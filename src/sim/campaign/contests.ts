@@ -1,0 +1,208 @@
+import { lastElection, majorityLine, type World } from '../election';
+import { clamp, zeros, zeros2 } from '../math';
+import { projectSeat } from '../project';
+import { Rng } from '../rng';
+import { N_BLOCS, N_PARTIES, PARTY_IDS, type Dynamics, type StateId } from '../types';
+import { effectiveDynamics, scaled } from './actions';
+import { shiftUnity } from './diplomacy';
+import { pushNews, ref } from './news';
+import type { Campaign, Scene } from './types';
+
+// Contests fought inside a term: a by-election when a seat falls vacant, and
+// the rounds of state polls. Both are fought with one decision and the
+// standing orders, not a full campaign, and both are settled by the same
+// voter model as everything else.
+
+const OTH = PARTY_IDS.indexOf('oth');
+
+// ---------- the House as it now sits ----------
+
+/** Who held a seat when the last general election was declared. */
+const elected = (world: World, i: number) => lastElection(world).seats[i].winner;
+
+/** Who holds a seat now: whoever won it at the general election, unless a by-election since has changed that. */
+export function holderOf(world: World, c: Campaign, seat: string): number {
+  return c.career?.house[seat] ?? elected(world, world.seatIndex.get(seat)!);
+}
+
+/** Seats in the House by party, as it sits today. */
+export function houseTally(world: World, c: Campaign): number[] {
+  const tally = [...lastElection(world).tally];
+  for (const [seat, now] of Object.entries(c.career?.house ?? {})) {
+    const was = elected(world, world.seatIndex.get(seat)!);
+    if (was === now) continue;
+    tally[was]--;
+    tally[now]++;
+  }
+  return tally;
+}
+
+/** A copy of what is moving voters now, with room to add to it. */
+function withNoise(c: Campaign): Dynamics {
+  return structuredClone(effectiveDynamics(c));
+}
+
+// ---------- by-elections ----------
+
+/** What each level of effort costs and adds: everything the party has, a candidate and a small budget, or the local branch on its own. */
+export const BY_EFFORT = [{ money: 150_000, lift: 0.25 }, { money: 50_000, lift: 0.1 }, { money: 0, lift: -0.05 }];
+const BY_NOISE = 0.12;
+
+/** Picks the seat that has fallen vacant: one the player's party fights, wherever it is. */
+export function vacantSeat(world: World, c: Campaign, rng: Rng): string {
+  const fought = world.seats.filter((_, i) => world.baseline.contesting[i][c.player]);
+  return (fought.length ? fought : world.seats)[rng.int(fought.length || world.seats.length)].id;
+}
+
+export interface ByResult { seat: string; winner: number; was: number; margin: number }
+
+/**
+ * Holds a by-election. The player has chosen how hard to fight it (0, 1 or
+ * 2); the voters of that seat decide with the mood of the country as it is
+ * today. Whoever wins sits in the House from now on.
+ */
+export function resolveByElection(world: World, c: Campaign, scene: Scene, choice: number): ByResult | null {
+  const k = c.career;
+  const pc = c.parties[c.player];
+  const i = scene.seat === undefined ? undefined : world.seatIndex.get(scene.seat);
+  const effort = BY_EFFORT[choice];
+  if (!k || !pc || i === undefined || !effort) return null;
+  const me = c.player;
+  const seat = world.seats[i];
+  const rng = new Rng(c.rng);
+
+  // Money buys effort only as far as there is money.
+  const price = scaled(world, effort.money);
+  const paid = Math.min(pc.funds, price);
+  pc.funds -= paid;
+  const dyn = withNoise(c);
+  const local = (dyn.support.seat[seat.id] ??= zeros(N_PARTIES));
+  for (let p = 0; p < N_PARTIES; p++) local[p] += rng.normal(0, BY_NOISE);
+  local[me] += effort.lift * (price > 0 ? paid / price : 1);
+  c.rng = rng.state;
+
+  const out = projectSeat(seat, i, world.baseline, dyn);
+  const was = holderOf(world, c, seat.id);
+  const winner = out.winner;
+  if (winner !== was) {
+    if (winner === elected(world, i)) delete k.house[seat.id]; else k.house[seat.id] = winner;
+    const g = k.government;
+    const inGov = (p: number) => p === g.pm || g.partners.includes(p);
+    g.seats += (inGov(winner) ? 1 : 0) - (inGov(was) ? 1 : 0);
+    if (inGov(was) && !inGov(winner)) g.stability = clamp(g.stability - 3, 5, 95);
+    for (let b = 0; b < N_BLOCS; b++) { k.mood[b][winner] += 0.008; k.mood[b][was] -= 0.006; }
+  }
+  if (winner === me) shiftUnity(c, me, was === me ? 1 : 3);
+  else if (was === me) shiftUnity(c, me, -3);
+  else if (choice === 0) shiftUnity(c, me, -1);
+
+  const key = winner === me ? (was === me ? 'news.by.held' : 'news.by.won') : was === me ? 'news.by.lost' : 'news.by.other';
+  pushNews(c, {
+    party: winner, key, tone: winner === me ? 'good' : was === me ? 'bad' : 'neutral',
+    vars: { seat: ref.seat(seat.id), party: ref.party(winner), from: ref.party(was), pct: (out.margin * 100).toFixed(1) },
+  });
+  return { seat: seat.id, winner, was, margin: out.margin };
+}
+
+// ---------- state polls ----------
+
+/** The states go to the polls in three rounds through the term. The federal territories have no assembly. */
+export const ROUNDS: { week: number; states: StateId[] }[] = [
+  { week: 70, states: ['sabah', 'sarawak'] },
+  { week: 130, states: ['kedah', 'kelantan', 'terengganu', 'penang', 'selangor', 'nsembilan'] },
+  { week: 190, states: ['perlis', 'perak', 'pahang', 'melaka', 'johor'] },
+];
+export const STATE_EFFORT = [{ money: 300_000, lift: 0.1, branches: 4 }, { money: 100_000, lift: 0.04, branches: 0 }, { money: 0, lift: -0.03, branches: 0 }];
+const STATE_NOISE = 0.06;
+/** What a state government is worth to the party that holds it, each week. */
+export const STATE_GOVERNMENT_INCOME = 2_000;
+
+/** The party with the most seats in each state: who would form its government. Ties go to whoever is in office. */
+function leaders(world: World, winners: number[], states: readonly string[], incumbent: Record<string, number>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const st of states) {
+    const count = new Array<number>(N_PARTIES).fill(0);
+    for (const i of world.seatsByState[st] ?? []) count[winners[i]]++;
+    count[OTH] = 0;
+    const best = Math.max(...count);
+    if (best === 0) continue;
+    const holder = incumbent[st];
+    out[st] = holder !== undefined && count[holder] === best ? holder : count.indexOf(best);
+  }
+  return out;
+}
+
+/** Who governs each state as a career opens: whoever carried it at the last general election. */
+export function startStates(world: World): Record<string, number> {
+  const all = ROUNDS.flatMap((r) => r.states).filter((st) => world.states.includes(st));
+  return leaders(world, lastElection(world).seats.map((o) => o.winner), all, {});
+}
+
+/** The round of state polls now due, if any. */
+export function roundDue(c: Campaign): number | null {
+  const k = c.career;
+  if (!k || k.rounds >= ROUNDS.length) return null;
+  return k.week >= ROUNDS[k.rounds].week ? k.rounds : null;
+}
+
+export interface StateResult { state: string; winner: number; was: number | undefined }
+
+/**
+ * Holds a round of state polls. Each state is decided on its parliamentary
+ * seats, with the country's mood as it is today and the effort the player
+ * chose (0, 1 or 2). Whoever takes most seats governs the state.
+ */
+export function resolveStatePolls(world: World, c: Campaign, choice: number): StateResult[] {
+  const k = c.career;
+  const pc = c.parties[c.player];
+  const effort = STATE_EFFORT[choice];
+  if (!k || !pc || !effort || k.rounds >= ROUNDS.length) return [];
+  const me = c.player;
+  const states = ROUNDS[k.rounds].states.filter((st) => world.states.includes(st));
+  k.rounds++;
+  const rng = new Rng(c.rng);
+
+  const price = scaled(world, effort.money);
+  const paid = Math.min(pc.funds, price);
+  pc.funds -= paid;
+  const lift = effort.lift * (price > 0 ? paid / price : 1);
+  const dyn = withNoise(c);
+  const winners = lastElection(world).seats.map((o) => o.winner);
+  for (const st of states) {
+    const rows = (dyn.support.state[st] ??= zeros2(N_BLOCS, N_PARTIES));
+    const swing = PARTY_IDS.map(() => rng.normal(0, STATE_NOISE));
+    for (const row of rows) for (let p = 0; p < N_PARTIES; p++) row[p] += swing[p] + (p === me ? lift : 0);
+    for (const i of world.seatsByState[st]) winners[i] = projectSeat(world.seats[i], i, world.baseline, dyn).winner;
+    if (effort.branches) { const s = world.states.indexOf(st); if (pc.machinery[s] > 0) pc.machinery[s] = Math.min(100, pc.machinery[s] + effort.branches); }
+  }
+  c.rng = rng.state;
+
+  const now = leaders(world, winners, states, k.states);
+  const results: StateResult[] = states.filter((st) => now[st] !== undefined).map((st) => ({ state: st, winner: now[st], was: k.states[st] }));
+  for (const r of results) {
+    k.states[r.state] = r.winner;
+    if (r.was === r.winner) continue;
+    // A state changing hands is a story the whole country reads.
+    for (let b = 0; b < N_BLOCS; b++) { k.mood[b][r.winner] += 0.006; if (r.was !== undefined) k.mood[b][r.was] -= 0.004; }
+    if (r.winner === me) shiftUnity(c, me, 2);
+    if (r.was === me) shiftUnity(c, me, -3);
+  }
+  // One line for each party that came out of the round governing somewhere.
+  const byWinner = new Map<number, StateResult[]>();
+  for (const r of results) byWinner.set(r.winner, [...(byWinner.get(r.winner) ?? []), r]);
+  for (const [party, won] of byWinner) {
+    const gained = won.filter((r) => r.was !== party);
+    pushNews(c, {
+      party, key: gained.length ? 'news.states.won' : 'news.states.held',
+      vars: { party: ref.party(party), states: `@states:${(gained.length ? gained : won).map((r) => r.state).join(',')}` },
+      tone: party === me ? 'good' : gained.some((r) => r.was === me) ? 'bad' : 'neutral',
+    });
+  }
+  return results;
+}
+
+/** How many state governments a party leads. */
+export const statesHeld = (c: Campaign, p: number) => Object.values(c.career?.states ?? {}).filter((x) => x === p).length;
+
+/** Whether the government still has the numbers after the House has changed. */
+export const hasMajority = (world: World, c: Campaign) => (c.career?.government.seats ?? 0) >= majorityLine(world);

@@ -1,0 +1,452 @@
+# Kempen 222 — Design Brief
+
+Decisions from the 110-question design interview (3 Oct 2026). The original single-file prototype is kept in `prototype/` and predates this brief.
+
+## Vision
+- **Player feeling:** "I outsmarted them" — strategy that pays off.
+- **Audience:** Malaysians who follow politics, plus casual players.
+- **Purpose:** fun, education and satire together.
+- **Tone:** serious systems, funny writing.
+- **Complexity:** easy to learn, hard to master.
+- **Inspirations:** The Political Machine (map campaigning) and Suzerain (characters, consequences).
+- **Unique hook:** authentically Malaysian politics.
+- **Release:** free public release, no deadline, zero budget.
+
+## Setting
+- Present day. Start matches present-day reality; events, skeletons and rival choices vary per game.
+- **Parties:** fictional, one-to-one parallels of the real coalitions and their component parties.
+- **Politicians:** fictional lookalikes.
+- **Race and religion:** modelled through abstracted blocs (e.g. heartland conservatives, urban liberals), never named directly.
+- **3R:** handled carefully; satire targets politicians, never communities or the monarchy.
+- **Palace:** an active, respectfully treated part of government formation (audiences, deadlines, unity-government suggestions).
+- **Sabah and Sarawak:** fully distinct politics — local parties, autonomy demands, peninsular parties as outsiders.
+- **Numbers:** real seat counts, state assembly sizes, electorate sizes and demographics.
+- **Language:** English and Bahasa Malaysia, switchable.
+
+## Player and characters
+- Full party creator (name, logo, colour, ideology), or take over a preset established party.
+- Start as opposition or as the sitting government (player's choice).
+- Leader has stats and a chosen backstory that unlocks unique events.
+- Candidates chosen for key seats only; the rest auto-filled. Candidates and staff have hidden skeletons; vetting costs time.
+- Small staff team (campaign manager, strategist, media chief, treasurer) as named characters.
+- Defections ("katak") in both directions.
+- Party unity as a single meter (light faction model).
+- Rival leaders are named characters with relationship scores.
+- Wide range of endorsers: influencers, celebrities, NGOs, unions, business, religious figures.
+
+## Map and electorate
+- All 222 parliamentary constituencies, plus fully modelled state elections.
+- Real geographic map; click a state to zoom to its seats.
+- Urban, semi-urban and rural seats behave strongly differently (which actions work where).
+- Voter blocs: age, income (B40/M40/T20), abstracted identity blocs, occupational blocs (civil servants, FELDA settlers, farmers and fishermen, gig workers, small business).
+- Undi18 first-time voters as a distinct, volatile, online bloc.
+- Turnout per bloc. Postal, early and overseas voters modelled.
+- Malapportionment via real electorate sizes (no redelineation mechanic).
+- Local issues per state.
+- Seats tagged safe / leaning / marginal, with a hot-seat watchlist.
+- True support is hidden; the player pays for noisy polls.
+- Undecided voters visible per seat and break late.
+
+## Time and core loop
+- Weekly turns across a full five-year term (about 260 turns).
+- Standing orders with skip-ahead until something needs attention.
+- Time budget per week: actions cost different numbers of days.
+- Leader has a location; travel costs time (more for Borneo).
+- All four action families matter: ceramah and walkabouts, party machinery, media, fundraising.
+- Social media is its own system with virality and backlash.
+- Money is tight and central. Sources: members and crowdfunding, tycoons and corporate donors, state resources, party businesses and assets.
+- Spending limits with enforcement risk.
+- Party machinery is a per-state resource built over years.
+- Attacks are a major system with opposition research.
+- Dirty play available at real risk: money politics, vote-buying, cybertroopers, sponsored spoiler candidates.
+- Public pledges and private deals, both called in later.
+
+## Policy
+- Stances on 10–12 issues along a spectrum.
+- Issue groups: bread and butter; governance; public services; identity and federation.
+- Hard trade-offs: every stance costs someone.
+- Costed, tracked manifesto; broken promises punished in government.
+- Issue salience shifts with events and with agenda-setting by players.
+- U-turns allowed at a credibility cost.
+- Rival platforms visible and shifting.
+- Populist giveaways are a constant temptation with deferred costs.
+
+## Events and narrative
+- 100+ events: scripted backbone, state-triggered and random.
+- Heavy use of fictionalised real political history.
+- Long event arcs spanning years.
+- Nomination day as a set-piece.
+- Institutions (election commission, anti-graft agency, police, courts) act, and a governing party can lean on them at a cost.
+- Media outlets with leanings.
+- Dialogue scenes at key moments (coalition talks, betrayals, Palace audiences).
+- News feed and netizen social feed react to player actions; main home of the humour.
+
+## Rivals
+- Full field of coalitions with component parties.
+- Strategic, reactive AI with distinct personalities. Difficulty levels change AI skill only.
+- Rivals run on the same rules as the player (money, trust, unity, skeletons) and act against each other: pacts, poaching, splits, collapse.
+- Full diplomacy: non-contest pacts, secret understandings, joint attacks, mergers, betrayal.
+- Pre-election coalitions with seat-by-seat allocation talks.
+- Single-player only.
+
+## Election and after
+- Election night as a live seat-by-seat broadcast.
+- Hung parliament: full negotiation phase under a Palace deadline.
+- On the table: cabinet posts, policy concessions, state-level deals, under-the-table inducements.
+- Statutory declarations and defections, constrained by an anti-hopping law (parties move as blocs).
+- Game continues into the next term. Full governing layer: annual budget, cabinet, bills, reacting economy, confidence votes, manifesto delivery.
+- Legacy endings when the player retires, is ousted or loses the party.
+- Detailed post-election analysis (swing by seat and bloc, turnout, decisive decisions, polling timeline).
+
+## Modes and progression
+- Career mode, plus scenarios: campaign-only, by-election, state election, hung parliament.
+- Achievements and a legacy gallery; nothing locked.
+- Autosave plus manual slots, with export/import to file.
+- Playable by-election tutorial, then gradual introduction of systems by an adviser character.
+
+## Presentation
+- Campaign war room style: map, briefing papers, phone messages, polling charts.
+- AI-generated illustrated portraits in one consistent style, not resembling real people too closely.
+- Full Malaysian campaign flavour: flag wars, banners, ceramah tents, posters; echo real colour schemes without copying logos.
+- Music and sound effects (royalty-free or generated).
+- Lively animation. Light and dark themes, switchable.
+
+## Platform
+- React + TypeScript; simulation tested; content in data files.
+- Desktop first, usable on mobile.
+- Fully offline: runs in the browser, saves on the device, no backend.
+- Free static hosting with the code on GitHub.
+- Shareable result image card.
+
+## Open risks
+- **Scope.** This describes a multi-year grand strategy game. It needs to be built in playable stages.
+- **Data.** Real figures for 222 parliamentary seats and about 600 state seats must come from a public dataset, not from memory.
+- **Writing volume.** 100+ events, dialogue scenes and two feeds, all in two languages.
+- **Legal and sensitivity.** One-to-one parody parties and lookalike politicians, with playable corruption and institutional pressure, in a public release. Needs a clear fiction disclaimer and care that parody characters are not presented as factual claims about real people.
+
+## Build stages
+
+1. **Foundation** — done (4 Oct 2026). React + TypeScript project, real data for 222 seats, zoomable map, voter-bloc and turnout model, saves, English/BM, light/dark.
+2. **Campaign-only scenario** — done (4 Oct 2026). Eight weekly turns, time budget, travel, the four action families, paid polls, rival AI with three difficulty levels, live election night. Not yet published.
+3. **By-election tutorial and state election scenario** — done (4 Oct 2026). A guided three-week by-election with an adviser, and six-week state elections in Perak, Pahang and Perlis.
+4. **Coalitions** — done (4 Oct 2026). Leader relationships, seat-by-seat pacts with vote transfers, private understandings, joint attacks, defections, party unity, and talks to form a government under a Palace deadline. Adds the hung-parliament scenario.
+5. **Career mode** — done (4 Oct 2026). Five-year terms with standing orders and skip-ahead, four money sources, machinery built over years, twelve policy stances, a costed manifesto, 35 events with three multi-step arcs, governments that can fall mid-term, and the loop from one parliament to the next.
+6. **Governing layer and legacy endings** — done (4 Oct 2026). A reacting economy, an annual budget, a named cabinet, bills for every manifesto promise with whip counts, debts to coalition partners, leaning on institutions, confidence and no-confidence votes, rival governments' bills, and ten legacy endings on retirement, removal or wipe-out.
+7. **Polish** — done (4 Oct 2026). Portraits for every named character, sound effects and generated music, thirty achievements, a legacy gallery, a shareable result card, bunting and small animations.
+8. **The unassigned items** — done (4 Oct 2026). Leader backstories and abilities, a party creator, named staff, candidates for key seats, endorsers, media outlets, a netizen feed, a spending limit, by-elections and state polls inside a career, and events brought up to 102.
+
+## Decisions made while building stage 1
+
+- **Fictional coalitions** (working names): Pakatan Sinar, Barisan Pusaka, Perikatan Teguh, Gabungan Bumi Kenyalang, Gabungan Bayu Sabah, Parti Legasi Sabah. Component parties are not modelled yet.
+- **Starting point** is the 2022 general election result. By-elections and realignments since then are not reflected yet.
+- **Voter blocs** are a single partition of 13 blocs per seat rather than separate age, income, identity and occupation dimensions. Each voter belongs to one bloc by primary political identity.
+- **Bloc shares per seat are estimates** from census indicators, not published figures. Land-scheme settler and civil servant shares are the weakest estimates.
+- **Small parties and independents are pooled** into one entry.
+- **State assembly seats** are downloaded but not yet processed.
+- **True support is visible** in this build as a developer view. Hiding it behind paid polls belongs to stage 2.
+
+## Decisions made while building stage 2
+
+- **Length:** eight weekly turns of seven days each.
+- **Playable parties:** the three national coalitions only. The Borneo blocs are rivals for now.
+- **Hidden drift:** each new campaign starts with a random, hidden shift in opinion since the last election, so the last result is a guide and polls are worth buying.
+- **Travel zones:** north, east, central, south, Sabah (with Labuan) and Sarawak. Travel is free within a zone.
+- **Regional parties have fewer days per week** (4-5 against 7), so that a small party does not out-campaign national ones on its home ground. This departs slightly from "rivals run on the same rules".
+- **Where each party stands** is fixed to where its stand-in stood in 2022. Seat allocation comes with coalitions in stage 4.
+- **Attacks, social media and tycoon money are simple versions** of the fuller systems in the brief (opposition research, a social media system, donors with strings).
+- **No random events yet** beyond tycoon exposure. The event system comes with career mode.
+- **The what-if sliders from stage 1 were removed.** The `?dev` address option shows the true state of the race instead.
+- **Balance is only machine-tested:** a party run by the rival logic ends about 15 seats ahead of an idle one, and an all-rival race stays close to the last result. It has not been tuned through human play.
+
+## Decisions made while building stage 3
+
+- **One engine, three sizes.** A contest is a set of seats plus a small rule set: money multiplier, length, which actions and polls are offered, and travel zones. Nothing else differs.
+- **State elections cover Perak, Pahang and Perlis only.** These are the states whose assembly results are in the data already downloaded (they voted with the 2022 general election). The other ten need results from other election dates.
+- **In a state election, seats are grouped by the parliamentary seat they sit in.** Those areas play the role states play nationally (door-to-door drives, billboards, area polls). There is no travel time inside a state.
+- **The by-election is Hulu Selangor**, a three-way marginal, as a fictional vacancy. It doubles as the tutorial. *Changed (4 Oct 2026, at the designer's request):* the title screen now draws the vacant seat at random from the 36 seats where each of the three national parties took at least a fifth of the vote and the top two were within 12 points (Hulu Selangor is one). A button draws another. The scenario id carries the seat (`byelection:P.133`); the plain id `byelection` still means Hulu Selangor, so older saves load. The tutorial works in any of them; the adviser's opening line says whether the player's party won the seat last time.
+- **The adviser is "Kak Ros", campaign manager**, shown with an initials badge until portraits arrive. Her 11 steps advance when the player does the thing, and can be skipped.
+- **Only parties with real support campaign in a contest** (a seat held, or 5% of the vote). Token candidacies still appear on the ballot but run no campaign.
+- **The tutorial defaults to the easiest rivals.**
+- **The hung-parliament scenario from the brief is not built**; it belongs with coalitions in stage 4.
+
+## State chiefs (added after stage 3, 4 Oct 2026)
+
+Requested by the designer: let each state have an AI state leader who runs the campaign there, so the country is easier to manage.
+
+- **Optional, per region.** The player can put a chief in charge of any state they contest (a division chief per parliamentary area in a state election). A one-seat by-election has none.
+- **What a chief does.** Ceramah and walkabouts in the closest seats, door-to-door drives, billboards, new branches and get-out-the-vote. The leader keeps the national work: mega rallies, television, social media, attacks and fundraising.
+- **The trade-off.** A chief costs none of the leader's days and no travel, at the normal prices. Their ceramah and walkabouts draw half the leader's crowd, and they choose for themselves what to do.
+- **Three levels of freedom:** Lean (one operation a week), Standard (two), All out (up to four).
+- **Money.** Chiefs spend party funds when the week ends. Between them they may spend only a share of the funds each week, weighted towards polling day because effects fade; the final week has no limit. The player can set an amount chiefs must leave untouched. A chief spends nothing when nothing on offer is good value.
+- **No doubling up.** A chief skips whatever the leader has already done in that seat or state that week.
+- **Local knowledge.** Chiefs read their own ground through the same kind of noise as a normal-difficulty rival, so where they campaign is a mild hint about which seats are close.
+- **Rivals have chiefs too**, in every state they contest, funded from whatever they hold above their reserve. In practice the computer's leaders spend most of their money themselves, so rival chiefs do little.
+- **Chiefs have no names or personalities yet.** Named chiefs with loyalty and skeletons belong with the staff and defection systems in later stages.
+- **Balance, from simulated campaigns only:** with the leader doing nothing, chiefs everywhere at All out win about 5 more seats than no campaign at all in a general election, against about 13 for a leader campaigning in person. Chiefs are a way to turn spare money into votes, not a replacement for the leader.
+- **Saves** move to version 4; stage 3 saves load and start with no chiefs.
+
+## Decisions made while building stage 4
+
+**Before the vote**
+
+- **Leaders are named, invented characters** with a relationship score to every other leader (-100 to 100). The player takes the place of their own party's leader. Relationships start where the parties stood going into the 2022 election and move with what leaders do: tea warms them, attacks sour them, pacts bind them.
+- **A pact is a seat-by-seat list** of who stands aside for whom. The player can fill it by hand, or start from a suggestion ("only where it matters" or "every seat"). An incumbent never stands aside.
+- **Voters do not all follow.** When a party stands aside, a share of its voters moves to the partner, a share stays home and the rest scatter. The shares differ by pair of parties (old enemies transfer badly) and are design numbers, not measurements.
+- **Leaders judge a pact** by the seats it is worth to them, how the gains are split, and how they feel about the proposer. Leaders on bad terms will not talk at all, so a pact with an old enemy has to be prepared with meetings first.
+- **Nomination day** falls three weeks before polling. Pacts and defections must happen before it.
+- **Rivals deal with each other too**: they sign pacts among themselves, put pact offers to the player, court the player's sitting members, and lose members to each other.
+- **Defections** move a sitting member's personal vote from one party to another for the rest of the campaign. Courting one costs a day and money and may fail or leak.
+- **Party unity** is one number per party. It falls when candidates are stood down, when a pact is signed with a party whose supporters are far from one's own, after scandals, backfired attacks and defections; a big rally lifts it. Low unity weakens door-to-door and get-out-the-vote work and invites poaching.
+- **Mergers are not built.** Component parties inside each coalition are still not modelled, so there is nothing to merge.
+
+**After the vote**
+
+- **Talks happen whenever nobody has a majority**, in general and state elections. An outright winner, or a pact that wins a majority between its partners, is appointed at once.
+- **The Palace sets the timetable** and is written respectfully throughout: a summons, a deadline (five days federally, three in a state), advice to consider a unity government if nobody has the numbers halfway through, one extension of two days, and then the appointment of whoever has the most members behind them as a minority government.
+- **Parties move as blocs**, as the anti-hopping law requires. The six parties each sign as one. Independents decide one by one. Rebel signatures against a party's line appear as news and count for nothing.
+- **An offer has four parts:** cabinet posts, one senior post, policy concessions, and money under the table. Each party values these differently; sounding a party out (one meeting) shows what it wants and how it would take an offer.
+- **Concessions are a fixed list of eleven** (Borneo autonomy, oil royalty, the Sabah chief ministership, subsidies, a reform agenda, shelving reforms, a "fair review" of court cases, a heartland values agenda, constituency funds, the Speaker's chair, local appointments). They stand in for the policy system that arrives in stage 5. Each has a cost to the giver: party unity, public trust or the treasury.
+- **Leaders hold out early and settle late**, and rival leaders raise their offers each day. A party that has signed can still be bought away by a clearly better offer. Money already paid is not returned.
+- **The player can stand down** and take a rival's offer, becoming a partner in that government.
+- **The result is rated** for stability (size of majority, number of partners, relationships, unity, trust) and public trust. The deals are stored with the save so that the governing layer can call them in.
+- **The hung-parliament scenario** starts from the real 2022 result with campaign funds mostly spent, playable as any of the three national parties.
+
+**Not built in this stage:** component parties and mergers; betrayal after the government is formed (it needs the governing layer); cabinet posts by name beyond the senior ones; any state-level deal beyond the Sabah chief ministership.
+
+**Balance is machine-tested only.** Left alone, a rival forms the government on about the third day. No human play-testing has tuned how hard the talks are.
+
+**Saves** move to version 5; earlier saves load with leaders on their starting terms.
+
+## Decisions made while building stage 5
+
+**The shape of a career**
+
+- **A career opens at the start of a parliament**, under the government the 2022 election produced: Pakatan Sinar leading, with Barisan Pusaka, Gabungan Bumi Kenyalang, Gabungan Bayu Sabah and Parti Legasi Sabah. Choosing a party chooses your seat: head of government, partner, or opposition.
+- **A term is 252 weeks, then the eight-week campaign.** The head of government may dissolve early after three years; a rival head of government may do so in the last year when ahead.
+- **Standing orders replace weekly actions between elections.** One focus for the leader's time, three spending dials, up to three target states, and two dials for outside money. They run until changed.
+- **Skip-ahead** moves one week, four weeks, or to the next decision, and always stops when an event needs an answer.
+- **The campaign, election night and the talks are the stage 2-4 game**, entered with whatever the term built: funds, machinery, unity, relationships, credibility and a dossier on rivals. Rivals arrive at the campaign rested and funded as before.
+- **After the talks the next term begins on a refitted map.** The model is fitted again to the result just declared, so "last election" always means the last one played. Where a pact kept a party off the ballot, the model is fitted to what would have happened with everyone standing, so that party can stand again next time. Pacts lapse at each election.
+- **Half of what is left in the bank goes on the campaign's bills** when a new term begins.
+
+**Money**
+
+- **Peacetime donations run at a tenth of campaign-time donations.** A party on the default orders reaches the election with a war chest similar to the single-contest starting funds.
+- **Four sources**: members (clean, follows support, unity and credibility), tycoons and corporate donors (three levels; favours, leaks and slow loss of credibility), state resources (government only; three levels; erodes public trust and invites the anti-graft agency), and party businesses (bought in lots, steady return, a tenth lost on selling).
+- **Spending limits with enforcement are not built.**
+
+**Policy and manifesto**
+
+- **Twelve issues in four groups**, each a five-point scale between two poles. Each bloc has a preferred position and a weight on every issue; these are design numbers.
+- **Policy moves voters relative to where the party stood at the last election**, so a party that changes nothing gains and loses nothing.
+- **Credibility** (0-100) scales how much voters respond to the player's positions and promises. U-turns cost it, twice over within a year; moving away from the party's founding positions also costs unity.
+- **Sixteen promises**, up to six in a manifesto, against a fiscal limit. A manifesto only counts for more or less than the party's usual one; rivals keep their usual ones. Promises are recorded for the governing stage to hold the player to.
+- **Rival platforms move**: twice a year a national rival may shift one step on one issue towards where the votes are.
+- **"Values" and "identity" issues stay abstract**, in line with the brief: no issue or promise names a race or religion.
+
+**Events**
+
+- **35 events**: random ones weighted by role, yearly ones (the budget, the alternative budget) and three arcs: a sovereign-fund scandal that takes most of a year to come out, a restless deputy who comes to a head at the party assembly, and a hotel-room plot to bring the government down between elections.
+- **Each choice shows its plain consequences and the odds of any gamble.** This favours strategy over surprise.
+- **Event text lives in its own file** (`src/i18n/events.ts`), with a test that every event has matching words in both languages.
+- The brief asks for 100+ events; this is the first third.
+
+**Governments between elections**
+
+- **Stability and public trust**, set when a government is formed, now matter: events move them, a shaky government can lose a partner, and if that costs it its majority the Palace talks open mid-term with the seats as they stand. A rival-led government falls of its own accord at most once a term.
+- **Governing itself is not played yet.** A head of government gets budget day and a few crises as events; bills, cabinet and the economy are stage 6.
+
+**Not built in this stage, and not yet assigned to a stage:** the party creator, leader stats and backstory, named staff, choosing candidates for key seats, endorsers, media outlets with leanings, a netizen feed, spending limits, playable by-elections and state elections inside a career, and the remaining events. These need scheduling.
+
+**Balance is machine-tested only.** Whole terms have been run by script; nobody has played five years by hand.
+
+**Saves** move to version 6; a career save carries the last election's result in every seat, and is about 85 KB.
+
+## Decisions made while building stage 6
+
+**The economy and the budget**
+
+- **Four numbers**: growth, inflation, unemployment and debt as a share of national income. They move a little every week towards where the budget in force points them, with some noise. Events (downturns, price shocks) knock them about.
+- **Voters hold the government answerable.** How the economy feels (good growth, low inflation, low unemployment) adds to or takes from the governing parties' standing every week, the head of government's party twice as much as its partners'.
+- **The budget is five spending lines and taxes**, each cut, held or boosted, planned in the House tab and tabled on budget day (week 40 of each year). Each line lifts the party with the blocs that notice it. Partners watch their own lines: Barisan Pusaka the civil service, the others rural and Borneo development.
+- **Generosity is paid for later.** A loose budget raises prices and adds to the debt; debt above 70% drags on growth and above 75% brings a downgrade. Bills passed and promises to partners add to standing commitments, which loosen every later budget. Scripted runs put a five-year giveaway about one seat ahead of a standstill budget at the next election, with debt near 90% and inflation near 5% for whoever governs next.
+- **A rival head of government tables a budget too**, each party to its habits, and all of them raise taxes once the debt passes 70%.
+
+**The cabinet**
+
+- **Eight portfolios, named ministers, one ability rating each** (one to five stars). Names are invented and drawn from a fixed list; ministers have no personal scandals or baggage yet.
+- **Partners hold posts in line with what they were given in the talks**, and a partner promised Finance or Home Affairs gets that ministry.
+- **Ability matters in two places**: the Finance Minister trims or widens the deficit, and each minister sets how many weeks their bills take to reach a vote. A capable cabinet also steadies the government slightly.
+- **A reshuffle replaces one minister with a new appointee from the head of government's party**, whose ability is a gamble. It costs unity for one's own minister, and stability and the relationship for a partner's.
+- **When a partner leaves the government its ministers go with it.**
+
+**Bills and promises**
+
+- **Every manifesto promise needs a bill**, and so do three of the concessions made to partners (Borneo autonomy, the values agenda, the reform agenda). Two bills can be in preparation at once.
+- **Parties vote their own position on the issue a bill turns on**, tempered by loyalty to the government and their relationship with whoever proposed it. Members close to the line are shown as wavering and decide on the day.
+- **Four ways to take a bill to its vote**: as it stands; sweetened, which wins waverers and adds to standing commitments; as a matter of confidence, which brings partners into line and brings the government down if it is lost; or withdrawn.
+- **A promise kept goes on the record the day its bill passes** and raises credibility. A bill lost marks the promise as tried and failed, which costs a little. A promise never brought to a vote costs credibility and the voters it was made to at the dissolution.
+- **A rival-led government puts one of its promises to the House about every forty weeks.** The player votes for, against or abstains; the blocs the bill was aimed at remember, and a partner who votes against its own government damages it.
+
+**Debts to partners**
+
+- **What the player promised in the talks falls due**, the first after a year and the rest at half-yearly intervals. Each is settled with a signature (some cost the treasury, some cost credibility when done in daylight) or with a bill.
+- **A debt left to slide** costs the relationship and the government's stability every year it is overdue.
+- **Pausing the reform agenda for a partner breaks the player's own reform promises.**
+- **What a rival head of government owes the player as a partner is not modelled.**
+
+**Institutions**
+
+- **Three levers, once a year each, for the head of government only**: the anti-graft agency against the main opposition party (usually hurts them, sometimes makes a martyr), the police against opposition rallies, and the state broadcaster. All cost public trust.
+- **A rival government's use of the agency against the player arrives as an event.** Rivals do not otherwise pull these levers.
+
+**Confidence**
+
+- **A partner stands by the government** if it gets on with its head and the government looks like lasting. The House tab shows how many members the government can count on.
+- **An opposition leader may move no confidence** after half a year, and once a year after that. Failure costs credibility and steadies the government.
+- **A partner may walk out.** If the government keeps its majority it carries on, weaker.
+- **A shaky government led by the player can face a motion**, and can buy loyalty first at the treasury's expense. A budget tabled by a shaky or narrow government can meet a revolt.
+- **A fall opens the Palace talks mid-term**, as in stage 5.
+
+**Endings**
+
+- **Three ways to end**: retiring (any quiet moment between elections), being removed by the party when unity collapses, and losing every seat.
+- **Ten legacies**: Statesman, Reformer, Survivor, Promiser, Plotter, Premier, Kingmaker, Conscience, Almost Prime Minister, Footnote. Chosen from years in the top job, promises kept and broken, credibility, governments lost and brought down, and the best seat tally.
+- **A legacy score out of 100** from the same record.
+- **Achievements and a gallery of past legacies are left to stage 7.**
+
+**Interface**
+
+- **A House tab** between elections, showing more or less depending on the player's seat.
+- **Any event or vote can be set aside** ("Look around first"). A banner stays until it is answered, and time does not move.
+- **Seven events were added and one removed**, for 41 in all: a budget revolt, a no-confidence motion, a credit downgrade, a partner's budget request, downturns for government and opposition, and being targeted by the agency.
+
+**Balance is machine-tested only.** Whole terms have been run by script with different budgets and with and without bills; nobody has governed for five years by hand.
+
+**Saves** move to version 7; a career saved before this stage is given the starting economy, a standstill budget, a new cabinet and a blank record.
+
+## Decisions made while building stage 7
+
+**Portraits**
+
+- **Drawn as vector art, not generated by an image model.** The brief asked for AI-generated illustrated portraits. There is no image generator in the build environment and no budget, so each portrait is a flat vector bust assembled from a few features (skin tone, hair, headwear, glasses, facial hair, dress) in the party's colour. One style throughout, and no image files. Illustrated portraits can replace them later without touching anything else.
+- **Nobody is based on a real person.** Each leader's features were chosen to differ from any real leader their party might bring to mind.
+- **Who has one**: the six party leaders, the twenty ministers, and Kak Ros the campaign manager. The player's portrait is their party's leader.
+- **The Palace is shown as a place**, a gateway under a dome, never as a person. The House and the leader's desk have emblems of their own.
+- **Where they appear**: the title screen, the Deals tab, the talks, phone calls and other scenes, the cabinet, the legacy screen, the gallery and the result card.
+
+**Sound and music**
+
+- **Everything is synthesised in the browser** from oscillators. No audio files, so nothing to license or download and the game still works offline.
+- **Twelve effects**: clicks, the week turning, a phone call, good and bad news, money in, a gavel for votes and governments formed, seats declared (won, lost, someone else's), a fanfare, and an achievement.
+- **One sound at most for each thing that happens**, chosen by importance.
+- **The music writes itself**: a slow five-note tune over a four-bar bass, different every session.
+- **Sound effects are on by default and music is off.** Both have a switch in the header and are remembered. Sound pauses when the page is in the background.
+- **Not checked by ear.** The build environment has no speakers: the sound engine was verified to start and schedule notes without errors, but how it sounds has not been judged by anyone.
+
+**Achievements and the gallery**
+
+- **Thirty achievements** in four groups: single contests, dealings, a career, and endings. All are visible from the start with what earns them; nothing is hidden and nothing is locked behind them, as the brief asks.
+- **Judged from the state of the game**, so they are earned the same way whether a game is played through or reloaded. Election results are not announced by an achievement until the count has been watched.
+- **A legacy gallery** holds every finished career: legacy, score, party, years, elections and promises. The newest forty are kept.
+- **Kept in a profile on the device**, apart from the saves, so deleting a save loses nothing. The profile is not part of the export file.
+- **A notice appears when one is earned**, one at a time.
+
+**The result card**
+
+- **A 1200 by 630 image drawn on a canvas**: the verdict, up to four figures, and either the chamber as it now sits (one dot a seat, the player's party on the left), the vote shares in a by-election, or the leader's portrait at the end of a career.
+- **Saved as a PNG, or handed to the device's share sheet** where the browser has one.
+- **It carries the fiction notice** and names only the game's invented parties.
+
+**Presentation**
+
+- **Bunting in the parties' colours** on the title screen, the legacy screen and the result card.
+- **Small movements**: dialogs, tab changes, results and notices ease in; buttons press. All are switched off for anyone whose device asks for reduced motion.
+- **A line left over from stage 4** that said the governing game was not yet built has been corrected.
+
+**Not built**
+
+- Illustrated portraits and recorded music, as above.
+- The rest of the campaign flavour the brief lists (flag wars, ceramah tents, posters).
+- The brief items never assigned to a stage: party creator, leader stats and backstory, named staff beyond the campaign manager, candidate selection, endorsers, media outlets, a netizen feed, spending limits, by-elections and state elections inside a career, and the remaining events (41 of 100+ exist).
+- Publishing. The game has not been put on a host or into a repository.
+
+**Saves** are unchanged at version 7. Settings gain two switches, for sound and music.
+
+## Decisions made while building stage 8 (the unassigned items)
+
+**The leader**
+
+- **Six backstories**, each a set of four abilities from 1 to 5: charisma, organisation, cunning and integrity. Every set adds up to twelve, the same as an ordinary leader's threes, so a backstory is a trade and not a bonus.
+- **Each point from ordinary is worth 8%** on what the ability touches: charisma on the leader's own ceramah, walkabouts, rallies, television and interviews; organisation on door-to-door work, turnout drives and branches; cunning on attacks and digging for dirt; integrity on how hard the leader is to smear and how fast credibility builds.
+- **Each backstory also brings something on the first day**: stronger branches, credibility, unity, a quarter more money, warmer relations with every leader, or a grudge from the establishment.
+- **Two events belong to each backstory** in a career.
+- **Rival leaders are all ordinary**, so difficulty remains a matter of how well rivals read the race.
+
+**A party of one's own**
+
+- **The creator rebrands one of the three national parties**: name, initials, colour (ten on offer), emblem (eight), leader's name and portrait (eight). The party keeps its seats, voters and branches. A party built from nothing is not modelled: every voter in the model already belongs somewhere.
+- **No emblem copies a real party's symbol.** Scales, a rocket, an eye, a keris and a crescent are deliberately not on offer.
+- **Ideology counts in a career only**, where parties hold positions: one of four platforms moves the party a step on three issues from where the old party stood, with no charge for a U-turn.
+- **The identity is stored with the save** and is presentation only: the rules see the same party as before.
+
+**Staff**
+
+- **Four jobs, three named people on offer for each**: one ordinary, one good, one outstanding. Wages rise with ability.
+- **What they do**: the manager finds up to a day more in the leader's week; the strategist makes polls cheaper and more accurate; the media chief strengthens television, online and billboard work and cuts gaffes; the treasurer raises more from fundraisers and members.
+- **Skeletons.** The better someone is, the likelier there is something in their past. Looking into them costs half a day in a campaign, or money between elections. A past nobody looked into, or looked into and ignored, may come out: the person goes, and the party takes the damage.
+- **Rival parties have no named staff.** This is a departure from "rivals play by the same rules": everything staff give is an edge the player pays for. Balance has not been retuned for it.
+
+**Candidates**
+
+- **The leader chooses in the closest seats only**: eight in a general election, five in a state election, the one seat in a by-election. Everywhere else the party fills the slate as before.
+- **Four kinds of hopeful**, three offered in each seat: the division chief (strong in rural seats, risky), the professional (strong in cities), the celebrity (a lift anywhere, and resented by the branch), the loyalist (small and safe).
+- **Papers are filed once and cannot be withdrawn**, and must be in three weeks before polling.
+- **Rival parties' candidates are not modelled.**
+
+**Endorsers**
+
+- **Ten invented figures and organisations**, each moving particular blocs for the whole campaign; some put other voters off. The preacher is one figure among ten and is written respectfully.
+- **Asking costs a day**, sometimes money, and may fail. The unions and the business chamber will not share a stage. The clean-government coalition walks away from anyone caught with a tycoon's money.
+- **Those nobody wins make up their own minds**, by how they lean, so rivals gain endorsers too.
+- **Not in by-elections**, which are too small for them.
+
+**The press and netizens**
+
+- **Six invented outlets**, each with an audience and habitual leanings; the state broadcaster favours whoever governs.
+- **Coverage moves voters only where it differs from an outlet's habit**, so the press changes nothing until someone changes it.
+- **An interview** costs half a day and can win an outlet round, change nothing, or produce a gaffe. Rival leaders give interviews too.
+- **Cybertroopers** are the dirty option: they work at once and have a one-in-five chance each week of being traced.
+- **Front pages** are written from each outlet's slant and the kind of week the player had.
+- **The netizen feed** reacts to twenty-five kinds of story with three remarks each in each language, from twelve invented handles. It is presentation only and is rebuilt from the news, so it adds nothing to saves.
+- **The press plays no part between elections yet.**
+
+**Spending limit**
+
+- **RM2.6 million in a general election**, scaled down for smaller contests. Actions, polls, endorsers' fees, paid accounts and staff wages all count.
+- **Rival parties never exceed it.** The player may; each week over the limit carries a chance, rising with the excess, that the Election Commission fines the party half of the excess and the story costs votes. A party is fined once.
+
+**Contests inside a term**
+
+- **By-elections are fought with one decision**, not a full campaign: everything, a small budget, or the local branch alone. The seat's own voters decide, with the country's mood as it stands. The winner sits in the House from then on, so whip counts, confidence votes and the government's majority all move.
+- **State polls come in three rounds a term**: Sabah and Sarawak in week 70, six states in week 130, five in week 190. Again one decision sets the effort.
+- **Each state is decided on its parliamentary seats.** Real assembly results exist in the game for only three states, so this keeps every state on the same footing. Whoever wins most seats governs.
+- **A state government is worth a small weekly income** to the party that holds it, and a state changing hands moves the national mood a little.
+- **State governments carry over a general election**; the House is elected afresh.
+
+**Events**
+
+- **Sixty more, for 102 in all**: the leader's past (12), staff (4), the press (5), money and the economy (11), the party (8), institutions (6), Borneo and the federation (5), and the life of the country (9).
+- **The old by-election event, which was a coin toss, is now the played by-election.**
+
+**Found while testing**
+
+- **The talks let a leader promise a partner both the reform agenda and a pause on reform**, and every other concession at once. A real saved game did this with three partners and its leader was removed by the party eighteen weeks into the term. Fixed (4 Oct 2026):
+  - **Contradictory concessions are refused.** The reform agenda cannot be in the same offer as a pause on reform or as the "fair review" of court cases, nor can they be promised to two different partners in one government. A pause on reform and the court cases may still go together. Rival leaders are held to the same rule, and an offer left on the table loses whatever has come to contradict a deal signed since. The list of contradictions is a table of pairs with these two entries.
+  - **The offer panel shows what an offer costs the party in unity** before it is put: what the offer gives away (its senior post and concessions, the same figures shown against each), the whole government so far including cabinet seats the party goes without, and where that leaves the party. In a career it warns when that is at or below the level at which the party removes its leader (12 when a crisis is answered, 6 in any week). The warning does not block the offer.
+  - **The talks have a way out.** A game panel at the foot of the talks screen (and of the new-government screen) holds the same save slots, file export and import as the Saves tab, and a "Quit to title" button. Election night, both the seat-by-seat count and a by-election's box count, has the same panel. Loading a game from it starts the count again.
+  - **Debts to partners all fall due within the term.** The first still falls due after a year and the rest half a year apart, but where there are too many for that, or the government was formed late in the term, they close up so that the last falls due by the final week. Careers already saved keep the dates they had.
+
+**Balance is machine-tested only**, and the player now has several edges rivals lack (staff, chosen candidates, a leader with abilities). Nobody has played through with them by hand.
+
+**Saves** move to version 8. Older games get an ordinary leader with nobody hired; older careers get the House as elected and the state governments the last election implies.

@@ -1,0 +1,395 @@
+import { create } from 'zustand';
+import { getWorld, worldOf } from '../data/world';
+import { translate, type Lang } from '../i18n/strings';
+import { earned, type AchievementId } from '../sim/campaign/achievements';
+import {
+  answerEvent, dissolve, invest, nextTerm, resumeTerm, setOrders, skipAhead, startCareer, syncOpinion,
+} from '../sim/campaign/career';
+import {
+  deliver, leaveGovernment, pullLever, reshuffle, setBudget, tableBill, tableMotion,
+} from '../sim/campaign/govern';
+import { choose, vetHopeful } from '../sim/campaign/candidates';
+import { courtEndorser } from '../sim/campaign/endorsers';
+import type { IdeologyId } from '../sim/campaign/leader';
+import { retire } from '../sim/campaign/legacy';
+import { hireTroopers, interview } from '../sim/campaign/media';
+import { dismiss, hire, vet } from '../sim/campaign/staff';
+import { launchManifesto, setStance, togglePledge } from '../sim/campaign/policy';
+import {
+  breakPact, courtDefector, jointAttack, meetLeader, proposePact, resolveCampaignScene, seekUnderstanding,
+  type PactProposal, type PactVerdict,
+} from '../sim/campaign/diplomacy';
+import {
+  backRival, claimAgain, endDay, makeOffer, resolveFormationScene, soundOut, type OfferResult,
+} from '../sim/campaign/formation';
+import { closeNight, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
+import type {
+  ActionId, ActionTarget, BackstoryId, Campaign, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, NewsItem, Offer, Orders,
+  OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId,
+} from '../sim/campaign/types';
+import { randomSeed } from '../sim/rng';
+import type { World } from '../sim/election';
+import type { RegionId } from '../sim/types';
+import { newGame, type GameState } from './game';
+import type { Identity } from './identity';
+import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
+import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
+
+/**
+ * What the map shows: the last election, the player's own picture from polls,
+ * or (developer mode only) how the country would really vote today.
+ */
+export type MapView = 'last' | 'estimate' | 'truth';
+export type SidebarTab = 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'news' | 'saves';
+export type Theme = 'system' | 'light' | 'dark';
+
+export interface Settings {
+  lang: Lang;
+  theme: Theme;
+  /** Sound effects. */
+  sound: boolean;
+  /** The background tune. Off unless asked for. */
+  music: boolean;
+}
+
+const SETTINGS_KEY = 'k222.settings';
+const storage = browserStorage();
+export const saveStore = new SaveStore(storage);
+const profileStore = new ProfileStore(storage);
+
+function loadSettings(): Settings {
+  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: false };
+  try {
+    const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
+    if (!raw) return fallback;
+    return {
+      lang: raw.lang === 'ms' ? 'ms' : 'en',
+      theme: raw.theme === 'light' || raw.theme === 'dark' ? raw.theme : 'system',
+      sound: raw.sound !== false,
+      music: raw.music === true,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+/** Add ?dev to the address to see the hidden true state of the race. */
+const DEV = typeof location !== 'undefined' && new URLSearchParams(location.search).has('dev');
+
+interface Store {
+  /** null while on the title screen. */
+  game: GameState | null;
+  settings: Settings;
+  dev: boolean;
+  view: MapView;
+  tab: SidebarTab;
+  selectedState: RegionId | null;
+  selectedSeat: string | null;
+  /** The outcome of the player's most recent action, shown above the action list. */
+  lastReport: NewsItem | null;
+  /** The answer to the player's latest pact proposal, and who gave it. */
+  pactReply: { party: number; verdict: PactVerdict } | null;
+  /** The answer to the player's latest offer in the talks after the election. */
+  offerReply: { party: number; result: OfferResult } | null;
+  /** Election night stays on screen after the count until the player moves on. */
+  showNight: boolean;
+  /** A scene the player has set aside to look around before answering. */
+  hiddenScene: number | null;
+  /** When the autosave last succeeded, or null if it has not or cannot. */
+  autosavedAt: number | null;
+  autosaveFailed: boolean;
+  /** Achievements and finished careers: the player's, not any one game's. */
+  profile: Profile;
+  /** Achievements just earned, waiting to be shown. */
+  toasts: AchievementId[];
+  /** How many games have been loaded this session. Screens with a running count start it again when this changes. */
+  loads: number;
+
+  setSettings(patch: Partial<Settings>): void;
+  dismissToast(id: AchievementId): void;
+  setView(view: MapView): void;
+  setTab(tab: SidebarTab): void;
+  selectState(state: RegionId | null): void;
+  selectSeat(seatId: string | null, state?: RegionId): void;
+
+  startCampaign(opts: {
+    name: string; scenario: string; player: number; difficulty: Difficulty;
+    backstory?: BackstoryId | null; ideology?: IdeologyId | null; identity?: Identity | null;
+  }): void;
+  /** Moves the adviser to the next step, or ends the tutorial after the last one. */
+  advanceTutorial(steps: number): void;
+  dismissTutorial(): void;
+  act(id: ActionId, target: ActionTarget): void;
+  poll(scope: PollScope, target: string | null, quality: PollQuality): void;
+  /** Puts a chief in charge of the regions given (level 0 takes them back). */
+  setChiefs(states: RegionId[], level: ChiefLevel | 0): void;
+  setChiefFloor(amount: number): void;
+  endWeek(): void;
+  /** Marks election night as watched, so reloading shows the final result. */
+  finishNight(): void;
+  /** Leaves election night for whatever comes after it. */
+  leaveNight(): void;
+  /** Goes back to look at election night once the government is settled. */
+  viewNight(): void;
+
+  meet(party: number): void;
+  proposePact(party: number, proposal: PactProposal): void;
+  clearPactReply(): void;
+  breakPact(party: number): void;
+  promise(party: number): void;
+  jointAttack(ally: number, target: number): void;
+  court(seat: string): void;
+  answerScene(id: number, choice: number): void;
+
+  offer(party: number, offer: Offer): void;
+  soundOut(party: number): void;
+  backRival(party: number): void;
+  claimAgain(): void;
+  endDay(): void;
+
+  /** Career: changes the standing orders for the weeks between elections. */
+  setOrders(patch: Partial<Orders>): void;
+  invest(lots: number): void;
+  setStance(issue: number, to: number): void;
+  togglePledge(id: PledgeId): void;
+  launchManifesto(): void;
+  /** Runs up to this many weeks of the term, stopping when something needs a decision. */
+  advance(weeks: number): void;
+  dissolve(): void;
+  /** After the election and the talks: on to the next parliament. */
+  nextTerm(): void;
+  /** After a change of government between elections: back to the term. */
+  resumeTerm(): void;
+
+  /** Sets a waiting scene aside (or brings it back with null) so the player can look around first. */
+  hideScene(id: number | null): void;
+  setBudget(patch: { line?: LineId; tax?: boolean; value: Dial }): void;
+  reshuffle(portfolio: PortfolioId): void;
+  tableBill(id: string): void;
+  deliver(index: number): void;
+  pullLever(id: LeverId): void;
+  tableMotion(): void;
+  leaveGovernment(): void;
+  retire(): void;
+
+  hire(role: RoleId, index: number): void;
+  dismiss(role: RoleId): void;
+  vetStaff(role: RoleId, index: number): void;
+  chooseCandidate(seat: string, option: number): void;
+  vetHopeful(seat: string, option: number): void;
+  courtEndorser(id: EndorserId): void;
+  interview(id: OutletId): void;
+  hireTroopers(): void;
+  renameGame(name: string): void;
+  loadGame(state: GameState): void;
+  quitToTitle(): void;
+}
+
+const settings = loadSettings();
+
+export const useStore = create<Store>((set, get) => {
+  /** Applies a change to the campaign on a copy, so the UI sees a new object. */
+  const mutate = (fn: (c: Campaign, g: GameState, world: World) => Partial<Store> | void) => {
+    const current = get().game;
+    const world = current && worldOf(current.campaign);
+    if (!current || !world) return;
+    const g = structuredClone(current);
+    const extra = fn(g.campaign, g, world) ?? {};
+    g.updatedAt = Date.now();
+    set({ game: g, ...extra });
+  };
+
+  return {
+    game: null,
+    settings,
+    dev: DEV,
+    view: 'last',
+    tab: 'actions',
+    selectedState: null,
+    selectedSeat: null,
+    lastReport: null,
+    pactReply: null,
+    offerReply: null,
+    showNight: false,
+    hiddenScene: null,
+    autosavedAt: null,
+    autosaveFailed: false,
+    profile: profileStore.load(),
+    toasts: [],
+    loads: 0,
+
+    setSettings: (patch) => {
+      const next = { ...get().settings, ...patch };
+      set({ settings: next });
+      try { storage?.setItem(SETTINGS_KEY, JSON.stringify(next)); } catch { /* settings are a convenience */ }
+    },
+    dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((x) => x !== id) })),
+    setView: (view) => set({ view }),
+    setTab: (tab) => set({ tab }),
+    selectState: (state) => set({ selectedState: state, selectedSeat: null }),
+    selectSeat: (seatId, state) => set((s) => ({ selectedSeat: seatId, selectedState: state ?? s.selectedState })),
+
+    startCampaign: ({ name, scenario, player, difficulty, backstory = null, ideology = null, identity = null }) => {
+      const world = getWorld(scenario);
+      if (!world) return;
+      const opts = { player, difficulty, seed: randomSeed(), backstory };
+      // A platform of its own belongs to a party of the player's own making.
+      const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null }) : newCampaign(world, opts);
+      const tutorial = world.rules.kind === 'byelection';
+      set({
+        game: newGame(name.trim() || translate(get().settings.lang, 'saves.defaultName'), campaign, Date.now(), tutorial, identity),
+        view: 'last', tab: campaign.phase === 'term' ? 'orders' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false,
+        // A general election opens on the leader's home state; smaller contests open on the whole map.
+        selectedState: world.rules.kind === 'general' && campaign.phase === 'campaign' ? campaign.parties[player]!.location : null,
+      });
+    },
+    advanceTutorial: (steps) => mutate((_c, g) => {
+      if (!g.tutorial) return;
+      g.tutorial = g.tutorial.step + 1 >= steps ? null : { step: g.tutorial.step + 1 };
+    }),
+    dismissTutorial: () => mutate((_c, g) => { g.tutorial = null; }),
+    act: (id, target) => mutate((c, _g, world) => ({ lastReport: playerAct(world, c, id, target) })),
+    poll: (scope, target, quality) => mutate((c, _g, world) => {
+      // Seeing the new numbers is the point, so switch the map to the player's picture.
+      if (playerPoll(world, c, scope, target, quality) && scope !== 'national') return { view: 'estimate' };
+    }),
+    setChiefs: (states, level) => mutate((c, _g, world) => { for (const st of states) setChief(world, c, st, level); }),
+    setChiefFloor: (amount) => mutate((c) => setChiefFloor(c, amount)),
+    endWeek: () => mutate((c, _g, world) => {
+      endWeek(world, c);
+      return c.phase === 'campaign'
+        ? { lastReport: null, pactReply: null, tab: 'news' }
+        : { lastReport: null, pactReply: null, selectedSeat: null, selectedState: null, showNight: true };
+    }),
+    finishNight: () => mutate((c, _g, world) => closeNight(world, c)),
+    leaveNight: () => set({ showNight: false, selectedSeat: null, selectedState: null }),
+    viewNight: () => set({ showNight: true }),
+
+    meet: (party) => mutate((c, _g, world) => ({ lastReport: meetLeader(world, c, party) })),
+    proposePact: (party, proposal) => mutate((c, _g, world) => {
+      const verdict = proposePact(world, c, party, proposal);
+      return verdict ? { pactReply: { party, verdict } } : {};
+    }),
+    clearPactReply: () => set({ pactReply: null }),
+    breakPact: (party) => mutate((c) => { breakPact(c, party); }),
+    promise: (party) => mutate((c, _g, world) => ({ lastReport: seekUnderstanding(world, c, party) })),
+    jointAttack: (ally, target) => mutate((c, _g, world) => ({ lastReport: jointAttack(world, c, ally, target) })),
+    court: (seat) => mutate((c, _g, world) => ({ lastReport: courtDefector(world, c, seat) })),
+    answerScene: (id, choice) => mutate((c, _g, world) => {
+      const scene = c.inbox.find((x) => x.id === id);
+      if (!scene) return;
+      c.inbox = c.inbox.filter((x) => x.id !== id);
+      if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote') {
+        answerEvent(world, c, scene, choice);
+        // The answer may have brought the government down: on to the talks.
+        if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: null };
+        return { hiddenScene: null };
+      }
+      if (c.phase === 'campaign') resolveCampaignScene(world, c, scene, choice);
+      else resolveFormationScene(c, scene, choice);
+    }),
+
+    offer: (party, offer) => mutate((c, _g, world) => {
+      const result = makeOffer(world, c, party, offer);
+      return result ? { offerReply: { party, result } } : {};
+    }),
+    soundOut: (party) => mutate((c) => { soundOut(c, party); }),
+    backRival: (party) => mutate((c) => { backRival(c, party); return { offerReply: null }; }),
+    claimAgain: () => mutate((c) => { claimAgain(c); }),
+    endDay: () => mutate((c, _g, world) => { endDay(world, c); return { offerReply: null }; }),
+
+    setOrders: (patch) => mutate((c, _g, world) => setOrders(world, c, patch)),
+    invest: (lots) => mutate((c, _g, world) => { invest(world, c, lots); }),
+    setStance: (issue, to) => mutate((c) => { if (setStance(c, issue, to)) syncOpinion(c); }),
+    togglePledge: (id) => mutate((c) => { if (togglePledge(c, id)) syncOpinion(c); }),
+    launchManifesto: () => mutate((c) => { if (launchManifesto(c)) syncOpinion(c); }),
+    advance: (weeks) => mutate((c, _g, world) => {
+      skipAhead(world, c, weeks);
+      // Parliament was dissolved along the way: the campaign opens where the leader is.
+      if (c.phase === 'campaign') return { tab: 'actions', lastReport: null, selectedSeat: null, selectedState: c.parties[c.player]!.location };
+      if (c.phase === 'formation') return { showNight: false, offerReply: null };
+    }),
+    dissolve: () => mutate((c, _g, world) => {
+      if (dissolve(world, c)) return { tab: 'actions', lastReport: null, selectedSeat: null, selectedState: c.parties[c.player]!.location };
+    }),
+    nextTerm: () => mutate((c, _g, world) => {
+      if (!nextTerm(world, c)) return;
+      // The new term is played on a map refitted to the result just declared.
+      const next = worldOf(c);
+      if (next) publishPublicPoll(next, c);
+      return { tab: 'orders', view: 'last', showNight: false, offerReply: null, pactReply: null, lastReport: null, selectedSeat: null, selectedState: null };
+    }),
+    resumeTerm: () => mutate((c) => {
+      if (resumeTerm(c)) return { tab: 'orders', offerReply: null };
+    }),
+
+    hideScene: (id) => set({ hiddenScene: id }),
+    setBudget: (patch) => mutate((c) => { setBudget(c, patch); }),
+    reshuffle: (portfolio) => mutate((c) => { reshuffle(c, portfolio); }),
+    tableBill: (id) => mutate((c) => { tableBill(c, id); }),
+    deliver: (index) => mutate((c) => { if (deliver(c, index)) syncOpinion(c); }),
+    pullLever: (id) => mutate((c, _g, world) => { if (pullLever(world, c, id)) syncOpinion(c); }),
+    tableMotion: () => mutate((c, _g, world) => {
+      tableMotion(world, c);
+      if (c.phase === 'formation') return { showNight: false, offerReply: null };
+    }),
+    leaveGovernment: () => mutate((c, _g, world) => {
+      leaveGovernment(world, c);
+      if (c.phase === 'formation') return { showNight: false, offerReply: null };
+    }),
+    retire: () => mutate((c) => { retire(c); }),
+
+    hire: (role, index) => mutate((c) => { hire(c, role, index); }),
+    dismiss: (role) => mutate((c) => { dismiss(c, role); }),
+    vetStaff: (role, index) => mutate((c, _g, world) => { vet(world, c, role, index); }),
+    chooseCandidate: (seat, option) => mutate((c, _g, world) => { choose(world, c, seat, option); }),
+    vetHopeful: (seat, option) => mutate((c, _g, world) => { vetHopeful(world, c, seat, option); }),
+    courtEndorser: (id) => mutate((c, _g, world) => ({ lastReport: courtEndorser(world, c, id) })),
+    interview: (id) => mutate((c) => ({ lastReport: interview(c, id) })),
+    hireTroopers: () => mutate((c, _g, world) => ({ lastReport: hireTroopers(world, c) })),
+    renameGame: (name) => mutate((_c, g) => { g.name = name.slice(0, 60); }),
+    loadGame: (state) => set((s) => ({
+      loads: s.loads + 1,
+      game: state,
+      view: 'last', tab: state.campaign.phase === 'term' ? 'orders' : 'actions', lastReport: null, pactReply: null, offerReply: null, selectedSeat: null,
+      // A saved game reopens on the count only if it was still running, or if there is nothing after it.
+      showNight: state.campaign.phase === 'night' || (state.campaign.phase === 'done' && !state.campaign.formation),
+      selectedState: state.campaign.phase === 'campaign' && (state.campaign.scenario === 'general' || state.campaign.scenario === 'career')
+        ? state.campaign.parties[state.campaign.player]!.location : null,
+    })),
+    quitToTitle: () => {
+      // Save now: the delayed autosave would find the game already gone.
+      const g = get().game;
+      if (g) saveStore.save(AUTO_SLOT, g);
+      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null });
+    },
+  };
+});
+
+// Autosave shortly after any change to the game.
+let timer: ReturnType<typeof setTimeout> | undefined;
+useStore.subscribe((state, prev) => {
+  if (state.game === prev.game || !state.game) return;
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    const game = useStore.getState().game;
+    if (!game) return;
+    const ok = saveStore.save(AUTO_SLOT, game);
+    useStore.setState(ok ? { autosavedAt: Date.now(), autosaveFailed: false } : { autosaveFailed: saveStore.available });
+  }, 400);
+});
+
+// Whatever the game has just earned goes on the player's profile: achievements, and a finished career for the gallery.
+useStore.subscribe((state, prev) => {
+  const game = state.game;
+  if (!game || game === prev.game) return;
+  const world = worldOf(game.campaign);
+  if (!world) return;
+  const now = Date.now();
+  const entry = legacyEntry(game, now);
+  const hung = entry ? hang(state.profile, entry) : state.profile;
+  const { profile, fresh } = award(hung, earned(world, game.campaign, hung.legacies.map((e) => e.legacy)), now);
+  if (profile === state.profile) return;
+  profileStore.save(profile);
+  useStore.setState({ profile, toasts: [...state.toasts, ...fresh] });
+});
