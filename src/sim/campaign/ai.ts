@@ -7,7 +7,7 @@ import {
 import type { ActionId, ActionReport, ActionTarget, Campaign, Difficulty } from './types';
 
 /** What makes each rival campaign differently. Weights multiply how attractive a kind of action looks. */
-interface Profile {
+export interface Profile {
   ground: number;
   machinery: number;
   media: number;
@@ -42,7 +42,7 @@ const GROUND_KIND: Record<SeatKind, number> = { rural: 1, semi: 0.75, urban: 0.4
 const CERAMAH_KIND: Record<SeatKind, number> = { rural: 1, semi: 0.8, urban: 0.45 };
 const WALK_KIND: Record<SeatKind, number> = { rural: 0.8, semi: 1, urban: 0.9 };
 
-interface Option { id: ActionId; target: ActionTarget; score: number }
+export interface Option { id: ActionId; target: ActionTarget; score: number }
 
 /** What a day of the leader's time is worth in money, at full funds. */
 const DAY_VALUE = 80_000;
@@ -55,7 +55,7 @@ const room = (current: number, cap: number) => Math.max(0, 1 - current / cap);
  * far ahead or far behind) and who stands in the way there. The real picture
  * is seen through `noise`.
  */
-function readRace(world: World, c: Campaign, p: number, truth: ElectionOutcome, rng: Rng, noise: number, watched: string[]) {
+export function readRace(world: World, c: Campaign, p: number, truth: ElectionOutcome, rng: Rng, noise: number, watched: string[]) {
   const value = new Array<number>(world.seats.length).fill(0);
   const mainRival = new Array<number>(world.seats.length).fill(-1);
   truth.seats.forEach((o, i) => {
@@ -75,6 +75,77 @@ function readRace(world: World, c: Campaign, p: number, truth: ElectionOutcome, 
   return { value, mainRival };
 }
 
+/** How a party reads the race: how much each seat is worth fighting for, and who stands in the way there. */
+export interface Reading { value: number[]; mainRival: number[] }
+
+/**
+ * Every action open to party `p` right now, best value for effort first.
+ * Value is what an action is expected to do in the seats worth fighting for,
+ * per unit of the leader's time and money. Used by the rivals' weekly play,
+ * and by the suggestions shown to the player.
+ */
+export function rankOptions(world: World, c: Campaign, p: number, reading: Reading, profile: Profile): Option[] {
+  const pc = c.parties[p];
+  if (!pc) return [];
+  const { value, mainRival } = reading;
+  const stateValue = (st: RegionId, weight: (i: number) => number) =>
+    world.seatsByState[st].reduce((a, i) => a + value[i] * weight(i), 0);
+  const totalValue = value.reduce((a, b) => a + b, 0);
+  const ranked = value.map((v, i) => ({ v, i })).filter((x) => x.v > 0.05).sort((a, b) => b.v - a.v).slice(0, 14);
+  const myStates = world.states.filter((st) => contestsState(world, c, p, st));
+  const finalStretch = c.week > c.totalWeeks - gotvWeeks(c);
+  const econ = world.rules.econ;
+  const reserve = profile.reserve * econ;
+  const weeksLeft = c.totalWeeks - c.week;
+
+  const options: Option[] = [];
+  // Money is worth more when there is little of it.
+  const moneyPerDay = DAY_VALUE * econ * Math.min(1.5, Math.max(0.25, pc.funds / (600_000 * econ)));
+  const consider = (id: ActionId, target: ActionTarget, benefit: number, weight: number) => {
+    if (benefit <= 0 || !canDo(world, c, p, id, target).ok) return;
+    const cost = actionCost(world, c, p, id, target);
+    options.push({ id, target, score: (benefit * weight) / (cost.days + cost.money / moneyPerDay) });
+  };
+  for (const { v, i } of ranked) {
+    const seat = world.seats[i];
+    const boost = c.dyn.support.seat[seat.id]?.[p] ?? 0;
+    consider('ceramah', { seat: seat.id }, v * EFFECT.ceramah * CERAMAH_KIND[seat.kind] * room(boost, CAP.seat), profile.ground);
+    consider('walkabout', { seat: seat.id }, v * EFFECT.walkabout * WALK_KIND[seat.kind] * room(boost, CAP.seat), profile.ground);
+  }
+  for (const st of myStates) {
+    const m = pc.machinery[world.states.indexOf(st)] / 60;
+    const ground = stateValue(st, (i) => GROUND_KIND[world.seats[i].kind]);
+    const flat = stateValue(st, () => 1);
+    consider('canvass', { state: st }, ground * EFFECT.canvass * m, profile.machinery);
+    consider('billboards', { state: st }, flat * EFFECT.billboards, profile.media);
+    consider('megarally', { state: st }, flat * EFFECT.megarally * (finalStretch ? 1.5 : 1), profile.ground);
+    // Turnout moves share about a third as much as persuasion does.
+    if (finalStretch) consider('gotv', { state: st }, flat * EFFECT.gotv * m * 0.35, profile.machinery);
+  }
+  // National media pays off late, when it no longer has time to fade.
+  const lateness = weeksLeft <= c.totalWeeks / 2.5 ? 1 : 0.4;
+  consider('tv', {}, totalValue * EFFECT.tv * 0.8 * lateness, profile.media);
+  consider('social', {}, totalValue * EFFECT.social * 0.7 * lateness, profile.media);
+
+  // Attack whichever party stands in the way in the most valuable seats.
+  const blocking = new Array<number>(N_PARTIES).fill(0);
+  mainRival.forEach((q, i) => { if (q >= 0) blocking[q] += value[i]; });
+  const foe = blocking.indexOf(Math.max(...blocking));
+  if (c.parties[foe]) consider('attack', { party: foe }, blocking[foe] * EFFECT.attack * 0.5, profile.attack);
+
+  // Fundraise when short; the lower the funds, the more urgent.
+  const need = Math.max(0, 1.6 - pc.funds / reserve);
+  if (need > 0) {
+    const here = pc.location;
+    const dayValue = DAY_VALUE * econ;
+    consider('dinner', { state: here }, (expectedYield(world, c, p, 'dinner', here) / dayValue) * need, 1);
+    consider('crowdfund', {}, (expectedYield(world, c, p, 'crowdfund') / dayValue) * need, 1);
+    if (profile.shady && pc.funds < reserve / 2) consider('tycoon', {}, (expectedYield(world, c, p, 'tycoon') / dayValue) * need * 0.5, 1);
+  }
+
+  return options.sort((a, b) => b.score - a.score);
+}
+
 /**
  * Plays one week for a rival party: repeatedly picks the action with the best
  * expected seats-per-effort until the week's days run out.
@@ -92,64 +163,11 @@ export function playWeek(world: World, c: Campaign, p: number, truth: ElectionOu
   const reports: ActionReport[] = [];
   const { value, mainRival } = readRace(world, c, p, truth, rng, skill.noise, watched);
 
-  const stateValue = (st: RegionId, weight: (i: number) => number) =>
-    world.seatsByState[st].reduce((a, i) => a + value[i] * weight(i), 0);
-  const totalValue = value.reduce((a, b) => a + b, 0);
-  const ranked = value.map((v, i) => ({ v, i })).filter((x) => x.v > 0.05).sort((a, b) => b.v - a.v).slice(0, 14);
-  const myStates = world.states.filter((st) => contestsState(world, c, p, st));
-  const finalStretch = c.week > c.totalWeeks - gotvWeeks(c);
-  const econ = world.rules.econ;
-  const reserve = profile.reserve * econ;
-  const weeksLeft = c.totalWeeks - c.week;
+  const reading: Reading = { value, mainRival };
 
   for (let guard = 0; guard < 40 && pc.days >= 0.5; guard++) {
-    const options: Option[] = [];
-    // Money is worth more when there is little of it.
-    const moneyPerDay = DAY_VALUE * econ * Math.min(1.5, Math.max(0.25, pc.funds / (600_000 * econ)));
-    const consider = (id: ActionId, target: ActionTarget, benefit: number, weight: number) => {
-      if (benefit <= 0 || !canDo(world, c, p, id, target).ok) return;
-      const cost = actionCost(world, c, p, id, target);
-      options.push({ id, target, score: (benefit * weight) / (cost.days + cost.money / moneyPerDay) });
-    };
-    for (const { v, i } of ranked) {
-      const seat = world.seats[i];
-      const boost = c.dyn.support.seat[seat.id]?.[p] ?? 0;
-      consider('ceramah', { seat: seat.id }, v * EFFECT.ceramah * CERAMAH_KIND[seat.kind] * room(boost, CAP.seat), profile.ground);
-      consider('walkabout', { seat: seat.id }, v * EFFECT.walkabout * WALK_KIND[seat.kind] * room(boost, CAP.seat), profile.ground);
-    }
-    for (const st of myStates) {
-      const m = pc.machinery[world.states.indexOf(st)] / 60;
-      const ground = stateValue(st, (i) => GROUND_KIND[world.seats[i].kind]);
-      const flat = stateValue(st, () => 1);
-      consider('canvass', { state: st }, ground * EFFECT.canvass * m, profile.machinery);
-      consider('billboards', { state: st }, flat * EFFECT.billboards, profile.media);
-      consider('megarally', { state: st }, flat * EFFECT.megarally * (finalStretch ? 1.5 : 1), profile.ground);
-      // Turnout moves share about a third as much as persuasion does.
-      if (finalStretch) consider('gotv', { state: st }, flat * EFFECT.gotv * m * 0.35, profile.machinery);
-    }
-    // National media pays off late, when it no longer has time to fade.
-    const lateness = weeksLeft <= c.totalWeeks / 2.5 ? 1 : 0.4;
-    consider('tv', {}, totalValue * EFFECT.tv * 0.8 * lateness, profile.media);
-    consider('social', {}, totalValue * EFFECT.social * 0.7 * lateness, profile.media);
-
-    // Attack whichever party stands in the way in the most valuable seats.
-    const blocking = new Array<number>(N_PARTIES).fill(0);
-    mainRival.forEach((q, i) => { if (q >= 0) blocking[q] += value[i]; });
-    const foe = blocking.indexOf(Math.max(...blocking));
-    if (c.parties[foe]) consider('attack', { party: foe }, blocking[foe] * EFFECT.attack * 0.5, profile.attack);
-
-    // Fundraise when short; the lower the funds, the more urgent.
-    const need = Math.max(0, 1.6 - pc.funds / reserve);
-    if (need > 0) {
-      const here = pc.location;
-      const dayValue = DAY_VALUE * econ;
-      consider('dinner', { state: here }, (expectedYield(world, c, p, 'dinner', here) / dayValue) * need, 1);
-      consider('crowdfund', {}, (expectedYield(world, c, p, 'crowdfund') / dayValue) * need, 1);
-      if (profile.shady && pc.funds < reserve / 2) consider('tycoon', {}, (expectedYield(world, c, p, 'tycoon') / dayValue) * need * 0.5, 1);
-    }
-
+    const options = rankOptions(world, c, p, reading, profile);
     if (options.length === 0) break;
-    options.sort((a, b) => b.score - a.score);
     // A weaker campaign sometimes picks something other than its best idea.
     const pick = rng.next() < skill.blunder ? options[rng.int(Math.min(options.length, 8))] : options[0];
     c.rng = rng.state;

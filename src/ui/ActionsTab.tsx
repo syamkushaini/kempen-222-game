@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { ACTIONS, actionCost, canDo, expectedYield, spendingLimit } from '../sim/campaign/actions';
 import { probeChance } from '../sim/campaign/spending';
+import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
 import type { RegionId } from '../sim/types';
 import { useStore } from '../state/store';
@@ -16,15 +17,16 @@ const FAMILIES: { family: Family; actions: ActionId[] }[] = [
 ];
 
 const GROUPS_KEY = 'k222.groups';
-/** A first visit shows the leader's own work and keeps the rest out of the way. */
-const DEFAULT_OPEN: Record<Family, boolean> = { ground: true, machinery: false, media: false, funds: false };
+type GroupKey = Family | 'suggested';
+/** A first visit shows only the suggestions and keeps the full lists out of the way. */
+const DEFAULT_OPEN: Record<GroupKey, boolean> = { suggested: true, ground: false, machinery: false, media: false, funds: false };
 
-function loadOpen(): Record<Family, boolean> {
+function loadOpen(): Record<GroupKey, boolean> {
   try {
     const raw = JSON.parse(localStorage.getItem(GROUPS_KEY) ?? 'null');
     if (raw && typeof raw === 'object') {
       const open = { ...DEFAULT_OPEN };
-      for (const family of Object.keys(DEFAULT_OPEN) as Family[]) if (typeof raw[family] === 'boolean') open[family] = raw[family];
+      for (const group of Object.keys(DEFAULT_OPEN) as GroupKey[]) if (typeof raw[group] === 'boolean') open[group] = raw[group];
       return open;
     }
   } catch { /* the groups start where they usually do */ }
@@ -40,11 +42,12 @@ export function ActionsTab() {
   const selectedState = useStore((s) => s.selectedState);
   const lastReport = useStore((s) => s.lastReport);
   const act = useStore((s) => s.act);
+  const selectSeat = useStore((s) => s.selectSeat);
   // While the adviser is walking the player through, every group stays open so nothing she names is hidden.
   const guided = useStore((s) => !!s.game?.tutorial);
   const [open, setOpen] = useState(loadOpen);
-  const setGroup = (family: Family, value: boolean) => {
-    const next = { ...open, [family]: value };
+  const setGroup = (group: GroupKey, value: boolean) => {
+    const next = { ...open, [group]: value };
     setOpen(next);
     try { localStorage.setItem(GROUPS_KEY, JSON.stringify(next)); } catch { /* the choice is only for this visit */ }
   };
@@ -67,7 +70,50 @@ export function ActionsTab() {
     return targets.some((target) => { const check = canDo(world, campaign, me, id, target); return check.ok || check.reason === 'noTarget'; });
   };
 
-  const row = (id: ActionId, target: ActionTarget, key: string, title: string, extra?: string) => {
+  /** What an action is called when it is aimed at something. */
+  const titleOf = (id: ActionId, target: ActionTarget) => {
+    const name = t(`action.${id}`);
+    if (target.seat) return `${name} — ${world.seats[world.seatIndex.get(target.seat)!].name}`;
+    if (target.state) return `${name} — ${regionLabel(t, world, target.state)}`;
+    if (target.party !== undefined) return `${name} — ${partyShort(t, target.party)}`;
+    return name;
+  };
+
+  /** The extra fact shown beside an action's cost: what a fundraiser should bring in, or how strong the machinery is. */
+  const extraFor = (id: ActionId, target: ActionTarget): string | undefined => {
+    if (id === 'dinner') return t('actions.expected', { rm: f.rm(expectedYield(world, campaign, me, 'dinner', target.state)) });
+    if (id === 'crowdfund' || id === 'tycoon') return t('actions.expected', { rm: f.rm(expectedYield(world, campaign, me, id)) });
+    if (ACTIONS[id].target === 'state' && ACTIONS[id].family === 'machinery') return t('actions.machinery', { n: pc.machinery[world.states.indexOf(target.state!)] });
+    return undefined;
+  };
+
+  /** Why an action is being suggested. */
+  const hintFor = (s: Suggestion): ReactNode => {
+    switch (s.why) {
+      case 'close': {
+        const target = world.seats[world.seatIndex.get(s.target.seat!)!];
+        return (
+          <>
+            {t('suggest.close', { seat: target.name })}{' '}
+            <button className="link inline" onClick={() => selectSeat(target.id, target.state)}>{t('suggest.map')}</button>
+          </>
+        );
+      }
+      case 'state': {
+        const label = regionLabel(t, world, s.target.state!);
+        return s.close ? t('suggest.state', { n: s.close, state: label }) : t('suggest.stateAny', { state: label });
+      }
+      case 'attack': return t('suggest.attack', { party: partyShort(t, s.target.party!) });
+      case 'gotv': return t('suggest.gotv');
+      case 'funds': return t('suggest.funds');
+      default: return t('suggest.national');
+    }
+  };
+
+  // Not while the adviser is guiding: her steps name what to do.
+  const ideas = guided ? [] : suggestions(world, campaign);
+
+  const row = (id: ActionId, target: ActionTarget, key: string, title: string, extra?: string, hint?: ReactNode) => {
     const check = canDo(world, campaign, me, id, target);
     const cost = actionCost(world, campaign, me, id, target);
     const reason = check.ok ? null
@@ -82,6 +128,7 @@ export function ActionsTab() {
             {cost.travelDays > 0 && <> · {t('cost.travel', { days: f.days(cost.travelDays) })}</>}
             {extra && <> · {extra}</>}
           </span>
+          {hint && <span className="action-hint">{hint}</span>}
           {reason && <span className="action-reason">{reason}</span>}
         </div>
         <button className="btn small primary" disabled={!check.ok} onClick={() => act(id, target)} aria-label={`${t('actions.go')}: ${title}`}>
@@ -97,22 +144,12 @@ export function ActionsTab() {
     switch (ACTIONS[id].target) {
       case 'seat':
         return row(id, { seat: seat?.id }, id, `${name} — ${seat ? seat.name : t('actions.noSeat')}`);
-      case 'state': {
-        const extra =
-          id === 'dinner' ? t('actions.expected', { rm: f.rm(expectedYield(world, campaign, me, 'dinner', state)) })
-          : ACTIONS[id].family === 'machinery' ? t('actions.machinery', { n: pc.machinery[world.states.indexOf(state)] })
-          : undefined;
-        return row(id, { state }, id, `${name} — ${stateName}`, extra);
-      }
+      case 'state':
+        return row(id, { state }, id, `${name} — ${stateName}`, extraFor(id, { state }));
       case 'party':
         return rivals.map((r) => row(id, { party: r }, `${id}-${r}`, `${name} — ${partyShort(t, r)}`));
-      default: {
-        const extra =
-          id === 'crowdfund' ? t('actions.expected', { rm: f.rm(expectedYield(world, campaign, me, 'crowdfund')) })
-          : id === 'tycoon' ? t('actions.expected', { rm: f.rm(expectedYield(world, campaign, me, 'tycoon')) })
-          : undefined;
-        return row(id, {}, id, name, extra);
-      }
+      default:
+        return row(id, {}, id, name, extraFor(id, {}));
     }
   };
 
@@ -129,6 +166,22 @@ export function ActionsTab() {
         {t('spend.line', { spent: f.rm(pc.spent), limit: f.rm(spendingLimit(world)) })}
         {pc.fined ? ` ${t('spend.fined')}` : pc.spent > spendingLimit(world) ? ` ${t('spend.over', { pct: f.pct(probeChance(world, campaign, me), 0) })}` : ''}
       </p>
+      {ideas.length > 0 && (
+        <details className="action-family suggested" open={open.suggested} onToggle={(e) => setGroup('suggested', e.currentTarget.open)}>
+          <summary>
+            <h3>{t('suggest.title')}</h3>
+            <span className="muted small">{t('suggest.count', { n: ideas.length })}</span>
+          </summary>
+          <p className="muted small action-desc">{t('suggest.note')}</p>
+          <ul className="action-list">
+            {ideas.map((s) => (
+              <li key={`${s.id}-${JSON.stringify(s.target)}`} className="action-group">
+                <ul>{row(s.id, s.target, `${s.id}-${JSON.stringify(s.target)}`, titleOf(s.id, s.target), extraFor(s.id, s.target), hintFor(s))}</ul>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
       {FAMILIES.map(({ family, actions: all }) => {
         const actions = all.filter((id) => world.rules.actions.includes(id));
         if (actions.length === 0) return null;
