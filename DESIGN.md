@@ -97,6 +97,7 @@ Decisions from the 110-question design interview (3 Oct 2026). The original sing
 - Game continues into the next term. Full governing layer: annual budget, cabinet, bills, reacting economy, confidence votes, manifesto delivery.
 - Legacy endings when the player retires, is ousted or loses the party.
 - Detailed post-election analysis (swing by seat and bloc, turnout, decisive decisions, polling timeline).
+  - Built so far ("What decided it", under the result on election night): the closest seats won and lost, in votes; the swing, seat change and the player's own actions in each state or area; and the last national poll against the result. It is read from the campaign's news trail and polls, so it adds nothing to a save. Still to do: swing by voter bloc, and which events and choices mattered most.
 
 ## Modes and progression
 - Career mode, plus scenarios: campaign-only, by-election, state election, hung parliament.

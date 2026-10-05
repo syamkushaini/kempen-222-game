@@ -8,6 +8,7 @@ import { sound } from './audio';
 import { MapView } from './MapView';
 import { GamePanel } from './SavesTab';
 import { electionCard, ShareDialog } from './ShareDialog';
+import { Review } from './Review';
 import { Tally } from './Tally';
 
 const STEP_MS = { normal: 210, fast: 45 };
@@ -141,6 +142,7 @@ function SeatBySeat() {
               {seatLinks(summary.gained)}
               <h3>{t('summary.lost', { n: summary.lost.length })}</h3>
               {seatLinks(summary.lost)}
+              <Review campaign={campaign} result={result} />
               <div className="button-row">
                 {campaign.formation
                   ? <button className="btn primary" onClick={leaveNight}>{t(campaign.formation.outcome ? 'summary.toGovernment' : 'summary.toTalks')} ▸</button>
@@ -289,6 +291,7 @@ function ByElectionCount() {
               <div><dt>{t('seat.turnout')}</dt><dd className="num">{f.pct(seat.turnout)}</dd></div>
               <div><dt>{t('summary.rank')}</dt><dd className="num">#{1 + seat.votes.filter((v) => v > seat.votes[campaign.player]).length}</dd></div>
             </dl>
+            <Review campaign={campaign} result={result} />
             <p className="note">{t('count.next')}</p>
             <div className="button-row">
               <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>

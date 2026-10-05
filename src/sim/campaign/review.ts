@@ -1,0 +1,115 @@
+import type { World } from '../election';
+import type { ElectionOutcome, RegionId } from '../types';
+import type { Campaign } from './types';
+
+// The look back after polling day: which seats turned on a few hundred votes,
+// where the party gained and lost ground and how hard it had worked there,
+// and how far its own polls were from the count. All of it is read from what
+// the campaign already recorded, so it needs nothing extra in a save.
+
+/** Seats closer than this (a share of the valid votes) count as close calls. */
+const CLOSE = 0.08;
+/** The most close calls listed on each side. */
+const CLOSE_SHOWN = 3;
+
+/** A seat that was settled by few votes. */
+export interface CloseCall {
+  seat: string;
+  /** Votes between the winner and the runner-up. */
+  votes: number;
+  /** The party on the other side of it. */
+  rival: number;
+}
+
+/** How the player's party did in one state (or, in a state election, one parliamentary seat). */
+export interface StateSwing {
+  state: RegionId;
+  seatsBefore: number;
+  seatsAfter: number;
+  /** Change in the party's share of the vote there, as a fraction (0.03 = three points). */
+  swing: number;
+  /** How many campaign actions the player aimed at this place. */
+  actions: number;
+}
+
+export interface Review {
+  closeWins: CloseCall[];
+  closeLosses: CloseCall[];
+  /** Largest movements first. Empty when the contest is a single seat. */
+  states: StateSwing[];
+  /** The player's share in the last national poll, and the week it was taken; null if none was taken. */
+  lastPoll: { week: number; share: number; ownPoll: boolean } | null;
+  finalShare: number;
+}
+
+const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+
+/** The places the player's actions were aimed at, counted: "@seat:P.001" and "@state:perak" both name a place. */
+export function effortByState(world: World, c: Campaign): Record<RegionId, number> {
+  const out: Record<RegionId, number> = Object.fromEntries(world.states.map((st) => [st, 0]));
+  for (const n of c.news) {
+    if (n.party !== c.player || !n.key.startsWith('news.me.')) continue;
+    const seat = typeof n.vars?.seat === 'string' ? world.seatIndex.get(n.vars.seat.replace('@seat:', '')) : undefined;
+    const state = seat !== undefined ? world.seats[seat].state : typeof n.vars?.state === 'string' ? n.vars.state.replace('@state:', '') : undefined;
+    if (state !== undefined && state in out) out[state]++;
+  }
+  return out;
+}
+
+function closeCalls(c: Campaign, result: ElectionOutcome) {
+  const p = c.player;
+  const wins: (CloseCall & { gap: number })[] = [], losses: (CloseCall & { gap: number })[] = [];
+  result.seats.forEach((o) => {
+    if (o.valid <= 0) return;
+    if (o.winner === p) {
+      const gap = o.votes[p] - o.votes[o.runnerUp];
+      wins.push({ seat: o.seatId, votes: gap, rival: o.runnerUp, gap: gap / o.valid });
+    } else if (o.votes[p] > 0) {
+      const gap = o.votes[o.winner] - o.votes[p];
+      losses.push({ seat: o.seatId, votes: gap, rival: o.winner, gap: gap / o.valid });
+    }
+  });
+  const pick = (list: typeof wins) => list.filter((x) => x.gap <= CLOSE).sort((a, b) => a.votes - b.votes).slice(0, CLOSE_SHOWN)
+    .map(({ seat, votes, rival }) => ({ seat, votes, rival }));
+  return { closeWins: pick(wins), closeLosses: pick(losses) };
+}
+
+function stateSwings(world: World, c: Campaign, result: ElectionOutcome): StateSwing[] {
+  if (world.states.length < 2) return [];
+  const p = c.player;
+  const effort = effortByState(world, c);
+  const swings = world.states.map((state) => {
+    let seatsBefore = 0, seatsAfter = 0, votesBefore = 0, validBefore = 0, votesAfter = 0, validAfter = 0;
+    for (const i of world.seatsByState[state]) {
+      const last = world.seats[i].last.votes;
+      if (last.indexOf(Math.max(...last)) === p) seatsBefore++;
+      votesBefore += last[p]; validBefore += sum(last);
+      const o = result.seats[i];
+      if (o.winner === p) seatsAfter++;
+      votesAfter += o.votes[p]; validAfter += o.valid;
+    }
+    const share = (v: number, valid: number) => (valid > 0 ? v / valid : 0);
+    return { state, seatsBefore, seatsAfter, swing: share(votesAfter, validAfter) - share(votesBefore, validBefore), actions: effort[state] };
+  });
+  return swings.sort((a, b) => Math.abs(b.seatsAfter - b.seatsBefore) - Math.abs(a.seatsAfter - a.seatsBefore) || Math.abs(b.swing) - Math.abs(a.swing));
+}
+
+/** The player's last look at the national race before polling day, public or commissioned. */
+function lastPoll(c: Campaign): Review['lastPoll'] {
+  // In a career the polls of the years before the campaign are older news.
+  const from = c.career ? c.career.length : 0;
+  for (let i = c.polls.length - 1; i >= 0; i--) {
+    const poll = c.polls[i];
+    if (poll.scope === 'national' && poll.national && poll.week > from) return { week: poll.week - from, share: poll.national[c.player], ownPoll: !poll.public };
+  }
+  return null;
+}
+
+export function review(world: World, c: Campaign, result: ElectionOutcome): Review {
+  return {
+    ...closeCalls(c, result),
+    states: stateSwings(world, c, result),
+    lastPoll: lastPoll(c),
+    finalShare: sum(result.votes) > 0 ? result.votes[c.player] / sum(result.votes) : 0,
+  };
+}

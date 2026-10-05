@@ -506,3 +506,16 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 .campaign-bar .end-week { margin-left: auto; min-height: 44px; }
 /* leave room under the last panel so the bar never covers it */
 @media (max-width: 980px) { .app { padding-bottom: 88px; } }
+
+/* ---------- the review after the count ---------- */
+
+.review { margin-top: 16px; border-top: 1px solid var(--line); }
+.review summary { padding: 12px 2px; cursor: pointer; list-style: none; }
+.review summary h3 { display: inline; margin: 0; }
+.review h4 { margin: 12px 0 4px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.review-list { list-style: none; margin: 0; padding: 0; }
+.review-list li { padding: 3px 0; }
+.review p { margin: 8px 0 0; line-height: 1.5; }
+.review-table td:last-child { width: auto; }
+.review-table .up { color: var(--good); }
+.review-table .down { color: var(--bad); }
