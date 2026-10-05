@@ -1,6 +1,6 @@
 import type { World } from '../election';
 import { Rng } from '../rng';
-import { N_PARTIES, PARTY_IDS, type ElectionOutcome, type PartyId, type RegionId, type SeatKind } from '../types';
+import { N_PARTIES, PARTY_IDS, type ElectionOutcome, type FieldedId, type RegionId, type SeatKind } from '../types';
 import {
   CAP, CHIEF, CHIEF_OPS, DECAY, EFFECT, actionCost, canDo, contests, contestsState, doAction, expectedYield, gotvWeeks,
 } from './actions';
@@ -18,7 +18,7 @@ export interface Profile {
   shady: boolean;
 }
 
-const PROFILES: Record<Exclude<PartyId, 'oth'>, Profile> = {
+const PROFILES: Record<FieldedId, Profile> = {
   // Reformists: media-savvy, urban, short of cash.
   ps:     { ground: 0.9, machinery: 0.7, media: 1.4, attack: 1.0, reserve: 250_000, shady: false },
   // The old establishment: deep machinery and deep pockets.
@@ -157,7 +157,7 @@ export function rankOptions(world: World, c: Campaign, p: number, reading: Readi
 export function playWeek(world: World, c: Campaign, p: number, truth: ElectionOutcome, watched: string[]): ActionReport[] {
   const pc = c.parties[p];
   if (!pc) return [];
-  const profile = PROFILES[PARTY_IDS[p] as Exclude<PartyId, 'oth'>];
+  const profile = PROFILES[PARTY_IDS[p] as FieldedId];
   const skill = SKILL[c.difficulty];
   const rng = new Rng(c.rng);
   const reports: ActionReport[] = [];
@@ -291,6 +291,6 @@ export function runChiefs(world: World, c: Campaign, p: number, truth: ElectionO
 export function planChiefs(world: World, c: Campaign, p: number): void {
   const pc = c.parties[p];
   if (!pc || !hasChiefs(world)) return;
-  pc.chiefFloor = 1.6 * PROFILES[PARTY_IDS[p] as Exclude<PartyId, 'oth'>].reserve * world.rules.econ;
+  pc.chiefFloor = 1.6 * PROFILES[PARTY_IDS[p] as FieldedId].reserve * world.rules.econ;
   pc.chiefs = Object.fromEntries(world.states.filter((st) => contestsState(world, c, p, st)).map((st) => [st, 2 as const]));
 }

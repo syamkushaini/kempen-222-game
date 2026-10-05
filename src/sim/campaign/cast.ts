@@ -1,4 +1,4 @@
-import { N_PARTIES, PARTY_IDS, type PartyId } from '../types';
+import { N_PARTIES, PARTY_IDS, type FieldedId, type PartyId } from '../types';
 import type { ContestKind } from './rules';
 import type { DemandId, Offer, SeniorId } from './types';
 
@@ -16,6 +16,9 @@ export const LEADERS: Record<Real, string> = {
   gbk: 'Datuk Patinggi Wan Sulaiman Jalil',
   gbs: 'Datuk Seri Harun Majid',
   legasi: 'Datuk Seri Jaafar Usman',
+  genba: 'Cik Nurin Sofea',
+  cahaya: 'Datuk Dennis Lapok',
+  suara: 'Puan Dorothy Gimbad',
 };
 
 const pairs = <T>(rows: [Real, Real, T][], blank: T): T[][] => {
@@ -34,6 +37,11 @@ export const startRelations = (): number[][] => pairs<number>([
   ['ps', 'gbs', -5], ['bp', 'gbs', 30], ['pt', 'gbs', 20],
   ['ps', 'legasi', 15], ['bp', 'legasi', -10], ['pt', 'legasi', -20],
   ['gbk', 'gbs', 10], ['gbk', 'legasi', 0], ['gbs', 'legasi', -40],
+  // The small parties: the young reformers lean to Pakatan Sinar, the Borneo locals are wary of their bigger neighbours.
+  ['ps', 'genba', 10], ['bp', 'genba', -20], ['pt', 'genba', -30], ['gbk', 'genba', -5], ['gbs', 'genba', 0], ['legasi', 'genba', 5],
+  ['ps', 'cahaya', 5], ['bp', 'cahaya', 0], ['pt', 'cahaya', -20], ['gbk', 'cahaya', -25], ['gbs', 'cahaya', 0], ['legasi', 'cahaya', 0],
+  ['ps', 'suara', 0], ['bp', 'suara', 10], ['pt', 'suara', -10], ['gbk', 'suara', 0], ['gbs', 'suara', -25], ['legasi', 'suara', 5],
+  ['genba', 'cahaya', 5], ['genba', 'suara', 5], ['cahaya', 'suara', 5],
 ], 0);
 
 /** How far apart the parties' supporters and programmes are, -1 to 1. Does not change. */
@@ -43,9 +51,13 @@ export const AFFINITY: number[][] = pairs<number>([
   ['ps', 'gbs', 0], ['bp', 'gbs', 0.4], ['pt', 'gbs', 0.2],
   ['ps', 'legasi', 0.3], ['bp', 'legasi', 0], ['pt', 'legasi', -0.3],
   ['gbk', 'gbs', 0.3], ['gbk', 'legasi', 0.1], ['gbs', 'legasi', -0.4],
+  ['ps', 'genba', 0.4], ['bp', 'genba', -0.4], ['pt', 'genba', -0.5], ['gbk', 'genba', -0.1], ['gbs', 'genba', 0], ['legasi', 'genba', 0.1],
+  ['ps', 'cahaya', 0.1], ['bp', 'cahaya', 0.1], ['pt', 'cahaya', -0.3], ['gbk', 'cahaya', -0.2], ['gbs', 'cahaya', 0.2], ['legasi', 'cahaya', 0.2],
+  ['ps', 'suara', 0], ['bp', 'suara', 0.2], ['pt', 'suara', -0.1], ['gbk', 'suara', 0.2], ['gbs', 'suara', -0.3], ['legasi', 'suara', 0.2],
+  ['genba', 'cahaya', 0.2], ['genba', 'suara', 0.2], ['cahaya', 'suara', 0.2],
 ], 0);
 
-export const START_UNITY: Record<Real, number> = { ps: 70, bp: 60, pt: 70, gbk: 80, gbs: 55, legasi: 65 };
+export const START_UNITY: Record<FieldedId, number> = { ps: 70, bp: 60, pt: 70, gbk: 80, gbs: 55, legasi: 65 };
 
 /** What a party's leader looks for when asked to support a government. Weights add up towards 1, the point of agreement. */
 export interface Wants {
@@ -69,6 +81,10 @@ export const WANTS: Record<PartyId, Wants> = {
   gbs:    { posts: 0.5, premium: 1, senior: null, seniorWorth: 0.15, cash: 0.3, demands: { sabahCm: 0.4, autonomy: 0.3, oilRoyalty: 0.2, devFunds: 0.1 } },
   legasi: { posts: 0.5, premium: 1, senior: null, seniorWorth: 0.15, cash: 0.2, demands: { sabahCm: 0.45, autonomy: 0.3, oilRoyalty: 0.15, devFunds: 0.1 } },
   oth:    { posts: 0.3, premium: 1, senior: null, seniorWorth: 0.1, cash: 0.5, demands: { devFunds: 0.4, localPosts: 0.3 } },
+  // Each small party's one or two members vote as a bloc, for what its voters sent them to Parliament to get.
+  genba:  { posts: 0.4, premium: 1, senior: null, seniorWorth: 0.1, cash: 0.05, demands: { reformAgenda: 0.45, speaker: 0.1, devFunds: 0.1 } },
+  cahaya: { posts: 0.45, premium: 1, senior: null, seniorWorth: 0.1, cash: 0.2, demands: { autonomy: 0.4, oilRoyalty: 0.3, devFunds: 0.15 } },
+  suara:  { posts: 0.45, premium: 1, senior: null, seniorWorth: 0.1, cash: 0.25, demands: { autonomy: 0.3, sabahCm: 0.2, devFunds: 0.3 } },
 };
 
 /** What granting a demand costs the leader who grants it. */

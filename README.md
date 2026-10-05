@@ -40,7 +40,7 @@ You lead one of three national parties through the last weeks before polling day
 - **Fading.** Campaign effects fade each week, and repeating the same thing in the same place gives less each time.
 - **Polls.** True support is hidden. A free public national poll comes out weekly; state and seat polls cost money and carry a margin of error. The "Your intelligence" map shows what you have polled.
 - **Chiefs.** In the Chiefs tab you can put a state chief in charge of any state (a division chief per area in a state election). They run the ground campaign there without using your days: ceramah and walkabouts in the closest seats, door-to-door drives, billboards, new branches and get-out-the-vote. They spend party money, their events draw half the crowd yours would, and they act when you end the week. You choose how free a hand each one has (one, two or up to four operations a week) and how much money they must leave untouched.
-- **Rivals.** Five other parties campaign under the same rules. The difficulty setting changes how well they read the race, not their resources.
+- **Small parties.** Three small parties stand in a few seats, win votes and sometimes a seat, and sit in the talks as parties of their own with leaders and demands. They run no campaign of their own. Five other parties campaign under the same rules. The difficulty setting changes how well they read the race, not their resources.
 - **Election night.** Results come in seat by seat, followed by a summary of what you gained and lost.
 - **Deals.** In the Deals tab you sit down with the other leaders. Tea warms a relationship. A pact settles, seat by seat, who stands aside for whom; most of a party's voters follow to its partner, some stay home and some go elsewhere. A private understanding lines up support for after the vote. You can attack a common rival together, and court a rival's sitting member to cross over. Pacts and defections close on nomination day, three weeks before polling.
 - **Party unity.** Standing candidates down, pacts with old enemies, scandals and defections strain your party. A divided party's machinery works less well and its members are easier to poach.
@@ -120,7 +120,7 @@ The per-seat corrections are fitted at start-up so that, with no campaign effect
 | Bloc leanings, turnout, undecided shares | **Design numbers**, tuned by hand (`src/sim/blocs.ts`) |
 | Parties | Fictional; real coalitions are mapped to them in `scripts/build-data.mjs` |
 
-Small parties and independents are pooled as one "independents and small parties" entry.
+Three small parties (a youth party, a Sarawak party and a Sabah interior party) are kept apart, each built from the real results of the small party it stands for; the rest of the small parties and the independents are pooled as one "independents and small parties" entry.
 
 ## Layout
 

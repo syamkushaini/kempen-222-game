@@ -25,8 +25,10 @@ export function pollCost(world: World, scope: PollScope, target: string | null, 
 }
 
 /** Adds sampling error to true shares and renormalises. Parties with no support stay at zero. */
-function noisy(shares: number[], sigma: number, rng: Rng): number[] {
-  const out = shares.map((s) => (s > 0 ? Math.max(0.001, s + rng.normal(0, sigma)) : 0));
+function noisy(shares: number[], sigma: number, rng: Rng, factor = 1): number[] {
+  // A sample cannot miss a party with half a percent of the vote by two whole points: for the tiniest shares the
+  // error shrinks with the share. `factor` (the noisy-polls challenge) then scales every party's error alike.
+  const out = shares.map((s) => (s > 0 ? Math.max(0.001, s + rng.normal(0, Math.min(sigma, 0.002 + s) * factor)) : 0));
   const sum = out.reduce((a, b) => a + b, 0);
   return out.map((v) => Math.round((v / sum) * 1000) / 1000);
 }
@@ -46,9 +48,10 @@ export function takePoll(
 ): Poll {
   // A poll of a one-seat contest is a seat poll, whatever it is called.
   // `precision` below 1 is a poll run by someone who knows how: the same sample, less error.
-  const sigma = (scope === 'national' && world.seats.length === 1 ? SIGMA.seat[quality] : SIGMA[scope][quality]) * precision * (c.challenge?.noisy ? NOISY : 1);
+  const base = (scope === 'national' && world.seats.length === 1 ? SIGMA.seat[quality] : SIGMA[scope][quality]) * precision;
+  const factor = c.challenge?.noisy ? NOISY : 1;
   const poll: Poll = {
-    id: c.polls.length + 1, week: now(c), scope, target, quality, public: isPublic, moe: 2 * sigma,
+    id: c.polls.length + 1, week: now(c), scope, target, quality, public: isPublic, moe: 2 * base * factor,
   };
 
   if (scope === 'national') {
@@ -59,19 +62,19 @@ export function takePoll(
       const r = byRegion[world.seats[i].region];
       for (let p = 0; p < N_PARTIES; p++) r[p] += o.votes[p];
     });
-    poll.national = noisy(sharesOf(truth.votes), sigma, rng);
+    poll.national = noisy(sharesOf(truth.votes), base, rng, factor);
     // A countrywide poll also breaks down by region. Sub-samples are smaller, so they are noisier.
     if (world.rules.kind === 'general') {
       poll.regions = {
-        peninsular: noisy(sharesOf(byRegion.peninsular), sigma * 1.2, rng),
-        sabah: noisy(sharesOf(byRegion.sabah), sigma * 2.5, rng),
-        sarawak: noisy(sharesOf(byRegion.sarawak), sigma * 2.5, rng),
+        peninsular: noisy(sharesOf(byRegion.peninsular), base * 1.2, rng, factor),
+        sabah: noisy(sharesOf(byRegion.sabah), base * 2.5, rng, factor),
+        sarawak: noisy(sharesOf(byRegion.sarawak), base * 2.5, rng, factor),
       };
     }
   } else {
     const indexes = scope === 'seat' ? [world.seatIndex.get(target!)!] : world.seatsByState[target!];
     poll.seats = {};
-    for (const i of indexes) poll.seats[world.seats[i].id] = noisy(sharesOf(truth.seats[i].votes), sigma, rng);
+    for (const i of indexes) poll.seats[world.seats[i].id] = noisy(sharesOf(truth.seats[i].votes), base, rng, factor);
   }
   return poll;
 }

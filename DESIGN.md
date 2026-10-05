@@ -469,7 +469,12 @@ First players said the actions screen was cluttered and that it was not clear wh
   - **Noisy polls** doubles the sampling error of every poll, the free public ones included, from the first. A poll states its own margin of error, so that doubles too (±4 points becomes ±8) and the player is not misled.
   - Neither changes the rivals, the money or the race. The top bar shows which are on, beside the game's name. The quick start never uses them.
 
-Ideas from the same feedback not yet built: small parties.
+- **Three small parties, built from the real small parties' results.** The feedback asked for fictional versions of Malaysia's small parties. The raw dataset names each small-party candidate, so three were split out of the pooled "independents and small parties" entry, each with the votes the real party took in the same seats: *Parti Generasi Baharu* (GENBA, a youth party: six seats contested, one won, from MUDA's results), *Parti Cahaya Sarawak* (CAHAYA: from PSB and PBM in Sarawak, one seat won) and *Parti Suara Pedalaman* (SUARA: from KDM in Sabah, one seat won). The names are invented and echo no real party; the leaders (Cik Nurin Sofea, Datuk Dennis Lapok, Puan Dorothy Gimbad) are invented and drawn to resemble nobody.
+  - **What they do.** They win votes and seats like any party, show in polls, the map legend, results and the House, and sit in the talks to form a government as one-member blocs, each with a leader, a portrait, things it wants (reform for GENBA; autonomy and oil royalties for CAHAYA; autonomy, development funds and the Sabah chief ministership for SUARA) and its own way of saying yes or no. They can be signed, owed promises, and given cabinet posts, and a whole term with all three in government has been run in tests.
+  - **What they do not do.** They run no campaign: no money, days, leader's tour, chiefs, pacts or defections, and they cannot be played. Their support moves with the voters and with what the campaigning parties do. Making them campaign and take part in pacts is a possible next step.
+  - **Left pooled on purpose.** The independents, and the other small parties (including one that is a single well-known person's vehicle, which an invented party would be too easy to read as).
+  - **Polls** shrink their error for the tiniest shares (a party on half a percent can no longer read as two), so the small parties read sensibly. The noisy-polls challenge still doubles every error.
+  - **Saves** move to version 9. A save made before this has seven parties where there are now ten, and is turned away as "from an earlier build"; export files from earlier builds are too.
 
 ## Visual design: the Linear system (5 Oct 2026)
 

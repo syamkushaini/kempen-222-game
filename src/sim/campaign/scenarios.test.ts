@@ -91,7 +91,7 @@ describe('who campaigns', () => {
     expect(playable(perak).map((p) => PARTY_IDS[p])).toEqual(['ps', 'bp', 'pt']);
     expect(playable(general)).toHaveLength(3);
     const c = newCampaign(perak, { player: P('ps'), difficulty: 'normal', seed: 3 });
-    expect(c.parties.map((p) => p !== null)).toEqual([true, true, true, false, false, false, false]);
+    expect(c.parties.map((p) => p !== null)).toEqual(PARTY_IDS.map((_, i) => i < 3));
   });
 });
 

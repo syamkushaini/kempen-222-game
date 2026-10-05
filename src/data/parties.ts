@@ -19,4 +19,8 @@ export const PARTIES: Record<PartyId, PartyDef> = {
   gbs:    { name: 'Gabungan Bayu Sabah',     short: 'GBS',    color: '#38a5cf' },
   legasi: { name: 'Parti Legasi Sabah',      short: 'LEGASI', color: '#8d66d0' },
   oth:    { name: '',                        short: '',       color: '#8a909b' },
+  // Small parties: named because they win votes, and sometimes a seat. They run no campaign.
+  genba:  { name: 'Parti Generasi Baharu',   short: 'GENBA',  color: '#e0609e' },
+  cahaya: { name: 'Parti Cahaya Sarawak',    short: 'CAHAYA', color: '#e8793a' },
+  suara:  { name: 'Parti Suara Pedalaman',   short: 'SUARA',  color: '#a3c93a' },
 };

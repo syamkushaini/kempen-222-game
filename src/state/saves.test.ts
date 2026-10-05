@@ -3,6 +3,7 @@ import { BYELECTION_SEAT, BYELECTION_SEATS, byElectionId, getWorld, world } from
 import { nextTerm, skipAhead, startCareer, termWeek } from '../sim/campaign/career';
 import { endDay, makeOffer } from '../sim/campaign/formation';
 import { closeNight, endWeek, newCampaign } from '../sim/campaign/turn';
+import { N_PARTIES } from '../sim/types';
 import { newGame, parseSave, serializeSave, SAVE_VERSION } from './game';
 import { exportFileName, SaveStore, type KeyValueStore } from './saves';
 
@@ -59,6 +60,16 @@ describe('save format', () => {
     expect(parsed).toEqual({ ok: true, state: g });
   });
 
+  it('turns away a save made when there were fewer parties, rather than loading it wrongly', () => {
+    const g = game('before the small parties') as any;
+    // What a save of the previous version looked like: seven entries wherever there is one per party.
+    g.version = 8;
+    g.campaign.parties = g.campaign.parties.slice(0, 7);
+    g.campaign.relations = g.campaign.relations.slice(0, 7).map((row: number[]) => row.slice(0, 7));
+    g.campaign.met = g.campaign.met.slice(0, 7);
+    expect(parseSave(JSON.stringify(g))).toEqual({ ok: false, error: 'outdated' });
+  });
+
   it('upgrades a save from before coalitions, with leaders on their starting terms', () => {
     const g = game('before coalitions') as any;
     const { relations, standDowns, pacts, understandings, met, katak, offered, inbox, nextScene, formation, ...campaign } = g.campaign;
@@ -67,9 +78,9 @@ describe('save format', () => {
       const { unity, ...rest } = p;
       return rest;
     });
-    expect(relations).toHaveLength(7);
+    expect(relations).toHaveLength(N_PARTIES);
     expect([standDowns, pacts, understandings, katak, offered, inbox, formation]).toEqual([{}, [], [], [], [], [], null]);
-    expect(met.length + nextScene).toBe(8);
+    expect(met.length + nextScene).toBe(N_PARTIES + 1);
     expect(parseSave(JSON.stringify({ ...g, version: 4, campaign }))).toEqual({ ok: true, state: g });
   });
 

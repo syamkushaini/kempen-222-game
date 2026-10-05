@@ -56,6 +56,9 @@ const START_STANCES: Record<PartyId, number[]> = {
   gbs:    [1, 0, 0, -1, 0, 0, 1, 0, 0, 0, 2, 1],
   legasi: [1, 1, 0, 1, 1, 1, 1, 0, 1, -1, 2, 0],
   oth:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  genba:  [-1, 1, 1, 2, 2, 1, 1, 1, 2, -1, 0, -1],
+  cahaya: [0, 0, -1, 0, 0, 0, 1, 0, 0, -1, 2, 1],
+  suara:  [1, 0, 0, -1, 0, 0, 1, 0, 0, 0, 2, 1],
 };
 export const startStances = (): number[][] => PARTY_IDS.map((p) => [...START_STANCES[p]]);
 
@@ -101,6 +104,7 @@ const DEFAULT_MANIFESTO: Record<PartyId, PledgeId[]> = {
   gbs: ['borneoFund', 'cashAid'],
   legasi: ['borneoFund', 'graftCommission'],
   oth: [],
+  genba: [], cahaya: [], suara: [],
 };
 export const defaultManifestos = (): PledgeId[][] => PARTY_IDS.map((p) => [...DEFAULT_MANIFESTO[p]]);
 

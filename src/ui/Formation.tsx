@@ -135,7 +135,7 @@ function OfferPanel({ bloc }: { bloc: number }) {
       <div className="panel-head with-face">
         <Portrait leader={bloc} size={48} />
         <h2 className="grow">{leaderName(t, bloc)}</h2>
-        <span className="muted">{partyShort(t, bloc)} · {t('state.seats', { n: f.seats[bloc] })}</span>
+        <span className="muted">{partyShort(t, bloc)} · {t(f.seats[bloc] === 1 ? 'state.seat1' : 'state.seats', { n: f.seats[bloc] })}</span>
       </div>
       <p className="muted small">{standing(t, campaign, bloc)}{bloc !== OTH && ` · ${t(`relation.${relationWord(relation(campaign, me, bloc))}`)}`}</p>
       {running && <p className="note">{t('form.running')}</p>}
@@ -334,7 +334,7 @@ export function FormationScreen() {
                     <strong>{partyName(t, p)}</strong>
                     <span className="small">{p === OTH ? t('form.indep.blurb') : leaderName(t, p)}</span>
                     <span className="muted small">
-                      {t('state.seats', { n: f.seats[p] })}
+                      {t(f.seats[p] === 1 ? 'state.seat1' : 'state.seats', { n: f.seats[p] })}
                       {p !== OTH && ` · ${t(`relation.${relationWord(relation(campaign, me, p))}`)}`}
                     </span>
                     <span className={`badge ${f.pledge[p] === me ? 'leaning' : 'plain'}`}>{standing(t, campaign, p)}</span>

@@ -15,7 +15,8 @@ describe('portraits', () => {
   it('give every leader and every minister a face of their own', () => {
     expect(MINISTER_LOOKS).toHaveLength(MINISTER_NAMES.length);
     const leaders = Object.values(LEADER_LOOKS).map((look) => portraitSvg(look, '#888888'));
-    expect(new Set(leaders).size).toBe(6);
+    expect(new Set(leaders).size).toBe(Object.keys(LEADER_LOOKS).length);
+    expect(leaders).toHaveLength(PARTY_IDS.length - 1); // every party but the pool
     expect(new Set(MINISTER_LOOKS.map((look) => portraitSvg(look, '#888888'))).size).toBe(MINISTER_NAMES.length);
     for (const svg of leaders) {
       expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true);

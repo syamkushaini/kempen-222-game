@@ -38,6 +38,7 @@ const en = {
   'hot.title': 'Hot seats',
   'hot.subtitle': 'The closest contests',
   'state.seats': '{n} seats',
+  'state.seat1': '{n} seat',
   'state.sortHint': 'Closest first',
 
   'seat.electorate': 'Voters',
@@ -689,6 +690,12 @@ const en = {
   'voice.legasi.refuse': 'We have been promised things before.',
   'voice.oth.accept': 'The independents discover that they have always admired you.',
   'voice.oth.refuse': 'The independents remain independent, for now.',
+  'voice.genba.accept': 'We were sent to Parliament to change things. This is a start.',
+  'voice.genba.refuse': 'Our voters did not queue for hours to watch us sign this.',
+  'voice.cahaya.accept': 'Sarawak’s voice will be heard. We will make sure of it.',
+  'voice.cahaya.refuse': 'Our door is open. This offer has not yet reached it.',
+  'voice.suara.accept': 'The interior has waited long enough. We will sign.',
+  'voice.suara.refuse': 'Roads, clinics, then signatures. In that order.',
 
   // ---------- stage 5: career ----------
   'tab.orders': 'Orders',
@@ -1086,6 +1093,7 @@ const ms: Record<CoreKey, string> = {
   'hot.title': 'Kerusi panas',
   'hot.subtitle': 'Pertandingan paling sengit',
   'state.seats': '{n} kerusi',
+  'state.seat1': '{n} kerusi',
   'state.sortHint': 'Paling sengit dahulu',
 
   'seat.electorate': 'Pengundi',
@@ -1737,6 +1745,12 @@ const ms: Record<CoreKey, string> = {
   'voice.legasi.refuse': 'Kami pernah dijanjikan macam-macam sebelum ini.',
   'voice.oth.accept': 'Ahli bebas mendapati mereka sebenarnya sudah lama mengagumi anda.',
   'voice.oth.refuse': 'Ahli bebas kekal bebas, buat masa ini.',
+  'voice.genba.accept': 'Kami dihantar ke Parlimen untuk mengubah keadaan. Ini satu permulaan.',
+  'voice.genba.refuse': 'Pengundi kami tidak beratur berjam-jam untuk melihat kami menandatangani ini.',
+  'voice.cahaya.accept': 'Suara Sarawak akan didengar. Kami pastikannya.',
+  'voice.cahaya.refuse': 'Pintu kami terbuka. Tawaran ini belum sampai ke pintu itu.',
+  'voice.suara.accept': 'Pedalaman sudah lama menunggu. Kami akan menandatangani.',
+  'voice.suara.refuse': 'Jalan, klinik, kemudian tandatangan. Mengikut susunan itu.',
 
   // ---------- stage 5: career ----------
   'tab.orders': 'Arahan',

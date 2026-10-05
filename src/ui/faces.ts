@@ -109,6 +109,9 @@ export const LEADER_LOOKS: Record<Real, Look> = {
   gbk:    { skin: 1, hair: 'thin', hairColor: 'grey', facial: 'moustache', wear: 'suit' },
   gbs:    { skin: 2, hair: 'short', hairColor: 'black', facial: 'beard', wear: 'suit' },
   legasi: { skin: 1, hair: 'swept', hairColor: 'black', glasses: true, wear: 'baju' },
+  genba:  { skin: 1, hair: 'bob', hairColor: 'black', wear: 'blouse' },
+  cahaya: { skin: 2, hair: 'short', hairColor: 'grey', glasses: true, wear: 'suit' },
+  suara:  { skin: 3, hair: 'bun', hairColor: 'black', wear: 'blouse' },
 };
 
 /** Ready-made portraits a new leader can choose from. */

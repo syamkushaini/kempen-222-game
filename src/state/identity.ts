@@ -28,6 +28,7 @@ export interface Identity {
 /** The marks the established parties fly. */
 export const DEFAULT_EMBLEMS: Record<Exclude<PartyId, 'oth'>, EmblemId> = {
   ps: 'sun', bp: 'torch', pt: 'mountain', gbk: 'wave', gbs: 'paddy', legasi: 'star',
+  genba: 'bridge', cahaya: 'torch', suara: 'tree',
 };
 
 const tidy = (s: string, max: number) => s.replace(/\s+/g, ' ').trim().slice(0, max);

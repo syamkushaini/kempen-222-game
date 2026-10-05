@@ -10,7 +10,7 @@ import { isValidCampaign } from '../sim/campaign/validate';
 import { isValidIdentity, type Identity } from './identity';
 
 /** Bump when the saved shape changes, and add a step to `migrate`. */
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 /** Everything that must survive a save and reload. Plain JSON only. */
 export interface GameState {
@@ -54,6 +54,8 @@ export type ParseResult = { ok: true; state: GameState } | { ok: false; error: P
  */
 function migrate(raw: Record<string, unknown>): Record<string, unknown> | null {
   if (raw.version === 1) return null;
+  // Before the small parties were added there were seven parties; every list that runs one entry per party is the wrong length.
+  if (isRecord(raw.campaign) && Array.isArray(raw.campaign.parties) && raw.campaign.parties.length !== N_PARTIES) return null;
   let s = raw;
   if (s.version === 2 && isRecord(s.campaign)) {
     // Version 2 had only the general election and no tutorial.
@@ -91,6 +93,10 @@ function migrate(raw: Record<string, unknown>): Record<string, unknown> | null {
     // Careers also gain by-elections and state polls: the House as elected, and whoever carried each state last time.
     const career = isRecord(campaign.career) ? withContests(campaign as unknown as Campaign) : campaign.career;
     s = { ...s, version: 8, identity: null, campaign: { ...campaign, career, team: withTeam(campaign as unknown as Campaign) } };
+  }
+  if (s.version === 8) {
+    // Version 9 added three small parties; nothing else about a save changed.
+    s = { ...s, version: 9 };
   }
   return s;
 }

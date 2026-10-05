@@ -3,8 +3,8 @@ import { lastElection, runElection, type World } from '../election';
 import { clamp } from '../math';
 import { Rng } from '../rng';
 import {
-  N_BLOCS, N_PARTIES, PARTY_IDS,
-  type Dynamics, type ElectionOutcome, type PartyId, type RegionId,
+  N_BLOCS, N_PARTIES, PARTY_IDS, isFielded,
+  type Dynamics, type ElectionOutcome, type FieldedId, type PartyId, type RegionId,
 } from '../types';
 import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, scaled, truth } from './actions';
 import { applyBackstory } from './leader';
@@ -29,7 +29,7 @@ const PLAYABLE_IDS: PartyId[] = ['ps', 'bp', 'pt'];
 /** A party with no seat campaigns in a contest only if it won at least this share of the vote there last time. */
 const MIN_SHARE_TO_CAMPAIGN = 0.05;
 
-const START: Record<Exclude<PartyId, 'oth'>, { funds: number; home: RegionId; machineryBonus: number; days: number }> = {
+const START: Record<FieldedId, { funds: number; home: RegionId; machineryBonus: number; days: number }> = {
   ps:     { funds: 1_200_000, home: 'selangor', machineryBonus: 0,  days: DAYS_PER_WEEK },
   bp:     { funds: 1_600_000, home: 'kl',       machineryBonus: 10, days: DAYS_PER_WEEK },
   pt:     { funds: 1_100_000, home: 'kelantan', machineryBonus: 5,  days: DAYS_PER_WEEK },
@@ -67,7 +67,7 @@ export function lastShares(world: World): LastShares {
  * support. Token presences and the pooled independents do not.
  */
 export function campaigns(world: World, p: number): boolean {
-  if (PARTY_IDS[p] === 'oth') return false;
+  if (!isFielded(PARTY_IDS[p])) return false;
   const holdsSeat = world.seats.some((s) => s.last.votes[p] > 0 && s.last.votes[p] === Math.max(...s.last.votes));
   return holdsSeat || lastShares(world).national[p] >= MIN_SHARE_TO_CAMPAIGN;
 }
@@ -78,7 +78,7 @@ export function playable(world: World): number[] {
 }
 
 export function startingFunds(world: World, p: number): number {
-  return scaled(world, START[PARTY_IDS[p] as Exclude<PartyId, 'oth'>].funds);
+  return scaled(world, START[PARTY_IDS[p] as FieldedId].funds);
 }
 
 export function weeklyIncome(world: World, p: number): number {
@@ -115,7 +115,7 @@ export interface CampaignOptions {
 /** A party's campaign as it stands on the first day: money in the bank, a rested leader, and branches where it has support. */
 export function freshParty(world: World, p: number): PartyCampaign | null {
   const id = PARTY_IDS[p];
-  if (id === 'oth' || !campaigns(world, p)) return null;
+  if (!isFielded(id) || !campaigns(world, p)) return null;
   const shares = lastShares(world);
   const general = world.rules.kind === 'general';
   const start = START[id];

@@ -29,6 +29,6 @@ Other states held their assembly elections on other dates and are not in this da
 ## Changes made to the data
 
 - Real coalitions are mapped to the game's fictional parties.
-- Small parties and independents are pooled into one entry per seat. In one seat (P.202) the pooled total would have exceeded the actual winner, so only the strongest minor candidate is kept there.
+- Four small parties that won a seat or a large share somewhere are kept apart, by the party name the dataset gives each candidate: MUDA becomes the game's youth party; PSB and PBM, in Sarawak only, become its Sarawak party; KDM, in Sabah only, becomes its Sabah interior party. (The same labels also stood in other regions' state seats, where they are pooled.) The rest of the small parties and the independents stay pooled into one entry per seat. In one seat (P.202) the pooled total would have exceeded the actual winner, so only the strongest minor candidate is kept there.
 - Boundaries are projected to flat coordinates and rounded.
 - Each seat's voter-bloc mix is an estimate derived from census indicators. It is a game abstraction, not a published statistic.

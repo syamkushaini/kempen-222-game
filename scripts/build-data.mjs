@@ -62,12 +62,21 @@ const normCode = (s) => s.replace(/\s+/g, '');
 // ---------- parties ----------
 
 // Order must match PARTY_IDS in src/sim/types.ts.
-const PARTY_IDS = ['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi', 'oth'];
+const PARTY_IDS = ['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi', 'oth', 'genba', 'cahaya', 'suara'];
 // Real coalition column prefix -> fictional party id.
 const COALITION_COLUMNS = {
   PH: 'ps', BN: 'bp', PN: 'pt', GPS: 'gbk', GRS: 'gbs', WARISAN: 'legasi',
 };
-// Everything else (small parties, independents) is pooled as "oth".
+// Small parties that won a seat or a large share somewhere are kept apart, by the party name the
+// dataset gives each candidate. A name only counts in the region it is a regional party of: the same
+// label also stood in other regions' state seats, where it is pooled with the rest.
+const SMALL_PARTIES = {
+  MUDA: { id: 'genba' },
+  PSB: { id: 'cahaya', region: 'sarawak' },
+  PBM: { id: 'cahaya', region: 'sarawak' },
+  KDM: { id: 'suara', region: 'sabah' },
+};
+// Everything else (the rest of the small parties, independents) is pooled as "oth".
 const OTHER_COLUMNS = [
   'GTA', 'OTHER PARTY (1)', 'OTHER PARTY (2)',
   'INDEPENDENT (1)', 'INDEPENDENT (2)', 'INDEPENDENT (3)', 'INDEPENDENT (4)',
@@ -102,6 +111,11 @@ function buildSeat(c, r, ids) {
   let othTotal = 0, othBest = 0;
   for (const col of OTHER_COLUMNS) {
     const v = num(r[`${col} VOTE`]);
+    const small = SMALL_PARTIES[(r[col] ?? '').trim().toUpperCase()];
+    if (small && (!small.region || small.region === ids.region)) {
+      votes[PARTY_IDS.indexOf(small.id)] += v;
+      continue;
+    }
     othTotal += v;
     othBest = Math.max(othBest, v);
   }
@@ -123,7 +137,8 @@ function buildSeat(c, r, ids) {
 
   const winnerIdx = votes.indexOf(Math.max(...votes));
   const realWinner = r['WINNING PARTY'].split(' - ')[0].trim();
-  const expected = COALITION_COLUMNS[realWinner] ?? 'oth';
+  const named = SMALL_PARTIES[realWinner.toUpperCase()];
+  const expected = COALITION_COLUMNS[realWinner] ?? (named && (!named.region || named.region === ids.region) ? named.id : 'oth');
   if (PARTY_IDS[winnerIdx] !== expected) {
     throw new Error(`${ids.id}: pooled winner ${PARTY_IDS[winnerIdx]} != recorded winner ${expected}`);
   }

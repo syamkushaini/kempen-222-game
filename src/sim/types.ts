@@ -1,10 +1,27 @@
 // Core simulation types. The simulation is plain TypeScript with no React or
 // browser dependencies, so it can be unit-tested and run headless.
 
-/** Fictional parties and coalitions. Order is the index order of every per-party array. */
-export const PARTY_IDS = ['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi', 'oth'] as const;
+/**
+ * Fictional parties and coalitions. Order is the index order of every per-party array.
+ * `oth` is the pool of independents and the smallest parties; the three after it are
+ * small parties named and kept apart because they win votes, and sometimes a seat.
+ */
+export const PARTY_IDS = ['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi', 'oth', 'genba', 'cahaya', 'suara'] as const;
 export type PartyId = (typeof PARTY_IDS)[number];
 export const N_PARTIES = PARTY_IDS.length;
+
+/**
+ * Small parties that appear on ballots and in the House and the talks, but run
+ * no campaign of their own: no money, days or leader's tour. Their support moves
+ * only with the voters and with what the campaigning parties do.
+ */
+export const MINOR_IDS = ['genba', 'cahaya', 'suara'] as const;
+export type MinorId = (typeof MINOR_IDS)[number];
+export const isMinor = (p: number) => (MINOR_IDS as readonly string[]).includes(PARTY_IDS[p]);
+
+/** The parties that campaign: everyone except the pool and the small parties. */
+export type FieldedId = Exclude<PartyId, 'oth' | MinorId>;
+export const isFielded = (id: PartyId): id is FieldedId => id !== 'oth' && !(MINOR_IDS as readonly string[]).includes(id);
 
 /** Voter blocs. Order is the index order of every per-bloc array. */
 export const BLOC_IDS = [
