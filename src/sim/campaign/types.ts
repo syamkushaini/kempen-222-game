@@ -197,6 +197,15 @@ export interface NewsItem {
   tone: 'good' | 'bad' | 'neutral';
 }
 
+/** One of the player's choices in the campaign: what it was, and how far it moved the projection when taken. */
+export interface Decision {
+  news: NewsItem;
+  /** Change in the party's projected seats. */
+  seats: number;
+  /** Change in the party's projected share of the national vote, as a fraction. */
+  share: number;
+}
+
 // ---------- the years between elections ----------
 
 export const ISSUE_IDS = [
@@ -410,6 +419,8 @@ export interface Campaign {
   parties: (PartyCampaign | null)[];
   polls: Poll[];
   news: NewsItem[];
+  /** What the player decided in this campaign, and what each choice moved when it was taken. */
+  ledger: Decision[];
   /** Set when polling day arrives: the generator state the election runs with. */
   election: { rng: number } | null;
 

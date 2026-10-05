@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 import type { ElectionOutcome } from '../sim/types';
 import type { Campaign } from '../sim/campaign/types';
 import { review, type CloseCall, type StateSwing } from '../sim/campaign/review';
+import type { Decision } from '../sim/campaign/types';
 import { useStore } from '../state/store';
-import { partyShort, regionLabel, seatName, useFormat, useT, useWorld } from './hooks';
+import { partyShort, regionLabel, renderNews, seatName, useFormat, useT, useWorld } from './hooks';
 
 const signed = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)}`;
 
@@ -28,7 +29,14 @@ export function Review({ campaign, result }: { campaign: Campaign; result: Elect
   const shown = data.states.slice(0, 6);
   const points = (x: number) => t('review.points', { n: `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x * 100).toFixed(1)}` });
 
-  const empty = !data.closeWins.length && !data.closeLosses.length && !data.states.length && !data.lastPoll;
+  const move = (d: Decision, i: number) => (
+    <li key={i} className={d.seats > 0 || d.share > 0 ? 'up' : 'down'}>
+      {renderNews(t, f, world, d.news)}{' '}
+      <span className="num">{t('review.moves.effect', { seats: signed(d.seats), vote: points(d.share) })}</span>
+    </li>
+  );
+
+  const empty = !data.moves.best.length && !data.moves.worst.length && !data.closeWins.length && !data.closeLosses.length && !data.states.length && !data.lastPoll;
   if (empty) return null;
   return (
     <details className="review" open>
@@ -36,6 +44,15 @@ export function Review({ campaign, result }: { campaign: Campaign; result: Elect
 
       {data.closeWins.length > 0 && <><h4>{t('review.closeWins')}</h4><ul className="review-list">{calls(data.closeWins, 'review.won')}</ul></>}
       {data.closeLosses.length > 0 && <><h4>{t('review.closeLosses')}</h4><ul className="review-list">{calls(data.closeLosses, 'review.lost')}</ul></>}
+
+      {(data.moves.best.length > 0 || data.moves.worst.length > 0) && (
+        <>
+          <h4>{t('review.moves')}</h4>
+          {data.moves.best.length > 0 && <ul className="review-list moves">{data.moves.best.map(move)}</ul>}
+          {data.moves.worst.length > 0 && <><h4>{t('review.moves.worst')}</h4><ul className="review-list moves">{data.moves.worst.map(move)}</ul></>}
+          <p className="muted small">{t('review.moves.note', { total: data.moves.total })}</p>
+        </>
+      )}
 
       {shown.length > 0 && (
         <>

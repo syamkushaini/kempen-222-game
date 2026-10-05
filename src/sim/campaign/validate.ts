@@ -45,6 +45,10 @@ function isValidPoll(x: unknown): boolean {
   );
 }
 
+function isValidDecision(x: unknown): boolean {
+  return isObj(x) && isValidNews(x.news) && isNum(x.seats) && isNum(x.share);
+}
+
 function isValidNews(x: unknown): boolean {
   if (!isObj(x)) return false;
   return (
@@ -197,6 +201,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
     x.parties[x.player] !== null &&
     Array.isArray(x.polls) && x.polls.every(isValidPoll) &&
     Array.isArray(x.news) && x.news.every(isValidNews) &&
+    Array.isArray(x.ledger) && x.ledger.every(isValidDecision) &&
     (election === null || (isObj(election) && isUint32(election.rng))) &&
     (x.phase === 'campaign' || x.phase === 'term' || election !== null || (x.phase !== 'night' && x.career !== null)) &&
     isList(x.relations, (row) => isList(row, (v) => isNum(v) && v >= -100 && v <= 100, N_PARTIES), N_PARTIES) &&

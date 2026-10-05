@@ -517,6 +517,9 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 .review-list li { padding: 3px 0; }
 .review p { margin: 8px 0 0; line-height: 1.5; }
 .review-table td:last-child { width: auto; }
+.review-list.moves li { line-height: 1.5; }
+.review-list.moves .up .num { color: var(--good); }
+.review-list.moves .down .num { color: var(--bad); }
 .review-table .up { color: var(--good); }
 .review-table .down { color: var(--bad); }
 

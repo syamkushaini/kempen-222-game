@@ -6,6 +6,7 @@ import type { StandDowns } from '../transfer';
 import { N_PARTIES, type ElectionOutcome } from '../types';
 import { EFFECT, contests, effectiveDynamics, scaled, truth } from './actions';
 import { AFFINITY } from './cast';
+import { record, standing } from './ledger';
 import { pushNews, ref } from './news';
 import type { Campaign, NewsItem, Scene } from './types';
 
@@ -176,6 +177,7 @@ export function assessPact(world: World, c: Campaign, a: number, b: number, prop
 
 /** Puts a pact into effect. The caller has checked that both sides agree. */
 export function signPact(world: World, c: Campaign, a: number, b: number, prop: PactProposal): void {
+  const before = a === c.player || b === c.player ? standing(world, c) : null;
   c.standDowns = withProposal(world, c, a, b, prop);
   c.pacts.push({ a, b, week: c.week });
   // Candidates who are told to stand aside do not go quietly.
@@ -195,12 +197,13 @@ export function signPact(world: World, c: Campaign, a: number, b: number, prop: 
   for (const x of outside) for (const y of outside) if (x < y) shiftRelation(c, x, y, 6);
 
   const mine = a === c.player || b === c.player;
-  pushNews(c, {
+  const item = pushNews(c, {
     party: mine ? c.player : a,
     key: mine ? 'news.pact.mine' : 'news.pact.signed',
     vars: { a: ref.party(a), b: ref.party(b), party: ref.party(a === c.player ? b : a), n: prop.give.length + prop.get.length },
     tone: mine ? 'good' : 'neutral',
   });
+  if (before) record(world, c, before, item);
 }
 
 /** The player tears up a pact: every seat is contested again, and the other leader does not forget. */
@@ -308,6 +311,7 @@ export function canJointAttack(world: World, c: Campaign, ally: number, target: 
 /** Two parties attack a common rival together: it hits harder, and both pay if it goes wrong. */
 export function jointAttack(world: World, c: Campaign, ally: number, target: number): NewsItem | null {
   if (!canJointAttack(world, c, ally, target).ok) return null;
+  const before = standing(world, c);
   spend(c, COST.joint, 'joint');
   const rng = new Rng(c.rng);
   const me = c.player;
@@ -324,10 +328,12 @@ export function jointAttack(world: World, c: Campaign, ally: number, target: num
   shiftRelation(c, me, ally, 5);
   shiftRelation(c, me, target, -12);
   shiftRelation(c, ally, target, -8);
-  return pushNews(c, {
+  const item = pushNews(c, {
     party: me, key: backfired ? 'news.joint.backfire' : 'news.joint.ok',
     vars: { ally: ref.party(ally), target: ref.party(target) }, tone: backfired ? 'bad' : 'good',
   });
+  record(world, c, before, item);
+  return item;
 }
 
 const holder = (world: World, i: number) => world.seats[i].last.votes.indexOf(Math.max(...world.seats[i].last.votes));
@@ -367,6 +373,7 @@ export function courtChance(world: World, c: Campaign, seat: string): number {
 /** Tries to bring a rival's sitting member across before nomination day. */
 export function courtDefector(world: World, c: Campaign, seat: string): NewsItem | null {
   if (!canCourt(world, c, seat).ok) return null;
+  const before = standing(world, c);
   const from = holder(world, world.seatIndex.get(seat)!);
   const chance = courtChance(world, c, seat);
   spend(c, COST.court, 'court', scaled(world, COST.courtMoney));
@@ -375,16 +382,21 @@ export function courtDefector(world: World, c: Campaign, seat: string): NewsItem
   const leaked = !won && rng.next() < 0.3;
   c.rng = rng.state;
   const vars = { seat: ref.seat(seat), party: ref.party(from) };
+  const done = (key: string, tone: NewsItem['tone']) => {
+    const item = pushNews(c, { party: c.player, key, vars, tone });
+    record(world, c, before, item);
+    return item;
+  };
   if (won) {
     defect(c, seat, from, c.player);
-    return pushNews(c, { party: c.player, key: 'news.court.won', vars, tone: 'good' });
+    return done('news.court.won', 'good');
   }
   if (leaked) {
     for (const row of c.dyn.support.nat) row[c.player] -= 0.01;
     shiftRelation(c, c.player, from, -10);
-    return pushNews(c, { party: c.player, key: 'news.court.leaked', vars, tone: 'bad' });
+    return done('news.court.leaked', 'bad');
   }
-  return pushNews(c, { party: c.player, key: 'news.court.failed', vars, tone: 'neutral' });
+  return done('news.court.failed', 'neutral');
 }
 
 // ---------- scenes ----------

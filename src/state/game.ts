@@ -11,7 +11,7 @@ import { isValidCampaign } from '../sim/campaign/validate';
 import { isValidIdentity, type Identity } from './identity';
 
 /** Bump when the saved shape changes, and add a step to `migrate`. */
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 /** Everything that must survive a save and reload. Plain JSON only. */
 export interface GameState {
@@ -102,6 +102,10 @@ function migrate(raw: Record<string, unknown>): Record<string, unknown> | null {
   if (s.version === 9 && isRecord(s.campaign) && Array.isArray(s.campaign.parties)) {
     // Version 10 lets the small parties campaign. A game from before has none running for them: start them as on the first day.
     s = { ...s, version: 10, campaign: { ...s.campaign, parties: withSmallParties(s.campaign as unknown as Campaign) } };
+  }
+  if (s.version === 10 && isRecord(s.campaign)) {
+    // Version 11 keeps a record of the player's decisions. A game from before has none.
+    s = { ...s, version: 11, campaign: { ...s.campaign, ledger: [] } };
   }
   return s;
 }

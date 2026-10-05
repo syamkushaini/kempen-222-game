@@ -6,6 +6,7 @@ import {
   N_BLOCS, N_PARTIES, PARTY_IDS, isFielded, isMinor,
   type Dynamics, type ElectionOutcome, type FieldedId, type PartyId, type RegionId,
 } from '../types';
+import { record, standing } from './ledger';
 import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, purseOf, scaled, truth } from './actions';
 import { applyBackstory } from './leader';
 import { pressReacts } from './media';
@@ -167,6 +168,7 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
     parties,
     polls: [],
     news: [],
+    ledger: [],
     election: null,
     relations: startRelations(),
     standDowns: {},
@@ -288,10 +290,12 @@ function aftermath(c: Campaign, r: ActionReport) {
 
 export function playerAct(world: World, c: Campaign, id: ActionId, target: ActionTarget): NewsItem | null {
   if (c.phase !== 'campaign' || !canDo(world, c, c.player, id, target).ok) return null;
+  const before = standing(world, c);
   const report = doAction(world, c, c.player, id, target);
   aftermath(c, report);
   const item = playerNews(c, report);
   c.news.push(item);
+  record(world, c, before, item);
   return item;
 }
 

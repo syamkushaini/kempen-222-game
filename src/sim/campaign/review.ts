@@ -1,6 +1,6 @@
 import type { World } from '../election';
 import type { ElectionOutcome, RegionId } from '../types';
-import type { Campaign } from './types';
+import type { Campaign, Decision } from './types';
 
 // The look back after polling day: which seats turned on a few hundred votes,
 // where the party gained and lost ground and how hard it had worked there,
@@ -11,6 +11,10 @@ import type { Campaign } from './types';
 const CLOSE = 0.08;
 /** The most close calls listed on each side. */
 const CLOSE_SHOWN = 3;
+/** The most decisions listed as helping, and as hurting. */
+const BEST_SHOWN = 3, WORST_SHOWN = 2;
+/** A change in national vote share smaller than this (a fifth of a point) does not count as a move. */
+const MOVE = 0.002;
 
 /** A seat that was settled by few votes. */
 export interface CloseCall {
@@ -37,6 +41,8 @@ export interface Review {
   closeLosses: CloseCall[];
   /** Largest movements first. Empty when the contest is a single seat. */
   states: StateSwing[];
+  /** The choices that moved the projection most when they were taken, for and against. Empty in a game made before the record was kept. */
+  moves: { best: Decision[]; worst: Decision[]; total: number };
   /** The player's share in the last national poll, and the week it was taken; null if none was taken. */
   lastPoll: { week: number; share: number; ownPoll: boolean } | null;
   finalShare: number;
@@ -94,6 +100,15 @@ function stateSwings(world: World, c: Campaign, result: ElectionOutcome): StateS
   return swings.sort((a, b) => Math.abs(b.seatsAfter - b.seatsBefore) - Math.abs(a.seatsAfter - a.seatsBefore) || Math.abs(b.swing) - Math.abs(a.swing));
 }
 
+/** The decisions that did the most good and the most harm, by seats moved and then by vote share. */
+function moves(c: Campaign): Review['moves'] {
+  const worth = (d: Decision) => d.seats + d.share * 100;
+  const mattered = c.ledger.filter((d) => d.seats !== 0 || Math.abs(d.share) >= MOVE);
+  const best = mattered.filter((d) => d.seats > 0 || (d.seats === 0 && d.share > 0)).sort((a, b) => worth(b) - worth(a)).slice(0, BEST_SHOWN);
+  const worst = mattered.filter((d) => d.seats < 0 || (d.seats === 0 && d.share < 0)).sort((a, b) => worth(a) - worth(b)).slice(0, WORST_SHOWN);
+  return { best, worst, total: c.ledger.length };
+}
+
 /** The player's last look at the national race before polling day, public or commissioned. */
 function lastPoll(c: Campaign): Review['lastPoll'] {
   // In a career the polls of the years before the campaign are older news.
@@ -109,6 +124,7 @@ export function review(world: World, c: Campaign, result: ElectionOutcome): Revi
   return {
     ...closeCalls(c, result),
     states: stateSwings(world, c, result),
+    moves: moves(c),
     lastPoll: lastPoll(c),
     finalShare: sum(result.votes) > 0 ? result.votes[c.player] / sum(result.votes) : 0,
   };
