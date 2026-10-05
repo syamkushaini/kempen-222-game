@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getWorld, world as general } from '../../data/world';
-import { PARTY_IDS } from '../types';
+import { N_BLOCS, PARTY_IDS } from '../types';
 import { review, effortByState } from './review';
 import { autoPlayWeek, electionResult, endWeek, newCampaign, playerAct, playerPoll } from './turn';
 
@@ -65,5 +65,29 @@ describe('the review after polling day', () => {
     const r = review(by, c, result);
     expect(r.states).toEqual([]);
     expect(r.closeWins.length + r.closeLosses.length).toBeLessThanOrEqual(1);
+  });
+
+  it('shows the groups of voters the party moved most among, in order, with sensible shares', () => {
+    const { c, result } = played(perak, 4, true);
+    const { blocs } = review(perak, c, result);
+    expect(blocs.length).toBeGreaterThan(0);
+    expect(blocs.length).toBeLessThanOrEqual(5);
+    const moves = blocs.map((b) => Math.abs(b.after - b.before));
+    expect(moves).toEqual([...moves].sort((a, b) => b - a));
+    for (const b of blocs) {
+      expect(b.bloc).toBeGreaterThanOrEqual(0);
+      expect(b.bloc).toBeLessThan(N_BLOCS);
+      expect(b.before).toBeGreaterThanOrEqual(0);
+      expect(b.before).toBeLessThanOrEqual(1);
+      expect(b.after).toBeGreaterThanOrEqual(0);
+      expect(b.after).toBeLessThanOrEqual(1);
+      expect(b.weight).toBeGreaterThanOrEqual(0.02);
+    }
+  });
+
+  it('leaves the groups out when the result carries no group figures', () => {
+    const { c, result } = played(perak, 4, true);
+    const bare = { ...result, seats: result.seats.map((o) => ({ ...o, blocs: [] })) };
+    expect(review(perak, c, bare).blocs).toEqual([]);
   });
 });

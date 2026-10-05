@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import type { ElectionOutcome } from '../sim/types';
+import { BLOC_IDS, type ElectionOutcome } from '../sim/types';
+import type { StringKey } from '../i18n/strings';
 import type { Campaign } from '../sim/campaign/types';
 import { review, type CloseCall, type StateSwing } from '../sim/campaign/review';
 import type { Decision } from '../sim/campaign/types';
@@ -36,7 +37,7 @@ export function Review({ campaign, result }: { campaign: Campaign; result: Elect
     </li>
   );
 
-  const empty = !data.moves.best.length && !data.moves.worst.length && !data.closeWins.length && !data.closeLosses.length && !data.states.length && !data.lastPoll;
+  const empty = !data.blocs.length && !data.moves.best.length && !data.moves.worst.length && !data.closeWins.length && !data.closeLosses.length && !data.states.length && !data.lastPoll;
   if (empty) return null;
   return (
     <details className="review" open>
@@ -51,6 +52,28 @@ export function Review({ campaign, result }: { campaign: Campaign; result: Elect
           {data.moves.best.length > 0 && <ul className="review-list moves">{data.moves.best.map(move)}</ul>}
           {data.moves.worst.length > 0 && <><h4>{t('review.moves.worst')}</h4><ul className="review-list moves">{data.moves.worst.map(move)}</ul></>}
           <p className="muted small">{t('review.moves.note', { total: data.moves.total })}</p>
+        </>
+      )}
+
+      {data.blocs.length > 0 && (
+        <>
+          <h4>{t('review.blocs')}</h4>
+          <table className="bloc-table review-table">
+            <thead>
+              <tr><th>{t('review.col.group')}</th><th className="num">{t('review.col.before')}</th><th className="num">{t('review.col.after')}</th><th className="num">{t('review.col.change')}</th></tr>
+            </thead>
+            <tbody>
+              {data.blocs.map((b) => (
+                <tr key={b.bloc}>
+                  <td>{t(`bloc.${BLOC_IDS[b.bloc]}` as StringKey)}</td>
+                  <td className="num">{f.pct(b.before, 0)}</td>
+                  <td className="num">{f.pct(b.after, 0)}</td>
+                  <td className={`num ${b.after >= b.before ? 'up' : 'down'}`}>{points(b.after - b.before)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="muted small">{t('review.blocs.note')}</p>
         </>
       )}
 
