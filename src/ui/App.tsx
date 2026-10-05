@@ -14,6 +14,7 @@ import { LegacyScreen } from './LegacyScreen';
 import { SceneModal } from './SceneModal';
 import { ElectionNight } from './ElectionNight';
 import { CampaignBar, Header } from './Header';
+import { GoalLine } from './Challenges';
 import { NextStep } from './NextStep';
 import { DisplayContext, useCampaignDisplay, useNarrow, useSpot, useT, useWorld } from './hooks';
 import { MapView } from './MapView';
@@ -88,6 +89,7 @@ function CampaignScreen() {
     <DisplayContext.Provider value={display}>
       <main className="layout">
         <NextStep />
+        <GoalLine />
         {/* on a phone the adviser comes first, where she cannot be missed */}
         {narrow && <Adviser />}
         <section className="map-column">

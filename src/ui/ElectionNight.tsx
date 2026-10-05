@@ -7,6 +7,7 @@ import { useStore } from '../state/store';
 import { lastOutcome, partyColor, partyName, partyShort, regionLabel, seatName, useFormat, useT, useWorld, type SeatDisplay } from './hooks';
 import { sound } from './audio';
 import { MapView, type PulseKind } from './MapView';
+import { GoalResult } from './Challenges';
 import { GamePanel } from './SavesTab';
 import { electionCard, ShareDialog } from './ShareDialog';
 import { Review } from './Review';
@@ -139,6 +140,7 @@ function SeatBySeat() {
             <section className="summary">
               <h2>{t('summary.title')}</h2>
               <p className={`verdict ${summary.verdict}`}>{t(`summary.verdict.${summary.verdict}`)}</p>
+              <GoalResult summary={summary} />
               <dl className="facts">
                 <div><dt>{t('summary.seats')}</dt><dd className="num">{summary.seats}</dd></div>
                 <div><dt>{t('summary.change')}</dt><dd className="num">{summary.seats - summary.before >= 0 ? '+' : ''}{summary.seats - summary.before}</dd></div>
@@ -295,6 +297,7 @@ function ByElectionCount() {
           <section className="summary">
             <h2>{t('summary.title')}</h2>
             <p className={`verdict ${summary.verdict}`}>{t(`summary.verdict.${summary.verdict}`)}</p>
+            <GoalResult summary={summary} />
             <dl className="facts">
               <div><dt>{t('summary.voteShare')}</dt><dd className="num">{f.pct(summary.voteShare)}</dd></div>
               <div><dt>{t('seat.margin')}</dt><dd className="num">{f.pct(seat.margin)}</dd></div>

@@ -121,6 +121,8 @@ interface Store {
 
   startCampaign(opts: {
     name: string; scenario: string; player: number; difficulty: Difficulty;
+    /** A fixed seed, for a set challenge. Otherwise a fresh one is drawn. */
+    seed?: number;
     backstory?: BackstoryId | null; ideology?: IdeologyId | null; identity?: Identity | null; challenge?: Partial<Challenge>;
   }): void;
   /** Moves the adviser to the next step, or ends the tutorial after the last one. */
@@ -236,13 +238,14 @@ export const useStore = create<Store>((set, get) => {
     selectState: (state) => set({ selectedState: state, selectedSeat: null }),
     selectSeat: (seatId, state) => set((s) => ({ selectedSeat: seatId, selectedState: state ?? s.selectedState })),
 
-    startCampaign: ({ name, scenario, player, difficulty, backstory = null, ideology = null, identity = null, challenge }) => {
+    startCampaign: ({ name, scenario, player, difficulty, seed, backstory = null, ideology = null, identity = null, challenge }) => {
       const world = getWorld(scenario);
       if (!world) return;
-      const opts = { player, difficulty, seed: randomSeed(), backstory, challenge };
+      const opts = { player, difficulty, seed: seed ?? randomSeed(), backstory, challenge };
       // A platform of its own belongs to a party of the player's own making.
       const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null }) : newCampaign(world, opts);
-      const tutorial = world.rules.kind === 'byelection';
+      // A set challenge is for someone who has played before: no adviser walking them through it.
+      const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
       set({
         game: newGame(name.trim() || translate(get().settings.lang, 'saves.defaultName'), campaign, Date.now(), tutorial, identity),
         view: 'last', tab: campaign.phase === 'term' ? 'orders' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false,

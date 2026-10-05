@@ -393,7 +393,8 @@ export interface Career {
  * Extra difficulty the player can choose, apart from how well the rivals play.
  * `fog` hides the chances of anything left to luck; `noisy` doubles the error of every poll.
  */
-export interface Challenge { fog: boolean; noisy: boolean }
+/** Optional ways to make a campaign harder, and the goal of a set challenge (an id in challenges.ts). */
+export interface Challenge { fog: boolean; noisy: boolean; goal?: string }
 
 /** A campaign in progress: everything the rules need, as plain JSON. */
 export interface Campaign {

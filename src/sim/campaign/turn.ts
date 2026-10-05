@@ -184,7 +184,9 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   };
   const c: Campaign = { ...bare, team: emptyTeam(bare, opts.backstory ?? null) };
   c.rng = rng.state;
-  if (opts.challenge?.fog || opts.challenge?.noisy) c.challenge = { fog: !!opts.challenge.fog, noisy: !!opts.challenge.noisy };
+  if (opts.challenge?.fog || opts.challenge?.noisy || opts.challenge?.goal) {
+    c.challenge = { fog: !!opts.challenge.fog, noisy: !!opts.challenge.noisy, ...(opts.challenge.goal ? { goal: opts.challenge.goal } : {}) };
+  }
   // A career sets its own opening terms first, then lets the leader's past have its say.
   if (!world.rules.career) applyBackstory(c);
   if (world.rules.kind === 'hung') {

@@ -10,6 +10,7 @@ import { DEFAULT_EMBLEMS, makeIdentity } from '../state/identity';
 import { saveStore, useStore } from '../state/store';
 import { LEADERS } from '../sim/campaign/cast';
 import { lastOutcome, useFormat, useT } from './hooks';
+import { ChallengeList } from './Challenges';
 import { Credits } from './Credits';
 import { FeedbackLink } from './FeedbackLink';
 import { HonoursEntry } from './Honours';
@@ -202,6 +203,7 @@ export function Title() {
             <p className="muted small">{t('quick.later')}</p>
           </div>
         )}
+        <ChallengeList />
       </section>
 
       <section className="panel title-side">
