@@ -6,7 +6,7 @@ import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
 import type { RegionId } from '../sim/types';
 import { useStore } from '../state/store';
-import { partyColor, partyShort, regionLabel, useFormat, useT, useWorld } from './hooks';
+import { partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld } from './hooks';
 import { NewsLine } from './NewsTab';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
@@ -36,6 +36,7 @@ function loadOpen(): Record<GroupKey, boolean> {
 export function ActionsTab() {
   const t = useT();
   const f = useFormat();
+  const spot = useSpot();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const selectedSeat = useStore((s) => s.selectedSeat);
@@ -131,7 +132,7 @@ export function ActionsTab() {
           {hint && <span className="action-hint">{hint}</span>}
           {reason && <span className="action-reason">{reason}</span>}
         </div>
-        <button className="btn small primary" disabled={!check.ok} onClick={() => act(id, target)} aria-label={`${t('actions.go')}: ${title}`}>
+        <button className={`btn small primary${spot(`go-${id}`) ? ' spot' : ''}`} disabled={!check.ok} onClick={() => act(id, target)} aria-label={`${t('actions.go')}: ${title}`}>
           {t('actions.go')}
         </button>
       </li>

@@ -2,7 +2,7 @@ import { playerPollCost } from '../sim/campaign/turn';
 import type { Poll, PollQuality, PollScope } from '../sim/campaign/types';
 import type { Region, RegionId } from '../sim/types';
 import { useStore } from '../state/store';
-import { partyColor, partyShort, regionLabel, seatName, useFormat, useT, useWorld } from './hooks';
+import { partyColor, partyShort, regionLabel, seatName, useFormat, useSpot, useT, useWorld } from './hooks';
 
 const REGIONS: Region[] = ['peninsular', 'sabah', 'sarawak'];
 
@@ -19,6 +19,7 @@ export function PollsTab() {
   const selectState = useStore((s) => s.selectState);
   const selectSeat = useStore((s) => s.selectSeat);
   const setView = useStore((s) => s.setView);
+  const spot = useSpot();
 
   const pc = campaign.parties[campaign.player]!;
   const state: RegionId = selectedState ?? pc.location;
@@ -28,7 +29,7 @@ export function PollsTab() {
   const buy = (scope: PollScope, target: string | null, quality: PollQuality) => {
     const cost = playerPollCost(world, campaign, scope, target, quality);
     return (
-      <button className="btn small" disabled={cost > pc.funds} onClick={() => poll(scope, target, quality)}>
+      <button className={`btn small${scope === 'seat' && spot('poll-seat') ? ' spot' : ''}`} disabled={cost > pc.funds} onClick={() => poll(scope, target, quality)}>
         {t(`polls.${quality}`)} <span className="muted num">{f.rm(cost)}</span>
       </button>
     );

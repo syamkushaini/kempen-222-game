@@ -15,7 +15,7 @@ import { SceneModal } from './SceneModal';
 import { ElectionNight } from './ElectionNight';
 import { Header } from './Header';
 import { NextStep } from './NextStep';
-import { DisplayContext, useCampaignDisplay, useT, useWorld } from './hooks';
+import { DisplayContext, useCampaignDisplay, useSpot, useT, useWorld } from './hooks';
 import { MapView } from './MapView';
 import { now } from '../sim/campaign/news';
 import { NewsTab } from './NewsTab';
@@ -69,6 +69,7 @@ function Waiting() {
 
 function CampaignScreen() {
   const t = useT();
+  const spot = useSpot();
   const campaign = useStore((s) => s.game!.campaign);
   const tab = useStore((s) => s.tab);
   const setTab = useStore((s) => s.setTab);
@@ -95,7 +96,7 @@ function CampaignScreen() {
           <Standing campaign={campaign} />
           <div className="tabs" role="tablist">
             {tabs.map((id) => (
-              <button key={id} role="tab" aria-selected={shown === id} className={shown === id ? 'tab active' : 'tab'} onClick={() => setTab(id)}>
+              <button key={id} role="tab" aria-selected={shown === id} className={`${shown === id ? 'tab active' : 'tab'}${spot(`tab-${id}`) ? ' spot' : ''}`} onClick={() => setTab(id)}>
                 {t(`tab.${id}`)}
                 {id === 'news' && unread > 0 && shown !== 'news' && <span className="pip" aria-hidden="true" />}
               </button>

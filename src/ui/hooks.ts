@@ -10,6 +10,7 @@ import { lastElection, type World } from '../sim/election';
 import { classify } from '../sim/project';
 import { PARTY_IDS, type ElectionOutcome, type RegionId, type SeatClass, type StateId } from '../sim/types';
 import { useStore } from '../state/store';
+import { STEPS } from './tutorial';
 
 export type T = (key: StringKey, vars?: Record<string, string | number>) => string;
 
@@ -76,6 +77,16 @@ export function partyColor(index: number): string {
 }
 
 /** The contest the open game is played in. Falls back to the general election on the title screen. */
+/** Whether a control is the one the tutorial is pointing at right now. Always false outside the tutorial. */
+export function useSpot(): (name: string) => boolean {
+  const step = useStore((s) => (s.game?.tutorial ? s.game.tutorial.step : -1));
+  const campaign = useStore((s) => s.game?.campaign);
+  const selectedSeat = useStore((s) => s.selectedSeat);
+  const tab = useStore((s) => s.tab);
+  const spots = step >= 0 && campaign && STEPS[step] ? STEPS[step].spots({ campaign, selectedSeat, tab }) : [];
+  return (name) => spots.includes(name);
+}
+
 export function useWorld(): World {
   const scenario = useStore((s) => s.game?.campaign.scenario);
   const results = useStore((s) => s.game?.campaign.career?.results ?? null);

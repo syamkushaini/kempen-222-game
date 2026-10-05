@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { termIncome, termSpending } from '../sim/campaign/career';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore, type Theme } from '../state/store';
-import { regionLabel, useFormat, useT, useWorld } from './hooks';
+import { regionLabel, useFormat, useSpot, useT, useWorld } from './hooks';
 
 function SettingsControls() {
   const t = useT();
@@ -46,6 +46,7 @@ function Hud() {
   const me = campaign.parties[campaign.player]!;
   const final = campaign.week === campaign.totalWeeks;
   const [armed, setArmed] = useState(false);
+  const spot = useSpot();
 
   useEffect(() => {
     if (!armed) return;
@@ -89,7 +90,7 @@ function Hud() {
           <strong className="hud-value">{regionLabel(t, world, me.location)}</strong>
         </div>
       )}
-      <button className={`btn primary end-week${armed ? ' armed' : ''}`} onClick={onEnd}>
+      <button className={`btn primary end-week${armed ? ' armed' : ''}${spot('end-week') ? ' spot' : ''}`} onClick={onEnd}>
         {armed ? t('hud.endWeekConfirm') : final ? t('hud.toPolls') : t('hud.endWeek')} ▸
       </button>
     </div>

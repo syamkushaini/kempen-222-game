@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState, type MouseEvent, type React
 import type { World } from '../sim/election';
 import type { RegionId, SeatClass } from '../sim/types';
 import { useStore } from '../state/store';
-import { contestName, partyColor, partyShort, regionLabel, useFormat, useT, useWorld, type SeatDisplay } from './hooks';
+import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay } from './hooks';
 
 interface MapShape { d: string; bbox: [number, number, number, number] }
 interface MapData {
@@ -51,6 +51,7 @@ export function MapView(props: {
   const { display } = props;
   const t = useT();
   const f = useFormat();
+  const spot = useSpot();
   const world = useWorld();
   // A one-seat contest has nothing to zoom between; the map stays on the seat.
   const single = world.seats.length === 1;
@@ -151,7 +152,7 @@ export function MapView(props: {
         </div>
       )}
 
-      <div className="map-frame" ref={frame}>
+      <div className={`map-frame${spot('map') ? ' spot' : ''}`} ref={frame}>
         {!map && <p className="muted map-loading">{t('app.loadingMap')}</p>}
         {map && zoom && (
           <svg viewBox={`0 0 ${map.width} ${VIEW_HEIGHT}`} role="img" aria-label={contestName(t, world)} onMouseLeave={() => setHover(null)}>

@@ -462,7 +462,9 @@ First players said the actions screen was cluttered and that it was not clear wh
 
 - **The title screen opens on a quick start.** One card: pick a party (three pills), see the randomly drawn vacancy (and draw another), and press "Start the tutorial", which starts the guided three-week by-election on gentle rivals. Everything else (other contests, a leader's backstory, a party of one's own, difficulty, the game's name) is behind "Customise instead", and a player who customises lands there on later visits (remembered on the device). For anyone with a game to continue, "Continue" is the screen's one primary button.
 
-Ideas from the same feedback not yet built: a spotlight on the tutorial's next button, harder optional settings (hidden odds, noisier polls), and small parties.
+- **The tutorial points at what it asks for.** Kak Ros's current step rings the one control she is talking about, using the system's focus ring in pulsing lavender: the Next button, the map, a tab, the Go button for the action, the seat poll buttons or End week. If the control is on another tab, the tab is ringed first. A "Show me" button scrolls to the ringed control, which matters on phones where it may be far off screen. The steps and what each points at are one table (`src/ui/tutorial.ts`) with tests; the ring is static for anyone whose device asks for reduced motion.
+
+Ideas from the same feedback not yet built: harder optional settings (hidden odds, noisier polls), and small parties.
 
 ## Visual design: the Linear system (5 Oct 2026)
 

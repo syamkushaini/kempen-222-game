@@ -347,6 +347,11 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 .credits a { color: var(--link); }
 .seat-draw { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 0; }
 
+/* the tutorial's pointer: the system's focus ring, pulsing, on the one control the adviser is asking for */
+.spot { outline: 2px solid var(--primary-hover); outline-offset: 2px; animation: spot-pulse 1.6s ease-in-out infinite; }
+@keyframes spot-pulse { 50% { outline-color: color-mix(in srgb, var(--primary-hover) 30%, transparent); outline-offset: 5px; } }
+@media (prefers-reduced-motion: reduce) { .spot { animation: none; } }
+
 .adviser { display: flex; gap: 12px; align-items: flex-start; }
 .adviser-face { flex: none; width: 42px; height: 42px; border-radius: 50%; background: var(--panel-3); color: var(--ink); display: grid; place-items: center; font-weight: 600; }
 .adviser-name { font-weight: 500; font-size: 13px; }
