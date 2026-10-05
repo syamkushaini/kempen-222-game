@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 import { useStore, type MapView as MapViewId, type SidebarTab } from '../state/store';
 import { hasChiefs } from '../sim/campaign/ai';
 import { ActionsTab } from './ActionsTab';
@@ -127,7 +127,7 @@ function CampaignScreen() {
 
 export function App() {
   const t = useT();
-  const { theme, lang } = useStore((s) => s.settings);
+  const { theme, lang, palette, textSize } = useStore((s) => s.settings);
   const phase = useStore((s) => s.game?.campaign.phase);
   const talks = useStore((s) => !!s.game?.campaign.formation);
   const showNight = useStore((s) => s.showNight);
@@ -139,7 +139,9 @@ export function App() {
     if (theme === 'system') delete root.dataset.theme;
     else root.dataset.theme = theme;
     root.lang = lang;
-  }, [theme, lang]);
+    if (textSize === 'large') root.dataset.text = 'large';
+    else delete root.dataset.text;
+  }, [theme, lang, textSize]);
 
   useEffect(() => installFeedback(), []);
 
@@ -148,12 +150,15 @@ export function App() {
   return (
     <div className="app">
       <Header />
-      {!phase && <Title />}
-      {ended && <LegacyScreen />}
-      {!ended && (phase === 'campaign' || phase === 'term') && <CampaignScreen />}
-      {!ended && night && <ElectionNight key={loads} />}
-      {!ended && phase && phase !== 'campaign' && phase !== 'term' && !night && <FormationScreen />}
-      {!ended && phase && !night && <SceneModal />}
+      {/* the screens read party colours when they draw, so a new palette starts them afresh */}
+      <Fragment key={palette}>
+        {!phase && <Title />}
+        {ended && <LegacyScreen />}
+        {!ended && (phase === 'campaign' || phase === 'term') && <CampaignScreen />}
+        {!ended && night && <ElectionNight key={loads} />}
+        {!ended && phase && phase !== 'campaign' && phase !== 'term' && !night && <FormationScreen />}
+        {!ended && phase && !night && <SceneModal />}
+      </Fragment>
       <Toasts />
       <footer className="footer">{t('footer.fiction')}</footer>
     </div>

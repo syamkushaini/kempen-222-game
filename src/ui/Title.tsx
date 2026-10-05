@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PARTIES } from '../data/parties';
+import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, STATE_SCENARIOS } from '../data/world';
 import type { ContestKind } from '../sim/campaign/rules';
 import { playable, startingFunds } from '../sim/campaign/turn';
@@ -11,10 +11,12 @@ import { saveStore, useStore } from '../state/store';
 import { LEADERS } from '../sim/campaign/cast';
 import { lastOutcome, useFormat, useT } from './hooks';
 import { Credits } from './Credits';
+import { FeedbackLink } from './FeedbackLink';
 import { HonoursEntry } from './Honours';
 import { Portrait } from './Portrait';
 import { saveLine, SaveSlots } from './SavesTab';
 import { LeaderPicker, PartyCreator, type Draft } from './Setup';
+import { Jargon } from './Term';
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard'];
 /** What can be started from the title screen: the single contests, and a career. */
@@ -64,7 +66,7 @@ export function Title() {
   const level = difficulty ?? (kind === 'byelection' ? 'easy' : 'normal');
   const playerId = PARTY_IDS[player] as 'ps' | 'bp' | 'pt';
   // The creator starts from the party being taken over, and follows it until the player types something of their own.
-  const base: Draft = { name: PARTIES[playerId].name, short: PARTIES[playerId].short, color: PARTIES[playerId].color, emblem: DEFAULT_EMBLEMS[playerId], leader: LEADERS[playerId], look: 0, ideology: null };
+  const base: Draft = { name: PARTIES[playerId].name, short: PARTIES[playerId].short, color: STANDARD_COLORS[playerId], emblem: DEFAULT_EMBLEMS[playerId], leader: LEADERS[playerId], look: 0, ideology: null };
   const shown = draft ?? base;
   const identity = own ? makeIdentity(shown) : null;
   const last = lastOutcome(world);
@@ -91,7 +93,7 @@ export function Title() {
             {KINDS.map((k) => (
               <button key={k} role="radio" aria-checked={kind === k} className={kind === k ? 'party-card plain active' : 'party-card plain'} onClick={() => setKind(k)}>
                 <strong>{t(`scenario.${k}`)}</strong>
-                <span className="small">{t(`scenario.${k}.blurb`)}</span>
+                <span className="small"><Jargon>{t(`scenario.${k}.blurb`)}</Jargon></span>
                 {k === 'byelection' && <span className="badge leaning start-here">{t('title.startHere')}</span>}
               </button>
             ))}
@@ -126,7 +128,7 @@ export function Title() {
                       <span className="muted small">{t('title.leader', { name: LEADERS[id] })}</span>
                     </span>
                   </span>
-                  <span className="small">{t(`party.${id}.blurb`)}</span>
+                  <span className="small"><Jargon>{t(`party.${id}.blurb`)}</Jargon></span>
                   <span className="muted small">
                     {kind === 'byelection' ? t('title.lastShare', { pct: f.pct(lastShare(p)) }) : t('title.heldSeats', { n: last.tally[p] })}
                     {' · '}{t('title.funds', { rm: f.rm(startingFunds(world, p) * (kind === 'career' ? 0.4 : 1)) })}
@@ -207,6 +209,7 @@ export function Title() {
         <SaveSlots />
         <HonoursEntry />
         <Credits />
+        <FeedbackLink />
       </section>
     </main>
   );

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { termIncome, termSpending } from '../sim/campaign/career';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore, type Theme } from '../state/store';
+import { Term } from './Term';
 import { regionLabel, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
 
 function SettingsControls() {
@@ -24,6 +25,27 @@ function SettingsControls() {
           </button>
         ))}
       </div>
+      <details className="display-menu">
+        <summary>{t('display.title')}</summary>
+        <div className="display-panel">
+          <span className="hud-label">{t('display.palette')}</span>
+          <div className="segmented small" role="group" aria-label={t('display.palette')}>
+            {(['standard', 'accessible'] as const).map((p) => (
+              <button key={p} className={settings.palette === p ? 'active' : ''} aria-pressed={settings.palette === p} onClick={() => setSettings({ palette: p })}>
+                {t(`display.palette.${p}`)}
+              </button>
+            ))}
+          </div>
+          <span className="hud-label">{t('display.text')}</span>
+          <div className="segmented small" role="group" aria-label={t('display.text')}>
+            {(['normal', 'large'] as const).map((z) => (
+              <button key={z} className={settings.textSize === z ? 'active' : ''} aria-pressed={settings.textSize === z} onClick={() => setSettings({ textSize: z })}>
+                {t(`display.text.${z}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </details>
       <div className="segmented small" role="group" aria-label={t('sound.label')}>
         <button className={settings.sound ? 'active' : ''} aria-pressed={settings.sound} onClick={() => setSettings({ sound: !settings.sound })}>
           {t('sound.sfx')}
@@ -158,11 +180,11 @@ function TermHud() {
         <strong className="num hud-value">{f.rm(me.funds)} <span className={`small ${net < 0 ? 'neg' : 'muted'}`}>{net < 0 ? '−' : '+'}{f.rm(Math.abs(net))}</span></strong>
       </div>
       <div className="hud-item">
-        <span className="hud-label">{t('term.unity')}</span>
+        <span className="hud-label"><Term id="unity">{t('term.unity')}</Term></span>
         <strong className="num hud-value">{Math.round(me.unity)}</strong>
       </div>
       <div className="hud-item">
-        <span className="hud-label">{t('term.credibility')}</span>
+        <span className="hud-label"><Term id="credibility">{t('term.credibility')}</Term></span>
         <strong className="num hud-value">{Math.round(k.credibility)}</strong>
       </div>
       {!k.ending && <div className="button-row tight term-buttons">

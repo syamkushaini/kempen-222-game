@@ -3,6 +3,7 @@ import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { lastOutcome, useSpot, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
+import { Jargon } from './Term';
 import { STEPS } from './tutorial';
 
 /** The campaign manager who talks the player through their first contest. */
@@ -33,7 +34,7 @@ export function Adviser() {
       <Portrait adviser size={46} />
       <div className="grow">
         <p className="adviser-name">{t('adviser.name')} <span className="muted">· {t('adviser.role')} · {tutorial.step + 1}/{STEPS.length}</span></p>
-        <p className="adviser-text">{t(text as StringKey)}</p>
+        <p className="adviser-text"><Jargon>{t(text as StringKey)}</Jargon></p>
         <div className="button-row tight">
           {!step.done && <button className={`btn small primary${spot('next') ? ' spot' : ''}`} onClick={() => advance(STEPS.length)}>{t('adviser.next')}</button>}
           {pointsAway && <button className="btn small" onClick={show}>{t('adviser.show')}</button>}

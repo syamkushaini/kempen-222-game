@@ -8,6 +8,7 @@ import { isMinor, type RegionId } from '../sim/types';
 import { useStore } from '../state/store';
 import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld } from './hooks';
 import { NewsLine } from './NewsTab';
+import { Jargon } from './Term';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
   { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally'] },
@@ -197,7 +198,7 @@ export function ActionsTab() {
             <ul className="action-list">
               {actions.map((id) => (
                 <li key={id} className="action-group">
-                  <p className="muted small action-desc">{t(`action.${id}.desc${fog && id === 'attack' ? '.fog' : ''}` as StringKey)}</p>
+                  <p className="muted small action-desc"><Jargon>{t(`action.${id}.desc${fog && id === 'attack' ? '.fog' : ''}` as StringKey)}</Jargon></p>
                   <ul>{render(id)}</ul>
                 </li>
               ))}

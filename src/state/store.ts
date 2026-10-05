@@ -42,6 +42,8 @@ import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
 export type MapView = 'last' | 'estimate' | 'truth';
 export type SidebarTab = 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'news' | 'saves';
 export type Theme = 'system' | 'light' | 'dark';
+export type Palette = 'standard' | 'accessible';
+export type TextSize = 'normal' | 'large';
 
 export interface Settings {
   lang: Lang;
@@ -50,6 +52,9 @@ export interface Settings {
   sound: boolean;
   /** The background tune. Off unless asked for. */
   music: boolean;
+  /** Party colours that colour-blind players can tell apart. */
+  palette: Palette;
+  textSize: TextSize;
 }
 
 const SETTINGS_KEY = 'k222.settings';
@@ -58,7 +63,7 @@ export const saveStore = new SaveStore(storage);
 const profileStore = new ProfileStore(storage);
 
 function loadSettings(): Settings {
-  const fallback: Settings = { lang: 'en', theme: 'dark', sound: true, music: false };
+  const fallback: Settings = { lang: 'en', theme: 'dark', sound: true, music: false, palette: 'standard', textSize: 'normal' };
   try {
     const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
     if (!raw) return fallback;
@@ -67,6 +72,8 @@ function loadSettings(): Settings {
       theme: raw.theme === 'light' || raw.theme === 'dark' ? raw.theme : 'system',
       sound: raw.sound !== false,
       music: raw.music === true,
+      palette: raw.palette === 'accessible' ? 'accessible' : 'standard',
+      textSize: raw.textSize === 'large' ? 'large' : 'normal',
     };
   } catch {
     return fallback;

@@ -8,8 +8,9 @@ import { leaderPortrait } from './faces';
 import { contestName, leaderName, partyColor, partyName, useT, type Format, type T } from './hooks';
 import { drawCard, type CardData } from './shareCard';
 
-const FLAGS = PARTY_IDS.filter((id) => id !== 'oth').map((id) => PARTIES[id].color);
-const common = (t: T) => ({ flags: FLAGS, tagline: t('share.tagline'), fiction: t('share.fiction') });
+/** Read when the card is made, so it follows the palette in use. */
+const flags = () => PARTY_IDS.filter((id) => id !== 'oth').map((id) => PARTIES[id].color);
+const common = (t: T) => ({ flags: flags(), tagline: t('share.tagline'), fiction: t('share.fiction') });
 
 /** The card for an election night: the verdict, the figures and the chamber as it now sits. */
 export function electionCard(t: T, f: Format, world: World, c: Campaign, result: ElectionOutcome, summary: Summary): CardData {

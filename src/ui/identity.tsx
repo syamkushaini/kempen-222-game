@@ -1,4 +1,4 @@
-import { PARTIES } from '../data/parties';
+import { ACCESSIBLE_COLORS, PARTIES } from '../data/parties';
 import { LEADERS } from '../sim/campaign/cast';
 import { PARTY_IDS, type PartyId } from '../sim/types';
 import { DEFAULT_EMBLEMS, type EmblemId, type Identity } from '../state/identity';
@@ -9,6 +9,7 @@ type Real = Exclude<PartyId, 'oth'>;
 const ORIGINAL = structuredClone(PARTIES);
 const ORIGINAL_LEADERS = { ...LEADERS };
 const emblems: Partial<Record<PartyId, EmblemId>> = {};
+let accessible = false;
 
 /**
  * Dresses the player's party in the name, colours and leader they chose, or
@@ -18,6 +19,7 @@ const emblems: Partial<Record<PartyId, EmblemId>> = {};
 export function applyIdentity(player: number | null, identity: Identity | null): void {
   for (const id of PARTY_IDS) {
     Object.assign(PARTIES[id], ORIGINAL[id]);
+    if (accessible) PARTIES[id].color = ACCESSIBLE_COLORS[id];
     if (id !== 'oth') { LEADERS[id] = ORIGINAL_LEADERS[id]; setLeaderLook(id, null); }
     delete emblems[id];
   }
@@ -30,14 +32,17 @@ export function applyIdentity(player: number | null, identity: Identity | null):
 }
 
 let installed = false;
-/** Keeps the parties dressed for whichever game is open. Runs before the screen redraws, so nothing shows the old names. */
+/** Keeps the parties dressed for whichever game is open, in the colours the player asked for. Runs before the screen redraws, so nothing shows the old names. */
 export function installIdentity(): void {
   if (installed) return;
   installed = true;
-  const sync = (game: ReturnType<typeof useStore.getState>['game']) => applyIdentity(game?.campaign.player ?? null, game?.identity ?? null);
-  sync(useStore.getState().game);
+  const sync = (state: ReturnType<typeof useStore.getState>) => {
+    accessible = state.settings.palette === 'accessible';
+    applyIdentity(state.game?.campaign.player ?? null, state.game?.identity ?? null);
+  };
+  sync(useStore.getState());
   useStore.subscribe((state, prev) => {
-    if (state.game?.id !== prev.game?.id || state.game?.identity !== prev.game?.identity) sync(state.game);
+    if (state.game?.id !== prev.game?.id || state.game?.identity !== prev.game?.identity || state.settings.palette !== prev.settings.palette) sync(state);
   });
 }
 

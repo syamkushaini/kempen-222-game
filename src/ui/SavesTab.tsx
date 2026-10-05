@@ -7,6 +7,7 @@ import { parseSave } from '../state/game';
 import { MANUAL_SLOTS, type SaveMeta, type SlotId } from '../state/saves';
 import { saveStore, useStore } from '../state/store';
 import { downloadGame } from './download';
+import { FeedbackLink } from './FeedbackLink';
 import { contestName, useFormat, useT, type T } from './hooks';
 
 /** A button that asks for a second click before doing something destructive. */
@@ -165,6 +166,7 @@ export function GamePanel() {
         <button className="btn" onClick={quitToTitle}>{t('hud.quit')}</button>
       </div>
       {open && <SavesPanel embedded />}
+      <FeedbackLink />
     </section>
   );
 }

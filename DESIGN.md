@@ -482,6 +482,10 @@ First players said the actions screen was cluttered and that it was not clear wh
   - **No national attacks,** which hit a target's support in every seat and would be out of proportion from a party of one seat. They are not offered to the player as targets, and a small party's routine ground work is not news (a viral video or a flop still is).
   - **Result.** In 20 simulated campaigns with the player idle, they won on average 1.7, 0.8 and 1.7 seats against the 1 each they hold, and none ended in debt.
   - **Saves** move to version 10; a version 9 game (made after the small parties arrived and before they campaigned) is upgraded by starting a campaign for each.
+- **Quick wins for first-time and wider audiences.**
+  - **Feedback link.** "Send feedback or report a problem" on the title screen and in the game panel opens a new GitHub issue with the version (release number and commit), language, contest, week and screen width filled in. The game sends nothing itself; the player reads the text and decides. It holds no name, save or account. It needs the repository to be public for strangers to use it.
+  - **Jargon tooltips.** A few words a newcomer may not know (ceramah, machinery, hung parliament, margin of error; and the unity and credibility labels) get a dotted underline and a short explanation on hover, focus or tap, in both languages. A word is marked only where it first appears in a sentence, and only in the adviser's text, action descriptions, title-screen blurbs and the term labels, not in event text, so a common word like "unity" is not underlined in "unity government".
+  - **Colour-blind palette and larger text.** A "Display" menu in the header switches the party colours to a set that differs in brightness as well as hue (red, blue and green become orange, blue and yellow) and makes all text 15% larger. Both are remembered. A party the player designs keeps its own colour. Party names are always written beside their colours, so colour is never the only signal.
 
 ## Visual design: the Linear system (5 Oct 2026)
 
