@@ -1,4 +1,4 @@
-import { BLOC_IDS, N_BLOCS, N_PARTIES, type BlocId, type Dynamics, type ElectionOutcome, type RegionId, type SeatKind } from '../types';
+import { BLOC_IDS, N_BLOCS, N_PARTIES, isMinor, type BlocId, type Dynamics, type ElectionOutcome, type RegionId, type SeatKind } from '../types';
 import { combineDynamics } from '../dynamics';
 import { projectElection, type World } from '../election';
 import { zeros, zeros2 } from '../math';
@@ -258,9 +258,13 @@ const addLateSwing = (c: Campaign, p: number, scale: number) => {
 };
 
 /** What a fundraising action would bring in before luck. */
+/** What a small party can raise and receive, against a national one: it has far fewer members and donors to ask. */
+export const MINOR_PURSE = 0.3;
+export const purseOf = (p: number): number => (isMinor(p) ? MINOR_PURSE : 1);
+
 export function expectedYield(world: World, c: Campaign, p: number, id: 'dinner' | 'crowdfund' | 'tycoon', st?: RegionId): number {
   const pc = partyOf(c, p);
-  const econ = world.rules.econ;
+  const econ = world.rules.econ * purseOf(p);
   if (id === 'tycoon') return EFFECT.tycoon * econ;
   if (id === 'crowdfund') return 150_000 * econ * 0.6 ** pc.crowdfunds;
   const seats = world.seatsByState[st!];

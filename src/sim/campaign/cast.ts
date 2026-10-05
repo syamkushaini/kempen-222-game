@@ -57,7 +57,7 @@ export const AFFINITY: number[][] = pairs<number>([
   ['genba', 'cahaya', 0.2], ['genba', 'suara', 0.2], ['cahaya', 'suara', 0.2],
 ], 0);
 
-export const START_UNITY: Record<FieldedId, number> = { ps: 70, bp: 60, pt: 70, gbk: 80, gbs: 55, legasi: 65 };
+export const START_UNITY: Record<FieldedId, number> = { ps: 70, bp: 60, pt: 70, gbk: 80, gbs: 55, legasi: 65, genba: 65, cahaya: 75, suara: 70 };
 
 /** What a party's leader looks for when asked to support a government. Weights add up towards 1, the point of agreement. */
 export interface Wants {

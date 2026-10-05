@@ -33,6 +33,21 @@ const RATES: Partial<Record<`${PartyId}>${PartyId}`, Transfer>> = {
   'legasi>ps': { to: 0.55, home: 0.15 },
   'ps>gbk': { to: 0.4, home: 0.2 },
   'gbk>ps': { to: 0.35, home: 0.2 },
+  // The small parties: the young reformers' voters follow Pakatan Sinar readily and Perikatan Teguh hardly at all;
+  // the Borneo locals stand against their larger neighbours, and go with the Barisan or the Sabah parties.
+  'genba>ps': { to: 0.6, home: 0.1 },
+  'ps>genba': { to: 0.5, home: 0.15 },
+  'genba>pt': { to: 0.1, home: 0.4 },
+  'cahaya>ps': { to: 0.4, home: 0.2 },
+  'ps>cahaya': { to: 0.4, home: 0.2 },
+  'cahaya>gbk': { to: 0.2, home: 0.3 },
+  'gbk>cahaya': { to: 0.2, home: 0.3 },
+  'suara>gbs': { to: 0.2, home: 0.3 },
+  'gbs>suara': { to: 0.2, home: 0.3 },
+  'suara>bp': { to: 0.5, home: 0.15 },
+  'bp>suara': { to: 0.45, home: 0.15 },
+  'suara>legasi': { to: 0.45, home: 0.15 },
+  'legasi>suara': { to: 0.45, home: 0.15 },
 };
 
 export function transferRate(from: number, to: number): Transfer {

@@ -11,17 +11,17 @@ export type PartyId = (typeof PARTY_IDS)[number];
 export const N_PARTIES = PARTY_IDS.length;
 
 /**
- * Small parties that appear on ballots and in the House and the talks, but run
- * no campaign of their own: no money, days or leader's tour. Their support moves
- * only with the voters and with what the campaigning parties do.
+ * Small parties. They campaign like the others, but on a small scale, and only
+ * where they hold a seat or took a real share of the vote. The player cannot
+ * lead them.
  */
 export const MINOR_IDS = ['genba', 'cahaya', 'suara'] as const;
 export type MinorId = (typeof MINOR_IDS)[number];
 export const isMinor = (p: number) => (MINOR_IDS as readonly string[]).includes(PARTY_IDS[p]);
 
-/** The parties that campaign: everyone except the pool and the small parties. */
-export type FieldedId = Exclude<PartyId, 'oth' | MinorId>;
-export const isFielded = (id: PartyId): id is FieldedId => id !== 'oth' && !(MINOR_IDS as readonly string[]).includes(id);
+/** The parties that can campaign: everyone except the pool of independents. */
+export type FieldedId = Exclude<PartyId, 'oth'>;
+export const isFielded = (id: PartyId): id is FieldedId => id !== 'oth';
 
 /** Voter blocs. Order is the index order of every per-bloc array. */
 export const BLOC_IDS = [

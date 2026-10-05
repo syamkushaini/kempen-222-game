@@ -4,7 +4,7 @@ import { ACTIONS, actionCost, canDo, expectedYield, spendingLimit } from '../sim
 import { probeChance } from '../sim/campaign/spending';
 import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
-import type { RegionId } from '../sim/types';
+import { isMinor, type RegionId } from '../sim/types';
 import { useStore } from '../state/store';
 import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld } from './hooks';
 import { NewsLine } from './NewsTab';
@@ -60,7 +60,8 @@ export function ActionsTab() {
   // State actions follow the map: the open state, else the selected seat's state, else where the leader is.
   const state: RegionId = selectedState ?? seat?.state ?? pc.location;
   const area = world.rules.kind === 'general' ? 'state' : 'area';
-  const rivals = campaign.parties.map((p, i) => (p && i !== me ? i : -1)).filter((i) => i >= 0);
+  // Attacks are aimed at the parties that matter nationally, not at a party of one seat.
+  const rivals = campaign.parties.map((p, i) => (p && i !== me && !isMinor(i) ? i : -1)).filter((i) => i >= 0);
 
   /** Whether an action can be done now, or only waits for the player to pick a seat on the map. */
   const available = (id: ActionId) => {

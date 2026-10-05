@@ -3,14 +3,15 @@ import { START_UNITY, startRelations } from '../sim/campaign/cast';
 import { formCabinet, makeObligations, standstill, startEconomy } from '../sim/campaign/govern';
 import { ROUNDS, startStates } from '../sim/campaign/contests';
 import { teamFor } from '../sim/campaign/team';
+import { freshParty } from '../sim/campaign/turn';
 import type { Campaign } from '../sim/campaign/types';
 import { Rng } from '../sim/rng';
-import { N_PARTIES, PARTY_IDS } from '../sim/types';
+import { isMinor, N_PARTIES, PARTY_IDS } from '../sim/types';
 import { isValidCampaign } from '../sim/campaign/validate';
 import { isValidIdentity, type Identity } from './identity';
 
 /** Bump when the saved shape changes, and add a step to `migrate`. */
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 /** Everything that must survive a save and reload. Plain JSON only. */
 export interface GameState {
@@ -98,7 +99,22 @@ function migrate(raw: Record<string, unknown>): Record<string, unknown> | null {
     // Version 9 added three small parties; nothing else about a save changed.
     s = { ...s, version: 9 };
   }
+  if (s.version === 9 && isRecord(s.campaign) && Array.isArray(s.campaign.parties)) {
+    // Version 10 lets the small parties campaign. A game from before has none running for them: start them as on the first day.
+    s = { ...s, version: 10, campaign: { ...s.campaign, parties: withSmallParties(s.campaign as unknown as Campaign) } };
+  }
   return s;
+}
+
+/** Starts a campaign for each small party that would have one, as it stands on the first day. */
+function withSmallParties(campaign: Campaign): unknown {
+  try {
+    const world = worldOf(campaign);
+    if (!world) return campaign.parties;
+    return campaign.parties.map((p, i) => (p === null && isMinor(i) ? freshParty(world, i) : p));
+  } catch {
+    return campaign.parties;
+  }
 }
 
 /** Gives an older career the House as it was elected and the state governments the last election implies. Rounds of state polls already past are not held again. */

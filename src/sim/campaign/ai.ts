@@ -1,6 +1,6 @@
 import type { World } from '../election';
 import { Rng } from '../rng';
-import { N_PARTIES, PARTY_IDS, type ElectionOutcome, type FieldedId, type RegionId, type SeatKind } from '../types';
+import { N_PARTIES, PARTY_IDS, isMinor, type ElectionOutcome, type FieldedId, type RegionId, type SeatKind } from '../types';
 import {
   CAP, CHIEF, CHIEF_OPS, DECAY, EFFECT, actionCost, canDo, contests, contestsState, doAction, expectedYield, gotvWeeks,
 } from './actions';
@@ -29,6 +29,10 @@ const PROFILES: Record<FieldedId, Profile> = {
   gbk:    { ground: 1.0, machinery: 1.4, media: 0.5, attack: 0.3, reserve: 150_000, shady: false },
   gbs:    { ground: 1.1, machinery: 1.2, media: 0.5, attack: 0.5, reserve: 100_000, shady: true },
   legasi: { ground: 1.3, machinery: 0.9, media: 0.7, attack: 0.8, reserve: 80_000, shady: false },
+  // The small parties: the young reformers live online; the Borneo locals knock on doors and avoid fights.
+  genba:  { ground: 1.1, machinery: 0.6, media: 1.6, attack: 0.6, reserve: 40_000, shady: false },
+  cahaya: { ground: 1.2, machinery: 1.2, media: 0.5, attack: 0.3, reserve: 40_000, shady: false },
+  suara:  { ground: 1.2, machinery: 1.2, media: 0.4, attack: 0.3, reserve: 30_000, shady: false },
 };
 
 /** Difficulty changes how well rivals read the race and choose, never their resources. */
@@ -129,9 +133,10 @@ export function rankOptions(world: World, c: Campaign, p: number, reading: Readi
 
   // Attack whichever party stands in the way in the most valuable seats.
   const blocking = new Array<number>(N_PARTIES).fill(0);
-  mainRival.forEach((q, i) => { if (q >= 0) blocking[q] += value[i]; });
+  // A national attack is a big party's weapon: a party of one seat does not run them, and is not worth one.
+  mainRival.forEach((q, i) => { if (q >= 0 && !isMinor(q)) blocking[q] += value[i]; });
   const foe = blocking.indexOf(Math.max(...blocking));
-  if (c.parties[foe]) consider('attack', { party: foe }, blocking[foe] * EFFECT.attack * 0.5, profile.attack);
+  if (!isMinor(p) && c.parties[foe]) consider('attack', { party: foe }, blocking[foe] * EFFECT.attack * 0.5, profile.attack);
 
   // Fundraise when short; the lower the funds, the more urgent.
   const need = Math.max(0, 1.6 - pc.funds / reserve);

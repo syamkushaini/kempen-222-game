@@ -349,10 +349,12 @@ describe('chiefs', () => {
       while (c.phase === 'campaign') endWeek(world, c);
       return electionResult(world, c)!.tally[P('ps')];
     };
+    // One campaign can swing by twenty seats either way; it takes a couple of dozen to see what chiefs are worth.
+    const seeds = Array.from({ length: 24 }, (_, i) => i + 1);
     let withChiefs = 0, without = 0;
-    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) { withChiefs += run(seed, true); without += run(seed, false); }
-    expect(withChiefs).toBeGreaterThan(without + 16); // more than 2 seats a campaign on average
-  }, 20_000); // sixteen whole campaigns: slow when the machine is busy
+    for (const seed of seeds) { withChiefs += run(seed, true); without += run(seed, false); }
+    expect(withChiefs).toBeGreaterThan(without + 2 * seeds.length); // more than 2 seats a campaign on average
+  }, 120_000); // forty-eight whole campaigns: slow when the machine is busy
 });
 
 describe('polling day', () => {

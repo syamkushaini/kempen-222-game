@@ -3,10 +3,10 @@ import { lastElection, runElection, type World } from '../election';
 import { clamp } from '../math';
 import { Rng } from '../rng';
 import {
-  N_BLOCS, N_PARTIES, PARTY_IDS, isFielded,
+  N_BLOCS, N_PARTIES, PARTY_IDS, isFielded, isMinor,
   type Dynamics, type ElectionOutcome, type FieldedId, type PartyId, type RegionId,
 } from '../types';
-import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, scaled, truth } from './actions';
+import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, purseOf, scaled, truth } from './actions';
 import { applyBackstory } from './leader';
 import { pressReacts } from './media';
 import { incomeBoost, managerDays, pollDiscount, pollPrecision } from './perks';
@@ -37,6 +37,10 @@ const START: Record<FieldedId, { funds: number; home: RegionId; machineryBonus: 
   gbk:    { funds: 700_000,   home: 'sarawak',  machineryBonus: 10, days: 5 },
   gbs:    { funds: 400_000,   home: 'sabah',    machineryBonus: 5,  days: 4 },
   legasi: { funds: 300_000,   home: 'sabah',    machineryBonus: 0,  days: 4 },
+  // The small parties run on a shoestring.
+  genba:  { funds: 90_000,    home: 'johor',    machineryBonus: 0,  days: 5 },
+  cahaya: { funds: 80_000,    home: 'sarawak',  machineryBonus: 5,  days: 4 },
+  suara:  { funds: 60_000,    home: 'sabah',    machineryBonus: 5,  days: 4 },
 };
 
 /** How far opinion has drifted since the last election (standard deviations, logit units). */
@@ -82,7 +86,7 @@ export function startingFunds(world: World, p: number): number {
 }
 
 export function weeklyIncome(world: World, p: number): number {
-  return scaled(world, 40_000 + 300_000 * lastShares(world).national[p]);
+  return scaled(world, (40_000 + 300_000 * lastShares(world).national[p]) * purseOf(p));
 }
 
 // ---------- setup ----------
@@ -228,6 +232,14 @@ function playerNews(c: Campaign, r: ActionReport): NewsItem {
 /** Turns a rival's week into a few public news lines. Quiet work (canvassing, fundraising) stays unseen. */
 function rivalNews(c: Campaign, p: number, reports: ActionReport[]) {
   const party = ref.party(p);
+  // A small party's routine ground work is not news; its viral moments and flops are.
+  if (isMinor(p)) {
+    for (const r of reports) {
+      if (r.id === 'social' && r.quality === 'viral') push(c, { party: p, key: 'news.rival.viral', vars: { party }, tone: 'neutral' });
+      if (r.id === 'social' && r.quality === 'flop') push(c, { party: p, key: 'news.rival.flop', vars: { party }, tone: 'neutral' });
+    }
+    return;
+  }
   const seats = [...new Set(reports.filter((r) => r.id === 'ceramah' || r.id === 'walkabout').map((r) => r.target.seat!))];
   if (seats.length) push(c, { party: p, key: 'news.rival.ground', vars: { party, seats: `@seats:${seats.join(',')}` }, tone: 'neutral' });
   const rallies = reports.filter((r) => r.id === 'megarally').map((r) => r.target.state!);

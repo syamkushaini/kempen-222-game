@@ -9,9 +9,12 @@ import { LEADERS } from './cast';
 import { endDay, makeOffer, blocs, pledged } from './formation';
 import { houseTally } from './contests';
 import { openTalks, whipCount } from './govern';
+import { expectedYield, MINOR_PURSE, spendingLimit } from './actions';
+import { assessPact, draftPact, meetLeader, others } from './diplomacy';
+import { newGame, parseSave, SAVE_VERSION } from '../../state/game';
 import { Rng } from '../rng';
 import { takePoll } from './polls';
-import { campaigns, newCampaign, playable, truth } from './turn';
+import { campaigns, electionResult, endWeek, newCampaign, playable, truth, weeklyIncome } from './turn';
 import type { Campaign, Offer } from './types';
 import { isValidCampaign } from './validate';
 
@@ -83,14 +86,101 @@ describe('what small parties are', () => {
     expect(new Set(Object.values(LEADERS)).size).toBe(Object.keys(LEADERS).length);
   });
 
-  it('run no campaign in any contest, and cannot be played', () => {
-    for (const id of ['general', 'career', 'byelection', 'state:perak'] as const) {
+  it('campaign only where they hold a seat or took a real share, and cannot be played', () => {
+    // The general election, a career and the talks after a hung result: each has them holding a seat.
+    for (const id of ['general', 'career', 'hung'] as const) {
       const w = getWorld(id)!;
-      for (const p of [GENBA, CAHAYA, SUARA]) expect(campaigns(w, p), `${id} ${PARTY_IDS[p]}`).toBe(false);
-      expect(playable(w).some(isMinor)).toBe(false);
+      for (const p of [GENBA, CAHAYA, SUARA]) expect(campaigns(w, p), `${id} ${PARTY_IDS[p]}`).toBe(true);
     }
+    // A by-election and the state assemblies we have have none of their seats.
+    for (const id of ['byelection', 'state:perak', 'state:pahang', 'state:perlis'] as const) {
+      for (const p of [GENBA, CAHAYA, SUARA]) expect(campaigns(getWorld(id)!, p), `${id} ${PARTY_IDS[p]}`).toBe(false);
+    }
+    for (const id of ['general', 'career', 'byelection', 'state:perak'] as const) expect(playable(getWorld(id)!).some(isMinor)).toBe(false);
     const c = newCampaign(world, { player: PS, difficulty: 'normal', seed: 3 });
-    for (const p of [GENBA, CAHAYA, SUARA]) expect(c.parties[p]).toBeNull();
+    for (const p of [GENBA, CAHAYA, SUARA]) expect(c.parties[p]).not.toBeNull();
+    expect(c.parties[PARTY_IDS.indexOf('oth')]).toBeNull();
+    const perak = newCampaign(getWorld('state:perak')!, { player: PS, difficulty: 'normal', seed: 3 });
+    for (const p of [GENBA, CAHAYA, SUARA]) expect(perak.parties[p]).toBeNull();
+  });
+});
+
+describe('small parties campaigning', () => {
+  it('start with a shoestring and a short week, and raise money in proportion', () => {
+    const c = newCampaign(world, { player: PS, difficulty: 'normal', seed: 3 });
+    for (const p of [GENBA, CAHAYA, SUARA]) {
+      expect(c.parties[p]!.funds, PARTY_IDS[p]).toBeLessThan(c.parties[GBS]!.funds);
+      expect(c.parties[p]!.days, PARTY_IDS[p]).toBeLessThan(7);
+      expect(expectedYield(world, c, p, 'crowdfund')).toBeCloseTo(expectedYield(world, c, PS, 'crowdfund') * MINOR_PURSE, 6);
+      expect(weeklyIncome(world, p)).toBeLessThan(weeklyIncome(world, PS) * 0.6);
+    }
+  });
+
+  it('play their weeks like the rivals, spend what they have, and never go into debt', () => {
+    for (const seed of [1, 2, 3]) {
+      const c = newCampaign(world, { player: PS, difficulty: 'normal', seed });
+      const before = [GENBA, CAHAYA, SUARA].map((p) => c.parties[p]!.funds);
+      while (c.phase === 'campaign') endWeek(world, c);
+      [GENBA, CAHAYA, SUARA].forEach((p, i) => {
+        const pc = c.parties[p]!;
+        expect(Object.keys(pc.used).length, `${seed} ${PARTY_IDS[p]}`).toBeGreaterThan(0);
+        expect(pc.spent, `${seed} ${PARTY_IDS[p]}`).toBeGreaterThan(0);
+        expect(pc.funds).toBeGreaterThanOrEqual(0);
+        expect(pc.spent).toBeLessThanOrEqual(spendingLimit(world));
+        void before[i];
+      });
+      expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world)).toBe(true);
+    }
+  });
+
+  it('run no national attacks, and their routine moves are not news', () => {
+    for (const seed of [1, 2, 3]) {
+      const c = newCampaign(world, { player: PS, difficulty: 'normal', seed });
+      while (c.phase === 'campaign') endWeek(world, c);
+      for (const p of [GENBA, CAHAYA, SUARA]) {
+        expect(c.parties[p]!.used.attack, `${seed} ${PARTY_IDS[p]}`).toBeUndefined();
+        const own = c.news.filter((n) => n.party === p && n.key.startsWith('news.rival.'));
+        expect(own.every((n) => n.key === 'news.rival.viral' || n.key === 'news.rival.flop'), `${seed} ${PARTY_IDS[p]}`).toBe(true);
+      }
+      // Nobody is told a small party attacked them.
+      expect(c.news.some((n) => n.key.startsWith('news.rival.attack') && [GENBA, CAHAYA, SUARA].includes(n.party ?? -1))).toBe(false);
+    }
+  });
+
+  it('win about the seats they hold, give or take what the voters decide', () => {
+    let genba = 0, cahaya = 0, suara = 0;
+    const seeds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    for (const seed of seeds) {
+      const c = newCampaign(world, { player: PS, difficulty: 'normal', seed });
+      while (c.phase === 'campaign') endWeek(world, c);
+      const t = electionResult(world, c)!.tally;
+      genba += t[GENBA]; cahaya += t[CAHAYA]; suara += t[SUARA];
+    }
+    for (const total of [genba, cahaya, suara]) {
+      expect(total / seeds.length).toBeGreaterThan(0.3);
+      expect(total / seeds.length).toBeLessThan(3);
+    }
+  });
+
+  it('can be met, and can be offered a pact, like any other leader', () => {
+    const c = newCampaign(world, { player: PS, difficulty: 'normal', seed: 3 });
+    expect(others(c, PS)).toEqual(expect.arrayContaining([GENBA, CAHAYA, SUARA]));
+    const meeting = meetLeader(world, c, GENBA);
+    expect(meeting).not.toBeNull();
+    const prop = draftPact(world, c, PS, GENBA, 'targeted', lastElection(world));
+    expect(assessPact(world, c, PS, GENBA, prop).reply).toBeTruthy();
+  });
+
+  it('carry on from a game saved before they could campaign', () => {
+    const c = newCampaign(world, { player: PS, difficulty: 'normal', seed: 3 });
+    const g = newGame('Before', c, 5) as any;
+    g.version = 9;
+    for (const p of [GENBA, CAHAYA, SUARA]) g.campaign.parties[p] = null;
+    const parsed = parseSave(JSON.stringify(g));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    for (const p of [GENBA, CAHAYA, SUARA]) expect(parsed.state.campaign.parties[p]).not.toBeNull();
+    expect(parsed.state.version).toBe(SAVE_VERSION);
   });
 });
 
