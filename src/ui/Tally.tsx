@@ -1,5 +1,28 @@
+import { useEffect, useRef, useState } from 'react';
 import { majorityLine } from '../sim/election';
 import { partyColor, partyName, partyShort, useFormat, useT, useWorld } from './hooks';
+
+/** A number that runs up to its new value instead of jumping, unless the player asked for less motion. */
+export function CountUp({ value, ms = 320 }: { value: number; ms?: number }) {
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+  useEffect(() => {
+    const calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (calm || from.current === value || typeof requestAnimationFrame !== 'function') { from.current = value; setShown(value); return; }
+    const start = performance.now(), a = from.current;
+    let frame = 0;
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - start) / ms);
+      const v = Math.round(a + (value - a) * k);
+      from.current = v;
+      setShown(v);
+      if (k < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value, ms]);
+  return <>{shown}</>;
+}
 
 /** The parliament bar on its own: seats per party against the majority line. */
 export function SeatBar({ tally, thin }: { tally: number[]; thin?: boolean }) {
@@ -50,7 +73,7 @@ export function Tally(props: { tally: number[]; votes: number[]; title: string; 
             <span className="dot" style={{ background: partyColor(o.p) }} />
             <span className="grow">{partyName(t, o.p)}</span>
             <span className="muted num">{totalVotes > 0 ? f.pct(props.votes[o.p] / totalVotes) : '–'}</span>
-            <strong className="num seats">{o.seats}</strong>
+            <strong className="num seats"><CountUp value={o.seats} /></strong>
           </li>
         ))}
       </ul>

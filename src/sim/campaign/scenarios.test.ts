@@ -3,6 +3,7 @@ import { BYELECTION_SEAT, BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, w
 import { lastElection, majorityLine } from '../election';
 import { PARTY_IDS } from '../types';
 import { actionCost, canDo } from './actions';
+import { flipKind } from './night';
 import { pollCost } from './polls';
 import {
   autoPlayWeek, campaigns, countBatches, electionResult, endWeek, newCampaign, playable, playerAct, playerPoll,
@@ -187,5 +188,16 @@ describe('playing the smaller contests', () => {
     expect(boxes).toHaveLength(10);
     expect(boxes.at(-1)).toEqual(result.seats[0].votes);
     for (let i = 1; i < boxes.length; i++) boxes[i].forEach((v, p) => expect(v).toBeGreaterThanOrEqual(boxes[i - 1][p] - 1));
+  });
+});
+
+describe('what a declaration meant on election night', () => {
+  it('tells a hold from a flip, and the player’s gains and losses from other parties’', () => {
+    const [a, b, me] = [0, 1, 2];
+    expect(flipKind(a, a, me)).toBe('hold');
+    expect(flipKind(me, me, me)).toBe('hold');
+    expect(flipKind(me, a, me)).toBe('gain');
+    expect(flipKind(a, me, me)).toBe('loss');
+    expect(flipKind(b, a, me)).toBe('flip');
   });
 });

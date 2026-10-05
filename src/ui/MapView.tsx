@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import type { Flip } from '../sim/campaign/night';
 import type { World } from '../sim/election';
 import type { RegionId, SeatClass } from '../sim/types';
 import { useStore } from '../state/store';
@@ -41,12 +42,17 @@ const SeatPath = memo(function SeatPath(props: {
   );
 });
 
+/** How a freshly declared seat is flagged: held by the same party, taken from another, or (for the player) won or lost. */
+export type PulseKind = Flip;
+
 export function MapView(props: {
   display: SeatDisplay[];
   /** Controls shown at the top right of the map panel. */
   toolbar?: ReactNode;
   /** Region to mark with the leader's pin. */
   marker?: RegionId | null;
+  /** A seat that has just been declared: it flashes an outline, in a colour that says whether it changed hands. `n` restarts the flash. */
+  pulse?: { id: string; kind: PulseKind; n: number } | null;
 }) {
   const { display } = props;
   const t = useT();
@@ -177,6 +183,7 @@ export function MapView(props: {
               {Object.entries(map.states).map(([id, shape]) => (
                 <path key={id} d={shape.d} className="state-outline" />
               ))}
+              {props.pulse && map.seats[props.pulse.id] && <path key={props.pulse.n} d={map.seats[props.pulse.id].d} className={`seat-pulse ${props.pulse.kind}`} />}
               {selectedSeat && map.seats[selectedSeat] && <path d={map.seats[selectedSeat].d} className="seat-highlight" />}
               {marker && (
                 <g className="leader-pin" transform={`translate(${(marker[0] + marker[2]) / 2} ${(marker[1] + marker[3]) / 2}) scale(${1 / zoom.k})`}>

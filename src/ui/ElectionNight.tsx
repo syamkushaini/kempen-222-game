@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { flipKind } from '../sim/campaign/night';
 import { countBatches, declarationOrder, electionResult, summarise } from '../sim/campaign/turn';
 import { majorityLine } from '../sim/election';
 import { N_PARTIES } from '../sim/types';
 import { useStore } from '../state/store';
 import { lastOutcome, partyColor, partyName, partyShort, regionLabel, seatName, useFormat, useT, useWorld, type SeatDisplay } from './hooks';
 import { sound } from './audio';
-import { MapView } from './MapView';
+import { MapView, type PulseKind } from './MapView';
 import { GamePanel } from './SavesTab';
 import { electionCard, ShareDialog } from './ShareDialog';
 import { Review } from './Review';
@@ -86,6 +87,14 @@ function SeatBySeat() {
   }, [count]); // eslint-disable-line react-hooks/exhaustive-deps
   const card = useMemo(() => electionCard(t, f, world, campaign, result, summary), [t, f, world, campaign, result, summary]);
   const ticker = order.slice(Math.max(0, count - 8), count).reverse();
+  // The seat just declared flashes on the map, and the colour says what it meant. A skip to the end flashes nothing.
+  const pulse = useMemo(() => {
+    if (count === 0 || count >= TOTAL || !playing) return null;
+    const i = order[count - 1];
+    const o = result.seats[i], was = last.seats[i].winner;
+    const kind: PulseKind = flipKind(o.winner, was, campaign.player);
+    return { id: world.seats[i].id, kind, n: count };
+  }, [count, playing]); // eslint-disable-line react-hooks/exhaustive-deps
   const picked = selectedSeat ? world.seatIndex.get(selectedSeat)! : -1;
   const pickedShown = picked >= 0 && display[picked].winner >= 0 ? result.seats[picked] : null;
 
@@ -102,6 +111,7 @@ function SeatBySeat() {
       <section className="map-column">
         <MapView
           display={display}
+          pulse={pulse}
           toolbar={<span className="muted num">{t('night.declared', { n: count, total: TOTAL })}</span>}
         />
         <div className="progress" aria-hidden="true"><span style={{ width: `${(count / TOTAL) * 100}%` }} /></div>
@@ -120,7 +130,7 @@ function SeatBySeat() {
 
         <div className="tab-body">
           {majorityAt && count >= majorityAt.at && (
-            <p className="call" style={{ borderColor: partyColor(majorityAt.party) }}>
+            <p className="call majority" style={{ borderColor: partyColor(majorityAt.party) }}>
               {t('night.majorityCall', { party: partyName(t, majorityAt.party), n: MAJORITY })}
             </p>
           )}

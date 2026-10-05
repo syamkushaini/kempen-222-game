@@ -22,6 +22,12 @@ export function declarationOrder(world: World, c: Campaign): number[] {
     .map((x) => x.i);
 }
 
+/** What a declaration meant: the seat stayed with the same party, changed hands, or (for the player) was won or lost. */
+export type Flip = 'hold' | 'flip' | 'gain' | 'loss';
+export function flipKind(winner: number, was: number, player: number): Flip {
+  return winner === was ? 'hold' : winner === player ? 'gain' : was === player ? 'loss' : 'flip';
+}
+
 /** How the night went for the player. The last two are for a single-seat by-election. */
 export type Verdict = 'majority' | 'largest' | 'gained' | 'held' | 'lost' | 'won' | 'defeated';
 
