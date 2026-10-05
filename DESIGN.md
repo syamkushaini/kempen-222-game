@@ -460,7 +460,9 @@ First players said the actions screen was cluttered and that it was not clear wh
 - **A "Suggested this week" group tops the Actions tab** with up to three actions of different kinds that can be done now, each with a line saying why and, for ground work, a link that shows the seat on the map. They are ranked by the same value-for-effort rule the rivals use (`rankOptions` in `ai.ts`, shared; the rivals were checked to play exactly as before). Unlike the rivals, who see the true race through noise, the suggestions use only what the player can see: the last election, and any poll they paid for in a seat. So they improve as the player polls, and hidden drift changes nothing. An action drops off the list once done. Attacks are weighted down (they cost nothing, so would lead every list, and three in ten backfire), and tycoon money is never suggested. The group is hidden during the tutorial.
 - **Money under RM500 shows as it is** (`RM0`, not `RM0k`).
 
-Ideas from the same feedback not yet built: a quick-start title screen, a spotlight on the tutorial's next button, harder optional settings (hidden odds, noisier polls), and small parties.
+- **The title screen opens on a quick start.** One card: pick a party (three pills), see the randomly drawn vacancy (and draw another), and press "Start the tutorial", which starts the guided three-week by-election on gentle rivals. Everything else (other contests, a leader's backstory, a party of one's own, difficulty, the game's name) is behind "Customise instead", and a player who customises lands there on later visits (remembered on the device). For anyone with a game to continue, "Continue" is the screen's one primary button.
+
+Ideas from the same feedback not yet built: a spotlight on the tutorial's next button, harder optional settings (hidden odds, noisier polls), and small parties.
 
 ## Visual design: the Linear system (5 Oct 2026)
 
