@@ -13,9 +13,9 @@ import { Toasts } from './Honours';
 import { LegacyScreen } from './LegacyScreen';
 import { SceneModal } from './SceneModal';
 import { ElectionNight } from './ElectionNight';
-import { Header } from './Header';
+import { CampaignBar, Header } from './Header';
 import { NextStep } from './NextStep';
-import { DisplayContext, useCampaignDisplay, useSpot, useT, useWorld } from './hooks';
+import { DisplayContext, useCampaignDisplay, useNarrow, useSpot, useT, useWorld } from './hooks';
 import { MapView } from './MapView';
 import { now } from '../sim/campaign/news';
 import { NewsTab } from './NewsTab';
@@ -75,6 +75,7 @@ function CampaignScreen() {
   const setTab = useStore((s) => s.setTab);
   const display = useCampaignDisplay();
   const world = useWorld();
+  const narrow = useNarrow();
   // A one-seat contest has nobody to delegate to and no pacts to make.
   const term = campaign.phase === 'term';
   const tabs = TABS.filter((id) =>
@@ -87,11 +88,13 @@ function CampaignScreen() {
     <DisplayContext.Provider value={display}>
       <main className="layout">
         <NextStep />
+        {/* on a phone the adviser comes first, where she cannot be missed */}
+        {narrow && <Adviser />}
         <section className="map-column">
           <MapView display={display} toolbar={<ViewSwitch />} marker={term ? null : campaign.parties[campaign.player]!.location} />
         </section>
         <aside className="sidebar">
-          <Adviser />
+          {!narrow && <Adviser />}
           <Waiting />
           <Standing campaign={campaign} />
           <div className="tabs" role="tablist">
@@ -117,6 +120,7 @@ function CampaignScreen() {
           </div>
         </aside>
       </main>
+      <CampaignBar />
     </DisplayContext.Provider>
   );
 }

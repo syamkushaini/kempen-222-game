@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { termIncome, termSpending } from '../sim/campaign/career';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore, type Theme } from '../state/store';
-import { regionLabel, useFormat, useSpot, useT, useWorld } from './hooks';
+import { regionLabel, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
 
 function SettingsControls() {
   const t = useT();
@@ -36,17 +36,14 @@ function SettingsControls() {
   );
 }
 
-/** Week, days, money and location, plus the button that ends the week. */
-function Hud() {
+/** Ending the week asks first when a day or more would be thrown away; the second press confirms. */
+function useEndWeek() {
   const t = useT();
-  const f = useFormat();
-  const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const endWeek = useStore((s) => s.endWeek);
   const me = campaign.parties[campaign.player]!;
   const final = campaign.week === campaign.totalWeeks;
   const [armed, setArmed] = useState(false);
-  const spot = useSpot();
 
   useEffect(() => {
     if (!armed) return;
@@ -55,11 +52,51 @@ function Hud() {
   }, [armed]);
   useEffect(() => setArmed(false), [campaign.week]);
 
-  // Ask before throwing away a day or more of unused time.
   const onEnd = () => {
     if (me.days >= 1 && !armed) setArmed(true);
     else { setArmed(false); endWeek(); }
   };
+  return { armed, onEnd, label: `${armed ? t('hud.endWeekConfirm') : final ? t('hud.toPolls') : t('hud.endWeek')} ▸` };
+}
+
+function EndWeekButton({ className = '' }: { className?: string }) {
+  const { armed, onEnd, label } = useEndWeek();
+  const spot = useSpot();
+  return <button className={`btn primary end-week${className}${armed ? ' armed' : ''}${spot('end-week') ? ' spot' : ''}`} onClick={onEnd}>{label}</button>;
+}
+
+/** The days left, funds and End week button, kept at the bottom of a phone screen so they never scroll away. */
+export function CampaignBar() {
+  const t = useT();
+  const f = useFormat();
+  const campaign = useStore((s) => s.game!.campaign);
+  const narrow = useNarrow();
+  if (campaign.phase !== 'campaign' || !narrow) return null;
+  const me = campaign.parties[campaign.player]!;
+  return (
+    <div className="campaign-bar">
+      <div className="hud-item">
+        <span className="hud-label">{t('hud.days')}</span>
+        <strong className="num hud-value">{me.days}</strong>
+      </div>
+      <div className="hud-item">
+        <span className="hud-label">{t('hud.funds')}</span>
+        <strong className="num hud-value">{f.rm(me.funds)}</strong>
+      </div>
+      <EndWeekButton />
+    </div>
+  );
+}
+
+/** Week, days, money and location, plus the button that ends the week. */
+function Hud() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const narrow = useNarrow();
+  const me = campaign.parties[campaign.player]!;
+  const final = campaign.week === campaign.totalWeeks;
 
   return (
     <div className="hud">
@@ -90,9 +127,8 @@ function Hud() {
           <strong className="hud-value">{regionLabel(t, world, me.location)}</strong>
         </div>
       )}
-      <button className={`btn primary end-week${armed ? ' armed' : ''}${spot('end-week') ? ' spot' : ''}`} onClick={onEnd}>
-        {armed ? t('hud.endWeekConfirm') : final ? t('hud.toPolls') : t('hud.endWeek')} ▸
-      </button>
+      {/* on a phone the button lives in the bottom bar */}
+      {!narrow && <EndWeekButton />}
     </div>
   );
 }

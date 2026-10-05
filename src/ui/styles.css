@@ -499,3 +499,10 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 .legacy-title { font-size: 28px; font-weight: 600; letter-spacing: -0.6px; line-height: 1.2; margin: 4px 0 12px; }
 .legacy .facts { margin: 14px 0; }
 .choices .link { margin: 4px 0 0; font-weight: 400; }
+
+/* ---------- phone: days, funds and End week stay at the bottom ---------- */
+
+.campaign-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; align-items: center; gap: 20px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line); box-shadow: 0 -6px 16px rgb(0 0 0 / 0.25); }
+.campaign-bar .end-week { margin-left: auto; min-height: 44px; }
+/* leave room under the last panel so the bar never covers it */
+@media (max-width: 980px) { .app { padding-bottom: 88px; } }

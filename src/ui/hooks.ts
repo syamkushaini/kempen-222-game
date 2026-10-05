@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { PARTIES } from '../data/parties';
 import { scenarioInfo, world as generalWorld, worldOf } from '../data/world';
 import { LEADERS } from '../sim/campaign/cast';
@@ -90,6 +90,21 @@ export function useSpot(): (name: string) => boolean {
   const tab = useStore((s) => s.tab);
   const spots = step >= 0 && campaign && STEPS[step] ? STEPS[step].spots({ campaign, selectedSeat, tab }) : [];
   return (name) => spots.includes(name);
+}
+
+/** Whether the screen is phone or tablet width, where the page is one column (matches the stylesheet's 980px breakpoint). */
+export function useNarrow(): boolean {
+  const query = '(max-width: 980px)';
+  const [narrow, setNarrow] = useState(() => typeof matchMedia === 'function' && matchMedia(query).matches);
+  useEffect(() => {
+    if (typeof matchMedia !== 'function') return;
+    const watch = matchMedia(query);
+    const update = () => setNarrow(watch.matches);
+    update();
+    watch.addEventListener('change', update);
+    return () => watch.removeEventListener('change', update);
+  }, []);
+  return narrow;
 }
 
 export function useWorld(): World {
