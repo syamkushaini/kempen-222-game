@@ -44,7 +44,7 @@ button, input, select { font: inherit; color: inherit; }
 .segmented button.active { background: var(--panel-3); color: var(--ink); }
 .segmented button:hover:not(.active) { color: var(--ink); }
 
-button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible, [role="radio"]:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 /* ---------- layout ---------- */
 
@@ -299,7 +299,7 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 .title-intro { font-size: 18px; line-height: 1.5; letter-spacing: -0.1px; color: var(--ink-muted); margin-bottom: 16px; max-width: 60ch; }
 .continue { display: block; width: 100%; text-align: left; padding: 12px 16px; margin: 16px 0 8px; }
 .party-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.party-card { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 16px; background: var(--panel-2); border: 1px solid var(--line); border-top: 4px solid; border-radius: 12px; cursor: pointer; }
+.party-card { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 16px; background: var(--panel-2); border: 1px solid var(--line); border-top: 4px solid; border-radius: 12px; cursor: pointer; -webkit-user-select: none; user-select: none; }
 .party-card strong { font-size: 16px; font-weight: 500; }
 .party-card:hover { border-color: var(--line-2); }
 .party-card.active { background: var(--panel-3); border-color: var(--line-3); }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, STATE_SCENARIOS } from '../data/world';
 import type { ContestKind } from '../sim/campaign/rules';
@@ -37,6 +37,20 @@ const drawSeat = (not?: string) => {
   const pool = BYELECTION_SEATS.filter((id) => id !== not);
   return pool[Math.floor(Math.random() * pool.length)];
 };
+
+/** One choice of a radio group, as a card. Not a <button>, because a word in its text that explains itself is a button of its own. */
+function RadioCard({ checked, className, style, onSelect, children }: { checked: boolean; className: string; style?: CSSProperties; onSelect: () => void; children: ReactNode }) {
+  return (
+    <div
+      role="radio" aria-checked={checked} tabIndex={0} className={checked ? `${className} active` : className} style={style}
+      // A press on the word inside is for the word, not the card.
+      onClick={(e) => { if (!(e.target as Element).closest('button')) onSelect(); }}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(); } }}
+    >
+      {children}
+    </div>
+  );
+}
 
 export function Title() {
   const t = useT();
@@ -113,11 +127,11 @@ export function Title() {
           <h3>{t('title.contest')}</h3>
           <div className="party-cards four" role="radiogroup" aria-label={t('title.contest')}>
             {KINDS.map((k) => (
-              <button key={k} role="radio" aria-checked={kind === k} className={kind === k ? 'party-card plain active' : 'party-card plain'} onClick={() => setKind(k)}>
+              <RadioCard key={k} checked={kind === k} className="party-card plain" onSelect={() => setKind(k)}>
                 <strong>{t(`scenario.${k}`)}</strong>
                 <span className="small"><Jargon>{t(`scenario.${k}.blurb`)}</Jargon></span>
                 {k === 'byelection' && <span className="badge leaning start-here">{t('title.startHere')}</span>}
-              </button>
+              </RadioCard>
             ))}
           </div>
           {kind === 'state' && (
@@ -140,7 +154,7 @@ export function Title() {
             {parties.map((p) => {
               const id = PARTY_IDS[p] as 'ps' | 'bp' | 'pt';
               return (
-                <button key={id} role="radio" aria-checked={player === p} className={player === p ? 'party-card active' : 'party-card'} style={{ borderTopColor: PARTIES[id].color }} onClick={() => { setChosen(p); setDraft(null); }}>
+                <RadioCard key={id} checked={player === p} className="party-card" style={{ borderTopColor: PARTIES[id].color }} onSelect={() => { setChosen(p); setDraft(null); }}>
                   <span className="card-head">
                     <Portrait leader={p} size={44} />
                     <span className="grow">
@@ -155,7 +169,7 @@ export function Title() {
                   </span>
                   {allyOf(p) >= 0 && <span className="muted small">{t('title.stands', { party: PARTIES[PARTY_IDS[allyOf(p)]].short, n: standsIn(p), total: world.seats.length })}</span>}
                   {kind === 'career' && <span className="badge plain">{t(`orders.seat.${CAREER_SEAT[id]}`)}</span>}
-                </button>
+                </RadioCard>
               );
             })}
           </div>
