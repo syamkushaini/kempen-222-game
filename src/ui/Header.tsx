@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { termIncome, termSpending } from '../sim/campaign/career';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore, type Theme } from '../state/store';
@@ -141,8 +141,19 @@ export function Header() {
   const t = useT();
   const phase = useStore((s) => s.game?.campaign.phase);
   const name = useStore((s) => s.game?.name);
+  const bar = useRef<HTMLElement>(null);
+  // The sticky sidebar sits below the bar, so it needs to know how tall the bar is.
+  useEffect(() => {
+    const el = bar.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const set = () => document.documentElement.style.setProperty('--header-h', `${el.offsetHeight}px`);
+    set();
+    const watch = new ResizeObserver(set);
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, []);
   return (
-    <header className="header">
+    <header className="header" ref={bar}>
       <div className="brand">
         <span className="brand-mark" aria-hidden="true">222</span>
         <div>

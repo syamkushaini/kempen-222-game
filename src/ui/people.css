@@ -1,7 +1,7 @@
 /* ---------- the leader, the team, the press ---------- */
 
-.pips { letter-spacing: 1px; color: var(--accent); font-size: 11px; white-space: nowrap; }
-.pips .muted { color: var(--line); }
+.pips { letter-spacing: 1px; color: var(--ink-muted); font-size: 12px; white-space: nowrap; }
+.pips .muted { color: var(--line-3); }
 .party-mark { flex: none; vertical-align: -3px; border-radius: 22%; }
 
 .leader-card { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
@@ -10,35 +10,35 @@
 .role { margin-bottom: 10px; }
 .role-head { margin: 8px 0 4px; }
 .role > ul { display: flex; flex-direction: column; gap: 6px; }
-.action.chosen { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
+.action.chosen { border-color: var(--line-3); background: var(--panel-3); }
 .row-buttons { flex: none; display: flex; flex-direction: column; gap: 5px; align-items: stretch; }
 .row-buttons .btn { white-space: nowrap; }
 
 /* title screen: the leader and a party of one's own */
 .party-cards.backstories { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-bottom: 10px; }
 .stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 8px; margin-top: 2px; }
-.check { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-weight: 600; cursor: pointer; }
-.check input { width: 16px; height: 16px; accent-color: var(--accent); }
-.creator { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: var(--panel-2); }
+.check { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-weight: 500; cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--primary); }
+.creator { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; background: var(--panel-2); }
 .creator-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr); gap: 10px; margin: 8px 0; }
 .field-label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
 .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
 .swatch-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--panel); cursor: pointer; padding: 0; box-shadow: 0 0 0 1px var(--line); }
-.swatch-btn.active { box-shadow: 0 0 0 3px var(--accent); }
+.swatch-btn.active { box-shadow: 0 0 0 3px var(--ink); }
 .mark-btn { border: 0; background: none; padding: 3px; border-radius: 10px; cursor: pointer; line-height: 0; }
-.mark-btn.active { box-shadow: 0 0 0 3px var(--accent); }
+.mark-btn.active { box-shadow: 0 0 0 3px var(--ink); }
 
 /* the press and what people say online */
 .news-views { margin-bottom: 10px; }
 .outlet .action-title .badge { margin-left: 4px; vertical-align: 1px; }
-.headline-quote { display: block; font: italic 600 14px/1.35 Georgia, 'Times New Roman', serif; margin: 4px 0 2px; }
+.headline-quote { display: block; font: 500 14px/1.4 var(--font); margin: 4px 0 2px; }
 .feed { display: flex; flex-direction: column; gap: 8px; }
-.post { display: flex; flex-direction: column; gap: 2px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 12px 12px 12px 3px; background: var(--panel-2); line-height: 1.4; animation: fade-up 200ms ease-out; }
-.handle { font-size: 12px; font-weight: 700; color: var(--accent); }
+.post { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; background: var(--panel-2); line-height: 1.4; animation: fade-up 200ms ease-out; }
+.handle { font-size: 12px; font-weight: 500; color: var(--ink-muted); }
 
 .state-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
-.state-chip { display: inline-flex; align-items: center; font-size: 12px; padding: 3px 9px 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-2); }
-.state-chip.mine { border-color: var(--accent); font-weight: 600; }
+.state-chip { display: inline-flex; align-items: center; font-size: 12px; padding: 4px 12px 4px 8px; border: 1px solid var(--line); border-radius: 9999px; background: var(--panel-2); }
+.state-chip.mine { border-color: var(--line-3); font-weight: 500; }
 
 .spend { margin: 6px 0 10px; }
 .spend.over { color: var(--bad); font-weight: 600; }

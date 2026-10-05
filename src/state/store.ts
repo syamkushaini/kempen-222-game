@@ -58,7 +58,7 @@ export const saveStore = new SaveStore(storage);
 const profileStore = new ProfileStore(storage);
 
 function loadSettings(): Settings {
-  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: false };
+  const fallback: Settings = { lang: 'en', theme: 'dark', sound: true, music: false };
   try {
     const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
     if (!raw) return fallback;

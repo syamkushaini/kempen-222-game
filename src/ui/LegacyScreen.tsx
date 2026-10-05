@@ -2,7 +2,7 @@ import { seatOf } from '../sim/campaign/events';
 import { useStore } from '../state/store';
 import { useMemo, useState } from 'react';
 import { leaderName, partyName, useT } from './hooks';
-import { Bunting, Portrait } from './Portrait';
+import { Portrait } from './Portrait';
 import { legacyCard, ShareDialog } from './ShareDialog';
 
 /** The end of a career: how the leader will be remembered, and the record behind it. */
@@ -19,7 +19,6 @@ export function LegacyScreen() {
   return (
     <main className="title legacy">
       <section className="panel title-main">
-        <Bunting />
         <div className="legacy-head">
           <Portrait leader={campaign.player} size={96} className="reveal" />
           <div className="grow">

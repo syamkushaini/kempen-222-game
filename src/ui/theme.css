@@ -1,0 +1,96 @@
+/*
+ * Kempen 222. The look follows the Linear design system (design-md/linear.app/DESIGN.md):
+ * a near-black canvas, a four-step surface ladder with hairline borders instead of shadows,
+ * one chromatic accent (lavender) kept for the brand mark, primary buttons, focus rings and
+ * links, and system sans type at weights 400 to 600. The six parties keep their own colours,
+ * which are data on the map and the charts.
+ *
+ * The system documents no light mode. The light theme here is built from its "inverse"
+ * tokens (white canvas, near-white surfaces, black ink) and the same lavender.
+ */
+
+:root {
+  color-scheme: dark;
+  --bg: #010102;            /* canvas */
+  --panel: #0f1011;         /* surface-1 */
+  --panel-2: #141516;       /* surface-2 */
+  --panel-3: #18191a;       /* surface-3 */
+  --panel-4: #191a1b;       /* surface-4 */
+  --line: #23252a;          /* hairline */
+  --line-2: #34343a;        /* hairline-strong */
+  --line-3: #3e3e44;        /* hairline-tertiary */
+  --ink: #f7f8f8;
+  --ink-muted: #d0d6e0;
+  --muted: #8a8f98;         /* ink-subtle */
+  --faint: #62666d;         /* ink-tertiary */
+  --primary: #5e6ad2;
+  --primary-hover: #828fff;
+  --primary-focus: #5e69d1;
+  --on-primary: #ffffff;
+  --link: #828fff;          /* the hover lavender: the base one is too dim for small text on near-black */
+  --ring: color-mix(in srgb, #5e69d1 50%, transparent);
+  --good: #27a644;          /* semantic-success */
+  --bad: #eb5757;           /* the in-product red of Linear's colour-tag palette */
+  --sea: #010102;
+  --map-stroke: #010102;
+  --state-stroke: #f7f8f8;
+  --undeclared: #191a1b;
+  --edge: inset 0 1px 0 rgb(255 255 255 / 4%);   /* the faint highlight on a lifted panel's top edge */
+  --scrim: rgb(0 0 0 / 60%);
+  --shadow: none;
+  --radius: 12px;
+  --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --panel: #f5f6f6;
+  --panel-2: #eceeef;
+  --panel-3: #e4e6e8;
+  --panel-4: #dcdfe1;
+  --line: #dfe1e4;
+  --line-2: #cdd0d5;
+  --line-3: #b9bdc4;
+  --ink: #000000;
+  --ink-muted: #3b4047;
+  --muted: #6a6f77;
+  --faint: #9a9ea6;
+  --link: #5e6ad2;
+  --good: #1f8a3b;
+  --bad: #cf3b3b;
+  --sea: #eceeef;
+  --map-stroke: #ffffff;
+  --state-stroke: #000000;
+  --undeclared: #dcdfe1;
+  --edge: none;
+  --scrim: rgb(0 0 0 / 40%);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --bg: #ffffff;
+    --panel: #f5f6f6;
+    --panel-2: #eceeef;
+    --panel-3: #e4e6e8;
+    --panel-4: #dcdfe1;
+    --line: #dfe1e4;
+    --line-2: #cdd0d5;
+    --line-3: #b9bdc4;
+    --ink: #000000;
+    --ink-muted: #3b4047;
+    --muted: #6a6f77;
+    --faint: #9a9ea6;
+    --link: #5e6ad2;
+    --good: #1f8a3b;
+    --bad: #cf3b3b;
+    --sea: #eceeef;
+    --map-stroke: #ffffff;
+    --state-stroke: #000000;
+    --undeclared: #dcdfe1;
+    --edge: none;
+    --scrim: rgb(0 0 0 / 40%);
+  }
+}

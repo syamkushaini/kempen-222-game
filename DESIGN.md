@@ -461,3 +461,18 @@ First players said the actions screen was cluttered and that it was not clear wh
 - **Money under RM500 shows as it is** (`RM0`, not `RM0k`).
 
 Ideas from the same feedback not yet built: a quick-start title screen, a spotlight on the tutorial's next button, harder optional settings (hidden odds, noisier polls), and small parties.
+
+## Visual design: the Linear system (5 Oct 2026)
+
+The interface was restyled to follow `design-md/linear.app/DESIGN.md` strictly: a near-black `#010102` canvas, the four-step surface ladder (`#0f1011` to `#191a1b`) with hairline borders and no drop shadows, a single lavender accent (`#5e6ad2`) used only for the brand mark, primary buttons, focus rings and links, system sans type at weights 400 to 600, 8px buttons and inputs, 12px cards, 16px map and dialog panels, pill tabs and badges, a 56px sticky top bar, content capped at 1280px, and 4px-based spacing. Tokens live in `src/ui/theme.css`.
+
+Where the system was silent or the game needed more, these are the choices made:
+
+- **Party colours are kept.** The six parties are data on the map and charts, not decoration (the designer's choice when asked). Everything else is monochrome plus lavender.
+- **A light theme exists, derived.** Linear documents none. It is built from the system's own inverse tokens (white canvas, near-white surfaces, black ink) and the same lavender, with greys interpolated between them. Dark is the default for new players; "Auto" still follows the device.
+- **Success and error colours.** Success is the documented `#27a644`. Error and warning use `#eb5757`, from the in-product colour tags the system mentions but does not specify.
+- **Link text uses the hover lavender** (`#828fff`) in dark, because the base lavender is too dim for small text on near-black.
+- **Repeated row buttons are secondary** (surface and hairline); lavender is reserved for each screen's one call to action.
+- **The party-coloured bunting was removed** from the title and legacy screens: it was decoration in several accents, which the system forbids.
+- **Fonts are the documented fallback stack** (SF Pro, then the system sans), because the app is offline and cannot load Inter.
+- **Not restyled:** the shareable result card image, which has its own cream look, and the small animations, which are unchanged and still switched off for reduced motion.

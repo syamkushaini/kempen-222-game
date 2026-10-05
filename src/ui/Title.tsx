@@ -12,7 +12,7 @@ import { LEADERS } from '../sim/campaign/cast';
 import { lastOutcome, useFormat, useT } from './hooks';
 import { Credits } from './Credits';
 import { HonoursEntry } from './Honours';
-import { Bunting, Portrait } from './Portrait';
+import { Portrait } from './Portrait';
 import { saveLine, SaveSlots } from './SavesTab';
 import { LeaderPicker, PartyCreator, type Draft } from './Setup';
 
@@ -62,7 +62,6 @@ export function Title() {
   return (
     <main className="title">
       <section className="panel title-main">
-        <Bunting />
         <p className="title-intro">{t('title.intro')}</p>
         <p className="muted small">{t('title.fiction')}</p>
 
