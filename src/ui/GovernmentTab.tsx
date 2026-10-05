@@ -8,7 +8,7 @@ import { LEVER_IDS, LINE_IDS, type Dial } from '../sim/campaign/types';
 import { majorityLine } from '../sim/election';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
-import { partyColor, partyName, partyShort, useT, useWorld, type T } from './hooks';
+import { partyColor, partyName, partyShort, useFog, useT, useWorld, type T } from './hooks';
 import { Portrait } from './Portrait';
 
 const DIALS: Dial[] = [-1, 0, 1];
@@ -39,6 +39,7 @@ function DialSwitch(props: { value: Dial; label: string; tax?: boolean; onChange
  */
 export function GovernmentTab() {
   const t = useT();
+  const fog = useFog();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const setBudget = useStore((s) => s.setBudget);
@@ -185,7 +186,7 @@ export function GovernmentTab() {
               <li key={id} className="action">
                 <div className="grow">
                   <span className="action-title">{t(`lever.${id}`)}</span>
-                  <span className="action-meta">{t(`lever.${id}.desc`)}</span>
+                  <span className="action-meta">{t(`lever.${id}.desc${fog && id === 'agency' ? '.fog' : ''}` as StringKey)}</span>
                 </div>
                 <ConfirmButton label={t('house.lever.pull')} confirmLabel={t('house.lever.confirm')} disabled={!canPull(campaign, id)} onConfirm={() => pullLever(id)} />
               </li>

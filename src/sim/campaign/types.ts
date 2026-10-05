@@ -380,6 +380,12 @@ export interface Career {
   rounds: number;
 }
 
+/**
+ * Extra difficulty the player can choose, apart from how well the rivals play.
+ * `fog` hides the chances of anything left to luck; `noisy` doubles the error of every poll.
+ */
+export interface Challenge { fog: boolean; noisy: boolean }
+
 /** A campaign in progress: everything the rules need, as plain JSON. */
 export interface Campaign {
   /** Which contest this is; matches the id of the world it is played in. */
@@ -387,6 +393,8 @@ export interface Campaign {
   /** Party index the player leads. */
   player: number;
   difficulty: Difficulty;
+  /** Absent in a game played without any. */
+  challenge?: Challenge;
   totalWeeks: number;
   /** Current week, starting at 1. */
   week: number;

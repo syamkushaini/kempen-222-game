@@ -3,7 +3,7 @@ import type { StringKey } from '../i18n/strings';
 import { canHireTroopers, canInterview, coverage, interviewOdds, OUTLETS, trooperCost, usualCoverage } from '../sim/campaign/media';
 import { OUTLET_IDS, type NewsItem } from '../sim/campaign/types';
 import { useStore } from '../state/store';
-import { partyColor, partyName, renderNews, useFormat, useT, useWorld } from './hooks';
+import { partyColor, partyName, renderNews, useFog, useFormat, useT, useWorld } from './hooks';
 import { netizenFeed } from './netizens';
 import { ConfirmButton } from './SavesTab';
 
@@ -25,6 +25,7 @@ const word = (n: number) => `coverage.${Math.max(-2, Math.min(2, Math.round(n)))
 /** The outlets: how each treats the player, what it led with this week, and the chance to sit down with it. */
 function Press() {
   const t = useT();
+  const fog = useFog();
   const f = useFormat();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
@@ -59,7 +60,7 @@ function Press() {
                 {inCampaign && <span className="headline-quote">{t(`front.${slant}.${topic}.${(o + latest) % 2}` as StringKey, { party: partyName(t, me) })}</span>}
                 <span className="action-meta num">
                   {now !== usual[o][me] && <>{t('press.usual', { word: t(word(usual[o][me])).toLowerCase() })} · </>}
-                  {inCampaign && <>{f.days(0.5)} · {t('press.odds', { good: f.pct(odds.good, 0), gaffe: f.pct(odds.gaffe, 0) })}</>}
+                  {inCampaign && <>{f.days(0.5)}{!fog && <> · {t('press.odds', { good: f.pct(odds.good, 0), gaffe: f.pct(odds.gaffe, 0) })}</>}</>}
                 </span>
                 {inCampaign && !check.ok && check.reason !== 'closed' && <span className="action-reason">{t(`reason.${check.reason}` as StringKey)}</span>}
               </div>

@@ -20,7 +20,7 @@ import { latestNationalPoll, pollCost, takePoll } from './polls';
 import {
   DAYS_PER_WEEK,
   type ActionId, type ActionReport, type ActionTarget, type Campaign, type ChiefLevel, type Difficulty,
-  type BackstoryId, type NewsItem, type PartyCampaign, type Poll, type PollQuality, type PollScope,
+  type BackstoryId, type Challenge, type NewsItem, type PartyCampaign, type Poll, type PollQuality, type PollScope,
 } from './types';
 
 /** Parties that can be played, where they campaign in the contest. */
@@ -108,6 +108,8 @@ export interface CampaignOptions {
   totalWeeks?: number;
   /** Where the player's leader came from; nothing for the party's usual leader. */
   backstory?: BackstoryId | null;
+  /** Extra difficulty the player has chosen. */
+  challenge?: Partial<Challenge>;
 }
 
 /** A party's campaign as it stands on the first day: money in the bank, a rested leader, and branches where it has support. */
@@ -176,6 +178,7 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   };
   const c: Campaign = { ...bare, team: emptyTeam(bare, opts.backstory ?? null) };
   c.rng = rng.state;
+  if (opts.challenge?.fog || opts.challenge?.noisy) c.challenge = { fog: !!opts.challenge.fog, noisy: !!opts.challenge.noisy };
   // A career sets its own opening terms first, then lets the leader's past have its say.
   if (!world.rules.career) applyBackstory(c);
   if (world.rules.kind === 'hung') {

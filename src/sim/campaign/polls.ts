@@ -13,6 +13,9 @@ const SIGMA: Record<PollScope, Record<PollQuality, number>> = {
   seat: { quick: 0.035, full: 0.02 },
 };
 
+/** What the noisy-polls challenge multiplies every poll's error by. The poll states its own margin of error, so it stays honest. */
+export const NOISY = 2;
+
 export function pollCost(world: World, scope: PollScope, target: string | null, quality: PollQuality): number {
   const full = quality === 'full';
   if (scope === 'national') return scaled(world, full ? 150_000 : 60_000);
@@ -43,7 +46,7 @@ export function takePoll(
 ): Poll {
   // A poll of a one-seat contest is a seat poll, whatever it is called.
   // `precision` below 1 is a poll run by someone who knows how: the same sample, less error.
-  const sigma = (scope === 'national' && world.seats.length === 1 ? SIGMA.seat[quality] : SIGMA[scope][quality]) * precision;
+  const sigma = (scope === 'national' && world.seats.length === 1 ? SIGMA.seat[quality] : SIGMA[scope][quality]) * precision * (c.challenge?.noisy ? NOISY : 1);
   const poll: Poll = {
     id: c.polls.length + 1, week: now(c), scope, target, quality, public: isPublic, moe: 2 * sigma,
   };

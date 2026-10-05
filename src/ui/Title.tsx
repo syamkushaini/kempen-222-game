@@ -47,6 +47,8 @@ export function Title() {
   const [backstory, setBackstory] = useState<BackstoryId | null>(null);
   const [own, setOwn] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [fog, setFog] = useState(false);
+  const [noisy, setNoisy] = useState(false);
   // A first visit gets the quick start; anyone who has chosen to customise lands there again.
   const [custom, setCustom] = useState(() => { try { return localStorage.getItem(MODE_KEY) === 'custom'; } catch { return false; } });
   const pick = (value: boolean) => {
@@ -153,11 +155,23 @@ export function Title() {
           </div>
           <p className="muted small">{t(`difficulty.${level}.hint`)}</p>
 
+          <h3>{t('challenge.title')}</h3>
+          <label className="check">
+            <input type="checkbox" checked={fog} onChange={(e) => setFog(e.target.checked)} />
+            <span>{t('challenge.fog')}</span>
+          </label>
+          <p className="muted small">{t('challenge.fog.desc')}</p>
+          <label className="check">
+            <input type="checkbox" checked={noisy} onChange={(e) => setNoisy(e.target.checked)} />
+            <span>{t('challenge.noisy')}</span>
+          </label>
+          <p className="muted small">{t('challenge.noisy.desc')}</p>
+
           <label className="field">
             <span>{t('saves.name')}</span>
             <input type="text" value={name} maxLength={60} placeholder={t('saves.defaultName')} onChange={(e) => setName(e.target.value)} />
           </label>
-          <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player, difficulty: level, backstory, ideology: shown.ideology, identity })}>{t('title.start')} ▸</button>
+          <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player, difficulty: level, backstory, ideology: shown.ideology, identity, challenge: { fog, noisy } })}>{t('title.start')} ▸</button>
           </>
         ) : (
           <div className="quick">

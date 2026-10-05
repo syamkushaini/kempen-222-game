@@ -77,6 +77,11 @@ export function partyColor(index: number): string {
 }
 
 /** The contest the open game is played in. Falls back to the general election on the title screen. */
+/** Whether the player chose to play without seeing the chances of anything left to luck. */
+export function useFog(): boolean {
+  return useStore((s) => !!s.game?.campaign.challenge?.fog);
+}
+
 /** Whether a control is the one the tutorial is pointing at right now. Always false outside the tutorial. */
 export function useSpot(): (name: string) => boolean {
   const step = useStore((s) => (s.game?.tutorial ? s.game.tutorial.step : -1));

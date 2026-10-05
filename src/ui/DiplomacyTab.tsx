@@ -7,7 +7,7 @@ import {
 } from '../sim/campaign/diplomacy';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
-import { leaderName, partyShort, relationWord, useFormat, useT, useWorld } from './hooks';
+import { leaderName, partyShort, relationWord, useFog, useFormat, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
 import { NewsLine } from './NewsTab';
 import { PactTalks } from './PactTalks';
@@ -33,6 +33,7 @@ function Move(props: { title: string; meta: string; check: Check; onGo(): void; 
 /** Dealings with the other party leaders during the campaign: tea, pacts, promises, joint attacks and defections. */
 export function DiplomacyTab() {
   const t = useT();
+  const fog = useFog();
   const f = useFormat();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
@@ -139,7 +140,7 @@ export function DiplomacyTab() {
       <ul>
         <Move
           title={seat && courtCheck.ok ? t('deals.court', { seat: seat.name, party: partyShort(t, holder) }) : t('deals.court.none')}
-          meta={`${f.days(COST.court)} · ${f.rm(scaled(world, COST.courtMoney))}${seat && courtCheck.ok ? ` · ${t('deals.court.chance', { pct: f.pct(courtChance(world, campaign, seat.id), 0) })}` : ''}`}
+          meta={`${f.days(COST.court)} · ${f.rm(scaled(world, COST.courtMoney))}${seat && courtCheck.ok && !fog ? ` · ${t('deals.court.chance', { pct: f.pct(courtChance(world, campaign, seat.id), 0) })}` : ''}`}
           check={courtCheck} onGo={() => court(selectedSeat!)}
         />
       </ul>

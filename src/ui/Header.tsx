@@ -142,6 +142,7 @@ export function Header() {
   const t = useT();
   const phase = useStore((s) => s.game?.campaign.phase);
   const name = useStore((s) => s.game?.name);
+  const challenge = useStore((s) => s.game?.campaign.challenge);
   const bar = useRef<HTMLElement>(null);
   // The sticky sidebar sits below the bar, so it needs to know how tall the bar is.
   useEffect(() => {
@@ -159,7 +160,7 @@ export function Header() {
         <span className="brand-mark" aria-hidden="true">222</span>
         <div>
           <h1>{t('app.title')}</h1>
-          <p>{name ?? t('app.tagline')}</p>
+          <p>{name ? [name, challenge?.fog && t('challenge.fog'), challenge?.noisy && t('challenge.noisy')].filter(Boolean).join(' · ') : t('app.tagline')}</p>
         </div>
       </div>
       {phase === 'campaign' && <Hud />}

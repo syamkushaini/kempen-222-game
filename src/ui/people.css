@@ -19,6 +19,7 @@
 .stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 8px; margin-top: 2px; }
 .check { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-weight: 500; cursor: pointer; }
 .check input { width: 16px; height: 16px; accent-color: var(--primary); }
+.check + p.small { margin: -6px 0 12px 24px; }
 .creator { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; background: var(--panel-2); }
 .creator-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr); gap: 10px; margin: 8px 0; }
 .field-label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }

@@ -6,7 +6,7 @@ import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
 import type { RegionId } from '../sim/types';
 import { useStore } from '../state/store';
-import { partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld } from './hooks';
+import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld } from './hooks';
 import { NewsLine } from './NewsTab';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
@@ -37,6 +37,7 @@ export function ActionsTab() {
   const t = useT();
   const f = useFormat();
   const spot = useSpot();
+  const fog = useFog();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const selectedSeat = useStore((s) => s.selectedSeat);
@@ -165,7 +166,7 @@ export function ActionsTab() {
       </p>
       <p className={`muted small spend ${pc.spent > spendingLimit(world) ? 'over' : ''}`}>
         {t('spend.line', { spent: f.rm(pc.spent), limit: f.rm(spendingLimit(world)) })}
-        {pc.fined ? ` ${t('spend.fined')}` : pc.spent > spendingLimit(world) ? ` ${t('spend.over', { pct: f.pct(probeChance(world, campaign, me), 0) })}` : ''}
+        {pc.fined ? ` ${t('spend.fined')}` : pc.spent > spendingLimit(world) ? ` ${fog ? t('spend.over.fog') : t('spend.over', { pct: f.pct(probeChance(world, campaign, me), 0) })}` : ''}
       </p>
       {ideas.length > 0 && (
         <details className="action-family suggested" open={open.suggested} onToggle={(e) => setGroup('suggested', e.currentTarget.open)}>
@@ -195,7 +196,7 @@ export function ActionsTab() {
             <ul className="action-list">
               {actions.map((id) => (
                 <li key={id} className="action-group">
-                  <p className="muted small action-desc">{t(`action.${id}.desc` as StringKey)}</p>
+                  <p className="muted small action-desc">{t(`action.${id}.desc${fog && id === 'attack' ? '.fog' : ''}` as StringKey)}</p>
                   <ul>{render(id)}</ul>
                 </li>
               ))}

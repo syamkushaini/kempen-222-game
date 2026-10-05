@@ -24,7 +24,7 @@ import {
 } from '../sim/campaign/formation';
 import { closeNight, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
-  ActionId, ActionTarget, BackstoryId, Campaign, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, NewsItem, Offer, Orders,
+  ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, NewsItem, Offer, Orders,
   OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId,
 } from '../sim/campaign/types';
 import { randomSeed } from '../sim/rng';
@@ -114,7 +114,7 @@ interface Store {
 
   startCampaign(opts: {
     name: string; scenario: string; player: number; difficulty: Difficulty;
-    backstory?: BackstoryId | null; ideology?: IdeologyId | null; identity?: Identity | null;
+    backstory?: BackstoryId | null; ideology?: IdeologyId | null; identity?: Identity | null; challenge?: Partial<Challenge>;
   }): void;
   /** Moves the adviser to the next step, or ends the tutorial after the last one. */
   advanceTutorial(steps: number): void;
@@ -229,10 +229,10 @@ export const useStore = create<Store>((set, get) => {
     selectState: (state) => set({ selectedState: state, selectedSeat: null }),
     selectSeat: (seatId, state) => set((s) => ({ selectedSeat: seatId, selectedState: state ?? s.selectedState })),
 
-    startCampaign: ({ name, scenario, player, difficulty, backstory = null, ideology = null, identity = null }) => {
+    startCampaign: ({ name, scenario, player, difficulty, backstory = null, ideology = null, identity = null, challenge }) => {
       const world = getWorld(scenario);
       if (!world) return;
-      const opts = { player, difficulty, seed: randomSeed(), backstory };
+      const opts = { player, difficulty, seed: randomSeed(), backstory, challenge };
       // A platform of its own belongs to a party of the player's own making.
       const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null }) : newCampaign(world, opts);
       const tutorial = world.rules.kind === 'byelection';

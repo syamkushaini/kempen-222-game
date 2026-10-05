@@ -187,6 +187,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
     x.scenario === world.id &&
     isNum(x.player) && Number.isInteger(x.player) && x.player >= 0 && x.player < N_PARTIES &&
     (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
+    (x.challenge === undefined || (isObj(x.challenge) && typeof x.challenge.fog === 'boolean' && typeof x.challenge.noisy === 'boolean')) &&
     isNum(x.totalWeeks) && isNum(x.week) && x.week >= 1 && x.week <= x.totalWeeks &&
     (x.phase === 'term' || x.phase === 'campaign' || x.phase === 'night' || x.phase === 'formation' || x.phase === 'done') &&
     isUint32(x.seed) && isUint32(x.rng) &&

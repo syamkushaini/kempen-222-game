@@ -464,7 +464,12 @@ First players said the actions screen was cluttered and that it was not clear wh
 
 - **The tutorial points at what it asks for.** Kak Ros's current step rings the one control she is talking about, using the system's focus ring in pulsing lavender: the Next button, the map, a tab, the Go button for the action, the seat poll buttons or End week. If the control is on another tab, the tab is ringed first. A "Show me" button scrolls to the ringed control, which matters on phones where it may be far off screen. The steps and what each points at are one table (`src/ui/tutorial.ts`) with tests; the ring is static for anyone whose device asks for reduced motion.
 
-Ideas from the same feedback not yet built: harder optional settings (hidden odds, noisier polls), and small parties.
+- **Two optional challenges, apart from difficulty.** The design brief says difficulty changes how well the rivals play and nothing else, so the harder settings are separate switches under "Customise" on the title screen, chosen at the start of a game and kept in the save (`Campaign.challenge`, absent in earlier games):
+  - **Hidden odds** removes every chance of something left to luck from the screen: an event's gamble ("A gamble: ... Otherwise: ..." in place of "50% chance: ..."), the loyalty appeal against a defection, the chance of courting a defector or an endorser, interview odds, and the spending probe. The two descriptions that said "three times in ten" now say "can". Nothing in the rules changes; the player simply judges the risk.
+  - **Noisy polls** doubles the sampling error of every poll, the free public ones included, from the first. A poll states its own margin of error, so that doubles too (±4 points becomes ±8) and the player is not misled.
+  - Neither changes the rivals, the money or the race. The top bar shows which are on, beside the game's name. The quick start never uses them.
+
+Ideas from the same feedback not yet built: small parties.
 
 ## Visual design: the Linear system (5 Oct 2026)
 

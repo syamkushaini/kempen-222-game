@@ -6,7 +6,7 @@ import { canVet, STAFF_NAMES, vetCost, wages } from '../sim/campaign/staff';
 import { ENDORSER_IDS, ROLE_IDS, STAT_IDS } from '../sim/campaign/types';
 import type { BlocId } from '../sim/types';
 import { useStore } from '../state/store';
-import { leaderName, partyName, partyShort, seatName, useFormat, useT, useWorld, type T } from './hooks';
+import { leaderName, partyName, partyShort, seatName, useFog, useFormat, useT, useWorld, type T } from './hooks';
 import { PartyMark } from './identity';
 import { NewsLine } from './NewsTab';
 import { Portrait } from './Portrait';
@@ -24,6 +24,7 @@ const blocList = (t: T, blocs: string[]) => blocs.map((b) => t(`bloc.${b as Bloc
 /** The people around the leader: who they are, who works for them, who stands for them, and who speaks up for them. */
 export function TeamTab() {
   const t = useT();
+  const fog = useFog();
   const f = useFormat();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
@@ -163,7 +164,7 @@ export function TeamTab() {
                     </span>
                     <span className="action-meta num">
                       <strong>{has === null ? t('team.endorser.free') : has === me ? t('team.endorser.yours') : t('team.endorser.theirs', { party: partyShort(t, has) })}</strong>
-                      {has === null && <> · {f.days(cost.days)}{cost.money > 0 && <> · {f.rm(cost.money)}</>} · {t('team.court.chance', { pct: f.pct(courtChance(campaign, id), 0) })}</>}
+                      {has === null && <> · {f.days(cost.days)}{cost.money > 0 && <> · {f.rm(cost.money)}</>} {!fog && <> · {t('team.court.chance', { pct: f.pct(courtChance(campaign, id), 0) })}</>}</>}
                     </span>
                     {has === null && !check.ok && check.reason !== 'taken' && <span className="action-reason">{t(`reason.${check.reason}` as StringKey)}</span>}
                   </div>

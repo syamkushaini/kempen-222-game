@@ -9,7 +9,7 @@ import { billName } from './GovernmentTab';
 import type { Scene } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import type { StringKey } from '../i18n/strings';
-import { lastOutcome, leaderName, partyName, partyShort, regionLabel, seatName, useFormat, useT, useWorld } from './hooks';
+import { lastOutcome, leaderName, partyName, partyShort, regionLabel, seatName, useFog, useFormat, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
 
 /**
@@ -24,6 +24,7 @@ export function SceneModal() {
 
 function SceneCard({ scene }: { scene: Scene }) {
   const t = useT();
+  const fog = useFog();
   const f = useFormat();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
@@ -70,7 +71,7 @@ function SceneCard({ scene }: { scene: Scene }) {
     if (!choice.gamble) return sure || t('hint.nothing');
     const pct = f.pct(gambleChance(campaign, choice.gamble.chance), 0);
     const win = list(choice.gamble.win) || t('hint.nothing'), lose = list(choice.gamble.lose) || t('hint.nothing');
-    return [sure, t('hint.gamble', { pct, win, lose })].filter(Boolean).join(' · ');
+    return [sure, fog ? t('hint.gamble.fog', { win, lose }) : t('hint.gamble', { pct, win, lose })].filter(Boolean).join(' · ');
   };
 
   let title = '', body: React.ReactNode = null, options: { label: string; choice: number; primary?: boolean; disabled?: boolean; hint?: string; after?(): void }[] = [];
@@ -98,7 +99,7 @@ function SceneCard({ scene }: { scene: Scene }) {
     body = <p>{t('scene.poach.body', { seat: seatName(world, scene.seat), party: partyName(t, from) })}</p>;
     options = [
       { label: t('scene.poach.pay', { rm: f.rm(price) }), choice: 0, primary: true, disabled: pc.funds < price },
-      { label: t('scene.poach.appeal', { pct: f.pct((pc.unity / 100) * 0.9, 0) }), choice: 1 },
+      { label: fog ? t('scene.poach.appeal.fog') : t('scene.poach.appeal', { pct: f.pct((pc.unity / 100) * 0.9, 0) }), choice: 1 },
       { label: t('scene.poach.letGo'), choice: 2 },
     ];
   } else if (scene.kind === 'event' && scene.event && EVENTS[scene.event]) {
