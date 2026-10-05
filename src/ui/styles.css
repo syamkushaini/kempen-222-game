@@ -348,6 +348,14 @@ input[type='range'] { width: 100%; accent-color: var(--accent); }
 .party-card.plain.active { border-top-color: var(--accent); }
 .start-here { align-self: flex-start; }
 .state-pick { margin: 10px 0 0; }
+.action-family { margin-top: 10px; border-top: 1px solid var(--line); }
+.action-family summary { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 10px 2px; cursor: pointer; list-style: none; }
+.action-family summary::-webkit-details-marker { display: none; }
+.action-family summary h3 { margin: 0; }
+.action-family summary h3::before { content: '▸'; display: inline-block; width: 1.3em; font-size: 1.25em; line-height: 1; vertical-align: -0.1em; transition: transform 150ms; }
+.action-family[open] summary h3::before { transform: rotate(90deg); }
+.next-step { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; margin: 0; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-left: 4px solid var(--accent); border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); line-height: 1.45; }
+.next-step strong { flex: none; color: var(--accent); }
 .error-fallback { grid-column: 1 / -1; max-width: 640px; margin: 40px auto; }
 .error-fallback p { margin: 8px 0 14px; line-height: 1.5; }
 .error-fallback pre { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; }

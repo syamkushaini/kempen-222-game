@@ -450,3 +450,13 @@ Requested by the designer: let each state have an AI state leader who runs the c
 **Balance is machine-tested only**, and the player now has several edges rivals lack (staff, chosen candidates, a leader with abilities). Nobody has played through with them by hand.
 
 **Saves** move to version 8. Older games get an ordinary leader with nobody hired; older careers get the House as elected and the state governments the last election implies.
+
+## Changes after the first players' feedback (5 Oct 2026)
+
+First players said the actions screen was cluttered and that it was not clear what to press first.
+
+- **Action groups fold away.** Each group on the Actions tab (ceramah and walkabouts, party machinery, media, fundraising) is a dropdown whose header says how many of its actions can be done now. A first visit opens only the first group; what the player opens or closes is remembered on the device. While the adviser's tutorial is running every group stays open, so nothing she names is hidden.
+- **A "What now?" line sits above the map** on the campaign and term screens, on phones as well as desktops. It says in one sentence what to do: answer whoever is waiting; poll in the first two weeks if you have not; spend the week and press End week; go to the polls after the last week; in a career, that the standing orders are running. It reads the state of the game only (`src/sim/campaign/guide.ts`), so it works in every contest and not just the tutorial.
+- **Money under RM500 shows as it is** (`RM0`, not `RM0k`).
+
+Ideas from the same feedback not yet built: a "Suggested this week" group, a quick-start title screen, a spotlight on the tutorial's next button, harder optional settings (hidden odds, noisier polls), and small parties.

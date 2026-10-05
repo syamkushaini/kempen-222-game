@@ -14,6 +14,7 @@ import { LegacyScreen } from './LegacyScreen';
 import { SceneModal } from './SceneModal';
 import { ElectionNight } from './ElectionNight';
 import { Header } from './Header';
+import { NextStep } from './NextStep';
 import { DisplayContext, useCampaignDisplay, useT, useWorld } from './hooks';
 import { MapView } from './MapView';
 import { now } from '../sim/campaign/news';
@@ -84,6 +85,7 @@ function CampaignScreen() {
   return (
     <DisplayContext.Provider value={display}>
       <main className="layout">
+        <NextStep />
         <section className="map-column">
           <MapView display={display} toolbar={<ViewSwitch />} marker={term ? null : campaign.parties[campaign.player]!.location} />
         </section>

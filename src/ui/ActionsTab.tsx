@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { ACTIONS, actionCost, canDo, expectedYield, spendingLimit } from '../sim/campaign/actions';
 import { probeChance } from '../sim/campaign/spending';
@@ -14,6 +15,22 @@ const FAMILIES: { family: Family; actions: ActionId[] }[] = [
   { family: 'funds', actions: ['dinner', 'crowdfund', 'tycoon'] },
 ];
 
+const GROUPS_KEY = 'k222.groups';
+/** A first visit shows the leader's own work and keeps the rest out of the way. */
+const DEFAULT_OPEN: Record<Family, boolean> = { ground: true, machinery: false, media: false, funds: false };
+
+function loadOpen(): Record<Family, boolean> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(GROUPS_KEY) ?? 'null');
+    if (raw && typeof raw === 'object') {
+      const open = { ...DEFAULT_OPEN };
+      for (const family of Object.keys(DEFAULT_OPEN) as Family[]) if (typeof raw[family] === 'boolean') open[family] = raw[family];
+      return open;
+    }
+  } catch { /* the groups start where they usually do */ }
+  return DEFAULT_OPEN;
+}
+
 export function ActionsTab() {
   const t = useT();
   const f = useFormat();
@@ -23,6 +40,14 @@ export function ActionsTab() {
   const selectedState = useStore((s) => s.selectedState);
   const lastReport = useStore((s) => s.lastReport);
   const act = useStore((s) => s.act);
+  // While the adviser is walking the player through, every group stays open so nothing she names is hidden.
+  const guided = useStore((s) => !!s.game?.tutorial);
+  const [open, setOpen] = useState(loadOpen);
+  const setGroup = (family: Family, value: boolean) => {
+    const next = { ...open, [family]: value };
+    setOpen(next);
+    try { localStorage.setItem(GROUPS_KEY, JSON.stringify(next)); } catch { /* the choice is only for this visit */ }
+  };
 
   const me = campaign.player;
   const pc = campaign.parties[me]!;
@@ -31,6 +56,16 @@ export function ActionsTab() {
   const state: RegionId = selectedState ?? seat?.state ?? pc.location;
   const area = world.rules.kind === 'general' ? 'state' : 'area';
   const rivals = campaign.parties.map((p, i) => (p && i !== me ? i : -1)).filter((i) => i >= 0);
+
+  /** Whether an action can be done now, or only waits for the player to pick a seat on the map. */
+  const available = (id: ActionId) => {
+    const targets: ActionTarget[] =
+      ACTIONS[id].target === 'seat' ? [{ seat: seat?.id }]
+      : ACTIONS[id].target === 'state' ? [{ state }]
+      : ACTIONS[id].target === 'party' ? rivals.map((party) => ({ party }))
+      : [{}];
+    return targets.some((target) => { const check = canDo(world, campaign, me, id, target); return check.ok || check.reason === 'noTarget'; });
+  };
 
   const row = (id: ActionId, target: ActionTarget, key: string, title: string, extra?: string) => {
     const check = canDo(world, campaign, me, id, target);
@@ -98,17 +133,20 @@ export function ActionsTab() {
         const actions = all.filter((id) => world.rules.actions.includes(id));
         if (actions.length === 0) return null;
         return (
-        <div key={family}>
-          <h3>{t(`family.${family}`)}</h3>
-          <ul className="action-list">
-            {actions.map((id) => (
-              <li key={id} className="action-group">
-                <p className="muted small action-desc">{t(`action.${id}.desc` as StringKey)}</p>
-                <ul>{render(id)}</ul>
-              </li>
-            ))}
-          </ul>
-        </div>
+          <details key={family} className="action-family" open={guided || open[family]} onToggle={(e) => { if (!guided) setGroup(family, e.currentTarget.open); }}>
+            <summary>
+              <h3>{t(`family.${family}`)}</h3>
+              <span className="muted small">{t('actions.group', { n: actions.length, ready: actions.filter(available).length })}</span>
+            </summary>
+            <ul className="action-list">
+              {actions.map((id) => (
+                <li key={id} className="action-group">
+                  <p className="muted small action-desc">{t(`action.${id}.desc` as StringKey)}</p>
+                  <ul>{render(id)}</ul>
+                </li>
+              ))}
+            </ul>
+          </details>
         );
       })}
     </section>

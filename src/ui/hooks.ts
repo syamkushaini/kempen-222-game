@@ -37,7 +37,8 @@ export function useFormat(): Format {
     return {
       int: (n) => int.format(n),
       pct: (x, digits = 1) => `${(x * 100).toFixed(digits)}%`,
-      rm: (n) => (Math.abs(n) >= 1_000_000 ? `RM${(n / 1_000_000).toFixed(2)}m` : `RM${Math.round(n / 1000)}k`),
+      // Under RM500 would round to "RM0k", so small amounts are shown as they are.
+      rm: (n) => (Math.abs(n) >= 1_000_000 ? `RM${(n / 1_000_000).toFixed(2)}m` : Math.abs(n) < 500 ? `RM${Math.round(n)}` : `RM${Math.round(n / 1000)}k`),
       days: (d) => {
         const whole = Math.floor(d), half = d - whole >= 0.5;
         const unit = translate(lang, d > 1 ? 'unit.days' : 'unit.day');
