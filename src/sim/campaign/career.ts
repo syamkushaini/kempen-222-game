@@ -16,6 +16,7 @@ import { endCareer, OUSTED_BELOW } from './legacy';
 import { applyBackstory, applyIdeology, type IdeologyId } from './leader';
 import { recordResults } from './results';
 import { FORMATION_WEEK, pushNews, ref } from './news';
+import { FOUNDING_FUNDS, growFoundedParty } from './founding';
 import { edge, incomeBoost, mediaBoost, skill } from './perks';
 import { staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
@@ -114,7 +115,7 @@ function takeOffice(c: Campaign): void {
 }
 
 /** Opens a career at the start of a parliamentary term, with the coffers low after the last election. */
-export function startCareer(world: World, opts: CampaignOptions & { ideology?: IdeologyId | null }): Campaign {
+export function startCareer(world: World, opts: CampaignOptions & { ideology?: IdeologyId | null; founded?: boolean; stances?: number[] }): Campaign {
   const c = newCampaign(world, opts);
   c.phase = 'term';
   c.career = freshCareer(1, firstGovernment(world), null);
@@ -128,6 +129,15 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   closeCampaign(c);
   applyBackstory(c);
   if (opts.ideology) applyIdeology(world, c, opts.ideology);
+  if (opts.founded) {
+    // A party of the player's own making: one seat, a small purse, and a platform that is all its own.
+    c.career.founded = true;
+    c.parties[c.player]!.funds = scaled(world, FOUNDING_FUNDS);
+  }
+  if (opts.stances && opts.stances.length === N_ISSUES) {
+    c.career.stances[c.player] = opts.stances.map((s) => Math.max(-2, Math.min(2, Math.round(s))));
+    c.career.stances0[c.player] = [...c.career.stances[c.player]];
+  }
   takeOffice(c);
   c.news = [];
   c.ledger = [];
@@ -148,7 +158,7 @@ export function termIncome(world: World, c: Campaign): Income {
   const k = c.career!;
   const pc = c.parties[c.player]!;
   const drive = k.orders.focus === 'funds';
-  const members = Math.round(weeklyIncome(world, c.player) * PEACETIME * (0.6 + 0.4 * pc.unity / 100) * (0.8 + k.credibility / 250) * (drive ? 1.6 : 1) * incomeBoost(c, c.player));
+  const members = Math.round(weeklyIncome(world, c.player, c) * PEACETIME * (0.6 + 0.4 * pc.unity / 100) * (0.8 + k.credibility / 250) * (drive ? 1.6 : 1) * incomeBoost(c, c.player));
   const donors = Math.round(scaled(world, DONOR_INCOME) * k.orders.donors * (drive ? 1.3 : 1));
   const state = inGovernment(c, c.player) ? scaled(world, STATE_INCOME) * k.orders.state : 0;
   const assets = Math.round(k.assets * ASSET_YIELD);
@@ -289,6 +299,7 @@ export function termWeek(world: World, c: Campaign): void {
   k.government.stability = clamp(k.government.stability + rng.normal(0, k.government.pm === me ? 0.15 : 0.4), 5, 95);
 
   rivalsWeek(world, c, rng);
+  growFoundedParty(world, c);
   governWeek(c, rng);
   syncOpinion(c);
   // One thing at a time: nothing new arrives while a vote is waiting. The states' own elections come when they are due.
@@ -430,7 +441,7 @@ export function beginCampaign(world: World, c: Campaign): void {
 
   c.parties = c.parties.map((pc, p) => {
     if (!pc) return null;
-    if (p === me) return { ...pc, days: pc.capacity, used: {}, dinners: {}, crowdfunds: 0, tycoon: 0, visits: [] };
+    if (p === me) return { ...pc, days: pc.capacity, used: {}, dinners: {}, crowdfunds: 0, tycoon: 0, visits: [], plays: {} };
     const fresh = freshParty(world, p) ?? pc;
     return { ...fresh, funds: Math.round(fresh.funds * (0.9 + 0.4 * rng.next())), unity: pc.unity };
   });
@@ -459,6 +470,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   const next = freshCareer(k.term + 1, outcome, recorded);
   c.career = {
     ...next,
+    ...(k.founded ? { founded: true } : {}),
     orders: k.orders, assets: k.assets, credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
     stances: k.stances, stances0: k.stances.map((row) => [...row]),
     manifesto: next.manifesto.map((m, p) => (p === c.player ? [...k.manifesto[p]] : m)),

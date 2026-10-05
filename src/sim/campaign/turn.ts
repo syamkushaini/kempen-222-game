@@ -87,8 +87,8 @@ export function startingFunds(world: World, p: number): number {
   return scaled(world, START[PARTY_IDS[p] as FieldedId].funds);
 }
 
-export function weeklyIncome(world: World, p: number): number {
-  return scaled(world, (40_000 + 300_000 * lastShares(world).national[p]) * purseOf(p));
+export function weeklyIncome(world: World, p: number, c?: Campaign): number {
+  return scaled(world, (40_000 + 300_000 * lastShares(world).national[p]) * purseOf(p, c));
 }
 
 // ---------- setup ----------
@@ -231,6 +231,14 @@ function playerNews(c: Campaign, r: ActionReport): NewsItem {
     case 'dinner': return item('news.me.dinner', { state: ref.state(target.state!), rm: ref.rm(r.raised!) }, 'good');
     case 'crowdfund': return item('news.me.crowdfund', { rm: ref.rm(r.raised!) }, 'good');
     case 'tycoon': return item('news.me.tycoon', { rm: ref.rm(r.raised!) });
+    case 'townhall': return item(`news.me.townhall.${quality === 'flop' ? 'flop' : 'ok'}`, { seat: ref.seat(target.seat!) }, quality === 'flop' ? 'bad' : 'good');
+    case 'charity': return item(`news.me.charity.${quality === 'backfire' ? 'backfire' : 'ok'}`, { state: ref.state(target.state!) }, quality === 'backfire' ? 'bad' : 'good');
+    case 'youth': return item('news.me.youth', { state: ref.state(target.state!) });
+    case 'festival': return item('news.me.festival', { state: ref.state(target.state!) }, 'good');
+    case 'conference': return item('news.me.conference', {}, 'good');
+    case 'debate': return item(`news.me.debate.${quality === 'great' ? 'won' : 'lost'}`, { party: ref.party(target.party!) }, quality === 'great' ? 'good' : 'bad');
+    case 'manifesto': return item(`news.me.manifesto.${quality === 'weak' ? 'weak' : 'ok'}`, {}, quality === 'weak' ? 'bad' : 'good');
+    case 'radio': return item('news.me.radio', { state: ref.state(target.state!) });
   }
 }
 
@@ -286,6 +294,11 @@ function aftermath(c: Campaign, r: ActionReport) {
     if (r.quality === 'backfire') shiftUnity(c, r.party, -2);
   }
   if (r.id === 'megarally') shiftUnity(c, r.party, r.quality === 'weak' ? 1 : 3);
+  // A festival and a party conference are for the party itself; a debate is remembered by the one who lost it.
+  if (r.id === 'festival') shiftUnity(c, r.party, EFFECT.festivalUnity);
+  if (r.id === 'conference') shiftUnity(c, r.party, EFFECT.conference);
+  if (r.id === 'debate') shiftRelation(c, r.party, r.target.party!, -6);
+  if (r.id === 'charity' && r.quality === 'backfire') pressReacts(c, r.party, -1, ['viral']);
   // What goes round online is noticed by those who live there.
   if (r.id === 'social' && (r.quality === 'viral' || r.quality === 'flop')) pressReacts(c, r.party, r.quality === 'viral' ? 1 : -1, ['viral']);
   if (r.id === 'attack' && r.quality === 'backfire') pressReacts(c, r.party, -1, ['viral']);
@@ -423,12 +436,12 @@ export function endWeek(world: World, c: Campaign): void {
   c.week++;
   c.parties.forEach((pc, p) => {
     if (!pc) return;
-    pc.funds += Math.round(weeklyIncome(world, p) * incomeBoost(c, p));
+    pc.funds += Math.round(weeklyIncome(world, p, c) * incomeBoost(c, p));
     pc.days = pc.capacity + managerDays(c, p);
     pc.used = {};
     pc.visits = [];
   });
-  push(c, { party: c.player, key: 'news.income', vars: { rm: ref.rm(Math.round(weeklyIncome(world, c.player) * incomeBoost(c, c.player))) }, tone: 'neutral' });
+  push(c, { party: c.player, key: 'news.income', vars: { rm: ref.rm(Math.round(weeklyIncome(world, c.player, c) * incomeBoost(c, c.player))) }, tone: 'neutral' });
   publishPublicPoll(world, c);
 }
 

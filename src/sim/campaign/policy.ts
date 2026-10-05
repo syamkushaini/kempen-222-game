@@ -142,6 +142,16 @@ function stanceAppeal(career: Career, stances: number[], b: number): number {
   return a * STEP;
 }
 
+/**
+ * How well a platform sits with one bloc, from -1 (the opposite of what it wants) through 0 to 1 (exactly
+ * what it wants), weighting each issue by how much that bloc cares about it.
+ */
+export function alignment(stances: number[], b: number): number {
+  let gap = 0, care = 0;
+  for (let i = 0; i < N_ISSUES; i++) { gap += CARE[b][i] * Math.abs(stances[i] - IDEAL[b][i]); care += CARE[b][i]; }
+  return Math.max(-1, Math.min(1, 1 - gap / care / 2));
+}
+
 /** Voters discount a leader they have stopped believing. Rival parties are taken at an average rate. */
 const belief = (c: Campaign, p: number) => (p === c.player ? 0.5 + c.career!.credibility / 200 : 0.8);
 

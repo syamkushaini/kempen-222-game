@@ -4,9 +4,11 @@ import { BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, STATE_SCENARIOS } 
 import type { ContestKind } from '../sim/campaign/rules';
 import { playable, startingFunds } from '../sim/campaign/turn';
 import type { BackstoryId, Difficulty } from '../sim/campaign/types';
-import { PARTY_IDS, type StateId } from '../sim/types';
+import { startStances } from '../sim/campaign/policy';
+import { FOUNDING_SLOT } from '../sim/campaign/founding';
+import { PARTY_IDS, type FieldedId, type StateId } from '../sim/types';
 import { AUTO_SLOT } from '../state/saves';
-import { DEFAULT_EMBLEMS, makeIdentity } from '../state/identity';
+import { DEFAULT_EMBLEMS, makeIdentity, PARTY_COLORS } from '../state/identity';
 import { saveStore, useStore } from '../state/store';
 import { LEADERS } from '../sim/campaign/cast';
 import { lastOutcome, useFormat, useT } from './hooks';
@@ -16,6 +18,7 @@ import { FeedbackLink } from './FeedbackLink';
 import { HonoursEntry } from './Honours';
 import { Portrait } from './Portrait';
 import { saveLine, SaveSlots } from './SavesTab';
+import { PlatformEditor } from './Platform';
 import { LeaderPicker, PartyCreator, type Draft } from './Setup';
 import { Jargon } from './Term';
 
@@ -49,6 +52,9 @@ export function Title() {
   const [auto] = useState(() => saveStore.meta(AUTO_SLOT));
   const [backstory, setBackstory] = useState<BackstoryId | null>(null);
   const [own, setOwn] = useState(false);
+  // A party of one's own can take over one of the big three or be founded from nothing, which only a career has the years for.
+  const [founded, setFounded] = useState(false);
+  const [stances, setStances] = useState<number[] | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [fog, setFog] = useState(false);
   const [noisy, setNoisy] = useState(false);
@@ -65,9 +71,15 @@ export function Title() {
   const parties = playable(world);
   const player = chosen !== null && parties.includes(chosen) ? chosen : parties[0];
   const level = difficulty ?? (kind === 'byelection' ? 'easy' : 'normal');
-  const playerId = PARTY_IDS[player] as 'ps' | 'bp' | 'pt';
+  const founding = own && kind === 'career' && founded;
+  const playerId = (founding ? FOUNDING_SLOT : PARTY_IDS[player]) as FieldedId;
+  const newPlatform = startStances()[PARTY_IDS.indexOf(FOUNDING_SLOT)];
   // The creator starts from the party being taken over, and follows it until the player types something of their own.
-  const base: Draft = { name: PARTIES[playerId].name, short: PARTIES[playerId].short, color: STANDARD_COLORS[playerId], emblem: DEFAULT_EMBLEMS[playerId], leader: LEADERS[playerId], look: 0, ideology: null };
+  const base: Draft = {
+    name: founding ? t('platform.founded.name') : PARTIES[playerId].name, short: founding ? t('platform.founded.short') : PARTIES[playerId].short,
+    // A party of its own needs one of the colours the creator offers; the small party it is built on has a colour that is not among them.
+    color: founding ? PARTY_COLORS[6] : STANDARD_COLORS[playerId], emblem: DEFAULT_EMBLEMS[playerId], leader: founding ? t('platform.founded.leader') : LEADERS[playerId], look: 0, ideology: null,
+  };
   const shown = draft ?? base;
   const identity = own ? makeIdentity(shown) : null;
   const last = lastOutcome(world);
@@ -116,6 +128,7 @@ export function Title() {
             </div>
           )}
 
+          {!founding && <>
           <h3>{t('title.party')}</h3>
           <div className="party-cards" role="radiogroup" aria-label={t('title.party')}>
             {parties.map((p) => {
@@ -140,13 +153,27 @@ export function Title() {
             })}
           </div>
 
+          </>}
+
           <h3>{t('leader.pick')}</h3>
           <LeaderPicker value={backstory} onChange={setBackstory} />
           <label className="check">
             <input type="checkbox" checked={own} onChange={(e) => setOwn(e.target.checked)} />
             <span>{t('creator.toggle')}</span>
           </label>
-          {own && <PartyCreator draft={shown} career={kind === 'career'} onChange={(patch) => setDraft((d) => ({ ...(d ?? base), ...patch }))} />}
+          {own && kind === 'career' && (
+            <div className="founding" role="radiogroup" aria-label={t('platform.how')}>
+              <span className="field-label">{t('platform.how')}</span>
+              {[false, true].map((v) => (
+                <button key={String(v)} role="radio" aria-checked={founded === v} className={founded === v ? 'party-card plain active' : 'party-card plain'} onClick={() => { setFounded(v); setDraft(null); }}>
+                  <strong>{t(v ? 'platform.new' : 'platform.takeover')}</strong>
+                  <span className="small">{t(v ? 'platform.new.desc' : 'platform.takeover.desc')}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {own && <PartyCreator draft={shown} career={kind === 'career' && !founding} onChange={(patch) => setDraft((d) => ({ ...(d ?? base), ...patch }))} />}
+          {founding && <PlatformEditor stances={stances ?? newPlatform} base={newPlatform} onChange={setStances} />}
 
           <h3>{t('title.difficulty')}</h3>
           <div className="segmented" role="group" aria-label={t('title.difficulty')}>
@@ -174,7 +201,7 @@ export function Title() {
             <span>{t('saves.name')}</span>
             <input type="text" value={name} maxLength={60} placeholder={t('saves.defaultName')} onChange={(e) => setName(e.target.value)} />
           </label>
-          <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player, difficulty: level, backstory, ideology: shown.ideology, identity, challenge: { fog, noisy } })}>{t('title.start')} ▸</button>
+          <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy }, founded: founding, stances: founding ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
           </>
         ) : (
           <div className="quick">

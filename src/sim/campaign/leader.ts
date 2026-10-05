@@ -63,8 +63,15 @@ const SHIFTS: Record<IdeologyId, Partial<Record<IssueId, number>>> = {
 export function applyIdeology(_world: World, c: Campaign, ideology: IdeologyId): void {
   const k = c.career;
   if (!k) return;
+  k.stances[c.player] = shiftStances(k.stances[c.player], ideology);
+}
+
+/** A platform moved a step on the issues an ideology cares about. */
+export function shiftStances(stances: number[], ideology: IdeologyId): number[] {
+  const out = [...stances];
   for (const [issue, step] of Object.entries(SHIFTS[ideology])) {
     const i = ISSUE_IDS.indexOf(issue as IssueId);
-    k.stances[c.player][i] = clamp(k.stances[c.player][i] + step, -2, 2);
+    out[i] = clamp(out[i] + step, -2, 2);
   }
+  return out;
 }

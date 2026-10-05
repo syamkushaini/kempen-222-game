@@ -134,7 +134,7 @@ export function rankOptions(world: World, c: Campaign, p: number, reading: Readi
   // Attack whichever party stands in the way in the most valuable seats.
   const blocking = new Array<number>(N_PARTIES).fill(0);
   // A national attack is a big party's weapon: a party of one seat does not run them, and is not worth one.
-  mainRival.forEach((q, i) => { if (q >= 0 && !isMinor(q)) blocking[q] += value[i]; });
+  mainRival.forEach((q, i) => { if (q >= 0 && (!isMinor(q) || q === c.player)) blocking[q] += value[i]; });
   const foe = blocking.indexOf(Math.max(...blocking));
   if (!isMinor(p) && c.parties[foe]) consider('attack', { party: foe }, blocking[foe] * EFFECT.attack * 0.5, profile.attack);
 

@@ -3,6 +3,7 @@ import dunPahang from './generated/dun-pahang.json';
 import dunPerak from './generated/dun-perak.json';
 import dunPerlis from './generated/dun-perlis.json';
 import { seatsAfter } from '../sim/campaign/career';
+import { FOUNDED, FOUNDING_SEED_SHARE, FOUNDING_SLOT } from '../sim/campaign/founding';
 import { BYELECTION_RULES, CAREER_RULES, GENERAL_RULES, HUNG_RULES, STATE_RULES, type ContestKind } from '../sim/campaign/rules';
 import type { Campaign, SeatResults } from '../sim/campaign/types';
 import { createWorld, type SeatFile, type World } from '../sim/election';
@@ -91,10 +92,34 @@ function fingerprint(results: SeatResults): number {
   return h;
 }
 
+/**
+ * The world a founded party's first term is played in: the country as it was, with the new party already
+ * on the ballot in every seat with a few votes. Without them it could never win a seat it did not already hold.
+ */
+export function foundedWorld(): World {
+  const hit = cache.get(FOUNDED);
+  if (hit) return hit;
+  const p = PARTY_IDS.indexOf(FOUNDING_SLOT);
+  const seed = (votes: number[]) => {
+    const total = votes.reduce((a, b) => a + b, 0);
+    const out = [...votes];
+    out[p] = Math.max(out[p], Math.round(total * FOUNDING_SEED_SHARE));
+    return out;
+  };
+  const seats = (seatFile as SeatFile).seats.map((s) => ({
+    ...s,
+    last: { ...s.last, votes: seed(s.last.votes) },
+    ...(s.basis ? { basis: { ...s.basis, votes: seed(s.basis.votes) } } : {}),
+  }));
+  const built = createWorld({ ...(seatFile as SeatFile), seats }, CAREER_RULES, 'career');
+  cache.set(FOUNDED, built);
+  return built;
+}
+
 /** The world a game is played in: its scenario's world, or for a career past its first election, one built from that election. */
 export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'>): World | null {
   const results = campaign.career?.results;
-  if (!results) return getWorld(campaign.scenario);
+  if (!results) return campaign.career?.founded ? foundedWorld() : getWorld(campaign.scenario);
   const key = fingerprint(results);
   let built = careerWorlds.get(key);
   if (!built) {

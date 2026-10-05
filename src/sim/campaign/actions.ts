@@ -35,6 +35,14 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   dinner:     { family: 'funds',     target: 'state', days: 1,   presence: true,  perWeek: 1 },
   crowdfund:  { family: 'funds',     target: 'none',  days: 0.5, presence: false, perWeek: 1 },
   tycoon:     { family: 'funds',     target: 'none',  days: 0.5, presence: false, perWeek: 1 },
+  townhall:   { family: 'ground',    target: 'seat',  days: 1,   presence: true,  perWeek: 1 },
+  charity:    { family: 'ground',    target: 'state', days: 1,   presence: true,  perWeek: 1 },
+  youth:      { family: 'ground',    target: 'state', days: 1,   presence: true,  perWeek: 1 },
+  festival:   { family: 'ground',    target: 'state', days: 1,   presence: true,  perWeek: 1 },
+  conference: { family: 'machinery', target: 'none',  days: 1,   presence: false, perWeek: 1 },
+  debate:     { family: 'media',     target: 'party', days: 1,   presence: false, perWeek: 1 },
+  manifesto:  { family: 'media',     target: 'none',  days: 1,   presence: false, perWeek: 1 },
+  radio:      { family: 'media',     target: 'state', days: 0.5, presence: false, perWeek: 1 },
 };
 
 /**
@@ -73,6 +81,29 @@ export const TV_REACH = blocTable({
   undi18: 0.25, heartland: 1, felda: 1, agri: 1, civil: 1, urban_b40: 0.7, gig: 0.4,
   m40: 0.8, urban_lib: 0.5, smallbiz: 0.8, seniors: 1.2, borneo_native: 0.8, borneo_urban: 0.7,
 });
+/** Who a town hall wins over: people who ask questions and read the answers. */
+export const TOWNHALL_KIND: Record<SeatKind, number> = { rural: 0.5, semi: 0.85, urban: 1 };
+/** Who is helped by a handout: those with the least to spare, and the villages. */
+export const CHARITY_REACH = blocTable({
+  undi18: 0.3, heartland: 0.8, felda: 1, agri: 1, civil: 0.2, urban_b40: 1, gig: 0.6,
+  m40: 0.1, urban_lib: 0.05, smallbiz: 0.2, seniors: 1, borneo_native: 1, borneo_urban: 0.4,
+});
+/** Who a youth drive speaks to. */
+export const YOUTH_REACH = blocTable({
+  undi18: 1.5, heartland: 0.05, felda: 0.05, agri: 0.05, civil: 0.2, urban_b40: 0.5, gig: 1,
+  m40: 0.3, urban_lib: 0.6, smallbiz: 0.2, seniors: 0, borneo_native: 0.1, borneo_urban: 0.5,
+});
+/** Who reads a manifesto to the end. */
+export const MANIFESTO_REACH = blocTable({
+  undi18: 0.8, heartland: 0.2, felda: 0.2, agri: 0.2, civil: 1, urban_b40: 0.4, gig: 0.5,
+  m40: 1, urban_lib: 1, smallbiz: 0.8, seniors: 0.4, borneo_native: 0.2, borneo_urban: 0.6,
+});
+/** Who has the radio on. */
+export const RADIO_REACH = blocTable({
+  undi18: 0.1, heartland: 1, felda: 1, agri: 1, civil: 0.7, urban_b40: 0.6, gig: 0.3,
+  m40: 0.4, urban_lib: 0.1, smallbiz: 0.4, seniors: 1.2, borneo_native: 1, borneo_urban: 0.3,
+});
+
 /** How much each bloc lives on its phone. */
 export const SOCIAL_REACH = blocTable({
   undi18: 1.5, heartland: 0.3, felda: 0.2, agri: 0.2, civil: 0.5, urban_b40: 0.9, gig: 1.2,
@@ -91,6 +122,14 @@ export const EFFECT = {
   billboards: 0.012,
   attack: 0.025, attackMotivation: 0.03, attackBackfire: 0.02, attackBackfireChance: 0.3,
   lateSwing: 0.04,
+  townhall: 0.14, townhallFlopChance: 0.2, townhallFlop: 0.04, townhallFlopNat: 0.008,
+  charity: 0.07, charityMotivation: 0.05, charityScandalChance: 0.15, charityScandalOverLimit: 0.2, charityScandal: 0.015,
+  youth: 0.07, youthTurnout: 0.06,
+  festival: 0.035, festivalUnity: 2,
+  debate: 0.05, debateRival: 0.02, debateLoss: 0.035, debateBase: 0.5, debatePerPoint: 0.08, debateRepeat: 0.6,
+  manifesto: 0.045, manifestoDivided: 0.4,
+  conference: 8, conferenceBranches: 3,
+  radio: 0.022,
   tycoon: 900_000, tycoonExposeChance: 0.12, tycoonHit: 0.08, tycoonMotivationHit: 0.1,
 };
 
@@ -103,6 +142,7 @@ export const CAP = { seat: 0.6, state: 0.3, nat: 0.3, seatTurnout: 0.4, stateTur
 const MONEY = {
   ceramah: 30_000, walkabout: 8_000, megarally: 150_000, build: 60_000,
   tv: 350_000, social: 50_000,
+  townhall: 12_000, charity: 90_000, youth: 40_000, festival: 70_000, manifesto: 120_000, conference: 40_000,
 };
 
 /** An amount of money scaled to the size of the contest and rounded to a tidy figure. */
@@ -170,7 +210,11 @@ export function actionCost(world: World, c: Campaign, p: number, id: ActionId, t
   let money = 0;
   switch (id) {
     case 'ceramah': case 'walkabout': case 'megarally': case 'build': case 'tv': case 'social':
+    case 'townhall': case 'charity': case 'youth': case 'festival': case 'manifesto': case 'conference':
       money = scaled(world, MONEY[id]);
+      break;
+    case 'radio':
+      money = st ? scaled(world, 30_000 + 2_000 * world.seatsByState[st].length) : 0;
       break;
     // Operations across a region cost more the more seats it has.
     case 'canvass': case 'gotv':
@@ -218,6 +262,7 @@ export function canDo(world: World, c: Campaign, p: number, id: ActionId, target
 
   if (id === 'gotv' && c.week <= c.totalWeeks - gotvWeeks(c)) return no('tooEarly');
   if (id === 'tycoon' && pc.tycoon !== 0) return no('once');
+  if (id === 'manifesto' && plays(pc, 'manifesto') > 0) return no('once');
   if ((pc.used[usageKey(id, target)] ?? 0) >= def.perWeek) return no('usedThisWeek');
 
   const cost = actionCost(world, c, p, id, target, chief);
@@ -251,6 +296,10 @@ function boostBlocs(rows: number[][], p: number, amount: number, reach: number[]
   }
 }
 
+/** How many times an action has been taken in this campaign. */
+const plays = (pc: PartyCampaign, id: string) => pc.plays?.[id] ?? 0;
+const notePlay = (pc: PartyCampaign, id: string) => { (pc.plays ??= {})[id] = plays(pc, id) + 1; };
+
 const inFinalStretch = (c: Campaign) => c.week > c.totalWeeks - gotvWeeks(c);
 const addLateSwing = (c: Campaign, p: number, scale: number) => {
   if (!inFinalStretch(c)) return;
@@ -260,11 +309,12 @@ const addLateSwing = (c: Campaign, p: number, scale: number) => {
 /** What a fundraising action would bring in before luck. */
 /** What a small party can raise and receive, against a national one: it has far fewer members and donors to ask. */
 export const MINOR_PURSE = 0.3;
-export const purseOf = (p: number): number => (isMinor(p) ? MINOR_PURSE : 1);
+/** A small party raises less than a big one, unless it is the one the player leads: that purse grows with its support instead. */
+export const purseOf = (p: number, c?: Campaign): number => (isMinor(p) && c?.player !== p ? MINOR_PURSE : 1);
 
 export function expectedYield(world: World, c: Campaign, p: number, id: 'dinner' | 'crowdfund' | 'tycoon', st?: RegionId): number {
   const pc = partyOf(c, p);
-  const econ = world.rules.econ * purseOf(p);
+  const econ = world.rules.econ * purseOf(p, c);
   if (id === 'tycoon') return EFFECT.tycoon * econ;
   if (id === 'crowdfund') return 150_000 * econ * 0.6 ** pc.crowdfunds;
   const seats = world.seatsByState[st!];
@@ -373,6 +423,82 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       }
       break;
     }
+    case 'townhall': {
+      // Open questions: a gain among people who like to be answered, and a one-in-five chance of a bad moment on camera.
+      const seat = world.seats[world.seatIndex.get(target.seat!)!];
+      const s = seatSupport(c, seat.id);
+      const flop = rng.next() < EFFECT.townhallFlopChance - gaffeCut(c, p);
+      if (flop) {
+        s[p] -= EFFECT.townhallFlop;
+        boostBlocs(c.dyn.support.nat, p, -EFFECT.townhallFlopNat, null, CAP.nat);
+        quality = 'flop';
+      } else {
+        s[p] += EFFECT.townhall * presence * TOWNHALL_KIND[seat.kind] * roll * room(s[p], CAP.seat);
+        quality = roll < 0.85 ? 'ok' : 'great';
+      }
+      if (!chief && !pc.visits.includes(seat.id)) pc.visits.push(seat.id);
+      break;
+    }
+    case 'charity': {
+      // Help is appreciated where it is needed. The papers, and the law, may call it something else.
+      boostBlocs(stateSupport(c, st!), p, EFFECT.charity * roll, CHARITY_REACH, CAP.state);
+      const t = stateTurnout(c, st!);
+      t[p] += EFFECT.charityMotivation * roll * room(t[p], CAP.stateTurnout);
+      const risk = EFFECT.charityScandalChance + (pc.spent > spendingLimit(world) ? EFFECT.charityScandalOverLimit : 0) - gaffeCut(c, p);
+      if (rng.next() < risk) {
+        boostBlocs(c.dyn.support.nat, p, -EFFECT.charityScandal, null, CAP.nat);
+        quality = 'backfire';
+      }
+      break;
+    }
+    case 'youth': {
+      // A drive among the young brings them to the polls, and whoever else they favour benefits from that too.
+      boostBlocs(stateSupport(c, st!), p, EFFECT.youth * roll, YOUTH_REACH, CAP.state);
+      const bloc = BLOC_IDS.indexOf('undi18');
+      c.dyn.turnout.nat[bloc] += EFFECT.youthTurnout * roll * room(c.dyn.turnout.nat[bloc], CAP.stateTurnout);
+      break;
+    }
+    case 'festival':
+      // A little for everyone, every time; the lasting gain is a party that feels itself a movement.
+      boostBlocs(stateSupport(c, st!), p, EFFECT.festival * (0.9 + 0.2 * rng.next()), null, CAP.state);
+      quality = 'ok';
+      break;
+    case 'conference': {
+      // The leader's days go on the party itself; the branches nearby take heart.
+      const home = stateIndex(world, pc.location);
+      if (home >= 0) pc.machinery[home] = Math.min(100, pc.machinery[home] + EFFECT.conferenceBranches);
+      quality = 'ok';
+      break;
+    }
+    case 'debate': {
+      // A fair fight on live television: it goes to the better performer, and a repeat is worth less.
+      const rival = target.party!;
+      const first = EFFECT.debateRepeat ** plays(pc, 'debate');
+      const odds = Math.min(0.8, Math.max(0.15, EFFECT.debateBase + EFFECT.debatePerPoint * (stat(c, p, 'charisma') - stat(c, rival, 'charisma')) - gaffeCut(c, p)));
+      if (rng.next() < odds) {
+        boostBlocs(c.dyn.support.nat, p, EFFECT.debate * first * onAir, TV_REACH, CAP.nat);
+        boostBlocs(c.dyn.support.nat, rival, -EFFECT.debateRival * first, null, CAP.nat);
+        addLateSwing(c, p, 0.5);
+        quality = 'great';
+      } else {
+        boostBlocs(c.dyn.support.nat, p, -EFFECT.debateLoss, null, CAP.nat);
+        quality = 'weak';
+      }
+      notePlay(pc, 'debate');
+      break;
+    }
+    case 'manifesto': {
+      // The party's promises in one document. A divided party launches it badly, and a believed leader sells it better.
+      const believed = c.career ? 0.5 + c.career.credibility / 200 : 1;
+      const united = pc.unity >= 40;
+      boostBlocs(c.dyn.support.nat, p, EFFECT.manifesto * believed * (united ? 1 : EFFECT.manifestoDivided) * onAir, MANIFESTO_REACH, CAP.nat);
+      quality = united ? 'great' : 'weak';
+      notePlay(pc, 'manifesto');
+      break;
+    }
+    case 'radio':
+      boostBlocs(stateSupport(c, st!), p, EFFECT.radio * onAir * roll, RADIO_REACH, CAP.state);
+      break;
     case 'dinner':
       raised = tidy(expectedYield(world, c, p, 'dinner', st!) * fundsBoost(c, p) * roll);
       pc.dinners[st!] = (pc.dinners[st!] ?? 0) + 1;

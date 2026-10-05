@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getWorld, worldOf } from '../data/world';
+import { foundedWorld, getWorld, worldOf } from '../data/world';
 import { translate, type Lang } from '../i18n/strings';
 import { earned, type AchievementId } from '../sim/campaign/achievements';
 import {
@@ -123,6 +123,9 @@ interface Store {
     name: string; scenario: string; player: number; difficulty: Difficulty;
     /** A fixed seed, for a set challenge. Otherwise a fresh one is drawn. */
     seed?: number;
+    /** A career that begins with a party the player founds from nothing, and the platform it stands on. */
+    founded?: boolean;
+    stances?: number[];
     backstory?: BackstoryId | null; ideology?: IdeologyId | null; identity?: Identity | null; challenge?: Partial<Challenge>;
   }): void;
   /** Moves the adviser to the next step, or ends the tutorial after the last one. */
@@ -238,12 +241,13 @@ export const useStore = create<Store>((set, get) => {
     selectState: (state) => set({ selectedState: state, selectedSeat: null }),
     selectSeat: (seatId, state) => set((s) => ({ selectedSeat: seatId, selectedState: state ?? s.selectedState })),
 
-    startCampaign: ({ name, scenario, player, difficulty, seed, backstory = null, ideology = null, identity = null, challenge }) => {
-      const world = getWorld(scenario);
+    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge }) => {
+      // A founded party's first term is played in a country with its name already on every ballot.
+      const world = founded && scenario === 'career' ? foundedWorld() : getWorld(scenario);
       if (!world) return;
       const opts = { player, difficulty, seed: seed ?? randomSeed(), backstory, challenge };
       // A platform of its own belongs to a party of the player's own making.
-      const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null }) : newCampaign(world, opts);
+      const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances }) : newCampaign(world, opts);
       // A set challenge is for someone who has played before: no adviser walking them through it.
       const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
       set({

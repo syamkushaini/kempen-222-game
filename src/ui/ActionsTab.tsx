@@ -12,16 +12,16 @@ import { RecapCard } from './RecapCard';
 import { Jargon } from './Term';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
-  { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally'] },
-  { family: 'machinery', actions: ['canvass', 'gotv', 'build'] },
-  { family: 'media', actions: ['tv', 'social', 'billboards', 'attack'] },
+  { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival'] },
+  { family: 'machinery', actions: ['canvass', 'gotv', 'build', 'conference'] },
+  { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack'] },
   { family: 'funds', actions: ['dinner', 'crowdfund', 'tycoon'] },
 ];
 
 const GROUPS_KEY = 'k222.groups';
 type GroupKey = Family | 'suggested';
-/** A first visit shows only the suggestions and keeps the full lists out of the way. */
-const DEFAULT_OPEN: Record<GroupKey, boolean> = { suggested: true, ground: false, machinery: false, media: false, funds: false };
+/** Every group starts closed, each with a one-line count on its header; the player opens what they want and the choice is remembered. */
+const DEFAULT_OPEN: Record<GroupKey, boolean> = { suggested: false, ground: false, machinery: false, media: false, funds: false };
 
 function loadOpen(): Record<GroupKey, boolean> {
   try {

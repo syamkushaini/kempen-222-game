@@ -1,8 +1,9 @@
-import { memo, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import type { Flip } from '../sim/campaign/night';
 import type { World } from '../sim/election';
 import type { RegionId, SeatClass } from '../sim/types';
 import { useStore } from '../state/store';
+import { FIT, holdPoint, viewTransform, zoomBy, type View } from './mapGesture';
 import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay } from './hooks';
 
 interface MapShape { d: string; bbox: [number, number, number, number] }
@@ -69,6 +70,14 @@ export function MapView(props: {
   const [map, setMap] = useState<MapData | null>(null);
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
   const frame = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // The player's own zoom and pan, on top of the map's automatic framing of the open state.
+  const [view, setView] = useState<View>(FIT);
+  const touches = useRef(new Map<number, { x: number; y: number }>());
+  const grip = useRef<{ start: View; a: [number, number]; spread: number } | null>(null);
+  const dragged = useRef(false);
+  useEffect(() => setView(FIT), [world, selectedState]);
 
   useEffect(() => {
     let alive = true;
@@ -106,6 +115,64 @@ export function MapView(props: {
     const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
     return { k, transform: `translate(${W / 2 - k * cx}px, ${H / 2 - k * cy}px) scale(${k})` };
   }, [map, home, single, selectedState]);
+
+  /** A pointer's place in the map's own units, whatever size the map is drawn at. */
+  const inMap = (p: { x: number; y: number }): [number, number] => {
+    const box = svgRef.current?.getBoundingClientRect();
+    if (!box || !map || box.width === 0) return [0, 0];
+    const s = map.width / box.width;
+    return [(p.x - box.left) * s, (p.y - box.top) * s];
+  };
+  const fingers = () => [...touches.current.values()];
+
+  const startGrip = () => {
+    const f = fingers();
+    if (f.length === 0) { grip.current = null; return; }
+    const a = f.length === 2 ? inMap({ x: (f[0].x + f[1].x) / 2, y: (f[0].y + f[1].y) / 2 }) : inMap(f[0]);
+    grip.current = { start: view, a, spread: f.length === 2 ? Math.hypot(f[0].x - f[1].x, f[0].y - f[1].y) : 0 };
+  };
+  const onPointerDown = (e: PointerEvent) => {
+    touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    dragged.current = false;
+    startGrip();
+  };
+  const onPointerMove = (e: PointerEvent) => {
+    if (!touches.current.has(e.pointerId) || !grip.current || !map) return;
+    touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const f = fingers(), g = grip.current;
+    if (f.length >= 2) {
+      const spread = Math.hypot(f[0].x - f[1].x, f[0].y - f[1].y);
+      const mid = inMap({ x: (f[0].x + f[1].x) / 2, y: (f[0].y + f[1].y) / 2 });
+      setView(holdPoint(g.start, g.a, mid, g.start.k * (g.spread > 0 ? spread / g.spread : 1), map.width, VIEW_HEIGHT));
+      dragged.current = true;
+    } else if (g.start.k > 1) {
+      // One finger only moves a map that has been zoomed; on the whole map it leaves the page free to scroll.
+      const to = inMap(f[0]);
+      if (!dragged.current && Math.hypot(to[0] - g.a[0], to[1] - g.a[1]) < 4) return;
+      setView(holdPoint(g.start, g.a, to, g.start.k, map.width, VIEW_HEIGHT));
+      dragged.current = true;
+      if (!svgRef.current?.hasPointerCapture(e.pointerId)) svgRef.current?.setPointerCapture(e.pointerId);
+    }
+  };
+  const onPointerEnd = (e: PointerEvent) => {
+    touches.current.delete(e.pointerId);
+    startGrip();
+    // The click that follows a drag must not pick a seat.
+    if (touches.current.size === 0) setTimeout(() => { dragged.current = false; }, 0);
+  };
+  const onWheel = (e: WheelEvent) => {
+    // A plain scroll stays the page's; holding Ctrl or Cmd (or pinching a trackpad) zooms the map.
+    if (!map || !(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    setView((v) => zoomBy(v, e.deltaY < 0 ? 1.2 : 1 / 1.2, map.width, VIEW_HEIGHT));
+  };
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  });
+  const zoomButton = (factor: number) => map && setView((v) => zoomBy(v, factor, map.width, VIEW_HEIGHT));
 
   const seatFromEvent = (e: MouseEvent) => (e.target as Element).getAttribute?.('data-seat') ?? null;
 
@@ -161,7 +228,13 @@ export function MapView(props: {
       <div className={`map-frame${spot('map') ? ' spot' : ''}`} ref={frame}>
         {!map && <p className="muted map-loading">{t('app.loadingMap')}</p>}
         {map && zoom && (
-          <svg viewBox={`0 0 ${map.width} ${VIEW_HEIGHT}`} role="img" aria-label={contestName(t, world)} onMouseLeave={() => setHover(null)}>
+          <svg
+            ref={svgRef} viewBox={`0 0 ${map.width} ${VIEW_HEIGHT}`} role="img" aria-label={contestName(t, world)} onMouseLeave={() => setHover(null)}
+            className={view.k > 1 ? 'zoomed' : undefined} style={{ touchAction: view.k > 1 ? 'none' : 'pan-y' }}
+            onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd}
+            onClickCapture={(e) => { if (dragged.current) e.stopPropagation(); }}
+          >
+            <g transform={viewTransform(view, map.width, VIEW_HEIGHT)}>
             <g className="map-zoom" style={{ transform: zoom.transform }} onClick={onClick} onMouseMove={onMove}>
               {backdrop.map(([id, shape]) => <path key={id} d={shape.d} className="seat-backdrop" />)}
               {world.seats.map((seat, i) => {
@@ -186,13 +259,21 @@ export function MapView(props: {
               {props.pulse && map.seats[props.pulse.id] && <path key={props.pulse.n} d={map.seats[props.pulse.id].d} className={`seat-pulse ${props.pulse.kind}`} />}
               {selectedSeat && map.seats[selectedSeat] && <path d={map.seats[selectedSeat].d} className="seat-highlight" />}
               {marker && (
-                <g className="leader-pin" transform={`translate(${(marker[0] + marker[2]) / 2} ${(marker[1] + marker[3]) / 2}) scale(${1 / zoom.k})`}>
+                <g className="leader-pin" transform={`translate(${(marker[0] + marker[2]) / 2} ${(marker[1] + marker[3]) / 2}) scale(${1 / (zoom.k * view.k)})`}>
                   <circle r="9" className="pin-halo" />
                   <circle r="4.5" className="pin-dot" />
                 </g>
               )}
             </g>
+            </g>
           </svg>
+        )}
+        {map && zoom && (
+          <div className="map-zoom-buttons" role="group" aria-label={t('map.zoom')}>
+            <button className="btn small" onClick={() => zoomButton(1.6)} aria-label={t('map.zoomIn')} disabled={view.k >= 10}>+</button>
+            <button className="btn small" onClick={() => zoomButton(1 / 1.6)} aria-label={t('map.zoomOut')} disabled={view.k <= 1}>−</button>
+            {view.k > 1 && <button className="btn small" onClick={() => setView(FIT)} aria-label={t('map.zoomFit')}>⤢</button>}
+          </div>
         )}
         {hover && hovered && hoveredSeat && (
           <div className="tooltip" style={{ left: hover.x, top: hover.y }}>

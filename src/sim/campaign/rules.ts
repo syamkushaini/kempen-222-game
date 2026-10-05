@@ -59,7 +59,7 @@ export const BYELECTION_RULES: Rules = {
   econ: 0.1,
   weeks: 3,
   // One seat: nothing statewide, no television, no time to build branches.
-  actions: ['ceramah', 'walkabout', 'canvass', 'gotv', 'social', 'attack', 'dinner', 'crowdfund'],
+  actions: ['ceramah', 'walkabout', 'canvass', 'gotv', 'social', 'attack', 'dinner', 'crowdfund', 'townhall', 'charity', 'festival', 'conference'],
   pollScopes: ['seat'],
   zones: null,
   diplomacy: false,

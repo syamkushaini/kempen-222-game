@@ -11,6 +11,8 @@ export const ACTION_IDS = [
   'canvass', 'gotv', 'build',
   'tv', 'social', 'billboards', 'attack',
   'dinner', 'crowdfund', 'tycoon',
+  // Added later, each with a catch: a different audience, a risk, or a price paid in something other than money.
+  'townhall', 'charity', 'youth', 'festival', 'conference', 'debate', 'manifesto', 'radio',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 export type Family = 'ground' | 'machinery' | 'media' | 'funds';
@@ -68,6 +70,8 @@ export interface PartyCampaign {
   chiefFloor: number;
   /** How well the party holds together, 0-100. */
   unity: number;
+  /** How many times each one-off or fading action has been taken this campaign, by action id. Absent until used. */
+  plays?: Record<string, number>;
   /** Money spent on this campaign so far, which the law puts a limit on. */
   spent: number;
   /** The Election Commission has already fined the party for overspending in this campaign. */
@@ -329,6 +333,8 @@ export interface Ending { kind: EndingKind; legacy: LegacyId; score: number }
 
 /** A career: the long game across terms. Null in one-off contests. */
 export interface Career {
+  /** The player founded this party: it began as a one-seat party and grows by winning over the groups its platform suits. */
+  founded?: boolean;
   /** Which parliament this is, starting at 1. */
   term: number;
   /** Week of the term, starting at 1. The election campaign follows the last one. */
