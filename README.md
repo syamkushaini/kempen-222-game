@@ -7,7 +7,7 @@ The full design is in [DESIGN.md](DESIGN.md). It has a career that runs from one
 | Contest | Size | Length |
 | --- | --- | --- |
 | By-election | One seat, drawn from the close three-way races (Hulu Selangor is one), with a guided tutorial | 3 weeks |
-| State election | Perak (59 seats), Pahang (42) or Perlis (15) | 6 weeks |
+| State election | Any of the 13 states, from Perlis (15 seats) to Sarawak (82). In Sabah and Sarawak the state's own parties can be led | 6 weeks |
 | General election | All 222 parliamentary seats | 8 weeks |
 | Hung parliament | The last real result: nobody has a majority, and you negotiate | 5 days of talks |
 | Career | A five-year term, then the general election and the talks, then the next term | 252 weeks a term, with skip-ahead |
@@ -114,7 +114,7 @@ The per-seat corrections are fitted at start-up so that, with no campaign effect
 
 | | Source |
 | --- | --- |
-| Seat list, electorate, turnout, votes | Real: Tindak Malaysia GE15 dataset (parliament, and the Perak, Pahang and Perlis assemblies) and its 2023 state election results (Kedah, Kelantan, Terengganu, Penang, Selangor, Negeri Sembilan) |
+| Seat list, electorate, turnout, votes | Real: Tindak Malaysia GE15 dataset (parliament, and the Perak, Pahang and Perlis assemblies) and its state election results for 2023 (Kedah, Kelantan, Terengganu, Penang, Selangor, Negeri Sembilan), Johor 2022, Melaka and Sarawak 2021, and Sabah 2020 |
 | Boundaries, census inputs | Real: Department of Statistics Malaysia |
 | Voter-bloc mix per seat | **Estimated** by formula from census inputs (`scripts/derive-blocs.mjs`) |
 | Bloc leanings, turnout, undecided shares | **Design numbers**, tuned by hand (`src/sim/blocs.ts`) |

@@ -1,11 +1,15 @@
 import seatFile from './generated/seats.json';
+import dunJohor from './generated/dun-johor.json';
 import dunKedah from './generated/dun-kedah.json';
 import dunKelantan from './generated/dun-kelantan.json';
+import dunMelaka from './generated/dun-melaka.json';
 import dunNsembilan from './generated/dun-nsembilan.json';
 import dunPahang from './generated/dun-pahang.json';
 import dunPenang from './generated/dun-penang.json';
 import dunPerak from './generated/dun-perak.json';
 import dunPerlis from './generated/dun-perlis.json';
+import dunSabah from './generated/dun-sabah.json';
+import dunSarawak from './generated/dun-sarawak.json';
 import dunSelangor from './generated/dun-selangor.json';
 import dunTerengganu from './generated/dun-terengganu.json';
 import { seatsAfter } from '../sim/campaign/career';
@@ -19,11 +23,15 @@ import { PARTY_IDS, type StateId } from '../sim/types';
 export const world = createWorld(seatFile as SeatFile, GENERAL_RULES, 'general');
 
 /**
- * States whose assembly election can be played, north to south: those we have a result for. Perlis, Perak and
- * Pahang voted with the 2022 general election; the other six voted in August 2023, when two of the national
- * parties were allies and stood aside for each other in every seat.
+ * States whose assembly election can be played, north to south and then across the sea: all thirteen. Perlis,
+ * Perak and Pahang voted with the 2022 general election. Six voted in August 2023, when two of the national
+ * parties were allies and stood aside for each other in every seat. Melaka (2021) and Johor (2022) were
+ * three-way fights. Sarawak (2021) and Sabah (2020) are led by their own parties, which can be played there;
+ * Sabah was fought by two allies who never stood against each other.
  */
-export const STATE_SCENARIOS: StateId[] = ['perlis', 'kedah', 'penang', 'perak', 'kelantan', 'terengganu', 'pahang', 'selangor', 'nsembilan'];
+export const STATE_SCENARIOS: StateId[] = [
+  'perlis', 'kedah', 'penang', 'perak', 'kelantan', 'terengganu', 'pahang', 'selangor', 'nsembilan', 'melaka', 'johor', 'sabah', 'sarawak',
+];
 const DUN_FILES: Partial<Record<StateId, SeatFile>> = {
   perlis: dunPerlis as SeatFile,
   kedah: dunKedah as SeatFile,
@@ -34,6 +42,10 @@ const DUN_FILES: Partial<Record<StateId, SeatFile>> = {
   pahang: dunPahang as SeatFile,
   selangor: dunSelangor as SeatFile,
   nsembilan: dunNsembilan as SeatFile,
+  melaka: dunMelaka as SeatFile,
+  johor: dunJohor as SeatFile,
+  sabah: dunSabah as SeatFile,
+  sarawak: dunSarawak as SeatFile,
 };
 
 /** The seat of the scenario id 'byelection' on its own: Hulu Selangor, a three-way marginal with a mixed electorate. Older saves are in it. */
@@ -71,7 +83,7 @@ export interface Vacancy {
   close: boolean;
 }
 
-/** Every parliamentary seat, and every assembly seat of the three states with results, in the order a list should show them. */
+/** Every parliamentary seat, and every assembly seat of the thirteen states, in the order a list should show them. */
 export const VACANCIES: Vacancy[] = [
   ...(seatFile as SeatFile).seats.map((s): Vacancy => ({ key: s.id, name: s.name, code: s.id, kind: 'parliament', state: s.state as StateId, within: null, close: isThreeWay(s.last.votes) })),
   ...STATE_SCENARIOS.flatMap((st) => (DUN_FILES[st]!.seats).map((s): Vacancy => ({

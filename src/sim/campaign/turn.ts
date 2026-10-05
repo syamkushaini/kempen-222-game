@@ -1,101 +1,33 @@
 import { emptyDynamics } from '../dynamics';
 import { lastElection, runElection, type World } from '../election';
-import { clamp } from '../math';
 import { Rng } from '../rng';
-import type { StandDowns } from '../transfer';
 import {
-  N_BLOCS, N_PARTIES, PARTY_IDS, isFielded, isMinor,
-  type Dynamics, type ElectionOutcome, type FieldedId, type PartyId, type RegionId,
+  N_BLOCS, N_PARTIES, PARTY_IDS, isMinor,
+  type Dynamics, type ElectionOutcome, type RegionId,
 } from '../types';
+import { freshParty, standingPact, weeklyIncome } from './field';
 import { record, standing } from './ledger';
 import { makeRecap } from './recap';
-import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, purseOf, scaled, truth } from './actions';
+import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, truth } from './actions';
 import { applyBackstory } from './leader';
 import { pressReacts } from './media';
 import { incomeBoost, managerDays, pollDiscount, pollPrecision } from './perks';
 import { emptyTeam, openCampaign, teamWeek } from './team';
-import { START_UNITY, startRelations } from './cast';
+import { startRelations } from './cast';
 import { beforeNomination, hasDiplomacy, nominationWeek, pactSeats, rivalDiplomacy, settleInbox, shiftRelation, shiftUnity } from './diplomacy';
 import { startFormation } from './formation';
 import { now, pushNews, ref } from './news';
 import { CHIEF_NOISE, RIVAL_NOISE, hasChiefs, planChiefs, playWeek, runChiefs, type ChiefReport } from './ai';
 import { latestNationalPoll, pollCost, takePoll } from './polls';
-import {
-  DAYS_PER_WEEK,
-  type ActionId, type ActionReport, type ActionTarget, type Campaign, type ChiefLevel, type Difficulty,
-  type BackstoryId, type Challenge, type NewsItem, type Pact, type PartyCampaign, type Poll, type PollQuality, type PollScope,
+import type {
+  ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Difficulty,
+  BackstoryId, Challenge, NewsItem, Poll, PollQuality, PollScope,
 } from './types';
 
-/** Parties that can be played, where they campaign in the contest. */
-const PLAYABLE_IDS: PartyId[] = ['ps', 'bp', 'pt'];
-
-/** A party with no seat campaigns in a contest only if it won at least this share of the vote there last time. */
-const MIN_SHARE_TO_CAMPAIGN = 0.05;
-
-const START: Record<FieldedId, { funds: number; home: RegionId; machineryBonus: number; days: number }> = {
-  ps:     { funds: 1_200_000, home: 'selangor', machineryBonus: 0,  days: DAYS_PER_WEEK },
-  bp:     { funds: 1_600_000, home: 'kl',       machineryBonus: 10, days: DAYS_PER_WEEK },
-  pt:     { funds: 1_100_000, home: 'kelantan', machineryBonus: 5,  days: DAYS_PER_WEEK },
-  // Regional parties run smaller headquarters.
-  gbk:    { funds: 700_000,   home: 'sarawak',  machineryBonus: 10, days: 5 },
-  gbs:    { funds: 400_000,   home: 'sabah',    machineryBonus: 5,  days: 4 },
-  legasi: { funds: 300_000,   home: 'sabah',    machineryBonus: 0,  days: 4 },
-  // The small parties run on a shoestring.
-  genba:  { funds: 90_000,    home: 'johor',    machineryBonus: 0,  days: 5 },
-  cahaya: { funds: 80_000,    home: 'sarawak',  machineryBonus: 5,  days: 4 },
-  suara:  { funds: 60_000,    home: 'sabah',    machineryBonus: 5,  days: 4 },
-};
+export { atHome, campaigns, freshParty, lastShares, playable, standingPact, startingFunds, weeklyIncome } from './field';
 
 /** How far opinion has drifted since the last election (standard deviations, logit units). */
 const DRIFT = { nat: 0.08, state: 0.06, seat: 0.08 };
-
-// ---------- facts derived from the last election ----------
-
-interface LastShares { national: number[]; state: Record<RegionId, number[]> }
-const shareCache = new WeakMap<World, LastShares>();
-
-/** Each party's share of the vote last time, across the contest and by region. */
-export function lastShares(world: World): LastShares {
-  const cached = shareCache.get(world);
-  if (cached) return cached;
-  const national = new Array<number>(N_PARTIES).fill(0);
-  const state: Record<RegionId, number[]> = Object.fromEntries(world.states.map((st) => [st, new Array<number>(N_PARTIES).fill(0)]));
-  for (const seat of world.seats) {
-    seat.last.votes.forEach((v, p) => { national[p] += v; state[seat.state][p] += v; });
-  }
-  const norm = (a: number[]) => { const t = a.reduce((x, y) => x + y, 0); return a.map((v) => (t ? v / t : 0)); };
-  const result = { national: norm(national), state: Object.fromEntries(world.states.map((st) => [st, norm(state[st])])) };
-  shareCache.set(world, result);
-  return result;
-}
-
-/**
- * Whether a party runs a campaign in this contest: it holds a seat or has real
- * support. Token presences and the pooled independents do not.
- */
-export function campaigns(world: World, p: number): boolean {
-  if (!isFielded(PARTY_IDS[p])) return false;
-  const holdsSeat = world.seats.some((s) => s.last.votes[p] > 0 && s.last.votes[p] === Math.max(...s.last.votes));
-  if (holdsSeat) return true;
-  // A party's following is what it would poll with everyone standing: a pact that kept it off most ballots did not make its voters vanish.
-  let mine = 0, all = 0;
-  for (const s of world.seats) for (const [q, v] of (s.basis?.votes ?? s.last.votes).entries()) { all += v; if (q === p) mine += v; }
-  return all > 0 && mine / all >= MIN_SHARE_TO_CAMPAIGN;
-}
-
-/** Parties the player can lead in this contest. */
-export function playable(world: World): number[] {
-  // In a one-seat contest the party must also be on that ballot, or it could do nothing there.
-  return PLAYABLE_IDS.map((id) => PARTY_IDS.indexOf(id)).filter((p) => campaigns(world, p) && (world.seats.length > 1 || world.baseline.contesting[0][p]));
-}
-
-export function startingFunds(world: World, p: number): number {
-  return scaled(world, START[PARTY_IDS[p] as FieldedId].funds);
-}
-
-export function weeklyIncome(world: World, p: number, c?: Campaign): number {
-  return scaled(world, (40_000 + 300_000 * lastShares(world).national[p]) * purseOf(p, c));
-}
 
 // ---------- setup ----------
 
@@ -122,59 +54,6 @@ export interface CampaignOptions {
   backstory?: BackstoryId | null;
   /** Extra difficulty the player has chosen. */
   challenge?: Partial<Challenge>;
-}
-
-/** A party's campaign as it stands on the first day: money in the bank, a rested leader, and branches where it has support. */
-export function freshParty(world: World, p: number): PartyCampaign | null {
-  const id = PARTY_IDS[p];
-  if (!isFielded(id) || !campaigns(world, p)) return null;
-  const shares = lastShares(world);
-  const general = world.rules.kind === 'general';
-  const start = START[id];
-  // Outside a general election, the leader starts where the party is strongest.
-  const strongest = world.states.reduce((best, st) => (shares.state[st][p] > shares.state[best][p] ? st : best), world.states[0]);
-  const days = general ? start.days : DAYS_PER_WEEK;
-  return {
-    funds: startingFunds(world, p),
-    capacity: days,
-    days,
-    location: general ? start.home : strongest,
-    // Organisation follows past support: strong where the party polled well.
-    machinery: world.states.map((st) => {
-      const share = shares.state[st][p];
-      return share > 0 ? Math.round(clamp(25 + 70 * share ** 0.7 + start.machineryBonus, 10, 95)) : 0;
-    }),
-    used: {},
-    dinners: {},
-    crowdfunds: 0,
-    tycoon: 0,
-    visits: [],
-    chiefs: {},
-    chiefFloor: 0,
-    unity: START_UNITY[id],
-    spent: 0,
-    fined: false,
-  };
-}
-
-/**
- * The pact a contest opens under: where the last election was fought with parties standing aside for each other,
- * and leaders can deal with each other in this one, the same arrangement still holds until someone ends it.
- */
-export function standingPact(world: World): { standDowns: StandDowns; pacts: Pact[] } {
-  const standDowns: StandDowns = {};
-  const pacts: Pact[] = [];
-  if (!world.rules.diplomacy) return { standDowns, pacts };
-  for (const seat of world.seats) {
-    if (!seat.stood || seat.stood.every((v) => v < 0)) continue;
-    standDowns[seat.id] = [...seat.stood];
-    seat.stood.forEach((to, from) => {
-      const a = Math.min(from, to), b = Math.max(from, to);
-      // Only parties that run a campaign have a leader to hold a pact with.
-      if (to >= 0 && campaigns(world, a) && campaigns(world, b) && !pacts.some((x) => x.a === a && x.b === b)) pacts.push({ a, b, week: 0 });
-    });
-  }
-  return { standDowns, pacts };
 }
 
 /** Allies who went into the last election together are on good terms as the next one opens. */

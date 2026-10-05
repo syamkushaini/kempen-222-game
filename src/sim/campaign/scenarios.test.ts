@@ -207,9 +207,9 @@ describe('what a declaration meant on election night', () => {
 });
 
 describe('choosing any seat for a by-election', () => {
-  it('lists every parliamentary seat and every assembly seat of the three states, each once', () => {
+  it('lists every parliamentary seat and every assembly seat of the thirteen states, each once', () => {
     expect(VACANCIES.filter((v) => v.kind === 'parliament')).toHaveLength(222);
-    expect(VACANCIES.filter((v) => v.kind === 'dun')).toHaveLength(15 + 36 + 40 + 59 + 45 + 32 + 42 + 56 + 36);
+    expect(VACANCIES.filter((v) => v.kind === 'dun')).toHaveLength(15 + 36 + 40 + 59 + 45 + 32 + 42 + 56 + 36 + 28 + 56 + 73 + 82);
     expect(new Set(VACANCIES.map((v) => v.key)).size).toBe(VACANCIES.length);
     expect(vacancyOf(BYELECTION_SEAT)?.name).toBeTruthy();
     expect(vacancyOf('P.999')).toBeNull();
@@ -255,8 +255,8 @@ describe('the six states that voted in August 2023', () => {
   const [ps, bp, pt] = [P('ps'), P('bp'), P('pt')];
 
   it('are playable alongside the three that voted in 2022, and show the result as it was declared', () => {
-    expect(STATE_SCENARIOS).toHaveLength(9);
     for (const st of PRN6) {
+      expect(STATE_SCENARIOS).toContain(st);
       const tally = lastElection(world(st)).tally;
       expect([tally[ps], tally[bp], tally[pt]], st).toEqual(REAL[st]);
       expect(majorityLine(world(st))).toBe(Math.floor(world(st).seats.length / 2) + 1);

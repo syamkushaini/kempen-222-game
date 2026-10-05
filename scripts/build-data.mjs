@@ -63,7 +63,9 @@ const normCode = (s) => s.replace(/\s+/g, '');
 
 // Order must match PARTY_IDS in src/sim/types.ts.
 const PARTY_IDS = ['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi', 'oth', 'genba', 'cahaya', 'suara'];
-// Real coalition column prefix -> fictional party id.
+// Real coalition column -> fictional party id. A state election fought by other line-ups gives its own
+// table (see DUN_SOURCES); where one column holds an alliance of parties that are separate in the game,
+// the entry is a function of the candidate's own party.
 const COALITION_COLUMNS = {
   PH: 'ps', BN: 'bp', PN: 'pt', GPS: 'gbk', GRS: 'gbs', WARISAN: 'legasi',
 };
@@ -77,10 +79,17 @@ const SMALL_PARTIES = {
   KDM: { id: 'suara', region: 'sabah' },
 };
 // Everything else (the rest of the small parties, independents) is pooled as "oth".
-const OTHER_COLUMNS = [
-  'GTA', 'OTHER PARTY (1)', 'OTHER PARTY (2)',
-  'INDEPENDENT (1)', 'INDEPENDENT (2)', 'INDEPENDENT (3)', 'INDEPENDENT (4)',
-];
+
+/** The candidate columns of a result row: each has a vote column, spelt "X VOTE" or "X CANDIDATE VOTE" depending on the file. */
+function candidateColumns(r) {
+  return Object.keys(r).filter((k) => / VOTE$/.test(k)).map((key) => ({ col: key.replace(/( CANDIDATE)? VOTE$/, ''), key }));
+}
+
+/** The game's party for a candidate in a coalition's column, or undefined where the column is not a coalition's. */
+function coalitionParty(columns, col, party) {
+  const to = columns[col];
+  return typeof to === 'function' ? to(party) : to;
+}
 
 // ---------- states ----------
 
@@ -101,17 +110,20 @@ const STATES = {
  * Builds one seat record from a census row and its election result.
  * `ids` says how this kind of seat is named and grouped.
  */
-function buildSeat(c, r, ids) {
+function buildSeat(c, r, ids, columns = COALITION_COLUMNS) {
   const votes = PARTY_IDS.map(() => 0);
-  for (const [col, id] of Object.entries(COALITION_COLUMNS)) {
-    votes[PARTY_IDS.indexOf(id)] += num(r[`${col} VOTE`]);
-  }
   // Pool the minor candidates, but keep the strongest one separately so we can
   // tell whether a minor candidate actually won the seat.
   let othTotal = 0, othBest = 0;
-  for (const col of OTHER_COLUMNS) {
-    const v = num(r[`${col} VOTE`]);
-    const small = SMALL_PARTIES[(r[col] ?? '').trim().toUpperCase()];
+  for (const { col, key } of candidateColumns(r)) {
+    const v = num(r[key]);
+    const party = (r[col] ?? '').trim().toUpperCase();
+    const coalition = coalitionParty(columns, col, party);
+    if (coalition) {
+      votes[PARTY_IDS.indexOf(coalition)] += v;
+      continue;
+    }
+    const small = SMALL_PARTIES[party];
     if (small && (!small.region || small.region === ids.region)) {
       votes[PARTY_IDS.indexOf(small.id)] += v;
       continue;
@@ -136,9 +148,10 @@ function buildSeat(c, r, ids) {
   if (valid + dropped !== num(r['TOTAL VALID VOTES'])) throw new Error(`Vote sum mismatch in ${ids.id}`);
 
   const winnerIdx = votes.indexOf(Math.max(...votes));
-  const realWinner = r['WINNING PARTY'].split(' - ')[0].trim();
-  const named = SMALL_PARTIES[realWinner.toUpperCase()];
-  const expected = COALITION_COLUMNS[realWinner] ?? (named && (!named.region || named.region === ids.region) ? named.id : 'oth');
+  // "PH - DAP", "GPS-PBB", "PBS", "INDEPENDENT - KEY": the coalition, then the candidate's own party where the file gives it.
+  const [realWinner, ownParty = ''] = r[Object.keys(r).find((k) => k.startsWith('WINNING PARTY'))].split('-').map((x) => x.trim().toUpperCase());
+  const named = SMALL_PARTIES[realWinner];
+  const expected = coalitionParty(columns, realWinner, ownParty) ?? (named && (!named.region || named.region === ids.region) ? named.id : 'oth');
   if (PARTY_IDS[winnerIdx] !== expected) {
     throw new Error(`${ids.id}: pooled winner ${PARTY_IDS[winnerIdx]} != recorded winner ${expected}`);
   }
@@ -257,6 +270,18 @@ for (const s of seats) if (!map.seats[s.id]) throw new Error(`No boundary for ${
 // were allies and stood aside for each other in every seat (`allies`). Those
 // seats also get a `basis`: an estimate of the result had all three stood, so
 // that the party which stood aside can stand again if the pact ends.
+//
+// Melaka (November 2021) and Johor (March 2022) were three-way fights between
+// the national coalitions. Sarawak (December 2021) and Sabah (September 2020)
+// were fought by other line-ups, so each gives its own `columns`:
+//   Sarawak  the governing state coalition against the national reformists and
+//            a state opposition party; the one candidate of a national
+//            conservative party counts for that coalition.
+//   Sabah    the parties that later formed the state's governing coalition stood
+//            under two banners, which are added together (in the six seats where
+//            both stood, the sum never changes the winner). The other alliance
+//            put up one candidate a seat, from the state party or from one of
+//            the national reformists' parties: two allied parties in the game.
 const DUN_SOURCES = [
   { file: 'tindak/MALAYSIA_GE15_DUN_RESULTS_V27122022.csv', states: ['Perlis', 'Perak', 'Pahang'] },
   {
@@ -264,13 +289,27 @@ const DUN_SOURCES = [
     states: ['Kedah', 'Kelantan', 'Terengganu', 'Pulau Pinang', 'Selangor', 'Negeri Sembilan'],
     allies: ['ps', 'bp'],
   },
+  { file: 'tindak/melaka-2021/MELAKA_2021_ELECTION_RESULTS.csv', states: ['Melaka'] },
+  { file: 'tindak/johor-2022/JOHOR_2022_ELECTION_RESULTS.csv', states: ['Johor'] },
+  { file: 'tindak/sarawak-2021/SARAWAK_2021_ELECTION_RESULTS.csv', states: ['Sarawak'], columns: { GPS: 'gbk', PH: 'ps', PAS: 'pt' } },
+  {
+    file: 'tindak/sabah-2020/SABAH_2020_ELECTION_RESULTS.csv',
+    states: ['Sabah'],
+    columns: { BN: 'bp', PN: 'gbs', PBS: 'gbs', 'WARISAN PLUS': (party) => (party === 'WARISAN' ? 'legasi' : 'ps') },
+    allies: ['legasi', 'ps'],
+  },
 ];
 const censusDun = readCsv('dosm/census_dun.csv');
 const parliamentById = new Map(seats.map((s) => [s.id, s]));
 
 // How many of a party's voters follow it to the ally it stands aside for, and how many stay at home.
 // These must match RATES in src/sim/transfer.ts; a test checks that the two agree.
-const TRANSFER = { 'ps>bp': { to: 0.6, home: 0.15 }, 'bp>ps': { to: 0.4, home: 0.15 } };
+const TRANSFER = {
+  'ps>bp': { to: 0.6, home: 0.15 },
+  'bp>ps': { to: 0.4, home: 0.15 },
+  'ps>legasi': { to: 0.55, home: 0.15 },
+  'legasi>ps': { to: 0.55, home: 0.15 },
+};
 
 /**
  * Works back from a result in which one ally stood aside to the result had both
@@ -308,7 +347,9 @@ const dunGeo = JSON.parse(readFileSync(join(RAW, 'dosm/electoral_1_dun.geojson')
 const dunOut = [];
 
 for (const source of DUN_SOURCES) for (const stateName of source.states) {
-  const dunResultByCode = new Map(readCsv(source.file).map((r) => [normCode(r['UNIQUE CODE']), r]));
+  // Codes are spelt "P.134_N.1", "P. 140_N. 01" or "P.192_N. 01" depending on the file.
+  const dunCode = (s) => normCode(s).replace(/N\.(\d)$/, 'N.0$1');
+  const dunResultByCode = new Map(readCsv(source.file).filter((r) => r['UNIQUE CODE']).map((r) => [dunCode(r['UNIQUE CODE']), r]));
   const [slug, region] = STATES[stateName];
   const regions = {};
   // The allies' relative strength across the state at the 2022 general election, in the seats where both stood.
@@ -318,7 +359,7 @@ for (const source of DUN_SOURCES) for (const stateName of source.states) {
     const r = dunResultByCode.get(`${c.code_parlimen}_${c.code_dun}`);
     if (!r) throw new Error(`No state election result for ${stateName} ${c.code_dun}`);
     regions[c.code_parlimen] = c.parlimen.replace(/^P\.\d+\s+/, '');
-    const seat = buildSeat(c, r, { id: c.code_dun, name: c.dun.replace(/^N\.\d+\s+/, ''), group: c.code_parlimen, region, stateSlug: slug });
+    const seat = buildSeat(c, r, { id: c.code_dun, name: c.dun.replace(/^N\.\d+\s+/, ''), group: c.code_parlimen, region, stateSlug: slug }, source.columns);
     return source.allies ? { ...seat, ...withAllStanding(seat, source.allies, stateRatio) } : seat;
   });
 

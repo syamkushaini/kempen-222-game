@@ -29,6 +29,8 @@ type Mode = ContestKind | 'career';
 const KINDS: Mode[] = ['byelection', 'state', 'general', 'hung', 'career'];
 /** Where each national party sits as a career opens. */
 const CAREER_SEAT = { ps: 'pm', bp: 'gov', pt: 'opp' } as const;
+/** The parties a player can lead: the three national ones, and in Sabah and Sarawak the parties of the state. */
+type Playable = 'ps' | 'bp' | 'pt' | 'gbk' | 'gbs' | 'legasi';
 
 const MODE_KEY = 'k222.title';
 
@@ -152,7 +154,7 @@ export function Title() {
           <h3>{t('title.party')}</h3>
           <div className="party-cards" role="radiogroup" aria-label={t('title.party')}>
             {parties.map((p) => {
-              const id = PARTY_IDS[p] as 'ps' | 'bp' | 'pt';
+              const id = PARTY_IDS[p] as Playable;
               return (
                 <RadioCard key={id} checked={player === p} className="party-card" style={{ borderTopColor: PARTIES[id].color }} onSelect={() => { setChosen(p); setDraft(null); }}>
                   <span className="card-head">
@@ -168,7 +170,7 @@ export function Title() {
                     {' · '}{t('title.funds', { rm: f.rm(startingFunds(world, p) * (kind === 'career' ? 0.4 : 1)) })}
                   </span>
                   {allyOf(p) >= 0 && <span className="muted small">{t('title.stands', { party: PARTIES[PARTY_IDS[allyOf(p)]].short, n: standsIn(p), total: world.seats.length })}</span>}
-                  {kind === 'career' && <span className="badge plain">{t(`orders.seat.${CAREER_SEAT[id]}`)}</span>}
+                  {kind === 'career' && id in CAREER_SEAT && <span className="badge plain">{t(`orders.seat.${CAREER_SEAT[id as keyof typeof CAREER_SEAT]}`)}</span>}
                 </RadioCard>
               );
             })}
@@ -231,7 +233,7 @@ export function Title() {
             <h3>{t('quick.party')}</h3>
             <div className="quick-parties" role="radiogroup" aria-label={t('quick.party')}>
               {parties.map((p) => {
-                const id = PARTY_IDS[p] as 'ps' | 'bp' | 'pt';
+                const id = PARTY_IDS[p] as Playable;
                 return (
                   <button key={id} role="radio" aria-checked={player === p} className={player === p ? 'chip active' : 'chip'} onClick={() => { setChosen(p); setDraft(null); }}>
                     <i className="dot" style={{ background: PARTIES[id].color }} />{PARTIES[id].name}
