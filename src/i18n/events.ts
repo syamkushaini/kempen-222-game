@@ -4,6 +4,7 @@
 // All people, parties and institutions here are invented.
 
 import { MORE_EVENTS_EN, MORE_EVENTS_MS } from './events2';
+import { GOVERNING_EVENTS_EN, GOVERNING_EVENTS_MS } from './events3';
 
 /** A result is one line, or for a gamble a pair: how it reads when it comes off, and when it does not. */
 export interface EventText {
@@ -764,6 +765,8 @@ export const EVENTS_MS: Record<string, EventText> = {
 // The second batch of events is written in its own file and joins the first here.
 Object.assign(EVENTS_EN, MORE_EVENTS_EN);
 Object.assign(EVENTS_MS, MORE_EVENTS_MS);
+Object.assign(EVENTS_EN, GOVERNING_EVENTS_EN);
+Object.assign(EVENTS_MS, GOVERNING_EVENTS_MS);
 
 /** Spreads the event text into the flat keys the interface looks up. */
 export function flattenEvents(texts: Record<string, EventText>): Record<string, string> {

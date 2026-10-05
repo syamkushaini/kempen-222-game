@@ -471,6 +471,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   c.career = {
     ...next,
     ...(k.founded ? { founded: true } : {}),
+    ...(k.nation ? { nation: { ...k.nation } } : {}),
     orders: k.orders, assets: k.assets, credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
     stances: k.stances, stances0: k.stances.map((row) => [...row]),
     manifesto: next.manifesto.map((m, p) => (p === c.player ? [...k.manifesto[p]] : m)),

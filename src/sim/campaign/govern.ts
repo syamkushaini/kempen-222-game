@@ -6,6 +6,7 @@ import { DEMANDS } from './cast';
 import { houseTally } from './contests';
 import { addScene, relation, shiftRelation } from './diplomacy';
 import { startFormation } from './formation';
+import { nationWeek } from './nation';
 import { pushNews, ref } from './news';
 import { economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
 import { PLEDGES } from './policy';
@@ -414,6 +415,7 @@ export function governWeek(c: Campaign, rng: Rng): void {
   const k = c.career!;
   const me = c.player;
   economyWeek(c, rng);
+  nationWeek(c, rng);
   if (isPm(c)) k.record.weeksPm++; else if (inGov(c, me)) k.record.weeksGov++; else k.record.weeksOpp++;
 
   // A capable cabinet steadies a government a little; a poor one wears it down.

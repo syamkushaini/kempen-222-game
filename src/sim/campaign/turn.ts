@@ -80,7 +80,8 @@ export function campaigns(world: World, p: number): boolean {
 
 /** Parties the player can lead in this contest. */
 export function playable(world: World): number[] {
-  return PLAYABLE_IDS.map((id) => PARTY_IDS.indexOf(id)).filter((p) => campaigns(world, p));
+  // In a one-seat contest the party must also be on that ballot, or it could do nothing there.
+  return PLAYABLE_IDS.map((id) => PARTY_IDS.indexOf(id)).filter((p) => campaigns(world, p) && (world.seats.length > 1 || world.baseline.contesting[0][p]));
 }
 
 export function startingFunds(world: World, p: number): number {

@@ -19,6 +19,7 @@ import { HonoursEntry } from './Honours';
 import { Portrait } from './Portrait';
 import { saveLine, SaveSlots } from './SavesTab';
 import { PlatformEditor } from './Platform';
+import { SeatPicker } from './SeatPicker';
 import { LeaderPicker, PartyCreator, type Draft } from './Setup';
 import { Jargon } from './Term';
 
@@ -122,10 +123,7 @@ export function Title() {
           )}
 
           {kind === 'byelection' && (
-            <div className="seat-draw">
-              <span>{t('title.seat', { seat: world.seats[0].name, state: t(`state.${world.seats[0].state as StateId}`) })}</span>
-              <button className="btn small" onClick={() => setSeat(drawSeat(seat))}>{t('title.seat.another')}</button>
-            </div>
+            <SeatPicker value={seat} onChange={setSeat} onRandom={() => setSeat(drawSeat(seat))} />
           )}
 
           {!founding && <>
@@ -218,10 +216,7 @@ export function Title() {
                 );
               })}
             </div>
-            <div className="seat-draw">
-              <span>{t('title.seat', { seat: world.seats[0].name, state: t(`state.${world.seats[0].state as StateId}`) })}</span>
-              <button className="btn small" onClick={() => setSeat(drawSeat(seat))}>{t('title.seat.another')}</button>
-            </div>
+            <SeatPicker value={seat} onChange={setSeat} onRandom={() => setSeat(drawSeat(seat))} />
             <div className="button-row">
               {/* a returning player's one call to action is Continue */}
               <button className={auto ? 'btn' : 'btn primary'} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy' })}>{t('quick.start')} ▸</button>

@@ -16,8 +16,10 @@ interface MapData {
 
 /** State assemblies have their own maps; everything else uses the national one. */
 function loadMap(world: World): Promise<MapData> {
-  const file = world.id.startsWith('state:')
-    ? import(`../data/generated/map-dun-${world.id.slice(6)}.json`)
+  // An assembly seat's by-election id is byelection:dun:<state>:<code>.
+  const state = world.id.startsWith('state:') ? world.id.slice(6) : world.id.startsWith('byelection:dun:') ? world.id.split(':')[2] : null;
+  const file = state
+    ? import(`../data/generated/map-dun-${state}.json`)
     : import('../data/generated/map.json');
   return file.then((m) => m.default as unknown as MapData);
 }

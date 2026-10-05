@@ -296,6 +296,9 @@ export interface Minister {
   skill: number;
 }
 
+/** How well the country is looked after, and how it stands among other nations, each from 0 to 100. */
+export interface Nation { health: number; education: number; standing: number }
+
 /** The figures everyone watches. All in per cent; debt is per cent of national income. */
 export interface Economy { growth: number; inflation: number; jobless: number; debt: number }
 
@@ -335,6 +338,8 @@ export interface Ending { kind: EndingKind; legacy: LegacyId; score: number }
 export interface Career {
   /** The player founded this party: it began as a one-seat party and grows by winning over the groups its platform suits. */
   founded?: boolean;
+  /** The state of the country beyond the budget's figures; absent in a game saved before it existed. */
+  nation?: Nation;
   /** Which parliament this is, starting at 1. */
   term: number;
   /** Week of the term, starting at 1. The election campaign follows the last one. */

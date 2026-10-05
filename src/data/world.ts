@@ -27,7 +27,7 @@ const NATIONAL = ['ps', 'bp', 'pt'].map((id) => PARTY_IDS.indexOf(id as (typeof 
 /** A by-election is a close race between the three national parties: each took a fifth of the vote, and the top two were within 12 points. */
 const THREE_WAY = { third: 0.2, gap: 0.12 };
 
-function isThreeWay(votes: readonly number[]): boolean {
+export function isThreeWay(votes: readonly number[]): boolean {
   const total = votes.reduce((a, b) => a + b, 0);
   const [first, second, third] = NATIONAL.map((p) => votes[p] / total).sort((a, b) => b - a);
   return third >= THREE_WAY.third && first - second <= THREE_WAY.gap;
@@ -36,8 +36,33 @@ function isThreeWay(votes: readonly number[]): boolean {
 /** The seats a by-election can be drawn in. Hulu Selangor is one of them. */
 export const BYELECTION_SEATS: string[] = (seatFile as SeatFile).seats.filter((s) => isThreeWay(s.last.votes)).map((s) => s.id);
 
-/** The scenario id of a by-election in a given seat. */
+/** The scenario id of a by-election in a given seat (a parliamentary seat's code, or `dun:<state>:<code>` for an assembly seat). */
 export const byElectionId = (seat: string) => `byelection:${seat}`;
+
+/** A seat in which a by-election can be fought. */
+export interface Vacancy {
+  /** What goes after `byelection:` in the scenario id. */
+  key: string;
+  name: string;
+  /** The seat's official code. */
+  code: string;
+  kind: 'parliament' | 'dun';
+  /** The state it is in. */
+  state: StateId;
+  /** For an assembly seat, the parliamentary seat it sits within. */
+  within: string | null;
+  /** A close three-way race, which makes for the best fight. */
+  close: boolean;
+}
+
+/** Every parliamentary seat, and every assembly seat of the three states with results, in the order a list should show them. */
+export const VACANCIES: Vacancy[] = [
+  ...(seatFile as SeatFile).seats.map((s): Vacancy => ({ key: s.id, name: s.name, code: s.id, kind: 'parliament', state: s.state as StateId, within: null, close: isThreeWay(s.last.votes) })),
+  ...STATE_SCENARIOS.flatMap((st) => (DUN_FILES[st]!.seats).map((s): Vacancy => ({
+    key: `dun:${st}:${s.id}`, name: s.name, code: s.id, kind: 'dun', state: st, within: DUN_FILES[st]!.regions?.[s.state] ?? null, close: isThreeWay(s.last.votes),
+  }))),
+];
+export const vacancyOf = (key: string) => VACANCIES.find((v) => v.key === key) ?? null;
 
 export interface ScenarioInfo {
   id: string;
@@ -65,7 +90,13 @@ export function getWorld(id: string): World | null {
   let built: World | null = null;
   if (id === 'hung') built = createWorld(seatFile as SeatFile, HUNG_RULES, id);
   else if (id === 'career') built = createWorld(seatFile as SeatFile, CAREER_RULES, id);
-  else if (id === 'byelection' || id.startsWith('byelection:')) {
+  else if (id.startsWith('byelection:dun:')) {
+    // An assembly seat: the same single contest, fought on that state's own map and results.
+    const [, , st, code] = id.split(':');
+    const file = DUN_FILES[st as StateId];
+    const seat = file?.seats.find((s) => s.id === code);
+    if (file && seat) built = createWorld({ ...file, seats: [seat] }, BYELECTION_RULES, id);
+  } else if (id === 'byelection' || id.startsWith('byelection:')) {
     const wanted = id === 'byelection' ? BYELECTION_SEAT : id.slice('byelection:'.length);
     const seat = (seatFile as SeatFile).seats.find((s) => s.id === wanted);
     if (seat) built = createWorld({ ...(seatFile as SeatFile), seats: [seat] }, BYELECTION_RULES, id);

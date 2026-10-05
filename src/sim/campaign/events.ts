@@ -3,15 +3,17 @@ import { Rng } from '../rng';
 import { BLOC_IDS, N_BLOCS, PARTY_IDS, type BlocId, type PartyId } from '../types';
 import { EVENTS as CORE_EVENTS } from './eventList';
 import { MORE_EVENTS } from './eventList2';
+import { GOVERNING_EVENTS } from './eventList3';
 import { statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
+import { nationOf, shiftNation } from './nation';
 import { pushNews } from './news';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
 /** Everything that can happen between elections. */
-export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS };
+export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS };
 
 /** Where the player sits: heading the government, a partner in it, or across the floor. */
 export type Seat = 'pm' | 'gov' | 'opp';
@@ -28,6 +30,7 @@ export type Effect =
   | { t: 'rival'; who: Who; n: number }
   | { t: 'unity' | 'funds' | 'cred' | 'stability' | 'trust' | 'machinery' | 'dossier' | 'donors' | 'state' | 'fiscal'; n: number }
   | { t: 'economy'; growth?: number; inflation?: number }
+  | { t: 'nation'; health?: number; education?: number; standing?: number }
   | { t: 'assets'; pct: number }
   | { t: 'dividend'; pct: number }
   | { t: 'relation'; who: Who; n: number }
@@ -61,6 +64,8 @@ export interface EventDef {
     shaky?: number;
     /** The national debt is above this share of national income. */
     debt?: number;
+    /** The care of the country's health, schooling, or standing among nations is below this (0-100). */
+    health?: number; education?: number; standing?: number;
     /** The player's leader has this past. */
     backstory?: BackstoryId;
     /** The player has hired at least one of their people. */
@@ -75,7 +80,8 @@ export interface EventDef {
 const QUIET_WEEKS = 3;
 const EVENT_CHANCE = 0.06;
 
-function eligible(c: Campaign, id: string): boolean {
+/** Whether an event could happen to the player now, by their place in government and by the state of things. */
+export function eligible(c: Campaign, id: string): boolean {
   const def = EVENTS[id];
   const k = c.career!;
   const seat = seatOf(c);
@@ -94,6 +100,9 @@ function eligible(c: Campaign, id: string): boolean {
   if (n.partners && k.government.partners.length === 0) return false;
   if (n.shaky !== undefined && k.government.stability >= n.shaky) return false;
   if (n.debt !== undefined && k.economy.debt <= n.debt) return false;
+  if (n.health !== undefined && nationOf(k).health >= n.health) return false;
+  if (n.education !== undefined && nationOf(k).education >= n.education) return false;
+  if (n.standing !== undefined && nationOf(k).standing >= n.standing) return false;
   if (n.backstory && c.team.leader.backstory !== n.backstory) return false;
   if (n.staff && !c.team.staff.some((s) => s !== null)) return false;
   if (n.states && statesHeld(c, c.player) === 0) return false;
@@ -180,6 +189,7 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
       case 'state': k.orders.state = clamp(k.orders.state + e.n, 0, 3) as Level; break;
       case 'fiscal': k.fiscal = Math.max(0, k.fiscal + e.n); break;
       case 'economy': k.economy.growth += e.growth ?? 0; k.economy.inflation += e.inflation ?? 0; break;
+      case 'nation': shiftNation(k, e); break;
       case 'assets': k.assets = Math.max(0, Math.round(k.assets * (1 + e.pct))); break;
       case 'dividend': pc.funds = Math.max(0, pc.funds + Math.round(k.assets * e.pct)); break;
       case 'relation': for (const p of partiesOf(c, e.who)) shiftRelation(c, me, p, e.n); break;

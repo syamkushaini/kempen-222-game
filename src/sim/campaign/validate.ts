@@ -156,6 +156,7 @@ function isValidCareer(x: unknown, world: World): boolean {
   const seats = world.seats.length;
   return (
     (x.founded === undefined || typeof x.founded === 'boolean') &&
+    (x.nation === undefined || (isObj(x.nation) && isNum(x.nation.health) && isNum(x.nation.education) && isNum(x.nation.standing))) &&
     isNum(x.term) && x.term >= 1 && isNum(x.week) && x.week >= 1 && isNum(x.length) && x.week <= x.length &&
     isValidOutcome(x.government) && typeof x.midterm === 'boolean' &&
     (r === null || (isObj(r) && isList(r.votes, isVotes, seats) && isList(r.turnout, isNum, seats) &&

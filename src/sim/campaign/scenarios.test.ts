@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BYELECTION_SEAT, BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, world as general } from '../../data/world';
+import { BYELECTION_SEAT, BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, vacancyOf, VACANCIES, world as general } from '../../data/world';
 import { lastElection, majorityLine } from '../election';
 import { PARTY_IDS } from '../types';
 import { actionCost, canDo } from './actions';
@@ -199,5 +199,44 @@ describe('what a declaration meant on election night', () => {
     expect(flipKind(me, a, me)).toBe('gain');
     expect(flipKind(a, me, me)).toBe('loss');
     expect(flipKind(b, a, me)).toBe('flip');
+  });
+});
+
+describe('choosing any seat for a by-election', () => {
+  it('lists every parliamentary seat and every assembly seat of the three states, each once', () => {
+    expect(VACANCIES.filter((v) => v.kind === 'parliament')).toHaveLength(222);
+    expect(VACANCIES.filter((v) => v.kind === 'dun')).toHaveLength(59 + 42 + 15);
+    expect(new Set(VACANCIES.map((v) => v.key)).size).toBe(VACANCIES.length);
+    expect(vacancyOf(BYELECTION_SEAT)?.name).toBeTruthy();
+    expect(vacancyOf('P.999')).toBeNull();
+    // The close races are still marked, and are the ones the random draw uses.
+    expect(VACANCIES.filter((v) => v.kind === 'parliament' && v.close).map((v) => v.key).sort()).toEqual([...BYELECTION_SEATS].sort());
+  });
+
+  it('builds a by-election in any parliamentary seat, and in an assembly seat of any of the three states', () => {
+    for (const v of [VACANCIES[0], VACANCIES.find((x) => x.kind === 'parliament' && !x.close)!, VACANCIES.at(-1)!, ...['perak', 'pahang', 'perlis'].map((st) => VACANCIES.find((x) => x.kind === 'dun' && x.state === st)!)]) {
+      const w = getWorld(byElectionId(v.key));
+      expect(w, v.key).not.toBeNull();
+      expect(w!.seats).toHaveLength(1);
+      expect(w!.seats[0].id).toBe(v.code);
+      expect(w!.seats[0].name).toBe(v.name);
+      expect(w!.rules.kind).toBe('byelection');
+    }
+    expect(getWorld('byelection:dun:perak:N.999')).toBeNull();
+    expect(getWorld('byelection:dun:atlantis:N.01')).toBeNull();
+  });
+
+  it('offers only the parties that stand in the seat, and plays an assembly by-election through', () => {
+    for (const v of VACANCIES.filter((x, i) => i % 11 === 0 || x.kind === 'dun').slice(0, 40)) {
+      const w = getWorld(byElectionId(v.key))!;
+      for (const p of playable(w)) expect(w.baseline.contesting[0][p], `${v.key} ${PARTY_IDS[p]}`).toBe(true);
+    }
+    const dun = VACANCIES.find((v) => v.kind === 'dun' && v.state === 'perak')!;
+    const w = getWorld(byElectionId(dun.key))!;
+    const player = playable(w)[0];
+    const c = newCampaign(w, { player, difficulty: 'easy', seed: 4 });
+    while (c.phase === 'campaign') { autoPlayWeek(w, c); endWeek(w, c); }
+    expect(electionResult(w, c)!.seats).toHaveLength(1);
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), w)).toBe(true);
   });
 });

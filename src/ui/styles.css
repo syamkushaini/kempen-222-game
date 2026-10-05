@@ -91,6 +91,15 @@ h3 { font-size: 13px; font-weight: 500; letter-spacing: 0.4px; color: var(--mute
 .platform { margin: 12px 0; }
 .platform h4 { margin: 14px 0 4px; font-size: 13px; font-weight: 500; color: var(--muted); }
 .platform .chips { margin: 6px 0 4px; }
+.vacancy-panel { margin-top: 8px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); }
+.vacancy-search { width: 100%; min-height: 40px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--panel); color: var(--ink); font: inherit; }
+.vacancy-list { list-style: none; margin: 6px 0 0; padding: 0; max-height: 280px; overflow-y: auto; }
+.vacancy-head { position: sticky; top: 0; padding: 6px 4px; font-size: 12px; font-weight: 500; color: var(--muted); background: var(--panel-2); }
+.vacancy-row { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 6px 8px; border: 0; border-radius: 6px; background: none; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.vacancy-row:hover { background: var(--panel-3); }
+.vacancy-row.active { background: var(--panel-3); outline: 1px solid var(--ink-muted); }
+.nation-list { list-style: none; margin: 4px 0 8px; padding: 0; display: grid; gap: 10px; }
+.pos-text { color: var(--good); }
 .map-loading { padding: 80px 0; text-align: center; }
 .map-zoom { transform-origin: 0 0; transition: transform 650ms cubic-bezier(0.22, 0.8, 0.2, 1); }
 @media (prefers-reduced-motion: reduce) { .map-zoom { transition: none; } }

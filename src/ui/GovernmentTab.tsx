@@ -9,6 +9,7 @@ import { majorityLine } from '../sim/election';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
 import { partyColor, partyName, partyShort, useFog, useT, useWorld, type T } from './hooks';
+import { NationCard } from './NationCard';
 import { Portrait } from './Portrait';
 
 const DIALS: Dial[] = [-1, 0, 1];
@@ -78,6 +79,8 @@ export function GovernmentTab() {
         <div><dt>{t('house.debt')}</dt><dd className={`num ${e.debt > 75 ? 'neg' : ''}`}>{e.debt.toFixed(0)}%</dd></div>
       </dl>
       <p className="muted small">{t(feel > 0.5 ? 'house.feel.good' : feel < -0.5 ? 'house.feel.bad' : 'house.feel.flat')} {t('house.deficit', { pct: deficit(k).toFixed(1) })}</p>
+
+      <NationCard />
 
       {pm && (
         <>

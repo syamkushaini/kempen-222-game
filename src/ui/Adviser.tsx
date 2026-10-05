@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
+import { isThreeWay } from '../data/world';
 import { lastOutcome, useSpot, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
 import { Jargon } from './Term';
@@ -28,7 +29,10 @@ export function Adviser() {
   const pointsAway = step.spots(ctx).some((name) => name !== 'next');
   const show = () => document.querySelector('.spot')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
   // The seat may be one the player's party already holds.
-  const text = step.id === 'welcome' && lastOutcome(world).seats[0].winner === campaign.player ? 'adviser.welcomeHeld' : `adviser.${step.id}`;
+  const held = lastOutcome(world).seats[0].winner === campaign.player;
+  // The usual welcome speaks of a close three-way fight; not every seat the player may pick was one.
+  const close = isThreeWay(world.seats[0].last.votes);
+  const text = step.id === 'welcome' ? `adviser.welcome${close ? '' : 'Any'}${held ? 'Held' : ''}` : `adviser.${step.id}`;
   return (
     <section className="panel adviser" aria-live="polite">
       <Portrait adviser size={46} />
