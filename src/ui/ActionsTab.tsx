@@ -8,6 +8,7 @@ import { isMinor, type RegionId } from '../sim/types';
 import { useStore } from '../state/store';
 import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld } from './hooks';
 import { NewsLine } from './NewsTab';
+import { RecapCard } from './RecapCard';
 import { Jargon } from './Term';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
@@ -160,6 +161,7 @@ export function ActionsTab() {
   return (
     <section className="actions">
       {lastReport && <ul className="report"><NewsLine item={lastReport} /></ul>}
+      {!guided && <RecapCard />}
       <p className="target-line">
         <span className="muted">{t('actions.target')}:</span>{' '}
         <i className="dot" style={{ background: partyColor(me) }} />

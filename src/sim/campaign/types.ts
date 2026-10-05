@@ -197,6 +197,24 @@ export interface NewsItem {
   tone: 'good' | 'bad' | 'neutral';
 }
 
+/** The week just ended, as the player can know it. */
+export interface Recap {
+  /** The week it describes. */
+  week: number;
+  daysTotal: number;
+  daysLeft: number;
+  /** Campaign money spent that week. */
+  spent: number;
+  /** Campaign money spent so far, so that next week's figure can be told from it. */
+  spentToDate: number;
+  /** Seats where the player's leader appeared. */
+  mine: string[];
+  /** Where each rival's leader appeared. */
+  rivals: { party: number; seats: string[] }[];
+  /** Close seats a rival's leader visited that the player's did not. */
+  missed: { seat: string; party: number }[];
+}
+
 /** One of the player's choices in the campaign: what it was, and how far it moved the projection when taken. */
 export interface Decision {
   news: NewsItem;
@@ -422,6 +440,8 @@ export interface Campaign {
   news: NewsItem[];
   /** What the player decided in this campaign, and what each choice moved when it was taken. */
   ledger: Decision[];
+  /** A look back at the week just ended; absent in the first week. */
+  recap?: Recap;
   /** Set when polling day arrives: the generator state the election runs with. */
   election: { rng: number } | null;
 

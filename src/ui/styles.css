@@ -538,6 +538,10 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 .goal-result.met { border-color: var(--good); color: var(--good); }
 .goal-result.missed { border-color: var(--bad); }
 
+.recap { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); }
+.recap h3 { margin: 0 0 4px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.recap p { margin: 3px 0 0; line-height: 1.5; }
+
 .feedback { margin: 16px 0 0; line-height: 1.5; }
 .feedback a { color: var(--link); }
 

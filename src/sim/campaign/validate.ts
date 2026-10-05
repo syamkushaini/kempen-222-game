@@ -49,6 +49,15 @@ function isValidDecision(x: unknown): boolean {
   return isObj(x) && isValidNews(x.news) && isNum(x.seats) && isNum(x.share);
 }
 
+function isValidRecap(x: unknown, world: World): boolean {
+  const seats = (v: unknown) => Array.isArray(v) && v.every((id) => typeof id === 'string' && world.seatIndex.has(id));
+  return (
+    isObj(x) && isNum(x.week) && isNum(x.daysTotal) && isNum(x.daysLeft) && isNum(x.spent) && isNum(x.spentToDate) && seats(x.mine) &&
+    isList(x.rivals, (r) => isObj(r) && isParty(r.party) && seats(r.seats)) &&
+    isList(x.missed, (m) => isObj(m) && isParty(m.party) && typeof m.seat === 'string' && world.seatIndex.has(m.seat))
+  );
+}
+
 function isValidNews(x: unknown): boolean {
   if (!isObj(x)) return false;
   return (
@@ -202,6 +211,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
     Array.isArray(x.polls) && x.polls.every(isValidPoll) &&
     Array.isArray(x.news) && x.news.every(isValidNews) &&
     Array.isArray(x.ledger) && x.ledger.every(isValidDecision) &&
+    (x.recap === undefined || isValidRecap(x.recap, world)) &&
     (election === null || (isObj(election) && isUint32(election.rng))) &&
     (x.phase === 'campaign' || x.phase === 'term' || election !== null || (x.phase !== 'night' && x.career !== null)) &&
     isList(x.relations, (row) => isList(row, (v) => isNum(v) && v >= -100 && v <= 100, N_PARTIES), N_PARTIES) &&

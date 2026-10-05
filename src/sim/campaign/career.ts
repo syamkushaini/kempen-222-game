@@ -131,6 +131,7 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   takeOffice(c);
   c.news = [];
   c.ledger = [];
+  delete c.recap;
   c.polls = [];
   syncOpinion(c);
   pushNews(c, { party: null, key: 'news.term.start', vars: { party: ref.party(c.career.government.pm), n: c.career.government.seats }, tone: 'neutral' });
@@ -490,6 +491,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   c.polls = [];
   c.news = [];
   c.ledger = [];
+  delete c.recap;
   closeCampaign(c);
   syncOpinion(c);
   takeOffice(c);

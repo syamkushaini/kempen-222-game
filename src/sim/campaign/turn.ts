@@ -7,6 +7,7 @@ import {
   type Dynamics, type ElectionOutcome, type FieldedId, type PartyId, type RegionId,
 } from '../types';
 import { record, standing } from './ledger';
+import { makeRecap } from './recap';
 import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, purseOf, scaled, truth } from './actions';
 import { applyBackstory } from './leader';
 import { pressReacts } from './media';
@@ -417,6 +418,7 @@ export function endWeek(world: World, c: Campaign): void {
     return;
   }
 
+  c.recap = makeRecap(world, c);
   decay(c.dyn);
   c.week++;
   c.parties.forEach((pc, p) => {
