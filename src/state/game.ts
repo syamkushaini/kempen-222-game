@@ -4,7 +4,9 @@ import { formCabinet, makeObligations, standstill, startEconomy } from '../sim/c
 import { ROUNDS, startStates } from '../sim/campaign/contests';
 import { teamFor } from '../sim/campaign/team';
 import { freshParty } from '../sim/campaign/turn';
-import type { Campaign } from '../sim/campaign/types';
+import { challengeById } from '../sim/campaign/challenges';
+import type { IdeologyId } from '../sim/campaign/leader';
+import type { BackstoryId, Campaign, Challenge, Difficulty } from '../sim/campaign/types';
 import { Rng } from '../sim/rng';
 import { isMinor, N_PARTIES, PARTY_IDS } from '../sim/types';
 import { isValidCampaign } from '../sim/campaign/validate';
@@ -12,6 +14,8 @@ import { isValidIdentity, type Identity } from './identity';
 
 /** Bump when the saved shape changes, and add a step to `migrate`. */
 export const SAVE_VERSION = 11;
+
+const isRecord = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
 
 /** Everything that must survive a save and reload. Plain JSON only. */
 export interface GameState {
@@ -28,10 +32,57 @@ export interface GameState {
   tutorial: { step: number } | null;
   /** The player's own name, colours and leader for their party, or null to play it as it is. */
   identity: Identity | null;
+  /** How the game was set up, so it can be started again from the beginning. Absent in a game saved before this was kept. */
+  start?: StartOptions;
 }
 
-export function newGame(name: string, campaign: Campaign, now: number = Date.now(), tutorial = false, identity: Identity | null = null): GameState {
+/** The choices made on the title screen. A seed is kept only where it was fixed (a set challenge); otherwise each start draws its own. */
+export interface StartOptions {
+  scenario: string;
+  player: number;
+  difficulty: Difficulty;
+  seed?: number;
+  backstory: BackstoryId | null;
+  ideology: IdeologyId | null;
+  founded?: boolean;
+  stances?: number[];
+  challenge?: Partial<Challenge>;
+}
+
+/**
+ * The setup of a game, for starting it again. A game saved before the setup was kept is worked out from what
+ * it holds: the same contest, party, difficulty, leader and challenge, and for a founded party its platform.
+ */
+export function startOf(game: GameState): StartOptions {
+  if (game.start) return game.start;
+  const c = game.campaign;
+  const fixed = challengeById(c.challenge?.goal);
   return {
+    scenario: c.scenario, player: c.player, difficulty: c.difficulty,
+    ...(fixed ? { seed: fixed.seed } : {}),
+    backstory: c.team.leader.backstory ?? null, ideology: null,
+    ...(c.career?.founded ? { founded: true, stances: [...c.career.stances0[c.player]] } : {}),
+    ...(c.challenge ? { challenge: { ...c.challenge } } : {}),
+  };
+}
+
+/** Whether what a save says about its setup can be trusted; if not it is dropped and worked out instead. */
+function isStart(x: unknown): x is StartOptions {
+  if (!isRecord(x)) return false;
+  return (
+    typeof x.scenario === 'string' && Number.isInteger(x.player) && (x.player as number) >= 0 && (x.player as number) < N_PARTIES &&
+    (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
+    (x.seed === undefined || Number.isInteger(x.seed)) &&
+    (x.backstory === null || typeof x.backstory === 'string') && (x.ideology === null || typeof x.ideology === 'string') &&
+    (x.founded === undefined || typeof x.founded === 'boolean') &&
+    (x.stances === undefined || (Array.isArray(x.stances) && x.stances.every((v) => typeof v === 'number'))) &&
+    (x.challenge === undefined || isRecord(x.challenge))
+  );
+}
+
+export function newGame(name: string, campaign: Campaign, now: number = Date.now(), tutorial = false, identity: Identity | null = null, start?: StartOptions): GameState {
+  return {
+    ...(start ? { start } : {}),
     version: SAVE_VERSION,
     id: `${now.toString(36)}-${campaign.seed.toString(36)}`,
     name,
@@ -43,7 +94,6 @@ export function newGame(name: string, campaign: Campaign, now: number = Date.now
   };
 }
 
-const isRecord = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
 
 export type ParseError = 'not-json' | 'not-a-save' | 'too-new' | 'outdated' | 'damaged';
 export type ParseResult = { ok: true; state: GameState } | { ok: false; error: ParseError };
@@ -199,6 +249,7 @@ export function parseSave(text: string): ParseResult {
       campaign: s.campaign as Campaign,
       tutorial: tutorial === null ? null : { step: tutorial.step as number },
       identity: s.identity as Identity | null,
+      ...(isStart(s.start) ? { start: s.start } : {}),
     },
   };
 }

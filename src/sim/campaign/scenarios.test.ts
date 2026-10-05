@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { BYELECTION_SEAT, BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, vacancyOf, VACANCIES, world as general } from '../../data/world';
-import { lastElection, majorityLine } from '../election';
+import { readFileSync } from 'node:fs';
+import { BYELECTION_SEAT, BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, STATE_SCENARIOS, vacancyOf, VACANCIES, world as general } from '../../data/world';
+import { emptyDynamics } from '../dynamics';
+import { transferRate } from '../transfer';
+import { lastElection, majorityLine, projectElection } from '../election';
 import { PARTY_IDS } from '../types';
 import { actionCost, canDo } from './actions';
+import { breakPact, inPact } from './diplomacy';
 import { flipKind } from './night';
 import { pollCost } from './polls';
 import {
   autoPlayWeek, campaigns, countBatches, electionResult, endWeek, newCampaign, playable, playerAct, playerPoll,
-  setChief, startingFunds, summarise, truth,
+  setChief, standingPact, startingFunds, summarise, truth,
 } from './turn';
 import { isValidCampaign } from './validate';
 
@@ -205,7 +209,7 @@ describe('what a declaration meant on election night', () => {
 describe('choosing any seat for a by-election', () => {
   it('lists every parliamentary seat and every assembly seat of the three states, each once', () => {
     expect(VACANCIES.filter((v) => v.kind === 'parliament')).toHaveLength(222);
-    expect(VACANCIES.filter((v) => v.kind === 'dun')).toHaveLength(59 + 42 + 15);
+    expect(VACANCIES.filter((v) => v.kind === 'dun')).toHaveLength(15 + 36 + 40 + 59 + 45 + 32 + 42 + 56 + 36);
     expect(new Set(VACANCIES.map((v) => v.key)).size).toBe(VACANCIES.length);
     expect(vacancyOf(BYELECTION_SEAT)?.name).toBeTruthy();
     expect(vacancyOf('P.999')).toBeNull();
@@ -238,5 +242,98 @@ describe('choosing any seat for a by-election', () => {
     while (c.phase === 'campaign') { autoPlayWeek(w, c); endWeek(w, c); }
     expect(electionResult(w, c)!.seats).toHaveLength(1);
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), w)).toBe(true);
+  });
+});
+
+describe('the six states that voted in August 2023', () => {
+  const PRN6 = ['kedah', 'kelantan', 'terengganu', 'penang', 'selangor', 'nsembilan'] as const;
+  // Seats won by PS, BP and PT, as declared.
+  const REAL: Record<(typeof PRN6)[number], [number, number, number]> = {
+    kedah: [3, 0, 33], kelantan: [1, 1, 43], terengganu: [0, 0, 32], penang: [27, 2, 11], selangor: [32, 2, 22], nsembilan: [17, 14, 5],
+  };
+  const world = (st: string) => getWorld(`state:${st}`)!;
+  const [ps, bp, pt] = [P('ps'), P('bp'), P('pt')];
+
+  it('are playable alongside the three that voted in 2022, and show the result as it was declared', () => {
+    expect(STATE_SCENARIOS).toHaveLength(9);
+    for (const st of PRN6) {
+      const tally = lastElection(world(st)).tally;
+      expect([tally[ps], tally[bp], tally[pt]], st).toEqual(REAL[st]);
+      expect(majorityLine(world(st))).toBe(Math.floor(world(st).seats.length / 2) + 1);
+    }
+  });
+
+  it('were fought by two allies who never stood against each other, and open with that pact still in force', () => {
+    for (const st of PRN6) {
+      const w = world(st);
+      const { standDowns, pacts } = standingPact(w);
+      expect(Object.keys(standDowns), st).toHaveLength(w.seats.length);
+      for (const seat of w.seats) {
+        const stood = standDowns[seat.id];
+        // Exactly one of the two allies is on the ballot, and the other stands aside for it.
+        expect((stood[ps] === bp) !== (stood[bp] === ps), `${st} ${seat.id}`).toBe(true);
+        expect(stood[pt]).toBe(-1);
+        expect(seat.last.votes[stood[ps] === bp ? ps : bp]).toBe(0);
+        expect(seat.basis!.votes[ps]).toBeGreaterThan(0);
+        expect(seat.basis!.votes[bp]).toBeGreaterThan(0);
+      }
+      // A pact is something two campaigning leaders hold; where one ally is too small to campaign there is none to end.
+      expect(pacts).toEqual(campaigns(w, ps) && campaigns(w, bp) ? [{ a: ps, b: bp, week: 0 }] : []);
+    }
+    // The states that voted in 2022 were three-way fights and open with no pact.
+    for (const w of [perak, pahang, perlis]) expect(standingPact(w)).toEqual({ standDowns: {}, pacts: [] });
+  });
+
+  it('are reproduced by the model when the pact holds: the same winner nearly everywhere, and vote shares within a point on average', () => {
+    for (const st of PRN6) {
+      const w = world(st);
+      const real = lastElection(w);
+      const model = projectElection(w, emptyDynamics(), standingPact(w).standDowns);
+      let same = 0, error = 0, n = 0;
+      real.seats.forEach((o, i) => {
+        if (o.winner === model.seats[i].winner) same++;
+        for (const p of [ps, bp, pt]) { error += Math.abs(o.votes[p] / o.valid - model.seats[i].votes[p] / model.seats[i].valid); n++; }
+      });
+      expect(same / w.seats.length, st).toBeGreaterThanOrEqual(0.92);
+      expect(error / n, st).toBeLessThan(0.01);
+    }
+  });
+
+  it('used the same voter-transfer rates to rebuild the three-way result as the game uses to apply a pact', () => {
+    const script = readFileSync(new URL('../../../scripts/build-data.mjs', import.meta.url), 'utf8');
+    for (const [from, to] of [['ps', 'bp'], ['bp', 'ps']] as const) {
+      const found = new RegExp(`'${from}>${to}': \\{ to: ([\\d.]+), home: ([\\d.]+) \\}`).exec(script)!;
+      expect({ to: Number(found[1]), home: Number(found[2]) }).toEqual(transferRate(P(from), P(to)));
+    }
+  });
+
+  it('start a campaign as allies on good terms, say so on the first day, and let the player end it', () => {
+    const w = world('selangor');
+    const c = newCampaign(w, { player: bp, difficulty: 'normal', seed: 3 });
+    expect(inPact(c, ps, bp)).toBe(true);
+    expect(c.relations[ps][bp]).toBeGreaterThanOrEqual(30);
+    expect(c.news.map((n) => n.key)).toContain('news.pact.standing.mine');
+    expect(newCampaign(w, { player: pt, difficulty: 'normal', seed: 3 }).news.map((n) => n.key)).toContain('news.pact.standing');
+    const standsIn = () => w.seats.filter((s, i) => w.baseline.contesting[i][bp] && (c.standDowns[s.id]?.[bp] ?? -1) < 0).length;
+    expect(standsIn()).toBe(12);
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), w)).toBe(true);
+    expect(breakPact(c, ps)).toBe(true);
+    expect(standsIn()).toBe(w.seats.length);
+    expect(c.standDowns).toEqual({});
+  });
+
+  it('play through to a full assembly, and offer all three parties in a by-election there', () => {
+    for (const st of ['selangor', 'kelantan'] as const) {
+      const w = world(st);
+      const c = newCampaign(w, { player: playable(w)[0], difficulty: 'normal', seed: 4 });
+      while (c.phase === 'campaign') { autoPlayWeek(w, c); endWeek(w, c); }
+      expect(electionResult(w, c)!.tally.reduce((a, b) => a + b, 0)).toBe(w.seats.length);
+      expect(isValidCampaign(JSON.parse(JSON.stringify(c)), w)).toBe(true);
+    }
+    const seat = VACANCIES.find((v) => v.kind === 'dun' && v.state === 'selangor')!;
+    const one = getWorld(byElectionId(seat.key))!;
+    // A by-election is a fresh contest: no pact, and everyone who has a following there stands.
+    expect(standingPact(one)).toEqual({ standDowns: {}, pacts: [] });
+    expect(playable(one).map((p) => PARTY_IDS[p])).toEqual(['ps', 'bp', 'pt']);
   });
 });

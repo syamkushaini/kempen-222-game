@@ -30,7 +30,7 @@ import type {
 import { randomSeed } from '../sim/rng';
 import type { World } from '../sim/election';
 import type { RegionId } from '../sim/types';
-import { newGame, type GameState } from './game';
+import { newGame, startOf, type GameState, type StartOptions } from './game';
 import type { Identity } from './identity';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
@@ -195,6 +195,16 @@ interface Store {
   renameGame(name: string): void;
   loadGame(state: GameState): void;
   quitToTitle(): void;
+  /** Starts the open game again from the beginning: the same contest, party and settings, with the same name. */
+  restart(): void;
+  /** Leaves for the title screen with the full set-up of a new game showing. */
+  newGameSetup(): void;
+  /** Set by `newGameSetup` so the title screen opens on the set-up, and cleared once it has. */
+  setupWanted: boolean;
+  clearSetupWanted(): void;
+  /** Whether the game menu is showing. */
+  menuOpen: boolean;
+  setMenuOpen(open: boolean): void;
 }
 
 const settings = loadSettings();
@@ -246,12 +256,14 @@ export const useStore = create<Store>((set, get) => {
       const world = founded && scenario === 'career' ? foundedWorld() : getWorld(scenario);
       if (!world) return;
       const opts = { player, difficulty, seed: seed ?? randomSeed(), backstory, challenge };
+      // Kept with the game so that it can be started again exactly as it was set up.
+      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances } : {}), ...(challenge ? { challenge } : {}) };
       // A platform of its own belongs to a party of the player's own making.
       const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances }) : newCampaign(world, opts);
       // A set challenge is for someone who has played before: no adviser walking them through it.
       const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
       set({
-        game: newGame(name.trim() || translate(get().settings.lang, 'saves.defaultName'), campaign, Date.now(), tutorial, identity),
+        game: newGame(name.trim() || translate(get().settings.lang, 'saves.defaultName'), campaign, Date.now(), tutorial, identity, start),
         view: 'last', tab: campaign.phase === 'term' ? 'orders' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false,
         // A general election opens on the leader's home state; smaller contests open on the whole map.
         selectedState: world.rules.kind === 'general' && campaign.phase === 'campaign' ? campaign.parties[player]!.location : null,
@@ -377,6 +389,16 @@ export const useStore = create<Store>((set, get) => {
       if (g) saveStore.save(AUTO_SLOT, g);
       set({ game: null, selectedSeat: null, selectedState: null, lastReport: null });
     },
+    restart: () => {
+      const g = get().game;
+      if (!g) return;
+      get().startCampaign({ ...startOf(g), name: g.name, identity: g.identity });
+    },
+    setupWanted: false,
+    newGameSetup: () => { get().quitToTitle(); set({ setupWanted: true }); },
+    clearSetupWanted: () => set({ setupWanted: false }),
+    menuOpen: false,
+    setMenuOpen: (menuOpen) => set({ menuOpen }),
   };
 });
 

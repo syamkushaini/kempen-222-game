@@ -2,6 +2,7 @@ import { emptyDynamics } from '../dynamics';
 import { lastElection, runElection, type World } from '../election';
 import { clamp } from '../math';
 import { Rng } from '../rng';
+import type { StandDowns } from '../transfer';
 import {
   N_BLOCS, N_PARTIES, PARTY_IDS, isFielded, isMinor,
   type Dynamics, type ElectionOutcome, type FieldedId, type PartyId, type RegionId,
@@ -22,7 +23,7 @@ import { latestNationalPoll, pollCost, takePoll } from './polls';
 import {
   DAYS_PER_WEEK,
   type ActionId, type ActionReport, type ActionTarget, type Campaign, type ChiefLevel, type Difficulty,
-  type BackstoryId, type Challenge, type NewsItem, type PartyCampaign, type Poll, type PollQuality, type PollScope,
+  type BackstoryId, type Challenge, type NewsItem, type Pact, type PartyCampaign, type Poll, type PollQuality, type PollScope,
 } from './types';
 
 /** Parties that can be played, where they campaign in the contest. */
@@ -75,7 +76,11 @@ export function lastShares(world: World): LastShares {
 export function campaigns(world: World, p: number): boolean {
   if (!isFielded(PARTY_IDS[p])) return false;
   const holdsSeat = world.seats.some((s) => s.last.votes[p] > 0 && s.last.votes[p] === Math.max(...s.last.votes));
-  return holdsSeat || lastShares(world).national[p] >= MIN_SHARE_TO_CAMPAIGN;
+  if (holdsSeat) return true;
+  // A party's following is what it would poll with everyone standing: a pact that kept it off most ballots did not make its voters vanish.
+  let mine = 0, all = 0;
+  for (const s of world.seats) for (const [q, v] of (s.basis?.votes ?? s.last.votes).entries()) { all += v; if (q === p) mine += v; }
+  return all > 0 && mine / all >= MIN_SHARE_TO_CAMPAIGN;
 }
 
 /** Parties the player can lead in this contest. */
@@ -152,9 +157,33 @@ export function freshParty(world: World, p: number): PartyCampaign | null {
   };
 }
 
+/**
+ * The pact a contest opens under: where the last election was fought with parties standing aside for each other,
+ * and leaders can deal with each other in this one, the same arrangement still holds until someone ends it.
+ */
+export function standingPact(world: World): { standDowns: StandDowns; pacts: Pact[] } {
+  const standDowns: StandDowns = {};
+  const pacts: Pact[] = [];
+  if (!world.rules.diplomacy) return { standDowns, pacts };
+  for (const seat of world.seats) {
+    if (!seat.stood || seat.stood.every((v) => v < 0)) continue;
+    standDowns[seat.id] = [...seat.stood];
+    seat.stood.forEach((to, from) => {
+      const a = Math.min(from, to), b = Math.max(from, to);
+      // Only parties that run a campaign have a leader to hold a pact with.
+      if (to >= 0 && campaigns(world, a) && campaigns(world, b) && !pacts.some((x) => x.a === a && x.b === b)) pacts.push({ a, b, week: 0 });
+    });
+  }
+  return { standDowns, pacts };
+}
+
+/** Allies who went into the last election together are on good terms as the next one opens. */
+const ALLIED = 30;
+
 export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   const rng = new Rng(opts.seed);
   const parties = PARTY_IDS.map((_, p) => freshParty(world, p));
+  const opening = standingPact(world);
 
   const bare: Omit<Campaign, 'team'> = {
     scenario: world.id,
@@ -173,8 +202,8 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
     ledger: [],
     election: null,
     relations: startRelations(),
-    standDowns: {},
-    pacts: [],
+    standDowns: opening.standDowns,
+    pacts: opening.pacts,
     understandings: [],
     met: new Array<number>(N_PARTIES).fill(0),
     katak: [],
@@ -191,6 +220,16 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   }
   // A career sets its own opening terms first, then lets the leader's past have its say.
   if (!world.rules.career) applyBackstory(c);
+  for (const pact of opening.pacts) {
+    c.relations[pact.a][pact.b] = c.relations[pact.b][pact.a] = Math.max(c.relations[pact.a][pact.b], ALLIED);
+    // Said on the first day, so nobody wonders why a party is missing from most of the ballots.
+    const mine = pact.a === c.player || pact.b === c.player;
+    c.news.push({
+      week: 1, party: mine ? c.player : pact.a, key: mine ? 'news.pact.standing.mine' : 'news.pact.standing',
+      vars: { a: ref.party(pact.a), b: ref.party(pact.b), party: ref.party(pact.a === c.player ? pact.b : pact.a), n: Object.keys(opening.standDowns).length },
+      tone: 'neutral',
+    });
+  }
   if (world.rules.kind === 'hung') {
     // The votes are in and they are the last election's: straight to the talks.
     c.drift = emptyDynamics();

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { termIncome, termSpending } from '../sim/campaign/career';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore, type Theme } from '../state/store';
+import { MenuButton } from './GameMenu';
 import { Term } from './Term';
 import { regionLabel, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
 
@@ -229,6 +230,7 @@ export function Header() {
       </div>
       {phase === 'campaign' && <Hud />}
       {phase === 'term' && <TermHud />}
+      <MenuButton />
       <SettingsControls />
     </header>
   );

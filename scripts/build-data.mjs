@@ -249,23 +249,77 @@ for (const s of seats) if (!map.seats[s.id]) throw new Error(`No boundary for ${
 
 // ---------- state assemblies ----------
 
-// States with a state election result in the raw data. Each becomes its own
-// small world: assembly seats grouped by the parliamentary seat they sit in.
-const DUN_STATES = ['Perlis', 'Perak', 'Pahang'];
+// States with a state election result in the raw data, by the file it is in. Each
+// becomes its own small world: assembly seats grouped by the parliamentary seat
+// they sit in.
+//
+// In the six states that voted in August 2023, two of the national coalitions
+// were allies and stood aside for each other in every seat (`allies`). Those
+// seats also get a `basis`: an estimate of the result had all three stood, so
+// that the party which stood aside can stand again if the pact ends.
+const DUN_SOURCES = [
+  { file: 'tindak/MALAYSIA_GE15_DUN_RESULTS_V27122022.csv', states: ['Perlis', 'Perak', 'Pahang'] },
+  {
+    file: 'tindak/prn6-2023/MALAYSIA_PRN6_2023_ELECTION_RESULTS.csv',
+    states: ['Kedah', 'Kelantan', 'Terengganu', 'Pulau Pinang', 'Selangor', 'Negeri Sembilan'],
+    allies: ['ps', 'bp'],
+  },
+];
 const censusDun = readCsv('dosm/census_dun.csv');
-const dunResults = readCsv('tindak/MALAYSIA_GE15_DUN_RESULTS_V27122022.csv');
-const dunResultByCode = new Map(dunResults.map((r) => [normCode(r['UNIQUE CODE']), r]));
+const parliamentById = new Map(seats.map((s) => [s.id, s]));
+
+// How many of a party's voters follow it to the ally it stands aside for, and how many stay at home.
+// These must match RATES in src/sim/transfer.ts; a test checks that the two agree.
+const TRANSFER = { 'ps>bp': { to: 0.6, home: 0.15 }, 'bp>ps': { to: 0.4, home: 0.15 } };
+
+/**
+ * Works back from a result in which one ally stood aside to the result had both
+ * stood. The allies' relative strength is taken from the same area at the 2022
+ * general election, when they fought each other; their combined size is whatever
+ * makes the pact reproduce the votes actually cast. A modelled figure, not a fact.
+ */
+function withAllStanding(seat, allies, stateRatio) {
+  const [a, b] = allies.map((id) => PARTY_IDS.indexOf(id));
+  const votes = seat.last.votes;
+  if ((votes[a] > 0) === (votes[b] > 0)) throw new Error(`${seat.id}: expected exactly one of ${allies.join(', ')} on the ballot`);
+  const stoodIn = votes[a] > 0 ? a : b, aside = votes[a] > 0 ? b : a;
+  const { to, home } = TRANSFER[`${PARTY_IDS[aside]}>${PARTY_IDS[stoodIn]}`];
+  const parent = parliamentById.get(seat.state).last.votes;
+  // In two areas one ally stood aside in 2022 for the youth party, whose vote there stands in for its own.
+  // Failing that there is nothing local to go on, and the state as a whole is used.
+  const local = (p) => parent[p] || (PARTY_IDS[p] === 'ps' ? parent[PARTY_IDS.indexOf('genba')] : 0);
+  const ratio = local(stoodIn) > 0 && local(aside) > 0 ? local(aside) / local(stoodIn) : stateRatio(aside, stoodIn);
+  const cast = votes.reduce((x, y) => x + y, 0), seen = votes[stoodIn];
+  // Votes of the one that stood, had its ally stood too: found by bisection, as the pact's effect grows with it.
+  const lift = (own) => 1 + ((1 - to - home) * ratio * own) / (cast - (1 - home) * ratio * own);
+  let lo = 0, hi = seen;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    if (mid * lift(mid) + to * ratio * mid < seen) lo = mid; else hi = mid;
+  }
+  const own = (lo + hi) / 2, k = lift(own);
+  const full = votes.map((v, p) => Math.round(p === stoodIn ? own : p === aside ? ratio * own : v / k));
+  const stood = PARTY_IDS.map((_, p) => (p === aside ? stoodIn : -1));
+  const total = full.reduce((x, y) => x + y, 0);
+  return { stood, basis: { votes: full, turnout: round(Math.min(0.98, (seat.last.turnout * total) / cast), 5) } };
+}
+
 const dunGeo = JSON.parse(readFileSync(join(RAW, 'dosm/electoral_1_dun.geojson'), 'utf8'));
 const dunOut = [];
 
-for (const stateName of DUN_STATES) {
+for (const source of DUN_SOURCES) for (const stateName of source.states) {
+  const dunResultByCode = new Map(readCsv(source.file).map((r) => [normCode(r['UNIQUE CODE']), r]));
   const [slug, region] = STATES[stateName];
   const regions = {};
+  // The allies' relative strength across the state at the 2022 general election, in the seats where both stood.
+  const both = seats.filter((s) => s.state === slug && source.allies?.every((id) => s.last.votes[PARTY_IDS.indexOf(id)] > 0));
+  const stateRatio = (aside, stoodIn) => both.reduce((x, s) => x + s.last.votes[aside], 0) / both.reduce((x, s) => x + s.last.votes[stoodIn], 0);
   const dunSeats = censusDun.filter((c) => c.state === stateName).map((c) => {
     const r = dunResultByCode.get(`${c.code_parlimen}_${c.code_dun}`);
     if (!r) throw new Error(`No state election result for ${stateName} ${c.code_dun}`);
     regions[c.code_parlimen] = c.parlimen.replace(/^P\.\d+\s+/, '');
-    return buildSeat(c, r, { id: c.code_dun, name: c.dun.replace(/^N\.\d+\s+/, ''), group: c.code_parlimen, region, stateSlug: slug });
+    const seat = buildSeat(c, r, { id: c.code_dun, name: c.dun.replace(/^N\.\d+\s+/, ''), group: c.code_parlimen, region, stateSlug: slug });
+    return source.allies ? { ...seat, ...withAllStanding(seat, source.allies, stateRatio) } : seat;
   });
 
   const features = dunGeo.features.filter((f) => f.properties.state === stateName);

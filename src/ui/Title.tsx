@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, STATE_SCENARIOS } from '../data/world';
 import type { ContestKind } from '../sim/campaign/rules';
-import { playable, startingFunds } from '../sim/campaign/turn';
+import { playable, standingPact, startingFunds } from '../sim/campaign/turn';
 import type { BackstoryId, Difficulty } from '../sim/campaign/types';
 import { startStances } from '../sim/campaign/policy';
 import { FOUNDING_SLOT } from '../sim/campaign/founding';
@@ -44,7 +44,7 @@ export function Title() {
   const startCampaign = useStore((s) => s.startCampaign);
   const loadGame = useStore((s) => s.loadGame);
   const [kind, setKind] = useState<Mode>('byelection');
-  const [state, setState] = useState<StateId>(STATE_SCENARIOS[0]);
+  const [state, setState] = useState<StateId>('perak');
   const [seat, setSeat] = useState(() => drawSeat());
   const [chosen, setChosen] = useState<number | null>(null);
   // The tutorial defaults to gentle rivals; the player can still change it.
@@ -60,7 +60,11 @@ export function Title() {
   const [fog, setFog] = useState(false);
   const [noisy, setNoisy] = useState(false);
   // A first visit gets the quick start; anyone who has chosen to customise lands there again.
-  const [custom, setCustom] = useState(() => { try { return localStorage.getItem(MODE_KEY) === 'custom'; } catch { return false; } });
+  const setupWanted = useStore((s) => s.setupWanted);
+  const clearSetupWanted = useStore((s) => s.clearSetupWanted);
+  // "New game" from the menu lands straight on the set-up; otherwise a first visit gets the quick start.
+  const [custom, setCustom] = useState(() => { if (setupWanted) return true; try { return localStorage.getItem(MODE_KEY) === 'custom'; } catch { return false; } });
+  useEffect(() => { if (setupWanted) clearSetupWanted(); }, [setupWanted, clearSetupWanted]);
   const pick = (value: boolean) => {
     setCustom(value);
     if (!value) setKind('byelection');
@@ -84,6 +88,10 @@ export function Title() {
   const shown = draft ?? base;
   const identity = own ? makeIdentity(shown) : null;
   const last = lastOutcome(world);
+  // Where the last election was fought by allies, each of them stands in only part of the seats until the pact ends.
+  const pact = standingPact(world);
+  const standsIn = (p: number) => world.seats.filter((s, i) => world.baseline.contesting[i][p] && (pact.standDowns[s.id]?.[p] ?? -1) < 0).length;
+  const allyOf = (p: number) => { const x = pact.pacts.find((q) => q.a === p || q.b === p); return x ? (x.a === p ? x.b : x.a) : -1; };
   const lastShare = (p: number) => last.votes[p] / last.votes.reduce((a, b) => a + b, 0);
 
   return (
@@ -145,6 +153,7 @@ export function Title() {
                     {kind === 'byelection' ? t('title.lastShare', { pct: f.pct(lastShare(p)) }) : t('title.heldSeats', { n: last.tally[p] })}
                     {' · '}{t('title.funds', { rm: f.rm(startingFunds(world, p) * (kind === 'career' ? 0.4 : 1)) })}
                   </span>
+                  {allyOf(p) >= 0 && <span className="muted small">{t('title.stands', { party: PARTIES[PARTY_IDS[allyOf(p)]].short, n: standsIn(p), total: world.seats.length })}</span>}
                   {kind === 'career' && <span className="badge plain">{t(`orders.seat.${CAREER_SEAT[id]}`)}</span>}
                 </button>
               );

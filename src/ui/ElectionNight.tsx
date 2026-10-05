@@ -30,6 +30,7 @@ function SeatBySeat() {
   const campaign = useStore((s) => s.game!.campaign);
   const finishNight = useStore((s) => s.finishNight);
   const quitToTitle = useStore((s) => s.quitToTitle);
+  const restart = useStore((s) => s.restart);
   const leaveNight = useStore((s) => s.leaveNight);
   const selectSeat = useStore((s) => s.selectSeat);
   const selectedSeat = useStore((s) => s.selectedSeat);
@@ -158,7 +159,7 @@ function SeatBySeat() {
               <div className="button-row">
                 {campaign.formation
                   ? <button className="btn primary" onClick={leaveNight}>{t(campaign.formation.outcome ? 'summary.toGovernment' : 'summary.toTalks')} ▸</button>
-                  : <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>}
+                  : <><button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button><button className="btn" onClick={restart}>{t('summary.restart')}</button></>}
                 <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>
               </div>
               {sharing && <ShareDialog data={card} onClose={() => setSharing(false)} />}
@@ -221,6 +222,7 @@ function ByElectionCount() {
   const campaign = useStore((s) => s.game!.campaign);
   const finishNight = useStore((s) => s.finishNight);
   const quitToTitle = useStore((s) => s.quitToTitle);
+  const restart = useStore((s) => s.restart);
   const electionSeed = campaign.election?.rng;
 
   const result = useMemo(() => electionResult(world, campaign)!, [world, electionSeed]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -308,6 +310,7 @@ function ByElectionCount() {
             <p className="note">{t('count.next')}</p>
             <div className="button-row">
               <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>
+              <button className="btn" onClick={restart}>{t('summary.restart')}</button>
               <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>
             </div>
             {sharing && <ShareDialog data={card} onClose={() => setSharing(false)} />}

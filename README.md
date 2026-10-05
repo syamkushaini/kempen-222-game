@@ -114,7 +114,7 @@ The per-seat corrections are fitted at start-up so that, with no campaign effect
 
 | | Source |
 | --- | --- |
-| Seat list, electorate, turnout, votes | Real: Tindak Malaysia GE15 dataset (parliament, and the Perak, Pahang and Perlis assemblies) |
+| Seat list, electorate, turnout, votes | Real: Tindak Malaysia GE15 dataset (parliament, and the Perak, Pahang and Perlis assemblies) and its 2023 state election results (Kedah, Kelantan, Terengganu, Penang, Selangor, Negeri Sembilan) |
 | Boundaries, census inputs | Real: Department of Statistics Malaysia |
 | Voter-bloc mix per seat | **Estimated** by formula from census inputs (`scripts/derive-blocs.mjs`) |
 | Bloc leanings, turnout, undecided shares | **Design numbers**, tuned by hand (`src/sim/blocs.ts`) |

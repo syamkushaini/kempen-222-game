@@ -3,6 +3,7 @@ import { useT } from './hooks';
 const LINKS = {
   dosm: 'https://github.com/dosm-malaysia/data-open',
   tindak: 'https://github.com/TindakMalaysia/GE15-Dataset-ARCHIVED-',
+  tindak2: 'https://github.com/TindakMalaysia/HISTORICAL-ELECTION-RESULTS',
   ccby: 'https://creativecommons.org/licenses/by/4.0/',
 };
 
@@ -21,6 +22,7 @@ export function Credits() {
       <ul>
         <li>{t('credits.dosm')} <Out href={LINKS.dosm}>{t('credits.link.dosm')}</Out></li>
         <li>{t('credits.tindak')} <Out href={LINKS.tindak}>{t('credits.link.tindak')}</Out> · <Out href={LINKS.ccby}>CC BY 4.0</Out></li>
+        <li>{t('credits.tindak2')} <Out href={LINKS.tindak2}>{t('credits.link.tindak2')}</Out> · <Out href={LINKS.ccby}>CC BY 4.0</Out></li>
       </ul>
       <p>{t('credits.changes')}</p>
     </details>

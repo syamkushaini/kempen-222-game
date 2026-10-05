@@ -15,6 +15,7 @@ import { SceneModal } from './SceneModal';
 import { ElectionNight } from './ElectionNight';
 import { CampaignBar, Header } from './Header';
 import { GoalLine } from './Challenges';
+import { GameMenu } from './GameMenu';
 import { NextStep } from './NextStep';
 import { DisplayContext, useCampaignDisplay, useNarrow, useSpot, useT, useWorld } from './hooks';
 import { MapView } from './MapView';
@@ -161,6 +162,7 @@ export function App() {
         {!ended && phase && phase !== 'campaign' && phase !== 'term' && !night && <FormationScreen />}
         {!ended && phase && !night && <SceneModal />}
       </Fragment>
+      <GameMenu />
       <Toasts />
       <footer className="footer">{t('footer.fiction')}</footer>
     </div>

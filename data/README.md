@@ -24,11 +24,19 @@ From <https://github.com/TindakMalaysia/GE15-Dataset-ARCHIVED->, licensed CC BY 
 | `MALAYSIA_GE15_DUN_RESULTS_V27122022.csv` | State assembly results for Perak, Pahang and Perlis, which voted on the same day in 2022 |
 | The two metadata files | Reference only |
 
-Other states held their assembly elections on other dates and are not in this dataset, so they are not playable yet.
+From <https://github.com/TindakMalaysia/HISTORICAL-ELECTION-RESULTS> (folder `2023-PRN6-STATE-ELECTIONS`), licensed CC BY 4.0 with compulsory attribution to Tindak Malaysia and to the sources its metadata lists: the Election Commission of Malaysia (SPR), Tindak Malaysia (2023) and the Attorney General's Chambers (`raw/tindak/prn6-2023/Licence`).
+
+| File | Used for |
+| --- | --- |
+| `prn6-2023/MALAYSIA_PRN6_2023_ELECTION_RESULTS.csv` | State assembly results for Kedah, Kelantan, Terengganu, Penang, Selangor and Negeri Sembilan, which voted on 12 August 2023 |
+| `prn6-2023/MALAYSIA_PRN6_2023_ELECTION_RESULTS_METADATA.csv`, `Readme` | Reference only: field descriptions, sources and the publisher's notices of correction |
+
+Melaka (2021), Johor (2022), Sarawak (2021) and Sabah (2020, 2025) held their assembly elections on other dates. The same repository has files for them, but they are not processed, so those states are not playable yet. Sabah, Sarawak and Johor have different sets of parties and would need their own mapping.
 
 ## Changes made to the data
 
 - Real coalitions are mapped to the game's fictional parties.
 - Four small parties that won a seat or a large share somewhere are kept apart, by the party name the dataset gives each candidate: MUDA becomes the game's youth party; PSB and PBM, in Sarawak only, become its Sarawak party; KDM, in Sabah only, becomes its Sabah interior party. (The same labels also stood in other regions' state seats, where they are pooled.) The rest of the small parties and the independents stay pooled into one entry per seat. In one seat (P.202) the pooled total would have exceeded the actual winner, so only the strongest minor candidate is kept there.
+- In the six states that voted in 2023, two of the national coalitions were allies and one of them stood in each seat. The game keeps that result as it was declared, and also needs to know what each would poll if all three stood, in case the pact ends. That figure is an estimate: the allies' relative strength is taken from the same area at the 2022 general election (in two areas, where one of them had stood aside for the youth party, from that party's vote; failing that, from the state as a whole), and their combined size is whatever makes the pact reproduce the votes actually cast. With the pact in place the model gives the declared winner in 240 of the 245 seats, with vote shares within 0.1 to 0.6 points on average.
 - Boundaries are projected to flat coordinates and rounded.
 - Each seat's voter-bloc mix is an estimate derived from census indicators. It is a game abstraction, not a published statistic.

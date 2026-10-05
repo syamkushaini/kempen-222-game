@@ -1,7 +1,13 @@
 import seatFile from './generated/seats.json';
+import dunKedah from './generated/dun-kedah.json';
+import dunKelantan from './generated/dun-kelantan.json';
+import dunNsembilan from './generated/dun-nsembilan.json';
 import dunPahang from './generated/dun-pahang.json';
+import dunPenang from './generated/dun-penang.json';
 import dunPerak from './generated/dun-perak.json';
 import dunPerlis from './generated/dun-perlis.json';
+import dunSelangor from './generated/dun-selangor.json';
+import dunTerengganu from './generated/dun-terengganu.json';
 import { seatsAfter } from '../sim/campaign/career';
 import { FOUNDED, FOUNDING_SEED_SHARE, FOUNDING_SLOT } from '../sim/campaign/founding';
 import { BYELECTION_RULES, CAREER_RULES, GENERAL_RULES, HUNG_RULES, STATE_RULES, type ContestKind } from '../sim/campaign/rules';
@@ -12,12 +18,22 @@ import { PARTY_IDS, type StateId } from '../sim/types';
 /** The general election: all 222 parliamentary seats, fitted to the last result. */
 export const world = createWorld(seatFile as SeatFile, GENERAL_RULES, 'general');
 
-/** States whose assembly election can be played. Limited to those we have a result for. */
-export const STATE_SCENARIOS: StateId[] = ['perak', 'pahang', 'perlis'];
+/**
+ * States whose assembly election can be played, north to south: those we have a result for. Perlis, Perak and
+ * Pahang voted with the 2022 general election; the other six voted in August 2023, when two of the national
+ * parties were allies and stood aside for each other in every seat.
+ */
+export const STATE_SCENARIOS: StateId[] = ['perlis', 'kedah', 'penang', 'perak', 'kelantan', 'terengganu', 'pahang', 'selangor', 'nsembilan'];
 const DUN_FILES: Partial<Record<StateId, SeatFile>> = {
-  perak: dunPerak as SeatFile,
-  pahang: dunPahang as SeatFile,
   perlis: dunPerlis as SeatFile,
+  kedah: dunKedah as SeatFile,
+  penang: dunPenang as SeatFile,
+  perak: dunPerak as SeatFile,
+  kelantan: dunKelantan as SeatFile,
+  terengganu: dunTerengganu as SeatFile,
+  pahang: dunPahang as SeatFile,
+  selangor: dunSelangor as SeatFile,
+  nsembilan: dunNsembilan as SeatFile,
 };
 
 /** The seat of the scenario id 'byelection' on its own: Hulu Selangor, a three-way marginal with a mixed electorate. Older saves are in it. */
@@ -59,7 +75,7 @@ export interface Vacancy {
 export const VACANCIES: Vacancy[] = [
   ...(seatFile as SeatFile).seats.map((s): Vacancy => ({ key: s.id, name: s.name, code: s.id, kind: 'parliament', state: s.state as StateId, within: null, close: isThreeWay(s.last.votes) })),
   ...STATE_SCENARIOS.flatMap((st) => (DUN_FILES[st]!.seats).map((s): Vacancy => ({
-    key: `dun:${st}:${s.id}`, name: s.name, code: s.id, kind: 'dun', state: st, within: DUN_FILES[st]!.regions?.[s.state] ?? null, close: isThreeWay(s.last.votes),
+    key: `dun:${st}:${s.id}`, name: s.name, code: s.id, kind: 'dun', state: st, within: DUN_FILES[st]!.regions?.[s.state] ?? null, close: isThreeWay(s.basis?.votes ?? s.last.votes),
   }))),
 ];
 export const vacancyOf = (key: string) => VACANCIES.find((v) => v.key === key) ?? null;

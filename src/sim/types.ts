@@ -80,6 +80,12 @@ export interface SeatData {
    * which stood aside last time can stand again.
    */
   basis?: { votes: number[]; turnout: number };
+  /**
+   * Where a pact kept a party off the ballot last time: [party] the partner it
+   * stood aside for, or -1 where it stood. A contest in which leaders can deal
+   * with each other opens with that pact still in force.
+   */
+  stood?: number[];
 }
 
 /**
