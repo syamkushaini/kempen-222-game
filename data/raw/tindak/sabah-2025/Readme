@@ -1,0 +1,50 @@
+Hosting all relevant 2025 Sabah State election related files
+Interim files for the coming Sabah 2025 Elections have been uploaded. Contents are subject to change time to time
+Source for Parliamentary Constituency Elector Count:
+- January 2025 - https://web.archive.org/web/20250415095618/https://ppn.spr.gov.my/sabah/wp-content/uploads/2025/03/STATISTIK-DPI-12025.pdf
+- February 2025 - https://ppn.spr.gov.my/sabah/wp-content/uploads/2025/04/STATISTIK-DPI-22025.pdf
+- March 2025 - https://ppn.spr.gov.my/sabah/wp-content/uploads/2025/05/STATISTIK-DPI-32025.pdf
+- July 2025 - https://ppn.spr.gov.my/sabah/wp-content/uploads/2025/08/STATISTIK-DPI-72025.pdf
+- August 2025 - https://github.com/TindakMalaysia/General-Election-Data/blob/master/2025%20ELECTORAL%20DEMOGRAPHICS/MALAYSIA_AUGUST_2025_PARLIAMENT_COMPOSITION.csv
+- January 2026 - https://ppn.spr.gov.my/sabah/wp-content/uploads/2026/03/STATISTIK-DPI-12026.pdf
+*NOTICE OF CORRECTION (6/11/2025)*
+- Reclassifying Labuk from Semi Urban to Rural
+*NOTICE OF UPDATE (7/11/2025)*
+- Added Sabah 2025 Demographics data (raw number and in percentage format). Separate Ethnic Information is based on EC's statistics
+*NOTICE OF UPDATE AND CORRECTION (17/11/2025)*
+- Uploaded the 2025 Sabah DUN Results (only candidate data)
+- Correction for age of STAR candidate for Banggi, correction for candidate name - PKAN (HASAMAN BIN SAGARAN), Independent (MARCELLUS BIN TAMBUD), Independent (YUSUF YODA)
+- Uploaded Selected Postal Vote Data by Applicant Category and DUN. Source: SPR (https://web.facebook.com/share/v/16yacQSK76/), Bersih Pemerhati team
+*NOTICE OF UPDATE (21/11/2025)*
+- Uploaded Sabah Blackwave Candidate (informal alliance of Independent Candidates led by Verhon Bahanda). Source: Election Lab (https://www.facebook.com/photo.php?fbid=1387657426413414&set=pb.100055075106626.-2207520000&type=3)
+- Uploaded Sabah Candidate Sex Breakdown by Coalition/Party/Independents. Derived from Tindak Malaysia's Sabah 2025 DUN Results file
+*NOTICE OF UPDATE (26/11/2025)*
+- Uploaded another classification of Sabah Ethnicity Data
+- Metadata for Ethnic files has been uploaded
+*NOTICE OF UPDATE (27/11/2025)*
+- Key Economic Data for DUN seats for Sabah has been uploaded. Source: Department of Statistics Malaysia (DOSM)
+*NOTICE OF UPDATE (28/11/2025)*
+- Added Pantai Manis ethnic composition data for Sabah 2025 Ethnic Composition according to the Elections Lab file
+- Corrections and data filling for Key Economic Indicators for Sabah DUN (2024)
+*NOTICE OF UPDATE (30/11/2025)*
+- Added individual candidate results for each seat
+- Added Winning Candidate file
+- Metadata for Sabah Election Results has been updated
+- Correction of Jasnih Daya's age
+*NOTICE OF UPDATE (1/12/2025)*
+- Revised Rejected Vote Figures for Sabah 2025 DUN Results
+- Added Unretruned Ballot data and Turnout data for Sabah 2025 DUN Results
+- Revised Sabah 2025 DUN Results Metadata
+- Replaced Candidate Sex Breakdown with CSV version
+- Detailed Breakdown for Karambunai Postal Vote Applicant data has been added in. Source: Bersih Pemerhati Team
+*NOTICE OF UPDATE (3/12/2025)*
+- Added detailed breakdown of votes by Coalition-Parties and Independents for Sabah 2025 Elections. Derived from Sabah_2025_DUN_Results
+*NOTICE OF UPDATE (9/12/2025)*
+- Updated PIS candidate name for DUN Tanjung Keramat
+- Updated the metadata
+*NOTICE OF UPDATE (10/12/2026)*
+- Corrected Warisan candidate name for DUN Sungai Manila
+*NOTICE OF UPDATE (17/3/2026)*
+- Updated Parliamentary Elector Count of Sabah
+**NOTICE OF UPDATE (8/5/2026)
+- Uploaded 2025 DUN Lamag Turnout by the Hour. Source: https://web.facebook.com/sprgovmy/photos_by

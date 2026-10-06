@@ -286,11 +286,13 @@ const DUN_SOURCES = [
   { file: 'tindak/MALAYSIA_GE15_DUN_RESULTS_V27122022.csv', states: ['Perlis', 'Perak', 'Pahang'] },
   {
     file: 'tindak/prn6-2023/MALAYSIA_PRN6_2023_ELECTION_RESULTS.csv',
-    states: ['Kedah', 'Kelantan', 'Terengganu', 'Pulau Pinang', 'Selangor', 'Negeri Sembilan'],
+    states: ['Kedah', 'Kelantan', 'Terengganu', 'Pulau Pinang', 'Selangor'],
     allies: ['ps', 'bp'],
   },
   { file: 'tindak/melaka-2021/MELAKA_2021_ELECTION_RESULTS.csv', states: ['Melaka'] },
-  { file: 'tindak/johor-2022/JOHOR_2022_ELECTION_RESULTS.csv', states: ['Johor'] },
+  // Johor and Negeri Sembilan voted again in 2026, each coalition on its own: the newest result is the one played.
+  { file: 'tindak/johor-2026/2026_JOHOR_DUN_RESULTS.csv', states: ['Johor'] },
+  { file: 'tindak/nsembilan-2026/2026_NEGERI_SEMBILAN_DUN_RESULTS.csv', states: ['Negeri Sembilan'] },
   { file: 'tindak/sarawak-2021/SARAWAK_2021_ELECTION_RESULTS.csv', states: ['Sarawak'], columns: { GPS: 'gbk', PH: 'ps', PAS: 'pt' } },
   {
     file: 'tindak/sabah-2020/SABAH_2020_ELECTION_RESULTS.csv',

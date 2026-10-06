@@ -622,3 +622,8 @@ Thirty questions, answered by the designer one at a time after a day of play. Th
 - **No licence yet.** The repository carries none: all rights stay with the designer until one is chosen.
 - **Newer results may be downloaded** from the same Tindak Malaysia repository, where it has them.
 - **Illustrated portraits are to be generated**, one sample leader first, and the rest only if the style is liked.
+
+**Newest results** *(overturns "every map describes the same few years")*
+- **Johor and Negeri Sembilan are played on their 2026 results** (11 July and 1 August 2026, Tindak Malaysia, CC BY 4.0, credited in the game). Both were fought by the three coalitions separately and are taken as declared: Johor BP 48 and PS 8 of 56; Negeri Sembilan BP 18, PS 11, PT 7 of 36. Negeri Sembilan therefore no longer opens under the 2023 PS-BP pact; the other five states of August 2023 still do. The 2022 Johor file is kept but no longer read.
+- **Sabah's 2025 result is downloaded but not yet used.** It needs decisions first: 73 seats went to GRS 29, Warisan 25, BN 6, independents 5, UPKO 3, STAR 2, and one each to PN, KDM and PH. The game has no party for UPKO or STAR, pools independents (who cannot then hold seats), and opens Sabah under a LEGASI-PS pact that no longer describes how it was fought.
+- Parliament is still the 2022 general election.

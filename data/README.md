@@ -28,7 +28,7 @@ From <https://github.com/TindakMalaysia/HISTORICAL-ELECTION-RESULTS> (folder `20
 
 | File | Used for |
 | --- | --- |
-| `prn6-2023/MALAYSIA_PRN6_2023_ELECTION_RESULTS.csv` | State assembly results for Kedah, Kelantan, Terengganu, Penang, Selangor and Negeri Sembilan, which voted on 12 August 2023 |
+| `prn6-2023/MALAYSIA_PRN6_2023_ELECTION_RESULTS.csv` | State assembly results for Kedah, Kelantan, Terengganu, Penang and Selangor, which voted on 12 August 2023. Negeri Sembilan voted that day too, but the game now uses its 2026 result (below) |
 | `prn6-2023/MALAYSIA_PRN6_2023_ELECTION_RESULTS_METADATA.csv`, `Readme` | Reference only: field descriptions, sources and the publisher's notices of correction |
 
 From the same repository, the four states that voted on other dates. Their folders carry no licence file of their own, so the repository's general licence applies (`raw/tindak/General_Licence`): CC BY 4.0, with compulsory attribution to Tindak Malaysia and to every source each dataset's metadata lists.
@@ -36,12 +36,15 @@ From the same repository, the four states that voted on other dates. Their folde
 | File | Used for | Sources listed in its metadata |
 | --- | --- | --- |
 | `melaka-2021/MELAKA_2021_ELECTION_RESULTS.csv` | Melaka, 20 November 2021 | Election Commission of Malaysia (SPR), Tindak Malaysia (2021), Attorney General Chambers, Perikatan Nasional Facebook Page, UMNO Online, Sinar Harian, Berita Harian, Malaysiakini, Bernama, individual political party Facebook pages |
-| `johor-2022/JOHOR_2022_ELECTION_RESULTS.csv` | Johor, 12 March 2022 | Election Commission of Malaysia (SPR), Tindak Malaysia (2021), Attorney General Chambers, Sinar Harian, Berita Harian, New Straits Times, The Star, Harian Metro, Malaysiakini, Bernama, RTM, Utusan TV, Astro Awani, individual political party Facebook pages, Perikatan Nasional Facebook Page, Perwakilan Bahagian ke Perhimpunan Agung UMNO 2008, Akhbar Rakyat, and the further links under "Additional Sources" in the metadata file |
+| `johor-2026/2026_JOHOR_DUN_RESULTS.csv` | Johor, 11 July 2026 | Election Commission of Malaysia (SPR), Bernama, and the further links in the publisher's `2026_JOHOR_DUN_Other_Sources` file |
+| `nsembilan-2026/2026_NEGERI_SEMBILAN_DUN_RESULTS.csv` | Negeri Sembilan, 1 August 2026 | Election Commission (SPR), Bernama, and the links under "Other Sources" in the metadata file: New Straits Times, Free Malaysia Today, Harakahdaily, Harian Metro, Kosmo, Malaysia Gazette, Malaysiakini, Sinar Harian, The Edge, UMNO Online, Utusan Malaysia, and parties' and candidates' social media pages |
+| `sabah-2025/2025_SABAH_DUN_RESULTS.csv` | Downloaded, not yet used: Sabah, 29 November 2025. The game still plays Sabah on its 2020 result | |
+| `johor-2022/JOHOR_2022_ELECTION_RESULTS.csv` | No longer used (Johor, 12 March 2022): kept for reference | Election Commission of Malaysia (SPR), Tindak Malaysia (2021), Attorney General Chambers, Sinar Harian, Berita Harian, New Straits Times, The Star, Harian Metro, Malaysiakini, Bernama, RTM, Utusan TV, Astro Awani, individual political party Facebook pages, Perikatan Nasional Facebook Page, Perwakilan Bahagian ke Perhimpunan Agung UMNO 2008, Akhbar Rakyat, and the further links under "Additional Sources" in the metadata file |
 | `sarawak-2021/SARAWAK_2021_ELECTION_RESULTS.csv` | Sarawak, 18 December 2021 | Election Commission of Malaysia (SPR), Tindak Malaysia (2021), Attorney General Chambers, Bernama, Berita Harian |
 | `sabah-2020/SABAH_2020_ELECTION_RESULTS.csv` | Sabah, 26 September 2020 | Election Commission of Malaysia (SPR), Tindak Malaysia (2022), Attorney General Chambers, Sinar Harian, Berita Harian, Sinar Project, individual political party Facebook pages |
 | Each folder's metadata file and `Readme` | Reference only: field descriptions, sources and the publisher's notices of correction | |
 
-Only the electorate, ballots and votes are used from these files; candidates' names, ages and sex are not. Sabah also voted in 2025, and Johor and Negeri Sembilan in 2026; the game uses the election nearest the 2022 general election for each state, so that every map describes the same few years.
+Only the electorate, ballots and votes are used from these files; candidates' names, ages and sex are not. From 6 October 2026 the game uses each state's newest result where it has been processed: Johor and Negeri Sembilan are on 2026. The maps therefore no longer all describe the same few years: parliament is still 2022, and Sabah is still 2020 until its 2025 result, which has a different line-up of parties, is mapped.
 
 ## Changes made to the data
 

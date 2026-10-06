@@ -311,11 +311,12 @@ describe('choosing any seat for a by-election', () => {
   });
 });
 
-describe('the six states that voted in August 2023', () => {
-  const PRN6 = ['kedah', 'kelantan', 'terengganu', 'penang', 'selangor', 'nsembilan'] as const;
+// Negeri Sembilan voted with them in 2023 and again in 2026, each coalition on its own; the game plays the newer result.
+describe('the five states still on their August 2023 result', () => {
+  const PRN6 = ['kedah', 'kelantan', 'terengganu', 'penang', 'selangor'] as const;
   // Seats won by PS, BP and PT, as declared.
   const REAL: Record<(typeof PRN6)[number], [number, number, number]> = {
-    kedah: [3, 0, 33], kelantan: [1, 1, 43], terengganu: [0, 0, 32], penang: [27, 2, 11], selangor: [32, 2, 22], nsembilan: [17, 14, 5],
+    kedah: [3, 0, 33], kelantan: [1, 1, 43], terengganu: [0, 0, 32], penang: [27, 2, 11], selangor: [32, 2, 22],
   };
   const world = (st: string) => getWorld(`state:${st}`)!;
   const [ps, bp, pt] = [P('ps'), P('bp'), P('pt')];
@@ -346,8 +347,10 @@ describe('the six states that voted in August 2023', () => {
       // A pact is something two campaigning leaders hold; where one ally is too small to campaign there is none to end.
       expect(pacts).toEqual(campaigns(w, ps) && campaigns(w, bp) ? [{ a: ps, b: bp, week: 0 }] : []);
     }
-    // The states that voted in 2022 were three-way fights and open with no pact.
-    for (const w of [perak, pahang, perlis]) expect(standingPact(w)).toEqual({ standDowns: {}, pacts: [] });
+    // The states that voted in 2022 were three-way fights and open with no pact; so does Negeri Sembilan, on its 2026 result.
+    for (const w of [perak, pahang, perlis, world('nsembilan')]) expect(standingPact(w)).toEqual({ standDowns: {}, pacts: [] });
+    const ns = lastElection(world('nsembilan')).tally;
+    expect([ns[ps], ns[bp], ns[pt]]).toEqual([11, 18, 7]);
   });
 
   it('are reproduced by the model when the pact holds: the same winner nearly everywhere, and vote shares within a point on average', () => {

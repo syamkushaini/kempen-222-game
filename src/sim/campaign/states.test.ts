@@ -21,7 +21,7 @@ const LAST = ['melaka', 'johor', 'sarawak', 'sabah'] as const;
 // Seats won, as declared.
 const REAL: Record<(typeof LAST)[number], Partial<Record<(typeof PARTY_IDS)[number], number>>> = {
   melaka: { bp: 21, ps: 5, pt: 2 },
-  johor: { bp: 40, ps: 12, pt: 3, genba: 1 },
+  johor: { bp: 48, ps: 8 },
   sarawak: { gbk: 76, cahaya: 4, ps: 2 },
   sabah: { gbs: 24, legasi: 23, bp: 14, ps: 9, oth: 3 },
 };
