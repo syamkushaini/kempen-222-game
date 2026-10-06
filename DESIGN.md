@@ -630,5 +630,5 @@ Thirty questions, answered by the designer one at a time after a day of play. Th
 
 **Painted portraits** *(the brief's "illustrated portraits", begun)*
 - The party leaders are getting painted portraits in place of the drawn busts: generated through the designer's Canva account from a written description of each invented leader (age, dress, bearing, the party's colour as a glow behind them), each asked for as "an invented person who does not resemble any real politician". The designer approved the first as the style for the set.
-- **Two of nine are in** (PS and BP), as 200-pixel images of about 9 kB each in `src/assets/portraits/<party>.jpg`. A leader with a file there is shown painted; one without, a leader the player has given a look of their own, ministers, staff and the adviser keep the drawn bust (`Portrait.tsx`). The share card still draws its own.
-- The other seven wait on Canva's generation limit, which allows only one every so often.
+- **Three of nine are in** (PS, BP and PT), as 200-pixel images of about 9 kB each in `src/assets/portraits/<party>.jpg`. A leader with a file there is shown painted; one without, a leader the player has given a look of their own, ministers, staff and the adviser keep the drawn bust (`Portrait.tsx`). The share card still draws its own.
+- The other six wait on Canva's generation limit, which allows only one every few minutes.
