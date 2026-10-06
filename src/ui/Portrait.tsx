@@ -1,13 +1,5 @@
-import { PARTY_IDS } from '../sim/types';
-import { adviserPortrait, emblem, hasOwnLook, leaderPortrait, ministerPortrait, type Emblem } from './faces';
-
-// Painted portraits of the party leaders, by party id, for those that have one. A leader without one, a leader the
-// player has given a look of their own, and everyone else in the game keep the drawn bust.
-const PAINTED = Object.fromEntries(
-  Object.entries(import.meta.glob('../assets/portraits/*.jpg', { eager: true, query: '?url', import: 'default' }) as Record<string, string>)
-    .map(([path, url]) => [path.replace(/^.*\/(\w+)\.jpg$/, '$1'), url]),
-);
-const paintedLeader = (party: number): string | null => (hasOwnLook(party) ? null : PAINTED[PARTY_IDS[party]] ?? null);
+import { adviserPortrait, emblem, leaderPortrait, ministerPortrait, type Emblem } from './faces';
+import { paintedLeader } from './painted';
 
 type Who = { leader: number } | { minister: number; party: number } | { adviser: true } | { emblem: Emblem };
 

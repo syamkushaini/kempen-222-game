@@ -1,36 +1,59 @@
 import { useEffect, useRef, useState } from 'react';
-import { PARTIES } from '../data/parties';
 import type { Summary } from '../sim/campaign/turn';
 import type { Campaign } from '../sim/campaign/types';
-import type { World } from '../sim/election';
-import { PARTY_IDS, type ElectionOutcome } from '../sim/types';
+import { majorityLine, type World } from '../sim/election';
+import { challengeById, goalResult } from '../sim/campaign/challenges';
+import type { StringKey } from '../i18n/strings';
+import type { ElectionOutcome } from '../sim/types';
+import { voiceOf } from './cardVoice';
 import { leaderPortrait } from './faces';
+import { paintedLeader } from './painted';
 import { contestName, leaderName, partyColor, partyName, useT, type Format, type T } from './hooks';
 import { drawCard, type CardData } from './shareCard';
 
-/** Read when the card is made, so it follows the palette in use. */
-const flags = () => PARTY_IDS.filter((id) => id !== 'oth').map((id) => PARTIES[id].color);
-const common = (t: T) => ({ flags: flags(), tagline: t('share.tagline'), fiction: t('share.fiction') });
+const common = (t: T) => ({ tagline: t('share.tagline'), fiction: t('share.fiction') });
+
+/** The leader's face for the card: the painted portrait where there is one, otherwise the drawn bust. */
+const face = (t: T, p: number) => ({ src: paintedLeader(p) ?? leaderPortrait(p) ?? '', caption: leaderName(t, p), sub: partyName(t, p) });
+
+/** How the game was played, for those who want to show it off: only what is worth showing. */
+function badgesOf(t: T, c: Campaign, summary: Pick<Summary, 'seats' | 'before' | 'voteShare'>): string[] {
+  const out: string[] = [];
+  if (c.difficulty === 'hard') out.push(t('card.badge.hard'));
+  if (c.challenge?.fog) out.push(t('card.badge.fog'));
+  if (c.challenge?.noisy) out.push(t('card.badge.noisy'));
+  const def = challengeById(c.challenge?.goal);
+  if (def && goalResult(def.goal, summary).met) out.push(t('card.badge.met', { title: t(`challenges.c.${def.id}` as StringKey) }));
+  return out;
+}
 
 /** The card for an election night: the verdict, the figures and the chamber as it now sits. */
 export function electionCard(t: T, f: Format, world: World, c: Campaign, result: ElectionOutcome, summary: Summary): CardData {
   const me = c.player;
   const kind = world.rules.kind;
   const contest = c.career ? `${t('scenario.career')} · ${t('share.term', { n: c.career.term })}` : `${t(`scenario.${kind}`)} · ${contestName(t, world)}`;
+  const seat = result.seats[0];
+  const lead = seat ? [...seat.votes].sort((a, b) => b - a) : [];
+  const margin = kind === 'byelection' && seat ? seat.margin : 0;
+  const voice = voiceOf({ verdict: summary.verdict, seats: summary.seats, before: summary.before, total: world.seats.length, majority: majorityLine(world), margin });
   const base = {
-    ...common(t), accent: partyColor(me), kicker: `${contest} · ${partyName(t, me)}`,
-    headline: t(`card.verdict.${summary.verdict}`), body: t(`summary.verdict.${summary.verdict}`),
+    ...common(t), accent: partyColor(me), kicker: contest,
+    headline: t(voice.shout as StringKey), body: t(voice.line as StringKey),
+    badges: badgesOf(t, c, summary), portrait: face(t, me),
   };
   if (kind === 'byelection') {
-    const seat = result.seats[0];
+    const mine = seat.votes[me] ?? 0;
+    const won = mine === lead[0];
+    const gap = Math.abs(won ? mine - (lead[1] ?? 0) : lead[0] - mine);
     return {
       ...base,
+      hero: { value: f.pct(summary.voteShare), label: t('card.hero.vote') },
       stats: [
-        { label: t('summary.voteShare'), value: f.pct(summary.voteShare) },
-        { label: t('seat.margin'), value: f.pct(seat.margin) },
+        { label: t(won ? 'card.wonBy' : 'card.lostBy'), value: f.int(gap) },
+        { label: t('summary.rank'), value: `#${1 + seat.votes.filter((v) => v > mine).length}` },
         { label: t('seat.turnout'), value: f.pct(seat.turnout) },
       ],
-      bars: seat.votes.map((v, p) => ({ label: partyName(t, p), share: v / seat.valid, color: partyColor(p) }))
+      bars: seat.votes.map((v, p) => ({ label: partyName(t, p), share: v / seat.valid, color: partyColor(p), mine: p === me }))
         .filter((b) => b.share > 0).sort((a, b) => b.share - a.share),
     };
   }
@@ -39,16 +62,14 @@ export function electionCard(t: T, f: Format, world: World, c: Campaign, result:
   const change = summary.seats - summary.before;
   return {
     ...base,
+    hero: { value: String(summary.seats), label: t('card.hero.seats'), sub: t('card.hero.of', { total: world.seats.length }) },
     stats: [
-      { label: t('summary.seats'), value: String(summary.seats) },
-      { label: t('summary.change'), value: `${change >= 0 ? '+' : '−'}${Math.abs(change)}` },
+      { label: t('card.vsLast'), value: `${change >= 0 ? '+' : '−'}${Math.abs(change)}` },
       { label: t('summary.voteShare'), value: f.pct(summary.voteShare) },
       { label: t('summary.rank'), value: `#${summary.rank}` },
+      { label: t('card.toGovern'), value: String(majorityLine(world)) },
     ],
-    chamber: {
-      seats: order.flatMap(({ n, p }) => new Array<string>(n).fill(partyColor(p))),
-      caption: t('share.ofSeats', { n: summary.seats, total: world.seats.length }),
-    },
+    chamber: { seats: order.flatMap(({ n, p }) => new Array<string>(n).fill(partyColor(p))), mine: result.tally[me] ?? 0 },
   };
 }
 
@@ -58,14 +79,17 @@ export function legacyCard(t: T, c: Campaign): CardData {
   const end = k.ending!;
   const years = ((k.term - 1) * 260 + k.week) / 52;
   return {
-    ...common(t), accent: partyColor(c.player), kicker: t(`ending.${end.kind}`),
+    ...common(t), accent: partyColor(c.player), kicker: `${t(`ending.${end.kind}`)} · ${partyName(t, c.player)}`,
     headline: t(`legacy.${end.legacy}`), body: t(`legacy.${end.legacy}.text`),
+    hero: { value: String(end.score), label: t('legacy.score'), sub: t('card.hero.years', { n: years.toFixed(1) }) },
     stats: [
-      { label: t('legacy.score'), value: String(end.score) },
       { label: t('legacy.years'), value: years.toFixed(1) },
       { label: t('house.record.pm'), value: (k.record.weeksPm / 52).toFixed(1) },
+      { label: t('house.record.elections'), value: String(k.record.elections) },
+      { label: t('house.record.kept'), value: String(k.record.kept.length) },
     ],
-    portrait: { src: leaderPortrait(c.player) ?? '', caption: leaderName(t, c.player), sub: partyName(t, c.player) },
+    badges: c.difficulty === 'hard' ? [t('card.badge.hard')] : [],
+    portrait: face(t, c.player),
   };
 }
 
