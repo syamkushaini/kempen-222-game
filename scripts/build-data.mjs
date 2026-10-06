@@ -143,7 +143,8 @@ function buildSeat(c, r, ids, columns = COALITION_COLUMNS) {
   votes[PARTY_IDS.indexOf('oth')] = othTotal;
 
   const valid = votes.reduce((a, b) => a + b, 0);
-  const electorate = num(r['TOTAL ELECTORATE']);
+  // The column is spelt both ways across the files.
+  const electorate = num(r['TOTAL ELECTORATE'] ?? r['TOTAL ELECTORS']);
   const issued = num(r['TOTAL BALLOTS ISSUED']);
   if (valid + dropped !== num(r['TOTAL VALID VOTES'])) throw new Error(`Vote sum mismatch in ${ids.id}`);
 
@@ -294,12 +295,9 @@ const DUN_SOURCES = [
   { file: 'tindak/johor-2026/2026_JOHOR_DUN_RESULTS.csv', states: ['Johor'] },
   { file: 'tindak/nsembilan-2026/2026_NEGERI_SEMBILAN_DUN_RESULTS.csv', states: ['Negeri Sembilan'] },
   { file: 'tindak/sarawak-2021/SARAWAK_2021_ELECTION_RESULTS.csv', states: ['Sarawak'], columns: { GPS: 'gbk', PH: 'ps', PAS: 'pt' } },
-  {
-    file: 'tindak/sabah-2020/SABAH_2020_ELECTION_RESULTS.csv',
-    states: ['Sabah'],
-    columns: { BN: 'bp', PN: 'gbs', PBS: 'gbs', 'WARISAN PLUS': (party) => (party === 'WARISAN' ? 'legasi' : 'ps') },
-    allies: ['legasi', 'ps'],
-  },
+  // Sabah voted again in 2025, every coalition for itself: GRS, Warisan, BN, PH and PN have parties in the game, KDM is the
+  // small Sabah party, and the rest (UPKO, STAR, the smaller parties and the independents) are pooled, as everywhere else.
+  { file: 'tindak/sabah-2025/2025_SABAH_DUN_RESULTS.csv', states: ['Sabah'] },
 ];
 const censusDun = readCsv('dosm/census_dun.csv');
 const parliamentById = new Map(seats.map((s) => [s.id, s]));

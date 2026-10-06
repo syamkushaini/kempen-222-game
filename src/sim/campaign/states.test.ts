@@ -23,7 +23,8 @@ const REAL: Record<(typeof LAST)[number], Partial<Record<(typeof PARTY_IDS)[numb
   melaka: { bp: 21, ps: 5, pt: 2 },
   johor: { bp: 48, ps: 8 },
   sarawak: { gbk: 76, cahaya: 4, ps: 2 },
-  sabah: { gbs: 24, legasi: 23, bp: 14, ps: 9, oth: 3 },
+  // Sabah on its 2025 result: the ten for "oth" are five independents, three for UPKO and two for STAR, pooled as everywhere.
+  sabah: { gbs: 29, legasi: 25, oth: 10, bp: 6, ps: 1, pt: 1, suara: 1 },
 };
 
 describe('the last four states', () => {
@@ -51,8 +52,8 @@ describe('the last four states', () => {
         if (o.winner === model.seats[i].winner) same++;
         o.votes.forEach((v, p) => { if (v > 0) { error += Math.abs(v / o.valid - model.seats[i].votes[p] / model.seats[i].valid); n++; } });
       });
-      // Three were plain contests and fit exactly; Sabah is refitted through its pact, and one knife-edge seat falls the other way.
-      expect(w.seats.length - same, st).toBeLessThanOrEqual(st === 'sabah' ? 1 : 0);
+      // All four were plain contests, every party for itself, and fit exactly.
+      expect(w.seats.length - same, st).toBe(0);
       expect(error / n, st).toBeLessThan(0.005);
     }
   });
@@ -61,7 +62,7 @@ describe('the last four states', () => {
     expect(ids(playable(world('melaka')))).toEqual(['ps', 'bp', 'pt']);
     expect(ids(playable(world('johor')))).toEqual(['ps', 'bp', 'pt']);
     expect(ids(playable(world('sarawak')))).toEqual(['gbk', 'ps']);
-    expect(ids(playable(world('sabah')))).toEqual(['gbs', 'legasi', 'ps', 'bp']);
+    expect(ids(playable(world('sabah')))).toEqual(['gbs', 'legasi', 'ps', 'bp', 'pt']);
     // Nowhere else: not in a general election, and not in another state.
     expect(ids(playable(general))).toEqual(['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi']);
     for (const p of [P('gbk'), P('gbs'), P('legasi')]) {
@@ -84,32 +85,21 @@ describe('the last four states', () => {
     expect(atHome(world('sarawak'), P('cahaya'))).toBe(true);
   });
 
-  it('open Sabah as it was fought: two allies, one of them in each seat, on terms the player can end', () => {
+  it('open as they were fought, every party for itself: Sabah’s pact of 2020 did not outlast it', () => {
+    for (const st of LAST) expect(standingPact(world(st))).toEqual({ standDowns: {}, pacts: [] });
     const w = world('sabah');
     const [ps, legasi] = [P('ps'), P('legasi')];
-    const { standDowns, pacts } = standingPact(w);
-    expect(pacts).toEqual([{ a: ps, b: legasi, week: 0 }]);
-    expect(Object.keys(standDowns)).toHaveLength(w.seats.length);
-    for (const seat of w.seats) {
-      const stood = standDowns[seat.id];
-      expect((stood[ps] === legasi) !== (stood[legasi] === ps), seat.id).toBe(true);
-      expect(seat.last.votes[stood[ps] === legasi ? ps : legasi]).toBe(0);
-      expect(seat.basis!.votes[ps]).toBeGreaterThan(0);
-      expect(seat.basis!.votes[legasi]).toBeGreaterThan(0);
-    }
-    // The other three were open contests.
-    for (const st of ['melaka', 'johor', 'sarawak']) expect(standingPact(world(st))).toEqual({ standDowns: {}, pacts: [] });
-
     const c = newCampaign(w, { player: legasi, difficulty: 'normal', seed: 3 });
-    expect(inPact(c, ps, legasi)).toBe(true);
-    expect(c.news.map((n) => n.key)).toContain('news.pact.standing.mine');
-    const standsIn = (p: number) => w.seats.filter((s, i) => w.baseline.contesting[i][p] && (c.standDowns[s.id]?.[p] ?? -1) < 0).length;
-    expect([standsIn(legasi), standsIn(ps)]).toEqual([46, 27]);
-    expect(breakPact(c, ps)).toBe(true);
-    expect([standsIn(legasi), standsIn(ps)]).toEqual([73, 73]);
+    expect(inPact(c, ps, legasi)).toBe(false);
+    expect(c.news.map((n) => n.key)).not.toContain('news.pact.standing.mine');
+    // Both stood nearly everywhere in 2025, against each other.
+    const stands = (p: number) => w.seats.filter((_, i) => w.baseline.contesting[i][p]).length;
+    expect(stands(legasi)).toBe(73);
+    expect(stands(ps)).toBeGreaterThan(15);
+    expect(breakPact(c, ps)).toBe(false); // nothing to break
   });
 
-  it('rebuilt Sabah with the same voter-transfer rates the game applies to a pact', () => {
+  it('keep the voter-transfer rates in the data script the same as the game applies to a pact', () => {
     const script = readFileSync(new URL('../../../scripts/build-data.mjs', import.meta.url), 'utf8');
     for (const [from, to] of [['ps', 'legasi'], ['legasi', 'ps']] as const) {
       const found = new RegExp(`'${from}>${to}': \\{ to: ([\\d.]+), home: ([\\d.]+) \\}`).exec(script)!;
