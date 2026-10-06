@@ -129,7 +129,8 @@ function isValidTeam(x: unknown, world: World): boolean {
     isList(x.endorsers, isPartyOrNull, ENDORSER_IDS.length) &&
     isList(x.media, (row) => isList(row, (v) => isNum(v) && v >= -2 && v <= 2, N_PARTIES), OUTLET_IDS.length) &&
     (x.troopers === 0 || x.troopers === 1 || x.troopers === 2) &&
-    (x.unpaid === undefined || typeof x.unpaid === 'boolean')
+    (x.unpaid === undefined || typeof x.unpaid === 'boolean') &&
+    (x.chiefs === undefined || (isObj(x.chiefs) && Object.values(x.chiefs).every((p) => isObj(p) && isNum(p.name) && isNum(p.skill) && p.skill >= 1 && p.skill <= 5 && isNum(p.loyalty) && p.loyalty >= 0 && p.loyalty <= 100 && typeof p.skeleton === 'boolean' && isNum(p.generation))))
   );
 }
 

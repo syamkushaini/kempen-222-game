@@ -76,4 +76,20 @@ export interface Team {
   troopers: 0 | 1 | 2;
   /** The team was not paid at the last payday and is not working. Absent when paid, so older saves need no change. */
   unpaid?: boolean;
+  /** [region]: the player's chief there, once met. Absent in a game saved before chiefs were people. */
+  chiefs?: Record<string, ChiefPerson>;
+}
+
+/** One of the player's regional chiefs. */
+export interface ChiefPerson {
+  /** Index into the chiefs' names. */
+  name: number;
+  /** 1 to 5: how much their rallies draw. */
+  skill: number;
+  /** 0 to 100: kept by turning up in their region, lost by staying away. */
+  loyalty: number;
+  /** Something in their past that a campaign may bring out. */
+  skeleton: boolean;
+  /** 0 for the chief the party began with; one more for each deputy who has stepped up since. */
+  generation: number;
 }

@@ -12,7 +12,7 @@ import { borrow, loanOffer } from './loan';
 import { outlook, outlookOf, par } from './outlook';
 import { pollCost } from './polls';
 import {
-  autoPlayWeek, campaigns, countBatches, electionResult, endWeek, newCampaign, playable, playerAct, playerPoll,
+  atHome, autoPlayWeek, campaigns, countBatches, electionResult, endWeek, newCampaign, playable, playerAct, playerPoll,
   setChief, standingPact, startingFunds, summarise, truth,
 } from './turn';
 import { isValidCampaign } from './validate';
@@ -201,6 +201,17 @@ describe('playing the smaller contests', () => {
       }
     }
     expect(outlook(perak, P('ps'))).toBeNull(); // only a single seat has a favourite
+    // A party of Sabah or Sarawak is drawn a seat on its own ground, where it can be led and is in the fight.
+    for (const id of ['gbk', 'gbs', 'legasi'] as const) {
+      const fair = fairSeats(P(id));
+      expect(fair.length, id).toBeGreaterThanOrEqual(3);
+      for (const seat of fair) {
+        const w = getWorld(byElectionId(seat))!;
+        expect(atHome(w, P(id)), seat).toBe(true);
+        expect(playable(w), seat).toContain(P(id));
+        expect(['favourite', 'close'], seat).toContain(outlook(w, P(id)));
+      }
+    }
   });
 
   it('judges a party nobody expected to win on its share of the vote, not on the seat', () => {

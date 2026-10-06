@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
-import { byElectionId, fairSeats, getWorld, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS } from '../data/world';
+import { byElectionId, fairSeats, getWorld, HOME_PARTIES, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS } from '../data/world';
 import type { ContestKind } from '../sim/campaign/rules';
 import { playable, standingPact, startingFunds } from '../sim/campaign/turn';
 import type { BackstoryId, Difficulty } from '../sim/campaign/types';
@@ -248,6 +248,15 @@ export function Title() {
                 );
               })}
             </div>
+            {/* the parties of Sabah and Sarawak get the same guided start, in a seat on their own ground */}
+            <p className="muted small quick-home">
+              {t('quick.home')}{' '}
+              {HOME_PARTIES.map((p) => (
+                <button key={p} className={player === p ? 'chip active' : 'chip'} aria-pressed={player === p} onClick={() => { setSeat(drawSeat(p, seat)); setChosen(p); setDraft(null); }}>
+                  <i className="dot" style={{ background: PARTIES[PARTY_IDS[p] as Playable].color }} />{PARTIES[PARTY_IDS[p] as Playable].short}
+                </button>
+              ))}
+            </p>
             <SeatPicker value={seat} onChange={setSeat} onRandom={() => setSeat(drawSeat(player, seat))} />
             {standing && <p className="muted small"><span className="badge plain">{t(`outlook.${standing}`)}</span> {t(`outlook.goal.${standing}`, { pct: f.pct(par(world, player) ?? 0, 0) })}</p>}
             <div className="button-row">

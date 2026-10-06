@@ -23,6 +23,7 @@ describe('what to do now', () => {
     endWeek(general, c);
     endWeek(general, c);
     expect(c.week).toBe(3);
+    c.inbox = []; // a rival may have telephoned in the meantime; that is another matter
     expect(nextStep(general, c)).toBe('spend');
   });
 

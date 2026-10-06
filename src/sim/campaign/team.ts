@@ -7,6 +7,7 @@ import { makeLeader } from './perks';
 import { spendingWeek } from './spending';
 import { makePool, staffWeek } from './staff';
 import { ENDORSER_IDS, ROLE_IDS, type BackstoryId, type Campaign, type Team } from './types';
+import { chiefsWeek } from './chiefs';
 
 /** The team's dice are kept apart from the rest of the game's, so adding people does not change how anything else falls. */
 const SALT = 0x7ea31c5d;
@@ -58,6 +59,8 @@ export function closeCampaign(c: Campaign): void {
 export function teamWeek(world: World, c: Campaign): void {
   const rng = new Rng((c.rng ^ SALT) + c.week);
   staffWeek(world, c, rng);
+  // The chiefs have dice of their own, so that meeting them changes nothing else.
+  chiefsWeek(world, c, new Rng((c.rng ^ 0xc41ef5) + c.week));
   candidatesWeek(c, rng);
   endorsersWeek(world, c, rng);
   mediaWeek(world, c, rng);

@@ -2,8 +2,10 @@ import type { World } from '../election';
 import { Rng } from '../rng';
 import { N_PARTIES, PARTY_IDS, isMinor, type ElectionOutcome, type FieldedId, type RegionId, type SeatKind } from '../types';
 import {
-  CAP, CHIEF, CHIEF_OPS, DECAY, EFFECT, actionCost, canDo, contests, contestsState, doAction, expectedYield, gotvWeeks,
+  CAP, CHARITY_REACH, CHIEF, CHIEF_OPS, DECAY, EFFECT, MANIFESTO_REACH, RADIO_REACH, TOWNHALL_KIND, TV_REACH, YOUTH_REACH,
+  actionCost, canDo, contests, contestsState, doAction, expectedYield, gotvWeeks,
 } from './actions';
+import { stat } from './perks';
 import type { ActionId, ActionReport, ActionTarget, Campaign, Difficulty } from './types';
 
 /** What makes each rival campaign differently. Weights multiply how attractive a kind of action looks. */
@@ -52,6 +54,7 @@ export interface Option { id: ActionId; target: ActionTarget; score: number }
 const DAY_VALUE = 80_000;
 
 const room = (current: number, cap: number) => Math.max(0, 1 - current / cap);
+const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
 
 /**
  * How a campaign reads the race: how much each seat is worth fighting for
@@ -115,6 +118,8 @@ export function rankOptions(world: World, c: Campaign, p: number, reading: Readi
     const boost = c.dyn.support.seat[seat.id]?.[p] ?? 0;
     consider('ceramah', { seat: seat.id }, v * EFFECT.ceramah * CERAMAH_KIND[seat.kind] * room(boost, CAP.seat), profile.ground);
     consider('walkabout', { seat: seat.id }, v * EFFECT.walkabout * WALK_KIND[seat.kind] * room(boost, CAP.seat), profile.ground);
+    // A town hall is worth what it gains less the one time in five it goes wrong on camera.
+    consider('townhall', { seat: seat.id }, v * EFFECT.townhall * TOWNHALL_KIND[seat.kind] * (1 - EFFECT.townhallFlopChance) * room(boost, CAP.seat), profile.ground);
   }
   for (const st of myStates) {
     const m = pc.machinery[world.states.indexOf(st)] / 60;
@@ -125,11 +130,19 @@ export function rankOptions(world: World, c: Campaign, p: number, reading: Readi
     consider('megarally', { state: st }, flat * EFFECT.megarally * (finalStretch ? 1.5 : 1), profile.ground);
     // Turnout moves share about a third as much as persuasion does.
     if (finalStretch) consider('gotv', { state: st }, flat * EFFECT.gotv * m * 0.35, profile.machinery);
+    // The newer ways to work a state, each reaching the groups it reaches.
+    consider('charity', { state: st }, flat * EFFECT.charity * mean(CHARITY_REACH) * (1 - EFFECT.charityScandalChance), profile.ground);
+    consider('youth', { state: st }, flat * EFFECT.youth * mean(YOUTH_REACH), profile.media);
+    consider('festival', { state: st }, flat * EFFECT.festival, profile.ground);
+    consider('radio', { state: st }, ground * EFFECT.radio * mean(RADIO_REACH), profile.media);
   }
   // National media pays off late, when it no longer has time to fade.
   const lateness = weeksLeft <= c.totalWeeks / 2.5 ? 1 : 0.4;
   consider('tv', {}, totalValue * EFFECT.tv * 0.8 * lateness, profile.media);
   consider('social', {}, totalValue * EFFECT.social * 0.7 * lateness, profile.media);
+  consider('manifesto', {}, totalValue * EFFECT.manifesto * mean(MANIFESTO_REACH) * lateness, profile.media);
+  // A day on the party itself is for a party that is coming apart.
+  if (pc.unity < 50) consider('conference', {}, totalValue * 0.004 * (50 - pc.unity), profile.machinery);
 
   // Attack whichever party stands in the way in the most valuable seats.
   const blocking = new Array<number>(N_PARTIES).fill(0);
@@ -137,6 +150,11 @@ export function rankOptions(world: World, c: Campaign, p: number, reading: Readi
   mainRival.forEach((q, i) => { if (q >= 0 && (!isMinor(q) || q === c.player)) blocking[q] += value[i]; });
   const foe = blocking.indexOf(Math.max(...blocking));
   if (!isMinor(p) && c.parties[foe]) consider('attack', { party: foe }, blocking[foe] * EFFECT.attack * 0.5, profile.attack);
+  // A debate with whoever stands in the way: worth it for the better speaker, a risk for the worse one.
+  if (!isMinor(p) && c.parties[foe]) {
+    const odds = Math.min(0.8, Math.max(0.15, EFFECT.debateBase + EFFECT.debatePerPoint * (stat(c, p, 'charisma') - stat(c, foe, 'charisma'))));
+    consider('debate', { party: foe }, totalValue * (odds * EFFECT.debate * mean(TV_REACH) - (1 - odds) * EFFECT.debateLoss) * EFFECT.debateRepeat ** (pc.plays?.debate ?? 0), profile.media);
+  }
 
   // Fundraise when short; the lower the funds, the more urgent.
   const need = Math.max(0, 1.6 - pc.funds / reserve);

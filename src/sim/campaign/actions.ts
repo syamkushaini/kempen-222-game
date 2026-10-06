@@ -6,6 +6,7 @@ import { Rng } from '../rng';
 import { addEndorsements } from './endorserData';
 import { travelCost } from './geo';
 import { edge, fundsBoost, gaffeCut, mediaBoost, stat } from './perks';
+import { chiefHand } from './chiefs';
 import type {
   ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, PartyCampaign, Quality, TargetKind,
 } from './types';
@@ -358,7 +359,8 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
     case 'walkabout': {
       const seat = world.seats[world.seatIndex.get(target.seat!)!];
       const s = seatSupport(c, seat.id);
-      const base = (id === 'ceramah' ? EFFECT.ceramah : EFFECT.walkabout) * (chief ? CHIEF.draw : 1);
+      // A chief draws half the leader's crowd, more or less according to who the chief is.
+      const base = (id === 'ceramah' ? EFFECT.ceramah : EFFECT.walkabout) * (chief ? CHIEF.draw * chiefHand(world, c, p, st) : 1);
       s[p] += base * presence * KIND_FACTOR[id][seat.kind] * roll * room(s[p], CAP.seat);
       if (id === 'ceramah') {
         const t = seatTurnout(c, seat.id);

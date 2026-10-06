@@ -19,7 +19,7 @@ import { Rng } from '../rng';
 import { BACKSTORY_IDS, ENDORSER_IDS, OUTLET_IDS, ROLE_IDS, type BackstoryId, type Campaign } from './types';
 import { isValidCampaign } from './validate';
 
-const [PS, BP, PT] = PARTY_IDS.map((_, i) => i);
+const [PS, BP, PT, GBK] = PARTY_IDS.map((_, i) => i);
 const general = getWorld('general')!, by = getWorld('byelection')!, perak = getWorld('state:perak')!, hung = getWorld('hung')!, careerWorld = getWorld('career')!;
 const game = (backstory: BackstoryId | null = null, seed = 5, world = general): Campaign => newCampaign(world, { player: PS, difficulty: 'normal', seed, backstory });
 const bloc = (id: (typeof BLOC_IDS)[number]) => BLOC_IDS.indexOf(id);
@@ -110,7 +110,8 @@ describe('staff', () => {
     expect(hire(c, 'manager', best(role('manager')))).toBe(false); // already in the job
     expect(wages(general, c)).toBe(20_000);
     expect(managerDays(c, PS)).toBe(1);
-    expect(managerDays(c, BP)).toBe(0);
+    expect(managerDays(c, BP)).toBe(0.5); // a rival has people of its own: BP's manager finds it half a day
+    expect(managerDays(c, GBK)).toBe(0); // and GBK has none
     const unity = c.parties[PS]!.unity;
     expect(hire(c, 'manager', (best(role('manager')) + 1) % 3)).toBe(true);
     expect(c.parties[PS]!.unity).toBe(unity - 1); // replacing someone is noticed

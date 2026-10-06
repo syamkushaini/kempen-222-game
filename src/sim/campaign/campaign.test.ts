@@ -13,6 +13,9 @@ import {
 import { DAYS_PER_WEEK, type Campaign } from './types';
 import { isValidCampaign } from './validate';
 import { edge } from './perks';
+import { campaignMarks, MARK } from './marks';
+import { CHIEF_NAMES, chiefHand, chiefMood, chiefOf, chiefsWeek, chiefView } from './chiefs';
+import { Rng } from '../rng';
 
 const world = createWorld(seatFile as SeatFile);
 const P = (id: (typeof PARTY_IDS)[number]) => PARTY_IDS.indexOf(id);
@@ -309,7 +312,7 @@ describe('chiefs', () => {
       return c.dyn.support.seat[SEAT][c.player];
     };
     // The leader draws on their own charisma; a chief is nobody in particular.
-    expect(boost(true)).toBeCloseTo((boost(false) / edge(start(), start().player, 'charisma')) * CHIEF.draw, 10);
+    expect(boost(true)).toBeCloseTo((boost(false) / edge(start(), start().player, 'charisma')) * CHIEF.draw * chiefHand(world, start(), start().player, world.seats[world.seatIndex.get(SEAT)!].state), 10);
     const c = start();
     expect(actionCost(world, c, c.player, 'ceramah', { seat: 'P.168' }, true)).toEqual({ days: 0, money: 30_000, travelDays: 0 });
     expect(canDo(world, c, c.player, 'tv', {}, true)).toEqual({ ok: false, reason: 'noCampaign' });
@@ -404,5 +407,88 @@ describe('polling day', () => {
     const seeds = [21, 22, 23, 24, 25, 26];
     for (const seed of seeds) electionResult(world, finish(seed, true, P('bp')))!.tally.forEach((v, p) => { mean[p] += v / seeds.length; });
     for (const p of [P('ps'), P('bp'), P('pt')]) expect(Math.abs(mean[p] - last[p])).toBeLessThan(15);
+  });
+});
+
+describe('marks on the map', () => {
+  it('show where the parties have been working, the hardest-worked first, and fade when they stop coming', () => {
+    const w = world;
+    const c = newCampaign(w, { player: 0, difficulty: 'normal', seed: 2 });
+    expect(campaignMarks(c)).toEqual([]);
+    const [a, b, far] = w.seats.map((s) => s.id);
+    c.dyn.support.seat[a] = w.seats[0].last.votes.map((_, p) => (p === 0 ? 0.2 : p === 1 ? 0.05 : p === 2 ? 0.04 : 0));
+    c.dyn.support.seat[b] = w.seats[0].last.votes.map((_, p) => (p === 2 ? MARK.flag : 0));
+    c.dyn.support.seat[far] = w.seats[0].last.votes.map((_, p) => (p === 1 ? MARK.flag - 0.001 : -0.3));
+    expect(campaignMarks(c)).toEqual([
+      { seat: a, party: 0, kind: 'tent', slot: 0, of: 2 },
+      { seat: a, party: 1, kind: 'flag', slot: 1, of: 2 }, // two parties at most: the third is left off
+      { seat: b, party: 2, kind: 'flag', slot: 0, of: 1 },
+    ]);
+    // A real week leaves real marks, and only for parties that campaign.
+    const played = newCampaign(w, { player: 0, difficulty: 'normal', seed: 2 });
+    autoPlayWeek(w, played); endWeek(w, played);
+    const marks = campaignMarks(played);
+    expect(marks.length).toBeGreaterThan(5);
+    for (const m of marks) expect(played.parties[m.party]).toBeTruthy();
+    played.phase = 'night';
+    expect(campaignMarks(played)).toEqual([]);
+  });
+});
+
+describe('chiefs as people', () => {
+  const elsewhere = (c: Campaign) => { c.parties[c.player]!.location = 'johor'; c.parties[c.player]!.visits = []; };
+
+  it('are the same people in the same game, and keep or lose their loyalty by whether the leader turns up', () => {
+    const c = start();
+    expect(setChief(world, c, 'perak', 2)).toBe(true);
+    const person = chiefOf(world, c, 'perak');
+    expect(chiefView(world, start(), 'perak')).toEqual(person);
+    expect(CHIEF_NAMES[person.name]).toBeTruthy();
+    expect(new Set(world.states.map((st) => chiefView(world, c, st).name)).size).toBe(world.states.length); // no two share a name
+    expect(person.skill).toBeGreaterThanOrEqual(2);
+    expect(person.skill).toBeLessThanOrEqual(5);
+    expect(chiefHand(world, c, c.player, 'perak')).toBeCloseTo(1 + 0.1 * (person.skill - 3), 6);
+    expect(chiefHand(world, c, P('bp'), 'perak')).toBe(1); // a rival's chiefs are nobody in particular
+    person.skeleton = false;
+    const before = person.loyalty;
+    elsewhere(c);
+    chiefsWeek(world, c, new Rng(1));
+    expect(person.loyalty).toBe(before - 2);
+    c.parties[c.player]!.location = 'perak';
+    chiefsWeek(world, c, new Rng(1));
+    expect(person.loyalty).toBe(before + 2);
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world)).toBe(true);
+  });
+
+  it('say so when they cool, and left alone may cross to a rival with the branches', () => {
+    const c = start();
+    setChief(world, c, 'perak', 2);
+    const person = chiefOf(world, c, 'perak');
+    person.skeleton = false;
+    person.loyalty = 31;
+    elsewhere(c);
+    chiefsWeek(world, c, new Rng(1));
+    expect(chiefMood(person)).toBe('restless');
+    expect(c.news.at(-1)).toMatchObject({ key: 'news.chief.restless', tone: 'bad' });
+    person.loyalty = 6;
+    const i = world.states.indexOf('perak');
+    const branches = c.parties[c.player]!.machinery[i], unity = c.parties[c.player]!.unity;
+    for (let seed = 1; seed < 60 && c.parties[c.player]!.chiefs.perak; seed++) { person.loyalty = 6; chiefsWeek(world, c, new Rng(seed)); }
+    expect(c.parties[c.player]!.chiefs.perak).toBeUndefined();
+    expect(c.news.at(-1)).toMatchObject({ key: 'news.chief.defected', tone: 'bad' });
+    expect(c.parties[c.player]!.machinery[i]).toBe(branches - 15);
+    expect(c.parties[c.player]!.unity).toBe(unity - 2);
+    // A deputy steps up: steadier, less able, and not the same person.
+    expect(chiefView(world, c, 'perak')).toMatchObject({ skill: 2, loyalty: 60, skeleton: false, generation: 1 });
+  });
+
+  it('may be brought down by something in their past', () => {
+    const c = start();
+    setChief(world, c, 'kedah', 1);
+    chiefOf(world, c, 'kedah').skeleton = true;
+    for (let seed = 1; seed < 200 && c.parties[c.player]!.chiefs.kedah; seed++) { c.parties[c.player]!.location = 'kedah'; chiefsWeek(world, c, new Rng(seed)); }
+    expect(c.parties[c.player]!.chiefs.kedah).toBeUndefined();
+    expect(c.news.at(-1)).toMatchObject({ key: 'news.chief.exposed', tone: 'bad' });
+    expect(chiefView(world, c, 'kedah').generation).toBe(1);
   });
 });

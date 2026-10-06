@@ -81,9 +81,17 @@ export const BYELECTION_SEATS: string[] = (seatFile as SeatFile).seats.filter((s
  * whole list handed the player a seat they could not win about four times in ten.
  */
 export function fairSeats(p: number): string[] {
-  const fair = (seatFile as SeatFile).seats.filter((s) => isThreeWay(s.last.votes) && inContention(s.last.votes, p)).map((s) => s.id);
+  // A party of Sabah or Sarawak is drawn a seat on its own ground: there it need not be a three-way fight to be a fair one.
+  const home = HOME_REGION[PARTY_IDS[p]];
+  const fair = (seatFile as SeatFile).seats
+    .filter((s) => (home ? s.region === home : isThreeWay(s.last.votes)) && inContention(s.last.votes, p))
+    .map((s) => s.id);
   return fair.length > 0 ? fair : BYELECTION_SEATS;
 }
+
+/** The parties of Sabah and Sarawak that can be led in a by-election on their own ground, and where that is. */
+const HOME_REGION: Partial<Record<(typeof PARTY_IDS)[number], string>> = { gbk: 'sarawak', gbs: 'sabah', legasi: 'sabah' };
+export const HOME_PARTIES = (Object.keys(HOME_REGION) as (typeof PARTY_IDS)[number][]).map((id) => PARTY_IDS.indexOf(id));
 
 /** The scenario id of a by-election in a given seat (a parliamentary seat's code, or `dun:<state>:<code>` for an assembly seat). */
 export const byElectionId = (seat: string) => `byelection:${seat}`;

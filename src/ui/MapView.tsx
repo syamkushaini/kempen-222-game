@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import { campaignMarks } from '../sim/campaign/marks';
 import type { Flip } from '../sim/campaign/night';
 import type { World } from '../sim/election';
 import type { RegionId, SeatClass } from '../sim/types';
@@ -31,6 +32,8 @@ const VIEW_HEIGHT = 470;
 const MAX_ZOOM = 40;
 const CLASS_OPACITY: Record<SeatClass, number> = { safe: 1, leaning: 0.72, marginal: 0.46 };
 const STALE_OPACITY = 0.22;
+/** How large a mark is drawn, against the 12 units it is designed in: the same on screen at any zoom. */
+const MARK_SIZE = 1.7;
 
 const SeatPath = memo(function SeatPath(props: {
   id: string; d: string; fill: string | undefined; opacity: number; dim: boolean; selected: boolean;
@@ -206,6 +209,9 @@ export function MapView(props: {
     if (d.winner < 0) anyUndeclared = true; else seen.add(d.winner);
     if (d.stale) anyStale = true;
   }
+  // Where the parties have been working: tents for a seat worked hard lately, flags for one still being worked.
+  const campaign = useStore((s) => s.game?.campaign);
+  const marks = useMemo(() => (campaign ? campaignMarks(campaign) : []), [campaign]);
   const marker = !map || !props.marker ? null : single ? map.seats[world.seats[0].id]?.bbox : map.states[props.marker]?.bbox;
 
   return (
@@ -261,6 +267,21 @@ export function MapView(props: {
               ))}
               {props.pulse && map.seats[props.pulse.id] && <path key={props.pulse.n} d={map.seats[props.pulse.id].d} className={`seat-pulse ${props.pulse.kind}`} />}
               {selectedSeat && map.seats[selectedSeat] && <path d={map.seats[selectedSeat].d} className="seat-highlight" />}
+              {marks.map((m) => {
+                const shape = map.seats[m.seat];
+                // Seen from far off only the tents show, or the map would be nothing but flags.
+                if (!shape || (m.kind === 'flag' && !single && zoom.k * view.k < 2)) return null;
+                const [x0, y0, x1, y1] = shape.bbox;
+                return (
+                  <g key={`${m.seat}:${m.party}`} className="map-mark" transform={`translate(${(x0 + x1) / 2} ${(y0 + y1) / 2}) scale(${MARK_SIZE / (zoom.k * view.k)})`}>
+                    <g transform={`translate(${(m.slot - (m.of - 1) / 2) * 11} ${single ? -16 : 0})`} fill={partyColor(m.party)}>
+                      {m.kind === 'tent'
+                        ? <path d="M-6 4.5L0 -5.5L6 4.5Z M-1.4 4.5L0 1.2L1.4 4.5Z" fillRule="evenodd" />
+                        : <><path d="M-2.6 -5.5H-1.4V5.5H-2.6Z" className="mark-pole" /><path d="M-1.4 -5.5L5 -3L-1.4 -0.5Z" /></>}
+                    </g>
+                  </g>
+                );
+              })}
               {marker && (
                 <g className="leader-pin" transform={`translate(${(marker[0] + marker[2]) / 2} ${(marker[1] + marker[3]) / 2}) scale(${1 / (zoom.k * view.k)})`}>
                   <circle r="9" className="pin-halo" />
@@ -302,6 +323,8 @@ export function MapView(props: {
           <span key={c}><i className="swatch" style={{ opacity: CLASS_OPACITY[c] }} /><Term id={c}>{t(`legend.${c}`)}</Term></span>
         ))}
         {anyStale && <span><i className="swatch" style={{ opacity: STALE_OPACITY }} />{t('legend.unpolled')}</span>}
+        {marks.some((m) => m.kind === 'tent') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-6 4.5L0 -5.5L6 4.5Z" /></svg>{t('legend.tent')}</span>}
+        {marks.some((m) => m.kind === 'flag') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-2.6 -5.5H-1.4V5.5H-2.6Z M-1.4 -5.5L5 -3L-1.4 -0.5Z" /></svg>{t('legend.flag')}</span>}
         {anyUndeclared && <span><i className="swatch undeclared" />{t('legend.undeclared')}</span>}
       </div>
     </div>

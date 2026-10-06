@@ -7,7 +7,9 @@ import type { Summary } from './night';
 // but unimaginative job: each goal asks for about what it manages, or a little
 // more, where an idle player falls well short. They were set again (6 Oct 2026)
 // when the rival leaders were given stats of their own: any change to the rules
-// reshuffles what a fixed seed produces, so the seeds were chosen afresh.
+// reshuffles what a fixed seed produces, so the seeds were chosen afresh; and again
+// when the rivals were given the player's newer actions and teams of their own,
+// and when the player's chiefs became people of differing ability.
 
 export type Goal =
   | { kind: 'win' }
@@ -27,12 +29,13 @@ export interface ChallengeDef {
 }
 
 export const CHALLENGES: ChallengeDef[] = [
-  { id: 'underdog', scenario: byElectionId('P.061'), party: 'bp', seed: 7, goal: { kind: 'win' } },
-  { id: 'blind', scenario: byElectionId('P.057'), party: 'pt', seed: 3, fog: true, noisy: true, goal: { kind: 'win' } },
-  { id: 'perlis', scenario: 'state:perlis', party: 'ps', seed: 1, goal: { kind: 'seats', atLeast: 3 } },
-  { id: 'perak', scenario: 'state:perak', party: 'ps', seed: 7, goal: { kind: 'seats', atLeast: 30 } },
+  { id: 'underdog', scenario: byElectionId('P.061'), party: 'bp', seed: 3, goal: { kind: 'win' } },
+  { id: 'blind', scenario: byElectionId('P.057'), party: 'pt', seed: 5, fog: true, noisy: true, goal: { kind: 'win' } },
+  { id: 'perlis', scenario: 'state:perlis', party: 'ps', seed: 2, goal: { kind: 'seats', atLeast: 2 } },
+  { id: 'perak', scenario: 'state:perak', party: 'ps', seed: 3, goal: { kind: 'seats', atLeast: 30 } },
   { id: 'pahang', scenario: 'state:pahang', party: 'bp', seed: 3, goal: { kind: 'seats', atLeast: 22 } },
-  { id: 'comeback', scenario: 'general', party: 'bp', seed: 3, goal: { kind: 'gain', atLeast: 10 } },
+  // BP holds 30 and, against rivals who use every tool, loses a good many if it sits still (14 here): to hold 28 is the comeback.
+  { id: 'comeback', scenario: 'general', party: 'bp', seed: 1, goal: { kind: 'seats', atLeast: 28 } },
 ];
 
 export const challengeById = (id: string | undefined): ChallengeDef | undefined => CHALLENGES.find((c) => c.id === id);

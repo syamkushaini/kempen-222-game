@@ -5,7 +5,11 @@ import { isThreeWay } from '../data/world';
 import { lastOutcome, useSpot, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
 import { Jargon } from './Term';
+import { atHome } from '../sim/campaign/turn';
 import { STEPS } from './tutorial';
+
+/** The steps at which the adviser has something of its own to say to a party on its home ground. */
+const HOME_LINES = new Set(['funds', 'rivals', 'middle']);
 
 /** The campaign manager who talks the player through their first contest. */
 export function Adviser() {
@@ -32,7 +36,11 @@ export function Adviser() {
   const held = lastOutcome(world).seats[0].winner === campaign.player;
   // The usual welcome speaks of a close three-way fight; not every seat the player may pick was one.
   const close = isThreeWay(world.seats[0].last.votes);
-  const text = step.id === 'welcome' ? `adviser.welcome${close ? '' : 'Any'}${held ? 'Held' : ''}` : `adviser.${step.id}`;
+  // A party of Sabah or Sarawak on its own ground is in a different fight, and is told so where it matters.
+  const home = atHome(world, campaign.player);
+  const text = home && step.id === 'welcome' ? `adviser.home.welcome${held ? 'Held' : ''}`
+    : home && HOME_LINES.has(step.id) ? `adviser.home.${step.id}`
+    : step.id === 'welcome' ? `adviser.welcome${close ? '' : 'Any'}${held ? 'Held' : ''}` : `adviser.${step.id}`;
   return (
     <section className="panel adviser" aria-live="polite">
       <Portrait adviser size={46} />

@@ -1,5 +1,5 @@
 import { PARTY_IDS } from '../types';
-import { LEADER_STATS } from './cast';
+import { LEADER_STATS, RIVAL_STAFF } from './cast';
 import { ROLE_IDS, STAT_IDS, type BackstoryId, type Campaign, type Leader, type RoleId, type StatId } from './types';
 
 // What the leaders and the player's team change about the rules. Kept free of
@@ -44,9 +44,10 @@ export function stat(c: Campaign, p: number, id: StatId): number {
 /** What a stat does to the things it touches: 8% either way for each point from ordinary. */
 export const edge = (c: Campaign, p: number, id: StatId) => 1 + 0.08 * (stat(c, p, id) - 3);
 
-/** How good the player's person in a job is: 0 with nobody in it, or in a week the team went unpaid. Rival parties make do without. */
+/** How good a party's person in a job is: 0 with nobody in it. The player's is whoever they hired (nothing in a week the team went unpaid); a rival's is as the cast gives it. */
 export function skill(c: Campaign, p: number, id: RoleId): number {
-  return p === c.player && !c.team.unpaid ? c.team.staff[ROLE_IDS.indexOf(id)]?.skill ?? 0 : 0;
+  if (p !== c.player) return RIVAL_STAFF[PARTY_IDS[p] as keyof typeof RIVAL_STAFF]?.[id] ?? 0;
+  return c.team.unpaid ? 0 : c.team.staff[ROLE_IDS.indexOf(id)]?.skill ?? 0;
 }
 
 /** Extra days in the leader's week from a campaign manager who keeps the diary. */

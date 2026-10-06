@@ -1,9 +1,12 @@
 import { contestsState } from '../sim/campaign/actions';
 import { chiefAllowance } from '../sim/campaign/ai';
+import { CHIEF_NAMES, chiefMood, chiefView } from '../sim/campaign/chiefs';
 import { now } from '../sim/campaign/news';
 import type { ChiefLevel, NewsItem } from '../sim/campaign/types';
 import { useStore } from '../state/store';
+import { Gauge } from './Gauge';
 import { actionList, regionLabel, useFormat, useT, useWorld } from './hooks';
+import { Pips } from './TeamTab';
 
 const LEVELS: (ChiefLevel | 0)[] = [0, 1, 2, 3];
 /** Amounts, at general-election scale, that chiefs can be told to leave untouched. */
@@ -61,6 +64,7 @@ export function ChiefsTab() {
       </div>
       <p className="muted small">{t(`chiefs.intro.${kind}`)}</p>
       <p className="muted small">{t('chiefs.when')}</p>
+      <p className="muted small">{t('chiefs.people')}</p>
 
       <div className="chief-controls">
         <div className="chief-control">
@@ -86,10 +90,16 @@ export function ChiefsTab() {
           const level = pc.chiefs[st] ?? 0;
           const work = lastWork.get(st);
           const name = regionLabel(t, world, st);
+          const person = chiefView(world, campaign, st);
           return (
             <li key={st} className={`chief${level ? ' on' : ''}${st === selectedState ? ' here' : ''}`}>
               <div className="grow">
                 <button className="link chief-name" onClick={() => selectState(st)}>{name}</button>
+                <span className="action-meta chief-person">
+                  <span>{CHIEF_NAMES[person.name]}</span>
+                  <Pips n={person.skill} label={`${t('chiefs.skill')}: ${person.skill} / 5`} />
+                  {level > 0 && <Gauge value={person.loyalty} label={t(`chiefs.mood.${chiefMood(person)}`)} />}
+                </span>
                 <span className="action-meta num">
                   {t('state.seats', { n: world.seatsByState[st].length })} · {t('actions.machinery', { n: pc.machinery[world.states.indexOf(st)] })}
                 </span>

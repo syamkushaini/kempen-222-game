@@ -34,7 +34,7 @@ export const LEADER_STATS: Record<Real, number[]> = {
   // The preacher of the heartland: a ceramah a night, and not much given to schemes.
   pt: [4, 3, 2, 3],
   // The patriarch: nothing in the state moves without him.
-  gbk: [2, 5, 3, 2],
+  gbk: [3, 4, 3, 2],
   // The dealmaker: every arrangement has an exit.
   gbs: [3, 3, 4, 2],
   // The proud native son.
@@ -43,6 +43,24 @@ export const LEADER_STATS: Record<Real, number[]> = {
   genba: [5, 1, 2, 4],
   cahaya: [3, 3, 2, 4],
   suara: [3, 4, 1, 4],
+};
+
+/**
+ * The people around each rival leader, as a skill out of five for each job; a job not named has nobody in it. They do
+ * for a rival what a hired team does for the player (a manager finds half a day more in the week, a media chief makes
+ * every broadcast count for more, a treasurer brings more in), and they suit the party: the reformers are good on a
+ * screen, the old establishment at money, the heartland conservatives at keeping a diary. Two of the three small
+ * parties make do without. The player's own team is whoever the player has hired.
+ */
+export const RIVAL_STAFF: Partial<Record<Real, Partial<Record<'manager' | 'strategist' | 'media' | 'treasurer', number>>>> = {
+  ps: { media: 3, strategist: 2 },
+  bp: { treasurer: 3, manager: 2 },
+  pt: { manager: 3, media: 2 },
+  gbs: { treasurer: 2 },
+  legasi: { media: 2 },
+  // GBK has nobody listed: its leader is its organiser. The one small party with a machine of its own lives next door
+  // to it, and with a manager on both sides held its seat about a third as often.
+  cahaya: { manager: 2 },
 };
 
 /**
