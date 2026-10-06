@@ -23,7 +23,7 @@ export function Term({ id, children }: { id: TermId; children: ReactNode }) {
   return (
     <>
       <button
-        ref={ref} type="button" className="term" aria-describedby={at ? tip : undefined}
+        ref={ref} type="button" className="gloss" aria-describedby={at ? tip : undefined}
         onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}
         onPointerDown={() => { wasOpen.current = at !== null; }}
         onClick={(e) => ((e.detail === 0 ? at : wasOpen.current) ? hide() : show())} onKeyDown={(e) => { if (e.key === 'Escape') hide(); }}

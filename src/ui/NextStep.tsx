@@ -13,7 +13,7 @@ export function NextStep() {
   if (!step) return null;
   const me = campaign.parties[campaign.player]!;
   return (
-    <p className={`next-step ${step}`} role="status">
+    <p className={`next-step step-${step}`} role="status">
       <strong>{t('guide.label')}</strong>
       <span>{t(`guide.${step}` as StringKey, { days: f.days(me.days), funds: f.rm(me.funds) })}</span>
     </p>
