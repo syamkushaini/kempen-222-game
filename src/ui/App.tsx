@@ -95,11 +95,12 @@ function CampaignScreen() {
         {narrow && <Adviser />}
         <section className="map-column">
           <MapView display={display} toolbar={<ViewSwitch />} marker={term ? null : campaign.parties[campaign.player]!.location} />
+          {/* the poll sits under the map, so that the side column is all tabs: what the player works in gets the height */}
+          <Standing campaign={campaign} />
         </section>
         <aside className="sidebar">
           {!narrow && <Adviser />}
           <Waiting />
-          <Standing campaign={campaign} />
           <div className="tabs" role="tablist">
             {tabs.map((id) => (
               <button key={id} role="tab" aria-selected={shown === id} className={`${shown === id ? 'tab active' : 'tab'}${spot(`tab-${id}`) ? ' spot' : ''}`} onClick={() => setTab(id)}>
