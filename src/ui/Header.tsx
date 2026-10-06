@@ -3,6 +3,7 @@ import { termIncome, termSpending } from '../sim/campaign/career';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore, type Theme } from '../state/store';
 import { MenuButton } from './GameMenu';
+import { Gauge } from './Gauge';
 import { Term } from './Term';
 import { regionLabel, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
 
@@ -157,23 +158,6 @@ function Hud() {
 }
 
 /** The years between elections: where the term stands, the money, and the buttons that move time on. */
-/**
- * A figure from 0 to 100 as a bar whose colour runs from red when low to green when full. The number stays beside it,
- * and the colour-blind palette runs from orange to blue, so the colour is never the only signal.
- */
-function Gauge({ value }: { value: number }) {
-  const accessible = useStore((s) => s.settings.palette === 'accessible');
-  const n = Math.max(0, Math.min(100, Math.round(value)));
-  // Red to green goes by way of amber; orange to blue goes straight, so it never passes through a red or a green.
-  const colour = accessible ? `color-mix(in oklab, #0072b2 ${n}%, #d55e00)` : `color-mix(in oklch, var(--good) ${n}%, var(--bad))`;
-  return (
-    <div className="gauge">
-      <div className="bar gauge-bar" aria-hidden="true"><span style={{ width: `${n}%`, background: colour }} /></div>
-      <strong className="num hud-value">{n}</strong>
-    </div>
-  );
-}
-
 function TermHud() {
   const t = useT();
   const f = useFormat();

@@ -6,6 +6,7 @@ import {
   nominationWeek, others, relation, type DiploRefusal,
 } from '../sim/campaign/diplomacy';
 import { useStore } from '../state/store';
+import { Gauge } from './Gauge';
 import { ConfirmButton } from './SavesTab';
 import { leaderName, partyShort, relationWord, useFog, useFormat, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
@@ -66,7 +67,7 @@ export function DiplomacyTab() {
       {lastReport && <ul className="report"><NewsLine item={lastReport} /></ul>}
       <div className="panel-head">
         <h2>{t('deals.title')}</h2>
-        <span className="muted">{t('deals.unity', { n: pc.unity })}</span>
+        <Gauge value={pc.unity} label={t('deals.unity')} />
       </div>
       <p className="muted small">{t('deals.intro')}</p>
       <p className="note">

@@ -5,6 +5,7 @@ import {
 import { ISSUE_IDS, PLEDGE_IDS, type PledgeId } from '../sim/campaign/types';
 import type { BlocId } from '../sim/types';
 import { useStore } from '../state/store';
+import { Gauge } from './Gauge';
 import { ConfirmButton } from './SavesTab';
 import { partyColor, partyShort, useT } from './hooks';
 
@@ -31,7 +32,7 @@ export function PolicyTab() {
     <section className="policy">
       <div className="panel-head">
         <h2>{t('policy.title')}</h2>
-        <span className="muted">{t('policy.credibility', { n: Math.round(k.credibility) })}</span>
+        <Gauge value={k.credibility} label={t('policy.credibility')} />
       </div>
       <p className="muted small">{t('policy.intro')}</p>
 
