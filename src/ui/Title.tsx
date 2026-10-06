@@ -80,17 +80,18 @@ export function Title() {
   // The set-up goes a step at a time: the contest, then who leads and how, then the rules.
   const [step, setStep] = useState(0);
   const [noisy, setNoisy] = useState(false);
-  // A first visit gets the quick start; anyone who has chosen to customise lands there again.
+  // The screen opens on a choice of how to play; the one chosen last time is marked. "New game" from the menu lands straight on the set-up.
   const setupWanted = useStore((s) => s.setupWanted);
   const clearSetupWanted = useStore((s) => s.clearSetupWanted);
-  // "New game" from the menu lands straight on the set-up; otherwise a first visit gets the quick start.
-  const [custom, setCustom] = useState(() => { if (setupWanted) return true; try { return localStorage.getItem(MODE_KEY) === 'custom'; } catch { return false; } });
+  const [mode, setMode] = useState<'home' | 'quick' | 'custom'>(() => (setupWanted ? 'custom' : 'home'));
+  const [lastMode] = useState<'quick' | 'custom' | null>(() => { try { const v = localStorage.getItem(MODE_KEY); return v === 'custom' || v === 'quick' ? v : null; } catch { return null; } });
   useEffect(() => { if (setupWanted) clearSetupWanted(); }, [setupWanted, clearSetupWanted]);
-  const pick = (value: boolean) => {
-    setCustom(value);
+  const custom = mode === 'custom';
+  const pick = (value: 'home' | 'quick' | 'custom') => {
+    setMode(value);
     setStep(0);
-    if (!value) setKind('byelection');
-    try { localStorage.setItem(MODE_KEY, value ? 'custom' : 'quick'); } catch { /* the choice is only for this visit */ }
+    if (value === 'quick') setKind('byelection');
+    if (value !== 'home') { try { localStorage.setItem(MODE_KEY, value); } catch { /* the choice is only for this visit */ } }
   };
 
   // A state's results are fetched when it is first chosen, and the choice takes effect once they are here.
@@ -134,9 +135,30 @@ export function Title() {
           </button>
         )}
 
-        {custom ? (
+        {mode === 'home' ? (
+          <div className="modes">
+            <h2>{t('title.modes')}</h2>
+            <div className="party-cards three">
+              <button className="party-card plain" onClick={() => pick('quick')}>
+                <strong>{t('title.mode.quick')}</strong>
+                <span className="small">{t('title.mode.quick.desc')}</span>
+                {!auto && lastMode === null && <span className="badge leaning start-here">{t('title.startHere')}</span>}
+                {lastMode === 'quick' && <span className="badge plain">{t('title.mode.last')}</span>}
+              </button>
+              <button className="party-card plain" onClick={() => pick('custom')}>
+                <strong>{t('title.mode.custom')}</strong>
+                <span className="small">{t('title.mode.custom.desc')}</span>
+                {lastMode === 'custom' && <span className="badge plain">{t('title.mode.last')}</span>}
+              </button>
+              <button className="party-card plain" onClick={() => { pick('custom'); pickKind('career'); setStep(1); }}>
+                <strong>{t('title.mode.career')}</strong>
+                <span className="small">{t('title.mode.career.desc')}</span>
+              </button>
+            </div>
+          </div>
+        ) : custom ? (
           <>
-            <p><button className="link" onClick={() => pick(false)}>← {t('quick.back')}</button></p>
+            <p><button className="link" onClick={() => pick('home')}>← {t('title.modes.back')}</button></p>
           <ol className="steps" aria-label={t('steps.label')}>
             {STEPS.map((key, i) => (
               <li key={key} className={i === step ? 'now' : i < step ? 'done' : ''} aria-current={i === step ? 'step' : undefined}>
@@ -261,6 +283,7 @@ export function Title() {
           </>
         ) : (
           <div className="quick">
+            <p><button className="link" onClick={() => pick('home')}>← {t('title.modes.back')}</button></p>
             <h2>{t('quick.title')}</h2>
             <p>{t('quick.body', { adviser: t('adviser.name') })}</p>
             <h3>{t('quick.party')}</h3>
@@ -269,7 +292,7 @@ export function Title() {
                 const id = PARTY_IDS[p] as Playable;
                 return (
                   <button key={id} role="radio" aria-checked={player === p} className={player === p ? 'chip active' : 'chip'} onClick={() => { setChosen(p); setDraft(null); if (!inContention(world.seats[0].last.votes, p)) setSeat(drawSeat(p, seat)); }}>
-                    <i className="dot" style={{ background: PARTIES[id].color }} />{PARTIES[id].name}
+                    <i className="dot" data-party={PARTY_IDS.indexOf(id)} style={{ background: PARTIES[id].color }} />{PARTIES[id].name}
                   </button>
                 );
               })}
@@ -279,7 +302,7 @@ export function Title() {
               {t('quick.home')}{' '}
               {HOME_PARTIES.map((p) => (
                 <button key={p} className={player === p ? 'chip active' : 'chip'} aria-pressed={player === p} onClick={() => { setSeat(drawSeat(p, seat)); setChosen(p); setDraft(null); }}>
-                  <i className="dot" style={{ background: PARTIES[PARTY_IDS[p] as Playable].color }} />{PARTIES[PARTY_IDS[p] as Playable].short}
+                  <i className="dot" data-party={p} style={{ background: PARTIES[PARTY_IDS[p] as Playable].color }} />{PARTIES[PARTY_IDS[p] as Playable].short}
                 </button>
               ))}
             </p>
@@ -288,7 +311,7 @@ export function Title() {
             <div className="button-row">
               {/* a returning player's one call to action is Continue */}
               <button className={auto ? 'btn' : 'btn primary'} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy' })}>{t('quick.start')} ▸</button>
-              <button className="btn" onClick={() => pick(true)}>{t('quick.customise')}</button>
+              <button className="btn" onClick={() => pick('custom')}>{t('quick.customise')}</button>
             </div>
             <p className="muted small">{t('quick.later')}</p>
           </div>

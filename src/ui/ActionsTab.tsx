@@ -181,7 +181,7 @@ export function ActionsTab() {
       {!guided && <RecapCard />}
       <p className="target-line">
         <span className="muted">{t('actions.target')}:</span>{' '}
-        <i className="dot" style={{ background: partyColor(me) }} />
+        <i className="dot" data-party={me} style={{ background: partyColor(me) }} />
         <strong>{seat && world.seats.length > 1 ? `${seat.name}, ` : ''}{regionLabel(t, world, state)}</strong>
         {pc.chiefs[state] && <span className="badge plain">{t('chiefs.badge', { level: t(`chiefs.level.${pc.chiefs[state]}`) })}</span>}
       </p>

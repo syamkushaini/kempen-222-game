@@ -209,10 +209,11 @@ export function App() {
     if (textSize === 'large') root.dataset.text = 'large';
     else delete root.dataset.text;
     root.dataset.density = density;
+    root.dataset.palette = palette;
     // Text follows the size the browser has been told to use: a root size of 20 px, not 16, scales everything by a quarter.
     const px = parseFloat(getComputedStyle(root).fontSize) || 16;
     root.style.setProperty('--ui-zoom', String(Math.round((px / 16) * 100) / 100));
-  }, [theme, lang, textSize, density]);
+  }, [theme, lang, textSize, density, palette]);
 
   // The player's party colour tints the buttons, the active tab, the focus ring and the mark; the title screen keeps the lavender.
   useEffect(() => {

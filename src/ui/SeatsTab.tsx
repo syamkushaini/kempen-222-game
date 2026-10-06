@@ -28,7 +28,7 @@ function SeatRow({ index, display, showState }: { index: number; display: SeatDi
   return (
     <li>
       <button className="seat-row" onClick={() => selectSeat(seat.id, seat.state)}>
-        <span className="dot" style={{ background: partyColor(display.winner), opacity: display.stale ? 0.4 : 1 }} />
+        <span className="dot" data-party={display.winner} style={{ background: partyColor(display.winner), opacity: display.stale ? 0.4 : 1 }} />
         <span className="grow">
           <span className="seat-name">{seat.name}</span>
           <span className="muted small">
@@ -89,11 +89,11 @@ function StateList() {
         <span className="muted">{t('state.seats', { n: seats.length })}</span>
       </div>
       <div className="seatbar thin">
-        {order.map((o) => <span key={o.p} style={{ width: `${(o.n / seats.length) * 100}%`, background: partyColor(o.p) }} />)}
+        {order.map((o) => <span key={o.p} data-party={o.p} style={{ width: `${(o.n / seats.length) * 100}%`, background: partyColor(o.p) }} />)}
       </div>
       <p className="state-tally">
         {order.map((o) => (
-          <span key={o.p}><i className="dot" style={{ background: partyColor(o.p) }} />{partyShort(t, o.p)} <strong className="num">{o.n}</strong></span>
+          <span key={o.p}><i className="dot" data-party={o.p} style={{ background: partyColor(o.p) }} />{partyShort(t, o.p)} <strong className="num">{o.n}</strong></span>
         ))}
       </p>
       <p className="muted small">{t('state.sortHint')}</p>
@@ -118,7 +118,7 @@ function ShareBars({ shares, votes }: { shares: number[]; votes?: number[] }) {
               <strong>{f.pct(s)}</strong>
             </span>
           </div>
-          <div className="bar"><span style={{ width: `${s * 100}%`, background: partyColor(p) }} /></div>
+          <div className="bar"><span data-party={p} style={{ width: `${s * 100}%`, background: partyColor(p) }} /></div>
         </li>
       ))}
     </ul>
@@ -203,7 +203,7 @@ function SeatDetail({ seatId }: { seatId: string }) {
               <td className="num">{f.pct(b.share, 0)}</td>
               <td>
                 {truthSeat
-                  ? <div className="stack">{truthSeat.blocs[b.i].shares.map((s, p) => (s > 0 ? <span key={p} style={{ width: `${s * 100}%`, background: partyColor(p) }} /> : null))}</div>
+                  ? <div className="stack">{truthSeat.blocs[b.i].shares.map((s, p) => (s > 0 ? <span key={p} data-party={p} style={{ width: `${s * 100}%`, background: partyColor(p) }} /> : null))}</div>
                   : <div className="bar"><span style={{ width: `${(b.share / blocs[0].share) * 100}%`, background: 'var(--muted)' }} /></div>}
               </td>
             </tr>

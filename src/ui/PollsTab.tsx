@@ -104,7 +104,7 @@ export function PollsTab() {
                     <th scope="row">{t(`polls.region.${r}`)}</th>
                     <td>
                       <div className="stack tall" title={shares.map((s, p) => (s > 0.01 ? `${partyShort(t, p)} ${f.pct(s, 0)}` : '')).filter(Boolean).join(' · ')}>
-                        {shares.map((s, p) => (s > 0 ? <span key={p} style={{ width: `${s * 100}%`, background: partyColor(p) }} /> : null))}
+                        {shares.map((s, p) => (s > 0 ? <span key={p} data-party={p} style={{ width: `${s * 100}%`, background: partyColor(p) }} /> : null))}
                       </div>
                       <span className="muted small">
                         {shares.map((s, p) => ({ s, p })).filter((x) => x.s > 0.03).sort((a, b) => b.s - a.s).slice(0, 4).map((x) => `${partyShort(t, x.p)} ${f.pct(x.s, 0)}`).join(' · ')}

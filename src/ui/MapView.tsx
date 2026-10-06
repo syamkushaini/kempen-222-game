@@ -49,6 +49,29 @@ const SeatPath = memo(function SeatPath(props: {
   );
 });
 
+/** How each party is marked on the map in the colour-blind palette, over its colour: a line direction or dots, dark or light. */
+const PATTERNS: { kind: 'diag' | 'vert' | 'horiz' | 'dots' | 'hatch' | 'back'; ink: string }[] = [
+  { kind: 'dots', ink: '#000' }, { kind: 'diag', ink: '#000' }, { kind: 'vert', ink: '#000' }, { kind: 'horiz', ink: '#000' }, { kind: 'back', ink: '#000' },
+  { kind: 'hatch', ink: '#000' }, { kind: 'diag', ink: '#fff' }, { kind: 'vert', ink: '#fff' }, { kind: 'horiz', ink: '#fff' }, { kind: 'dots', ink: '#fff' },
+];
+const PAT = 9;
+
+function PatternDefs() {
+  return (
+    <defs>
+      {PATTERNS.map(({ kind, ink }, i) => (
+        <pattern key={i} id={`party-pat-${i}`} width={PAT} height={PAT} patternUnits="userSpaceOnUse" patternTransform={kind === 'diag' ? 'rotate(45)' : kind === 'back' ? 'rotate(-45)' : undefined}>
+          {kind === 'dots' ? <circle cx={PAT / 2} cy={PAT / 2} r="1.3" fill={ink} fillOpacity="0.55" />
+            : kind === 'vert' ? <rect x="0" y="0" width="2" height={PAT} fill={ink} fillOpacity="0.45" />
+            : kind === 'horiz' ? <rect x="0" y="0" width={PAT} height="2" fill={ink} fillOpacity="0.45" />
+            : kind === 'hatch' ? <><rect x="0" y="0" width="1.6" height={PAT} fill={ink} fillOpacity="0.4" /><rect x="0" y="0" width={PAT} height="1.6" fill={ink} fillOpacity="0.4" /></>
+            : <rect x="0" y="0" width="2" height={PAT} fill={ink} fillOpacity="0.45" />}
+        </pattern>
+      ))}
+    </defs>
+  );
+}
+
 /** How a freshly declared seat is flagged: held by the same party, taken from another, or (for the player) won or lost. */
 export type PulseKind = Flip;
 
@@ -69,6 +92,7 @@ export function MapView(props: {
   // A one-seat contest has nothing to zoom between; the map stays on the seat.
   const single = world.seats.length === 1;
   const selectedState = useStore((s) => s.selectedState);
+  const accessible = useStore((s) => s.settings.palette === 'accessible');
   const selectedSeat = useStore((s) => s.selectedSeat);
   const selectState = useStore((s) => s.selectState);
   const selectSeat = useStore((s) => s.selectSeat);
@@ -245,6 +269,7 @@ export function MapView(props: {
           >
             <g transform={viewTransform(view, map.width, VIEW_HEIGHT)}>
             <g className="map-zoom" style={{ transform: zoom.transform }} onClick={onClick} onMouseMove={onMove}>
+              {accessible && <PatternDefs />}
               {backdrop.map(([id, shape]) => <path key={id} d={shape.d} className="seat-backdrop" />)}
               {world.seats.map((seat, i) => {
                 const d = display[i];
@@ -261,6 +286,11 @@ export function MapView(props: {
                     selected={seat.id === selectedSeat}
                   />
                 );
+              })}
+              {accessible && world.seats.map((seat, i) => {
+                const d = display[i];
+                if (!d || d.winner < 0 || d.stale || !map.seats[seat.id]) return null;
+                return <path key={`pat-${seat.id}`} d={map.seats[seat.id].d} fill={`url(#party-pat-${d.winner % PATTERNS.length})`} className="seat-pattern" pointerEvents="none" />;
               })}
               {Object.entries(map.states).map(([id, shape]) => (
                 <path key={id} d={shape.d} className="state-outline" />
@@ -305,7 +335,7 @@ export function MapView(props: {
             <span className="muted">{hoveredSeat.id} · {regionLabel(t, world, hoveredSeat.state)}</span>
             {hovered.winner >= 0 ? (
               <span>
-                <i className="dot" style={{ background: partyColor(hovered.winner) }} />
+                <i className="dot" data-party={hovered.winner} style={{ background: partyColor(hovered.winner) }} />
                 {partyShort(t, hovered.winner)} · {t('map.margin', { pct: f.pct(hovered.margin) })}
               </span>
             ) : <span className="muted">{t('legend.undeclared')}</span>}
@@ -316,7 +346,7 @@ export function MapView(props: {
 
       <div className="legend">
         {[...seen].sort((a, b) => a - b).map((p) => (
-          <span key={p}><i className="dot" style={{ background: partyColor(p) }} />{partyShort(t, p)}</span>
+          <span key={p}><i className="dot" data-party={p} style={{ background: partyColor(p) }} />{partyShort(t, p)}</span>
         ))}
         <span className="legend-gap" />
         {(['safe', 'leaning', 'marginal'] as const).map((c) => (

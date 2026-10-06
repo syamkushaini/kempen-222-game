@@ -51,8 +51,8 @@ function ClaimBars({ f, me }: { f: Formation; me: number }) {
               <strong className="num">{pledged(f, k)}</strong>
             </div>
             <div className="seatbar" role="img" aria-label={`${partyShort(t, k)} ${pledged(f, k)}`}>
-              {backers.map((p) => <span key={p} title={partyName(t, p)} style={{ width: `${(f.seats[p] / total) * 100}%`, background: partyColor(p) }} />)}
-              {indep > 0 && <span title={partyName(t, OTH)} style={{ width: `${(indep / total) * 100}%`, background: partyColor(OTH) }} />}
+              {backers.map((p) => <span key={p} title={partyName(t, p)} data-party={p} style={{ width: `${(f.seats[p] / total) * 100}%`, background: partyColor(p) }} />)}
+              {indep > 0 && <span title={partyName(t, OTH)} data-party={OTH} style={{ width: `${(indep / total) * 100}%`, background: partyColor(OTH) }} />}
               <i className="majority-mark" style={{ left: `${(need / total) * 100}%` }} />
             </div>
           </li>
@@ -270,7 +270,7 @@ function OutcomePanel() {
           <h3>{t('form.outcome.deals')}</h3>
           <ul className="deal-list">
             {o.deals.map((d, p) => d && (
-              <li key={p}><i className="dot" style={{ background: partyColor(p) }} /><strong>{partyName(t, p)}</strong> <span className="muted">{describeOffer(t, fmt, d)}</span></li>
+              <li key={p}><i className="dot" data-party={p} style={{ background: partyColor(p) }} /><strong>{partyName(t, p)}</strong> <span className="muted">{describeOffer(t, fmt, d)}</span></li>
             ))}
           </ul>
           <p className="muted small">{t(career ? 'form.outcome.career' : 'form.outcome.later')}</p>

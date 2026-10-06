@@ -170,7 +170,7 @@ export function OrdersTab() {
       <div className="state-chips">
         {Object.entries(k.states).map(([st, p]) => (
           <span key={st} className={p === me ? 'state-chip mine' : 'state-chip'}>
-            <i className="dot" style={{ background: partyColor(p) }} />{regionLabel(t, world, st)} <span className="muted">· {partyShort(t, p)}</span>
+            <i className="dot" data-party={p} style={{ background: partyColor(p) }} />{regionLabel(t, world, st)} <span className="muted">· {partyShort(t, p)}</span>
           </span>
         ))}
       </div>

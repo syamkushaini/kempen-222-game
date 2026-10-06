@@ -34,7 +34,7 @@ export function SeatBar({ tally, thin }: { tally: number[]; thin?: boolean }) {
     <>
       <div className={thin ? 'seatbar thin' : 'seatbar'} role="img" aria-label={order.map((o) => `${partyShort(t, o.p)} ${o.seats}`).join(', ')}>
         {order.map((o) => (
-          <span key={o.p} style={{ width: `${(o.seats / TOTAL) * 100}%`, background: partyColor(o.p) }} />
+          <span key={o.p} data-party={o.p} style={{ width: `${(o.seats / TOTAL) * 100}%`, background: partyColor(o.p) }} />
         ))}
         <i className="majority-mark" style={{ left: `${(MAJORITY / TOTAL) * 100}%` }} />
       </div>
@@ -70,7 +70,7 @@ export function Tally(props: { tally: number[]; votes: number[]; title: string; 
       <ul className="tally-list">
         {shown.map((o) => (
           <li key={o.p} className={o.p === props.highlight ? 'mine' : ''}>
-            <span className="dot" style={{ background: partyColor(o.p) }} />
+            <span className="dot" data-party={o.p} style={{ background: partyColor(o.p) }} />
             <span className="grow">{partyName(t, o.p)}</span>
             <span className="muted num">{totalVotes > 0 ? f.pct(props.votes[o.p] / totalVotes) : '–'}</span>
             <strong className="num seats"><CountUp value={o.seats} /></strong>

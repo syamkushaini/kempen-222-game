@@ -24,7 +24,7 @@ export function Standing({ campaign }: { campaign: Campaign }) {
         {order.map(({ s, p }) => (
           <li key={p} className={p === campaign.player ? 'mine' : ''}>
             <span className="poll-name">{partyName(t, p)}</span>
-            <div className="bar"><span style={{ width: `${(s / top) * 100}%`, background: partyColor(p) }} /></div>
+            <div className="bar"><span data-party={p} style={{ width: `${(s / top) * 100}%`, background: partyColor(p) }} /></div>
             <strong className="num">{f.pct(s, 0)}</strong>
           </li>
         ))}

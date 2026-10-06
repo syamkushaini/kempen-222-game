@@ -194,7 +194,7 @@ function SeatBySeat() {
                       <span>{partyName(t, p)}</span>
                       <span className="num"><span className="muted small">{t('seat.votes', { n: f.int(v) })} </span><strong>{f.pct(v / pickedShown.valid)}</strong></span>
                     </div>
-                    <div className="bar"><span style={{ width: `${(v / pickedShown.valid) * 100}%`, background: partyColor(p) }} /></div>
+                    <div className="bar"><span data-party={p} style={{ width: `${(v / pickedShown.valid) * 100}%`, background: partyColor(p) }} /></div>
                   </li>
                 ))}
               </ul>
@@ -211,7 +211,7 @@ function SeatBySeat() {
                 const mine = o.winner === campaign.player || was === campaign.player;
                 return (
                   <li key={i} className={mine ? 'mine' : ''}>
-                    <span className="dot" style={{ background: partyColor(o.winner) }} />
+                    <span className="dot" data-party={o.winner} style={{ background: partyColor(o.winner) }} />
                     <span className="grow">
                       <span className="seat-name">{world.seats[i].name}</span>
                       <span className="muted small">{regionLabel(t, world, world.seats[i].state)} · {t('map.margin', { pct: f.pct(o.margin) })}</span>
@@ -332,7 +332,7 @@ function ByElectionCount() {
                   <span>{partyName(t, p)}</span>
                   <span className="num"><span className="muted small">{t('seat.votes', { n: f.int(now) })} </span><strong>{counted > 0 ? f.pct(now / counted) : '–'}</strong></span>
                 </div>
-                <div className="bar tall"><span style={{ width: `${counted > 0 ? (now / seat.valid) * 100 : 0}%`, background: partyColor(p) }} /></div>
+                <div className="bar tall"><span data-party={p} style={{ width: `${counted > 0 ? (now / seat.valid) * 100 : 0}%`, background: partyColor(p) }} /></div>
               </li>
             ))}
           </ul>

@@ -161,7 +161,7 @@ export function GovernmentTab() {
               const def = DEMANDS[o.demand];
               return (
                 <li key={i} className="action">
-                  <span className="dot" style={{ background: partyColor(o.party) }} />
+                  <span className="dot" data-party={o.party} style={{ background: partyColor(o.party) }} />
                   <div className="grow">
                     <span className="action-title">{t(`demand.${o.demand}`)}</span>
                     <span className="action-meta num">

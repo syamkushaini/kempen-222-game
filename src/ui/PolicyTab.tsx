@@ -63,7 +63,7 @@ export function PolicyTab() {
                     {POSITIONS.map((pos) => (
                       <span key={pos} className={`pos${pos === here ? ' here' : ''}${pos === moving ? ' moving' : ''}`}>
                         {rivals.filter((p) => k.stances[p][i] === pos).map((p) => (
-                          <i key={p} className="dot" title={partyShort(t, p)} style={{ background: partyColor(p) }} />
+                          <i key={p} className="dot" title={partyShort(t, p)} data-party={p} style={{ background: partyColor(p) }} />
                         ))}
                       </span>
                     ))}
@@ -91,7 +91,7 @@ export function PolicyTab() {
       ))}
       <p className="muted small">
         {t('policy.legend')}{' '}
-        {rivals.map((p) => <span key={p} className="legend-party"><i className="dot" style={{ background: partyColor(p) }} />{partyShort(t, p)}</span>)}
+        {rivals.map((p) => <span key={p} className="legend-party"><i className="dot" data-party={p} style={{ background: partyColor(p) }} />{partyShort(t, p)}</span>)}
       </p>
 
       <h3>{t('manifesto.title')}</h3>
