@@ -160,6 +160,7 @@ function isValidCareer(x: unknown, world: World): boolean {
   return (
     (x.founded === undefined || typeof x.founded === 'boolean') &&
     (x.nation === undefined || (isObj(x.nation) && isNum(x.nation.health) && isNum(x.nation.education) && isNum(x.nation.standing))) &&
+    (x.members === undefined || (Array.isArray(x.members) && x.members.every((v) => isNum(v) && v >= -1 && v <= 100))) &&
     (x.plots === undefined || (isObj(x.plots) && Object.values(x.plots).every((v) => isNum(v) && v >= 0 && v <= 100))) &&
     isNum(x.term) && x.term >= 1 && isNum(x.week) && x.week >= 1 && isNum(x.length) && x.week <= x.length &&
     isValidOutcome(x.government) && typeof x.midterm === 'boolean' &&

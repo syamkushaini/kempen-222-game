@@ -19,6 +19,7 @@ import { FORMATION_WEEK, pushNews, ref } from './news';
 import { FOUNDING_FUNDS, growFoundedParty } from './founding';
 import { edge, incomeBoost, mediaBoost, neutralLeader, skill } from './perks';
 import { afterLender } from './loan';
+import { membersWeek } from './members';
 import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
@@ -297,6 +298,7 @@ export function termWeek(world: World, c: Campaign): void {
   staffWeek(world, c, new Rng((c.rng ^ 0x57aff) + k.week), false);
   plotsWeek(world, c);
   if (c.phase !== 'term') return;
+  membersWeek(world, c, new Rng((c.rng ^ 0x3e3be5) + k.week));
   if (o.focus === 'leaders' && o.courting !== null && k.week % 4 === 0 && relation(c, me, o.courting) < 45) shiftRelation(c, me, o.courting, 2);
 
   // Easy money has a slow price as well as a sudden one.

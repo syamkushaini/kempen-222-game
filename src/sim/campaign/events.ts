@@ -9,6 +9,7 @@ import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
+import { membersFeel } from './members';
 import { nationOf, shiftNation } from './nation';
 import { pushNews } from './news';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
@@ -248,6 +249,8 @@ export function resolveEvent(world: World, c: Campaign, scene: Scene, choice: nu
     falls = apply(world, c, won ? picked.gamble.win : picked.gamble.lose) || falls;
     suffix = won ? 'w' : 'l';
   }
+  // The members of the player's coalition each make what they will of it.
+  membersFeel(c, [...picked.effects, ...(picked.gamble ? (suffix === 'w' ? picked.gamble.win : picked.gamble.lose) : [])]);
   if (picked.then) c.career.queue.push({ event: picked.then.event, week: c.career.week + picked.then.after });
   const bad = picked.gamble ? suffix === 'l' : false;
   pushNews(c, { party: c.player, key: `event.${scene.event}.r${choice}${suffix}`, tone: bad ? 'bad' : suffix === 'w' ? 'good' : 'neutral' });

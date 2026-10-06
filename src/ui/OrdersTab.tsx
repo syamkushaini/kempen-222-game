@@ -5,6 +5,7 @@ import { contestsState, scaled } from '../sim/campaign/actions';
 import { ROUNDS, STATE_GOVERNMENT_INCOME } from '../sim/campaign/contests';
 import { others, relation } from '../sim/campaign/diplomacy';
 import { seatOf } from '../sim/campaign/events';
+import { memberMoods, membersOf, moodWord } from '../sim/campaign/members';
 import { partnerMood } from '../sim/campaign/plots';
 import { Gauge } from './Gauge';
 import { Loan } from './Loan';
@@ -60,6 +61,7 @@ export function OrdersTab() {
   const leaders = others(campaign, me);
   const governing = inGovernment(campaign, me);
   const band = stabilityBand(g.stability);
+  const members = membersOf(campaign), moods = memberMoods(campaign);
 
   const budgetRow = (key: keyof Orders['budget']) => (
     <li className="action" key={key}>
@@ -87,6 +89,11 @@ export function OrdersTab() {
         })}
       </p>
       <p className="muted small">{t(`orders.seat.${seat}`)} · {t(`orders.band.${band}`)}</p>
+      {members && moods && (
+        <p className="muted small" title={t('member.note')}>
+          {t('member.title')}: {members.map((m, i) => `${m.name} ${t(`member.${moodWord(moods[i])}`)}`).join(' · ')}
+        </p>
+      )}
       {seat === 'pm' && g.partners.length > 0 && (
         <p className="muted small" title={t('partner.note')}>
           {t('partner.title')}: {g.partners.map((p) => `${partyShort(t, p)} ${t(`partner.${partnerMood(campaign, p)}`)}`).join(' · ')}

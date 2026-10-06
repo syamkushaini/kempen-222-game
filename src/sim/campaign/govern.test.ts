@@ -8,6 +8,8 @@ import { TEMPER } from './cast';
 import { relation } from './diplomacy';
 import { choiceCost, ULTIMATUM_MONEY } from './events';
 import { bluffChance, partnerMood, plotPressure, plotsWeek } from './plots';
+import { MEMBERS, memberMoods, membersFeel, membersOf, membersWeek, memberTarget, moodWord, votersOf } from './members';
+import { houseTally } from './contests';
 import { scaled } from './actions';
 import { isValidCampaign } from './validate';
 import {
@@ -493,5 +495,69 @@ describe('partners who plot', () => {
     c.career!.plots = { [GBK]: 50 };
     plotsWeek(base, c);
     expect(c.career!.plots).toBeUndefined();
+  });
+});
+
+describe('the members of a coalition', () => {
+  it('are three parties for each of the larger ones, with shares that add up, and none for a single party', () => {
+    for (const [id, members] of Object.entries(MEMBERS)) {
+      expect(members, id).toHaveLength(3);
+      expect(members!.reduce((a, m) => a + m.share, 0), id).toBeCloseTo(1, 6);
+      expect(new Set(members!.map((m) => m.name)).size, id).toBe(3);
+    }
+    expect(membersOf(career(PS))).toBe(MEMBERS.ps);
+    expect(membersOf(career(PARTY_IDS.indexOf('legasi')))).toBeNull();
+    expect(memberMoods(career(PS))).toEqual([60, 60, 60]);
+    expect(career(PS).career!.members).toBeUndefined(); // nothing is written down until something happens
+  });
+
+  it('each follow their own voters, week by week, and all feel at once what shakes the party', () => {
+    const c = career(PS);
+    const [reform, kota, desa] = MEMBERS.ps!;
+    expect(memberTarget(c, desa)).toBe(60);
+    // The party falls 12 points among the heartland and the civil servants, the third member's ground, and nowhere else.
+    for (const b of desa.cares) c.career!.mood[bloc(b)][PS] = -0.12;
+    expect(votersOf(c, desa)).toBeCloseTo(-0.12, 6);
+    expect(memberTarget(c, desa)).toBeCloseTo(30, 6);
+    expect(memberTarget(c, reform)).toBe(60);
+    expect(memberTarget(c, kota)).toBe(60);
+    membersWeek(base, c, new Rng(1));
+    expect(memberMoods(c)).toEqual([60, 60, 58.5]); // a twentieth of the way there
+    for (let w = 0; w < 60; w++) membersWeek(base, c, new Rng(w + 2)); // about a year of it
+    expect(moodWord(memberMoods(c)![2])).toBe('restless');
+    expect(c.news.filter((n) => n.key === 'news.member.restless')).toHaveLength(1);
+    // A row that costs the party its unity is felt by every member straight away.
+    const before = memberMoods(c)!.slice();
+    membersFeel(c, [{ t: 'unity', n: -10 }]);
+    expect(memberMoods(c)).toEqual(before.map((n) => n - 6));
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
+  });
+
+  it('walk out with their MPs if left mutinous, and stay out until the country votes again', () => {
+    const c = career(PS);
+    for (const b of MEMBERS.ps![1].cares) c.career!.mood[bloc(b)][PS] = -0.3; // nothing to come back for
+    c.career!.members = [60, 5, 60];
+
+    const seats = lastElection(base).tally[PS], inGov = c.career!.government.seats, unity = c.parties[PS]!.unity;
+    for (let seed = 1; seed < 400 && c.career!.members![1] >= 0; seed++) { c.career!.members![1] = 5; membersWeek(base, c, new Rng(seed)); }
+    expect(moodWord(c.career!.members![1])).toBe('gone');
+    const left = Math.round(seats * MEMBERS.ps![1].share);
+    expect(houseTally(base, c)[PS]).toBe(seats - left);
+    expect(c.career!.government.seats).toBe(inGov - left);
+    expect(c.parties[PS]!.unity).toBe(unity - 8);
+    expect(c.news.at(-1)).toMatchObject({ key: 'news.member.left', tone: 'bad' });
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
+    // Gone is gone until the country votes again: nothing more happens to it.
+    membersFeel(c, [{ t: 'unity', n: 20 }]);
+    expect(c.career!.members![1]).toBe(-1);
+    // The largest member is the party's core. It cannot walk out; mutinous, it wears the leader down instead.
+    const core = career(PS);
+    for (const b of MEMBERS.ps![0].cares) core.career!.mood[bloc(b)][PS] = -0.3;
+    core.career!.members = [5, 60, 60];
+    const held = core.parties[PS]!.unity;
+    for (let seed = 1; seed < 40; seed++) membersWeek(base, core, new Rng(seed));
+    expect(core.career!.members![0]).toBeGreaterThanOrEqual(0);
+    expect(core.parties[PS]!.unity).toBeLessThan(held - 10);
+    expect(houseTally(base, core)[PS]).toBe(seats);
   });
 });

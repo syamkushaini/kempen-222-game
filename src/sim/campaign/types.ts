@@ -344,6 +344,8 @@ export interface Career {
   nation?: Nation;
   /** How far each partner in the player's government has gone towards walking out, 0 to 100, by party. Absent while none has a complaint. */
   plots?: Record<number, number>;
+  /** The mood of each member party of the player's coalition, 0 to 100 in the order they are listed, or -1 for one that has walked out. Absent while all are as they began. */
+  members?: number[];
   /** Which parliament this is, starting at 1. */
   term: number;
   /** Week of the term, starting at 1. The election campaign follows the last one. */
