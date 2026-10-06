@@ -43,7 +43,8 @@ function isValidPoll(x: unknown): boolean {
     typeof x.public === 'boolean' &&
     (x.national === undefined || isShares(x.national)) &&
     (x.regions === undefined || (isObj(x.regions) && Object.values(x.regions).every(isShares))) &&
-    (x.seats === undefined || (isObj(x.seats) && Object.values(x.seats).every(isShares)))
+    (x.seats === undefined || (isObj(x.seats) && Object.values(x.seats).every(isShares))) &&
+    (x.groups === undefined || (Array.isArray(x.groups) && x.groups.length === N_BLOCS && x.groups.every((v) => v === null || (isNum(v) && v >= 0 && v <= 1))))
   );
 }
 

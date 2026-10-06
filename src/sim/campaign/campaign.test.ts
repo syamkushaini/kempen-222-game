@@ -16,6 +16,8 @@ import { edge } from './perks';
 import { campaignMarks, MARK } from './marks';
 import { CHIEF_NAMES, chiefHand, chiefMood, chiefOf, chiefsWeek, chiefView } from './chiefs';
 import { Rng } from '../rng';
+import { GROUP_NOISE } from './polls';
+import { BLOC_IDS } from '../types';
 
 const world = createWorld(seatFile as SeatFile);
 const P = (id: (typeof PARTY_IDS)[number]) => PARTY_IDS.indexOf(id);
@@ -490,5 +492,27 @@ describe('chiefs as people', () => {
     expect(c.parties[c.player]!.chiefs.kedah).toBeUndefined();
     expect(c.news.at(-1)).toMatchObject({ key: 'news.chief.exposed', tone: 'bad' });
     expect(chiefView(world, c, 'kedah').generation).toBe(1);
+  });
+});
+
+describe('a poll\'s reading of each voter group', () => {
+  it('comes with every national poll, close to the truth, and leaves every other reading as it was', () => {
+    const c = start();
+    const real = truth(world, c);
+    const poll = c.polls.find((p) => p.scope === 'national')!;
+    expect(poll.groups).toHaveLength(BLOC_IDS.length);
+    const cast = BLOC_IDS.map(() => 0), mine = BLOC_IDS.map(() => 0);
+    for (const seat of real.seats) seat.blocs.forEach((b, i) => { cast[i] += b.voters * b.turnout; mine[i] += b.voters * b.turnout * b.shares[c.player]; });
+    poll.groups!.forEach((v, i) => {
+      if (cast[i] === 0) { expect(v).toBeNull(); return; }
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(1);
+      // Within three times the stated error: each group is a smaller sample, read twice as roughly as the whole.
+      expect(Math.abs(v! - mine[i] / cast[i])).toBeLessThan(3 * GROUP_NOISE * (poll.moe / 2));
+    });
+    // The same game takes the same poll, and a seat poll has no reading of the groups.
+    expect(start().polls.find((p) => p.scope === 'national')!.groups).toEqual(poll.groups);
+    expect(playerPoll(world, c, 'seat', world.seats[0].id, 'quick')!.groups).toBeUndefined();
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world)).toBe(true);
   });
 });

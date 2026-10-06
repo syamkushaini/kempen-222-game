@@ -173,6 +173,8 @@ const en = {
   'standing.public': 'Public poll, week {n}',
   'standing.private': 'Your poll, week {n}',
   'standing.moe': 'Margin of error ±{n} points',
+  'standing.groups': 'Your support by voter group',
+  'standing.groups.note': 'From the same poll, give or take {n} points: each group is a smaller sample. The bars move when a new poll comes in.',
   'standing.last': 'Seats at the last election',
 
   'map.fog': 'No poll yet',
@@ -254,7 +256,7 @@ const en = {
   'seat.poll': 'Latest poll',
   'seat.pollMeta': 'Week {n}, ±{moe} points',
   'seat.noPoll': 'You have no poll of this seat. The last election is all you know.',
-  'seat.blocsNote': 'Share of voters. How each bloc is leaning is not public.',
+  'seat.blocsNote': 'Share of voters. How each bloc is leaning in this seat is not public; a national poll reads your standing with each group overall.',
   'seat.truth': 'True support (dev)',
   'seat.visitedThisWeek': 'Leader visited this week',
 
@@ -1459,6 +1461,8 @@ const ms: Record<CoreKey, string> = {
   'standing.public': 'Tinjauan awam, minggu {n}',
   'standing.private': 'Tinjauan anda, minggu {n}',
   'standing.moe': 'Ralat ±{n} mata',
+  'standing.groups': 'Sokongan anda mengikut kelompok pengundi',
+  'standing.groups.note': 'Daripada tinjauan yang sama, lebih kurang {n} mata: setiap kelompok ialah sampel yang lebih kecil. Bar berubah apabila tinjauan baharu masuk.',
   'standing.last': 'Kerusi pada pilihan raya lalu',
 
   'map.fog': 'Belum ada tinjauan',
@@ -1540,7 +1544,7 @@ const ms: Record<CoreKey, string> = {
   'seat.poll': 'Tinjauan terkini',
   'seat.pollMeta': 'Minggu {n}, ±{moe} mata',
   'seat.noPoll': 'Anda tiada tinjauan bagi kerusi ini. Hanya keputusan lalu yang anda tahu.',
-  'seat.blocsNote': 'Bahagian pengundi. Kecenderungan setiap kelompok bukan maklumat awam.',
+  'seat.blocsNote': 'Bahagian pengundi. Kecenderungan setiap kelompok di kerusi ini bukan maklumat awam; tinjauan nasional membaca kedudukan anda dengan setiap kelompok secara keseluruhan.',
   'seat.truth': 'Sokongan sebenar (dev)',
   'seat.visitedThisWeek': 'Pemimpin hadir minggu ini',
 

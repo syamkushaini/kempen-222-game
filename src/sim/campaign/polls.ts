@@ -1,6 +1,6 @@
 import type { World } from '../election';
-import type { Rng } from '../rng';
-import { N_PARTIES, type ElectionOutcome, type Region } from '../types';
+import { Rng } from '../rng';
+import { N_BLOCS, N_PARTIES, type ElectionOutcome, type Region } from '../types';
 import { scaled } from './actions';
 import { now } from './news';
 import type { Campaign, Poll, PollQuality, PollScope } from './types';
@@ -71,12 +71,29 @@ export function takePoll(
         sarawak: noisy(sharesOf(byRegion.sarawak), base * 2.5, rng, factor),
       };
     }
+    poll.groups = groupReading(c, truth, poll.id, base * GROUP_NOISE * factor);
   } else {
     const indexes = scope === 'seat' ? [world.seatIndex.get(target!)!] : world.seatsByState[target!];
     poll.seats = {};
     for (const i of indexes) poll.seats[world.seats[i].id] = noisy(sharesOf(truth.seats[i].votes), base, rng, factor);
   }
   return poll;
+}
+
+/** A voter group is a part of the sample: its reading is this many times rougher than the poll's own. */
+export const GROUP_NOISE = 2;
+
+/**
+ * The player's share of the vote within each voter group, as the poll's sample has it. The groups' dice are their own
+ * (from the poll's number), so that asking them changes nothing about any other reading.
+ */
+function groupReading(c: Campaign, truth: ElectionOutcome, id: number, sigma: number): (number | null)[] | undefined {
+  if (truth.seats.some((o) => o.blocs.length !== N_BLOCS)) return undefined;
+  const rng = new Rng(((c.seed ^ 0x6b10c5) + id * 7919) >>> 0);
+  const cast = new Array<number>(N_BLOCS).fill(0), mine = new Array<number>(N_BLOCS).fill(0);
+  for (const seat of truth.seats) seat.blocs.forEach((b, i) => { const n = b.voters * b.turnout; cast[i] += n; mine[i] += n * (b.shares[c.player] ?? 0); });
+  // Kept to a tenth of a point: a career takes hundreds of polls, and they are all saved.
+  return cast.map((n, i) => (n > 0 ? Math.round(Math.min(1, Math.max(0, mine[i] / n + rng.normal(0, sigma))) * 1000) / 1000 : null));
 }
 
 export interface SeatIntel { shares: number[]; week: number; moe: number }

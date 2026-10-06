@@ -182,13 +182,12 @@ function TermHud() {
         <span className="hud-label">{t('hud.funds')}</span>
         <strong className="num hud-value">{f.rm(me.funds)} <span className={`small ${net < 0 ? 'neg' : 'muted'}`}>{net < 0 ? '−' : '+'}{f.rm(Math.abs(net))}</span></strong>
       </div>
-      <div className="hud-item">
-        <span className="hud-label"><Term id="unity">{t('term.unity')}</Term></span>
-        <Gauge value={me.unity} />
-      </div>
-      <div className="hud-item">
-        <span className="hud-label"><Term id="credibility">{t('term.credibility')}</Term></span>
-        <Gauge value={k.credibility} />
+      {/* Two of the party's own, and the government's two, whoever leads it: they matter as much to those trying to bring it down. */}
+      <div className="hud-gauges">
+        <Gauge value={me.unity} label={<Term id="unity">{t('term.unity')}</Term>} />
+        <Gauge value={k.government.stability} label={<Term id="stability">{t('hint.stability')}</Term>} />
+        <Gauge value={k.credibility} label={<Term id="credibility">{t('term.credibility')}</Term>} />
+        <Gauge value={k.government.trust} label={<Term id="trust">{t('hint.trust')}</Term>} />
       </div>
       {!k.ending && <div className="button-row tight term-buttons">
         <button className="btn small" disabled={waiting} onClick={() => advance(1)}>{t('term.next')} ▸</button>

@@ -186,6 +186,11 @@ export interface Poll {
   regions?: Record<Region, number[]>;
   /** State and seat polls: vote share per party in each polled seat. */
   seats?: Record<string, number[]>;
+  /**
+   * National polls: the player's share of the vote within each voter group, in the order of the groups, or null for a
+   * group with nobody in it here. A smaller sample than the whole poll, so a rougher reading. Absent in older polls.
+   */
+  groups?: (number | null)[];
 }
 
 /**
