@@ -589,6 +589,7 @@ Thirty questions, answered by the designer one at a time after a day of play. Th
 - **Told where you stand.** Favourite, close fight, uphill or long shot (`outlook.ts`), shown on the quick start, on each party card of a by-election, and above the map while the campaign runs.
 - **A goal that fits.** A party not expected to win is judged on its share of the vote: an uphill campaign has to add 2 points to its last share, a long shot has only to hold its own (which the autoplayer manages about one time in four). Meeting it gives a new verdict, "beat expectations", in place of "there is no second prize". A favourite or a close fight is still judged on the seat alone.
 - Not changed: the size of any campaign effect. A leader who campaigns wins and one who sits idle loses (76% against 9%), so the choices already matter where the seat is in reach.
+- **Measured again after the rivals were given teams and the newer actions:** a favourite who campaigns well wins 74% of the time against gentle rivals and 82% against sharp ones (the autoplayer is the player in both, and is sharper than the gentle rivals); a close fight is won about half the time (47 to 54%); uphill 17 to 27%; a long shot 1 to 5%. A favourite who sits idle now wins 1 or 2 times in 100. The fair draw still holds.
 
 **Before launch**
 - **A state's results load when the state is first wanted** (`loadState` in `world.ts`), not with the page. The main script went from 1,139 kB to 951 kB (345 to 299 kB compressed). Saved games are checked for the states they need before the first screen is drawn, and an imported save fetches its state before it is read. The tests register every state up front (`src/data/allStates.ts`, never imported by the game). Both languages' text still loads together (about 330 kB of source): splitting it by language is the next saving.
@@ -630,8 +631,8 @@ Thirty questions, answered by the designer one at a time after a day of play. Th
 
 **Painted portraits** *(the brief's "illustrated portraits", begun)*
 - The party leaders are getting painted portraits in place of the drawn busts: generated through the designer's Canva account from a written description of each invented leader (age, dress, bearing, the party's colour as a glow behind them), each asked for as "an invented person who does not resemble any real politician". The designer approved the first as the style for the set.
-- **Seven of nine are in** (PS, BP, PT, GBK, GBS, LEGASI and GENBA), as 200-pixel images of about 9 kB each in `src/assets/portraits/<party>.jpg`. A leader with a file there is shown painted; one without, a leader the player has given a look of their own, ministers, staff and the adviser keep the drawn bust (`Portrait.tsx`). The share card still draws its own.
-- The leaders of CAHAYA and SUARA wait on Canva's generation limit, which allows only one every few minutes.
+- **All nine leaders are in,** as 200-pixel images of about 9 kB each in `src/assets/portraits/<party>.jpg`. A leader with a file there is shown painted; one without, a leader the player has given a look of their own, ministers, staff and the adviser keep the drawn bust (`Portrait.tsx`). The share card still draws its own.
+- Still drawn, not painted: the ministers, the staff and the adviser.
 
 **The rest of the second interview (6 Oct 2026, continued)**
 
