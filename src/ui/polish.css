@@ -1,6 +1,6 @@
 /* ---------- stage 7: portraits, honours, the result card, and movement ---------- */
 
-.portrait { flex: none; border-radius: 50%; display: block; box-shadow: 0 0 0 1px var(--line); background: var(--panel-2); user-select: none; }
+.portrait { flex: none; border-radius: 50%; display: block; object-fit: cover; box-shadow: 0 0 0 1px var(--line); background: var(--panel-2); user-select: none; }
 .dialog-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 .dialog-head h2 { margin-bottom: 0; }
 .panel-head.with-face { align-items: center; }

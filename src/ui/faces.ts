@@ -170,6 +170,9 @@ const uri = (key: string, svg: () => string) => {
 
 const colorOf = (party: number) => PARTIES[PARTY_IDS[party]].color;
 
+/** Whether the player has given this party's leader a look of their own choosing, which no painted portrait would match. */
+export const hasOwnLook = (party: number): boolean => PARTY_IDS[party] in override;
+
 /** A party leader's portrait as an image address, or null for the pooled independents. */
 export function leaderPortrait(party: number): string | null {
   const id = PARTY_IDS[party];
