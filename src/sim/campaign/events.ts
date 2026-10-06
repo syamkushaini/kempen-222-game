@@ -4,6 +4,7 @@ import { BLOC_IDS, N_BLOCS, PARTY_IDS, type BlocId, type PartyId } from '../type
 import { EVENTS as CORE_EVENTS } from './eventList';
 import { MORE_EVENTS } from './eventList2';
 import { GOVERNING_EVENTS } from './eventList3';
+import { STORY_EVENTS } from './eventList4';
 import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
@@ -13,7 +14,7 @@ import { pushNews } from './news';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
 /** Everything that can happen between elections. */
-export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS };
+export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS };
 
 /** Where the player sits: heading the government, a partner in it, or across the floor. */
 export type Seat = 'pm' | 'gov' | 'opp';

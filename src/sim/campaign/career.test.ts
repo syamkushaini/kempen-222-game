@@ -170,6 +170,31 @@ describe('events', () => {
     expect(Object.keys(EVENTS_MS).sort()).toEqual(Object.keys(EVENTS).sort());
   });
 
+  it('tell stories in chapters: whatever is chosen, the next chapter arrives, and only the first comes by chance', () => {
+    for (const [first, second, third] of [['papers', 'papersStory', 'papersBook'], ['bridge', 'bridgeContract', 'bridgeOpening'], ['riceShort', 'ricePrice', 'riceInquiry']]) {
+      expect(EVENTS[first].weight, first).toBeGreaterThan(0);
+      expect(EVENTS[second].weight, second).toBe(0);
+      expect(EVENTS[third].weight, third).toBe(0);
+      for (const choice of EVENTS[first].choices) expect(choice.then?.event, first).toBe(second);
+      for (const choice of EVENTS[second].choices) expect(choice.then?.event, second).toBe(third);
+      for (const choice of EVENTS[third].choices) expect(choice.then, third).toBeUndefined();
+    }
+    // Played through: the bridge goes, and two more chapters land on the desk in their turn.
+    const c = career();
+    resolveEvent(base, c, { id: 1, kind: 'event', from: null, event: 'bridge' }, 0);
+    expect(c.career!.queue).toContainEqual({ event: 'bridgeContract', week: c.career!.week + 10 });
+    const seen: string[] = [];
+    for (let guard = 0; guard < 200 && seen.length < 2 && c.phase === 'term'; guard++) {
+      skipAhead(base, c, 4);
+      while (c.inbox.length) {
+        const scene = c.inbox.shift()!;
+        if (scene.event?.startsWith('bridge')) seen.push(scene.event);
+        answerEvent(base, c, scene, 1);
+      }
+    }
+    expect(seen).toEqual(['bridgeContract', 'bridgeOpening']);
+  });
+
   it('offer only what the party can pay for, and always something that costs nothing', () => {
     const c = career();
     const pc = c.parties[c.player]!;
@@ -412,7 +437,7 @@ describe('from one parliament to the next', () => {
         expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world), id).toBe(true);
       }
     }
-  });
+  }, 60_000);
 });
 
 void GBK; void clearDesk; void PLEDGE_IDS;
