@@ -15,6 +15,7 @@ import { FOCUS_IDS, type Level, type Orders } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
 import { leaderName, partyColor, partyName, partyShort, regionLabel, relationWord, useFormat, useT, useWorld } from './hooks';
+import { Brief } from './Brief';
 
 const LEVELS: Level[] = [0, 1, 2, 3];
 
@@ -80,7 +81,7 @@ export function OrdersTab() {
         <h2><Term id="orders">{t('orders.title')}</Term></h2>
         <span className="muted">{t('orders.term', { n: k.term })}</span>
       </div>
-      <p className="muted small">{t('orders.intro')}</p>
+      <Brief text={t('orders.intro')} />
 
       <h3>{t('orders.government')}</h3>
       <p>

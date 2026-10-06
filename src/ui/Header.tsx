@@ -179,6 +179,14 @@ function TermHud() {
         <div className="progress term-progress" role="img" aria-label={t('term.progress', { n: k.week, total: k.length })}>
           <span style={{ width: `${(k.week / k.length) * 100}%` }} />
         </div>
+        {(k.record.terms?.length ?? 0) > 0 && (
+          <ol className="career-line" aria-label={t('career.line')}>
+            {k.record.terms!.map((r, i) => (
+              <li key={i} className={r.pm ? 'won' : 'lost'} title={t(r.pm ? 'career.term.won' : 'career.term.lost', { n: i + 1, seats: r.seats })}>{i + 1}</li>
+            ))}
+            <li className="now" title={t('career.term.now', { n: k.term })}>{k.term}</li>
+          </ol>
+        )}
       </div>
       <div className="hud-item">
         <span className="hud-label">{t('hud.funds')}</span>

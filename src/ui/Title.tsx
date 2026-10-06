@@ -55,6 +55,8 @@ function RadioCard({ checked, className, style, onSelect, children }: { checked:
   );
 }
 
+const STEPS = ['steps.contest', 'steps.who', 'steps.rules'] as const;
+
 export function Title() {
   const t = useT();
   const f = useFormat();
@@ -75,6 +77,8 @@ export function Title() {
   const [stances, setStances] = useState<number[] | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [fog, setFog] = useState(false);
+  // The set-up goes a step at a time: the contest, then who leads and how, then the rules.
+  const [step, setStep] = useState(0);
   const [noisy, setNoisy] = useState(false);
   // A first visit gets the quick start; anyone who has chosen to customise lands there again.
   const setupWanted = useStore((s) => s.setupWanted);
@@ -84,6 +88,7 @@ export function Title() {
   useEffect(() => { if (setupWanted) clearSetupWanted(); }, [setupWanted, clearSetupWanted]);
   const pick = (value: boolean) => {
     setCustom(value);
+    setStep(0);
     if (!value) setKind('byelection');
     try { localStorage.setItem(MODE_KEY, value ? 'custom' : 'quick'); } catch { /* the choice is only for this visit */ }
   };
@@ -132,6 +137,14 @@ export function Title() {
         {custom ? (
           <>
             <p><button className="link" onClick={() => pick(false)}>← {t('quick.back')}</button></p>
+          <ol className="steps" aria-label={t('steps.label')}>
+            {STEPS.map((key, i) => (
+              <li key={key} className={i === step ? 'now' : i < step ? 'done' : ''} aria-current={i === step ? 'step' : undefined}>
+                <button type="button" className="link" disabled={i === step} onClick={() => setStep(i)}>{i + 1}. {t(key)}</button>
+              </li>
+            ))}
+          </ol>
+          {step === 0 && <>
           <h3>{t('title.contest')}</h3>
           <div className="party-cards four" role="radiogroup" aria-label={t('title.contest')}>
             {KINDS.map((k) => (
@@ -156,6 +169,9 @@ export function Title() {
             <SeatPicker value={seat} onChange={setSeat} onRandom={() => setSeat(drawSeat(player, seat))} />
           )}
 
+          </>}
+
+          {step === 1 && <>
           {!founding && <>
           <h3>{t('title.party')}</h3>
           <div className="party-cards" role="radiogroup" aria-label={t('title.party')}>
@@ -204,7 +220,9 @@ export function Title() {
           )}
           {own && <PartyCreator draft={shown} career={kind === 'career' && !founding} onChange={(patch) => setDraft((d) => ({ ...(d ?? base), ...patch }))} />}
           {founding && <PlatformEditor stances={stances ?? newPlatform} base={newPlatform} onChange={setStances} />}
+          </>}
 
+          {step === 2 && <>
           <h3>{t('title.difficulty')}</h3>
           <div className="segmented" role="group" aria-label={t('title.difficulty')}>
             {DIFFICULTIES.map((d) => (
@@ -231,7 +249,15 @@ export function Title() {
             <span>{t('saves.name')}</span>
             <input type="text" value={name} maxLength={60} placeholder={t('saves.defaultName')} onChange={(e) => setName(e.target.value)} />
           </label>
-          <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy }, founded: founding, stances: founding ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
+          </>}
+
+          <div className="button-row">
+            {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>‹ {t('steps.back')}</button>}
+            {step < STEPS.length - 1
+              ? <button className="btn primary" onClick={() => setStep(step + 1)}>{t('steps.next')} ▸</button>
+              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy }, founded: founding, stances: founding ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
+            }
+          </div>
           </>
         ) : (
           <div className="quick">

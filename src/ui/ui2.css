@@ -89,3 +89,33 @@ body:has(.adviser-strip) .app { padding-bottom: 116px; }
 
 .adviser-strip.danger { border-top-color: var(--bad); }
 .poll-advice .link { margin-left: 4px; }
+
+/* election night: what the desk says of the seat just declared, and the tally kept in view on a phone */
+.commentary { margin: 8px 0; padding: 8px 10px; border-left: 3px solid var(--primary); background: var(--panel-2); border-radius: 0 8px 8px 0; animation: fade-up 240ms ease-out; }
+@media (max-width: 980px) {
+  .sidebar > .tally { position: sticky; top: 0; z-index: 5; }
+}
+
+/* the career as a row of parliaments, each marked by how it ended */
+.career-line { list-style: none; display: flex; gap: 4px; margin: 4px 0 0; padding: 0; }
+.career-line li { min-width: 18px; padding: 0 5px; font-size: 11px; line-height: 18px; text-align: center; border-radius: 9px; border: 1px solid var(--line-2); color: var(--muted); }
+.career-line li.won { background: var(--good); color: var(--bg); border-color: transparent; }
+.career-line li.lost { background: transparent; border-style: dashed; }
+.career-line li.now { border-color: var(--primary); color: var(--ink); }
+
+.relation-map { margin: 10px 0; }
+.relation-map summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.relation-map svg { display: block; width: 100%; max-width: 300px; margin: 8px auto; }
+
+/* a stance is moved on a slider; the cells beneath show where the party is and where the rivals stand */
+.issue-scale { grid-template-rows: auto auto; }
+.issue-scale .pole { grid-row: 1 / span 2; align-self: center; }
+.issue-slider { grid-column: 2 / span 5; grid-row: 1; width: 100%; margin: 0; accent-color: var(--primary); height: 26px; background: transparent; }
+.issue-scale .pos { cursor: default; grid-row: 2; }
+
+/* the set-up, a step at a time */
+.steps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 0 12px; padding: 0; font-size: 13px; }
+.steps li { color: var(--muted); }
+.steps li.now { color: var(--ink); font-weight: 600; }
+.steps li.done { color: var(--ink); }
+.steps .link:disabled { color: inherit; text-decoration: none; cursor: default; }

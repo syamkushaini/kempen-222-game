@@ -8,6 +8,7 @@ import { useStore } from '../state/store';
 import { Gauge } from './Gauge';
 import { ConfirmButton } from './SavesTab';
 import { partyColor, partyShort, useT } from './hooks';
+import { Brief } from './Brief';
 
 const POSITIONS = [-2, -1, 0, 1, 2];
 
@@ -34,7 +35,7 @@ export function PolicyTab() {
         <h2>{t('policy.title')}</h2>
         <Gauge value={k.credibility} label={t('policy.credibility')} />
       </div>
-      <p className="muted small">{t('policy.intro')}</p>
+      <Brief text={t('policy.intro')} />
 
       {ISSUE_GROUPS.map(({ group, issues }) => (
         <div key={group}>
@@ -54,18 +55,17 @@ export function PolicyTab() {
                   </div>
                   <div className="issue-scale" role="group" aria-label={t(`issue.${id}`)}>
                     <span className="pole">{t(`issue.${id}.lo`)}</span>
+                    <input
+                      type="range" className="issue-slider" min={-2} max={2} step={1} value={moving ?? here}
+                      aria-label={t(`issue.${id}`)} aria-valuetext={t('policy.position', { n: (moving ?? here) + 3 })}
+                      onChange={(e) => { const pos = Number(e.target.value); setDraft(pos === here ? null : { issue: i, to: pos }); }}
+                    />
                     {POSITIONS.map((pos) => (
-                      <button
-                        key={pos}
-                        className={`pos${pos === here ? ' here' : ''}${pos === moving ? ' moving' : ''}`}
-                        aria-pressed={pos === here}
-                        aria-label={t('policy.position', { n: pos + 3 })}
-                        onClick={() => setDraft(pos === here ? null : { issue: i, to: pos })}
-                      >
+                      <span key={pos} className={`pos${pos === here ? ' here' : ''}${pos === moving ? ' moving' : ''}`}>
                         {rivals.filter((p) => k.stances[p][i] === pos).map((p) => (
                           <i key={p} className="dot" title={partyShort(t, p)} style={{ background: partyColor(p) }} />
                         ))}
-                      </button>
+                      </span>
                     ))}
                     <span className="pole right">{t(`issue.${id}.hi`)}</span>
                   </div>
@@ -95,7 +95,7 @@ export function PolicyTab() {
       </p>
 
       <h3>{t('manifesto.title')}</h3>
-      <p className="muted small action-desc">{t(k.launched ? 'manifesto.launched' : 'manifesto.intro')}</p>
+      <Brief className="muted small action-desc" text={t(k.launched ? 'manifesto.launched' : 'manifesto.intro')} />
       <dl className="facts orders-facts">
         <div><dt>{t('manifesto.count')}</dt><dd className="num">{mine.length} / {MAX_PLEDGES}</dd></div>
         <div><dt>{t('manifesto.cost')}</dt><dd className={`num ${cost > FISCAL_ROOM ? 'neg' : ''}`}>{cost} / {FISCAL_ROOM}</dd></div>

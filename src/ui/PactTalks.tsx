@@ -5,6 +5,7 @@ import { transferRate } from '../sim/transfer';
 import type { RegionId } from '../sim/types';
 import { useStore } from '../state/store';
 import { lastOutcome, leaderName, partyName, partyShort, regionLabel, seatName, useFormat, useT, useWorld } from './hooks';
+import { Brief } from './Brief';
 
 /** Who stands in a seat both parties contest: the player ("mine"), the other party ("theirs"), or both. */
 type Stand = 'mine' | 'both' | 'theirs';
@@ -73,7 +74,7 @@ export function PactTalks({ party, onClose }: { party: number; onClose(): void }
         <h2>{t('pact.title', { party: partyName(t, party) })}</h2>
         <span className="muted">{t('pact.clash', { n: clash.length })}</span>
       </div>
-      <p className="muted small">{t('pact.intro')}</p>
+      <Brief text={t('pact.intro')} />
       <p className="muted small">
         {t('pact.transfer', {
           theirs: f.pct(transferRate(party, me).to, 0), mine: f.pct(transferRate(me, party).to, 0), party: partyShort(t, party),

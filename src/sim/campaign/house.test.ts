@@ -258,6 +258,7 @@ describe('the record and the ending', () => {
     for (let day = 0; day < 10 && c.phase === 'formation'; day++) endDay(base, c);
     expect(nextTerm(base, c)).toBe(true);
     expect(c.career!.record.elections).toBe(1);
+    expect(c.career!.record.terms).toHaveLength(1);
     expect(c.career!.ending?.kind).toBe('wipedOut');
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), worldOf(c)!)).toBe(true);
   });

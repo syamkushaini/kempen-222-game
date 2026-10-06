@@ -16,6 +16,8 @@ import { leaderName, partyShort, relationWord, useFog, useFormat, useT, useWorld
 import { Portrait } from './Portrait';
 import { NewsLine } from './NewsTab';
 import { PactTalks } from './PactTalks';
+import { Brief } from './Brief';
+import { RelationMap } from './RelationMap';
 
 type Check = { ok: true } | { ok: false; reason: DiploRefusal };
 
@@ -73,10 +75,12 @@ export function DiplomacyTab() {
         <h2>{t('deals.title')}</h2>
         <Gauge value={pc.unity} label={t('deals.unity')} />
       </div>
-      <p className="muted small">{t('deals.intro')}</p>
+      <Brief text={t('deals.intro')} />
       <p className="note">
         {beforeNomination(campaign) ? t('deals.nomination', { n: nominationWeek(campaign) }) : t('deals.nominated')}
       </p>
+
+      <RelationMap />
 
       <ul className="leader-list">
         {leaders.map((p) => {

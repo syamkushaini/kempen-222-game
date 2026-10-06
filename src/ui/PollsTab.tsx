@@ -3,6 +3,7 @@ import type { Poll, PollQuality, PollScope } from '../sim/campaign/types';
 import type { Region, RegionId } from '../sim/types';
 import { useStore } from '../state/store';
 import { partyColor, partyShort, regionLabel, seatName, useFormat, useIntel, useSpot, useT, useWorld, lastOutcome } from './hooks';
+import { Brief } from './Brief';
 
 const REGIONS: Region[] = ['peninsular', 'sabah', 'sarawak'];
 
@@ -56,7 +57,7 @@ export function PollsTab() {
 
   return (
     <section className="polls">
-      <p className="muted small">{t('polls.intro')}</p>
+      <Brief text={t('polls.intro')} />
       {worth && (
         <p className="note poll-advice">
           {t('polls.advice', { seat: world.seats[worth.i].name, margin: f.pct(worth.margin) })}{' '}

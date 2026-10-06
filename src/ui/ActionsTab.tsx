@@ -10,7 +10,7 @@ import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, 
 import { NewsLine } from './NewsTab';
 import { RecapCard } from './RecapCard';
 import { Loan } from './Loan';
-import { Jargon } from './Term';
+import { Brief } from './Brief';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
   { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival'] },
@@ -217,7 +217,7 @@ export function ActionsTab() {
             <ul className="action-list">
               {actions.map((id) => (
                 <li key={id} className="action-group">
-                  <p className="muted small action-desc"><Jargon>{t(`action.${id}.desc${fog && id === 'attack' ? '.fog' : ''}` as StringKey)}</Jargon></p>
+                  <Brief className="muted small action-desc" jargon text={t(`action.${id}.desc${fog && id === 'attack' ? '.fog' : ''}` as StringKey)} />
                   <ul>{render(id)}</ul>
                 </li>
               ))}

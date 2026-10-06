@@ -76,6 +76,20 @@ function SeatBySeat() {
   }, [world, order, result, count, MAJORITY]);
 
   const last = lastOutcome(world);
+  // The count stops by itself at the one moment that settles the night; Play carries on. A skip to the end does not stop.
+  useEffect(() => { if (majorityAt && count === majorityAt.at && count < TOTAL) setPlaying(false); }, [count]); // eslint-disable-line react-hooks/exhaustive-deps
+  // What a commentator would say of the seat just declared, if it is worth saying.
+  const say = (() => {
+    if (count === 0 || finished) return null;
+    const i = order[count - 1], o = result.seats[i], was = last.seats[i].winner;
+    const vars = { seat: world.seats[i].name, party: partyName(t, o.winner), was: partyName(t, was), pct: f.pct(o.margin) };
+    const kind = flipKind(o.winner, was, campaign.player);
+    if (majorityAt?.at === count) return t('night.say.majority', vars);
+    if (kind === 'gain') return t('night.say.gain', vars);
+    if (kind === 'loss') return t('night.say.loss', vars);
+    if (kind === 'flip') return t('night.say.flip', vars);
+    return o.margin < 0.01 ? t('night.say.close', vars) : null;
+  })();
   // Each declaration has its sound: the player's gains and losses stand out, and a majority gets a fanfare.
   const heard = useRef(count);
   useEffect(() => {
@@ -187,6 +201,7 @@ function SeatBySeat() {
             </section>
           )}
 
+          {say && <p className="commentary" aria-live="polite"><span className="muted small">{t('night.say.who')}</span> {say}</p>}
           {!finished && (
             <ul className="ticker" aria-live="off">
               {ticker.length === 0 && <li className="muted">{t('night.waiting')}</li>}

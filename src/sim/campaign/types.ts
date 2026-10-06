@@ -334,6 +334,8 @@ export interface CareerRecord {
   falls: number;
   /** Governments the player brought down. */
   toppled: number;
+  /** How each election went, in order: the seats won and whether the player came out heading the government. Absent in a game saved before it existed. */
+  terms?: { seats: number; pm: boolean }[];
 }
 
 export const LEGACY_IDS = ['statesman', 'reformer', 'survivor', 'promiser', 'plotter', 'premier', 'kingmaker', 'conscience', 'nearly', 'footnote'] as const;

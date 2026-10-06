@@ -495,6 +495,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   r.elections++;
   r.bestSeats = Math.max(r.bestSeats, seats);
   if (outcome.pm === c.player) r.victories++;
+  r.terms = [...(r.terms ?? []), { seats, pm: outcome.pm === c.player }];
   if (!inGovernment(c, c.player)) c.career.orders.state = 0;
   // The campaign's bills arrive after the votes are counted: half of what was left goes on them.
   const pc = c.parties[c.player]!;
