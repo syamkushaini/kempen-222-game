@@ -4,7 +4,7 @@ import { BLOC_IDS, N_BLOCS, PARTY_IDS, type BlocId, type PartyId } from '../type
 import { EVENTS as CORE_EVENTS } from './eventList';
 import { MORE_EVENTS } from './eventList2';
 import { GOVERNING_EVENTS } from './eventList3';
-import { statesHeld } from './contests';
+import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
@@ -207,6 +207,23 @@ export function gambleChance(c: Campaign, chance: number | 'unity' | 'cred' | 's
   if (chance === 'cred') return clamp(c.career!.credibility / 100, 0.1, 0.9);
   if (chance === 'stability') return clamp(c.career!.government.stability / 100, 0.1, 0.9);
   return chance;
+}
+
+/**
+ * What a choice costs on the spot. A by-election and a round of state polls are priced by the effort chosen.
+ * What a gamble may lose is not counted: a loss takes what is there.
+ */
+export function choiceCost(world: World, event: string, choice: number): number {
+  // `scaled` rounds up to its smallest step, so an effort priced at nothing is kept at nothing here.
+  const effort = event === 'byElection' ? BY_EFFORT[choice] : event === 'statePolls' ? STATE_EFFORT[choice] : undefined;
+  if (effort) return effort.money > 0 ? scaled(world, effort.money) : 0;
+  const net = (EVENTS[event]?.choices[choice]?.effects ?? []).reduce((a, e) => a + (e.t === 'funds' ? Math.sign(e.n) * scaled(world, Math.abs(e.n)) : 0), 0);
+  return Math.max(0, -net);
+}
+
+/** A choice the party cannot pay for is not on offer: without this, an empty chest bought everything for nothing. */
+export function canChoose(world: World, c: Campaign, event: string, choice: number): boolean {
+  return choiceCost(world, event, choice) <= (c.parties[c.player]?.funds ?? 0);
 }
 
 /**

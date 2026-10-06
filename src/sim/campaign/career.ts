@@ -18,7 +18,7 @@ import { recordResults } from './results';
 import { FORMATION_WEEK, pushNews, ref } from './news';
 import { FOUNDING_FUNDS, growFoundedParty } from './founding';
 import { edge, incomeBoost, mediaBoost, skill } from './perks';
-import { staffWeek, wages } from './staff';
+import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances } from './policy';
 import {
@@ -272,6 +272,8 @@ export function termWeek(world: World, c: Campaign): void {
   pc.funds += income.total;
   const afford = plan.total > 0 ? Math.min(1, pc.funds / plan.total) : 1;
   pc.funds -= Math.round(plan.total * afford);
+  // The retainer is cut back with everything else, and a team on part pay does not work.
+  payday(c, afford >= 1 || plan.wages === 0);
 
   // Branches wither a little every week, and grow where money and the leader's time go.
   const targets = machineryTargets(world, c);

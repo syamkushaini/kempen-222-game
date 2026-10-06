@@ -87,6 +87,7 @@ export const PEOPLE_EN = {
   'team.vetted.clean': 'Nothing found',
   'team.vetted.dirty': 'Something in their past',
   'team.wages': 'The team costs {rm} a week.',
+  'team.unpaid': 'There was not enough to pay the team, so nobody is working. They come back the week their wages are met.',
 
   // candidates
   'team.candidates': 'Candidates for the closest seats',
@@ -201,6 +202,8 @@ export const PEOPLE_EN = {
 
   // news
   'news.staff.hired': '{name} joins you as {role}.',
+  'news.staff.unpaid': 'You could not pay your team this week. They have stopped work until you can.',
+  'news.staff.paid': 'Your team has been paid and is back at work.',
   'news.staff.scandal': 'Your {role}, {name}, resigns after their past makes the front pages. The party wants to know who hired them.',
   'news.candidate.named': '{name} ({kind}) is your candidate in {seat}.',
   'news.candidate.scandal': 'Your candidate in {seat}, {name}, is in the news for the wrong reasons. It is too late to change the ballot.',
@@ -328,6 +331,7 @@ export const PEOPLE_MS: Record<PeopleKey, string> = {
   'team.vetted.clean': 'Tiada apa ditemui',
   'team.vetted.dirty': 'Ada sesuatu dalam sejarahnya',
   'team.wages': 'Pasukan ini menelan {rm} seminggu.',
+  'team.unpaid': 'Wang tidak cukup untuk membayar pasukan, jadi tiada sesiapa yang bekerja. Mereka kembali pada minggu gaji mereka dibayar.',
 
   'team.candidates': 'Calon bagi kerusi paling sengit',
   'team.candidates.desc': 'Di kerusi yang mungkin ditentukan oleh segelintir undi, anda memilih siapa bertanding. Borang mesti difailkan sebelum tamat minggu {n}, dan tidak boleh ditarik balik. Di tempat lain, dan di mana anda tidak memilih, parti memilih seperti biasa.',
@@ -437,6 +441,8 @@ export const PEOPLE_MS: Record<PeopleKey, string> = {
   'spend.fined': 'Suruhanjaya Pilihan Raya telah mendenda anda kerana berbelanja lebih.',
 
   'news.staff.hired': '{name} menyertai anda sebagai {role}.',
+  'news.staff.unpaid': 'Anda tidak mampu membayar gaji pasukan minggu ini. Mereka berhenti bekerja sehingga anda mampu.',
+  'news.staff.paid': 'Pasukan anda telah dibayar dan kembali bekerja.',
   'news.staff.scandal': '{role} anda, {name}, meletak jawatan selepas sejarahnya menghiasi muka depan. Parti mahu tahu siapa yang melantiknya.',
   'news.candidate.named': '{name} ({kind}) ialah calon anda di {seat}.',
   'news.candidate.scandal': 'Calon anda di {seat}, {name}, menjadi berita atas sebab yang salah. Sudah terlambat untuk menukar kertas undi.',

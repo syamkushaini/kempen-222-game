@@ -4,7 +4,7 @@ import { PARTY_IDS } from '../types';
 import { BLOC_IDS } from '../types';
 import { doAction, effectiveDynamics, spendingLimit, truth } from './actions';
 import { candidateDeadline, candidatesWeek, canChoose, choose, HOPEFULS, liftIn, vetHopeful } from './candidates';
-import { answerEvent, resumeTerm, skipAhead, startCareer, termSpending, termWeek } from './career';
+import { answerEvent, resumeTerm, skipAhead, startCareer, termIncome, termSpending, termWeek } from './career';
 import { EVENTS } from './events';
 import { endDay } from './formation';
 import { relation } from './diplomacy';
@@ -130,6 +130,42 @@ describe('staff', () => {
     expect(c.parties[PS]!.days).toBe(8);
     expect(c.parties[PS]!.funds).toBe(funds - 80_000 + Math.round(weeklyIncome(general, PS) * 1.2));
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), general)).toBe(true);
+  });
+
+  it('stop work in a week their wages cannot be met, and come back when they are', () => {
+    const c = game();
+    for (const id of ROLE_IDS) hire(c, id, c.team.pool[role(id)].findIndex((s) => s.skill === 5));
+    for (const s of c.team.staff) s!.skeleton = false;
+    const pc = c.parties[PS]!;
+    pc.funds = 79_999; // one ringgit short of the week's wages
+    staffWeek(general, c, new Rng(1));
+    expect(pc.funds).toBe(79_999); // paid in full or not at all
+    expect(c.team.unpaid).toBe(true);
+    expect(managerDays(c, PS)).toBe(0);
+    expect(playerPollCost(general, c, 'national', null, 'full')).toBe(150_000);
+    expect(c.news.at(-1)).toMatchObject({ key: 'news.staff.unpaid', tone: 'bad' });
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), general)).toBe(true);
+    const told = c.news.length;
+    staffWeek(general, c, new Rng(2));
+    expect(c.news).toHaveLength(told); // said once, not every week it lasts
+    pc.funds = 80_000;
+    staffWeek(general, c, new Rng(3));
+    expect(pc.funds).toBe(0);
+    expect(c.team.unpaid).toBeUndefined();
+    expect(managerDays(c, PS)).toBe(1);
+    expect(c.news.at(-1)).toMatchObject({ key: 'news.staff.paid' });
+  });
+
+  it('go on part pay and stop work between elections when the orders cost more than there is', () => {
+    const c = startCareer(careerWorld, { player: PS, difficulty: 'normal', seed: 5 });
+    hire(c, 'manager', c.team.pool[role('manager')].findIndex((s) => s.skill === 5));
+    c.team.staff[role('manager')]!.skeleton = false;
+    termWeek(careerWorld, c);
+    expect(c.team.unpaid).toBeUndefined();
+    c.parties[PS]!.funds = -termIncome(careerWorld, c).total; // the week's income leaves the chest empty
+    termWeek(careerWorld, c);
+    expect(c.team.unpaid).toBe(true);
+    expect(c.news.some((n) => n.key === 'news.staff.unpaid')).toBe(true);
   });
 
   it('take the party down with them when a past nobody looked into comes out', () => {

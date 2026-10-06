@@ -37,9 +37,9 @@ export function stat(c: Campaign, p: number, id: StatId): number {
 /** What a stat does to the things it touches: 8% either way for each point from ordinary. */
 export const edge = (c: Campaign, p: number, id: StatId) => 1 + 0.08 * (stat(c, p, id) - 3);
 
-/** How good the player's person in a job is: 0 with nobody in it. Rival parties make do without. */
+/** How good the player's person in a job is: 0 with nobody in it, or in a week the team went unpaid. Rival parties make do without. */
 export function skill(c: Campaign, p: number, id: RoleId): number {
-  return p === c.player ? c.team.staff[ROLE_IDS.indexOf(id)]?.skill ?? 0 : 0;
+  return p === c.player && !c.team.unpaid ? c.team.staff[ROLE_IDS.indexOf(id)]?.skill ?? 0 : 0;
 }
 
 /** Extra days in the leader's week from a campaign manager who keeps the diary. */

@@ -74,4 +74,6 @@ export interface Team {
   media: number[][];
   /** Paid accounts pushing the player's line online: 0 never, 1 running, 2 exposed. */
   troopers: 0 | 1 | 2;
+  /** The team was not paid at the last payday and is not working. Absent when paid, so older saves need no change. */
+  unpaid?: boolean;
 }

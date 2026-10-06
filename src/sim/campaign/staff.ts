@@ -105,6 +105,16 @@ export function vet(world: World, c: Campaign, id: RoleId, index: number): boole
 }
 
 /**
+ * Payday. A team that is not paid in full does not work: every job counts for nothing until a payday is met again.
+ * The news says so when it happens and when it ends, not every week it lasts.
+ */
+export function payday(c: Campaign, paid: boolean): void {
+  if (!paid === !!c.team.unpaid) return;
+  if (paid) delete c.team.unpaid; else c.team.unpaid = true;
+  pushNews(c, { party: c.player, key: paid ? 'news.staff.paid' : 'news.staff.unpaid', tone: paid ? 'neutral' : 'bad' });
+}
+
+/**
  * The team's week: wages go out (unless the caller has already paid them),
  * and a past that was never looked into, or was looked into and ignored, may
  * come out.
@@ -113,10 +123,15 @@ export function staffWeek(world: World, c: Campaign, rng: Rng, pay = true): void
   const pc = c.parties[c.player];
   if (!pc) return;
   if (pay) {
-    const paid = Math.min(pc.funds, wages(world, c));
-    pc.funds -= paid;
-    // A campaign team's pay is campaign spending like any other.
-    if (c.phase === 'campaign') pc.spent += paid;
+    // Wages go out in full or not at all. Paying what there was left the team working for nothing.
+    const due = wages(world, c);
+    const paid = due <= pc.funds;
+    if (paid) {
+      pc.funds -= due;
+      // A campaign team's pay is campaign spending like any other.
+      if (c.phase === 'campaign') pc.spent += due;
+    }
+    payday(c, paid);
   }
   const chance = c.phase === 'term' ? EXPOSURE.term : EXPOSURE.campaign;
   c.team.staff.forEach((s, r) => {

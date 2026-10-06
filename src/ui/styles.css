@@ -514,7 +514,8 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 .choices { margin-top: 12px; }
 .choices li + li { margin-top: 6px; }
 .choice { display: block; width: 100%; padding: 12px 16px; text-align: left; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
-.choice:hover { border-color: var(--line-3); background: var(--panel-3); }
+.choice:hover:not(:disabled) { border-color: var(--line-3); background: var(--panel-3); }
+.choice:disabled { opacity: 0.45; cursor: not-allowed; }
 /* A row's switch drops below its text when there is not room for both. */
 .orders .action { flex-wrap: wrap; }
 .orders .action > .grow { flex-basis: 170px; }

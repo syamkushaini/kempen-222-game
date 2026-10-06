@@ -9,6 +9,7 @@ import {
   deliver, leaveGovernment, pullLever, reshuffle, setBudget, tableBill, tableMotion,
 } from '../sim/campaign/govern';
 import { choose, vetHopeful } from '../sim/campaign/candidates';
+import { canChoose } from '../sim/campaign/events';
 import { courtEndorser } from '../sim/campaign/endorsers';
 import type { IdeologyId } from '../sim/campaign/leader';
 import { retire } from '../sim/campaign/legacy';
@@ -304,6 +305,7 @@ export const useStore = create<Store>((set, get) => {
     answerScene: (id, choice) => mutate((c, _g, world) => {
       const scene = c.inbox.find((x) => x.id === id);
       if (!scene) return;
+      if (scene.kind === 'event' && scene.event && !canChoose(world, c, scene.event, choice)) return;
       c.inbox = c.inbox.filter((x) => x.id !== id);
       if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote') {
         answerEvent(world, c, scene, choice);

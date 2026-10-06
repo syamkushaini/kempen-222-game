@@ -11,7 +11,7 @@ import {
   setOrders, skipAhead, startCareer, syncOpinion, termIncome, termSpending, termWeek, TERM_WEEKS,
 } from './career';
 import { draftPact, signPact } from './diplomacy';
-import { EVENTS, resolveEvent, rollEvent, seatOf } from './events';
+import { canChoose, choiceCost, EVENTS, resolveEvent, rollEvent, seatOf } from './events';
 import { endDay } from './formation';
 import { FISCAL_ROOM, launchManifesto, manifestoCost, MAX_PLEDGES, policyEffect, setStance, stanceCost, togglePledge } from './policy';
 import { closeNight, electionResult, endWeek } from './turn';
@@ -168,6 +168,24 @@ describe('events', () => {
     }
     expect(Object.keys(EVENTS_EN).sort()).toEqual(Object.keys(EVENTS).sort());
     expect(Object.keys(EVENTS_MS).sort()).toEqual(Object.keys(EVENTS).sort());
+  });
+
+  it('offer only what the party can pay for, and always something that costs nothing', () => {
+    const c = career();
+    const pc = c.parties[c.player]!;
+    for (const [id, def] of Object.entries(EVENTS)) {
+      expect(def.choices.some((_, i) => choiceCost(base, id, i) === 0), id).toBe(true);
+    }
+    // Flood relief is paid for; the walkabout and staying away are not.
+    expect(choiceCost(base, 'flood', 0)).toBe(40_000);
+    pc.funds = 39_999;
+    expect([0, 1, 2].map((i) => canChoose(base, c, 'flood', i))).toEqual([false, true, true]);
+    pc.funds = 40_000;
+    expect(canChoose(base, c, 'flood', 0)).toBe(true);
+    // A by-election and the state polls are priced by the effort chosen.
+    pc.funds = 0;
+    expect([0, 1, 2].map((i) => canChoose(base, c, 'byElection', i))).toEqual([false, false, true]);
+    expect([0, 1, 2].map((i) => canChoose(base, c, 'statePolls', i))).toEqual([false, false, true]);
   });
 
   it('reach only the leaders they are meant for', () => {

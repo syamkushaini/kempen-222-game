@@ -102,6 +102,7 @@ export function TeamTab() {
         );
       })}
       {wages(world, campaign) > 0 && <p className="note">{t('team.wages', { rm: f.rm(wages(world, campaign)) })}</p>}
+      {campaign.team.unpaid && <p className="note bad">{t('team.unpaid')}</p>}
 
       {inCampaign && (
         <>

@@ -516,6 +516,11 @@ First players said the actions screen was cluttered and that it was not clear wh
   - **Checked by simulation,** six campaigns for each party on offer, played by the rival logic and again left idle (averages): Sarawak stays GBK's (66 seats when it sits idle, 73 when it campaigns, 78 against an idle PS); Sabah is a four-way fight in which nobody averages the 37 needed alone (GBS 19 to 28, LEGASI 14 to 24, BP 11 to 21, PS 9 to 12).
   - **Not done.** The home parties have no tutorial of their own, the "close race" mark in the seat picker still looks only at the three national parties, and the six states' and four states' seat data all load with the page (the main script is now about 1.13 MB, 343 kB compressed).
   - `turn.ts` had grown past 500 lines; who takes the field and what they start with now lives in `field.ts`.
+- **An empty chest buys nothing (6 Oct 2026).** Found in play: with no money left, a choice in an event that cost money could still be taken, and gave everything it promised.
+  - **Event choices.** A choice that costs more than the party has is shown, greyed, with "Not enough money", and cannot be taken (`canChoose` in `events.ts`). Every event keeps at least one choice that costs nothing. What a gamble may lose is not counted: a loss takes what is there.
+  - **By-elections and state polls in a career** follow the same rule: an effort is chosen only if it can be paid for in full. Before, the party paid what it had and got that share of the effect.
+  - **Wages.** A team that cannot be paid in full is not paid and does not work: every job counts for nothing (no extra days, no cheaper or sharper polls, no lift to media, fundraising or income) until a payday is met. Before, the party paid what it had and the team worked on. Between elections the retainer is cut back with the rest of the orders, and a team on part pay does not work either. The news says so once when it starts and once when it ends, and the Team tab says so while it lasts. Nobody quits over it. Saved as `Team.unpaid` (optional, so no save version change).
+  - **Unchanged:** actions that cost only days can still be taken with no money, as intended.
 
 ## Visual design: the Linear system (5 Oct 2026)
 
@@ -530,5 +535,5 @@ Where the system was silent or the game needed more, these are the choices made:
 - **Repeated row buttons are secondary** (surface and hairline); lavender is reserved for each screen's one call to action.
 - **The party-coloured bunting was removed** from the title and legacy screens: it was decoration in several accents, which the system forbids.
 - **Fonts are the documented fallback stack** (SF Pro, then the system sans), because the app is offline and cannot load Inter.
-- **Not restyled:** the shareable result card image, which has its own cream look, and the small animations, which are unchanged and still switched off for reduced motion.
 - **Unity and credibility are bars (6 Oct 2026),** in the header of a career, at the player's request: the bar's length is the figure out of 100 and its colour runs from the error red when low, through amber, to the success green when full. The number stays beside it. With the colour-blind palette the bar runs from orange to blue instead. This is the one place outside the party colours where colour carries a value.
+- **Not restyled:** the shareable result card image, which has its own cream look, and the small animations, which are unchanged and still switched off for reduced motion.

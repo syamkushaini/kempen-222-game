@@ -3,7 +3,7 @@ import { majorityLine } from '../sim/election';
 import { scaled } from '../sim/campaign/actions';
 import { BY_EFFORT, holderOf, ROUNDS, STATE_EFFORT } from '../sim/campaign/contests';
 import { COST, pactPreview } from '../sim/campaign/diplomacy';
-import { EVENTS, gambleChance, type Choice, type Effect } from '../sim/campaign/events';
+import { canChoose, EVENTS, gambleChance, type Choice, type Effect } from '../sim/campaign/events';
 import { billDef, confidenceCount, deficit, looseness, standstill, whipCount } from '../sim/campaign/govern';
 import { billName } from './GovernmentTab';
 import type { Scene } from '../sim/campaign/types';
@@ -133,7 +133,12 @@ function SceneCard({ scene }: { scene: Scene }) {
         `${t('hint.stability')} +8 · ▲ ${t('hint.fiscal')} · ${t('hint.motion', { n: confidenceCount(world, campaign, () => 0.08), need: majorityLine(world) })}`,
       ],
     };
-    options = EVENTS[id].choices.map((choice, i) => ({ label: t(`event.${id}.o${i}` as StringKey), choice: i, hint: special[id]?.[i] ?? hintFor(choice) }));
+    options = EVENTS[id].choices.map((choice, i) => {
+      const hint = special[id]?.[i] ?? hintFor(choice);
+      // What the party cannot pay for is shown, so the player sees what money would have bought, but cannot be chosen.
+      const broke = !canChoose(world, campaign, id, i);
+      return { label: t(`event.${id}.o${i}` as StringKey), choice: i, disabled: broke, hint: broke ? `${hint} · ${t('reason.funds')}` : hint };
+    });
   } else if ((scene.kind === 'vote' || scene.kind === 'houseVote') && scene.bill && billDef(scene.bill)) {
     const id = scene.bill;
     const mine = scene.kind === 'vote';
@@ -189,7 +194,7 @@ function SceneCard({ scene }: { scene: Scene }) {
           <ul className="choices">
             {options.map((o) => (
               <li key={o.choice}>
-                <button className="choice" onClick={() => answer(o.choice)}>
+                <button className="choice" disabled={o.disabled} onClick={() => answer(o.choice)}>
                   <span className="action-title">{o.label}</span>
                   <span className="action-meta">{o.hint}</span>
                 </button>
