@@ -16,5 +16,6 @@ export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
   // The map boundaries are one large chunk, loaded on demand.
   build: { chunkSizeWarningLimit: 900 },
-  test: { environment: 'node', include: ['src/**/*.test.ts'] },
+  // The game fetches a state's results when first wanted; the tests have them all from the start.
+  test: { environment: 'node', include: ['src/**/*.test.ts'], setupFiles: ['src/data/allStates.ts'] },
 });

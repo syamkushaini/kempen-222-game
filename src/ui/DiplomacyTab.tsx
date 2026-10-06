@@ -6,7 +6,11 @@ import {
   nominationWeek, others, relation, type DiploRefusal,
 } from '../sim/campaign/diplomacy';
 import { useStore } from '../state/store';
+import { LEADER_STATS } from '../sim/campaign/cast';
+import { STAT_IDS } from '../sim/campaign/types';
+import { PARTY_IDS } from '../sim/types';
 import { Gauge } from './Gauge';
+import { Pips } from './TeamTab';
 import { ConfirmButton } from './SavesTab';
 import { leaderName, partyShort, relationWord, useFog, useFormat, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
@@ -93,10 +97,21 @@ export function DiplomacyTab() {
                     {campaign.understandings.includes(p) && ` · ${t('deals.tag.understanding')}`}
                   </span>
                 </span>
+                {/* how well a rival's party holds together: a divided one is where a defector can be found */}
+                <Gauge value={campaign.parties[p]!.unity} label={t('term.unity')} />
                 <span className={`badge rel-${relationWord(rel)}`}>{t(`relation.${relationWord(rel)}`)} {rel > 0 ? '+' : ''}{rel}</span>
               </button>
               {open === p && (
                 <ul className="leader-moves">
+                  {/* who you are dealing with: what they are good at, and how they take what you do to them */}
+                  {PARTY_IDS[p] in LEADER_STATS && (
+                    <li className="leader-about small">
+                      <span className="muted">{t(`temper.${PARTY_IDS[p] as keyof typeof LEADER_STATS}`)}</span>
+                      <span className="stat-grid">
+                        {STAT_IDS.map((s, i) => { const n = LEADER_STATS[PARTY_IDS[p] as keyof typeof LEADER_STATS][i]; return <span key={s}><span className="muted">{t(`stat.${s}`)}</span> <Pips n={n} label={`${n} / 5`} /></span>; })}
+                      </span>
+                    </li>
+                  )}
                   <Move title={t('deals.meet')} meta={f.days(COST.meet)} check={canMeet(world, campaign, p)} onGo={() => meet(p)}>
                     <span className="action-meta">{t('deals.meet.desc')}</span>
                   </Move>

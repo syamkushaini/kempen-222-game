@@ -1,19 +1,7 @@
 import seatFile from './generated/seats.json';
-import dunJohor from './generated/dun-johor.json';
-import dunKedah from './generated/dun-kedah.json';
-import dunKelantan from './generated/dun-kelantan.json';
-import dunMelaka from './generated/dun-melaka.json';
-import dunNsembilan from './generated/dun-nsembilan.json';
-import dunPahang from './generated/dun-pahang.json';
-import dunPenang from './generated/dun-penang.json';
-import dunPerak from './generated/dun-perak.json';
-import dunPerlis from './generated/dun-perlis.json';
-import dunSabah from './generated/dun-sabah.json';
-import dunSarawak from './generated/dun-sarawak.json';
-import dunSelangor from './generated/dun-selangor.json';
-import dunTerengganu from './generated/dun-terengganu.json';
 import { seatsAfter } from '../sim/campaign/career';
 import { FOUNDED, FOUNDING_SEED_SHARE, FOUNDING_SLOT } from '../sim/campaign/founding';
+import { inContention } from '../sim/campaign/outlook';
 import { BYELECTION_RULES, CAREER_RULES, GENERAL_RULES, HUNG_RULES, STATE_RULES, type ContestKind } from '../sim/campaign/rules';
 import type { Campaign, SeatResults } from '../sim/campaign/types';
 import { createWorld, type SeatFile, type World } from '../sim/election';
@@ -32,21 +20,45 @@ export const world = createWorld(seatFile as SeatFile, GENERAL_RULES, 'general')
 export const STATE_SCENARIOS: StateId[] = [
   'perlis', 'kedah', 'penang', 'perak', 'kelantan', 'terengganu', 'pahang', 'selangor', 'nsembilan', 'melaka', 'johor', 'sabah', 'sarawak',
 ];
-const DUN_FILES: Partial<Record<StateId, SeatFile>> = {
-  perlis: dunPerlis as SeatFile,
-  kedah: dunKedah as SeatFile,
-  penang: dunPenang as SeatFile,
-  perak: dunPerak as SeatFile,
-  kelantan: dunKelantan as SeatFile,
-  terengganu: dunTerengganu as SeatFile,
-  pahang: dunPahang as SeatFile,
-  selangor: dunSelangor as SeatFile,
-  nsembilan: dunNsembilan as SeatFile,
-  melaka: dunMelaka as SeatFile,
-  johor: dunJohor as SeatFile,
-  sabah: dunSabah as SeatFile,
-  sarawak: dunSarawak as SeatFile,
+/** How many seats each state's assembly has: known without loading the state's results. */
+export const STATE_SEATS: Partial<Record<StateId, number>> = {
+  perlis: 15, kedah: 36, penang: 40, perak: 59, kelantan: 45, terengganu: 32, pahang: 42, selangor: 56, nsembilan: 36, melaka: 28, johor: 56, sabah: 73, sarawak: 82,
 };
+
+// A state's results are fetched when the state is first wanted, so that the page does not carry all thirteen from the
+// start. Everything else here stays synchronous: a state is loaded before anything asks for its world.
+const DUN_FILES: Partial<Record<StateId, SeatFile>> = {};
+
+/** Makes a state's results available. Called by the loader below, and directly by the tests, which have every file to hand. */
+export function registerState(st: StateId, file: SeatFile): void {
+  if (DUN_FILES[st]) return;
+  DUN_FILES[st] = file;
+  listVacancies();
+}
+
+export const stateLoaded = (st: StateId) => !!DUN_FILES[st];
+
+/** Fetches a state's results, once. Resolves at once for a state already here, and for anything that is not a state. */
+export async function loadState(st: StateId): Promise<void> {
+  if (DUN_FILES[st] || !STATE_SCENARIOS.includes(st)) return;
+  const file = (await import(`./generated/dun-${st}.json`)) as { default: SeatFile };
+  registerState(st, file.default);
+}
+
+/** Fetches every state's results: the list of seats for a by-election needs them all. */
+export const loadStates = (): Promise<unknown> => Promise.all(STATE_SCENARIOS.map(loadState));
+
+/** The state whose results a scenario is played on, if any: a state election, or a by-election in an assembly seat. */
+export function stateNeeded(scenario: string): StateId | null {
+  const st = scenario.startsWith('state:') ? scenario.slice(6) : scenario.startsWith('byelection:dun:') ? scenario.split(':')[2] : null;
+  return st && STATE_SCENARIOS.includes(st as StateId) ? (st as StateId) : null;
+}
+
+/** Fetches whatever a scenario needs before its world can be built. */
+export async function loadScenario(scenario: string): Promise<void> {
+  const st = stateNeeded(scenario);
+  if (st) await loadState(st);
+}
 
 /** The seat of the scenario id 'byelection' on its own: Hulu Selangor, a three-way marginal with a mixed electorate. Older saves are in it. */
 export const BYELECTION_SEAT = 'P.094';
@@ -63,6 +75,15 @@ export function isThreeWay(votes: readonly number[]): boolean {
 
 /** The seats a by-election can be drawn in. Hulu Selangor is one of them. */
 export const BYELECTION_SEATS: string[] = (seatFile as SeatFile).seats.filter((s) => isThreeWay(s.last.votes)).map((s) => s.id);
+
+/**
+ * The seats to draw from for a party: those where it led last time or was within reach of the lead. A draw from the
+ * whole list handed the player a seat they could not win about four times in ten.
+ */
+export function fairSeats(p: number): string[] {
+  const fair = (seatFile as SeatFile).seats.filter((s) => isThreeWay(s.last.votes) && inContention(s.last.votes, p)).map((s) => s.id);
+  return fair.length > 0 ? fair : BYELECTION_SEATS;
+}
 
 /** The scenario id of a by-election in a given seat (a parliamentary seat's code, or `dun:<state>:<code>` for an assembly seat). */
 export const byElectionId = (seat: string) => `byelection:${seat}`;
@@ -83,13 +104,21 @@ export interface Vacancy {
   close: boolean;
 }
 
-/** Every parliamentary seat, and every assembly seat of the thirteen states, in the order a list should show them. */
-export const VACANCIES: Vacancy[] = [
-  ...(seatFile as SeatFile).seats.map((s): Vacancy => ({ key: s.id, name: s.name, code: s.id, kind: 'parliament', state: s.state as StateId, within: null, close: isThreeWay(s.last.votes) })),
-  ...STATE_SCENARIOS.flatMap((st) => (DUN_FILES[st]!.seats).map((s): Vacancy => ({
-    key: `dun:${st}:${s.id}`, name: s.name, code: s.id, kind: 'dun', state: st, within: DUN_FILES[st]!.regions?.[s.state] ?? null, close: isThreeWay(s.basis?.votes ?? s.last.votes),
-  }))),
-];
+/**
+ * Every parliamentary seat, and every assembly seat of the states loaded so far, in the order a list should show them.
+ * The same array is refilled as states arrive, so whoever holds it sees them.
+ */
+export const VACANCIES: Vacancy[] = [];
+function listVacancies(): void {
+  VACANCIES.length = 0;
+  VACANCIES.push(
+    ...(seatFile as SeatFile).seats.map((s): Vacancy => ({ key: s.id, name: s.name, code: s.id, kind: 'parliament', state: s.state as StateId, within: null, close: isThreeWay(s.last.votes) })),
+    ...STATE_SCENARIOS.flatMap((st) => (DUN_FILES[st]?.seats ?? []).map((s): Vacancy => ({
+      key: `dun:${st}:${s.id}`, name: s.name, code: s.id, kind: 'dun', state: st, within: DUN_FILES[st]!.regions?.[s.state] ?? null, close: isThreeWay(s.basis?.votes ?? s.last.votes),
+    }))),
+  );
+}
+listVacancies();
 export const vacancyOf = (key: string) => VACANCIES.find((v) => v.key === key) ?? null;
 
 export interface ScenarioInfo {

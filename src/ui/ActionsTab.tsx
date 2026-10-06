@@ -9,6 +9,7 @@ import { useStore } from '../state/store';
 import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld } from './hooks';
 import { NewsLine } from './NewsTab';
 import { RecapCard } from './RecapCard';
+import { Loan } from './Loan';
 import { Jargon } from './Term';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
@@ -204,6 +205,7 @@ export function ActionsTab() {
                   <ul>{render(id)}</ul>
                 </li>
               ))}
+              {family === 'funds' && <li className="action-group"><Loan /></li>}
             </ul>
           </details>
         );

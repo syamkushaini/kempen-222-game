@@ -12,6 +12,7 @@ import {
 } from './turn';
 import { DAYS_PER_WEEK, type Campaign } from './types';
 import { isValidCampaign } from './validate';
+import { edge } from './perks';
 
 const world = createWorld(seatFile as SeatFile);
 const P = (id: (typeof PARTY_IDS)[number]) => PARTY_IDS.indexOf(id);
@@ -307,7 +308,8 @@ describe('chiefs', () => {
       doAction(world, c, c.player, 'ceramah', { seat: SEAT }, chief);
       return c.dyn.support.seat[SEAT][c.player];
     };
-    expect(boost(true)).toBeCloseTo(boost(false) * CHIEF.draw, 10);
+    // The leader draws on their own charisma; a chief is nobody in particular.
+    expect(boost(true)).toBeCloseTo((boost(false) / edge(start(), start().player, 'charisma')) * CHIEF.draw, 10);
     const c = start();
     expect(actionCost(world, c, c.player, 'ceramah', { seat: 'P.168' }, true)).toEqual({ days: 0, money: 30_000, travelDays: 0 });
     expect(canDo(world, c, c.player, 'tv', {}, true)).toEqual({ ok: false, reason: 'noCampaign' });

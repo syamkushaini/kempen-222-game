@@ -2,7 +2,7 @@ import type { StringKey } from '../i18n/strings';
 import type { Lang } from '../i18n/strings';
 
 /** The words that need explaining to someone new, and what each is called in each language. */
-export type TermId = 'ceramah' | 'machinery' | 'hung' | 'moe' | 'unity' | 'credibility';
+export type TermId = 'ceramah' | 'machinery' | 'hung' | 'moe' | 'unity' | 'credibility' | 'safe' | 'leaning' | 'marginal' | 'orders' | 'dossier' | 'stability' | 'trust';
 
 export const GLOSSARY: Record<TermId, { words: Record<Lang, string[]>; text: StringKey }> = {
   ceramah: { words: { en: ['ceramah'], ms: ['ceramah'] }, text: 'gloss.ceramah' },
@@ -12,6 +12,14 @@ export const GLOSSARY: Record<TermId, { words: Record<Lang, string[]>; text: Str
   // Too common as plain words to find inside running text; they are marked up by hand where they label something.
   unity: { words: { en: [], ms: [] }, text: 'gloss.unity' },
   credibility: { words: { en: [], ms: [] }, text: 'gloss.credibility' },
+  // The game's own words, marked up by hand where they label something.
+  safe: { words: { en: [], ms: [] }, text: 'gloss.safe' },
+  leaning: { words: { en: [], ms: [] }, text: 'gloss.leaning' },
+  marginal: { words: { en: [], ms: [] }, text: 'gloss.marginal' },
+  orders: { words: { en: [], ms: [] }, text: 'gloss.orders' },
+  dossier: { words: { en: ['dossier'], ms: ['dosier'] }, text: 'gloss.dossier' },
+  stability: { words: { en: [], ms: [] }, text: 'gloss.stability' },
+  trust: { words: { en: [], ms: [] }, text: 'gloss.trust' },
 };
 
 export interface Piece { text: string; term?: TermId }

@@ -7,6 +7,7 @@ import { candidateDeadline, candidatesWeek, canChoose, choose, HOPEFULS, liftIn,
 import { answerEvent, resumeTerm, skipAhead, startCareer, termIncome, termSpending, termWeek } from './career';
 import { EVENTS } from './events';
 import { endDay } from './formation';
+import { LEADER_STATS, TEMPER } from './cast';
 import { relation } from './diplomacy';
 import { canCourtEndorser, courtChance, courtEndorser, endorsersWeek, hasEndorsers, holder } from './endorsers';
 import { BACKSTORIES, edge, stat } from './leader';
@@ -31,14 +32,17 @@ describe('the leader', () => {
       expect(BACKSTORIES[id].every((v) => v >= 1 && v <= 5)).toBe(true);
     }
     const plain = game();
-    expect(plain.team.leader).toEqual({ backstory: null, stats: [3, 3, 3, 3] });
-    expect(edge(plain, PS, 'charisma')).toBe(1);
+    // With no past chosen, the player leads with the leader the party already has, who is a trade like any other.
+    expect(plain.team.leader).toEqual({ backstory: null, stats: LEADER_STATS.ps });
+    expect(edge(plain, PS, 'charisma')).toBeCloseTo(1 + 0.08 * (LEADER_STATS.ps[0] - 3), 6);
+    for (const stats of Object.values(LEADER_STATS)) expect(stats.reduce((a, b) => a + b, 0)).toBe(12);
   });
 
-  it('is only ever the player’s: rivals stay ordinary', () => {
+  it('is the player’s own for their party, and the cast’s for every rival', () => {
     const c = game('firebrand');
     expect(stat(c, PS, 'charisma')).toBe(5);
-    expect(stat(c, BP, 'charisma')).toBe(3);
+    expect(stat(c, BP, 'charisma')).toBe(LEADER_STATS.bp[0]);
+    expect(stat(c, BP, 'cunning')).toBe(LEADER_STATS.bp[2]);
     expect(edge(c, PS, 'charisma')).toBeCloseTo(1.16, 6);
     expect(edge(c, PS, 'organisation')).toBeCloseTo(0.92, 6);
   });
@@ -46,11 +50,12 @@ describe('the leader', () => {
   it('draws a bigger crowd, or builds a stronger branch, according to their gifts', () => {
     const seat = general.seats.find((s) => s.kind === 'rural' && s.last.votes[PS] > 0)!;
     const ceramah = (b: BackstoryId | null) => { const c = game(b); doAction(general, c, PS, 'ceramah', { seat: seat.id }); return c.dyn.support.seat[seat.id][PS]; };
-    expect(ceramah('firebrand') / ceramah(null)).toBeCloseTo(1.16, 6);
-    expect(ceramah('organiser') / ceramah(null)).toBeCloseTo(0.92, 6);
+    const own = 1 + 0.08 * (LEADER_STATS.ps[0] - 3); // the party's own leader is the yardstick
+    expect(ceramah('firebrand') / ceramah(null)).toBeCloseTo(1.16 / own, 6);
+    expect(ceramah('organiser') / ceramah(null)).toBeCloseTo(0.92 / own, 6);
     const build = (b: BackstoryId | null) => { const c = game(b); const i = general.states.indexOf('johor'); const m = c.parties[PS]!.machinery[i]; doAction(general, c, PS, 'build', { state: 'johor' }); return c.parties[PS]!.machinery[i] - m; };
     expect(build('organiser')).toBe(12);
-    expect(build(null)).toBe(10);
+    expect(build(null)).toBe(Math.round(10 * (1 + 0.08 * (LEADER_STATS.ps[1] - 3)))); // the party's own leader is no organiser
     expect(build('firebrand')).toBe(9);
   });
 
@@ -59,8 +64,8 @@ describe('the leader', () => {
     expect(game('tycoon').parties[PS]!.funds).toBe(Math.round(startingFunds(general, PS) * 1.25));
     expect(game('firebrand').parties[PS]!.unity).toBe(plain.parties[PS]!.unity + 6);
     expect(game('organiser').parties[PS]!.machinery[0]).toBe(plain.parties[PS]!.machinery[0] + 6);
-    expect(relation(game('fixer'), PS, PT)).toBe(relation(plain, PS, PT) + 10);
-    expect(relation(game('activist'), PS, BP)).toBe(relation(plain, PS, BP) - 8);
+    expect(relation(game('fixer'), PS, PT)).toBe(relation(plain, PS, PT) + Math.round(10 * TEMPER.pt.warmth));
+    expect(relation(game('activist'), PS, BP)).toBe(relation(plain, PS, BP) + Math.round(-8 * TEMPER.bp.grudge));
     // The talks after a hung parliament are where a fixer earns their keep.
     const talks = newCampaign(hung, { player: PS, difficulty: 'normal', seed: 5, backstory: 'fixer' });
     expect(relation(talks, PS, BP)).toBe(relation(newCampaign(hung, { player: PS, difficulty: 'normal', seed: 5 }), PS, BP) + 10);

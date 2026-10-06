@@ -5,6 +5,10 @@ import { contestsState, scaled } from '../sim/campaign/actions';
 import { ROUNDS, STATE_GOVERNMENT_INCOME } from '../sim/campaign/contests';
 import { others, relation } from '../sim/campaign/diplomacy';
 import { seatOf } from '../sim/campaign/events';
+import { partnerMood } from '../sim/campaign/plots';
+import { Gauge } from './Gauge';
+import { Loan } from './Loan';
+import { Jargon, Term } from './Term';
 import { stabilityBand } from '../sim/campaign/formation';
 import { FOCUS_IDS, type Level, type Orders } from '../sim/campaign/types';
 import { useStore } from '../state/store';
@@ -71,7 +75,7 @@ export function OrdersTab() {
   return (
     <section className="orders">
       <div className="panel-head">
-        <h2>{t('orders.title')}</h2>
+        <h2><Term id="orders">{t('orders.title')}</Term></h2>
         <span className="muted">{t('orders.term', { n: k.term })}</span>
       </div>
       <p className="muted small">{t('orders.intro')}</p>
@@ -82,9 +86,16 @@ export function OrdersTab() {
           party: partyName(t, g.pm), partners: g.partners.map((p) => partyShort(t, p)).join(', '), n: g.seats,
         })}
       </p>
-      <p className="muted small">
-        {t(`orders.seat.${seat}`)} · {t('orders.stability', { n: Math.round(g.stability) })} ({t(`orders.band.${band}`)}) · {t('orders.trust', { n: Math.round(g.trust) })}
-      </p>
+      <p className="muted small">{t(`orders.seat.${seat}`)} · {t(`orders.band.${band}`)}</p>
+      {seat === 'pm' && g.partners.length > 0 && (
+        <p className="muted small" title={t('partner.note')}>
+          {t('partner.title')}: {g.partners.map((p) => `${partyShort(t, p)} ${t(`partner.${partnerMood(campaign, p)}`)}`).join(' · ')}
+        </p>
+      )}
+      <div className="gauge-row">
+        <Gauge value={g.stability} label={<Term id="stability">{t('hint.stability')}</Term>} />
+        <Gauge value={g.trust} label={<Term id="trust">{t('hint.trust')}</Term>} />
+      </div>
       <p className="note">
         {t('orders.due', { n: k.length - k.week + 1 })}{' '}
         {seat === 'pm' && (k.week >= EARLIEST_DISSOLUTION ? t('orders.dissolve.can') : t('orders.dissolve.wait', { n: EARLIEST_DISSOLUTION - k.week }))}
@@ -119,7 +130,7 @@ export function OrdersTab() {
 
       <h3>{t('orders.budget')}</h3>
       <ul>{(['machinery', 'media', 'research'] as const).map(budgetRow)}</ul>
-      <p className="muted small">{t('orders.dossier', { n: Math.round(k.dossier) })}</p>
+      <p className="muted small"><Jargon>{t('orders.dossier', { n: Math.round(k.dossier) })}</Jargon></p>
 
       <h3>{t('orders.states')}</h3>
       <p className="muted small action-desc">{t('orders.states.desc')}</p>
@@ -193,6 +204,7 @@ export function OrdersTab() {
             <button className="btn small" disabled={k.assets < lot} onClick={() => invest(-1)}>{t('orders.sell')}</button>
           </div>
         </li>
+        <li><Loan /></li>
         {income.states > 0 && (
           <li className="action">
             <div className="grow">

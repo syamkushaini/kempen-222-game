@@ -21,6 +21,46 @@ export const LEADERS: Record<Real, string> = {
   suara: 'Puan Dorothy Gimbad',
 };
 
+/**
+ * What each leader is good at, in the order charisma, organisation, cunning, integrity. Each adds up to twelve, the
+ * same as an ordinary leader and as every backstory, so a rival's leader is a different opponent, not a stronger one.
+ * The player's own leader takes the place of their party's.
+ */
+export const LEADER_STATS: Record<Real, number[]> = {
+  // The reformer: fills a hall and is believed; the branches are another matter.
+  ps: [4, 2, 2, 4],
+  // The old hand: knows where every division chief is buried.
+  bp: [2, 4, 4, 2],
+  // The preacher of the heartland: a ceramah a night, and not much given to schemes.
+  pt: [4, 3, 2, 3],
+  // The patriarch: nothing in the state moves without him.
+  gbk: [2, 5, 3, 2],
+  // The dealmaker: every arrangement has an exit.
+  gbs: [3, 3, 4, 2],
+  // The proud native son.
+  legasi: [4, 2, 2, 4],
+  // The idealist with a ring light.
+  genba: [5, 1, 2, 4],
+  cahaya: [3, 3, 2, 4],
+  suara: [3, 4, 1, 4],
+};
+
+/**
+ * How each leader takes what the player does to them: how hard an insult lands (`grudge`) and how readily a kindness
+ * is returned (`warmth`). One is ordinary. It scales every change in their relations with the player.
+ */
+export const TEMPER: Record<Real, { grudge: number; warmth: number }> = {
+  ps: { grudge: 1, warmth: 1.2 },      // an idealist: easy to befriend
+  bp: { grudge: 0.7, warmth: 1 },      // transactional: nothing is personal
+  pt: { grudge: 1.4, warmth: 0.8 },    // proud: slow to warm, quick to take offence
+  gbk: { grudge: 0.6, warmth: 0.7 },   // patient: hard to move either way
+  gbs: { grudge: 0.6, warmth: 1.3 },   // an opportunist: yesterday is forgotten
+  legasi: { grudge: 1.5, warmth: 0.7 },// wary of anyone from across the sea
+  genba: { grudge: 1.2, warmth: 1.3 }, // earnest: takes everything to heart
+  cahaya: { grudge: 0.8, warmth: 1 },
+  suara: { grudge: 1.3, warmth: 0.9 },
+};
+
 const pairs = <T>(rows: [Real, Real, T][], blank: T): T[][] => {
   const m = Array.from({ length: N_PARTIES }, () => new Array<T>(N_PARTIES).fill(blank));
   for (const [a, b, v] of rows) {

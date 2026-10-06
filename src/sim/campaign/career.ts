@@ -17,7 +17,9 @@ import { applyBackstory, applyIdeology, type IdeologyId } from './leader';
 import { recordResults } from './results';
 import { FORMATION_WEEK, pushNews, ref } from './news';
 import { FOUNDING_FUNDS, growFoundedParty } from './founding';
-import { edge, incomeBoost, mediaBoost, skill } from './perks';
+import { edge, incomeBoost, mediaBoost, neutralLeader, skill } from './perks';
+import { afterLender } from './loan';
+import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances } from './policy';
@@ -117,6 +119,8 @@ function takeOffice(c: Campaign): void {
 /** Opens a career at the start of a parliamentary term, with the coffers low after the last election. */
 export function startCareer(world: World, opts: CampaignOptions & { ideology?: IdeologyId | null; founded?: boolean; stances?: number[] }): Campaign {
   const c = newCampaign(world, opts);
+  // A party founded from nothing has no leader in the cast: without a past of the player's choosing, theirs is ordinary.
+  if (opts.founded && !opts.backstory) c.team.leader = neutralLeader();
   c.phase = 'term';
   c.career = freshCareer(1, firstGovernment(world), null);
   const pc = c.parties[c.player]!;
@@ -269,7 +273,7 @@ export function termWeek(world: World, c: Campaign): void {
   // Money. If the orders cost more than there is, everything is cut back in proportion.
   const income = termIncome(world, c);
   const plan = termSpending(world, c);
-  pc.funds += income.total;
+  pc.funds += afterLender(c, pc, income.total);
   const afford = plan.total > 0 ? Math.min(1, pc.funds / plan.total) : 1;
   pc.funds -= Math.round(plan.total * afford);
   // The retainer is cut back with everything else, and a team on part pay does not work.
@@ -291,6 +295,8 @@ export function termWeek(world: World, c: Campaign): void {
   if (o.focus === 'policy') k.credibility = Math.min(Math.max(k.credibility, 85), k.credibility + 0.2 * edge(c, me, 'integrity'));
   // The team is on the payroll already; what is left is whether anyone's past comes out this week.
   staffWeek(world, c, new Rng((c.rng ^ 0x57aff) + k.week), false);
+  plotsWeek(world, c);
+  if (c.phase !== 'term') return;
   if (o.focus === 'leaders' && o.courting !== null && k.week % 4 === 0 && relation(c, me, o.courting) < 45) shiftRelation(c, me, o.courting, 2);
 
   // Easy money has a slow price as well as a sudden one.
@@ -355,6 +361,7 @@ export function answerEvent(world: World, c: Campaign, scene: Scene, choice: num
     const g = k.government;
     if (g.partners.length > 0 && (g.stability < 30 || g.seats < majorityLine(world) + 3)) raise(c, 'budgetRevolt');
   } else if (scene.event === 'motion') faceMotion(world, c, choice);
+  else if (scene.event === 'ultimatum') resolveUltimatum(world, c, scene, choice);
   else if (scene.event === 'byElection') resolveByElection(world, c, scene, choice);
   else if (scene.event === 'statePolls') resolveStatePolls(world, c, choice);
   else if (scene.event && EVENTS[scene.event]) {
@@ -375,12 +382,13 @@ export function answerEvent(world: World, c: Campaign, scene: Scene, choice: num
  * weaker; if not, the Palace asks who can command a majority and the talks
  * begin, with the seats as they stand.
  */
-export function governmentFalls(world: World, c: Campaign): void {
+export function governmentFalls(world: World, c: Campaign, who?: number): void {
   const k = c.career!;
   const g = k.government;
   const tally = houseTally(world, c);
   if (g.partners.length === 0) return;
-  const leaver = [...g.partners].sort((a, b) => relation(c, g.pm, a) - relation(c, g.pm, b) || tally[b] - tally[a])[0];
+  // A partner that has decided to go, or else whichever is on the worst terms with the head of government.
+  const leaver = who !== undefined && g.partners.includes(who) ? who : [...g.partners].sort((a, b) => relation(c, g.pm, a) - relation(c, g.pm, b) || tally[b] - tally[a])[0];
   shiftRelation(c, g.pm, leaver, -30);
   pushNews(c, { party: leaver, key: 'news.term.walkout', vars: { party: ref.party(leaver), pm: ref.party(g.pm) }, tone: g.pm === c.player ? 'bad' : 'neutral' });
   g.partners = g.partners.filter((p) => p !== leaver);

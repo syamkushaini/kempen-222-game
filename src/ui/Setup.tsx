@@ -1,4 +1,4 @@
-import { BACKSTORIES } from '../sim/campaign/perks';
+import { BACKSTORIES, partyLeaderStats } from '../sim/campaign/perks';
 import { IDEOLOGY_IDS, type IdeologyId } from '../sim/campaign/leader';
 import { BACKSTORY_IDS, STAT_IDS, type BackstoryId } from '../sim/campaign/types';
 import { EMBLEM_IDS, PARTY_COLORS, type EmblemId } from '../state/identity';
@@ -8,7 +8,7 @@ import { PartyMark } from './identity';
 import { Pips } from './TeamTab';
 
 /** Choosing where the leader came from, and with it what they are good at. */
-export function LeaderPicker({ value, onChange }: { value: BackstoryId | null; onChange(value: BackstoryId | null): void }) {
+export function LeaderPicker({ value, party, onChange }: { value: BackstoryId | null; party: number; onChange(value: BackstoryId | null): void }) {
   const t = useT();
   const options: (BackstoryId | null)[] = [null, ...BACKSTORY_IDS];
   return (
@@ -16,7 +16,7 @@ export function LeaderPicker({ value, onChange }: { value: BackstoryId | null; o
       <p className="muted small">{t('leader.pick.note')}</p>
       <div className="party-cards backstories" role="radiogroup" aria-label={t('leader.pick')}>
         {options.map((id) => {
-          const stats = id ? BACKSTORIES[id] : STAT_IDS.map(() => 3);
+          const stats = id ? BACKSTORIES[id] : partyLeaderStats(party);
           return (
             <button key={id ?? 'none'} role="radio" aria-checked={value === id} className={value === id ? 'party-card plain active' : 'party-card plain'} onClick={() => onChange(id)}>
               <strong>{t(id ? `backstory.${id}` : 'backstory.none')}</strong>

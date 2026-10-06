@@ -3,9 +3,9 @@ import { projectElection, type World } from '../election';
 import { clamp, zeros } from '../math';
 import { Rng } from '../rng';
 import type { StandDowns } from '../transfer';
-import { N_PARTIES, type ElectionOutcome } from '../types';
+import { N_PARTIES, PARTY_IDS, type ElectionOutcome } from '../types';
 import { EFFECT, contests, effectiveDynamics, scaled, truth } from './actions';
-import { AFFINITY } from './cast';
+import { AFFINITY, TEMPER } from './cast';
 import { record, standing } from './ledger';
 import { pushNews, ref } from './news';
 import type { Campaign, NewsItem, Scene } from './types';
@@ -22,6 +22,10 @@ export const relation = (c: Campaign, a: number, b: number) => c.relations[a][b]
 
 export function shiftRelation(c: Campaign, a: number, b: number, by: number): void {
   if (a === b) return;
+  // Between the player and a rival, the rival's temper decides how much of it sticks.
+  const other = a === c.player ? b : b === c.player ? a : -1;
+  const temper = other >= 0 ? TEMPER[PARTY_IDS[other] as keyof typeof TEMPER] : undefined;
+  if (temper) by *= by < 0 ? temper.grudge : temper.warmth;
   const v = clamp(Math.round(c.relations[a][b] + by), -100, 100);
   c.relations[a][b] = v;
   c.relations[b][a] = v;

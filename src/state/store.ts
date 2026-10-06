@@ -10,6 +10,7 @@ import {
 } from '../sim/campaign/govern';
 import { choose, vetHopeful } from '../sim/campaign/candidates';
 import { canChoose } from '../sim/campaign/events';
+import { borrow } from '../sim/campaign/loan';
 import { courtEndorser } from '../sim/campaign/endorsers';
 import type { IdeologyId } from '../sim/campaign/leader';
 import { retire } from '../sim/campaign/legacy';
@@ -163,6 +164,8 @@ interface Store {
   /** Career: changes the standing orders for the weeks between elections. */
   setOrders(patch: Partial<Orders>): void;
   invest(lots: number): void;
+  /** Takes the loan a lender is offering against the party's coming income. */
+  borrow(): void;
   setStance(issue: number, to: number): void;
   togglePledge(id: PledgeId): void;
   launchManifesto(): void;
@@ -328,6 +331,7 @@ export const useStore = create<Store>((set, get) => {
 
     setOrders: (patch) => mutate((c, _g, world) => setOrders(world, c, patch)),
     invest: (lots) => mutate((c, _g, world) => { invest(world, c, lots); }),
+    borrow: () => mutate((c, _g, world) => { borrow(world, c); }),
     setStance: (issue, to) => mutate((c) => { if (setStance(c, issue, to)) syncOpinion(c); }),
     togglePledge: (id) => mutate((c) => { if (togglePledge(c, id)) syncOpinion(c); }),
     launchManifesto: () => mutate((c) => { if (launchManifesto(c)) syncOpinion(c); }),

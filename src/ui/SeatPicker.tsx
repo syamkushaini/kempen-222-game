@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { vacancyOf, VACANCIES, type Vacancy } from '../data/world';
+import { useEffect, useMemo, useState } from 'react';
+import { loadStates, vacancyOf, VACANCIES, type Vacancy } from '../data/world';
 import { useT, type T } from './hooks';
 
 /** Where a seat is, in words: its state, and for an assembly seat the parliamentary seat it sits in. */
@@ -14,6 +14,9 @@ export function SeatPicker({ value, onChange, onRandom }: { value: string; onCha
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const chosen = vacancyOf(value);
+  // The assembly seats of all thirteen states are fetched when the list is first opened.
+  const [listed, setListed] = useState(VACANCIES.length);
+  useEffect(() => { if (open) void loadStates().then(() => setListed(VACANCIES.length)); }, [open]);
 
   const shown = useMemo(() => {
     const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -21,7 +24,7 @@ export function SeatPicker({ value, onChange, onRandom }: { value: string; onCha
       const text = `${v.name} ${v.code} ${t(`state.${v.state}`)} ${v.within ?? ''} ${v.kind === 'dun' ? 'dun' : 'parlimen parliament'}`.toLowerCase();
       return words.every((w) => text.includes(w));
     });
-  }, [search, t]);
+  }, [search, t, listed]);
   const parliament = shown.filter((v) => v.kind === 'parliament');
   const assembly = shown.filter((v) => v.kind === 'dun');
 

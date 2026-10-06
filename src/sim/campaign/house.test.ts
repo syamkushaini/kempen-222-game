@@ -4,6 +4,7 @@ import { lastElection, majorityLine } from '../election';
 import { Rng } from '../rng';
 import { BLOC_IDS, N_BLOCS, PARTY_IDS } from '../types';
 import { answerEvent, dissolve, EARLIEST_DISSOLUTION, nextTerm, startCareer, syncOpinion, termWeek } from './career';
+import { TEMPER } from './cast';
 import { relation } from './diplomacy';
 import { endDay } from './formation';
 import {
@@ -70,7 +71,7 @@ describe('leaning on institutions', () => {
       const c = career(PS, seed);
       const withPt = relation(c, PS, PT);
       pullLever(base, c, 'agency');
-      expect(relation(c, PS, PT)).toBe(Math.max(-100, withPt - 25));
+      expect(relation(c, PS, PT)).toBe(Math.max(-100, withPt + Math.round(-25 * TEMPER.pt.grudge))); // a proud man takes it harder
       expect(c.career!.government.trust).toBe(54);
       keys.add(c.news.at(-1)!.key);
     }

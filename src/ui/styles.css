@@ -231,6 +231,10 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
   .chip { flex: none; }
   .field select, .field input { min-height: 44px; }
 }
+.settings-fold summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; min-height: 40px; padding: 6px 14px; border: 1px solid var(--line-2); border-radius: 8px; font-size: 14px; font-weight: 500; }
+.settings-fold summary::-webkit-details-marker { display: none; }
+.settings-fold[open] { width: 100%; }
+.settings-fold[open] summary { background: var(--panel-3); margin-bottom: 8px; }
 @media (max-width: 520px) {
   .app { padding: 0 16px 16px; }
   .facts { grid-template-columns: repeat(2, 1fr); }
@@ -245,6 +249,20 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 .hud-value { font-size: 16px; font-weight: 600; }
 .gauge { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .gauge-bar { width: 72px; background: var(--line-2); }
+.desk-call { margin: 4px 0 12px; font-size: 13px; color: var(--muted); }
+.desk-call strong { font-weight: 500; color: var(--ink); }
+.desk-call.called { color: var(--ink); }
+.count-story { list-style: none; margin: 12px 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.count-story li { display: flex; gap: 8px; }
+.count-story li .num { flex: none; width: 1.5em; text-align: right; }
+.count-story li.latest { color: var(--ink); }
+.next-contest { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.next-contest span { flex: 1 1 240px; }
+.gauge-row { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 6px 0; font-size: 13px; }
+.leader-about { display: flex; flex-direction: column; gap: 6px; padding: 4px 0 8px; }
+.leader-head .gauge { font-size: 12px; }
+.leader-head .gauge-bar { width: 48px; }
+@media (max-width: 520px) { .leader-head .gauge .muted { display: none; } }
 .gauge-bar span { transition: width 300ms, background-color 300ms; }
 .weeks, .days { display: flex; align-items: center; gap: 3px; }
 .weeks i { width: 14px; height: 4px; border-radius: 2px; background: var(--line-2); }

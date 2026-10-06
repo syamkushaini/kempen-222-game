@@ -12,6 +12,7 @@ import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, truth
 import { applyBackstory } from './leader';
 import { pressReacts } from './media';
 import { incomeBoost, managerDays, pollDiscount, pollPrecision } from './perks';
+import { afterLender } from './loan';
 import { emptyTeam, openCampaign, teamWeek } from './team';
 import { startRelations } from './cast';
 import { beforeNomination, hasDiplomacy, nominationWeek, pactSeats, rivalDiplomacy, settleInbox, shiftRelation, shiftUnity } from './diplomacy';
@@ -355,7 +356,7 @@ export function endWeek(world: World, c: Campaign): void {
   c.week++;
   c.parties.forEach((pc, p) => {
     if (!pc) return;
-    pc.funds += Math.round(weeklyIncome(world, p, c) * incomeBoost(c, p));
+    pc.funds += afterLender(c, pc, Math.round(weeklyIncome(world, p, c) * incomeBoost(c, p)));
     pc.days = pc.capacity + managerDays(c, p);
     pc.used = {};
     pc.visits = [];

@@ -63,7 +63,7 @@ describe('the last four states', () => {
     expect(ids(playable(world('sarawak')))).toEqual(['gbk', 'ps']);
     expect(ids(playable(world('sabah')))).toEqual(['gbs', 'legasi', 'ps', 'bp']);
     // Nowhere else: not in a general election, and not in another state.
-    expect(ids(playable(general))).toEqual(['ps', 'bp', 'pt']);
+    expect(ids(playable(general))).toEqual(['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi']);
     for (const p of [P('gbk'), P('gbs'), P('legasi')]) {
       expect(atHome(general, p)).toBe(false);
       expect(atHome(world('johor'), p)).toBe(false);

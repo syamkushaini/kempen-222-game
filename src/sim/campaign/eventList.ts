@@ -170,6 +170,8 @@ export const EVENTS: Record<string, EventDef> = {
     ],
   },
   motion: { role: 'pm', weight: 3, times: 2, needs: { partners: true, shaky: 35 }, choices: [{ effects: [] }, { effects: [] }] },
+  // A partner's ultimatum, raised when it has drifted far enough towards the door and never by chance: see plots.ts.
+  ultimatum: { role: 'pm', weight: 0, choices: [{ effects: [] }, { effects: [] }, { effects: [], gamble: { chance: 0.5, win: [], lose: [] } }] },
   downgrade: {
     role: 'pm', weight: 6, needs: { debt: 75 },
     choices: [

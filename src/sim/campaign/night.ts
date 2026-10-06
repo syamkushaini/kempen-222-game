@@ -1,6 +1,7 @@
 import type { World } from '../election';
 import { Rng } from '../rng';
 import type { ElectionOutcome } from '../types';
+import { par } from './outlook';
 import type { Campaign } from './types';
 
 // How an election night is told: the order the seats declare in, how the
@@ -28,8 +29,11 @@ export function flipKind(winner: number, was: number, player: number): Flip {
   return winner === was ? 'hold' : winner === player ? 'gain' : was === player ? 'loss' : 'flip';
 }
 
-/** How the night went for the player. The last two are for a single-seat by-election. */
-export type Verdict = 'majority' | 'largest' | 'gained' | 'held' | 'lost' | 'won' | 'defeated';
+/**
+ * How the night went for the player. The last three are for a single-seat by-election: `creditable` is a seat lost
+ * by a party nobody expected to win it, with a share of the vote that beat what was expected.
+ */
+export type Verdict = 'majority' | 'largest' | 'gained' | 'held' | 'lost' | 'won' | 'creditable' | 'defeated';
 
 export interface Summary {
   seats: number;
@@ -56,14 +60,15 @@ export function summarise(world: World, c: Campaign, result: ElectionOutcome): S
     if (was && !is) lost.push(o.seatId);
   });
   const seats = result.tally[p];
+  const voteShare = result.votes[p] / result.votes.reduce((a, b) => a + b, 0);
+  const target = par(world, p);
   const rank = 1 + result.tally.filter((n) => n > seats).length;
   const majority = Math.floor(world.seats.length / 2) + 1;
   const verdict: Verdict =
-    world.rules.kind === 'byelection' ? (seats > 0 ? 'won' : 'defeated')
+    world.rules.kind === 'byelection' ? (seats > 0 ? 'won' : target !== null && voteShare >= target ? 'creditable' : 'defeated')
     : seats >= majority ? 'majority' : rank === 1 ? 'largest' : seats > before ? 'gained' : seats === before ? 'held' : 'lost';
   return {
-    seats, before, rank, verdict, gained, lost,
-    voteShare: result.votes[p] / result.votes.reduce((a, b) => a + b, 0),
+    seats, before, rank, verdict, gained, lost, voteShare,
   };
 }
 
@@ -84,3 +89,44 @@ export function countBatches(c: Campaign, result: ElectionOutcome, batches = 12)
   });
 }
 
+
+/** What the desk makes of a count so far: still open, leaning one way, or settled because the votes left cannot change it. */
+export type CallState = 'open' | 'likely' | 'called';
+
+export interface CountLine {
+  /** What happened as this box was added. */
+  kind: 'first' | 'flip' | 'halfway' | 'closing' | 'pulling' | 'steady';
+  leader: number;
+  second: number;
+  /** The leader's lead over the runner-up, in votes. */
+  lead: number;
+  call: CallState;
+  /** The desk made a call with this box, took one back, or settled it for good. */
+  desk: 'made' | 'withdrawn' | 'settled' | null;
+}
+
+/**
+ * A commentary on a single seat's count, one line for each box: who leads and by how much, whether the lead changed
+ * hands, and what the desk is prepared to say. A call is only final once the lead is more than the votes still out;
+ * before that it is a judgement, and a bad box can make the desk take it back.
+ */
+export function countStory(boxes: number[][]): CountLine[] {
+  const all = (boxes.at(-1) ?? []).reduce((a, b) => a + b, 0);
+  const lines: CountLine[] = [];
+  boxes.forEach((votes, i) => {
+    const order = votes.map((v, p) => ({ v, p })).sort((a, b) => b.v - a.v);
+    const leader = order[0].p, second = order[1]?.p ?? order[0].p;
+    const lead = order[0].v - (order[1]?.v ?? 0);
+    const out = all - votes.reduce((a, b) => a + b, 0);
+    const call: CallState = lead > out ? 'called' : lead > out / 2 ? 'likely' : 'open';
+    const prev = lines[i - 1];
+    const kind: CountLine['kind'] =
+      !prev ? 'first' : prev.leader !== leader ? 'flip' : i === Math.floor(boxes.length / 2) - 1 ? 'halfway'
+      : lead < prev.lead * 0.75 ? 'closing' : lead > prev.lead * 1.25 ? 'pulling' : 'steady';
+    const was = prev?.call ?? 'open';
+    const desk: CountLine['desk'] =
+      call === 'called' && was !== 'called' ? 'settled' : call === 'likely' && (was === 'open' || prev?.leader !== leader) ? 'made' : call === 'open' && was === 'likely' ? 'withdrawn' : null;
+    lines.push({ kind, leader, second, lead, call, desk });
+  });
+  return lines;
+}

@@ -15,6 +15,16 @@ export interface EventText {
 }
 
 export const EVENTS_EN: Record<string, EventText> = {
+  ultimatum: {
+    title: 'An ultimatum',
+    body: 'A partner’s leader asks to see you alone, and does not sit down. His members are restless, he says, and other people have been making them offers. Things must change, or they will find another arrangement.',
+    options: ['Find money for their constituencies', 'Give them what they ask, and face your own party', 'Tell them to do their worst'],
+    results: [
+      'The money was found, and the restlessness went away. For now.',
+      'They got what they asked for. Your own party noticed who did not.',
+      ['They blinked. The talk of leaving stopped the same afternoon.', 'They did their worst.'],
+    ],
+  },
   flood: {
     title: 'The monsoon floods',
     body: 'The east coast is under water again. Thousands are in relief centres, and every politician in the country has discovered a sudden love of rubber boots.',
@@ -389,6 +399,16 @@ export const EVENTS_EN: Record<string, EventText> = {
 };
 
 export const EVENTS_MS: Record<string, EventText> = {
+  ultimatum: {
+    title: 'Kata dua',
+    body: 'Pemimpin sebuah parti rakan meminta berjumpa anda bersendirian, dan tidak duduk. Ahli-ahlinya resah, katanya, dan pihak lain sudah mula membuat tawaran. Keadaan mesti berubah, atau mereka akan mencari aturan lain.',
+    options: ['Cari wang untuk kawasan mereka', 'Tunaikan permintaan mereka, dan hadapi parti sendiri', 'Suruh mereka buat apa yang mereka mahu'],
+    results: [
+      'Wang ditemui, dan keresahan itu reda. Buat masa ini.',
+      'Mereka mendapat apa yang diminta. Parti anda sendiri perasan siapa yang tidak.',
+      ['Mereka mengalah. Cakap-cakap mahu keluar terhenti petang itu juga.', 'Mereka buat apa yang mereka mahu.'],
+    ],
+  },
   flood: {
     title: 'Banjir musim tengkujuh',
     body: 'Pantai timur ditenggelami air sekali lagi. Ribuan orang berada di pusat pemindahan, dan setiap ahli politik di negara ini tiba-tiba jatuh cinta dengan but getah.',

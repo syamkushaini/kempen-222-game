@@ -14,7 +14,7 @@ import { draftPact, signPact } from './diplomacy';
 import { canChoose, choiceCost, EVENTS, resolveEvent, rollEvent, seatOf } from './events';
 import { endDay } from './formation';
 import { FISCAL_ROOM, launchManifesto, manifestoCost, MAX_PLEDGES, policyEffect, setStance, stanceCost, togglePledge } from './policy';
-import { closeNight, electionResult, endWeek } from './turn';
+import { autoPlayWeek, closeNight, electionResult, endWeek, playable } from './turn';
 import { ISSUE_IDS, PLEDGE_IDS, type Campaign } from './types';
 import { isValidCampaign } from './validate';
 
@@ -390,6 +390,28 @@ describe('from one parliament to the next', () => {
     }
     expect(c.career!.term).toBe(3);
     expect(JSON.stringify(c).length).toBeLessThan(400_000);
+  });
+
+  it('can be led by a party of Sabah or Sarawak: no majority to be had, but a say in who governs', () => {
+    for (const id of ['gbk', 'gbs', 'legasi'] as const) {
+      const me = PARTY_IDS.indexOf(id);
+      expect(playable(base), id).toContain(me);
+      const c = career(me, 11);
+      let world = base;
+      for (const term of [1, 2]) {
+        expect(c.career!.term, id).toBe(term);
+        playTerm(c, world);
+        while (c.phase === 'campaign') { autoPlayWeek(world, c); endWeek(world, c); }
+        // It stands only at home, so it can never reach a majority of the 222 on its own.
+        expect(electionResult(world, c)!.tally[me], id).toBeGreaterThan(0);
+        expect(electionResult(world, c)!.tally[me], id).toBeLessThan(majorityLine(world));
+        closeNight(world, c);
+        for (let day = 0; day < 10 && c.phase === 'formation'; day++) endDay(world, c);
+        expect(nextTerm(world, c), id).toBe(true);
+        world = worldOf(c)!;
+        expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world), id).toBe(true);
+      }
+    }
   });
 });
 

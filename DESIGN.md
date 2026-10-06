@@ -537,3 +537,88 @@ Where the system was silent or the game needed more, these are the choices made:
 - **Fonts are the documented fallback stack** (SF Pro, then the system sans), because the app is offline and cannot load Inter.
 - **Unity and credibility are bars (6 Oct 2026),** in the header of a career, on the Deals tab (unity) and on the Policy tab (credibility), at the player's request: the bar's length is the figure out of 100 and its colour runs from the error red when low, through amber, to the success green when full. The number stays beside it. With the colour-blind palette the bar runs from orange to blue instead. This is the one place outside the party colours where colour carries a value.
 - **Not restyled:** the shareable result card image, which has its own cream look, and the small animations, which are unchanged and still switched off for reduced motion.
+
+## Second interview: what to improve (6 Oct 2026)
+
+Thirty questions, answered by the designer one at a time after a day of play. These are wishes, not yet built; where an answer overturns an earlier decision it says so.
+
+**How it plays**
+- The designer mostly plays the **by-election**, and the commonest complaint is that **the outcome feels decided** before the player's choices can matter. Difficulty is **uneven**. This is the first thing to measure and fix.
+- Sittings should be as long as the mode: no single target.
+- **An empty chest should have two ways out,** each with a price: a loan repaid from later income, and a donor with strings.
+- A career's five years between elections feel about right.
+- **Winning a career means staying in power** across terms.
+
+**Rivals and politics**
+- **Rival leaders get stats and personalities.** *Overturns* "rival leaders are all ordinary, so difficulty stays a matter of skill".
+- **Rivals use everything the player can:** staff, endorsers and the eight extra actions. *Overturns* "they are the player's alone"; the balance figures recorded for those actions will need measuring again.
+- **State chiefs become full characters:** names, skill, loyalty, pasts that can come out, defection.
+- **Component parties inside each coalition, without mergers.**
+- **Partners plot.** After a government forms they scheme, issue ultimatums and walk out when it suits them, with signs the player can read.
+- **The Sabah and Sarawak parties can be led nationally, as kingmakers,** in a general election and a career.
+- **Maps move to each state's newest result** (Sabah 2025, Johor and Negeri Sembilan 2026). *Overturns* "every map describes the same few years". Needs the data, and Sabah's line-up of parties changed.
+
+**Content**
+- More events of every kind: scandals and intrigue, local colour, governing crises, and moments on the campaign trail itself.
+- **Most new events belong to story chains** with later chapters.
+- The satire is about right. The netizen feed and the media outlets are read and liked.
+- **A full tutorial for the home parties** of Sabah and Sarawak.
+
+**Look and feel**
+- **Flags, tents and posters as marks on the map** where the player and rivals are active. An exception to the Linear rule against decoration, to be drawn as data (who is active where).
+- **Illustrated portraits,** as the brief first asked, replacing the vector busts. Needs a source for the art.
+- **More red-to-green bars:** government stability and trust, rival parties' unity, and the nation figures.
+- **The phone layout is awkward** in places; which screens is still to be asked.
+- **Election night is too short:** more drama, commentary, calls made and unmade.
+
+**New players**
+- After the tutorial, **suggest one next contest and say why**; no second guided tutorial.
+- **Tooltips for the game's own terms** (momentum, key seat, standing orders, dossier, safe, leaning, marginal).
+- The audience, in order: Malaysians who follow politics, Malaysians who do not, outsiders.
+
+**Release**
+- What blocks going public: **choosing a licence**, and **more building first**. The media-law read and the small playtest were not named this time.
+- **Load each state's data only when it is chosen,** before launch.
+- Success after launch: finished careers, shared result cards, feedback, and players coming back.
+
+## Built from the second interview (6 Oct 2026)
+
+**By-elections that are not decided before they start**
+- **Measured first.** Over the 36 three-way seats, each of the three parties, six seeds, with the game's autoplayer at its best playing the party: a party that led last time wins about 3 in 4; one within 3 points, about half the time against gentle rivals and a quarter against sharp ones; one 3 to 8 points behind, about 1 in 5; one further back, never (0 of 156 at every difficulty), and it is squeezed to a median 24 points behind. The quick start drew its seat from all 36 for whichever party was picked, so about 4 draws in 10 could not be won, and nothing said so.
+- **A fair draw.** The quick start and "Random close race" now draw only seats where the chosen party led or was within 3 points (`fairSeats`: 15 to 17 seats for each party). Changing party on the quick start draws again if the seat shown is out of reach. Any seat can still be picked by hand.
+- **Told where you stand.** Favourite, close fight, uphill or long shot (`outlook.ts`), shown on the quick start, on each party card of a by-election, and above the map while the campaign runs.
+- **A goal that fits.** A party not expected to win is judged on its share of the vote: an uphill campaign has to add 2 points to its last share, a long shot has only to hold its own (which the autoplayer manages about one time in four). Meeting it gives a new verdict, "beat expectations", in place of "there is no second prize". A favourite or a close fight is still judged on the seat alone.
+- Not changed: the size of any campaign effect. A leader who campaigns wins and one who sits idle loses (76% against 9%), so the choices already matter where the seat is in reach.
+
+**Before launch**
+- **A state's results load when the state is first wanted** (`loadState` in `world.ts`), not with the page. The main script went from 1,139 kB to 951 kB (345 to 299 kB compressed). Saved games are checked for the states they need before the first screen is drawn, and an imported save fetches its state before it is read. The tests register every state up front (`src/data/allStates.ts`, never imported by the game). Both languages' text still loads together (about 330 kB of source): splitting it by language is the next saving.
+- **On a phone** the language, theme, display and sound switches fold into one "Settings" button, and the days and funds are no longer repeated in the header when the bar at the bottom shows them, so the map is on the first screen. No tab scrolls sideways at 375 points wide. Checked in an emulated phone, not on a real one.
+
+**Small wins**
+- **More red-to-green bars:** government stability and public trust on the Orders tab, each rival party's unity beside its leader on the Deals tab, and the nation figures.
+- **Tooltips for the game's own words:** safe, leaning and marginal on the map legend; standing orders, stability, public trust and dossier on the Orders tab.
+- **After a by-election, one contest is suggested** with a button that starts it: Perak for PS, Pahang for BP and PT, the home state for a party of Sabah or Sarawak.
+- **Two ways out of an empty chest.** A lender advances the next weeks of income at 80 sen in the ringgit and takes that income as it arrives (three weeks' worth in a campaign, eight between elections; one loan at a time; none in the last week, when no income is left to lend against; `loan.ts`, saved as `PartyCampaign.loan`, optional). The donor with strings already existed as the tycoon action and the donors order; the tycoon is now on offer in by-elections too.
+- **A by-election count with a commentary.** 18 boxes in place of 12, the last five slower while the seat is open. Each box gets a line (first box, the lead changing hands, closing, pulling away), and a desk that leans one way once the lead is more than half the votes still out, takes that back if a box goes the other way, and calls the seat only when the votes left cannot change it (`countStory`). The seat-by-seat night of a larger election is unchanged.
+
+**Rival leaders with stats and tempers** *(overturns "rival leaders are all ordinary")*
+- Each of the nine leaders has four stats that add up to twelve, like every backstory (`LEADER_STATS` in `cast.ts`): the reformer fills a hall and is believed, the old hand organises and schemes, the patriarch of Sarawak organises above all. They work on a rival exactly as the player's leader's do on the player: the crowd at a rally, the branches, how hard an attack lands and how well one is shrugged off.
+- **The party's own leader is no longer a blank.** A player who picks no backstory leads with their party's leader and that leader's stats. A party founded from nothing still gets an ordinary leader.
+- **Tempers.** Each leader takes what the player does to them in their own way (`TEMPER`): an insult lands 1.5 times as hard on the proud leader of LEGASI and 0.6 times on the patient one of GBK; a kindness counts 1.3 times with the opportunist of GBS. It scales every change in a rival's relations with the player. The Deals tab shows each leader's stats and a line on their temper.
+- **Balance.** Averaged over ten general elections played by the autoplayer, the three national parties finish where they did before (PS 74.7, BP 26.9, PT 73.0 seats, against 73.8, 25.5 and 75.7 with ordinary leaders). A single fixed seed, though, moves by several seats under any change to the rules, so the six set challenges were given new seeds and "The comeback" now asks for 10 seats gained, not 15.
+- Not done from the same answers: rivals still have no staff, endorsers or the eight extra actions.
+
+**Kingmakers** *(overturns "the three national coalitions only" for national contests)*
+- GBK, GBS and LEGASI can be led in a general election, the hung-parliament talks and a career, offered after the three national parties. They stand only at home, so there is no majority to be won: the game is whom to put in office and what to take for it. The coalition talks already let a player back a rival's claim. Two full terms as each of the three run through cleanly under the autoplayer. Nothing was written specially for them: no tutorial, no events of their own, and "winning" is still measured as for anyone else.
+
+**Partners who plot**
+- A partner in the player's government now drifts towards the door when it has a grievance (`plots.ts`): most of all when the player is on cold terms with it or has let a promise to it fall overdue, and a little when the government is shaky or disliked. It drifts back when the grievance is gone.
+- **Signs to read.** The Orders tab says how each partner is (content, restless, plotting). At 35 of 100 the papers notice ("seen dining with the opposition"). At 65 its leader comes with an ultimatum: find money for their constituencies (RM150k at general scale, credibility −1), give them their way (unity −6, stability +4), or tell them to do their worst (they back down more often from a steady government and a leader they do not hate; otherwise they leave at once). At 100, unanswered, they walk.
+- When one partner brings an ultimatum the others step back 20, so they do not all come in the same month.
+- **Measured** over six first terms as head of government with nothing done to keep partners happy: about two ultimatums a term; conceding each keeps every partner; daring each loses one partner in most terms and brought the government down in one of the six.
+- Saved as `Career.plots` (optional, so no save version change). Only the player's own government is watched: a rival's partners still leave as they did.
+
+**Decided after the second interview (6 Oct 2026)**
+- **No licence yet.** The repository carries none: all rights stay with the designer until one is chosen.
+- **Newer results may be downloaded** from the same Tindak Malaysia repository, where it has them.
+- **Illustrated portraits are to be generated**, one sample leader first, and the rest only if the style is liked.

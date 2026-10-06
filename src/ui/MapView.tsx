@@ -5,6 +5,7 @@ import type { RegionId, SeatClass } from '../sim/types';
 import { useStore } from '../state/store';
 import { FIT, holdPoint, viewTransform, zoomBy, type View } from './mapGesture';
 import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay } from './hooks';
+import { Term } from './Term';
 
 interface MapShape { d: string; bbox: [number, number, number, number] }
 interface MapData {
@@ -298,7 +299,7 @@ export function MapView(props: {
         ))}
         <span className="legend-gap" />
         {(['safe', 'leaning', 'marginal'] as const).map((c) => (
-          <span key={c}><i className="swatch" style={{ opacity: CLASS_OPACITY[c] }} />{t(`legend.${c}`)}</span>
+          <span key={c}><i className="swatch" style={{ opacity: CLASS_OPACITY[c] }} /><Term id={c}>{t(`legend.${c}`)}</Term></span>
         ))}
         {anyStale && <span><i className="swatch" style={{ opacity: STALE_OPACITY }} />{t('legend.unpolled')}</span>}
         {anyUndeclared && <span><i className="swatch undeclared" />{t('legend.undeclared')}</span>}

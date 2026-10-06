@@ -12,6 +12,8 @@ import { DAYS_PER_WEEK, type Campaign, type Pact, type PartyCampaign } from './t
 
 /** Parties that can be played, where they campaign in the contest. */
 const PLAYABLE_IDS: PartyId[] = ['ps', 'bp', 'pt'];
+/** The parties of Sabah and Sarawak that can be led across the whole country, in a general election or a career. */
+const KINGMAKER_IDS: PartyId[] = ['gbk', 'gbs', 'legasi'];
 /** The home ground of the parties of Sabah and Sarawak. The larger of them can be played there: in a state election or a by-election. */
 const HOME_GROUND: Partial<Record<PartyId, string>> = { gbk: 'sarawak', gbs: 'sabah', legasi: 'sabah', cahaya: 'sarawak', suara: 'sabah' };
 /** A national party brings a share of its chest to a local contest; a party fighting on its home ground brings far more of its own. */
@@ -75,7 +77,13 @@ export function atHome(world: World, p: number): boolean {
 /** Parties the player can lead in this contest: a party on its home ground first, then the national ones. */
 export function playable(world: World): number[] {
   const all = PARTY_IDS.map((_, p) => p);
-  const offered = [...all.filter((p) => atHome(world, p) && !isMinor(p)), ...all.filter((p) => PLAYABLE_IDS.includes(PARTY_IDS[p]))];
+  // Across the whole country the parties of Sabah and Sarawak can be led as kingmakers: they cannot win a majority, but they can decide who governs.
+  const national = world.rules.kind === 'general' || world.rules.kind === 'hung';
+  const offered = [
+    ...all.filter((p) => atHome(world, p) && !isMinor(p)),
+    ...all.filter((p) => PLAYABLE_IDS.includes(PARTY_IDS[p])),
+    ...(national ? all.filter((p) => KINGMAKER_IDS.includes(PARTY_IDS[p])) : []),
+  ];
   // In a one-seat contest the party must also be on that ballot, or it could do nothing there.
   return offered.filter((p) => campaigns(world, p) && (world.seats.length > 1 || world.baseline.contesting[0][p]));
 }

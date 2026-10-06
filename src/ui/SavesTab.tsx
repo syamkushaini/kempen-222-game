@@ -3,7 +3,8 @@ import { PARTIES } from '../data/parties';
 import { getWorld } from '../data/world';
 import type { StringKey } from '../i18n/strings';
 import { PARTY_IDS } from '../sim/types';
-import { parseSave } from '../state/game';
+import { loadScenario } from '../data/world';
+import { parseSave, scenarioIn } from '../state/game';
 import { MANUAL_SLOTS, type SaveMeta, type SlotId } from '../state/saves';
 import { saveStore, useStore } from '../state/store';
 import { downloadGame } from './download';
@@ -66,7 +67,10 @@ export function SaveSlots() {
 
   const importFile = async (file: File | undefined) => {
     if (!file) return;
-    const parsed = parseSave(await file.text());
+    const text = await file.text();
+    // A game played in a state needs that state's results before it can be checked.
+    await loadScenario(scenarioIn(text) ?? '').catch(() => {});
+    const parsed = parseSave(text);
     if (parsed.ok) {
       loadGame(parsed.state);
       setMessage({ text: t('saves.imported'), bad: false });

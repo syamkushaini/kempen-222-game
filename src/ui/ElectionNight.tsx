@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { flipKind } from '../sim/campaign/night';
+import { countStory, flipKind } from '../sim/campaign/night';
 import { countBatches, declarationOrder, electionResult, summarise } from '../sim/campaign/turn';
 import { majorityLine } from '../sim/election';
-import { N_PARTIES } from '../sim/types';
+import { loadScenario, STATE_SEATS } from '../data/world';
+import { N_PARTIES, PARTY_IDS, type StateId } from '../sim/types';
 import { useStore } from '../state/store';
 import { lastOutcome, partyColor, partyName, partyShort, regionLabel, seatName, useFormat, useT, useWorld, type SeatDisplay } from './hooks';
 import { sound } from './audio';
@@ -212,9 +213,31 @@ function SeatBySeat() {
   );
 }
 
-const BOXES = 12;
+const BOXES = 18;
+/** A box every so often; the last few come slower while the seat is still open. */
+const BOX_MS = { usual: 1300, tense: 2300 };
 
 /** A single seat's count, box by box, with the lead changing hands as boxes come in. */
+/** The state each party is pointed to after its first by-election: one where it is in the fight, and for a state's own party, its home. */
+const NEXT_STATE: Partial<Record<(typeof PARTY_IDS)[number], StateId>> = { ps: 'perak', bp: 'pahang', pt: 'pahang', gbk: 'sarawak', gbs: 'sabah', legasi: 'sabah' };
+
+/** After a by-election, one contest to try next, why, and a button that starts it. Challenges have their own list. */
+function NextContest() {
+  const t = useT();
+  const player = useStore((s) => s.game!.campaign.player);
+  const challenge = useStore((s) => s.game!.campaign.challenge?.goal);
+  const startCampaign = useStore((s) => s.startCampaign);
+  const state = NEXT_STATE[PARTY_IDS[player]];
+  if (!state || challenge) return <p className="note">{t('count.next')}</p>;
+  const scenario = `state:${state}`;
+  return (
+    <p className="note next-contest">
+      <span>{t('count.next.state', { state: t(`state.${state}`), party: partyName(t, player), n: STATE_SEATS[state] ?? 0 })}</span>
+      <button className="btn small" onClick={() => void loadScenario(scenario).then(() => startCampaign({ name: '', scenario, player, difficulty: 'normal' }))}>{t('count.next.go')} ▸</button>
+    </p>
+  );
+}
+
 function ByElectionCount() {
   const t = useT();
   const f = useFormat();
@@ -234,11 +257,14 @@ function ByElectionCount() {
   const [sharing, setSharing] = useState(false);
   const finished = count >= BOXES;
 
+  const story = useMemo(() => countStory(boxes), [boxes]);
+  const line = count > 0 ? story[count - 1] : null;
+  const tense = BOXES - count <= 5 && line?.call !== 'called';
   useEffect(() => {
     if (!playing || finished) return;
-    const id = setInterval(() => setCount((c) => Math.min(BOXES, c + 1)), 1300);
-    return () => clearInterval(id);
-  }, [playing, finished]);
+    const id = setTimeout(() => setCount((c) => Math.min(BOXES, c + 1)), tense ? BOX_MS.tense : BOX_MS.usual);
+    return () => clearTimeout(id);
+  }, [playing, finished, count, tense]);
   useEffect(() => { if (finished) finishNight(); }, [finished, finishNight]);
 
   const seat = result.seats[0];
@@ -276,6 +302,11 @@ function ByElectionCount() {
             {finished ? t('count.winner', { party: partyName(t, seat.winner) })
               : leader >= 0 ? t('count.leading', { party: partyName(t, leader) }) : t('night.waiting')}
           </p>
+          {line && !finished && (
+            <p className={`desk-call ${line.call}`} role="status">
+              <strong>{t('count.desk')}</strong> {t(`count.status.${line.call}`, { party: partyName(t, line.leader) })}
+            </p>
+          )}
           <ul className="result-bars">
             {order.map(({ p, now }) => (
               <li key={p} className={p === campaign.player ? 'mine' : ''}>
@@ -287,6 +318,23 @@ function ByElectionCount() {
               </li>
             ))}
           </ul>
+          {count > 0 && (
+            <ol className="count-story" aria-live="polite">
+              {story.slice(Math.max(0, count - 4), count).reverse().map((s, i) => {
+                const n = count - i;
+                const vars = { party: partyName(t, s.leader), second: partyName(t, s.second), n: f.int(s.lead) };
+                return (
+                  <li key={n} className={i === 0 ? 'latest' : ''}>
+                    <span className="muted num">{n}</span>
+                    <span>
+                      {t(`count.story.${s.kind}`, vars)}
+                      {s.desk && <strong> {t(`count.desk.${s.desk}`, vars)}</strong>}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
           {!finished && (
             <div className="button-row">
               <button className="btn" onClick={() => setPlaying((v) => !v)}>{playing ? t('night.pause') : t('night.play')}</button>
@@ -307,7 +355,7 @@ function ByElectionCount() {
               <div><dt>{t('summary.rank')}</dt><dd className="num">#{1 + seat.votes.filter((v) => v > seat.votes[campaign.player]).length}</dd></div>
             </dl>
             <Review campaign={campaign} result={result} />
-            <p className="note">{t('count.next')}</p>
+            <NextContest />
             <div className="button-row">
               <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>
               <button className="btn" onClick={restart}>{t('summary.restart')}</button>

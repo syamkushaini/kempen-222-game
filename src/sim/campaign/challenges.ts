@@ -5,7 +5,9 @@ import type { Summary } from './night';
 // faces the same hidden swing and can compare how they did. The goals were set
 // by playing each contest with the game's own autoplayer, which does a sound
 // but unimaginative job: each goal asks for about what it manages, or a little
-// more, where an idle player falls well short.
+// more, where an idle player falls well short. They were set again (6 Oct 2026)
+// when the rival leaders were given stats of their own: any change to the rules
+// reshuffles what a fixed seed produces, so the seeds were chosen afresh.
 
 export type Goal =
   | { kind: 'win' }
@@ -27,10 +29,10 @@ export interface ChallengeDef {
 export const CHALLENGES: ChallengeDef[] = [
   { id: 'underdog', scenario: byElectionId('P.061'), party: 'bp', seed: 7, goal: { kind: 'win' } },
   { id: 'blind', scenario: byElectionId('P.057'), party: 'pt', seed: 3, fog: true, noisy: true, goal: { kind: 'win' } },
-  { id: 'perlis', scenario: 'state:perlis', party: 'ps', seed: 3, goal: { kind: 'seats', atLeast: 3 } },
-  { id: 'perak', scenario: 'state:perak', party: 'ps', seed: 6, goal: { kind: 'seats', atLeast: 30 } },
-  { id: 'pahang', scenario: 'state:pahang', party: 'bp', seed: 9, goal: { kind: 'seats', atLeast: 22 } },
-  { id: 'comeback', scenario: 'general', party: 'bp', seed: 1, goal: { kind: 'gain', atLeast: 15 } },
+  { id: 'perlis', scenario: 'state:perlis', party: 'ps', seed: 1, goal: { kind: 'seats', atLeast: 3 } },
+  { id: 'perak', scenario: 'state:perak', party: 'ps', seed: 7, goal: { kind: 'seats', atLeast: 30 } },
+  { id: 'pahang', scenario: 'state:pahang', party: 'bp', seed: 3, goal: { kind: 'seats', atLeast: 22 } },
+  { id: 'comeback', scenario: 'general', party: 'bp', seed: 3, goal: { kind: 'gain', atLeast: 10 } },
 ];
 
 export const challengeById = (id: string | undefined): ChallengeDef | undefined => CHALLENGES.find((c) => c.id === id);

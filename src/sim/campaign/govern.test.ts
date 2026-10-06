@@ -4,7 +4,12 @@ import { lastElection } from '../election';
 import { Rng } from '../rng';
 import { BLOC_IDS, PARTY_IDS } from '../types';
 import { answerEvent, startCareer } from './career';
+import { TEMPER } from './cast';
 import { relation } from './diplomacy';
+import { choiceCost, ULTIMATUM_MONEY } from './events';
+import { bluffChance, partnerMood, plotPressure, plotsWeek } from './plots';
+import { scaled } from './actions';
+import { isValidCampaign } from './validate';
 import {
   agenda, deficit, deliver, dueWeeks, economicMood, formCabinet, governWeek, looseness, makeObligations, MAX_BILLS, prepWeeks, reshuffle,
   resolveHouseVote, resolveVote, setBudget, standstill, tableBill, tableBudget, whipCount,
@@ -25,6 +30,9 @@ const govern = (c: Campaign, weeks: number, seed = 1) => {
   const rng = new Rng(seed);
   for (let w = 0; w < weeks; w++) { governWeek(c, rng); c.career!.week++; }
 };
+
+/** A change in relations as the other leader takes it: their temper scales what the player does to them. */
+const felt = (who: keyof typeof TEMPER, by: number) => Math.round(by * (by < 0 ? TEMPER[who].grudge : TEMPER[who].warmth));
 
 describe('the economy', () => {
   it('holds steady on a standstill budget', () => {
@@ -89,8 +97,8 @@ describe('the budget', () => {
     expect(k.mood[bloc('agri')][PS]).toBeLessThan(0);
     expect(k.mood[bloc('urban_lib')][PS]).toBe(liberal);
     expect(k.mood[bloc('civil')][BP]).toBeGreaterThan(0); // partners share the credit
-    expect(relation(c, PS, BP)).toBe(withBp + 3);
-    expect(relation(c, PS, GBK)).toBe(withGbk - 3);
+    expect(relation(c, PS, BP)).toBe(withBp + felt('bp', 3));
+    expect(relation(c, PS, GBK)).toBe(withGbk + felt('gbk', -3));
     expect(c.news.at(-1)!.key).toBe('news.gov.budget.steady');
   });
 
@@ -158,7 +166,7 @@ describe('the cabinet', () => {
     expect(reshuffle(c, theirs.portfolio)).toBe(true);
     expect(k.cabinet.find((m) => m.portfolio === theirs.portfolio)!.party).toBe(PS);
     expect(k.government.stability).toBe(stability - 4);
-    expect(relation(c, PS, BP)).toBe(withBp - 8);
+    expect(relation(c, PS, BP)).toBe(withBp + felt('bp', -8));
     expect(k.cabinet.map((m) => m.portfolio)).toEqual([...PORTFOLIO_IDS]);
     expect(new Set(k.cabinet.map((m) => m.name)).size).toBe(PORTFOLIO_IDS.length);
     expect(c.news.at(-1)!.key).toBe('news.gov.reshuffle');
@@ -290,9 +298,9 @@ describe('bills', () => {
       return { rel: relation(s, player, PS) - before.rel, gig: k.mood[bloc('gig')][player] - before.gig, stab: k.government.stability - before.stab, key: s.news.at(-1)!.key };
     };
     const yes = house(PT, 0), no = house(PT, 1), sat = house(PT, 2), rebel = house(BP, 1);
-    expect(yes.rel).toBe(5);
+    expect(yes.rel).toBe(felt('ps', 5));
     expect(yes.gig).toBeCloseTo(0.024, 6);
-    expect(no.rel).toBe(-5);
+    expect(no.rel).toBe(felt('ps', -5));
     expect(no.gig).toBeCloseTo(-0.024, 6);
     expect(sat).toMatchObject({ rel: 0, gig: 0 });
     expect(rebel.rel).toBe(-15);
@@ -357,7 +365,7 @@ describe('promises to partners', () => {
     expect(deliver(c, 2)).toBe(false); // the same bill covers both
     resolveVote(base, c, vote('demand:autonomy'), 2);
     expect(k.obligations.every((o) => o.done)).toBe(true);
-    expect(relation(c, PS, GBK)).toBe(withGbk + 8);
+    expect(relation(c, PS, GBK)).toBe(withGbk + felt('gbk', 8));
     expect(deliver(career(BP), 0)).toBe(false);
   });
 
@@ -378,10 +386,112 @@ describe('promises to partners', () => {
     govern(c, 52);
     expect(relation(c, PS, BP)).toBe(withBp);
     govern(c, 2);
-    expect(relation(c, PS, BP)).toBe(withBp - 12);
+    expect(relation(c, PS, BP)).toBe(withBp + felt('bp', -12));
     expect(k.obligations[0].due).toBe(105);
     expect(c.news.some((n) => n.key === 'news.gov.overdue')).toBe(true);
     expect(k.government.stability).toBeLessThan(60);
   });
 });
 
+
+describe('partners who plot', () => {
+  /** A government in good order, in which nobody has a complaint. */
+  const settled = () => {
+    const c = career();
+    const g = c.career!.government;
+    g.stability = 80; g.trust = 60;
+    c.career!.obligations = [];
+    for (const p of g.partners) c.relations[PS][p] = c.relations[p][PS] = 30;
+    return c;
+  };
+  const chill = (c: Campaign, p: number) => { c.relations[PS][p] = c.relations[p][PS] = -50; };
+
+  it('stay put while they have no complaint', () => {
+    const c = settled();
+    for (const p of c.career!.government.partners) expect(plotPressure(c, p)).toBe(0);
+    for (let w = 0; w < 30; w++) plotsWeek(base, c);
+    expect(c.career!.plots).toBeUndefined();
+    expect(c.career!.government.partners.every((p) => partnerMood(c, p) === 'content')).toBe(true);
+  });
+
+  it('drift towards the door when left in the cold, and the papers notice before the ultimatum comes', () => {
+    const c = settled();
+    chill(c, BP);
+    expect(plotPressure(c, BP)).toBeCloseTo(0.7, 6);
+    expect(plotPressure(c, GBK)).toBe(0);
+    for (let w = 0; w < 51; w++) plotsWeek(base, c); // 35.7 of 100
+    expect(partnerMood(c, BP)).toBe('restless');
+    expect(c.news.filter((n) => n.key === 'news.plot.murmur')).toHaveLength(1);
+    expect(c.inbox).toHaveLength(0);
+    for (let w = 0; w < 43; w++) plotsWeek(base, c); // 65.8 of 100
+    expect(partnerMood(c, BP)).toBe('plotting');
+    expect(c.inbox).toMatchObject([{ kind: 'event', event: 'ultimatum', from: BP }]);
+    expect(partnerMood(c, GBK)).toBe('content');
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
+    // A partner brought back in from the cold settles down again.
+    c.relations[PS][BP] = c.relations[BP][PS] = 40;
+    c.inbox = [];
+    for (let w = 0; w < 140; w++) plotsWeek(base, c);
+    expect(c.career!.plots).toBeUndefined();
+  });
+
+  it('can be bought off or given their way, each at its own price', () => {
+    const paid = settled();
+    paid.career!.plots = { [BP]: 70 };
+    const funds = paid.parties[PS]!.funds, cred = paid.career!.credibility;
+    answerEvent(base, paid, { id: 1, kind: 'event', from: BP, event: 'ultimatum' }, 0);
+    expect(paid.parties[PS]!.funds).toBe(funds - scaled(base, ULTIMATUM_MONEY));
+    expect(paid.career!.credibility).toBe(cred - 1);
+    expect(paid.career!.plots).toBeUndefined();
+    expect(paid.news.at(-1)!.key).toBe('event.ultimatum.r0');
+    expect(choiceCost(base, 'ultimatum', 0)).toBe(scaled(base, ULTIMATUM_MONEY));
+    expect(choiceCost(base, 'ultimatum', 1)).toBe(0);
+
+    const gave = settled();
+    gave.career!.plots = { [BP]: 70 };
+    const unity = gave.parties[PS]!.unity;
+    answerEvent(base, gave, { id: 1, kind: 'event', from: BP, event: 'ultimatum' }, 1);
+    expect(gave.parties[PS]!.unity).toBe(unity - 6);
+    expect(gave.career!.government.stability).toBe(84);
+    expect(gave.career!.plots).toBeUndefined();
+  });
+
+  it('may back down when dared, or may go', () => {
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 40 && seen.size < 2; seed++) {
+      const c = settled();
+      c.rng = seed * 2654435761 >>> 0;
+      c.career!.plots = { [BP]: 70 };
+      chill(c, BP);
+      c.career!.government.stability = 50;
+      expect(bluffChance(c, BP)).toBeGreaterThan(0.15);
+      expect(bluffChance(c, BP)).toBeLessThan(0.8);
+      answerEvent(base, c, { id: 1, kind: 'event', from: BP, event: 'ultimatum' }, 2);
+      const stayed = c.career!.government.partners.includes(BP);
+      seen.add(stayed ? 'stayed' : 'left');
+      if (stayed) expect(c.career!.plots).toEqual({ [BP]: 45 });
+      else {
+        expect(c.news.some((n) => n.key === 'news.term.walkout')).toBe(true);
+        expect(c.career!.plots).toBeUndefined();
+      }
+    }
+    expect([...seen].sort()).toEqual(['left', 'stayed']);
+  });
+
+  it('walk out in the end if nothing changes', () => {
+    const c = settled();
+    chill(c, GBS);
+    c.career!.plots = { [GBS]: 99.5 };
+    plotsWeek(base, c);
+    expect(c.career!.government.partners).not.toContain(GBS);
+    expect(c.news.some((n) => n.key === 'news.term.walkout')).toBe(true);
+    expect(c.career!.plots).toBeUndefined();
+  });
+
+  it('are nobody’s business but the head of government’s', () => {
+    const c = career(BP); // a partner in someone else's government
+    c.career!.plots = { [GBK]: 50 };
+    plotsWeek(base, c);
+    expect(c.career!.plots).toBeUndefined();
+  });
+});

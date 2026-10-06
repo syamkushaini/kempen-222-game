@@ -1,9 +1,11 @@
+import { PARTY_IDS } from '../types';
+import { LEADER_STATS } from './cast';
 import { ROLE_IDS, STAT_IDS, type BackstoryId, type Campaign, type Leader, type RoleId, type StatId } from './types';
 
-// What the player's leader and their team change about the rules. Kept free
-// of other imports so that any part of the simulation can ask.
+// What the leaders and the player's team change about the rules. Kept free of
+// imports that reach back into the simulation, so that any part of it can ask.
 
-/** An ordinary leader: three at everything. Rival leaders are all ordinary, so difficulty stays a matter of skill. */
+/** An ordinary leader: three at everything. What the player leads with unless they choose a past. */
 export const neutralLeader = (): Leader => ({ backstory: null, stats: STAT_IDS.map(() => 3) });
 
 /**
@@ -26,12 +28,17 @@ export const BACKSTORIES: Record<BackstoryId, number[]> = {
   activist: [4, 2, 1, 5],
 };
 
-export const makeLeader = (backstory: BackstoryId | null): Leader =>
-  backstory ? { backstory, stats: [...BACKSTORIES[backstory]] } : neutralLeader();
+/** What the leader a party already has is good at: ordinary, for a party with no leader in the cast. */
+export const partyLeaderStats = (p: number): number[] => [...(LEADER_STATS[PARTY_IDS[p] as keyof typeof LEADER_STATS] ?? STAT_IDS.map(() => 3))];
 
-/** How good the leader of a party is at something. Only the player's leader is anything but ordinary. */
+/** The player's leader: someone with a past of the player's choosing, or the leader the party already has. */
+export const makeLeader = (backstory: BackstoryId | null, party?: number): Leader =>
+  backstory ? { backstory, stats: [...BACKSTORIES[backstory]] } : party === undefined ? neutralLeader() : { backstory: null, stats: partyLeaderStats(party) };
+
+/** How good the leader of a party is at something: the player's own leader, or the rival party's as the cast gives them. */
 export function stat(c: Campaign, p: number, id: StatId): number {
-  return p === c.player ? c.team.leader.stats[STAT_IDS.indexOf(id)] ?? 3 : 3;
+  const i = STAT_IDS.indexOf(id);
+  return p === c.player ? c.team.leader.stats[i] ?? 3 : LEADER_STATS[PARTY_IDS[p] as keyof typeof LEADER_STATS]?.[i] ?? 3;
 }
 
 /** What a stat does to the things it touches: 8% either way for each point from ordinary. */

@@ -210,7 +210,17 @@ function withOffice(campaign: Campaign): unknown {
   }
 }
 
-/** Reads a save from text, checking it thoroughly: the text may be damaged or hand-edited. */
+/** The scenario a saved game was played in, read without checking anything else: enough to know which state's results it needs. */
+export function scenarioIn(text: string): string | null {
+  try {
+    const scenario = (JSON.parse(text) as { campaign?: { scenario?: unknown } } | null)?.campaign?.scenario;
+    return typeof scenario === 'string' ? scenario : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Reads a save from text, checking it thoroughly: the text may be damaged or hand-edited. A game in a state needs that state's results loaded first. */
 export function parseSave(text: string): ParseResult {
   let raw: unknown;
   try { raw = JSON.parse(text); } catch { return { ok: false, error: 'not-json' }; }

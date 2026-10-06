@@ -72,6 +72,8 @@ export interface PartyCampaign {
   unity: number;
   /** How many times each one-off or fading action has been taken this campaign, by action id. Absent until used. */
   plays?: Record<string, number>;
+  /** What is still owed to a lender who advanced the party's income. Absent when nothing is owed. */
+  loan?: number;
   /** Money spent on this campaign so far, which the law puts a limit on. */
   spent: number;
   /** The Election Commission has already fined the party for overspending in this campaign. */
@@ -340,6 +342,8 @@ export interface Career {
   founded?: boolean;
   /** The state of the country beyond the budget's figures; absent in a game saved before it existed. */
   nation?: Nation;
+  /** How far each partner in the player's government has gone towards walking out, 0 to 100, by party. Absent while none has a complaint. */
+  plots?: Record<number, number>;
   /** Which parliament this is, starting at 1. */
   term: number;
   /** Week of the term, starting at 1. The election campaign follows the last one. */

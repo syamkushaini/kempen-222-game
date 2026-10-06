@@ -3,7 +3,8 @@ import { majorityLine } from '../sim/election';
 import { scaled } from '../sim/campaign/actions';
 import { BY_EFFORT, holderOf, ROUNDS, STATE_EFFORT } from '../sim/campaign/contests';
 import { COST, pactPreview } from '../sim/campaign/diplomacy';
-import { canChoose, EVENTS, gambleChance, type Choice, type Effect } from '../sim/campaign/events';
+import { canChoose, EVENTS, gambleChance, ULTIMATUM_MONEY, type Choice, type Effect } from '../sim/campaign/events';
+import { bluffChance } from '../sim/campaign/plots';
 import { billDef, confidenceCount, deficit, looseness, standstill, whipCount } from '../sim/campaign/govern';
 import { billName } from './GovernmentTab';
 import type { Scene } from '../sim/campaign/types';
@@ -115,6 +116,7 @@ function SceneCard({ scene }: { scene: Scene }) {
         {vacant !== undefined && (
           <p className="note">{t('scene.by.seat', { seat: world.seats[vacant].name, party: partyName(t, holderOf(world, campaign, scene.seat!)), pct: (lastOutcome(world).seats[vacant].margin * 100).toFixed(1) })}</p>
         )}
+        {id === 'ultimatum' && from !== null && <p className="note">{t('scene.ultimatum.from', { leader: leaderName(t, from), party: partyName(t, from) })}</p>}
         {voting.length > 0 && (
           <p className="note">{t('scene.states.list', { states: voting.map((st) => t('scene.states.holds', { state: regionLabel(t, world, st), party: k.states[st] === undefined ? '–' : partyShort(t, k.states[st]) })).join(' · ') })}</p>
         )}
@@ -128,6 +130,11 @@ function SceneCard({ scene }: { scene: Scene }) {
       ],
       byElection: BY_EFFORT.map((e, i) => t(`hint.by.${i}` as StringKey, { rm: f.rm(scaled(world, e.money)) })),
       statePolls: STATE_EFFORT.map((e, i) => t(`hint.states.${i}` as StringKey, { rm: f.rm(scaled(world, e.money)) })),
+      ultimatum: from === null ? [] : [
+        t('hint.ultimatum.0', { rm: f.rm(scaled(world, ULTIMATUM_MONEY)) }),
+        t('hint.ultimatum.1'),
+        fog ? t('hint.ultimatum.2.fog') : t('hint.ultimatum.2', { pct: f.pct(bluffChance(campaign, from), 0) }),
+      ],
       motion: [
         t('hint.motion', { n: confidenceCount(world, campaign), need: majorityLine(world) }),
         `${t('hint.stability')} +8 · ▲ ${t('hint.fiscal')} · ${t('hint.motion', { n: confidenceCount(world, campaign, () => 0.08), need: majorityLine(world) })}`,

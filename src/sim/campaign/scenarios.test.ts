@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { BYELECTION_SEAT, BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, STATE_SCENARIOS, vacancyOf, VACANCIES, world as general } from '../../data/world';
+import { BYELECTION_SEAT, BYELECTION_SEATS, byElectionId, fairSeats, getWorld, SCENARIOS, STATE_SCENARIOS, vacancyOf, VACANCIES, world as general } from '../../data/world';
 import { emptyDynamics } from '../dynamics';
 import { transferRate } from '../transfer';
 import { lastElection, majorityLine, projectElection } from '../election';
 import { PARTY_IDS } from '../types';
 import { actionCost, canDo } from './actions';
 import { breakPact, inPact } from './diplomacy';
-import { flipKind } from './night';
+import { countStory, flipKind } from './night';
+import { borrow, loanOffer } from './loan';
+import { outlook, outlookOf, par } from './outlook';
 import { pollCost } from './polls';
 import {
   autoPlayWeek, campaigns, countBatches, electionResult, endWeek, newCampaign, playable, playerAct, playerPoll,
@@ -94,7 +96,7 @@ describe('who campaigns', () => {
     expect(campaigns(perak, P('legasi'))).toBe(false);
     expect(campaigns(perak, P('gbk'))).toBe(false);
     expect(playable(perak).map((p) => PARTY_IDS[p])).toEqual(['ps', 'bp', 'pt']);
-    expect(playable(general)).toHaveLength(3);
+    expect(playable(general)).toHaveLength(6); // the three national parties, and the kingmakers of Sabah and Sarawak
     const c = newCampaign(perak, { player: P('ps'), difficulty: 'normal', seed: 3 });
     expect(c.parties.map((p) => p !== null)).toEqual(PARTY_IDS.map((_, i) => i < 3));
   });
@@ -181,8 +183,64 @@ describe('playing the smaller contests', () => {
     const done = finish(by, 9, true);
     const result = electionResult(by, done)!;
     const s = summarise(by, done, result);
-    expect(['won', 'defeated']).toContain(s.verdict);
+    expect(['won', 'creditable', 'defeated']).toContain(s.verdict);
     expect(s.seats).toBe(result.tally[P('ps')]);
+  });
+
+  it('tells a party where it stands, and draws it a seat it can fairly be asked to win', () => {
+    expect(outlookOf([40, 30, 30], 0)).toBe('favourite');
+    expect(outlookOf([40, 38, 22], 1)).toBe('close');
+    expect(outlookOf([40, 35, 25], 1)).toBe('uphill');
+    expect(outlookOf([40, 35, 25], 2)).toBe('longShot');
+    for (const id of ['ps', 'bp', 'pt'] as const) {
+      const fair = fairSeats(P(id));
+      expect(fair.length, id).toBeGreaterThanOrEqual(10);
+      for (const seat of fair) {
+        expect(BYELECTION_SEATS).toContain(seat);
+        expect(['favourite', 'close'], seat).toContain(outlook(getWorld(byElectionId(seat))!, P(id)));
+      }
+    }
+    expect(outlook(perak, P('ps'))).toBeNull(); // only a single seat has a favourite
+  });
+
+  it('judges a party nobody expected to win on its share of the vote, not on the seat', () => {
+    // A seat where one of the three finished far behind: a long shot.
+    const seat = BYELECTION_SEATS.find((id) => ['ps', 'bp', 'pt'].some((x) => outlook(getWorld(byElectionId(id))!, P(x as 'ps')) === 'longShot'))!;
+    const w = getWorld(byElectionId(seat))!;
+    const p = (['ps', 'bp', 'pt'] as const).map(P).find((x) => outlook(w, x) === 'longShot')!;
+    const target = par(w, p)!;
+    const last = w.seats[0].last.votes;
+    expect(target).toBeCloseTo(last[p] / last.reduce((a, b) => a + b, 0), 6); // a long shot has only to hold its vote
+    const leader = last.indexOf(Math.max(...last));
+    const night = (share: number) => {
+      const votes = last.map((_, i) => (i === p ? share * 1000 : i === leader ? (1 - share) * 1000 : 0));
+      const c = newCampaign(w, { player: p, difficulty: 'normal', seed: 1 });
+      return summarise(w, c, { seats: [{ seatId: w.seats[0].id, winner: leader }], tally: last.map((_, i) => +(i === leader)), votes } as never).verdict;
+    };
+    expect(night(target + 0.01)).toBe('creditable');
+    expect(night(target - 0.01)).toBe('defeated');
+    expect(par(w, leader)).toBeNull(); // the favourite is judged on the seat alone
+  });
+
+  it('lends against income that is still to come, and takes that income until it is repaid', () => {
+    const c = newCampaign(by, { player: P('ps'), difficulty: 'normal', seed: 4 });
+    const pc = c.parties[P('ps')]!;
+    const offer = loanOffer(by, c)!;
+    expect(offer.weeks).toBe(2); // three weeks: income arrives twice more
+    expect(offer.advance).toBeLessThan(offer.owed);
+    const funds = pc.funds;
+    expect(borrow(by, c)).toBe(true);
+    expect(pc.funds).toBe(funds + offer.advance);
+    expect(pc.loan).toBe(offer.owed);
+    expect(loanOffer(by, c)).toBeNull(); // one loan at a time
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), by)).toBe(true);
+    endWeek(by, c);
+    expect(pc.funds).toBe(funds + offer.advance); // the week's income went to the lender
+    expect(pc.loan).toBeLessThan(offer.owed);
+    endWeek(by, c);
+    expect(pc.loan ?? 0).toBeLessThan(offer.owed / 4);
+    delete pc.loan;
+    expect(loanOffer(by, c)).toBeNull(); // the last week: no income left to lend against
   });
 
   it('counts a by-election in boxes that add up to the result', () => {
@@ -192,6 +250,14 @@ describe('playing the smaller contests', () => {
     expect(boxes).toHaveLength(10);
     expect(boxes.at(-1)).toEqual(result.seats[0].votes);
     for (let i = 1; i < boxes.length; i++) boxes[i].forEach((v, p) => expect(v).toBeGreaterThanOrEqual(boxes[i - 1][p] - 1));
+    // The commentary follows the boxes: it opens with the first, and ends with the seat called for whoever won it.
+    const story = countStory(boxes);
+    expect(story).toHaveLength(10);
+    expect(story[0].kind).toBe('first');
+    expect(story.at(-1)).toMatchObject({ call: 'called', leader: result.seats[0].winner });
+    const settled = story.findIndex((s) => s.call === 'called');
+    expect(story.slice(settled).every((s) => s.call === 'called')).toBe(true); // a final call is never taken back
+    expect(story.filter((s) => s.desk === 'settled')).toHaveLength(1);
   });
 });
 

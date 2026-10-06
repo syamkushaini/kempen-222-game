@@ -3,7 +3,7 @@ import { getWorld } from '../../data/world';
 import { EVENTS_EN, EVENTS_MS } from '../../i18n/events';
 import { Rng } from '../rng';
 import { BLOC_IDS, PARTY_IDS } from '../types';
-import { answerEvent, nextTerm, skipAhead, startCareer } from './career';
+import { answerEvent, nextTerm, resumeTerm, skipAhead, startCareer } from './career';
 import { eligible, EVENTS, resolveEvent } from './events';
 import { GOVERNING_EVENTS } from './eventList3';
 import { endDay } from './formation';
@@ -132,7 +132,10 @@ describe('the challenges of governing', () => {
     c.career!.nation = { health: 35, education: 35, standing: 55 };
     c.career!.tabled.lines.health = -1;
     const seen = new Set<string>();
-    for (let guard = 0; c.phase === 'term' && guard < 200; guard++) {
+    // A government can fall before its five years are up; the term carries on under whoever comes out of the talks.
+    for (let guard = 0; c.phase !== 'campaign' && guard < 600; guard++) {
+      if (c.phase === 'formation') { endDay(base, c); continue; }
+      if (c.phase === 'done') { resumeTerm(c); continue; }
       skipAhead(base, c, 400);
       while (c.inbox.length) { const scene = c.inbox.shift()!; if (scene.event) seen.add(scene.event); answerEvent(base, c, scene, 0); }
     }

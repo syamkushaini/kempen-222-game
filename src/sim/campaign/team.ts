@@ -14,7 +14,7 @@ const SALT = 0x7ea31c5d;
 /** A team with nobody in it yet: the leader, people who could be hired, and the press as it usually is. */
 export function emptyTeam(c: Omit<Campaign, 'team'>, backstory: BackstoryId | null = null): Team {
   return {
-    leader: makeLeader(backstory),
+    leader: makeLeader(backstory, c.player),
     staff: ROLE_IDS.map(() => null),
     pool: makePool(new Rng(c.seed ^ SALT)),
     keySeats: [],

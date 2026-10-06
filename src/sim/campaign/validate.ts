@@ -25,6 +25,7 @@ function isValidParty(x: unknown, world: World): x is PartyCampaign {
     (x.tycoon === 0 || x.tycoon === 1 || x.tycoon === 2) &&
     Array.isArray(x.visits) && x.visits.every((v) => typeof v === 'string') &&
     (x.plays === undefined || (isObj(x.plays) && Object.values(x.plays).every(isNum))) &&
+    (x.loan === undefined || (isNum(x.loan) && x.loan > 0)) &&
     isObj(x.chiefs) && Object.entries(x.chiefs).every(([st, level]) => world.states.includes(st) && (level === 1 || level === 2 || level === 3)) &&
     isNum(x.chiefFloor) && x.chiefFloor >= 0 &&
     isNum(x.unity) && x.unity >= 0 && x.unity <= 100 &&
@@ -158,6 +159,7 @@ function isValidCareer(x: unknown, world: World): boolean {
   return (
     (x.founded === undefined || typeof x.founded === 'boolean') &&
     (x.nation === undefined || (isObj(x.nation) && isNum(x.nation.health) && isNum(x.nation.education) && isNum(x.nation.standing))) &&
+    (x.plots === undefined || (isObj(x.plots) && Object.values(x.plots).every((v) => isNum(v) && v >= 0 && v <= 100))) &&
     isNum(x.term) && x.term >= 1 && isNum(x.week) && x.week >= 1 && isNum(x.length) && x.week <= x.length &&
     isValidOutcome(x.government) && typeof x.midterm === 'boolean' &&
     (r === null || (isObj(r) && isList(r.votes, isVotes, seats) && isList(r.turnout, isNum, seats) &&

@@ -1,4 +1,4 @@
-import { parseSave, serializeSave, type GameState } from './game';
+import { parseSave, scenarioIn, serializeSave, type GameState } from './game';
 
 /** The part of Web Storage we use; lets tests supply an in-memory stand-in. */
 export interface KeyValueStore {
@@ -63,6 +63,19 @@ export class SaveStore {
     } catch {
       return null;
     }
+  }
+
+  /** The scenarios of the games in the slots, so that what they need can be fetched before any of them is read. */
+  scenarios(): string[] {
+    const found: string[] = [];
+    for (const slot of [AUTO_SLOT, ...MANUAL_SLOTS] as SlotId[]) {
+      try {
+        const text = this.kv?.getItem(key(slot));
+        const scenario = text ? scenarioIn(text) : null;
+        if (scenario) found.push(scenario);
+      } catch { /* an unreadable slot needs nothing */ }
+    }
+    return found;
   }
 
   delete(slot: SlotId): void {

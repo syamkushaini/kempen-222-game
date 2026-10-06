@@ -209,6 +209,9 @@ export function gambleChance(c: Campaign, chance: number | 'unity' | 'cred' | 's
   return chance;
 }
 
+/** What buying off a partner who has come with an ultimatum costs, at general-election scale. */
+export const ULTIMATUM_MONEY = 150_000;
+
 /**
  * What a choice costs on the spot. A by-election and a round of state polls are priced by the effort chosen.
  * What a gamble may lose is not counted: a loss takes what is there.
@@ -217,6 +220,7 @@ export function choiceCost(world: World, event: string, choice: number): number 
   // `scaled` rounds up to its smallest step, so an effort priced at nothing is kept at nothing here.
   const effort = event === 'byElection' ? BY_EFFORT[choice] : event === 'statePolls' ? STATE_EFFORT[choice] : undefined;
   if (effort) return effort.money > 0 ? scaled(world, effort.money) : 0;
+  if (event === 'ultimatum') return choice === 0 ? scaled(world, ULTIMATUM_MONEY) : 0;
   const net = (EVENTS[event]?.choices[choice]?.effects ?? []).reduce((a, e) => a + (e.t === 'funds' ? Math.sign(e.n) * scaled(world, Math.abs(e.n)) : 0), 0);
   return Math.max(0, -net);
 }

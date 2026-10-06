@@ -132,7 +132,8 @@ function Hud() {
           ))}
         </div>
       </div>
-      <div className="hud-item">
+      {/* days and funds are in the bar at the bottom of a phone screen */}
+      {!narrow && <div className="hud-item">
         <span className="hud-label">{t('hud.days')}</span>
         <div className="days" role="img" aria-label={f.days(me.days)}>
           {Array.from({ length: DAYS_PER_WEEK }, (_, i) => (
@@ -140,11 +141,11 @@ function Hud() {
           ))}
           <strong className="num">{me.days}</strong>
         </div>
-      </div>
-      <div className="hud-item">
+      </div>}
+      {!narrow && <div className="hud-item">
         <span className="hud-label">{t('hud.funds')}</span>
         <strong className="num hud-value">{f.rm(me.funds)}</strong>
-      </div>
+      </div>}
       {world.states.length > 1 && (
         <div className="hud-item">
           <span className="hud-label">{t('hud.location')}</span>
@@ -206,6 +207,7 @@ export function Header() {
   const saved = useStore((s) => s.autosavedAt);
   const saveFailed = useStore((s) => s.autosaveFailed);
   const bar = useRef<HTMLElement>(null);
+  const narrow = useNarrow();
   // The sticky sidebar sits below the bar, so it needs to know how tall the bar is.
   useEffect(() => {
     const el = bar.current;
@@ -232,7 +234,8 @@ export function Header() {
       {phase === 'campaign' && <Hud />}
       {phase === 'term' && <TermHud />}
       <MenuButton />
-      <SettingsControls />
+      {/* on a phone the switches fold away, so that the game and not its settings fills the first screen */}
+      {narrow ? <details className="settings-fold"><summary>{t('settings.title')}</summary><SettingsControls /></details> : <SettingsControls />}
     </header>
   );
 }

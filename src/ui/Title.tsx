@@ -1,11 +1,12 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
-import { BYELECTION_SEATS, byElectionId, getWorld, SCENARIOS, STATE_SCENARIOS } from '../data/world';
+import { byElectionId, fairSeats, getWorld, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS } from '../data/world';
 import type { ContestKind } from '../sim/campaign/rules';
 import { playable, standingPact, startingFunds } from '../sim/campaign/turn';
 import type { BackstoryId, Difficulty } from '../sim/campaign/types';
 import { startStances } from '../sim/campaign/policy';
 import { FOUNDING_SLOT } from '../sim/campaign/founding';
+import { inContention, outlook, par } from '../sim/campaign/outlook';
 import { PARTY_IDS, type FieldedId, type StateId } from '../sim/types';
 import { AUTO_SLOT } from '../state/saves';
 import { DEFAULT_EMBLEMS, makeIdentity, PARTY_COLORS } from '../state/identity';
@@ -34,9 +35,9 @@ type Playable = 'ps' | 'bp' | 'pt' | 'gbk' | 'gbs' | 'legasi';
 
 const MODE_KEY = 'k222.title';
 
-/** A seat for a by-election, other than the one just shown. */
-const drawSeat = (not?: string) => {
-  const pool = BYELECTION_SEATS.filter((id) => id !== not);
+/** A seat for a by-election that the party has a fair chance in, other than the one just shown. */
+const drawSeat = (party: number, not?: string) => {
+  const pool = fairSeats(party).filter((id) => id !== not);
   return pool[Math.floor(Math.random() * pool.length)];
 };
 
@@ -61,7 +62,7 @@ export function Title() {
   const loadGame = useStore((s) => s.loadGame);
   const [kind, setKind] = useState<Mode>('byelection');
   const [state, setState] = useState<StateId>('perak');
-  const [seat, setSeat] = useState(() => drawSeat());
+  const [seat, setSeat] = useState(() => drawSeat(0));
   const [chosen, setChosen] = useState<number | null>(null);
   // The tutorial defaults to gentle rivals; the player can still change it.
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
@@ -87,6 +88,10 @@ export function Title() {
     try { localStorage.setItem(MODE_KEY, value ? 'custom' : 'quick'); } catch { /* the choice is only for this visit */ }
   };
 
+  // A state's results are fetched when it is first chosen, and the choice takes effect once they are here.
+  const pickState = (st: StateId) => void loadState(st).then(() => setState(st));
+  const pickKind = (k: Mode) => (k === 'state' ? void loadState(state).then(() => setKind(k)) : setKind(k));
+
   const scenario = kind === 'state' ? `state:${state}` : kind === 'byelection' ? byElectionId(seat) : SCENARIOS.find((s) => s.id === kind)!.id;
   const world = getWorld(scenario)!;
   const parties = playable(world);
@@ -109,6 +114,7 @@ export function Title() {
   const standsIn = (p: number) => world.seats.filter((s, i) => world.baseline.contesting[i][p] && (pact.standDowns[s.id]?.[p] ?? -1) < 0).length;
   const allyOf = (p: number) => { const x = pact.pacts.find((q) => q.a === p || q.b === p); return x ? (x.a === p ? x.b : x.a) : -1; };
   const lastShare = (p: number) => last.votes[p] / last.votes.reduce((a, b) => a + b, 0);
+  const standing = outlook(world, player);
 
   return (
     <main className="title">
@@ -129,7 +135,7 @@ export function Title() {
           <h3>{t('title.contest')}</h3>
           <div className="party-cards four" role="radiogroup" aria-label={t('title.contest')}>
             {KINDS.map((k) => (
-              <RadioCard key={k} checked={kind === k} className="party-card plain" onSelect={() => setKind(k)}>
+              <RadioCard key={k} checked={kind === k} className="party-card plain" onSelect={() => pickKind(k)}>
                 <strong>{t(`scenario.${k}`)}</strong>
                 <span className="small"><Jargon>{t(`scenario.${k}.blurb`)}</Jargon></span>
                 {k === 'byelection' && <span className="badge leaning start-here">{t('title.startHere')}</span>}
@@ -139,15 +145,15 @@ export function Title() {
           {kind === 'state' && (
             <div className="chips state-pick" role="radiogroup" aria-label={t('scenario.state')}>
               {STATE_SCENARIOS.map((st) => (
-                <button key={st} role="radio" aria-checked={state === st} className={state === st ? 'chip active' : 'chip'} onClick={() => setState(st)}>
-                  {t(`state.${st}`)} <span className="num">· {t('state.seats', { n: getWorld(`state:${st}`)!.seats.length })}</span>
+                <button key={st} role="radio" aria-checked={state === st} className={state === st ? 'chip active' : 'chip'} onClick={() => pickState(st)}>
+                  {t(`state.${st}`)} <span className="num">· {t('state.seats', { n: STATE_SEATS[st] ?? 0 })}</span>
                 </button>
               ))}
             </div>
           )}
 
           {kind === 'byelection' && (
-            <SeatPicker value={seat} onChange={setSeat} onRandom={() => setSeat(drawSeat(seat))} />
+            <SeatPicker value={seat} onChange={setSeat} onRandom={() => setSeat(drawSeat(player, seat))} />
           )}
 
           {!founding && <>
@@ -170,6 +176,7 @@ export function Title() {
                     {' · '}{t('title.funds', { rm: f.rm(startingFunds(world, p) * (kind === 'career' ? 0.4 : 1)) })}
                   </span>
                   {allyOf(p) >= 0 && <span className="muted small">{t('title.stands', { party: PARTIES[PARTY_IDS[allyOf(p)]].short, n: standsIn(p), total: world.seats.length })}</span>}
+                  {outlook(world, p) && <span className="badge plain">{t(`outlook.${outlook(world, p)!}`)}</span>}
                   {kind === 'career' && id in CAREER_SEAT && <span className="badge plain">{t(`orders.seat.${CAREER_SEAT[id as keyof typeof CAREER_SEAT]}`)}</span>}
                 </RadioCard>
               );
@@ -179,7 +186,7 @@ export function Title() {
           </>}
 
           <h3>{t('leader.pick')}</h3>
-          <LeaderPicker value={backstory} onChange={setBackstory} />
+          <LeaderPicker value={backstory} party={founding ? -1 : player} onChange={setBackstory} />
           <label className="check">
             <input type="checkbox" checked={own} onChange={(e) => setOwn(e.target.checked)} />
             <span>{t('creator.toggle')}</span>
@@ -235,13 +242,14 @@ export function Title() {
               {parties.map((p) => {
                 const id = PARTY_IDS[p] as Playable;
                 return (
-                  <button key={id} role="radio" aria-checked={player === p} className={player === p ? 'chip active' : 'chip'} onClick={() => { setChosen(p); setDraft(null); }}>
+                  <button key={id} role="radio" aria-checked={player === p} className={player === p ? 'chip active' : 'chip'} onClick={() => { setChosen(p); setDraft(null); if (!inContention(world.seats[0].last.votes, p)) setSeat(drawSeat(p, seat)); }}>
                     <i className="dot" style={{ background: PARTIES[id].color }} />{PARTIES[id].name}
                   </button>
                 );
               })}
             </div>
-            <SeatPicker value={seat} onChange={setSeat} onRandom={() => setSeat(drawSeat(seat))} />
+            <SeatPicker value={seat} onChange={setSeat} onRandom={() => setSeat(drawSeat(player, seat))} />
+            {standing && <p className="muted small"><span className="badge plain">{t(`outlook.${standing}`)}</span> {t(`outlook.goal.${standing}`, { pct: f.pct(par(world, player) ?? 0, 0) })}</p>}
             <div className="button-row">
               {/* a returning player's one call to action is Continue */}
               <button className={auto ? 'btn' : 'btn primary'} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy' })}>{t('quick.start')} ▸</button>

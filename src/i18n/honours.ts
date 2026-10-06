@@ -47,6 +47,7 @@ export const HONOURS_EN = {
   'card.verdict.lost': 'Lost ground',
   'card.verdict.won': 'Seat won',
   'card.verdict.defeated': 'Defeated',
+  'card.verdict.creditable': 'Beat expectations',
 
   'ach.firstWin': 'Maiden Speech',
   'ach.firstWin.desc': 'Win a by-election.',
@@ -157,6 +158,7 @@ export const HONOURS_MS: Record<HonoursKey, string> = {
   'card.verdict.lost': 'Kehilangan kerusi',
   'card.verdict.won': 'Kerusi dimenangi',
   'card.verdict.defeated': 'Tewas',
+  'card.verdict.creditable': 'Melebihi jangkaan',
 
   'ach.firstWin': 'Ucapan Sulung',
   'ach.firstWin.desc': 'Menang pilihan raya kecil.',
