@@ -671,3 +671,38 @@ Thirty questions, answered by the designer one at a time after a day of play. Th
   - **Branding is small:** the mark in the corner and the tagline and the fiction notice in the foot. No address, no call to play.
   - **One format,** the wide 1200×630, as chosen.
 - **Not done:** posters or stories in other shapes (portrait, square, story); the ministers' and staff's faces on the card; any writing in the card's own language independent of the game's.
+
+## Third interview: UI and UX (6 Oct 2026)
+
+Fifty questions, answered one at a time. These are wishes, not yet built. The designer plays on a **laptop or desktop**; the phone should get "a fair amount" of polish. The one thing to fix first: **too many things on screen.**
+
+**Where the answers pull against each other**
+- The top priority is *fewer things on screen*, but several answers add things: a relationship map, a timeline, a headline ticker, commentators, toasts, flashes, a Voters tab, sliders. **Simplify first**; build each addition only where it replaces something or earns its room.
+- **"Follow the device" for the colour-blind palette is not possible as stated:** browsers expose no colour-blindness setting. What can be done instead: mark parties with shapes or patterns as well as colour everywhere (so the switch matters less), and keep the Display switch.
+- **Sound and music on by default at low volume** will not play until the player's first click or key press (browsers block it), so it starts after the first interaction, with a mute button always in view.
+
+**Layout and navigation**
+- **Title screen:** pick a mode first (by-election, state, general, career as big cards). Customise becomes **steps** (contest, party, leader, difficulty, start), one decision per screen.
+- **Header:** **icons only** for the switches (language stays a small EN | BM, since an icon cannot say which language), theme **follows the device** by default, and sound controls stay in reach.
+- **Map is the biggest part** of the screen. Colouring stays as it is (party colour shaded by margin). Hover keeps the small tooltip.
+- **Tabs are grouped** into fewer, larger ones, each with **an icon and a word**. Saves moves to the Menu. The voter-group bars move to **their own tab**, off the poll panel. Seats becomes **target seats first**, ranked by what is worth the next day, with the reason. Deals becomes **a relationship map**. Polls gets **a recommendation** of the most worthwhile poll, with the reason. The career's Policy tab uses **sliders**. A **timeline** across the top shows the five years.
+- **Keyboard:** Space ends the week; number keys switch tabs.
+
+**Playing**
+- **Actions:** folded groups with suggestions on top, as now. Each action shows its **cost and its expected gain**. A blocked action **offers the fix** ("Not enough money. Raise some?"). Taking an action gives **a toast and a flash on the map**.
+- **End week:** no confirmation; the button reads **"End week (3 days unused)"**. **No undo.** Autosave keeps a **history** of recent saves per game.
+- **Guidance:** the "What now?" line stays but gets **a switch to hide it**. Kak Ros moves to **a bottom strip**, like subtitles. **The adviser speaks up** when a career figure falls into danger. Terms are explained **once, on first use**; tooltips otherwise as now.
+- **Decisions** (events, calls from leaders) wait in **an inbox** you open, with a badge, rather than covering the screen. The week still cannot end while one waits.
+- **Long text:** a short line first, **more on request**. Numbers stay rounded (RM480k, 38%).
+- **Election night:** a headline ticker, a big tally bar always in view, a pause on big moments, and commentary, as in the by-election count. **The result screen** keeps the verdict and figures first, and lists new **achievements under the verdict**. A **thumbs up or down** after each game, with an optional comment, sent only if the player chooses.
+
+**Look and feel**
+- **More lively:** smooth transitions, cards that slide in, numbers that tick, with Reduce motion honoured. **Density switch** (comfortable or compact) in Display. **Party colour** tints the interface (header, accents, buttons).
+- **One bundled typeface for everything** (Inter, about 100 kB) in place of system fonts. **Default text size follows the browser's setting.**
+- **Larger targets only for the main actions** (End week, Go, dialog choices); the rest stays compact. **Empty states** get **a small illustration** and a line in the game's voice. **Errors** get a plain, kind message with a next step. A **branded splash** while the game loads.
+- **Outsiders** get only the tooltips; no primer. **Phone:** a fair amount of polish.
+
+
+**What was built from this interview (7 Oct 2026), and what was not**
+- Built: grouped tabs with icons, a quieter header, a Voters tab, decisions in an inbox, Kak Ros as a bottom strip; Space and number-key shortcuts; the End-week label with unused days; actions showing their expected gain and offering the fix when blocked; toasts and a map flash; theme and text size following the device; bundled Inter; party-colour tint; density switch; lively motion; empty states; kind error messages; a branded splash; a history of autosaves; achievements earned under the verdict and a thumbs up or down with an optional comment (sent only through a prefilled GitHub page the player opens); the Seats tab leading with seats to win and seats to keep; Polls suggesting the closest seat nobody has polled lately; Kak Ros warning when one of the four career figures falls below 25.
+- Not built, because each adds to a screen the designer wants emptier: the relationship map for Deals, the career timeline, Policy sliders (the five-step scale with rival dots already does that job), the election-night ticker, tally bar, pause and commentary for general elections, Customise as steps and a mode-first title screen, shapes or patterns for parties, short-first text with "more", and a first-use-only term explanation. They remain wishes, to be taken one at a time where they replace something.

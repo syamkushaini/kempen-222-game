@@ -30,7 +30,7 @@ export interface CardData {
 
 export const CARD_W = 1200, CARD_H = 630;
 const BRAND = '#5e6ad2';
-const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+const FONT = '"Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 
 export interface Dot { x: number; y: number }
 
@@ -160,6 +160,8 @@ export async function drawCard(canvas: HTMLCanvasElement, data: CardData): Promi
   canvas.height = CARD_H;
   const g = canvas.getContext('2d');
   if (!g) throw new Error('canvas');
+  // The card is set in the game's typeface, so it must be loaded before the canvas draws with it.
+  try { await Promise.all([400, 500, 600, 700, 800, 900].map((w) => document.fonts.load(`${w} 20px "Inter Variable"`))); } catch { /* the system face stands in */ }
   const WHITE = '#ffffff';
   const text = (s: string, x: number, y: number, font: string, color: string, align: CanvasTextAlign = 'left') => {
     g.font = font; g.fillStyle = color; g.textAlign = align; g.textBaseline = 'alphabetic';
@@ -212,7 +214,10 @@ export async function drawCard(canvas: HTMLCanvasElement, data: CardData): Promi
   g.restore();
   // The line under the shout sits just below it. Over a chamber there is room for one line only, and not for a two-line shout.
   if (data.body && !(data.chamber && fit.lines.length > 1)) {
-    const font = `500 22px ${FONT}`;
+    // Over a chamber the line must stay on one row: it shrinks to fit before it is ever cut short.
+    let size = 22;
+    while (data.chamber && size > 17 && measureWith(`500 ${size}px ${FONT}`)(data.body) > stageWidth) size--;
+    const font = `500 ${size}px ${FONT}`;
     y = base + 34;
     for (const line of wrap(data.body, stageWidth, measureWith(font), data.chamber ? 1 : 2)) { text(line, stageLeft, y, font, 'rgba(255,255,255,0.92)'); y += 30; }
   }

@@ -9,7 +9,9 @@ export interface KeyValueStore {
 
 export const AUTO_SLOT = 'auto';
 export const MANUAL_SLOTS = ['1', '2', '3', '4', '5'] as const;
-export type SlotId = typeof AUTO_SLOT | (typeof MANUAL_SLOTS)[number];
+/** The autosaves before the latest, newest first: one is kept for each week the game has moved on, three in all. */
+export const HISTORY_SLOTS = ['auto1', 'auto2', 'auto3'] as const;
+export type SlotId = typeof AUTO_SLOT | (typeof MANUAL_SLOTS)[number] | (typeof HISTORY_SLOTS)[number];
 
 export interface SaveMeta {
   slot: SlotId;
@@ -46,6 +48,7 @@ export class SaveStore {
   save(slot: SlotId, state: GameState): boolean {
     if (!this.kv) return false;
     try {
+      if (slot === AUTO_SLOT) this.rotate(state);
       this.kv.setItem(key(slot), serializeSave(state));
       return true;
     } catch {
@@ -65,10 +68,36 @@ export class SaveStore {
     }
   }
 
+  /**
+   * Before the autosave is overwritten, the one it replaces is kept if the game has moved on a week since it was
+   * written, and the older ones shift down. A different game starts a fresh history. Nothing is parsed: the texts are
+   * moved as they are, and a small marker beside the autosave says which game and which week it holds.
+   */
+  private rotate(state: GameState): void {
+    const c = state.campaign;
+    const sig = `${state.id}|${c.phase}|${c.week}|${c.career?.term ?? 0}|${c.career?.week ?? 0}`;
+    const markKey = `${key(AUTO_SLOT)}.sig`;
+    const was = this.kv!.getItem(markKey);
+    const previous = this.kv!.getItem(key(AUTO_SLOT));
+    this.kv!.setItem(markKey, sig);
+    if (was === null || previous === null || was === sig) return;
+    if (was.split('|')[0] !== state.id) { for (const h of HISTORY_SLOTS) this.kv!.removeItem(key(h)); return; }
+    for (let i = HISTORY_SLOTS.length - 1; i > 0; i--) {
+      const older = this.kv!.getItem(key(HISTORY_SLOTS[i - 1]));
+      if (older === null) this.kv!.removeItem(key(HISTORY_SLOTS[i])); else this.kv!.setItem(key(HISTORY_SLOTS[i]), older);
+    }
+    this.kv!.setItem(key(HISTORY_SLOTS[0]), previous);
+  }
+
+  /** The earlier autosaves of the game in progress, newest first. */
+  history(): SaveMeta[] {
+    return HISTORY_SLOTS.map((slot) => this.meta(slot)).filter((m): m is SaveMeta => m !== null);
+  }
+
   /** The scenarios of the games in the slots, so that what they need can be fetched before any of them is read. */
   scenarios(): string[] {
     const found: string[] = [];
-    for (const slot of [AUTO_SLOT, ...MANUAL_SLOTS] as SlotId[]) {
+    for (const slot of [AUTO_SLOT, ...MANUAL_SLOTS, ...HISTORY_SLOTS] as SlotId[]) {
       try {
         const text = this.kv?.getItem(key(slot));
         const scenario = text ? scenarioIn(text) : null;

@@ -26,3 +26,18 @@ export function feedbackUrl(info: ReportInfo): string {
   const body = `**What happened, or what would you change?**\n\n\n**What did you expect?**\n\n\n---\n${facts}\n`;
   return `${REPO}/issues/new?${new URLSearchParams({ title: 'Feedback: ', body })}`;
 }
+
+/**
+ * A link that opens a new GitHub issue with the player's verdict on a finished game: a thumb, and the comment they
+ * chose to write. As with `feedbackUrl`, nothing is sent from the game; the player reads it and decides.
+ */
+export function ratingUrl(info: ReportInfo, rating: 'up' | 'down', comment: string): string {
+  const facts = [
+    `Version: ${info.version}`,
+    `Language: ${info.lang}`,
+    info.scenario ? `Contest: ${info.scenario}` : null,
+    info.width !== null ? `Screen width: ${info.width}px` : null,
+  ].filter(Boolean).join('\n');
+  const body = `**${rating === 'up' ? '👍 Enjoyed this game' : '👎 Did not enjoy this game'}**\n\n${comment.trim() || '_(no comment)_'}\n\n---\n${facts}\n`;
+  return `${REPO}/issues/new?${new URLSearchParams({ title: `Rating: ${rating === 'up' ? '👍' : '👎'}`, body })}`;
+}

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import seatFile from '../../data/generated/seats.json';
 import { createWorld, lastElection, type SeatFile } from '../election';
 import { PARTY_IDS, type ElectionOutcome } from '../types';
-import { ACTIONS, CHIEF, actionCost, canDo, doAction } from './actions';
+import { ACTIONS, CHIEF, actionCost, canDo, doAction, expectedSeatGain } from './actions';
 import { CHIEF_NOISE, chiefAllowance, runChiefs } from './ai';
 import { travelCost } from './geo';
 import { latestSeatIntel, pollCost } from './polls';
@@ -514,5 +514,29 @@ describe('a poll\'s reading of each voter group', () => {
     expect(start().polls.find((p) => p.scope === 'national')!.groups).toEqual(poll.groups);
     expect(playerPoll(world, c, 'seat', world.seats[0].id, 'quick')!.groups).toBeUndefined();
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world)).toBe(true);
+  });
+});
+
+describe('what an action is expected to gain', () => {
+  it('is the formula the action uses, with luck at its average, and nothing for what is not aimed at one seat', () => {
+    const c = start();
+    const rural = world.seats.find((s) => s.kind === 'rural' && s.last.votes[P('ps')] > 0)!;
+    const urban = world.seats.find((s) => s.kind === 'urban' && s.last.votes[P('ps')] > 0)!;
+    const gain = (id: Parameters<typeof expectedSeatGain>[3], seat: string) => expectedSeatGain(world, c, P('ps'), id, seat)!;
+    expect(gain('ceramah', rural.id)).toBeGreaterThan(gain('ceramah', urban.id)); // a rally is a rural art
+    expect(gain('walkabout', urban.id)).toBeGreaterThan(gain('walkabout', rural.id)); // and a walkabout suits a town
+    expect(gain('ceramah', rural.id)).toBeGreaterThan(0);
+    expect(expectedSeatGain(world, c, P('ps'), 'tv', rural.id)).toBeNull();
+    expect(expectedSeatGain(world, c, P('ps'), 'ceramah', 'P.999')).toBeNull();
+    // It shrinks as the seat fills up, and its number is about what the action really does, on average.
+    const before = gain('ceramah', rural.id);
+    c.dyn.support.seat[rural.id] = world.seats[0].last.votes.map((_, p) => (p === P('ps') ? 0.3 : 0));
+    expect(gain('ceramah', rural.id)).toBeLessThan(before);
+    const fresh = start();
+    const was = share(truth(world, fresh), rural.id, P('ps'));
+    doAction(world, fresh, P('ps'), 'ceramah', { seat: rural.id });
+    const real = (share(truth(world, fresh), rural.id, P('ps')) - was) * 100;
+    expect(real).toBeGreaterThan(0);
+    expect(real).toBeLessThan(2.5 * expectedSeatGain(world, start(), P('ps'), 'ceramah', rural.id)!);
   });
 });

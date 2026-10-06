@@ -102,6 +102,19 @@ describe('the result poster', () => {
     }
   });
 
+  it('keeps every line short enough to sit on one row over the chamber at a readable size', () => {
+    // 740 px wide at 17 px is about 88 characters of ordinary text; the longest line is held well inside that.
+    for (const lang of ['en', 'ms'] as const) {
+      for (const verdict of VERDICTS) {
+        for (const tone of ['grand', 'cheeky'] as const) {
+          const key = `card.line.${verdict}.${tone}` as StringKey;
+          const line = translate(lang, key);
+          if (line !== key) expect(line.length, `${lang} ${key}`).toBeLessThanOrEqual(84);
+        }
+      }
+    }
+  });
+
   it('is built on the party’s colour, darkened until white type stands out from it', () => {
     expect(mix('#000000', '#ffffff', 0.5)).toBe('#808080');
     expect(mix('not-a-colour', '#ffffff', 0.5)).toBe('not-a-colour');

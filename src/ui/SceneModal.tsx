@@ -20,7 +20,12 @@ import { Portrait } from './Portrait';
 export function SceneModal() {
   const scene = useStore((s) => s.game?.campaign.inbox[0]);
   const hidden = useStore((s) => s.hiddenScene);
-  return scene && scene.id !== hidden ? <SceneCard key={scene.id} scene={scene} /> : null;
+  const open = useStore((s) => s.sceneOpen);
+  const phase = useStore((s) => s.game?.campaign.phase);
+  // In a campaign or a term a decision waits in the inbox until it is opened. In the talks and on the night after,
+  // the decisions are the business of the screen, and come up by themselves.
+  const inbox = phase === 'campaign' || phase === 'term';
+  return scene && (!inbox || open) && scene.id !== hidden ? <SceneCard key={scene.id} scene={scene} /> : null;
 }
 
 function SceneCard({ scene }: { scene: Scene }) {

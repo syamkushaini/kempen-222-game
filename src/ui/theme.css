@@ -39,7 +39,7 @@
   --scrim: rgb(0 0 0 / 60%);
   --shadow: none;
   --radius: 12px;
-  --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font: 'Inter Variable', 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 

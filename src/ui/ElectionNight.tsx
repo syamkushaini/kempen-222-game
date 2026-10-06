@@ -9,6 +9,7 @@ import { lastOutcome, partyColor, partyName, partyShort, regionLabel, seatName, 
 import { sound } from './audio';
 import { MapView, type PulseKind } from './MapView';
 import { GoalResult } from './Challenges';
+import { AchievementsEarned, RateGame } from './ResultExtras';
 import { GamePanel } from './SavesTab';
 import { electionCard, ShareDialog } from './ShareDialog';
 import { Review } from './Review';
@@ -143,6 +144,7 @@ function SeatBySeat() {
               <h2>{t('summary.title')}</h2>
               <p className={`verdict ${summary.verdict}`}>{t(`summary.verdict.${summary.verdict}`)}</p>
               <GoalResult summary={summary} />
+              <AchievementsEarned campaign={campaign} />
               <dl className="facts">
                 <div><dt>{t('summary.seats')}</dt><dd className="num">{summary.seats}</dd></div>
                 <div><dt>{t('summary.change')}</dt><dd className="num">{summary.seats - summary.before >= 0 ? '+' : ''}{summary.seats - summary.before}</dd></div>
@@ -157,6 +159,7 @@ function SeatBySeat() {
               <h3>{t('summary.lost', { n: summary.lost.length })}</h3>
               {seatLinks(summary.lost)}
               <Review campaign={campaign} result={result} />
+              <RateGame campaign={campaign} />
               <div className="button-row">
                 {campaign.formation
                   ? <button className="btn primary" onClick={leaveNight}>{t(campaign.formation.outcome ? 'summary.toGovernment' : 'summary.toTalks')} ▸</button>
@@ -348,6 +351,7 @@ function ByElectionCount() {
             <h2>{t('summary.title')}</h2>
             <p className={`verdict ${summary.verdict}`}>{t(`summary.verdict.${summary.verdict}`)}</p>
             <GoalResult summary={summary} />
+            <AchievementsEarned campaign={campaign} />
             <dl className="facts">
               <div><dt>{t('summary.voteShare')}</dt><dd className="num">{f.pct(summary.voteShare)}</dd></div>
               <div><dt>{t('seat.margin')}</dt><dd className="num">{f.pct(seat.margin)}</dd></div>
@@ -355,6 +359,7 @@ function ByElectionCount() {
               <div><dt>{t('summary.rank')}</dt><dd className="num">#{1 + seat.votes.filter((v) => v > seat.votes[campaign.player]).length}</dd></div>
             </dl>
             <Review campaign={campaign} result={result} />
+            <RateGame campaign={campaign} />
             <NextContest />
             <div className="button-row">
               <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>

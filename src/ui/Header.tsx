@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { termIncome, termSpending } from '../sim/campaign/career';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore, type Theme } from '../state/store';
 import { MenuButton } from './GameMenu';
 import { Gauge } from './Gauge';
+import { Icon, type IconName } from './Icon';
 import { Term } from './Term';
 import { regionLabel, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
 
@@ -11,8 +12,13 @@ function SettingsControls() {
   const t = useT();
   const settings = useStore((s) => s.settings);
   const setSettings = useStore((s) => s.setSettings);
+  // One button for the theme, going round Auto, Light, Dark: the icon says which is in use, the label says which comes next.
+  const themes: Theme[] = ['system', 'light', 'dark'];
+  const nextTheme = themes[(themes.indexOf(settings.theme) + 1) % themes.length];
+  const themeIcon: IconName = settings.theme === 'light' ? 'sun' : settings.theme === 'dark' ? 'moon' : 'auto';
   return (
     <div className="header-controls">
+      {/* the language stays in words: an icon cannot say which of two languages is which */}
       <div className="segmented small" role="group" aria-label={t('lang.label')}>
         {(['en', 'ms'] as const).map((l) => (
           <button key={l} className={settings.lang === l ? 'active' : ''} aria-pressed={settings.lang === l} onClick={() => setSettings({ lang: l })}>
@@ -20,15 +26,11 @@ function SettingsControls() {
           </button>
         ))}
       </div>
-      <div className="segmented small" role="group" aria-label={t('theme.label')}>
-        {(['system', 'light', 'dark'] as Theme[]).map((th) => (
-          <button key={th} className={settings.theme === th ? 'active' : ''} aria-pressed={settings.theme === th} onClick={() => setSettings({ theme: th })}>
-            {t(`theme.${th}`)}
-          </button>
-        ))}
-      </div>
+      <button className="icon-btn" title={`${t('theme.label')}: ${t(`theme.${settings.theme}`)} → ${t(`theme.${nextTheme}`)}`} aria-label={`${t('theme.label')}: ${t(`theme.${settings.theme}`)}`} onClick={() => setSettings({ theme: nextTheme })}>
+        <Icon name={themeIcon} />
+      </button>
       <details className="display-menu">
-        <summary>{t('display.title')}</summary>
+        <summary className="icon-btn" title={t('display.title')} aria-label={t('display.title')}><Icon name="sliders" /></summary>
         <div className="display-panel">
           <span className="hud-label">{t('display.palette')}</span>
           <div className="segmented small" role="group" aria-label={t('display.palette')}>
@@ -46,47 +48,47 @@ function SettingsControls() {
               </button>
             ))}
           </div>
+          <label className="check small">
+            <input type="checkbox" checked={settings.hints} onChange={(e) => setSettings({ hints: e.target.checked })} />
+            <span>{t('guide.show')}</span>
+          </label>
+          <span className="hud-label">{t('display.density')}</span>
+          <div className="segmented small" role="group" aria-label={t('display.density')}>
+            {(['comfortable', 'compact'] as const).map((d) => (
+              <button key={d} className={settings.density === d ? 'active' : ''} aria-pressed={settings.density === d} onClick={() => setSettings({ density: d })}>
+                {t(`display.density.${d}`)}
+              </button>
+            ))}
+          </div>
         </div>
       </details>
-      <div className="segmented small" role="group" aria-label={t('sound.label')}>
-        <button className={settings.sound ? 'active' : ''} aria-pressed={settings.sound} onClick={() => setSettings({ sound: !settings.sound })}>
-          {t('sound.sfx')}
-        </button>
-        <button className={settings.music ? 'active' : ''} aria-pressed={settings.music} onClick={() => setSettings({ music: !settings.music })}>
-          {t('sound.music')}
-        </button>
-      </div>
+      <button className={`icon-btn${settings.sound ? ' on' : ''}`} aria-pressed={settings.sound} title={t('sound.sfx')} aria-label={t('sound.sfx')} onClick={() => setSettings({ sound: !settings.sound })}>
+        <Icon name={settings.sound ? 'speaker' : 'muted'} />
+      </button>
+      <button className={`icon-btn${settings.music ? ' on' : ''}`} aria-pressed={settings.music} title={t('sound.music')} aria-label={t('sound.music')} onClick={() => setSettings({ music: !settings.music })}>
+        <Icon name="music" />
+      </button>
     </div>
   );
 }
 
-/** Ending the week asks first when a day or more would be thrown away; the second press confirms. */
-function useEndWeek() {
+/** Ending the week takes one press. What would be thrown away is written on the button, so nobody does it by accident. */
+export function useEndWeek() {
   const t = useT();
+  const f = useFormat();
   const campaign = useStore((s) => s.game!.campaign);
   const endWeek = useStore((s) => s.endWeek);
   const me = campaign.parties[campaign.player]!;
   const final = campaign.week === campaign.totalWeeks;
-  const [armed, setArmed] = useState(false);
-
-  useEffect(() => {
-    if (!armed) return;
-    const id = setTimeout(() => setArmed(false), 3500);
-    return () => clearTimeout(id);
-  }, [armed]);
-  useEffect(() => setArmed(false), [campaign.week]);
-
-  const onEnd = () => {
-    if (me.days >= 1 && !armed) setArmed(true);
-    else { setArmed(false); endWeek(); }
-  };
-  return { armed, onEnd, label: `${armed ? t('hud.endWeekConfirm') : final ? t('hud.toPolls') : t('hud.endWeek')} ▸` };
+  const unused = Math.floor(me.days);
+  const base = final ? t('hud.toPolls') : t('hud.endWeek');
+  return { onEnd: endWeek, unused, label: `${base}${unused >= 1 ? ` (${t('hud.unused', { days: f.days(unused) })})` : ''} ▸` };
 }
 
 function EndWeekButton({ className = '' }: { className?: string }) {
-  const { armed, onEnd, label } = useEndWeek();
+  const { onEnd, unused, label } = useEndWeek();
   const spot = useSpot();
-  return <button className={`btn primary end-week${className}${armed ? ' armed' : ''}${spot('end-week') ? ' spot' : ''}`} onClick={onEnd}>{label}</button>;
+  return <button className={`btn primary end-week${className}${unused >= 1 ? ' unused' : ''}${spot('end-week') ? ' spot' : ''}`} onClick={onEnd}>{label}</button>;
 }
 
 /** The days left, funds and End week button, kept at the bottom of a phone screen so they never scroll away. */

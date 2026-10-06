@@ -2,7 +2,7 @@ import { playerPollCost } from '../sim/campaign/turn';
 import type { Poll, PollQuality, PollScope } from '../sim/campaign/types';
 import type { Region, RegionId } from '../sim/types';
 import { useStore } from '../state/store';
-import { partyColor, partyShort, regionLabel, seatName, useFormat, useSpot, useT, useWorld } from './hooks';
+import { partyColor, partyShort, regionLabel, seatName, useFormat, useIntel, useSpot, useT, useWorld, lastOutcome } from './hooks';
 
 const REGIONS: Region[] = ['peninsular', 'sabah', 'sarawak'];
 
@@ -20,6 +20,7 @@ export function PollsTab() {
   const selectSeat = useStore((s) => s.selectSeat);
   const setView = useStore((s) => s.setView);
   const spot = useSpot();
+  const intel = useIntel();
 
   const pc = campaign.parties[campaign.player]!;
   const state: RegionId = selectedState ?? pc.location;
@@ -43,11 +44,25 @@ export function PollsTab() {
     if (p.scope === 'seat') { selectSeat(p.target, world.seats[world.seatIndex.get(p.target!)!].state); setView('estimate'); }
   };
 
+  // Where a poll would teach the most: the closest seat, by the last election, that no poll of the player's has looked at in the last month.
+  const last = lastOutcome(world).seats;
+  const worth = scopes.includes('seat') && world.seats.length > 1
+    ? last
+      .map((o, i) => ({ i, margin: o.margin ?? 1 }))
+      .filter((r) => { const known = intel.get(world.seats[r.i].id); return !known || campaign.week - known.week > 4; })
+      .sort((a, b) => a.margin - b.margin)[0]
+    : undefined;
   const national = [...campaign.polls].reverse().find((p) => p.scope === 'national');
 
   return (
     <section className="polls">
       <p className="muted small">{t('polls.intro')}</p>
+      {worth && (
+        <p className="note poll-advice">
+          {t('polls.advice', { seat: world.seats[worth.i].name, margin: f.pct(worth.margin) })}{' '}
+          <button className="link" onClick={() => selectSeat(world.seats[worth.i].id, world.seats[worth.i].state)}>{t('polls.advice.pick')}</button>
+        </p>
+      )}
 
       <ul className="action-list">
         {scopes.includes('national') && (

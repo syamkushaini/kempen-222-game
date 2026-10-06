@@ -42,7 +42,7 @@ import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
  * or (developer mode only) how the country would really vote today.
  */
 export type MapView = 'last' | 'estimate' | 'truth';
-export type SidebarTab = 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'news' | 'saves';
+export type SidebarTab = 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
 export type Theme = 'system' | 'light' | 'dark';
 export type Palette = 'standard' | 'accessible';
 export type TextSize = 'normal' | 'large';
@@ -52,11 +52,15 @@ export interface Settings {
   theme: Theme;
   /** Sound effects. */
   sound: boolean;
-  /** The background tune. Off unless asked for. */
+  /** The background tune, quiet. Like the effects it waits for the player's first click, as browsers insist. */
   music: boolean;
   /** Party colours that colour-blind players can tell apart. */
   palette: Palette;
   textSize: TextSize;
+  /** How tightly the screens are packed. */
+  density: 'comfortable' | 'compact';
+  /** The "What now?" line above the map. */
+  hints: boolean;
 }
 
 const SETTINGS_KEY = 'k222.settings';
@@ -65,7 +69,7 @@ export const saveStore = new SaveStore(storage);
 const profileStore = new ProfileStore(storage);
 
 function loadSettings(): Settings {
-  const fallback: Settings = { lang: 'en', theme: 'dark', sound: true, music: false, palette: 'standard', textSize: 'normal' };
+  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', textSize: 'normal', density: 'comfortable', hints: true };
   try {
     const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
     if (!raw) return fallback;
@@ -73,9 +77,11 @@ function loadSettings(): Settings {
       lang: raw.lang === 'ms' ? 'ms' : 'en',
       theme: raw.theme === 'light' || raw.theme === 'dark' ? raw.theme : 'system',
       sound: raw.sound !== false,
-      music: raw.music === true,
+      music: raw.music !== false,
       palette: raw.palette === 'accessible' ? 'accessible' : 'standard',
       textSize: raw.textSize === 'large' ? 'large' : 'normal',
+      density: raw.density === 'compact' ? 'compact' : 'comfortable',
+      hints: raw.hints !== false,
     };
   } catch {
     return fallback;
@@ -96,6 +102,8 @@ interface Store {
   selectedSeat: string | null;
   /** The outcome of the player's most recent action, shown above the action list. */
   lastReport: NewsItem | null;
+  /** The seat the last action worked on, and a counter that restarts its flash on the map. */
+  flash: { seat: string | null; n: number };
   /** The answer to the player's latest pact proposal, and who gave it. */
   pactReply: { party: number; verdict: PactVerdict } | null;
   /** The answer to the player's latest offer in the talks after the election. */
@@ -104,6 +112,8 @@ interface Store {
   showNight: boolean;
   /** A scene the player has set aside to look around before answering. */
   hiddenScene: number | null;
+  /** The inbox is open: the decision at its head is on screen. In a campaign or a term it opens only when the player opens it. */
+  sceneOpen: boolean;
   /** When the autosave last succeeded, or null if it has not or cannot. */
   autosavedAt: number | null;
   autosaveFailed: boolean;
@@ -118,6 +128,7 @@ interface Store {
   dismissToast(id: AchievementId): void;
   setView(view: MapView): void;
   setTab(tab: SidebarTab): void;
+  openScene(open: boolean): void;
   selectState(state: RegionId | null): void;
   selectSeat(seatId: string | null, state?: RegionId): void;
 
@@ -234,10 +245,12 @@ export const useStore = create<Store>((set, get) => {
     selectedState: null,
     selectedSeat: null,
     lastReport: null,
+    flash: { seat: null, n: 0 },
     pactReply: null,
     offerReply: null,
     showNight: false,
     hiddenScene: null,
+    sceneOpen: false,
     autosavedAt: null,
     autosaveFailed: false,
     profile: profileStore.load(),
@@ -268,7 +281,7 @@ export const useStore = create<Store>((set, get) => {
       const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
       set({
         game: newGame(name.trim() || translate(get().settings.lang, 'saves.defaultName'), campaign, Date.now(), tutorial, identity, start),
-        view: 'last', tab: campaign.phase === 'term' ? 'orders' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false,
+        view: 'last', tab: campaign.phase === 'term' ? 'orders' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false,
         // A general election opens on the leader's home state; smaller contests open on the whole map.
         selectedState: world.rules.kind === 'general' && campaign.phase === 'campaign' ? campaign.parties[player]!.location : null,
       });
@@ -278,7 +291,11 @@ export const useStore = create<Store>((set, get) => {
       g.tutorial = g.tutorial.step + 1 >= steps ? null : { step: g.tutorial.step + 1 };
     }),
     dismissTutorial: () => mutate((_c, g) => { g.tutorial = null; }),
-    act: (id, target) => mutate((c, _g, world) => ({ lastReport: playerAct(world, c, id, target) })),
+    act: (id, target) => mutate((c, _g, world) => {
+      const report = playerAct(world, c, id, target);
+      // What was worked on flashes on the map: the seat itself, or for an action on a state or the country, nothing.
+      return report ? { lastReport: report, flash: target.seat ? { seat: target.seat, n: get().flash.n + 1 } : get().flash } : { lastReport: report };
+    }),
     poll: (scope, target, quality) => mutate((c, _g, world) => {
       // Seeing the new numbers is the point, so switch the map to the player's picture.
       if (playerPoll(world, c, scope, target, quality) && scope !== 'national') return { view: 'estimate' };
@@ -313,11 +330,13 @@ export const useStore = create<Store>((set, get) => {
       if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote') {
         answerEvent(world, c, scene, choice);
         // The answer may have brought the government down: on to the talks.
-        if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: null };
-        return { hiddenScene: null };
+        if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: null, sceneOpen: false };
+        // The inbox stays open while there is more in it, and closes itself when it is empty.
+        return { hiddenScene: null, sceneOpen: c.inbox.length > 0 };
       }
       if (c.phase === 'campaign') resolveCampaignScene(world, c, scene, choice);
       else resolveFormationScene(c, scene, choice);
+      return { sceneOpen: c.inbox.length > 0 };
     }),
 
     offer: (party, offer) => mutate((c, _g, world) => {
@@ -355,7 +374,8 @@ export const useStore = create<Store>((set, get) => {
       if (resumeTerm(c)) return { tab: 'orders', offerReply: null };
     }),
 
-    hideScene: (id) => set({ hiddenScene: id }),
+    hideScene: (id) => set({ hiddenScene: id, sceneOpen: false }),
+    openScene: (sceneOpen) => set({ sceneOpen, hiddenScene: null }),
     setBudget: (patch) => mutate((c) => { setBudget(c, patch); }),
     reshuffle: (portfolio) => mutate((c) => { reshuffle(c, portfolio); }),
     tableBill: (id) => mutate((c) => { tableBill(c, id); }),
@@ -383,7 +403,7 @@ export const useStore = create<Store>((set, get) => {
     loadGame: (state) => set((s) => ({
       loads: s.loads + 1,
       game: state,
-      view: 'last', tab: state.campaign.phase === 'term' ? 'orders' : 'actions', lastReport: null, pactReply: null, offerReply: null, selectedSeat: null,
+      view: 'last', tab: state.campaign.phase === 'term' ? 'orders' : 'actions', lastReport: null, pactReply: null, offerReply: null, selectedSeat: null, sceneOpen: false,
       // A saved game reopens on the count only if it was still running, or if there is nothing after it.
       showNight: state.campaign.phase === 'night' || (state.campaign.phase === 'done' && !state.campaign.formation),
       selectedState: state.campaign.phase === 'campaign' && (state.campaign.scenario === 'general' || state.campaign.scenario === 'career')
@@ -393,7 +413,7 @@ export const useStore = create<Store>((set, get) => {
       // Save now: the delayed autosave would find the game already gone.
       const g = get().game;
       if (g) saveStore.save(AUTO_SLOT, g);
-      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null });
+      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null, sceneOpen: false });
     },
     restart: () => {
       const g = get().game;

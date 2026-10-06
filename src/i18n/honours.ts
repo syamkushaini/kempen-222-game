@@ -184,7 +184,7 @@ export const HONOURS_MS: Record<HonoursKey, string> = {
   'card.shout.creditable': 'Melebihi jangkaan',
   'card.shout.defeated': 'Kami berjuang. Kami akan kembali.',
   'card.line.majority.grand': 'Mandat yang jelas daripada rakyat. Kini memerintahlah sewajarnya.',
-  'card.line.majority.cheeky': 'Majoriti tetap majoriti, setipis mana pun. Tiada sesiapa di bangku kita dibenarkan demam.',
+  'card.line.majority.cheeky': 'Majoriti tetap majoriti, walau setipis mana. Tiada yang boleh demam di bangku kita.',
   'card.line.largest.grand': 'Kerusi terbanyak di Dewan, dan panggilan pertama ke Istana.',
   'card.line.largest.cheeky': 'Pertama melepasi garisan, tetapi belum cukup. Rundingan gabungan akan menarik.',
   'card.line.gained.grand': 'Lebih banyak kerusi daripada dahulu, dan parti yang yakin pada dirinya.',

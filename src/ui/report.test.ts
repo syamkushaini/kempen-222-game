@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { feedbackUrl, REPO } from './report';
+import { feedbackUrl, ratingUrl, REPO } from './report';
 
 const read = (url: string) => new URL(url).searchParams;
 
@@ -17,5 +17,20 @@ describe('the feedback link', () => {
     expect(body).not.toContain('Contest');
     expect(body).not.toContain('Screen width');
     expect(body).toContain('Version: 1');
+  });
+});
+
+describe('the rating link', () => {
+  const info = { version: '1', lang: 'en', scenario: null, week: null, width: null };
+
+  it('carries the thumb and the comment, and nothing else of the player', () => {
+    const q = read(ratingUrl(info, 'down', ' too slow at the start '));
+    expect(q.get('title')).toBe('Rating: 👎');
+    expect(q.get('body')).toContain('too slow at the start');
+    expect(q.get('body')).toContain('Version: 1');
+  });
+
+  it('says so when there is no comment', () => {
+    expect(read(ratingUrl(info, 'up', '  ')).get('body')).toContain('no comment');
   });
 });

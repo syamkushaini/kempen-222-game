@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PARTIES } from '../data/parties';
 import { getWorld } from '../data/world';
 import type { StringKey } from '../i18n/strings';
@@ -52,6 +52,9 @@ export function SaveSlots() {
   const [message, setMessage] = useState<{ text: string; bad: boolean } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const refresh = () => setSlots(saveStore.list());
+  // The weeks just gone, for taking back a bad one. The list is read again whenever the game moves on.
+  const week = game ? `${game.campaign.phase}${game.campaign.week}${game.campaign.career?.week ?? ''}` : '';
+  const history = useMemo(() => (game ? saveStore.history() : []), [week, game?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = (slot: SlotId) => {
     if (!game) return;
@@ -109,6 +112,24 @@ export function SaveSlots() {
           );
         })}
       </ul>
+
+      {game && history.length > 0 && (
+        <>
+          <h4>{t('saves.history')}</h4>
+          <p className="muted small">{t('saves.history.note')}</p>
+          <ul className="slot-list">
+            {history.map((meta) => (
+              <li key={meta.slot}>
+                <div className="grow">
+                  <span className="seat-name">{saveLine(t, meta)}</span>
+                  <span className="muted small">{f.dateTime(meta.updatedAt)}</span>
+                </div>
+                <ConfirmButton label={t('saves.load')} name={`${t('saves.load')}: ${saveLine(t, meta)}`} confirmLabel={t('saves.confirm')} onConfirm={() => load(meta.slot)} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <div className="button-row">
         {game && <button className="btn" onClick={() => downloadGame(game)}>{t('saves.export')}</button>}

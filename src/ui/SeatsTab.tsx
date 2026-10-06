@@ -6,7 +6,8 @@ import {
   lastOutcome, partyColor, partyName, partyShort, regionLabel, useDisplay, useFormat, useIntel, useT, useTruth, useWorld, type SeatDisplay,
 } from './hooks';
 
-const HOT_SEATS = 15;
+const TARGETS = 8;
+const DEFEND = 5;
 
 export function SeatsTab() {
   const selectedState = useStore((s) => s.selectedState);
@@ -44,14 +45,29 @@ function SeatRow({ index, display, showState }: { index: number; display: SeatDi
 function HotSeats() {
   const t = useT();
   const display = useDisplay();
-  const hot = display.map((d, i) => ({ d, i })).sort((a, b) => a.d.margin - b.d.margin).slice(0, HOT_SEATS);
+  const me = useStore((s) => s.game!.campaign.player);
+  const rows = display.map((d, i) => ({ d, i })).sort((a, b) => a.d.margin - b.d.margin);
+  // Seats to win are the closest ones held by someone else; seats to keep are the closest ones the player's party holds.
+  const targets = rows.filter((r) => r.d.winner !== me).slice(0, TARGETS);
+  const defend = rows.filter((r) => r.d.winner === me).slice(0, DEFEND);
   return (
     <section>
       <div className="panel-head">
-        <h2>{t('hot.title')}</h2>
-        <span className="muted">{t('hot.subtitle')}</span>
+        <h2>{t('hot.targets')}</h2>
+        <span className="muted">{t('hot.targetsHint')}</span>
       </div>
-      <ul className="seat-list">{hot.map(({ d, i }) => <SeatRow key={i} index={i} display={d} showState />)}</ul>
+      {targets.length > 0
+        ? <ul className="seat-list">{targets.map(({ d, i }) => <SeatRow key={i} index={i} display={d} showState />)}</ul>
+        : <p className="muted small">{t('hot.noTargets')}</p>}
+      {defend.length > 0 && (
+        <>
+          <div className="panel-head">
+            <h2>{t('hot.defend')}</h2>
+            <span className="muted">{t('hot.defendHint')}</span>
+          </div>
+          <ul className="seat-list">{defend.map(({ d, i }) => <SeatRow key={i} index={i} display={d} showState />)}</ul>
+        </>
+      )}
     </section>
   );
 }

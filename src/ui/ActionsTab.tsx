@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
-import { ACTIONS, actionCost, canDo, expectedYield, spendingLimit } from '../sim/campaign/actions';
+import { ACTIONS, actionCost, canDo, expectedSeatGain, expectedYield, spendingLimit } from '../sim/campaign/actions';
 import { probeChance } from '../sim/campaign/spending';
 import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
@@ -119,9 +119,17 @@ export function ActionsTab() {
   // Not while the adviser is guiding: her steps name what to do.
   const ideas = guided ? [] : suggestions(world, campaign);
 
+  const endWeek = useStore((s) => s.endWeek);
+  /** Opens the fundraising group and brings it into view: the way out of a blocked action that costs too much. */
+  const raiseMoney = () => {
+    setGroup('funds', true);
+    setTimeout(() => document.getElementById('family-funds')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+  };
+
   const row = (id: ActionId, target: ActionTarget, key: string, title: string, extra?: string, hint?: ReactNode) => {
     const check = canDo(world, campaign, me, id, target);
     const cost = actionCost(world, campaign, me, id, target);
+    const gain = target.seat ? expectedSeatGain(world, campaign, me, id, target.seat) : null;
     const reason = check.ok ? null
       : check.reason === 'noTarget' ? t(`reason.noTarget.${ACTIONS[id].target === 'state' ? area : (ACTIONS[id].target as 'seat' | 'party')}`)
       : t(`reason.${check.reason}` as StringKey);
@@ -133,9 +141,17 @@ export function ActionsTab() {
             {f.days(cost.days)} · {cost.money > 0 ? f.rm(cost.money) : t('cost.free')}
             {cost.travelDays > 0 && <> · {t('cost.travel', { days: f.days(cost.travelDays) })}</>}
             {extra && <> · {extra}</>}
+            {gain !== null && gain > 0 && <> · <span className="gain" title={t('actions.gain.note')}>{t('actions.gain', { n: gain })}</span></>}
           </span>
           {hint && <span className="action-hint">{hint}</span>}
-          {reason && <span className="action-reason">{reason}</span>}
+          {reason && (
+            <span className="action-reason">
+              {reason}
+              {/* a blocked action says what would unblock it, and offers it */}
+              {!check.ok && check.reason === 'funds' && ACTIONS[id].family !== 'funds' && <> <button className="link inline" onClick={raiseMoney}>{t('actions.fix.funds')}</button></>}
+              {!check.ok && check.reason === 'days' && <> <button className="link inline" onClick={() => endWeek()}>{t('actions.fix.days')}</button></>}
+            </span>
+          )}
         </div>
         <button className={`btn small primary${spot(`go-${id}`) ? ' spot' : ''}`} disabled={!check.ok} onClick={() => act(id, target)} aria-label={`${t('actions.go')}: ${title}`}>
           {t('actions.go')}
@@ -193,7 +209,7 @@ export function ActionsTab() {
         const actions = all.filter((id) => world.rules.actions.includes(id));
         if (actions.length === 0) return null;
         return (
-          <details key={family} className="action-family" open={guided || open[family]} onToggle={(e) => { if (!guided) setGroup(family, e.currentTarget.open); }}>
+          <details key={family} id={`family-${family}`} className="action-family" open={guided || open[family]} onToggle={(e) => { if (!guided) setGroup(family, e.currentTarget.open); }}>
             <summary>
               <h3>{t(`family.${family}`)}</h3>
               <span className="muted small">{t('actions.group', { n: actions.length, ready: actions.filter(available).length })}</span>

@@ -5,7 +5,9 @@ import { ACHIEVEMENT_IDS, type AchievementId } from '../sim/campaign/achievement
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from '../state/store';
 import { useFormat, useT } from './hooks';
+import type { NewsItem } from '../sim/campaign/types';
 import { Portrait } from './Portrait';
+import { NewsLine } from './NewsTab';
 
 const TOAST_MS = 7000;
 
@@ -103,6 +105,26 @@ function HonoursDialog({ onClose }: { onClose(): void }) {
 }
 
 /** Achievements just earned, announced in a corner of the screen. They go away by themselves. */
+/** What the last action did, as a message that comes up for a few seconds, over whatever tab the player is on. */
+function ActionToast() {
+  const report = useStore((s) => s.lastReport);
+  const [shown, setShown] = useState<NewsItem | null>(null);
+  useEffect(() => {
+    if (!report) return;
+    setShown(report);
+    const id = setTimeout(() => setShown(null), 4200);
+    return () => clearTimeout(id);
+  }, [report]);
+  if (!shown) return null;
+  return (
+    <div className="action-toast panel" role="status" aria-live="polite" key={shown.week + shown.key + String(shown.vars?.rm ?? '')}>
+      <ul className="report"><NewsLine item={shown} /></ul>
+    </div>
+  );
+}
+
+export function ActionToasts() { return <ActionToast />; }
+
 export function Toasts() {
   const t = useT();
   const toasts = useStore((s) => s.toasts);

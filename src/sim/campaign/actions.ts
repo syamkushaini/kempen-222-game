@@ -307,6 +307,26 @@ const addLateSwing = (c: Campaign, p: number, scale: number) => {
   c.dyn.lateSwing[p] = Math.min(CAP.lateSwing, c.dyn.lateSwing[p] + EFFECT.lateSwing * scale);
 };
 
+/**
+ * What a seat action would add to the party's support in the seat, on an ordinary day, in vote-share points (the
+ * support numbers are logit units, about 25 points of share to a unit in a close race). It is the formula the action
+ * uses, with the luck of the day taken at its average of 1 and the seat's room to grow counted in. Nothing for an
+ * action that is not aimed at one seat.
+ */
+export function expectedSeatGain(world: World, c: Campaign, p: number, id: ActionId, seat: string): number | null {
+  const i = world.seatIndex.get(seat);
+  if (i === undefined) return null;
+  const s = world.seats[i];
+  const boost = c.dyn.support.seat[seat]?.[p] ?? 0;
+  const presence = edge(c, p, 'charisma');
+  const room_ = room(boost, CAP.seat);
+  let units: number;
+  if (id === 'ceramah' || id === 'walkabout') units = EFFECT[id] * presence * KIND_FACTOR[id][s.kind] * room_;
+  else if (id === 'townhall') units = (1 - EFFECT.townhallFlopChance) * EFFECT.townhall * presence * TOWNHALL_KIND[s.kind] * room_ - EFFECT.townhallFlopChance * EFFECT.townhallFlop;
+  else return null;
+  return Math.round(units * 25 * 10) / 10;
+}
+
 /** What a fundraising action would bring in before luck. */
 /** What a small party can raise and receive, against a national one: it has far fewer members and donors to ask. */
 export const MINOR_PURSE = 0.3;

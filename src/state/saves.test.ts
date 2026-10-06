@@ -274,3 +274,39 @@ describe('save slots', () => {
     expect(exportFileName(g)).toBe('kempen222-parti-saya-2026-week1.json');
   });
 });
+
+describe('the autosave history', () => {
+  it('keeps the autosave of each earlier week of the same game, newest first, three at most', () => {
+    const store = new SaveStore(memoryStore());
+    const g = game('Hist', 7);
+    store.save('auto', g);
+    expect(store.history()).toHaveLength(0);
+    store.save('auto', g); // the same week again: nothing to keep
+    expect(store.history()).toHaveLength(0);
+    const weeks: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      weeks.push(g.campaign.week);
+      endWeek(world, g.campaign);
+      store.save('auto', g);
+    }
+    const h = store.history();
+    expect(h).toHaveLength(3);
+    expect(h.map((m) => m.week)).toEqual([weeks[3], weeks[2], weeks[1]]); // the weeks just gone, newest first
+    expect(store.meta('auto')!.week).toBe(g.campaign.week);
+    // An earlier week can be loaded, and is the game as it stood then.
+    expect(store.load('auto1')!.campaign.week).toBe(weeks[3]);
+  });
+
+  it('starts again for a different game, and knows the history when asked which scenarios the slots need', () => {
+    const kv = memoryStore();
+    const store = new SaveStore(kv);
+    const a = game('A', 1);
+    store.save('auto', a); endWeek(world, a.campaign); store.save('auto', a);
+    expect(store.history()).toHaveLength(1);
+    expect(store.scenarios()).toContain(a.campaign.scenario);
+    const b = game('B', 2);
+    store.save('auto', b); endWeek(world, b.campaign); store.save('auto', b);
+    expect(store.history()).toHaveLength(1); // B's own, not A's
+    expect(store.history()[0].name).toBe('B');
+  });
+});
