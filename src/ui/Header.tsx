@@ -157,6 +157,23 @@ function Hud() {
 }
 
 /** The years between elections: where the term stands, the money, and the buttons that move time on. */
+/**
+ * A figure from 0 to 100 as a bar whose colour runs from red when low to green when full. The number stays beside it,
+ * and the colour-blind palette runs from orange to blue, so the colour is never the only signal.
+ */
+function Gauge({ value }: { value: number }) {
+  const accessible = useStore((s) => s.settings.palette === 'accessible');
+  const n = Math.max(0, Math.min(100, Math.round(value)));
+  // Red to green goes by way of amber; orange to blue goes straight, so it never passes through a red or a green.
+  const colour = accessible ? `color-mix(in oklab, #0072b2 ${n}%, #d55e00)` : `color-mix(in oklch, var(--good) ${n}%, var(--bad))`;
+  return (
+    <div className="gauge">
+      <div className="bar gauge-bar" aria-hidden="true"><span style={{ width: `${n}%`, background: colour }} /></div>
+      <strong className="num hud-value">{n}</strong>
+    </div>
+  );
+}
+
 function TermHud() {
   const t = useT();
   const f = useFormat();
@@ -182,11 +199,11 @@ function TermHud() {
       </div>
       <div className="hud-item">
         <span className="hud-label"><Term id="unity">{t('term.unity')}</Term></span>
-        <strong className="num hud-value">{Math.round(me.unity)}</strong>
+        <Gauge value={me.unity} />
       </div>
       <div className="hud-item">
         <span className="hud-label"><Term id="credibility">{t('term.credibility')}</Term></span>
-        <strong className="num hud-value">{Math.round(k.credibility)}</strong>
+        <Gauge value={k.credibility} />
       </div>
       {!k.ending && <div className="button-row tight term-buttons">
         <button className="btn small" disabled={waiting} onClick={() => advance(1)}>{t('term.next')} ▸</button>

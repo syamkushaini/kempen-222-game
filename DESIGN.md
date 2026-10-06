@@ -531,3 +531,4 @@ Where the system was silent or the game needed more, these are the choices made:
 - **The party-coloured bunting was removed** from the title and legacy screens: it was decoration in several accents, which the system forbids.
 - **Fonts are the documented fallback stack** (SF Pro, then the system sans), because the app is offline and cannot load Inter.
 - **Not restyled:** the shareable result card image, which has its own cream look, and the small animations, which are unchanged and still switched off for reduced motion.
+- **Unity and credibility are bars (6 Oct 2026),** in the header of a career, at the player's request: the bar's length is the figure out of 100 and its colour runs from the error red when low, through amber, to the success green when full. The number stays beside it. With the colour-blind palette the bar runs from orange to blue instead. This is the one place outside the party colours where colour carries a value.

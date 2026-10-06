@@ -243,6 +243,9 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 .hud-item { display: flex; flex-direction: column; gap: 2px; }
 .hud-label { font-size: 12px; color: var(--muted); }
 .hud-value { font-size: 16px; font-weight: 600; }
+.gauge { display: flex; align-items: center; gap: 8px; }
+.gauge-bar { width: 72px; background: var(--line-2); }
+.gauge-bar span { transition: width 300ms, background-color 300ms; }
 .weeks, .days { display: flex; align-items: center; gap: 3px; }
 .weeks i { width: 14px; height: 4px; border-radius: 2px; background: var(--line-2); }
 .weeks i.past { background: var(--faint); }
