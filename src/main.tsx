@@ -12,6 +12,7 @@ import './ui/styles.css';
 import './ui/polish.css';
 import './ui/people.css';
 import './ui/ui2.css';
+import './ui/ios.css';
 
 // A saved game in a state election can only be read once that state's results are here, so they are fetched first.
 // If one cannot be fetched (offline, say), the game still opens, and that save shows as unreadable until it can.

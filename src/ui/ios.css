@@ -1,0 +1,209 @@
+/*
+ * Kempen 222, dressed like an iPhone app: Apple's system colours and type, large soft corners, pill buttons, grouped
+ * panels, and frosted glass on the layers that float above the page (the top bar, the bottom bar, dialogs, messages
+ * and the seat sheet). It is the last stylesheet loaded and works almost wholly through the tokens the others use, so
+ * the layout rules are untouched. The glass is kept to those few layers on purpose: blurring what is behind many
+ * panels costs a phone more than it is worth. It falls back to plain solid surfaces where the browser cannot blur, or
+ * where the player has asked their device for less transparency or more contrast.
+ */
+
+:root {
+  color-scheme: dark;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --bg: #000000;
+  --panel: #1c1c1e;
+  --panel-2: #2c2c2e;
+  --panel-3: #3a3a3c;
+  --panel-4: #48484a;
+  --line: rgb(84 84 88 / 55%);
+  --line-2: rgb(84 84 88 / 75%);
+  --line-3: rgb(120 120 128 / 70%);
+  --ink: #ffffff;
+  --ink-muted: #ebebf5;
+  --muted: #a1a1a6;
+  --faint: #8e8e93;
+  --primary: #0071e3;
+  --primary-hover: #1a82ee;
+  --primary-focus: #0062c7;
+  --on-primary: #ffffff;
+  --link: #4aa3ff;
+  --ring: rgb(10 132 255 / 55%);
+  --sea: #000000;
+  --map-stroke: #000000;
+  --state-stroke: #ffffff;
+  --undeclared: #2c2c2e;
+  --edge: none;
+  --scrim: rgb(0 0 0 / 45%);
+  --radius: 20px;
+
+  /* what the buttons and fields are filled with: the system's translucent grey, which takes the colour of what is under it */
+  --fill: rgb(120 120 128 / 24%);
+  --fill-2: rgb(120 120 128 / 36%);
+  /* the glass: a tinted, frosted layer with a bright edge, for what floats */
+  --glass: rgb(28 28 30 / 62%);
+  --glass-strong: rgb(44 44 46 / 72%);
+  --glass-edge: rgb(255 255 255 / 14%);
+  --glass-shine: inset 0 1px 0 rgb(255 255 255 / 16%);
+  --glass-shadow: 0 10px 40px rgb(0 0 0 / 45%);
+  --blur: blur(24px) saturate(180%);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f2f2f7;
+  --panel: #ffffff;
+  --panel-2: #f2f2f7;
+  --panel-3: #e5e5ea;
+  --panel-4: #d1d1d6;
+  --line: rgb(60 60 67 / 16%);
+  --line-2: rgb(60 60 67 / 26%);
+  --line-3: rgb(60 60 67 / 38%);
+  --ink: #000000;
+  --ink-muted: #3a3a3c;
+  --muted: #636366;
+  --faint: #8e8e93;
+  --link: #0066cc;
+  --ring: rgb(0 113 227 / 45%);
+  --sea: #e5e5ea;
+  --map-stroke: #ffffff;
+  --state-stroke: #000000;
+  --undeclared: #d1d1d6;
+  --scrim: rgb(0 0 0 / 30%);
+  --fill: rgb(120 120 128 / 12%);
+  --fill-2: rgb(120 120 128 / 20%);
+  --glass: rgb(255 255 255 / 66%);
+  --glass-strong: rgb(255 255 255 / 78%);
+  --glass-edge: rgb(255 255 255 / 80%);
+  --glass-shine: inset 0 1px 0 rgb(255 255 255 / 90%);
+  --glass-shadow: 0 10px 40px rgb(0 0 0 / 16%);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --bg: #f2f2f7;
+    --panel: #ffffff;
+    --panel-2: #f2f2f7;
+    --panel-3: #e5e5ea;
+    --panel-4: #d1d1d6;
+    --line: rgb(60 60 67 / 16%);
+    --line-2: rgb(60 60 67 / 26%);
+    --line-3: rgb(60 60 67 / 38%);
+    --ink: #000000;
+    --ink-muted: #3a3a3c;
+    --muted: #636366;
+    --faint: #8e8e93;
+    --link: #0066cc;
+    --ring: rgb(0 113 227 / 45%);
+    --sea: #e5e5ea;
+    --map-stroke: #ffffff;
+    --state-stroke: #000000;
+    --undeclared: #d1d1d6;
+    --scrim: rgb(0 0 0 / 30%);
+    --fill: rgb(120 120 128 / 12%);
+    --fill-2: rgb(120 120 128 / 20%);
+    --glass: rgb(255 255 255 / 66%);
+    --glass-strong: rgb(255 255 255 / 78%);
+    --glass-edge: rgb(255 255 255 / 80%);
+    --glass-shine: inset 0 1px 0 rgb(255 255 255 / 90%);
+    --glass-shadow: 0 10px 40px rgb(0 0 0 / 16%);
+  }
+}
+
+/* Where glass is not wanted or not possible, the same layers become solid. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass: var(--panel); --glass-strong: var(--panel-2); --blur: none; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root { --glass: var(--panel); --glass-strong: var(--panel-2); --blur: none; --glass-edge: var(--line-2); }
+}
+
+body { letter-spacing: -0.08px; }
+h3 { text-transform: none; }
+
+/* ---------- glass: the layers that float ---------- */
+
+/* The top bar is a frosted strip the page scrolls under. Its glass is a pseudo-element exactly as wide as the screen: anything wider makes a phone zoom the whole page out to fit it. */
+.header { background: transparent; box-shadow: none; clip-path: inset(0 -100vmax); }
+.header::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 100vw; transform: translateX(-50%); z-index: -1; background: var(--glass); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
+.header::after { border-bottom-color: var(--glass-edge); }
+
+.phone-nav { background: var(--glass); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border-top: 1px solid var(--glass-edge); box-shadow: var(--glass-shine); }
+.phone-nav button { border-radius: 14px; }
+.phone-nav button.active { background: color-mix(in srgb, var(--primary) 16%, transparent); }
+
+.overlay { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.overlay.fall { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.dialog, .dialog.panel { background: var(--glass-strong); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border: 1px solid var(--glass-edge); border-radius: 28px; box-shadow: var(--glass-shine), var(--glass-shadow); }
+.dialog h2 { font-weight: 700; letter-spacing: -0.4px; }
+
+.toast, .action-toast { background: var(--glass-strong); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border: 1px solid var(--glass-edge); border-radius: 20px; box-shadow: var(--glass-shine), var(--glass-shadow); }
+.seat-card { background: var(--glass-strong); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shine), var(--glass-shadow); }
+@media (max-width: 980px) { .seat-card { border-radius: 24px 24px 0 0; } }
+
+/* ---------- panels and cards: grouped, soft, no hard outlines ---------- */
+
+.panel { border: 0; border-radius: 20px; box-shadow: none; }
+.map-panel { border-radius: 24px; }
+.party-card, .bloc-card, .choice, .action, .menu-item, .badge-card { border-radius: 18px; }
+.party-card { border-color: transparent; }
+.party-card.plain { border-top-color: transparent; }
+.party-card.plain.active, .party-card.active { border-color: var(--primary); }
+.fold, details.fold { border-radius: 14px; }
+.chip { border: 0; background: var(--fill); color: var(--ink-muted); border-radius: 9999px; padding: 6px 14px; }
+.chip.active, .chip[aria-pressed='true'] { background: var(--primary); color: var(--on-primary); }
+.brand-mark { border-radius: 10px; }
+
+/* ---------- buttons: pills, a grey fill for the ordinary, blue for the one that matters ---------- */
+
+.btn { border: 0; border-radius: 9999px; background: var(--fill); color: var(--ink); padding: 9px 18px; font-weight: 600; letter-spacing: -0.1px; }
+.btn:hover:not(:disabled) { background: var(--fill-2); border-color: transparent; }
+.btn.small { padding: 6px 14px; }
+.btn.primary { background: var(--primary); color: var(--on-primary); }
+.btn.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: transparent; }
+.btn.primary:active:not(:disabled) { background: var(--primary-focus); }
+/* A "Go" on an action is not the screen's main button, so it stays the quiet grey one. */
+.action .btn.primary, .action-card > .btn.primary, .action > .btn.primary { background: var(--fill); color: var(--ink); border-color: transparent; }
+.action .btn.primary:hover:not(:disabled), .action > .btn.primary:hover:not(:disabled) { background: var(--fill-2); border-color: transparent; }
+.btn.danger:hover:not(:disabled) { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); border-color: transparent; }
+.btn.armed { background: var(--bad); color: #fff; }
+.btn:disabled { opacity: 0.4; }
+.title .btn.primary { padding: 12px 26px; }
+.icon-btn { border: 0; background: var(--fill); color: var(--ink-muted); }
+.icon-btn:hover { background: var(--fill-2); }
+.icon-btn.on, .display-menu[open] > .icon-btn { background: var(--fill-2); color: var(--ink); }
+.close-x { border-radius: 9999px; }
+
+/* ---------- tabs and segmented controls: a grey track with a lifted thumb ---------- */
+
+.tabs { background: var(--fill); border-radius: 9999px; padding: 3px; gap: 2px; }
+.tab { border-radius: 9999px; }
+.tab.active { background: var(--panel-3); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / 28%); }
+:root[data-theme='light'] .tab.active { background: #ffffff; }
+.tab:not(.active):hover { background: transparent; color: var(--ink); }
+.segmented { background: var(--fill); border: 0; padding: 3px; }
+.segmented button.active { background: var(--panel-3); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / 28%); }
+:root[data-theme='light'] .segmented button.active { background: #ffffff; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .tab.active, :root:not([data-theme]) .segmented button.active { background: #ffffff; }
+}
+
+/* ---------- fields ---------- */
+
+.field select, .field input, input[type='text'], input[type='number'], input[type='search'], select { background: var(--fill); border: 1px solid transparent; border-radius: 12px; }
+.field select:hover, .field input:hover { border-color: transparent; background: var(--fill-2); }
+.field select:focus, .field input:focus, input[type='text']:focus, input[type='number']:focus, input[type='search']:focus, select:focus { outline: 0; border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+input[type='checkbox'], input[type='radio'], input[type='range'] { accent-color: var(--primary); }
+.swatch-btn.active, .mark-btn.active { box-shadow: 0 0 0 3px var(--primary); }
+
+/* ---------- press feedback: the little give an iPhone's controls have ---------- */
+
+.btn:active:not(:disabled), .icon-btn:active { opacity: 0.8; }
+
+/* The older press-down "ledge" under buttons has no place in this look. */
+.btn.primary, .action-card > .btn.primary, .action > .btn.primary, .tab.active { box-shadow: none; }
+.tab.active { box-shadow: 0 1px 3px rgb(0 0 0 / 28%); }
+.btn:not(.primary):not(.armed) { background: var(--fill); border-color: transparent; }
+.btn:not(.primary):not(.armed):hover:not(:disabled) { background: var(--fill-2); border-color: transparent; }
+.btn:not(:disabled), .menu-item { box-shadow: none; }
+.btn:active:not(:disabled), .menu-item:active, .party-card:active, .bloc-card:active, .choice:active:not(:disabled), .chip:active, .icon-btn:active { transform: scale(0.97); }
