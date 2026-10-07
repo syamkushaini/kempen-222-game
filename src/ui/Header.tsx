@@ -211,7 +211,7 @@ export function Header() {
       {/* On a phone the panel may be scrolled far down, or the map may be showing: a decision that is waiting says so here, always in sight. */}
       {narrow && waiting > 0 && !sceneOpen && (
         <button className="icon-btn inbox-button" title={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} aria-label={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} onClick={() => openScene(true)}>
-          <Icon name="inbox" size={20} /><span className="count">{waiting}</span>
+          <Icon name="inbox" size={20} /><span className="count-badge">{waiting}</span>
         </button>
       )}
       <MenuButton />

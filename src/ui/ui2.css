@@ -290,7 +290,8 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 .tab:not(.active):hover { background: var(--panel-2); }
 .subtabs button { display: inline-flex; align-items: center; gap: 6px; }
 .subtabs button.active { background: var(--panel-3); color: var(--ink); }
-.count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
+/* Named for what it is: a plain ".count" also caught the by-election's count panel and squeezed it to a red sliver. */
+.count-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
 .action-card { align-items: flex-start; gap: 12px; padding: 12px; border-radius: 12px; background: var(--panel-2); border-color: var(--line); border-left: 3px solid var(--tone, var(--line-2)); }
 .action-card .action-title { font-size: 15px; font-weight: 600; }
 .action-card.blocked { opacity: 0.72; }
@@ -337,9 +338,9 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 /* ---------- a phone: the map and the panel are separate screens, changed from a bar at the bottom ---------- */
 .phone-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; display: flex; padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line-2); }
 .phone-nav button { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 52px; padding: 6px 2px; border: 0; border-radius: 10px; background: none; color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; position: relative; }
-.phone-nav button span:not(.count) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.phone-nav button span:not(.count-badge) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .phone-nav button.active { color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, transparent); }
-.phone-nav .count { position: absolute; top: 4px; right: 22%; }
+.phone-nav .count-badge { position: absolute; top: 4px; right: 22%; }
 .layout.phone-map > .sidebar, .layout.phone-panel > .map-column { display: none; }
 .layout[class*="phone-"] .tabs { display: none; }
 @media (max-width: 980px) {
@@ -491,7 +492,7 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 }
 
 .inbox-button { position: relative; flex: none; width: 44px; height: 44px; color: var(--ink); border-color: var(--bad); animation: inbox-nudge 1.6s ease-in-out 2; }
-.inbox-button .count { position: absolute; top: -4px; right: -4px; }
+.inbox-button .count-badge { position: absolute; top: -4px; right: -4px; }
 @keyframes inbox-nudge { 0%, 100% { transform: none; } 12% { transform: translateY(-3px); } 24% { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .inbox-button { animation: none; } }
 
@@ -521,11 +522,21 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
   .poll-row { flex-wrap: wrap; gap: 8px; }
   .poll-row > .grow { flex-basis: 100%; }
   .poll-row > .btn { flex: 1; }
-  /* When the count is over, the result comes first: the verdict and what to do next, then the tally, then the map. */
+  /*
+   * When the count is over, the page is one column in this order: the result (the verdict and what to do next), the
+   * tally or the seat's count, the map, and last of all the box for saving and leaving. The side panel and its body
+   * are opened out so that their parts can be put in that order among the rest. Nothing in the column may be
+   * squeezed: a part squeezed shorter than what is in it spills over whatever comes next.
+   */
   .layout.night.done { display: flex; flex-direction: column; }
-  .layout.night.done > .sidebar { order: -1; }
-  .layout.night.done > .sidebar > .tab-body, .layout.night.done > .sidebar > .summary { order: -1; }
-  .layout.night.done > .sidebar { display: flex; flex-direction: column; }
+  .layout.night.done > .sidebar, .layout.night.done > .sidebar > .tab-body { display: contents; }
+  .layout.night.done > *, .layout.night.done > .sidebar > *, .layout.night.done > .sidebar > .tab-body > * { flex: none; min-width: 0; }
+  .layout.night.done .call { order: -5; }
+  .layout.night.done .summary { order: -4; }
+  .layout.night.done .picked { order: -3; }
+  .layout.night.done .tally, .layout.night.done .panel.count { order: -2; }
+  .layout.night.done > .map-column { order: 0; }
+  .layout.night.done .t-game { order: 5; }
 }
 @keyframes toast-down { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .poll-result { animation: none; } }

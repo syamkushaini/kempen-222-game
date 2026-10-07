@@ -27,3 +27,16 @@ describe('labels fit their boxes in both languages', () => {
   }
 
 });
+
+describe('class names that mean one thing', () => {
+  it('does not style a bare .count: the by-election count panel is "panel count", and a badge rule of that name squeezed it to a sliver', async () => {
+    const { readFileSync, readdirSync } = await import('node:fs');
+    const dir = new URL('.', import.meta.url);
+    for (const file of readdirSync(dir).filter((f) => f.endsWith('.css'))) {
+      const css = readFileSync(new URL(file, dir), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      // A rule whose selector ends in plain ".count" (not .count-badge, .count-story and the like, nor ".panel.count" or ".count .something").
+      const bare = css.split('}').map((rule) => rule.split('{')[0]).flatMap((sel) => sel.split(',')).map((sel) => sel.trim()).filter((sel) => /(^|\s)\.count$/.test(sel));
+      expect(bare, file).toEqual([]);
+    }
+  });
+});

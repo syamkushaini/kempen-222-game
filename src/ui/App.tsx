@@ -184,7 +184,7 @@ function CampaignScreen() {
               >
                 <Icon name={g.id === 'run' && term ? 'landmark' : g.icon} size={20} />
                 <span className="tab-name">{t(groupLabel(g.id, term))}</span>
-                {g.tabs.reduce((a, id) => a + waitingFor(id), 0) > 0 && group.id !== g.id && <span className="count" aria-label={t('tab.waiting', { n: g.tabs.reduce((a, id) => a + waitingFor(id), 0) })}>{g.tabs.reduce((a, id) => a + waitingFor(id), 0)}</span>}
+                {g.tabs.reduce((a, id) => a + waitingFor(id), 0) > 0 && group.id !== g.id && <span className="count-badge" aria-label={t('tab.waiting', { n: g.tabs.reduce((a, id) => a + waitingFor(id), 0) })}>{g.tabs.reduce((a, id) => a + waitingFor(id), 0)}</span>}
               </button>
             ))}
           </div>
@@ -194,7 +194,7 @@ function CampaignScreen() {
                 <button key={id} role="tab" aria-selected={shown === id} className={`${shown === id ? 'active' : ''}${spot(`tab-${id}`) ? ' spot' : ''}`} onClick={() => setTab(id)}>
                   <Icon name={TAB_ICON[id]} size={15} />
                   {t(`tab.${id}`)}
-                  {waitingFor(id) > 0 && <span className="count" aria-label={t('tab.waiting', { n: waitingFor(id) })}>{waitingFor(id)}</span>}
+                  {waitingFor(id) > 0 && <span className="count-badge" aria-label={t('tab.waiting', { n: waitingFor(id) })}>{waitingFor(id)}</span>}
                 </button>
               ))}
             </div>
@@ -234,7 +234,7 @@ function CampaignScreen() {
             return (
               <button key={g.id} className={`${here ? 'active' : ''}${g.tabs.some((id) => spot(`tab-${id}`)) ? ' spot' : ''}`} aria-pressed={here} onClick={() => { setScreen('panel'); if (group.id !== g.id) setTab(g.tabs[0]); }}>
                 <Icon name={g.id === 'run' && term ? 'landmark' : g.icon} size={22} /><span>{t(groupLabel(g.id, term))}</span>
-                {n > 0 && !here && <span className="count">{n}</span>}
+                {n > 0 && !here && <span className="count-badge">{n}</span>}
               </button>
             );
           })}
