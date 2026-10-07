@@ -1,4 +1,4 @@
-import { Fragment, useEffect } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { useStore, type MapView as MapViewId, type SidebarTab } from '../state/store';
 import { hasChiefs } from '../sim/campaign/ai';
@@ -25,7 +25,7 @@ import { NewsTab } from './NewsTab';
 import { OrdersTab } from './OrdersTab';
 import { PolicyTab } from './PolicyTab';
 import { PollsTab } from './PollsTab';
-import { SeatsTab } from './SeatsTab';
+import { SeatDetail, SeatsTab } from './SeatsTab';
 import { Standing } from './Standing';
 import { TeamTab } from './TeamTab';
 import { VotersTab } from './VotersTab';
@@ -49,6 +49,11 @@ const GROUPS: { id: GroupId; icon: IconName; tabs: SidebarTab[] }[] = [
 /** Tabs that belong only to the years between elections, and only to the campaign. */
 const TERM_ONLY: SidebarTab[] = ['orders', 'house'];
 const CAMPAIGN_ONLY: SidebarTab[] = ['actions', 'chiefs', 'deals'];
+/** The picture that goes with each tab, beside its name. */
+const TAB_ICON: Record<SidebarTab, IconName> = {
+  orders: 'doc', house: 'landmark', policy: 'sliders', actions: 'megaphone', team: 'crown', chiefs: 'flag', deals: 'chat',
+  seats: 'target', polls: 'intel', voters: 'people', news: 'book', saves: 'folder',
+};
 const groupLabel = (id: GroupId, term: boolean): StringKey => (id === 'run' ? (term ? 'group.run.term' : 'group.run.campaign') : `group.${id}`) as StringKey;
 export const groupOf = (tab: SidebarTab): GroupId | null => GROUPS.find((g) => g.tabs.includes(tab))?.id ?? null;
 
@@ -110,6 +115,12 @@ function CampaignScreen() {
   const advance = useStore((s) => s.advance);
   const waiting = campaign.inbox.length > 0;
   const flash = useStore((s) => s.flash);
+  // A seat picked on the map opens as a card over the side panel, from whichever tab is open. Closing the card keeps the seat chosen.
+  const selectedSeat = useStore((s) => s.selectedSeat);
+  const [card, setCard] = useState<string | null>(null);
+  useEffect(() => { setCard(selectedSeat && world.seats.length > 1 && !campaign.inbox.length ? selectedSeat : null); }, [selectedSeat]); // eslint-disable-line react-hooks/exhaustive-deps
+  // What each tab has waiting: decisions for whoever runs things, bad news not yet read.
+  const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : 0);
 
   // The keyboard: Space ends the week (or moves a term on a week), and a number key opens a group; pressed again it
   // goes on to the next tab in that group.
@@ -154,9 +165,9 @@ function CampaignScreen() {
                 className={`${group.id === g.id ? 'tab active' : 'tab'}${g.tabs.some((id) => spot(`tab-${id}`)) ? ' spot' : ''}`}
                 onClick={() => { if (group.id !== g.id) setTab(g.tabs[0]); }}
               >
-                <Icon name={g.id === 'run' && term ? 'landmark' : g.icon} />
-                {t(groupLabel(g.id, term))}
-                {g.tabs.includes('news') && unread > 0 && shown !== 'news' && <span className="pip" aria-hidden="true" />}
+                <Icon name={g.id === 'run' && term ? 'landmark' : g.icon} size={20} />
+                <span className="tab-name">{t(groupLabel(g.id, term))}</span>
+                {g.tabs.reduce((a, id) => a + waitingFor(id), 0) > 0 && group.id !== g.id && <span className="count" aria-label={t('tab.waiting', { n: g.tabs.reduce((a, id) => a + waitingFor(id), 0) })}>{g.tabs.reduce((a, id) => a + waitingFor(id), 0)}</span>}
               </button>
             ))}
           </div>
@@ -164,7 +175,9 @@ function CampaignScreen() {
             <div className="subtabs segmented small" role="tablist" aria-label={t(groupLabel(group.id, term))}>
               {group.tabs.map((id) => (
                 <button key={id} role="tab" aria-selected={shown === id} className={`${shown === id ? 'active' : ''}${spot(`tab-${id}`) ? ' spot' : ''}`} onClick={() => setTab(id)}>
+                  <Icon name={TAB_ICON[id]} size={15} />
                   {t(`tab.${id}`)}
+                  {waitingFor(id) > 0 && <span className="count" aria-label={t('tab.waiting', { n: waitingFor(id) })}>{waitingFor(id)}</span>}
                 </button>
               ))}
             </div>
@@ -182,6 +195,11 @@ function CampaignScreen() {
             {shown === 'voters' && <VotersTab />}
             {shown === 'news' && <NewsTab />}
           </div>
+          {card && (
+            <div className="seat-card panel" role="dialog" aria-label={t('seat.card')}>
+              <SeatDetail seatId={card} onClose={() => setCard(null)} />
+            </div>
+          )}
         </aside>
       </main>
       <CampaignBar />

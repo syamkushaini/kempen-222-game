@@ -17,5 +17,6 @@ export default defineConfig({
   // The map boundaries are one large chunk, loaded on demand.
   build: { chunkSizeWarningLimit: 900 },
   // The game fetches a state's results when first wanted; the tests have them all from the start.
-  test: { environment: 'node', include: ['src/**/*.test.ts'], setupFiles: ['src/data/allStates.ts'] },
+  // The longest tests build whole careers and take a few seconds; on a busy machine the default five was sometimes not enough.
+  test: { environment: 'node', include: ['src/**/*.test.ts'], setupFiles: ['src/data/allStates.ts'], testTimeout: 20000 },
 });

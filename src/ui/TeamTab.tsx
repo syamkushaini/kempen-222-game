@@ -11,6 +11,8 @@ import { PartyMark } from './identity';
 import { NewsLine } from './NewsTab';
 import { Portrait } from './Portrait';
 import { ConfirmButton } from './SavesTab';
+import { Gauge } from './Gauge';
+import { Term } from './Term';
 
 /** Five pips, some of them filled. */
 export function Pips({ n, label }: { n: number; label: string }) {
@@ -57,6 +59,8 @@ export function TeamTab() {
           <span className="action-meta">{t(story ? `backstory.${story}.desc` : 'leader.ordinary')}</span>
         </div>
       </div>
+      {/* how well the party holds together: between elections this is the place to watch it */}
+      <Gauge value={campaign.parties[me]!.unity} label={<Term id="unity">{t('term.unity')}</Term>} />
       <dl className="facts orders-facts stats">
         {STAT_IDS.map((id, i) => (
           <div key={id} title={t(`stat.${id}.desc`)}>

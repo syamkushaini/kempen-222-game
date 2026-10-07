@@ -125,7 +125,8 @@ function ShareBars({ shares, votes }: { shares: number[]; votes?: number[] }) {
   );
 }
 
-function SeatDetail({ seatId }: { seatId: string }) {
+/** Everything about one seat, and the two or three things that can be done there. With `onClose` it is a card over the side panel, closed without letting go of the seat. */
+export function SeatDetail({ seatId, onClose }: { seatId: string; onClose?: () => void }) {
   const t = useT();
   const f = useFormat();
   const world = useWorld();
@@ -165,7 +166,7 @@ function SeatDetail({ seatId }: { seatId: string }) {
 
   return (
     <section className="seat-detail">
-      {world.seats.length > 1 && <button className="link" onClick={() => selectSeat(null)}>‹ {t('seat.close')}</button>}
+      {world.seats.length > 1 && <button className="link back-link" onClick={() => (onClose ? onClose() : selectSeat(null))}>‹ {t(onClose ? 'seat.card.close' : 'seat.close')}</button>}
       <div className="panel-head">
         <h2>{seat.name}</h2>
         <span className="muted">{seat.id}{world.seats.length > 1 ? ` · ${regionLabel(t, world, seat.state)}` : ''}</span>

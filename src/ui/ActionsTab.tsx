@@ -6,11 +6,12 @@ import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
 import { isMinor, type RegionId } from '../sim/types';
 import { useStore } from '../state/store';
-import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld } from './hooks';
+import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld, contestName } from './hooks';
 import { NewsLine } from './NewsTab';
 import { RecapCard } from './RecapCard';
 import { Loan } from './Loan';
 import { Brief } from './Brief';
+import { Icon, type IconName } from './Icon';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
   { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival'] },
@@ -18,6 +19,13 @@ const FAMILIES: { family: Family; actions: ActionId[] }[] = [
   { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack'] },
   { family: 'funds', actions: ['dinner', 'crowdfund', 'tycoon'] },
 ];
+
+/** The picture that goes with each thing a party can do. Always beside its name, never instead of it. */
+const ACTION_ICON: Record<ActionId, IconName> = {
+  ceramah: 'megaphone', walkabout: 'walk', megarally: 'flag', canvass: 'home', gotv: 'ballot', build: 'tool',
+  tv: 'tv', social: 'phone', billboards: 'board', attack: 'bolt', dinner: 'coins', crowdfund: 'heart', tycoon: 'crown',
+  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic',
+};
 
 const GROUPS_KEY = 'k222.groups';
 type GroupKey = Family | 'suggested';
@@ -106,7 +114,8 @@ export function ActionsTab() {
         );
       }
       case 'state': {
-        const label = regionLabel(t, world, s.target.state!);
+        // An action aimed at a party or at nobody reaches the whole contest, not one state.
+        const label = s.target.state ? regionLabel(t, world, s.target.state) : contestName(t, world);
         return s.close ? t('suggest.state', { n: s.close, state: label }) : t('suggest.stateAny', { state: label });
       }
       case 'attack': return t('suggest.attack', { party: partyShort(t, s.target.party!) });
@@ -134,14 +143,16 @@ export function ActionsTab() {
       : check.reason === 'noTarget' ? t(`reason.noTarget.${ACTIONS[id].target === 'state' ? area : (ACTIONS[id].target as 'seat' | 'party')}`)
       : t(`reason.${check.reason}` as StringKey);
     return (
-      <li key={key} className="action">
+      <li key={key} className={`action action-card family-${ACTIONS[id].family}${check.ok ? '' : ' blocked'}`}>
+        <span className="row-icon"><Icon name={ACTION_ICON[id]} size={20} /></span>
         <div className="grow">
           <span className="action-title">{title}</span>
-          <span className="action-meta num">
-            {f.days(cost.days)} · {cost.money > 0 ? f.rm(cost.money) : t('cost.free')}
-            {cost.travelDays > 0 && <> · {t('cost.travel', { days: f.days(cost.travelDays) })}</>}
-            {extra && <> · {extra}</>}
-            {gain !== null && gain > 0 && <> · <span className="gain" title={t('actions.gain.note')}>{t('actions.gain', { n: gain })}</span></>}
+          <span className="chips-line num">
+            <span className="cost-chip">{f.days(cost.days)}</span>
+            <span className="cost-chip">{cost.money > 0 ? f.rm(cost.money) : t('cost.free')}</span>
+            {cost.travelDays > 0 && <span className="cost-chip">{t('cost.travel', { days: f.days(cost.travelDays) })}</span>}
+            {extra && <span className="cost-chip">{extra}</span>}
+            {gain !== null && gain > 0 && <span className="cost-chip gain" title={t('actions.gain.note')}>{t('actions.gain', { n: gain })}</span>}
           </span>
           {hint && <span className="action-hint">{hint}</span>}
           {reason && (

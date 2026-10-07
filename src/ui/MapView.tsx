@@ -7,6 +7,8 @@ import { useStore } from '../state/store';
 import { canDraw3D, PATTERNS } from './map3d';
 import { FIT, holdPoint, viewTransform, zoomBy, type View } from './mapGesture';
 import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay } from './hooks';
+import { Icon } from './Icon';
+import { SeatSearch } from './SeatSearch';
 import { Term } from './Term';
 
 // The 3D map and the library behind it are fetched only for a player who turns 3D on.
@@ -254,26 +256,48 @@ export function MapView(props: {
   return (
     <div className="panel map-panel">
       <div className="map-top">
-        <nav className="crumbs" aria-label="Map location">
-          <button className="crumb" onClick={() => selectState(null)} disabled={single || !selectedState}>{contestName(t, world)}</button>
-          {!single && selectedState && <><span aria-hidden="true">›</span><span className="crumb here">{regionLabel(t, world, selectedState)}</span></>}
-        </nav>
-        <button
-          className={`btn small map-3d-toggle${use3d ? ' active' : ''}`} aria-pressed={use3d} disabled={!canDraw3D()}
-          title={canDraw3D() ? t('map.3d.toggle') : t('map.3d.unsupported')} onClick={() => setSettings({ map3d: !want3d })}
-        >3D</button>
-        {props.toolbar}
+        {/* where the map is looking: the whole contest, or one state of it */}
+        {single ? <strong className="map-place">{contestName(t, world)}</strong> : (
+          <select className="state-select" aria-label={t('map.place')} value={selectedState ?? ''} onChange={(e) => selectState((e.target.value || null) as RegionId | null)}>
+            <option value="">{contestName(t, world)}</option>
+            {world.states.map((st) => <option key={st} value={st}>{regionLabel(t, world, st)}</option>)}
+          </select>
+        )}
+        {!single && <SeatSearch />}
+        {/* everything else about the map is one press away, so that the map has the room */}
+        <details className="map-options">
+          <summary className="btn small"><Icon name="sliders" size={16} /> {t('map.options')}</summary>
+          <div className="map-options-panel">
+            {props.toolbar && <div className="map-option"><span className="hud-label">{t('view.label')}</span>{props.toolbar}</div>}
+            <div className="map-option">
+              <span className="hud-label">{t('map.view')}</span>
+              <div className="segmented small" role="group" aria-label={t('map.view')}>
+                {([false, true] as const).map((v) => (
+                  <button key={String(v)} className={use3d === v ? 'active' : ''} aria-pressed={use3d === v} disabled={v && !canDraw3D()} onClick={() => setSettings({ map3d: v })}>
+                    {t(v ? 'map.view.3d' : 'map.view.flat')}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {!canDraw3D() && <p className="muted small">{t('map.3d.unsupported')}</p>}
+            {use3d && <p className="muted small">{t('map.3d.hint')}</p>}
+            <span className="hud-label">{t('map.legend')}</span>
+          <div className="legend">
+            {[...seen].sort((a, b) => a - b).map((p) => (
+              <span key={p}><i className="dot" data-party={p} style={{ background: partyColor(p) }} />{partyShort(t, p)}</span>
+            ))}
+            <span className="legend-gap" />
+            {(['safe', 'leaning', 'marginal'] as const).map((c) => (
+              <span key={c}><i className="swatch" style={{ opacity: CLASS_OPACITY[c] }} /><Term id={c}>{t(`legend.${c}`)}</Term></span>
+            ))}
+            {anyStale && <span><i className="swatch" style={{ opacity: STALE_OPACITY }} />{t('legend.unpolled')}</span>}
+            {marks.some((m) => m.kind === 'tent') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-6 4.5L0 -5.5L6 4.5Z" /></svg>{t('legend.tent')}</span>}
+            {marks.some((m) => m.kind === 'flag') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-2.6 -5.5H-1.4V5.5H-2.6Z M-1.4 -5.5L5 -3L-1.4 -0.5Z" /></svg>{t('legend.flag')}</span>}
+            {anyUndeclared && <span><i className="swatch undeclared" />{t('legend.undeclared')}</span>}
+          </div>
+          </div>
+        </details>
       </div>
-
-      {!single && (
-        <div className="chips">
-          {world.states.map((st) => (
-            <button key={st} className={st === selectedState ? 'chip active' : 'chip'} aria-pressed={st === selectedState} onClick={() => selectState(st === selectedState ? null : st)}>
-              {regionLabel(t, world, st)}
-            </button>
-          ))}
-        </div>
-      )}
 
       <div className={`map-frame${spot('map') ? ' spot' : ''}`} ref={frame}>
         {!map && <p className="muted map-loading">{t('app.loadingMap')}</p>}
@@ -372,19 +396,6 @@ export function MapView(props: {
         )}
       </div>
 
-      <div className="legend">
-        {[...seen].sort((a, b) => a - b).map((p) => (
-          <span key={p}><i className="dot" data-party={p} style={{ background: partyColor(p) }} />{partyShort(t, p)}</span>
-        ))}
-        <span className="legend-gap" />
-        {(['safe', 'leaning', 'marginal'] as const).map((c) => (
-          <span key={c}><i className="swatch" style={{ opacity: CLASS_OPACITY[c] }} /><Term id={c}>{t(`legend.${c}`)}</Term></span>
-        ))}
-        {anyStale && <span><i className="swatch" style={{ opacity: STALE_OPACITY }} />{t('legend.unpolled')}</span>}
-        {marks.some((m) => m.kind === 'tent') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-6 4.5L0 -5.5L6 4.5Z" /></svg>{t('legend.tent')}</span>}
-        {marks.some((m) => m.kind === 'flag') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-2.6 -5.5H-1.4V5.5H-2.6Z M-1.4 -5.5L5 -3L-1.4 -0.5Z" /></svg>{t('legend.flag')}</span>}
-        {anyUndeclared && <span><i className="swatch undeclared" />{t('legend.undeclared')}</span>}
-      </div>
     </div>
   );
 }

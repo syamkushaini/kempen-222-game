@@ -236,3 +236,79 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 .btn { text-wrap: balance; }
 @media (prefers-reduced-motion: reduce) { .btn:active:not(:disabled), .menu-item:active, .party-card:active { transform: none; } .menu-scene { transition: none; } }
 @media (max-width: 980px) { .main-menu { max-width: none; padding-top: 4px; } }
+
+/* ---------- settings, all in one panel ---------- */
+.settings-dialog { width: min(520px, 100%); display: flex; flex-direction: column; gap: 4px; }
+.setting { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.setting .grow { display: flex; flex-direction: column; min-width: 120px; }
+.setting-name { font-weight: 500; }
+.switch { position: relative; width: 44px; height: 26px; padding: 0; border-radius: 9999px; border: 1px solid var(--line-2); background: var(--panel-3); cursor: pointer; transition: background-color 150ms, border-color 150ms; }
+.switch i { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--muted); transition: transform 150ms, background-color 150ms; }
+.switch.on { background: var(--primary); border-color: var(--primary); }
+.switch.on i { transform: translateX(18px); background: #fff; }
+.settings-button { width: 40px; height: 40px; }
+.brand .party-mark { flex: none; }
+
+/* ---------- the game screen: the map stays put and has the room ---------- */
+@media (min-width: 981px) {
+  .layout > .map-column { position: sticky; top: calc(var(--header-h, 56px) + 16px); }
+}
+.map-panel { padding: 16px; }
+.map-top { flex-wrap: nowrap; gap: 8px; }
+.state-select, .seat-search input { min-height: 36px; padding: 6px 10px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--panel-2); color: var(--ink); font: inherit; font-size: 14px; }
+.state-select { font-weight: 600; max-width: 46%; }
+.map-place { font-size: 16px; font-weight: 600; margin-right: auto; }
+.seat-search { flex: 1; min-width: 0; }
+.seat-search input { width: 100%; }
+.map-options { position: relative; flex: none; }
+.map-options summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; }
+.map-options summary::-webkit-details-marker { display: none; }
+.map-options[open] summary { background: var(--panel-3); }
+.map-options-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; display: flex; flex-direction: column; gap: 10px; width: min(340px, 86vw); padding: 14px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: var(--radius); box-shadow: 0 12px 32px rgb(0 0 0 / 0.4); }
+.map-option { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.map-options-panel .legend { margin-top: 0; }
+.map-options-panel .legend-gap { display: none; }
+/* the poll, as one line under the map */
+.panel.standing { padding: 0; overflow: hidden; }
+.poll-strip { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 14px; border: 0; background: none; color: var(--ink); cursor: pointer; text-align: left; }
+.poll-strip:hover { background: var(--panel-2); }
+.poll-strip .dot { margin: 0; width: 12px; height: 12px; }
+.strip-share { font-size: 20px; font-weight: 700; }
+.strip-gap { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.strip-gap.pos-text { color: var(--good); }
+.strip-go { color: var(--muted); transition: transform 150ms; }
+.standing.open .strip-go { transform: rotate(90deg); }
+.standing-full { padding: 4px 16px 16px; border-top: 1px solid var(--line); animation: fade-up 200ms ease-out; }
+.sparkline { flex: none; }
+@media (max-width: 520px) { .map-top { flex-wrap: wrap; } .state-select { max-width: none; flex: 1; } }
+
+/* ---------- the side panel: clear tabs, and rows that are cards ---------- */
+.tabs { gap: 6px; padding: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+.tab { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 12px; border-radius: 10px; font-size: 15px; font-weight: 600; position: relative; }
+.tab.active { background: var(--primary); color: var(--on-primary, #fff); box-shadow: 0 2px 0 color-mix(in srgb, var(--primary) 60%, #000); }
+.tab:not(.active):hover { background: var(--panel-2); }
+.subtabs button { display: inline-flex; align-items: center; gap: 6px; }
+.subtabs button.active { background: var(--panel-3); color: var(--ink); }
+.count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
+.action-card { align-items: flex-start; gap: 12px; padding: 12px; border-radius: 12px; background: var(--panel-2); border-color: var(--line); border-left: 3px solid var(--tone, var(--line-2)); }
+.action-card .action-title { font-size: 15px; font-weight: 600; }
+.action-card.blocked { opacity: 0.72; }
+.row-icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: color-mix(in srgb, var(--tone, var(--muted)) 18%, transparent); color: var(--tone, var(--muted)); }
+.family-ground { --tone: #2f9e63; } .family-machinery { --tone: #3b82c4; } .family-media { --tone: #d08a2e; } .family-funds { --tone: #b06ad6; }
+.chips-line { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.cost-chip { display: inline-block; padding: 2px 8px; border-radius: 9999px; background: var(--panel-3); color: var(--ink-muted, var(--muted)); font-size: 12px; white-space: nowrap; }
+.cost-chip.gain { background: color-mix(in srgb, var(--good) 20%, transparent); color: var(--good); font-weight: 600; }
+/* the one thing to press on a card is a real, filled button */
+.action-card > .btn.primary, .action > .btn.primary { align-self: center; background: var(--primary); border-color: var(--primary); color: var(--on-primary, #fff); min-width: 56px; }
+.action-card > .btn.primary:hover:not(:disabled), .action > .btn.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+.action-family summary h3 { font-size: 15px; }
+/* a seat picked on the map opens over the panel, and closes back to where the player was */
+.sidebar { position: sticky; }
+.seat-card { position: absolute; inset: 0; z-index: 6; overflow-y: auto; padding: 16px; box-shadow: -12px 0 32px -12px rgb(0 0 0 / 0.5); animation: card-in 240ms cubic-bezier(.2,.8,.2,1); }
+@keyframes card-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (max-width: 980px) { .seat-card { position: fixed; inset: auto 0 76px 0; max-height: 70vh; border-radius: 16px 16px 0 0; animation-name: sheet-in; } .tab { font-size: 14px; padding: 8px 6px; } .seat-search { flex-basis: 100%; order: 3; } }
+@keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .seat-card { animation: none; } }
+
+.seat-detail .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.seat-detail .badges .badge { flex: none; }

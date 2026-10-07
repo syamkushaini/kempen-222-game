@@ -73,7 +73,6 @@ export default function MapScene3DView(props: MapScene3DProps) {
         <button className="btn small" onClick={() => scene.current?.zoomBy(1 / 1.6)} aria-label={t('map.zoomOut')}>−</button>
         <button className="btn small" onClick={() => scene.current?.reset()} aria-label={t('map.zoomFit')}>⤢</button>
       </div>
-      <p className="map3d-hint muted small">{t('map.3d.hint')}</p>
     </>
   );
 }
