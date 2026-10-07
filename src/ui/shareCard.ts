@@ -1,3 +1,4 @@
+import { logoSvg } from './mark';
 /**
  * The result card: one poster that sums up an election night or a career,
  * drawn on a canvas so it can be saved or shared. Everything on it comes from
@@ -214,8 +215,16 @@ export async function drawCard(canvas: HTMLCanvasElement, data: CardData): Promi
   g.strokeStyle = 'rgba(255,255,255,0.28)'; g.lineWidth = 2; g.beginPath(); g.roundRect(14, 14, CARD_W - 28, CARD_H - 28, 22); g.stroke();
 
   // The mark: small, in the corner.
-  g.fillStyle = BRAND; g.beginPath(); g.roundRect(44, 38, 44, 30, 7); g.fill();
-  text('222', 66, 61, `800 17px ${FONT}`, WHITE, 'center');
+  try {
+    const mark = await loadImage(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(logoSvg())}`);
+    g.drawImage(mark, 44, 30, 44, 44);
+    // A pale edge, so that the mark stands off a card that is its own blue.
+    g.strokeStyle = 'rgba(255,255,255,0.7)'; g.lineWidth = 1.5; g.beginPath(); g.roundRect(44, 30, 44, 44, 10); g.stroke();
+  } catch {
+    // Where the picture cannot be made, the old plain mark stands in.
+    g.fillStyle = BRAND; g.beginPath(); g.roundRect(44, 38, 44, 30, 7); g.fill();
+    text('222', 66, 61, `800 17px ${FONT}`, WHITE, 'center');
+  }
   text('KEMPEN 222', 98, 61, `700 17px ${FONT}`, 'rgba(255,255,255,0.85)');
 
   // The shout.

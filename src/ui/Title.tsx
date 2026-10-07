@@ -20,6 +20,7 @@ import { ACHIEVEMENT_IDS } from '../sim/campaign/achievements';
 import { FitText } from './FitText';
 import { HonoursDialog } from './Honours';
 import { HowToPlay } from './HowToPlay';
+import { Logo } from './Logo';
 import { Icon, type IconName } from './Icon';
 import { canDraw3D } from './map3d';
 import { Portrait } from './Portrait';
@@ -164,6 +165,13 @@ export function Title() {
       {howTo && <HowToPlay onClose={() => setHowTo(false)} />}
       {mode === 'menu' ? (
         <nav className="main-menu" aria-label={t('menu.label')}>
+          <div className="menu-brand">
+            <Logo size={84} lively />
+            <div>
+              <p className="menu-name">Kempen <b>222</b></p>
+              <p className="menu-tag">{t('app.tagline')}</p>
+            </div>
+          </div>
           <p className="title-intro">{t('title.intro')}</p>
           <ul className="menu-list">
             {auto && (

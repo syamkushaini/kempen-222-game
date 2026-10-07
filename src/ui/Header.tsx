@@ -5,6 +5,7 @@ import { useStore } from '../state/store';
 import { MenuButton } from './GameMenu';
 import { Delta } from './Delta';
 import { PartyMark } from './identity';
+import { Logo } from './Logo';
 import { SettingsButton } from './SettingsPanel';
 import { partyName, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
 
@@ -154,7 +155,7 @@ export function Header() {
     <header className="header" ref={bar}>
       <div className="brand">
         {/* in a game the header says whose campaign this is; on the title it is the game's own mark */}
-        {player !== undefined ? <PartyMark party={player} size={34} /> : <span className="brand-mark" aria-hidden="true">222</span>}
+        {player !== undefined ? <PartyMark party={player} size={34} /> : <Logo size={36} />}
         <div>
           <h1>{player !== undefined ? partyName(t, player) : t('app.title')}</h1>
           <p>
