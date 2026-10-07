@@ -132,6 +132,12 @@ export function setLeaderLook(id: PartyId, look: Look | null): void {
   if (look) override[id] = look; else delete override[id];
 }
 
+const photos: Partial<Record<PartyId, string>> = {};
+/** Puts a photo the player uploaded in place of a party leader's drawn face, or with null takes it away. */
+export function setLeaderPhoto(id: PartyId, photo: string | null): void {
+  if (photo) photos[id] = photo; else delete photos[id];
+}
+
 /** Kak Ros, the campaign manager who talks the player through the by-election. */
 export const ADVISER_LOOK: Look = { skin: 1, hair: 'bob', hairColor: 'black', headwear: 'scarf', glasses: true, wear: 'blouse' };
 
@@ -171,12 +177,13 @@ const uri = (key: string, svg: () => string) => {
 const colorOf = (party: number) => PARTIES[PARTY_IDS[party]].color;
 
 /** Whether the player has given this party's leader a look of their own choosing, which no painted portrait would match. */
-export const hasOwnLook = (party: number): boolean => PARTY_IDS[party] in override;
+export const hasOwnLook = (party: number): boolean => PARTY_IDS[party] in override || PARTY_IDS[party] in photos;
 
 /** A party leader's portrait as an image address, or null for the pooled independents. */
 export function leaderPortrait(party: number): string | null {
   const id = PARTY_IDS[party];
   if (id === 'oth') return null;
+  if (photos[id]) return photos[id]!;
   const look = override[id] ?? LEADER_LOOKS[id];
   return uri(`leader:${id}:${PARTIES[id].color}:${JSON.stringify(look)}`, () => portraitSvg(look, PARTIES[id].color));
 }

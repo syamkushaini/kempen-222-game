@@ -1,6 +1,7 @@
 import {
   ASSET_LOT, BUDGET, canDissolve, EARLIEST_DISSOLUTION, inGovernment, machineryTargets, termIncome, termSpending,
 } from '../sim/campaign/career';
+import { useState } from 'react';
 import { contestsState, scaled } from '../sim/campaign/actions';
 import { ROUNDS, STATE_GOVERNMENT_INCOME } from '../sim/campaign/contests';
 import { others, relation } from '../sim/campaign/diplomacy';
@@ -50,6 +51,7 @@ export function OrdersTab() {
   const k = campaign.career!;
   const me = campaign.player;
   const pc = campaign.parties[me]!;
+  const [lots, setLots] = useState(1);
   const o = k.orders;
   const g = k.government;
   const seat = seatOf(campaign);
@@ -208,8 +210,17 @@ export function OrdersTab() {
             <span className="action-meta num">{t('orders.assets', { value: f.rm(k.assets), rm: f.rm(income.assets) })}</span>
           </div>
           <div className="button-row tight">
-            <button className="btn small" disabled={pc.funds < lot} onClick={() => invest(1)}>{t('orders.buy', { rm: f.rm(lot) })}</button>
-            <button className="btn small" disabled={k.assets < lot} onClick={() => invest(-1)}>{t('orders.sell')}</button>
+            <button className="btn small" disabled={pc.funds < lot * lots} onClick={() => invest(lots)}>{t('orders.buy', { rm: f.rm(lot * lots) })}</button>
+            <input
+              className="num"
+              type="number"
+              min={1}
+              step={1}
+              value={lots}
+              onChange={(e) => setLots(Math.max(1, Number(e.target.value) || 1))}
+              aria-label={t('orders.lots')}
+            />
+            <button className="btn small" disabled={k.assets < lot * lots} onClick={() => invest(-lots)}>{t('orders.sell')}</button>
           </div>
         </li>
         <li><Loan /></li>

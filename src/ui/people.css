@@ -48,3 +48,5 @@
 @media (max-width: 640px) {
   .creator-grid { grid-template-columns: minmax(0, 1fr); }
 }
+.field-error { color: var(--bad); margin: 4px 0 0; }
+.swatches .btn { align-self: center; }

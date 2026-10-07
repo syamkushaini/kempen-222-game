@@ -3,12 +3,13 @@ import { LEADERS } from '../sim/campaign/cast';
 import { PARTY_IDS, type PartyId } from '../sim/types';
 import { DEFAULT_EMBLEMS, type EmblemId, type Identity } from '../state/identity';
 import { useStore } from '../state/store';
-import { PLAYER_LOOKS, setLeaderLook } from './faces';
+import { PLAYER_LOOKS, setLeaderLook, setLeaderPhoto } from './faces';
 
 type Real = Exclude<PartyId, 'oth'>;
 const ORIGINAL = structuredClone(PARTIES);
 const ORIGINAL_LEADERS = { ...LEADERS };
 const emblems: Partial<Record<PartyId, EmblemId>> = {};
+const flags: Partial<Record<PartyId, string>> = {};
 let accessible = false;
 
 /**
@@ -20,15 +21,18 @@ export function applyIdentity(player: number | null, identity: Identity | null):
   for (const id of PARTY_IDS) {
     Object.assign(PARTIES[id], ORIGINAL[id]);
     if (accessible) PARTIES[id].color = ACCESSIBLE_COLORS[id];
-    if (id !== 'oth') { LEADERS[id] = ORIGINAL_LEADERS[id]; setLeaderLook(id, null); }
+    if (id !== 'oth') { LEADERS[id] = ORIGINAL_LEADERS[id]; setLeaderLook(id, null); setLeaderPhoto(id, null); }
     delete emblems[id];
+    delete flags[id];
   }
   const id = player === null ? null : PARTY_IDS[player];
   if (!identity || !id || id === 'oth') return;
   Object.assign(PARTIES[id], { name: identity.name, short: identity.short, color: identity.color });
   LEADERS[id as Real] = identity.leader;
   setLeaderLook(id, PLAYER_LOOKS[identity.look] ?? null);
+  setLeaderPhoto(id, identity.photo ?? null);
   emblems[id] = identity.emblem;
+  if (identity.flag) flags[id] = identity.flag;
 }
 
 let installed = false;
@@ -58,9 +62,19 @@ const ART: Record<EmblemId, string> = {
 };
 
 /** A party's flag: its emblem on its colour. Decorative; the party's name is always written beside it. */
-export function PartyMark({ party, size = 28, emblem, color }: { party?: number; size?: number; emblem?: EmblemId; color?: string }) {
+export function PartyMark({ party, size = 28, emblem, color, picture }: { party?: number; size?: number; emblem?: EmblemId; color?: string; picture?: string }) {
   const id = party === undefined ? null : PARTY_IDS[party];
   if (id === 'oth') return null;
+  const own = picture ?? (emblem ? undefined : id ? flags[id] : undefined);
+  if (own) {
+    // A picture of the player's own goes on the party's colour, so a logo with clear corners still looks like a flag.
+    return (
+      <svg className="party-mark" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+        <rect width="24" height="24" rx="5" fill={color ?? (id ? PARTIES[id].color : '#888')} />
+        <image href={own} width="24" height="24" preserveAspectRatio="xMidYMid slice" />
+      </svg>
+    );
+  }
   const mark = emblem ?? (id ? emblems[id] ?? DEFAULT_EMBLEMS[id as Real] : 'sun');
   const fill = color ?? (id ? PARTIES[id].color : '#888');
   return (

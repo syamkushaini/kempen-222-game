@@ -23,7 +23,17 @@ export interface Identity {
   leader: string;
   /** Index into the ready-made portraits. */
   look: number;
+  /** A photo the player gave their leader, shrunk to a small picture. When there is one, it is shown in place of the ready-made portrait. */
+  photo?: string;
+  /** A picture the player gave the party as its flag, shown in place of the ready-made emblem. */
+  flag?: string;
 }
+
+/** The most a saved picture may weigh, as text. They are shrunk well below this before they are kept. */
+export const PICTURE_MAX = 60_000;
+
+/** Whether something is a small picture the game made itself: a data address for a JPEG, PNG or WebP, and nothing else. */
+export const isPicture = (x: unknown): x is string => typeof x === 'string' && x.length <= PICTURE_MAX && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(x);
 
 /** The marks the established parties fly. */
 export const DEFAULT_EMBLEMS: Record<Exclude<PartyId, 'oth'>, EmblemId> = {
@@ -34,13 +44,17 @@ export const DEFAULT_EMBLEMS: Record<Exclude<PartyId, 'oth'>, EmblemId> = {
 const tidy = (s: string, max: number) => s.replace(/\s+/g, ' ').trim().slice(0, max);
 
 /** Cleans up what the player typed, or returns null if there is not enough to make a party of. */
-export function makeIdentity(raw: { name: string; short: string; color: string; emblem: string; leader: string; look: number }): Identity | null {
+export function makeIdentity(raw: { name: string; short: string; color: string; emblem: string; leader: string; look: number; photo?: string; flag?: string }): Identity | null {
   const name = tidy(raw.name, 40), leader = tidy(raw.leader, 50);
   const short = tidy(raw.short, 6).toUpperCase();
   if (!name || !leader || !short) return null;
   if (!PARTY_COLORS.includes(raw.color) || !(EMBLEM_IDS as readonly string[]).includes(raw.emblem)) return null;
   if (!Number.isInteger(raw.look) || raw.look < 0 || raw.look >= LOOK_COUNT) return null;
-  return { name, short, color: raw.color, emblem: raw.emblem as EmblemId, leader, look: raw.look };
+  if ((raw.photo !== undefined && !isPicture(raw.photo)) || (raw.flag !== undefined && !isPicture(raw.flag))) return null;
+  const made: Identity = { name, short, color: raw.color, emblem: raw.emblem as EmblemId, leader, look: raw.look };
+  if (raw.photo) made.photo = raw.photo;
+  if (raw.flag) made.flag = raw.flag;
+  return made;
 }
 
 /** Whether something read from a save is a usable identity. Null means the party is played as it is. */
@@ -50,5 +64,5 @@ export function isValidIdentity(x: unknown): x is Identity | null {
   const o = x as Record<string, unknown>;
   if (typeof o.name !== 'string' || typeof o.short !== 'string' || typeof o.color !== 'string' || typeof o.emblem !== 'string' || typeof o.leader !== 'string' || typeof o.look !== 'number') return false;
   const made = makeIdentity(o as Parameters<typeof makeIdentity>[0]);
-  return !!made && made.name === o.name && made.short === o.short && made.leader === o.leader;
+  return !!made && made.name === o.name && made.short === o.short && made.leader === o.leader && made.photo === o.photo && made.flag === o.flag;
 }

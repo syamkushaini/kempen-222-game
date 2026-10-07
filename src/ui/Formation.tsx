@@ -39,6 +39,9 @@ const headKind = (world: World) => (world.rules.kind === 'state' ? 'state' : 'ge
 /** A change in a meter as a whole number with its sign. */
 const signed = (n: number) => { const r = Math.round(n); return r > 0 ? `+${r}` : r < 0 ? `−${-r}` : '0'; };
 
+/** Keeps an under-the-table offer inside the party's purse, rounding to a lot. */
+const clampCash = (n: number, funds: number, step: number) => Math.max(0, Math.min(funds, Math.round(n / step) * step));
+
 function describeOffer(t: T, f: Format, offer: Offer): string {
   const parts = [t(offer.posts === 1 ? 'form.offer.post' : 'form.offer.posts', { n: offer.posts })];
   if (offer.senior) parts.push(t(`senior.${offer.senior}`));
@@ -103,6 +106,8 @@ function OfferPanel({ bloc }: { bloc: number }) {
   const me = campaign.player;
   const id = PARTY_IDS[bloc];
   const [draft, setDraft] = useState<Offer>(() => f.offers[me][bloc] ?? emptyOffer());
+  // What is being typed in the cash box; it is only rounded to a lot once typing stops, so "50000" can be typed through "5".
+  const [typed, setTyped] = useState<string | null>(null);
 
   const known = f.known[bloc];
   const wants = WANTS[id];
@@ -210,7 +215,21 @@ function OfferPanel({ bloc }: { bloc: number }) {
       <h3>{t('form.cash')}</h3>
       <div className="stepper">
         <button className="btn small" disabled={draft.cash <= 0} onClick={() => setDraft({ ...draft, cash: Math.max(0, draft.cash - step) })} aria-label={t('form.less')}>−</button>
-        <strong className="num">{fmt.rm(draft.cash)}</strong>
+        <input
+          className="num"
+          type="number"
+          min={0}
+          max={funds}
+          step={step}
+          value={typed ?? draft.cash}
+          onChange={(e) => setTyped(e.target.value)}
+          onBlur={() => {
+            if (typed !== null) setDraft({ ...draft, cash: clampCash(Number(typed) || 0, funds, step) });
+            setTyped(null);
+          }}
+          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+          aria-label={t('form.cash')}
+        />
         <button className="btn small" disabled={draft.cash + step > funds} onClick={() => setDraft({ ...draft, cash: draft.cash + step })} aria-label={t('form.more')}>+</button>
         <span className="muted small">
           {t('form.cash.note', { rm: fmt.rm(funds) })}
