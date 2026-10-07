@@ -56,5 +56,5 @@ export function MenuButton() {
   const playing = useStore((s) => !!s.game);
   const setOpen = useStore((s) => s.setMenuOpen);
   if (!playing) return null;
-  return <button className="btn small menu-button" aria-haspopup="dialog" onClick={() => setOpen(true)}>☰ {t('menu.button')}</button>;
+  return <button className="btn small menu-button" aria-haspopup="dialog" aria-label={t('menu.button')} onClick={() => setOpen(true)}><span aria-hidden="true">☰</span><span className="menu-word"> {t('menu.button')}</span></button>;
 }

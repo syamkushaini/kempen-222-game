@@ -4,6 +4,7 @@ import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import { MenuButton } from './GameMenu';
 import { Delta } from './Delta';
+import { Icon } from './Icon';
 import { PartyMark } from './identity';
 import { Logo } from './Logo';
 import { SettingsButton } from './SettingsPanel';
@@ -132,6 +133,34 @@ function TermHud() {
   );
 }
 
+/** Between elections, on a phone: the money and the buttons that move time, kept at the bottom where a thumb is. */
+export function TermBar() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const advance = useStore((s) => s.advance);
+  const narrow = useNarrow();
+  const k = campaign.career;
+  if (campaign.phase !== 'term' || !narrow || !k || k.ending) return null;
+  const me = campaign.parties[campaign.player]!;
+  const net = termIncome(world, campaign).total - termSpending(world, campaign).total;
+  const waiting = campaign.inbox.length > 0;
+  return (
+    <div className="campaign-bar term-bar">
+      <div className="hud-item">
+        <span className="hud-label">{t('hud.funds')}</span>
+        <strong className="num hud-value">{f.rm(me.funds)} <span className={`small ${net < 0 ? 'neg' : 'muted'}`}>{net < 0 ? '−' : '+'}{f.rm(Math.abs(net))}</span></strong>
+      </div>
+      <div className="button-row tight term-buttons">
+        <button className="btn small" disabled={waiting} onClick={() => advance(1)} aria-label={t('term.next')}>▸ 1</button>
+        <button className="btn small" disabled={waiting} onClick={() => advance(4)} aria-label={t('term.month')}>▸▸ 4</button>
+        <button className="btn small primary" disabled={waiting} onClick={() => advance(52)}>{t('term.skip.short')} ⏭</button>
+      </div>
+    </div>
+  );
+}
+
 export function Header() {
   const t = useT();
   const phase = useStore((s) => s.game?.campaign.phase);
@@ -141,6 +170,17 @@ export function Header() {
   const saveFailed = useStore((s) => s.autosaveFailed);
   const bar = useRef<HTMLElement>(null);
   const player = useStore((s) => s.game?.campaign.player);
+  const narrow = useNarrow();
+  const waiting = useStore((s) => (s.game && (s.game.campaign.phase === 'campaign' || s.game.campaign.phase === 'term') ? s.game.campaign.inbox.length : 0));
+  const sceneOpen = useStore((s) => s.sceneOpen);
+  const openScene = useStore((s) => s.openScene);
+  const week = useStore((s) => s.game?.campaign.week);
+  const totalWeeks = useStore((s) => s.game?.campaign.totalWeeks);
+  const career = useStore((s) => s.game?.campaign.career);
+  // On a phone the bar is one line: whose campaign, and where in it. The week has no box of its own there.
+  const when = phase === 'campaign' && week !== undefined && totalWeeks !== undefined
+    ? (week === totalWeeks ? t('hud.finalWeek') : t('hud.week', { n: week, total: totalWeeks }))
+    : phase === 'term' && career ? t('term.date', { term: career.term, year: Math.floor((career.week - 1) / 52) + 1, week: ((career.week - 1) % 52) + 1 }) : null;
   // The sticky sidebar sits below the bar, so it needs to know how tall the bar is.
   useEffect(() => {
     const el = bar.current;
@@ -152,21 +192,28 @@ export function Header() {
     return () => watch.disconnect();
   }, []);
   return (
-    <header className="header" ref={bar}>
+    <header className={player === undefined ? 'header on-title' : 'header'} ref={bar}>
       <div className="brand">
         {/* in a game the header says whose campaign this is; on the title it is the game's own mark */}
         {player !== undefined ? <PartyMark party={player} size={34} /> : <Logo size={36} />}
         <div>
           <h1>{player !== undefined ? partyName(t, player) : t('app.title')}</h1>
           <p>
-            {name ? [name, challenge?.fog && t('challenge.fog'), challenge?.noisy && t('challenge.noisy')].filter(Boolean).join(' · ') : t('app.tagline')}
+            {narrow && when ? when : name ? [name, challenge?.fog && t('challenge.fog'), challenge?.noisy && t('challenge.noisy')].filter(Boolean).join(' · ') : t('app.tagline')}
             {name && saveFailed && <span className="autosave bad" role="status"> · {t('saves.failedShort')}</span>}
             {name && !saveFailed && saved && <span key={saved} className="autosave" role="status"> · ✓ {t('saves.autosavedShort')}</span>}
           </p>
         </div>
       </div>
-      {phase === 'campaign' && <Hud />}
-      {phase === 'term' && <TermHud />}
+      {/* on a phone the week is in the line above, and the money and buttons are in the bar at the bottom */}
+      {phase === 'campaign' && !narrow && <Hud />}
+      {phase === 'term' && !narrow && <TermHud />}
+      {/* On a phone the panel may be scrolled far down, or the map may be showing: a decision that is waiting says so here, always in sight. */}
+      {narrow && waiting > 0 && !sceneOpen && (
+        <button className="icon-btn inbox-button" title={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} aria-label={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} onClick={() => openScene(true)}>
+          <Icon name="inbox" size={20} /><span className="count">{waiting}</span>
+        </button>
+      )}
       <MenuButton />
       <SettingsButton />
     </header>

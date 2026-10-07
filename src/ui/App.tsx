@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, lazy, Suspense, useEffect, useState } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { useStore, type MapView as MapViewId, type SidebarTab } from '../state/store';
 import { hasChiefs } from '../sim/campaign/ai';
@@ -7,14 +7,10 @@ import { Adviser } from './Adviser';
 import { ChiefsTab } from './ChiefsTab';
 import { hasDiplomacy } from '../sim/campaign/diplomacy';
 import { DiplomacyTab } from './DiplomacyTab';
-import { FormationScreen } from './Formation';
-import { GovernmentTab } from './GovernmentTab';
 import { installFeedback } from './feedback';
 import { ActionToasts, Toasts } from './Honours';
-import { LegacyScreen } from './LegacyScreen';
 import { SceneModal } from './SceneModal';
-import { ElectionNight } from './ElectionNight';
-import { CampaignBar, Header } from './Header';
+import { CampaignBar, Header, TermBar } from './Header';
 import { GoalLine } from './Challenges';
 import { GameMenu } from './GameMenu';
 import { NextStep } from './NextStep';
@@ -22,11 +18,9 @@ import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useWorld
 import { MapView } from './MapView';
 import { now } from '../sim/campaign/news';
 import { NewsTab } from './NewsTab';
-import { OrdersTab } from './OrdersTab';
-import { PolicyTab } from './PolicyTab';
 import { PollsTab } from './PollsTab';
+import { SectionJump } from './SectionJump';
 import { SeatDetail, SeatsTab } from './SeatsTab';
-import { TermDesk } from './TermDesk';
 import { WeekRecap } from './WeekRecap';
 import { Standing } from './Standing';
 import { TeamTab } from './TeamTab';
@@ -35,6 +29,16 @@ import { Icon, type IconName } from './Icon';
 import { Title } from './Title';
 import { installIdentity } from './identity';
 import { ground, mix } from './shareCard';
+
+// The screens a game only reaches later (the count, the talks, the years between elections, the end of a career) are
+// fetched when they are first wanted, so that the first download, which matters most on a phone, is smaller.
+const ElectionNight = lazy(() => import('./ElectionNight').then((m) => ({ default: m.ElectionNight })));
+const FormationScreen = lazy(() => import('./Formation').then((m) => ({ default: m.FormationScreen })));
+const LegacyScreen = lazy(() => import('./LegacyScreen').then((m) => ({ default: m.LegacyScreen })));
+const GovernmentTab = lazy(() => import('./GovernmentTab').then((m) => ({ default: m.GovernmentTab })));
+const OrdersTab = lazy(() => import('./OrdersTab').then((m) => ({ default: m.OrdersTab })));
+const PolicyTab = lazy(() => import('./PolicyTab').then((m) => ({ default: m.PolicyTab })));
+const TermDesk = lazy(() => import('./TermDesk').then((m) => ({ default: m.TermDesk })));
 
 installIdentity();
 
@@ -165,7 +169,7 @@ function CampaignScreen() {
         <NextStep />
         <GoalLine />
         <section className="map-column">
-          <MapView display={display} toolbar={<ViewSwitch />} marker={term ? null : campaign.parties[campaign.player]!.location} pulse={flash.seat ? { id: flash.seat, kind: 'gain', n: flash.n } : null} />
+          <MapView tall display={display} toolbar={<ViewSwitch />} marker={term ? null : campaign.parties[campaign.player]!.location} pulse={flash.seat ? { id: flash.seat, kind: 'gain', n: flash.n } : null} />
           {/* the poll sits under the map, so that the side column is all tabs: what the player works in gets the height */}
           <Standing campaign={campaign} />
         </section>
@@ -196,6 +200,8 @@ function CampaignScreen() {
             </div>
           )}
           <div className="tab-body" role="tabpanel">
+            {narrow && <SectionJump watch={shown} />}
+            <Suspense fallback={<p className="muted small">{t('app.loading')}</p>}>
             {shown === 'desk' && <TermDesk />}
             {shown === 'orders' && <OrdersTab />}
             {shown === 'house' && <GovernmentTab />}
@@ -208,6 +214,7 @@ function CampaignScreen() {
             {shown === 'polls' && <PollsTab />}
             {shown === 'voters' && <VotersTab />}
             {shown === 'news' && <NewsTab />}
+            </Suspense>
           </div>
           {!narrow && seatCard}
         </aside>
@@ -215,6 +222,7 @@ function CampaignScreen() {
       {narrow && seatCard}
       <WeekRecap />
       <CampaignBar />
+      <TermBar />
       {narrow && (
         <nav className="phone-nav" aria-label={t('nav.label')}>
           <button className={screen === 'map' ? 'active' : ''} aria-pressed={screen === 'map'} onClick={() => setScreen('map')}>
@@ -286,10 +294,12 @@ export function App() {
       {/* the screens read party colours when they draw, so a new palette starts them afresh */}
       <Fragment key={palette}>
         {!phase && <Title />}
+        <Suspense fallback={<p className="muted">{t('app.loading')}</p>}>
         {ended && <LegacyScreen />}
         {!ended && (phase === 'campaign' || phase === 'term') && <CampaignScreen />}
         {!ended && night && <ElectionNight key={loads} />}
         {!ended && phase && phase !== 'campaign' && phase !== 'term' && !night && <FormationScreen />}
+        </Suspense>
         {!ended && phase && !night && <SceneModal />}
       </Fragment>
       <GameMenu />

@@ -7,7 +7,7 @@ import type { RegionId, SeatClass } from '../sim/types';
 import { useStore } from '../state/store';
 import { canDraw3D, PATTERNS } from './map3d';
 import { FIT, holdPoint, viewTransform, zoomBy, type View } from './mapGesture';
-import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay } from './hooks';
+import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay, useNarrow } from './hooks';
 import { Icon } from './Icon';
 import { SeatSearch } from './SeatSearch';
 import { Term } from './Term';
@@ -36,6 +36,8 @@ function loadMap(world: World): Promise<MapData> {
 // The country is about three times wider than it is tall. A taller canvas
 // leaves room to zoom into tall states without shrinking them.
 const VIEW_HEIGHT = 470;
+/** On a phone the map has a screen of its own, so it is drawn nearly square: a state fills more of it. */
+const PHONE_SHAPE = 1.05;
 const MAX_ZOOM = 40;
 const CLASS_OPACITY: Record<SeatClass, number> = { safe: 1, leaning: 0.72, marginal: 0.46 };
 const STALE_OPACITY = 0.22;
@@ -85,6 +87,8 @@ export function MapView(props: {
   marker?: RegionId | null;
   /** A seat that has just been declared: it flashes an outline, in a colour that says whether it changed hands. `n` restarts the flash. */
   pulse?: { id: string; kind: PulseKind; n: number } | null;
+  /** On a phone, where the map has a screen to itself, draw it nearly square. Not for election night, where the tally shares the screen. */
+  tall?: boolean;
 }) {
   const { display } = props;
   const t = useT();
@@ -104,6 +108,8 @@ export function MapView(props: {
   const preview = useStore((s) => s.preview);
 
   const [map, setMap] = useState<MapData | null>(null);
+  const narrow = useNarrow();
+  const viewH = props.tall && narrow && map ? Math.round(map.width * PHONE_SHAPE) : VIEW_HEIGHT;
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
   const frame = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -141,7 +147,7 @@ export function MapView(props: {
 
   const zoom = useMemo(() => {
     if (!map || !home) return null;
-    const W = map.width, H = VIEW_HEIGHT;
+    const W = map.width, H = viewH;
     const region = !single && selectedState ? map.states[selectedState]?.bbox : null;
     const box = region ?? home;
     const bw = Math.max(box[2] - box[0], 1e-6), bh = Math.max(box[3] - box[1], 1e-6);
@@ -150,7 +156,7 @@ export function MapView(props: {
     const k = Math.min(W / (bw * pad), H / (bh * pad), MAX_ZOOM);
     const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
     return { k, transform: `translate(${W / 2 - k * cx}px, ${H / 2 - k * cy}px) scale(${k})` };
-  }, [map, home, single, selectedState]);
+  }, [map, home, single, selectedState, viewH]);
 
   // What the 3D camera frames: the open state, or the whole contest.
   const focusBox = useMemo((): [number, number, number, number] | null => {
@@ -205,13 +211,13 @@ export function MapView(props: {
     if (f.length >= 2) {
       const spread = Math.hypot(f[0].x - f[1].x, f[0].y - f[1].y);
       const mid = inMap({ x: (f[0].x + f[1].x) / 2, y: (f[0].y + f[1].y) / 2 });
-      setView(holdPoint(g.start, g.a, mid, g.start.k * (g.spread > 0 ? spread / g.spread : 1), map.width, VIEW_HEIGHT));
+      setView(holdPoint(g.start, g.a, mid, g.start.k * (g.spread > 0 ? spread / g.spread : 1), map.width, viewH));
       dragged.current = true;
     } else if (g.start.k > 1) {
       // One finger only moves a map that has been zoomed; on the whole map it leaves the page free to scroll.
       const to = inMap(f[0]);
       if (!dragged.current && Math.hypot(to[0] - g.a[0], to[1] - g.a[1]) < 4) return;
-      setView(holdPoint(g.start, g.a, to, g.start.k, map.width, VIEW_HEIGHT));
+      setView(holdPoint(g.start, g.a, to, g.start.k, map.width, viewH));
       dragged.current = true;
       if (!svgRef.current?.hasPointerCapture(e.pointerId)) svgRef.current?.setPointerCapture(e.pointerId);
     }
@@ -226,7 +232,7 @@ export function MapView(props: {
     // A plain scroll stays the page's; holding Ctrl or Cmd (or pinching a trackpad) zooms the map.
     if (!map || !(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
-    setView((v) => zoomBy(v, e.deltaY < 0 ? 1.2 : 1 / 1.2, map.width, VIEW_HEIGHT));
+    setView((v) => zoomBy(v, e.deltaY < 0 ? 1.2 : 1 / 1.2, map.width, viewH));
   };
   useEffect(() => {
     const el = svgRef.current;
@@ -234,7 +240,7 @@ export function MapView(props: {
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   });
-  const zoomButton = (factor: number) => map && setView((v) => zoomBy(v, factor, map.width, VIEW_HEIGHT));
+  const zoomButton = (factor: number) => map && setView((v) => zoomBy(v, factor, map.width, viewH));
 
   const seatFromEvent = (e: MouseEvent) => (e.target as Element).getAttribute?.('data-seat') ?? null;
 
@@ -333,12 +339,12 @@ export function MapView(props: {
         )}
         {!use3d && map && zoom && (
           <svg
-            ref={svgRef} viewBox={`0 0 ${map.width} ${VIEW_HEIGHT}`} role="img" aria-label={contestName(t, world)} onMouseLeave={() => setHover(null)}
+            ref={svgRef} viewBox={`0 0 ${map.width} ${viewH}`} role="img" aria-label={contestName(t, world)} onMouseLeave={() => setHover(null)}
             className={view.k > 1 ? 'zoomed' : undefined} style={{ touchAction: view.k > 1 ? 'none' : 'pan-y' }}
             onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd}
             onClickCapture={(e) => { if (dragged.current) e.stopPropagation(); }}
           >
-            <g transform={viewTransform(view, map.width, VIEW_HEIGHT)}>
+            <g transform={viewTransform(view, map.width, viewH)}>
             <g className="map-zoom" style={{ transform: zoom.transform }} onClick={onClick} onMouseMove={onMove}>
               {accessible && <PatternDefs />}
               {backdrop.map(([id, shape]) => <path key={id} d={shape.d} className="seat-backdrop" />)}

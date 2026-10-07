@@ -2,11 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- viewport-fit=cover lets the bars at the bottom keep clear of a phone's home indicator -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Kempen 222</title>
     <meta name="description" content="Kempen 222: a satirical Malaysian election strategy game. Fight a by-election, a state or general election, or a five-year career. Every party and person in it is invented." />
     <meta name="theme-color" content="#efece4" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0c111b" media="(prefers-color-scheme: dark)" />
+    <!-- added to a phone's home screen, the game opens full-screen like an app -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Kempen 222" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Kempen 222" />
     <meta property="og:description" content="A satirical Malaysian election strategy game. Every party and person in it is invented." />
