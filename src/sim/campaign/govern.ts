@@ -8,7 +8,7 @@ import { addScene, relation, shiftRelation } from './diplomacy';
 import { startFormation } from './formation';
 import { nationWeek } from './nation';
 import { pushNews, ref } from './news';
-import { economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
+import { cabinetWeek, economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
 import { PLEDGES } from './policy';
 import {
   ISSUE_IDS, LEVER_IDS,
@@ -16,7 +16,8 @@ import {
 } from './types';
 
 export {
-  deficit, economicMood, formCabinet, looseness, MINISTER_NAMES, reshuffle, setBudget, standstill, startEconomy, tableBudget, vacate,
+  ACTING_DRAG, appoint, candidatesFor, deficit, economicMood, formCabinet, looseness, MINISTER_NAMES, reshuffle, setBudget, standstill, startEconomy,
+  tableBudget, TRAIT_EFFECT, TRAIT_RISK, vacate, waitingForChoice,
 } from './office';
 
 const OTH = PARTY_IDS.indexOf('oth');
@@ -422,6 +423,7 @@ export function governWeek(c: Campaign, rng: Rng): void {
   // A capable cabinet steadies a government a little; a poor one wears it down.
   const skill = k.cabinet.reduce((a, m) => a + m.skill, 0) / Math.max(1, k.cabinet.length);
   k.government.stability = clamp(k.government.stability + 0.03 * (skill - 3), 5, 95);
+  cabinetWeek(c, rng);
 
   for (const bill of k.bills) bill.weeks--;
   const ready = k.bills.find((b) => b.weeks <= 0);

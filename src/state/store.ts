@@ -6,7 +6,7 @@ import {
   answerEvent, dissolve, foundForContest, invest, nextTerm, resumeTerm, setOrders, skipAhead, startCareer, syncOpinion,
 } from '../sim/campaign/career';
 import {
-  deliver, leaveGovernment, pullLever, reshuffle, setBudget, tableBill, tableMotion,
+  appoint, deliver, leaveGovernment, pullLever, reshuffle, setBudget, tableBill, tableMotion,
 } from '../sim/campaign/govern';
 import { choose, vetHopeful } from '../sim/campaign/candidates';
 import { canChoose } from '../sim/campaign/events';
@@ -213,6 +213,7 @@ interface Store {
   deliver(index: number): void;
   pullLever(id: LeverId): void;
   tableMotion(): void;
+  appoint(portfolio: PortfolioId, option: number): void;
   leaveGovernment(): void;
   retire(): void;
 
@@ -405,6 +406,7 @@ export const useStore = create<Store>((set, get) => {
     deliver: (index) => mutate((c) => { if (deliver(c, index)) syncOpinion(c); }),
     pullLever: (id) => mutate((c, _g, world) => { if (pullLever(world, c, id)) syncOpinion(c); }),
     tableMotion: () => mutate((c, _g, world) => {
+    appoint: (portfolio, option) => mutate((c, _g, world) => { appoint(world, c, portfolio, option); }),
       tableMotion(world, c);
       if (c.phase === 'formation') return { showNight: false, offerReply: null };
     }),

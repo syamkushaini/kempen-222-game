@@ -1,11 +1,13 @@
+import type { World } from '../election';
 import { clamp } from '../math';
 import { Rng } from '../rng';
 import { BLOC_IDS, N_BLOCS, PARTY_IDS, type BlocId, type PartyId } from '../types';
+import { scaled } from './actions';
 import { shiftRelation, shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
 import {
-  LINE_IDS, PORTFOLIO_IDS,
-  type Budget, type Campaign, type Career, type Dial, type Economy, type LineId, type Minister, type PortfolioId,
+  LINE_IDS, MINISTER_TRAITS, PORTFOLIO_IDS,
+  type Budget, type Campaign, type Candidate, type Career, type Dial, type Economy, type LineId, type Minister, type MinisterTrait, type PortfolioId,
 } from './types';
 
 export const isPm = (c: Campaign) => c.career!.government.pm === c.player;
@@ -118,7 +120,7 @@ export function rivalBudget(c: Campaign): void {
 
 // ---------- the cabinet ----------
 
-/** Invented names for ministers. Proper nouns; the same in every language. */
+/** Invented names for ministers. Proper nouns; the same in every language. Each has a face of its own in the portraits. */
 export const MINISTER_NAMES = [
   'Azlan Mokhtar', 'Noraini Hashim', 'Zulkifli Daud', 'Suraya Latiff', 'Kamarul Bahrin', 'Rosnah Yahya',
   'Lee Chee Keong', 'Wong Siew Lan', 'Tan Boon Hock', 'Chong Mei Yin',
@@ -153,6 +155,128 @@ export function formCabinet(c: Campaign, rng: Rng): void {
   }
   k.cabinet = [];
   for (const id of PORTFOLIO_IDS) k.cabinet.push(newMinister(k, id, holder.get(id) ?? g.pm, rng));
+  k.appointments = [];
+  for (const m of k.cabinet) if (m.party === c.player && inGov(c, c.player)) stepIn(c, m);
+}
+
+// ---------- appointing ministers ----------
+
+/** What each kind brings on the day, and what it costs. Money is at general-election scale. */
+export const TRAIT_EFFECT = {
+  expert: { credibility: 3, unity: -3 },
+  loyalist: { unity: 3 },
+  rising: { mood: 0.004 },
+  fixer: { funds: 25_000 },
+} as const;
+/** Each week, the chance that the risk of the kind comes to pass. */
+export const TRAIT_RISK: Partial<Record<MinisterTrait, number>> = { rising: 0.004, fixer: 0.005 };
+/** What an unfilled post costs the government's steadiness each week, for every post. */
+export const ACTING_DRAG = 0.08;
+
+/** The skill a candidate of each kind has: how well they will do the job. */
+function skillFor(trait: MinisterTrait, rng: Rng): number {
+  if (trait === 'expert') return 4 + rng.int(2);
+  if (trait === 'loyalist') return 2 + rng.int(2);
+  if (trait === 'rising') return 3 + rng.int(2);
+  return 3;
+}
+
+/**
+ * Three people the player could put in a post, each a different kind. Their draw does not touch the game's own stream of
+ * chance, so a cabinet formed in a game that had none of this comes out the same.
+ */
+export function candidatesFor(c: Campaign, portfolio: PortfolioId): Candidate[] {
+  const k = c.career!;
+  const rng = new Rng((c.rng ^ 0x4d1e11) + k.week * 31 + PORTFOLIO_IDS.indexOf(portfolio) * 7919 + k.cabinet.length);
+  // Only one person can be chosen for each post, so different posts may offer the same name; the one chosen is taken off the others (see appoint).
+  const used = new Set<number>(k.cabinet.filter((m) => m.portfolio !== portfolio).map((m) => m.name));
+  const kinds = [...MINISTER_TRAITS];
+  for (let i = kinds.length - 1; i > 0; i--) { const j = rng.int(i + 1); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; }
+  return kinds.slice(0, 3).map((trait) => {
+    let name = rng.int(MINISTER_NAMES.length);
+    for (let i = 0; i < MINISTER_NAMES.length && used.has(name); i++) name = (name + 1) % MINISTER_NAMES.length;
+    used.add(name);
+    return { name, skill: skillFor(trait, rng), trait };
+  });
+}
+
+/** Gives a candidate whose name has just been taken (by a minister, or an option elsewhere that was chosen) another one. */
+function renameTaken(k: Career, rng: Rng): void {
+  for (const a of k.appointments ?? []) {
+    const used = new Set<number>([...k.cabinet.filter((m) => m.portfolio !== a.portfolio).map((m) => m.name)]);
+    for (const o of a.options) {
+      if (used.has(o.name)) {
+        let name = rng.int(MINISTER_NAMES.length);
+        for (let i = 0; i < MINISTER_NAMES.length && (used.has(name) || a.options.some((x) => x.name === name)); i++) name = (name + 1) % MINISTER_NAMES.length;
+        o.name = name;
+      }
+      used.add(o.name);
+    }
+  }
+}
+
+/** A weak stand-in holds a post of the player's party until the player has chosen. */
+function stepIn(c: Campaign, m: Minister): void {
+  const k = c.career!;
+  m.skill = 2;
+  m.acting = true;
+  delete m.trait;
+  delete m.done;
+  k.appointments = (k.appointments ?? []).filter((a) => a.portfolio !== m.portfolio);
+  k.appointments.push({ portfolio: m.portfolio, options: candidatesFor(c, m.portfolio) });
+}
+
+/** Whether the post is one the player has yet to fill. */
+export const waitingForChoice = (k: Career, portfolio: PortfolioId) => !!k.appointments?.some((a) => a.portfolio === portfolio);
+
+/** The player puts one of the people on offer in a post. What they bring comes at once; what they cost may come later. */
+export function appoint(world: World, c: Campaign, portfolio: PortfolioId, index: number): boolean {
+  const k = c.career;
+  if (!k || c.phase !== 'term') return false;
+  const slot = k.appointments?.find((a) => a.portfolio === portfolio);
+  const pick = slot?.options[index];
+  const i = k.cabinet.findIndex((m) => m.portfolio === portfolio);
+  if (!slot || !pick || i < 0 || k.cabinet[i].party !== c.player) return false;
+  k.cabinet[i] = { portfolio, party: c.player, name: pick.name, skill: pick.skill, trait: pick.trait };
+  k.appointments = k.appointments!.filter((a) => a !== slot);
+  renameTaken(k, new Rng((c.rng ^ 0x7a4e) + k.week));
+  const me = c.player;
+  if (pick.trait === 'expert') { k.credibility = clamp(k.credibility + TRAIT_EFFECT.expert.credibility, 0, 100); shiftUnity(c, me, TRAIT_EFFECT.expert.unity); }
+  else if (pick.trait === 'loyalist') shiftUnity(c, me, TRAIT_EFFECT.loyalist.unity);
+  else if (pick.trait === 'rising') lift(k, me, 'all', TRAIT_EFFECT.rising.mood);
+  else c.parties[me]!.funds += scaled(world, TRAIT_EFFECT.fixer.funds);
+  pushNews(c, { party: me, key: 'news.gov.appointed', vars: { name: MINISTER_NAMES[pick.name], post: `@portfolio:${portfolio}` }, tone: 'neutral' });
+  return true;
+}
+
+/**
+ * A week of the player's own ministers: a stand-in drags on the government, and the risk that comes with a kind of
+ * person may come to pass. `rng` is the game's stream; it is only drawn from when there is a risk to roll.
+ */
+export function cabinetWeek(c: Campaign, rng: Rng): void {
+  const k = c.career!;
+  const me = c.player;
+  const standIns = k.cabinet.filter((m) => m.acting).length;
+  if (standIns > 0) k.government.stability = clamp(k.government.stability - ACTING_DRAG * standIns, 5, 95);
+  for (const m of k.cabinet) {
+    if (m.party !== me || !m.trait || m.done) continue;
+    const risk = TRAIT_RISK[m.trait];
+    if (!risk || rng.next() >= risk) continue;
+    m.done = true;
+    if (m.trait === 'rising') {
+      shiftUnity(c, me, -6);
+      pushNews(c, { party: me, key: 'news.gov.ambition', vars: { name: MINISTER_NAMES[m.name], post: `@portfolio:${m.portfolio}` }, tone: 'bad' });
+    } else {
+      // A fixer's past catches up with them: they resign, the party pays for it, and the post is the player's to fill again.
+      k.credibility = clamp(k.credibility - 8, 0, 100);
+      k.government.trust = clamp(k.government.trust - 5, 0, 100);
+      pushNews(c, { party: me, key: 'news.gov.scandal', vars: { name: MINISTER_NAMES[m.name], post: `@portfolio:${m.portfolio}` }, tone: 'bad' });
+      const resigned = m.name;
+      stepIn(c, m);
+      // The one who resigned is not on offer again.
+      k.appointments = k.appointments!.map((a) => (a.portfolio === m.portfolio ? { ...a, options: a.options.filter((o) => o.name !== resigned) } : a));
+    }
+  }
 }
 
 /** A party leaves the government: its ministers go with it, and the head of government's party fills the gaps. */
@@ -162,8 +286,12 @@ export function vacate(c: Campaign, party: number): void {
   k.cabinet.forEach((m, i) => {
     if (m.party !== party) return;
     k.cabinet.splice(i, 1);
-    k.cabinet.splice(i, 0, newMinister(k, m.portfolio, k.government.pm, rng));
+    const next = newMinister(k, m.portfolio, k.government.pm, rng);
+    k.cabinet.splice(i, 0, next);
+    if (next.party === c.player && inGov(c, c.player)) stepIn(c, next);
   });
+  // A party that has left government leaves its unfilled posts behind with it.
+  if (party === c.player) k.appointments = [];
   c.rng = rng.state;
 }
 
@@ -176,12 +304,16 @@ export function reshuffle(c: Campaign, portfolio: PortfolioId): boolean {
   const old = k.cabinet[i];
   const rng = new Rng(c.rng);
   k.cabinet.splice(i, 1);
-  k.cabinet.splice(i, 0, newMinister(k, portfolio, c.player, rng));
+  const next = newMinister(k, portfolio, c.player, rng);
+  k.cabinet.splice(i, 0, next);
   c.rng = rng.state;
+  // The post is the player's own now, and theirs to fill: until then a stand-in holds it.
+  stepIn(c, next);
+  k.appointments = k.appointments!.map((a) => (a.portfolio === portfolio ? { ...a, options: a.options.filter((o) => o.name !== old.name) } : a));
   if (old.party !== c.player) {
     k.government.stability = clamp(k.government.stability - 4, 5, 95);
     shiftRelation(c, c.player, old.party, -8);
   } else shiftUnity(c, c.player, -2);
-  pushNews(c, { party: c.player, key: 'news.gov.reshuffle', vars: { name: MINISTER_NAMES[k.cabinet[i].name], post: `@portfolio:${portfolio}` }, tone: 'neutral' });
+  pushNews(c, { party: c.player, key: 'news.gov.dismissed', vars: { name: MINISTER_NAMES[old.name], post: `@portfolio:${portfolio}` }, tone: 'neutral' });
   return true;
 }

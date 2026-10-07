@@ -4,7 +4,7 @@ import { N_PARTIES } from '../types';
 import { N_BLOCS } from '../types';
 import {
   BACKSTORY_IDS, DEMAND_IDS, ENDORSER_IDS, FOCUS_IDS, HOPEFUL_KINDS, LEGACY_IDS, LEVER_IDS, LINE_IDS, N_ISSUES, OUTLET_IDS,
-  PLEDGE_IDS, PORTFOLIO_IDS, ROLE_IDS, SENIOR_IDS, STAT_IDS,
+  MINISTER_TRAITS, PLEDGE_IDS, PORTFOLIO_IDS, ROLE_IDS, SENIOR_IDS, STAT_IDS,
   type Campaign, type PartyCampaign,
 } from './types';
 
@@ -141,7 +141,8 @@ function isValidOffice(x: Record<string, unknown>): boolean {
   return (
     isObj(e) && isNum(e.growth) && isNum(e.inflation) && isNum(e.jobless) && isNum(e.debt) &&
     isBudget(x.budget) && isBudget(x.tabled) && isNum(x.fiscal) &&
-    isList(x.cabinet, (m) => isObj(m) && (PORTFOLIO_IDS as readonly unknown[]).includes(m.portfolio) && isParty(m.party) && isNum(m.name) && isNum(m.skill)) &&
+    isList(x.cabinet, (m) => isObj(m) && (PORTFOLIO_IDS as readonly unknown[]).includes(m.portfolio) && isParty(m.party) && isNum(m.name) && isNum(m.skill) && (m.trait === undefined || (MINISTER_TRAITS as readonly unknown[]).includes(m.trait)) && (m.acting === undefined || typeof m.acting === 'boolean') && (m.done === undefined || typeof m.done === 'boolean')) &&
+    (x.appointments === undefined || isList(x.appointments, (a) => isObj(a) && (PORTFOLIO_IDS as readonly unknown[]).includes(a.portfolio) && isList(a.options, (o) => isObj(o) && isNum(o.name) && isNum(o.skill) && (MINISTER_TRAITS as readonly unknown[]).includes(o.trait)))) &&
     isList(x.bills, (b) => isObj(b) && typeof b.id === 'string' && isNum(b.weeks)) &&
     isObj(x.delivery) && Object.entries(x.delivery).every(([id, v]) => isPledge(id) && (v === 'kept' || v === 'failed')) &&
     isList(x.obligations, (o) => isObj(o) && isParty(o.party) && (DEMAND_IDS as readonly unknown[]).includes(o.demand) && isNum(o.due) && typeof o.done === 'boolean') &&

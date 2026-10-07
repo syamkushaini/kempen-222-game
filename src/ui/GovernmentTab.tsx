@@ -4,11 +4,13 @@ import { seatOf } from '../sim/campaign/events';
 import {
   agenda, canMotion, canPull, confidenceCount, deficit, economicMood, MAX_BILLS, MINISTER_NAMES, needsBill, prepWeeks, whipCount,
 } from '../sim/campaign/govern';
+import { scaled } from '../sim/campaign/actions';
+import { TRAIT_EFFECT } from '../sim/campaign/govern';
 import { LEVER_IDS, LINE_IDS, type Dial } from '../sim/campaign/types';
 import { majorityLine } from '../sim/election';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
-import { partyColor, partyName, partyShort, useFog, useT, useWorld, type T } from './hooks';
+import { partyColor, partyName, partyShort, useFog, useFormat, useT, useWorld, type T } from './hooks';
 import { NationCard } from './NationCard';
 import { Portrait } from './Portrait';
 import { Chamber } from './Chamber';
@@ -42,11 +44,13 @@ function DialSwitch(props: { value: Dial; label: string; tax?: boolean; onChange
  */
 export function GovernmentTab() {
   const t = useT();
+  const f = useFormat();
   const fog = useFog();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const setBudget = useStore((s) => s.setBudget);
   const reshuffle = useStore((s) => s.reshuffle);
+  const appoint = useStore((s) => s.appoint);
   const tableBill = useStore((s) => s.tableBill);
   const deliver = useStore((s) => s.deliver);
   const pullLever = useStore((s) => s.pullLever);
@@ -111,6 +115,32 @@ export function GovernmentTab() {
         </>
       )}
 
+      {(k.appointments?.length ?? 0) > 0 && (
+        <section className="appointments" aria-label={t('appoint.title')}>
+          <h3>{t('appoint.title')} <span className="count-badge">{k.appointments!.length}</span></h3>
+          <p className="muted small action-desc">{t('appoint.desc')}</p>
+          {k.appointments!.map((a) => (
+            <div key={a.portfolio} className="appoint-post">
+              <strong className="action-title">{t(`portfolio.${a.portfolio}`)}</strong>
+              <ul>
+                {a.options.map((o, i) => (
+                  <li key={o.name} className="candidate">
+                    <Portrait minister={o.name} party={me} size={40} />
+                    <div className="grow">
+                      <span className="action-title">{MINISTER_NAMES[o.name]} <span className="badge plain">{t(`trait.${o.trait}` as StringKey)}</span></span>
+                      <span className="action-meta"><span aria-label={t('house.skill', { n: o.skill })}>{'★'.repeat(o.skill)}{'☆'.repeat(5 - o.skill)}</span></span>
+                      <span className="cand-good small"><b>+ {t('appoint.gain')}:</b> {t(`trait.${o.trait}.good` as StringKey, { rm: f.rm(scaled(world, TRAIT_EFFECT.fixer.funds)) })}</span>
+                      <span className="cand-bad small"><b>− {t('appoint.risk')}:</b> {t(`trait.${o.trait}.bad` as StringKey)}</span>
+                    </div>
+                    <button className="btn small" onClick={() => appoint(a.portfolio, i)}>{t('appoint.button')}</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      )}
+
       <h3>{t('house.cabinet')}</h3>
       <ul>
         {k.cabinet.map((m) => (
@@ -118,7 +148,7 @@ export function GovernmentTab() {
             <Portrait minister={m.name} party={m.party} size={36} />
             <div className="grow">
               <span className="action-title">{t(`portfolio.${m.portfolio}`)}</span>
-              <span className="action-meta">{MINISTER_NAMES[m.name]} · {partyShort(t, m.party)} · <span aria-label={t('house.skill', { n: m.skill })}>{'★'.repeat(m.skill)}{'☆'.repeat(5 - m.skill)}</span></span>
+              <span className="action-meta">{MINISTER_NAMES[m.name]} · {partyShort(t, m.party)} · <span aria-label={t('house.skill', { n: m.skill })}>{'★'.repeat(m.skill)}{'☆'.repeat(5 - m.skill)}</span>{m.acting && <> · <span className="badge plain">{t('appoint.acting')}</span></>}{m.trait && <> · <span className="badge plain">{t(`trait.${m.trait}` as StringKey)}</span></>}</span>
             </div>
             {pm && <ConfirmButton label={t('house.reshuffle')} confirmLabel={t(m.party === me ? 'house.reshuffle.own' : 'house.reshuffle.theirs')} onConfirm={() => reshuffle(m.portfolio)} />}
           </li>

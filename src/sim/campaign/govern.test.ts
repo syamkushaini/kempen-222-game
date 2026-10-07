@@ -171,7 +171,7 @@ describe('the cabinet', () => {
     expect(relation(c, PS, BP)).toBe(withBp + felt('bp', -8));
     expect(k.cabinet.map((m) => m.portfolio)).toEqual([...PORTFOLIO_IDS]);
     expect(new Set(k.cabinet.map((m) => m.name)).size).toBe(PORTFOLIO_IDS.length);
-    expect(c.news.at(-1)!.key).toBe('news.gov.reshuffle');
+    expect(c.news.at(-1)!.key).toBe('news.gov.dismissed');
     expect(reshuffle(career(BP), 'finance')).toBe(false);
   });
 });

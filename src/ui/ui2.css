@@ -540,3 +540,14 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 }
 @keyframes toast-down { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .poll-result { animation: none; } }
+
+/* Appointing ministers: three people for a post, what each brings in green and what each costs in red. */
+.appoint-post { margin-top: 12px; }
+.appoint-post > .action-title { display: block; margin-bottom: 4px; }
+.candidate { display: flex; align-items: flex-start; gap: 12px; padding: 12px; margin-top: 8px; background: var(--panel-2); border-radius: 16px; }
+.candidate .grow { display: flex; flex-direction: column; gap: 2px; }
+.cand-good { color: var(--good); }
+.cand-bad { color: var(--bad); }
+.cand-good, .cand-bad { display: block; }
+@media (max-width: 980px) { .candidate { flex-wrap: wrap; } .candidate .grow { flex: 1 1 0; min-width: 0; } .candidate .btn { flex: 1 1 100%; min-height: 44px; } }
+

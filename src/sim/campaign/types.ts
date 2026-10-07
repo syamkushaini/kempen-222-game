@@ -294,6 +294,10 @@ export interface Budget { lines: Record<LineId, Dial>; tax: Dial }
 export const PORTFOLIO_IDS = ['finance', 'home', 'economy', 'education', 'health', 'rural', 'works', 'defence'] as const;
 export type PortfolioId = (typeof PORTFOLIO_IDS)[number];
 
+/** What kind of person a minister is the player chose: each brings something and costs something. */
+export const MINISTER_TRAITS = ['expert', 'loyalist', 'rising', 'fixer'] as const;
+export type MinisterTrait = (typeof MINISTER_TRAITS)[number];
+
 export interface Minister {
   portfolio: PortfolioId;
   party: number;
@@ -301,7 +305,18 @@ export interface Minister {
   name: number;
   /** 1 (out of their depth) to 5 (formidable). */
   skill: number;
+  /** Set on a minister the player appointed; ministers of other parties, and those from before this existed, have none. */
+  trait?: MinisterTrait;
+  /** Holding the post until the player appoints someone: a stand-in, weak, and a small drag on the government. */
+  acting?: boolean;
+  /** The risk of this minister's kind has already come to pass. */
+  done?: boolean;
 }
+
+/** A person the player may appoint to a post. */
+export interface Candidate { name: number; skill: number; trait: MinisterTrait }
+/** A post the player's party holds and has yet to fill, with the people on offer. */
+export interface Appointment { portfolio: PortfolioId; options: Candidate[] }
 
 /** How well the country is looked after, and how it stands among other nations, each from 0 to 100. */
 export interface Nation { health: number; education: number; standing: number }
@@ -407,6 +422,8 @@ export interface Career {
   /** Standing commitments taken on since the last election, in budget units. */
   fiscal: number;
   cabinet: Minister[];
+  /** Posts of the player's party waiting for the player to choose who fills them. Absent in a game saved before this existed. */
+  appointments?: Appointment[];
   /** Bills the player's government has before the House. */
   bills: Bill[];
   /** What became of each promise the player's government took to a vote. */

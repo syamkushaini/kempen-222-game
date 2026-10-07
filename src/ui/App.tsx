@@ -127,7 +127,7 @@ function CampaignScreen() {
   // A decision waiting in the inbox is a bar, not a screen: it does not stop a seat being looked at.
   useEffect(() => { setCard(selectedSeat && world.seats.length > 1 ? selectedSeat : null); }, [selectedSeat]); // eslint-disable-line react-hooks/exhaustive-deps
   // What each tab has waiting: decisions for whoever runs things, bad news not yet read.
-  const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : id === 'desk' ? (shown === 'desk' ? 0 : campaign.inbox.length) : 0);
+  const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : id === 'desk' ? (shown === 'desk' ? 0 : campaign.inbox.length) : id === 'house' ? (shown === 'house' ? 0 : campaign.career?.appointments?.length ?? 0) : 0);
   // On a phone the map and the panel are separate screens, changed from a bar at the bottom.
   const narrow = useNarrow();
   const [screen, setScreen] = useState<'map' | 'panel'>('panel');
