@@ -162,20 +162,24 @@ export function OrdersTab() {
         {' '}<button className="link inline" onClick={() => selectState(o.focusStates[0] ?? null)}>{t('orders.states.show')}</button>
       </p>
 
-      <h3>{t('orders.statesGov')}</h3>
-      <p className="muted small action-desc">
-        {t('orders.statesGov.desc', { a: ROUNDS[0].week, b: ROUNDS[1].week, c: ROUNDS[2].week, rm: f.rm(scaled(world, STATE_GOVERNMENT_INCOME)) })}{' '}
-        {k.rounds < ROUNDS.length
-          ? t('orders.statesGov.next', { n: Math.max(0, ROUNDS[k.rounds].week - k.week), states: ROUNDS[k.rounds].states.map((st) => regionLabel(t, world, st)).join(', ') })
-          : t('orders.statesGov.done')}
-      </p>
-      <div className="state-chips">
-        {Object.entries(k.states).map(([st, p]) => (
-          <span key={st} className={p === me ? 'state-chip mine' : 'state-chip'}>
-            <i className="dot" data-party={p} style={{ background: partyColor(p) }} />{regionLabel(t, world, st)} <span className="muted">· {partyShort(t, p)}</span>
-          </span>
-        ))}
-      </div>
+      {world.rules.kind !== 'state' && (
+        <>
+        <h3>{t('orders.statesGov')}</h3>
+        <p className="muted small action-desc">
+          {t('orders.statesGov.desc', { a: ROUNDS[0].week, b: ROUNDS[1].week, c: ROUNDS[2].week, rm: f.rm(scaled(world, STATE_GOVERNMENT_INCOME)) })}{' '}
+          {k.rounds < ROUNDS.length
+            ? t('orders.statesGov.next', { n: Math.max(0, ROUNDS[k.rounds].week - k.week), states: ROUNDS[k.rounds].states.map((st) => regionLabel(t, world, st)).join(', ') })
+            : t('orders.statesGov.done')}
+        </p>
+        <div className="state-chips">
+          {Object.entries(k.states).map(([st, p]) => (
+            <span key={st} className={p === me ? 'state-chip mine' : 'state-chip'}>
+              <i className="dot" data-party={p} style={{ background: partyColor(p) }} />{regionLabel(t, world, st)} <span className="muted">· {partyShort(t, p)}</span>
+            </span>
+          ))}
+        </div>
+        </>
+      )}
       {Object.keys(k.house).length > 0 && <p className="note">{t('orders.house.changed', { n: Object.keys(k.house).length })}</p>}
 
       <h3>{t('orders.money')}</h3>

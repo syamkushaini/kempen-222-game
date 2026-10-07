@@ -54,6 +54,9 @@ export const STATE_RULES: Rules = {
   career: false,
 };
 
+/** A career in one state: assembly elections five years apart, with the years between played too. */
+export const STATE_CAREER_RULES: Rules = { ...STATE_RULES, career: true };
+
 export const BYELECTION_RULES: Rules = {
   kind: 'byelection',
   econ: 0.1,

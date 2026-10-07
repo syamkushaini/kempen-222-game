@@ -32,6 +32,8 @@ import {
   type Campaign, type Career, type Level, type Orders, type Outcome, type Scene, type SeatResults,
 } from './types';
 
+const OTH = PARTY_IDS.indexOf('oth');
+
 /** Weeks of a term before the election campaign begins. With the campaign, a term is five years. */
 export const TERM_WEEKS = 252;
 /** A head of government may ask for a dissolution once three years have passed. */
@@ -76,8 +78,9 @@ export function syncOpinion(c: Campaign): void {
 function firstGovernment(world: World): Outcome {
   const tally = lastElection(world).tally;
   const [ps, bp, gbk, gbs, legasi] = (['ps', 'bp', 'gbk', 'gbs', 'legasi'] as const).map((id) => PARTY_IDS.indexOf(id));
-  const partners = [bp, gbk, gbs, legasi];
   const deals: Outcome['deals'] = new Array(N_PARTIES).fill(null);
+  if (world.rules.kind === 'state') return firstStateGovernment(world, tally, [ps, bp, gbk, gbs, legasi], deals);
+  const partners = [bp, gbk, gbs, legasi];
   deals[bp] = { posts: 6, senior: 'dpm', demands: ['subsidies'], cash: 0 };
   deals[gbk] = { posts: 5, senior: null, demands: ['autonomy'], cash: 0 };
   deals[gbs] = { posts: 1, senior: null, demands: ['autonomy'], cash: 0 };
@@ -86,6 +89,33 @@ function firstGovernment(world: World): Outcome {
     pm: ps, partners, seats: tally[ps] + partners.reduce((a, p) => a + tally[p], 0),
     minority: false, stability: 60, trust: 60, deals, day: 0,
   };
+}
+
+/**
+ * The government a state career opens with, drawn from the last assembly election: the largest party heads it, with the
+ * parties it governs with in Putrajaya where they won seats here, and then the next largest until the numbers are there.
+ */
+function firstStateGovernment(world: World, tally: number[], federal: number[], deals: Outcome['deals']): Outcome {
+  const line = majorityLine(world);
+  const ranked = PARTY_IDS.map((_, p) => p).filter((p) => p !== OTH && tally[p] > 0).sort((a, b) => tally[b] - tally[a]);
+  const pm = ranked[0] ?? federal[0];
+  const partners: number[] = federal.includes(pm) ? federal.filter((p) => p !== pm && tally[p] > 0) : [];
+  let seats = tally[pm] + partners.reduce((a, p) => a + tally[p], 0);
+  for (const p of ranked) {
+    if (seats >= line) break;
+    if (p === pm || partners.includes(p)) continue;
+    partners.push(p);
+    seats += tally[p];
+  }
+  // Independents are the last to be counted, and only if the numbers still are not there.
+  if (seats < line) seats += tally[OTH];
+  const posts = world.rules.formation?.cabinet ?? 10;
+  const together = tally[pm] + partners.reduce((a, p) => a + tally[p], 0) || 1;
+  partners.sort((a, b) => tally[b] - tally[a]);
+  partners.forEach((p, i) => {
+    deals[p] = { posts: Math.max(1, Math.round((posts * tally[p]) / together)), senior: i === 0 ? 'deputy' : null, demands: [], cash: 0 };
+  });
+  return { pm, partners, seats, minority: seats < line, stability: 60, trust: 60, deals, day: 0 };
 }
 
 const defaultOrders = (): Orders => ({
@@ -139,7 +169,8 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   // The government was elected on its usual programme, and will be held to it.
   c.career.promises = [...c.career.manifesto[c.player]];
   c.career.record.bestSeats = lastElection(world).tally[c.player];
-  c.career.states = startStates(world);
+  // Only the country's career has state polls of its own to hold: a state career is played in the one state.
+  c.career.states = world.rules.kind === 'state' ? {} : startStates(world);
   // Candidates and endorsers wait for the campaign; the leader's past and platform count from the first day.
   closeCampaign(c);
   applyBackstory(c);
@@ -323,7 +354,7 @@ export function termWeek(world: World, c: Campaign): void {
   governWeek(c, rng);
   syncOpinion(c);
   // One thing at a time: nothing new arrives while a vote is waiting. The states' own elections come when they are due.
-  if (c.inbox.length === 0 && roundDue(c) !== null) raise(c, 'statePolls');
+  if (c.inbox.length === 0 && world.rules.kind !== 'state' && roundDue(c) !== null) raise(c, 'statePolls');
   if (c.inbox.length === 0) rollEvent(c, rng);
   // A by-election needs a seat to be fought in.
   for (const scene of c.inbox) if (scene.event === 'byElection' && !scene.seat) scene.seat = vacantSeat(world, c, rng);

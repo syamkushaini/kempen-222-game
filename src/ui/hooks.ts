@@ -16,7 +16,9 @@ export type T = (key: StringKey, vars?: Record<string, string | number>) => stri
 
 export function useT(): T {
   const lang = useStore((s) => s.settings.lang);
-  return useCallback((key, vars) => translate(lang, key, vars), [lang]);
+  // In a state's assembly (a state election or a career in one) some words change: the Chief Minister, not the Prime Minister.
+  const assembly = useStore((s) => { const sc = s.game?.campaign.scenario; return !!sc && (sc.startsWith('state:') || sc.startsWith('career:')); });
+  return useCallback((key, vars) => translate(lang, key, vars, assembly), [lang, assembly]);
 }
 
 export interface Format {

@@ -103,6 +103,8 @@ export function Title() {
   const [own, setOwn] = useState(false);
   // A party of one's own can take over one of the big three or be founded from nothing. A hung parliament's votes are already in, so it cannot be founded there.
   const [founded, setFounded] = useState(false);
+  // A state election can be one contest, or the first of a career in that state.
+  const [stateCareer, setStateCareer] = useState(false);
   const [stances, setStances] = useState<number[] | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [fog, setFog] = useState(false);
@@ -134,12 +136,13 @@ export function Title() {
   const pickState = (st: StateId) => void loadState(st).then(() => setState(st));
   const pickKind = (k: Mode) => (k === 'state' ? void loadState(state).then(() => setKind(k)) : setKind(k));
 
-  const scenario = kind === 'state' ? `state:${state}` : kind === 'byelection' ? byElectionId(seat) : SCENARIOS.find((s) => s.id === kind)!.id;
+  const scenario = kind === 'state' ? `${stateCareer ? 'career' : 'state'}:${state}` : kind === 'byelection' ? byElectionId(seat) : SCENARIOS.find((s) => s.id === kind)!.id;
   const world = getWorld(scenario)!;
   const parties = playable(world);
   const player = chosen !== null && parties.includes(chosen) ? chosen : parties[0];
   const level = difficulty ?? (kind === 'byelection' ? 'easy' : 'normal');
-  const founding = own && founded && kind !== 'hung';
+  const inCareer = kind === 'career' || (kind === 'state' && stateCareer);
+  const founding = own && founded && kind !== 'hung' && !(kind === 'state' && stateCareer);
   const playerId = (founding ? FOUNDING_SLOT : PARTY_IDS[player]) as FieldedId;
   const newPlatform = startStances()[PARTY_IDS.indexOf(FOUNDING_SLOT)];
   // The creator starts from the party being taken over, and follows it until the player types something of their own.
@@ -256,6 +259,20 @@ export function Title() {
             </div>
           )}
 
+          {kind === 'state' && (
+            <>
+              <span className="field-label">{t('title.stateMode')}</span>
+              <div className="party-cards" role="radiogroup" aria-label={t('title.stateMode')}>
+                {[false, true].map((v) => (
+                  <RadioCard key={String(v)} checked={stateCareer === v} className="party-card plain" onSelect={() => { setStateCareer(v); setDraft(null); if (v) setFounded(false); }}>
+                    <strong>{t(v ? 'title.stateMode.career' : 'title.stateMode.single')}</strong>
+                    <span className="small">{t(v ? 'title.stateMode.career.desc' : 'title.stateMode.single.desc')}</span>
+                  </RadioCard>
+                ))}
+              </div>
+            </>
+          )}
+
           {kind === 'byelection' && (
             <SeatPicker value={seat} onChange={setSeat} onRandom={() => setSeat(drawSeat(player, seat))} />
           )}
@@ -263,7 +280,7 @@ export function Title() {
           </>}
 
           {step === 1 && <>
-          {kind !== 'hung' && (
+          {kind !== 'hung' && !(kind === 'state' && stateCareer) && (
             <div className="founding" role="radiogroup" aria-label={t('platform.how')}>
               <h3>{t('platform.how')}</h3>
               {[false, true].map((v) => (
@@ -291,7 +308,7 @@ export function Title() {
                   <span className="small"><Jargon>{t(`party.${id}.blurb`)}</Jargon></span>
                   <span className="muted small">
                     {kind === 'byelection' ? t('title.lastShare', { pct: f.pct(lastShare(p)) }) : t('title.heldSeats', { n: last.tally[p] })}
-                    {' · '}{t('title.funds', { rm: f.rm(startingFunds(world, p) * (kind === 'career' ? 0.4 : 1)) })}
+                    {' · '}{t('title.funds', { rm: f.rm(startingFunds(world, p) * (inCareer ? 0.4 : 1)) })}
                   </span>
                   {allyOf(p) >= 0 && <span className="muted small">{t('title.stands', { party: PARTIES[PARTY_IDS[allyOf(p)]].short, n: standsIn(p), total: world.seats.length })}</span>}
                   {outlook(world, p) && <span className="badge plain">{t(`outlook.${outlook(world, p)!}`)}</span>}
@@ -311,7 +328,7 @@ export function Title() {
               <span>{t('creator.toggle')}</span>
             </label>
           )}
-          {own && <PartyCreator draft={shown} career={kind === 'career' && !founding} onChange={(patch) => setDraft((d) => ({ ...(d ?? base), ...patch }))} />}
+          {own && <PartyCreator draft={shown} career={inCareer && !founding} onChange={(patch) => setDraft((d) => ({ ...(d ?? base), ...patch }))} />}
           {founding && kind === 'career' && <PlatformEditor stances={stances ?? newPlatform} base={newPlatform} onChange={setStances} />}
           </>}
 

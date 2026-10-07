@@ -2,7 +2,7 @@ import seatFile from './generated/seats.json';
 import { seatsAfter } from '../sim/campaign/career';
 import { FOUNDED, FOUNDING_SEED_SHARE, FOUNDING_SLOT, NEW_PARTY_SHARE } from '../sim/campaign/founding';
 import { inContention } from '../sim/campaign/outlook';
-import { BYELECTION_RULES, CAREER_RULES, GENERAL_RULES, HUNG_RULES, STATE_RULES, type ContestKind } from '../sim/campaign/rules';
+import { BYELECTION_RULES, CAREER_RULES, GENERAL_RULES, HUNG_RULES, STATE_CAREER_RULES, STATE_RULES, type ContestKind } from '../sim/campaign/rules';
 import type { Campaign, SeatResults } from '../sim/campaign/types';
 import { createWorld, type SeatFile, type World } from '../sim/election';
 import { PARTY_IDS, type StateId } from '../sim/types';
@@ -50,7 +50,7 @@ export const loadStates = (): Promise<unknown> => Promise.all(STATE_SCENARIOS.ma
 
 /** The state whose results a scenario is played on, if any: a state election, or a by-election in an assembly seat. */
 export function stateNeeded(scenario: string): StateId | null {
-  const st = scenario.startsWith('state:') ? scenario.slice(6) : scenario.startsWith('byelection:dun:') ? scenario.split(':')[2] : null;
+  const st = scenario.startsWith('state:') ? scenario.slice(6) : scenario.startsWith('career:') ? scenario.slice(7) : scenario.startsWith('byelection:dun:') ? scenario.split(':')[2] : null;
   return st && STATE_SCENARIOS.includes(st as StateId) ? (st as StateId) : null;
 }
 
@@ -144,6 +144,7 @@ export const SCENARIOS: ScenarioInfo[] = [
   { id: 'general', kind: 'general' },
   { id: 'hung', kind: 'hung' },
   { id: 'career', kind: 'general', career: true },
+  ...STATE_SCENARIOS.map((state) => ({ id: `career:${state}`, kind: 'state' as const, career: true, state })),
 ];
 
 const cache = new Map<string, World>([['general', world]]);
@@ -168,6 +169,10 @@ function blueprint(id: string): { file: SeatFile; rules: typeof GENERAL_RULES } 
   if (id.startsWith('state:')) {
     const file = DUN_FILES[id.slice(6) as StateId];
     return file ? { file, rules: STATE_RULES } : null;
+  }
+  if (id.startsWith('career:')) {
+    const file = DUN_FILES[id.slice(7) as StateId];
+    return file ? { file, rules: STATE_CAREER_RULES } : null;
   }
   return null;
 }
@@ -217,10 +222,10 @@ export function newPartyWorld(id: string): World | null {
 export const scenarioInfo = (id: string) => SCENARIOS.find((s) => s.id === id) ?? null;
 
 // A career's world changes at every election: the model is refitted to the
-// result just declared. Worlds are kept by a fingerprint of that result, so a
-// reloaded or replayed game always gets the world that matches its own history.
-const careerWorlds = new Map<number, World>();
-const KEPT = 3;
+// result just declared. Worlds are kept by the scenario and a fingerprint of that
+// result, so a reloaded or replayed game always gets the world that matches its own history.
+const careerWorlds = new Map<string, World>();
+const KEPT = 6;
 
 function fingerprint(results: SeatResults): number {
   let h = 0x811c9dc5;
@@ -257,11 +262,13 @@ export function foundedWorld(): World {
 export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean }): World | null {
   const results = campaign.career?.results;
   if (!results) return campaign.career?.founded ? foundedWorld() : campaign.newParty ? newPartyWorld(campaign.scenario) ?? getWorld(campaign.scenario) : getWorld(campaign.scenario);
-  const key = fingerprint(results);
+  const key = `${campaign.scenario}:${fingerprint(results)}`;
   let built = careerWorlds.get(key);
   if (!built) {
-    const file = seatFile as SeatFile;
-    built = createWorld({ ...file, seats: seatsAfter(file.seats, results) }, CAREER_RULES, 'career');
+    // A career's later terms are fought on its own scenario's seats: the country's, or one state's assembly.
+    const plan = campaign.scenario.startsWith('career:') ? blueprint(campaign.scenario) : { file: seatFile as SeatFile, rules: CAREER_RULES };
+    if (!plan) return null;
+    built = createWorld({ ...plan.file, seats: seatsAfter(plan.file.seats, results) }, plan.rules, campaign.scenario.startsWith('career:') ? campaign.scenario : 'career');
     if (careerWorlds.size >= KEPT) careerWorlds.delete(careerWorlds.keys().next().value!);
     careerWorlds.set(key, built);
   }

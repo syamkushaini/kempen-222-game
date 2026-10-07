@@ -108,13 +108,14 @@ export function earned(world: World, c: Campaign, legacies: LegacyId[] = []): Ac
     if (r.victories >= 1) out.add('mandate');
     if (r.victories >= 2) out.add('secondMandate');
     // The career opened with Pakatan Sinar at the head of the government.
-    if (pm && me !== PS) out.add('outsider');
+    if (pm && me !== PS && world.rules.kind !== 'state') out.add('outsider');
     if (pm && k.promises.length >= 4 && k.promises.every((id) => k.delivery[id] === 'kept')) out.add('promiseKeeper');
     if (pm && k.week >= 104 && k.economy.debt < 55) out.add('hawk');
     if (r.toppled >= 1) out.add('toppler');
     if (c.news.some((n) => n.key === 'news.motion.survived')) out.add('survivor');
     if (r.weeksPm >= 520) out.add('decade');
-    if (pc.machinery.some((m) => m >= 90)) out.add('machine');
+    // A party at home in its own state starts a state career with branches that strong: it counts once a year has passed.
+    if (pc.machinery.some((m) => m >= 90) && (world.rules.kind !== 'state' || k.week >= 52 || k.term >= 2)) out.add('machine');
     if (k.assets >= scaled(world, 1_000_000)) out.add('magnate');
     if (pm && k.levers.every((week) => week > 0)) out.add('longArm');
 

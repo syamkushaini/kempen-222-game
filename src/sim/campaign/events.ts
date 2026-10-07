@@ -83,8 +83,17 @@ const QUIET_WEEKS = 3;
 const EVENT_CHANCE = 0.06;
 
 /** Whether an event could happen to the player now, by their place in government and by the state of things. */
+/** Things only a country's government deals with: foreign affairs, the federation's own quarrels, national schemes and taxes. A state's does not. */
+export const COUNTRY_ONLY: ReadonlySet<string> = new Set([
+  'borneoThird', 'oilRights', 'borneoHighway', 'peninsulaGaffe', 'stateDefiance', 'royaltiesRow', 'summitHost', 'seaIncident',
+  'mediationAward', 'refugeeBoats', 'twoPowers', 'tradeDispute', 'subsidyReform', 'megaProject', 'ratingsWarning', 'pensionCall', 'tolls',
+]);
+/** A career in one state is told apart from the country's by its scenario: career:<state>. */
+export const inStateCareer = (c: Pick<Campaign, 'scenario'>) => c.scenario.startsWith('career:');
+
 export function eligible(c: Campaign, id: string): boolean {
   const def = EVENTS[id];
+  if (COUNTRY_ONLY.has(id) && inStateCareer(c)) return false;
   const k = c.career!;
   const seat = seatOf(c);
   if (def.role === 'pm' && seat !== 'pm') return false;
