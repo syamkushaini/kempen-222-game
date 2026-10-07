@@ -3,6 +3,7 @@ import { termIncome, termSpending } from '../sim/campaign/career';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import { MenuButton } from './GameMenu';
+import { Delta } from './Delta';
 import { PartyMark } from './identity';
 import { SettingsButton } from './SettingsPanel';
 import { partyName, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
@@ -54,6 +55,7 @@ function Hud() {
   const t = useT();
   const f = useFormat();
   const campaign = useStore((s) => s.game!.campaign);
+  const scope = useStore((s) => s.game!.id);
   const narrow = useNarrow();
   const me = campaign.parties[campaign.player]!;
   const final = campaign.week === campaign.totalWeeks;
@@ -80,7 +82,7 @@ function Hud() {
       </div>}
       {!narrow && <div className="hud-item">
         <span className="hud-label">{t('hud.funds')}</span>
-        <strong className="num hud-value">{f.rm(me.funds)}</strong>
+        <strong className="num hud-value">{f.rm(me.funds)} <Delta value={me.funds} format={(n) => f.rm(Math.abs(n))} scope={scope} least={1000} /></strong>
       </div>}
       {/* on a phone the button lives in the bottom bar */}
       {!narrow && <EndWeekButton />}

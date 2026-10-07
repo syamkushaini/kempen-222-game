@@ -8,7 +8,6 @@ import { isMinor, type RegionId } from '../sim/types';
 import { useStore } from '../state/store';
 import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld, contestName } from './hooks';
 import { NewsLine } from './NewsTab';
-import { RecapCard } from './RecapCard';
 import { Loan } from './Loan';
 import { Brief } from './Brief';
 import { Icon, type IconName } from './Icon';
@@ -129,6 +128,7 @@ export function ActionsTab() {
   const ideas = guided ? [] : suggestions(world, campaign);
 
   const endWeek = useStore((s) => s.endWeek);
+  const setPreview = useStore((s) => s.setPreview);
   /** Opens the fundraising group and brings it into view: the way out of a blocked action that costs too much. */
   const raiseMoney = () => {
     setGroup('funds', true);
@@ -143,7 +143,12 @@ export function ActionsTab() {
       : check.reason === 'noTarget' ? t(`reason.noTarget.${ACTIONS[id].target === 'state' ? area : (ACTIONS[id].target as 'seat' | 'party')}`)
       : t(`reason.${check.reason}` as StringKey);
     return (
-      <li key={key} className={`action action-card family-${ACTIONS[id].family}${check.ok ? '' : ' blocked'}`}>
+      <li
+        key={key} className={`action action-card family-${ACTIONS[id].family}${check.ok ? '' : ' blocked'}`}
+        // Pointing at an action that lands on a seat shows that seat on the map before anything is spent.
+        onMouseEnter={() => setPreview(target.seat ?? null)} onMouseLeave={() => setPreview(null)}
+        onFocus={() => setPreview(target.seat ?? null)} onBlur={() => setPreview(null)}
+      >
         <span className="row-icon"><Icon name={ACTION_ICON[id]} size={20} /></span>
         <div className="grow">
           <span className="action-title">{title}</span>
@@ -189,7 +194,6 @@ export function ActionsTab() {
   return (
     <section className="actions">
       {lastReport && <ul className="report"><NewsLine item={lastReport} /></ul>}
-      {!guided && <RecapCard />}
       <p className="target-line">
         <span className="muted">{t('actions.target')}:</span>{' '}
         <i className="dot" data-party={me} style={{ background: partyColor(me) }} />

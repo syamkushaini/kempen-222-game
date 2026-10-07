@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useStore } from '../state/store';
+import { Delta } from './Delta';
 
 /**
  * A figure from 0 to 100 as a bar whose colour runs from red when low to green when full. The number stays beside it,
@@ -23,6 +24,7 @@ export function Gauge({ value, label }: { value: number; label?: ReactNode }) {
       {label && <span className="muted">{label}</span>}
       <div className="bar gauge-bar" aria-hidden="true"><span style={{ width: `${n}%`, background: colour }} /></div>
       <strong className={label ? 'num' : 'num hud-value'}>{n}</strong>
+      <Delta value={n} />
     </div>
   );
 }

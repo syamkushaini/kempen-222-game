@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { latestNationalPoll } from '../sim/campaign/polls';
 import type { Campaign } from '../sim/campaign/types';
 import { lastOutcome, partyColor, partyName, partyShort, useFormat, useT, useWorld } from './hooks';
+import { Delta } from './Delta';
 import { Icon } from './Icon';
 import { SeatBar } from './Tally';
 
@@ -48,6 +49,7 @@ export function Standing({ campaign }: { campaign: Campaign }) {
         {poll ? (
           <>
             <strong className="num strip-share">{f.pct(mine, 0)}</strong>
+            <Delta value={Math.round(mine * 100)} scope={`${campaign.scenario}${campaign.seed}`} />
             <span className={`strip-gap ${order[0]?.p === me ? 'pos-text' : ''}`}>
               {!rival ? t('standing.alone') : order[0].p === me ? t('standing.ahead', { n: gap, party: partyShort(t, rival.p) }) : t('standing.behind', { n: Math.round((top - mine) * 100), party: partyShort(t, order[0].p) })}
             </span>

@@ -42,7 +42,7 @@ import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
  * or (developer mode only) how the country would really vote today.
  */
 export type MapView = 'last' | 'estimate' | 'truth';
-export type SidebarTab = 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
+export type SidebarTab = 'desk' | 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
 export type Theme = 'system' | 'light' | 'dark';
 export type Palette = 'standard' | 'accessible';
 export type TextSize = 'normal' | 'large';
@@ -113,6 +113,9 @@ interface Store {
   lastReport: NewsItem | null;
   /** The seat the last action worked on, and a counter that restarts its flash on the map. */
   flash: { seat: string | null; n: number };
+  /** The seat an action being pointed at would land on, shown on the map before it is taken. */
+  preview: string | null;
+  setPreview(seat: string | null): void;
   /** The answer to the player's latest pact proposal, and who gave it. */
   pactReply: { party: number; verdict: PactVerdict } | null;
   /** The answer to the player's latest offer in the talks after the election. */
@@ -255,6 +258,8 @@ export const useStore = create<Store>((set, get) => {
     selectedSeat: null,
     lastReport: null,
     flash: { seat: null, n: 0 },
+    preview: null,
+    setPreview: (seat) => { if (get().preview !== seat) set({ preview: seat }); },
     pactReply: null,
     offerReply: null,
     showNight: false,
@@ -291,7 +296,7 @@ export const useStore = create<Store>((set, get) => {
       const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
       set({
         game: newGame(name.trim() || translate(get().settings.lang, 'saves.defaultName'), campaign, Date.now(), tutorial, identity, start),
-        view: 'last', tab: campaign.phase === 'term' ? 'orders' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false,
+        view: 'last', tab: campaign.phase === 'term' ? 'desk' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false,
         // A general election opens on the leader's home state; smaller contests open on the whole map.
         selectedState: world.rules.kind === 'general' && campaign.phase === 'campaign' ? campaign.parties[player]!.location : null,
       });
@@ -378,10 +383,10 @@ export const useStore = create<Store>((set, get) => {
       // The new term is played on a map refitted to the result just declared.
       const next = worldOf(c);
       if (next) publishPublicPoll(next, c);
-      return { tab: 'orders', view: 'last', showNight: false, offerReply: null, pactReply: null, lastReport: null, selectedSeat: null, selectedState: null };
+      return { tab: 'desk', view: 'last', showNight: false, offerReply: null, pactReply: null, lastReport: null, selectedSeat: null, selectedState: null };
     }),
     resumeTerm: () => mutate((c) => {
-      if (resumeTerm(c)) return { tab: 'orders', offerReply: null };
+      if (resumeTerm(c)) return { tab: 'desk', offerReply: null };
     }),
 
     hideScene: (id) => set({ hiddenScene: id, sceneOpen: false }),
@@ -413,7 +418,7 @@ export const useStore = create<Store>((set, get) => {
     loadGame: (state) => set((s) => ({
       loads: s.loads + 1,
       game: state,
-      view: 'last', tab: state.campaign.phase === 'term' ? 'orders' : 'actions', lastReport: null, pactReply: null, offerReply: null, selectedSeat: null, sceneOpen: false,
+      view: 'last', tab: state.campaign.phase === 'term' ? 'desk' : 'actions', lastReport: null, pactReply: null, offerReply: null, selectedSeat: null, sceneOpen: false,
       // A saved game reopens on the count only if it was still running, or if there is nothing after it.
       showNight: state.campaign.phase === 'night' || (state.campaign.phase === 'done' && !state.campaign.formation),
       selectedState: state.campaign.phase === 'campaign' && (state.campaign.scenario === 'general' || state.campaign.scenario === 'career')

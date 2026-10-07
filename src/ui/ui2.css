@@ -312,3 +312,42 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 
 .seat-detail .badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .seat-detail .badges .badge { flex: none; }
+
+/* a figure that has just moved says by how much, for a moment */
+.delta { display: inline-block; margin-left: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; animation: delta 3600ms ease-out forwards; }
+.delta.up { color: var(--good); } .delta.down { color: var(--bad); }
+@keyframes delta { 0% { opacity: 0; transform: translateY(4px); } 8% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .delta { animation: none; } }
+
+/* the seat an action would land on, shown before it is taken */
+.seat-highlight.preview { stroke: var(--good); stroke-dasharray: 5 3; animation: fade-in 160ms ease-out; }
+/* ---------- the desk between elections ---------- */
+.desk-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.desk-card { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--tone, var(--line-2)); }
+.desk-card .gauge { margin-top: 4px; }
+.desk-card .progress { margin-top: 6px; }
+/* ---------- the week just ended ---------- */
+.week-recap { width: min(520px, 100%); display: flex; flex-direction: column; gap: 12px; animation: fade-up 240ms ease-out; }
+.week-recap .report { margin: 0; }
+.recap-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding: 12px; border-radius: 12px; background: var(--panel-2); }
+.recap-big { font-size: 24px; font-weight: 700; margin-right: 4px; }
+.recap-figures .hud-label { display: block; }
+.delta.still { animation: none; font-size: 14px; }
+/* ---------- a phone: the map and the panel are separate screens, changed from a bar at the bottom ---------- */
+.phone-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; display: flex; padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line-2); }
+.phone-nav button { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 52px; padding: 6px 2px; border: 0; border-radius: 10px; background: none; color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; position: relative; }
+.phone-nav button span:not(.count) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.phone-nav button.active { color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, transparent); }
+.phone-nav .count { position: absolute; top: 4px; right: 22%; }
+.layout.phone-map > .sidebar, .layout.phone-panel > .map-column { display: none; }
+.layout[class*="phone-"] .tabs { display: none; }
+@media (max-width: 980px) {
+  .campaign-bar { bottom: calc(60px + env(safe-area-inset-bottom)); }
+  .app { padding-bottom: 150px; }
+  .adviser-strip { bottom: calc(132px + env(safe-area-inset-bottom)); }
+  body:has(.adviser-strip) .app { padding-bottom: 270px; }
+  .seat-card { inset: auto 0 calc(60px + env(safe-area-inset-bottom)) 0; z-index: 22; }
+}
+
+.recap-more summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.recap-more .recap h3 { display: none; }

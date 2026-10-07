@@ -18,7 +18,7 @@ import { CampaignBar, Header } from './Header';
 import { GoalLine } from './Challenges';
 import { GameMenu } from './GameMenu';
 import { NextStep } from './NextStep';
-import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useWorld } from './hooks';
+import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useWorld, useNarrow } from './hooks';
 import { MapView } from './MapView';
 import { now } from '../sim/campaign/news';
 import { NewsTab } from './NewsTab';
@@ -26,6 +26,8 @@ import { OrdersTab } from './OrdersTab';
 import { PolicyTab } from './PolicyTab';
 import { PollsTab } from './PollsTab';
 import { SeatDetail, SeatsTab } from './SeatsTab';
+import { TermDesk } from './TermDesk';
+import { WeekRecap } from './WeekRecap';
 import { Standing } from './Standing';
 import { TeamTab } from './TeamTab';
 import { VotersTab } from './VotersTab';
@@ -42,16 +44,16 @@ installIdentity();
  */
 type GroupId = 'run' | 'people' | 'intel';
 const GROUPS: { id: GroupId; icon: IconName; tabs: SidebarTab[] }[] = [
-  { id: 'run', icon: 'flag', tabs: ['orders', 'house', 'actions', 'chiefs', 'policy'] },
+  { id: 'run', icon: 'flag', tabs: ['desk', 'orders', 'house', 'actions', 'chiefs', 'policy'] },
   { id: 'people', icon: 'people', tabs: ['team', 'deals'] },
   { id: 'intel', icon: 'intel', tabs: ['seats', 'polls', 'voters', 'news'] },
 ];
 /** Tabs that belong only to the years between elections, and only to the campaign. */
-const TERM_ONLY: SidebarTab[] = ['orders', 'house'];
+const TERM_ONLY: SidebarTab[] = ['desk', 'orders', 'house'];
 const CAMPAIGN_ONLY: SidebarTab[] = ['actions', 'chiefs', 'deals'];
 /** The picture that goes with each tab, beside its name. */
 const TAB_ICON: Record<SidebarTab, IconName> = {
-  orders: 'doc', house: 'landmark', policy: 'sliders', actions: 'megaphone', team: 'crown', chiefs: 'flag', deals: 'chat',
+  desk: 'inbox', orders: 'doc', house: 'landmark', policy: 'sliders', actions: 'megaphone', team: 'crown', chiefs: 'flag', deals: 'chat',
   seats: 'target', polls: 'intel', voters: 'people', news: 'book', saves: 'folder',
 };
 const groupLabel = (id: GroupId, term: boolean): StringKey => (id === 'run' ? (term ? 'group.run.term' : 'group.run.campaign') : `group.${id}`) as StringKey;
@@ -120,7 +122,17 @@ function CampaignScreen() {
   const [card, setCard] = useState<string | null>(null);
   useEffect(() => { setCard(selectedSeat && world.seats.length > 1 && !campaign.inbox.length ? selectedSeat : null); }, [selectedSeat]); // eslint-disable-line react-hooks/exhaustive-deps
   // What each tab has waiting: decisions for whoever runs things, bad news not yet read.
-  const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : 0);
+  const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : id === 'desk' ? (shown === 'desk' ? 0 : campaign.inbox.length) : 0);
+  // On a phone the map and the panel are separate screens, changed from a bar at the bottom.
+  const narrow = useNarrow();
+  const [screen, setScreen] = useState<'map' | 'panel'>('panel');
+  const mapWanted = spot('map');
+  useEffect(() => { if (mapWanted) setScreen('map'); }, [mapWanted]);
+  const seatCard = card && (
+    <div className="seat-card panel" role="dialog" aria-label={t('seat.card')}>
+      <SeatDetail seatId={card} onClose={() => setCard(null)} />
+    </div>
+  );
 
   // The keyboard: Space ends the week (or moves a term on a week), and a number key opens a group; pressed again it
   // goes on to the next tab in that group.
@@ -148,7 +160,7 @@ function CampaignScreen() {
 
   return (
     <DisplayContext.Provider value={display}>
-      <main className="layout">
+      <main className={narrow ? `layout phone-${screen}` : 'layout'}>
         <NextStep />
         <GoalLine />
         <section className="map-column">
@@ -183,6 +195,7 @@ function CampaignScreen() {
             </div>
           )}
           <div className="tab-body" role="tabpanel">
+            {shown === 'desk' && <TermDesk />}
             {shown === 'orders' && <OrdersTab />}
             {shown === 'house' && <GovernmentTab />}
             {shown === 'policy' && <PolicyTab />}
@@ -195,14 +208,29 @@ function CampaignScreen() {
             {shown === 'voters' && <VotersTab />}
             {shown === 'news' && <NewsTab />}
           </div>
-          {card && (
-            <div className="seat-card panel" role="dialog" aria-label={t('seat.card')}>
-              <SeatDetail seatId={card} onClose={() => setCard(null)} />
-            </div>
-          )}
+          {!narrow && seatCard}
         </aside>
       </main>
+      {narrow && seatCard}
+      <WeekRecap />
       <CampaignBar />
+      {narrow && (
+        <nav className="phone-nav" aria-label={t('nav.label')}>
+          <button className={screen === 'map' ? 'active' : ''} aria-pressed={screen === 'map'} onClick={() => setScreen('map')}>
+            <Icon name="compass" size={22} /><span>{t('nav.map')}</span>
+          </button>
+          {groups.map((g) => {
+            const here = screen === 'panel' && group.id === g.id;
+            const n = g.tabs.reduce((a, id) => a + waitingFor(id), 0);
+            return (
+              <button key={g.id} className={`${here ? 'active' : ''}${g.tabs.some((id) => spot(`tab-${id}`)) ? ' spot' : ''}`} aria-pressed={here} onClick={() => { setScreen('panel'); if (group.id !== g.id) setTab(g.tabs[0]); }}>
+                <Icon name={g.id === 'run' && term ? 'landmark' : g.icon} size={22} /><span>{t(groupLabel(g.id, term))}</span>
+                {n > 0 && !here && <span className="count">{n}</span>}
+              </button>
+            );
+          })}
+        </nav>
+      )}
       {/* Kak Ros is a strip along the bottom, like subtitles, so that she never covers what she is pointing at */}
       <Adviser />
     </DisplayContext.Provider>

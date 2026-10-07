@@ -100,6 +100,7 @@ export function MapView(props: {
   const selectedSeat = useStore((s) => s.selectedSeat);
   const selectState = useStore((s) => s.selectState);
   const selectSeat = useStore((s) => s.selectSeat);
+  const preview = useStore((s) => s.preview);
 
   const [map, setMap] = useState<MapData | null>(null);
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
@@ -305,7 +306,7 @@ export function MapView(props: {
           <Suspense fallback={<p className="muted map-loading">{t('map.3d.loading')}</p>}>
             <MapScene3D
               shapes={map.seats} seats={seatList} backdrop={backdropIds} home={home as [number, number, number, number]} focus={focusBox}
-              display={display} selectedSeat={selectedSeat} selectedState={single ? null : selectedState} accessible={accessible}
+              display={display} selectedSeat={preview ?? selectedSeat} selectedState={single ? null : selectedState} accessible={accessible}
               marks={marks} pin={marker as [number, number, number, number] | null} pulse={props.pulse ? { id: props.pulse.id, n: props.pulse.n } : null}
               label={contestName(t, world)} single={single} partyColor={partyColor} onPick={pick}
               onHover={(id, x, y) => setHover(id ? { id, x, y } : null)}
@@ -349,6 +350,7 @@ export function MapView(props: {
               ))}
               {props.pulse && map.seats[props.pulse.id] && <path key={props.pulse.n} d={map.seats[props.pulse.id].d} className={`seat-pulse ${props.pulse.kind}`} />}
               {selectedSeat && map.seats[selectedSeat] && <path d={map.seats[selectedSeat].d} className="seat-highlight" />}
+              {preview && preview !== selectedSeat && map.seats[preview] && <path d={map.seats[preview].d} className="seat-highlight preview" />}
               {marks.map((m) => {
                 const shape = map.seats[m.seat];
                 // Seen from far off only the tents show, or the map would be nothing but flags.
