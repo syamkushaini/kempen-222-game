@@ -226,7 +226,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
     (x.phase === 'campaign' || x.phase === 'term' || election !== null || (x.phase !== 'night' && x.career !== null)) &&
     isList(x.relations, (row) => isList(row, (v) => isNum(v) && v >= -100 && v <= 100, N_PARTIES), N_PARTIES) &&
     isObj(x.standDowns) && Object.entries(x.standDowns).every(([seat, stood]) =>
-      world.seatIndex.has(seat) && isList(stood, (v) => v === -1 || isParty(v), N_PARTIES)) &&
+      world.seatIndex.has(seat) && isList(stood, (v) => v === -1 || v === -2 || isParty(v), N_PARTIES)) &&
     isList(x.pacts, (p) => isObj(p) && isParty(p.a) && isParty(p.b) && isNum(p.week)) &&
     isList(x.understandings, isParty) && isList(x.met, isNum, N_PARTIES) &&
     isSeatList(x.katak, world) && isList(x.offered, isParty) &&

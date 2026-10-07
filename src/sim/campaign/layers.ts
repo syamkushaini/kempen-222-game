@@ -7,7 +7,7 @@ import type { Campaign } from './types';
 // (the leading party, the margin, last time's result, the pacts, the branches, the voters) and says which seats to mark.
 // This file only decides; the map draws.
 
-export const LAYER_IDS = ['marginal', 'flipped', 'mine', 'machinery', 'unpolled', 'campaign', 'pacts', 'blocs'] as const;
+export const LAYER_IDS = ['marginal', 'flipped', 'mine', 'fielded', 'machinery', 'unpolled', 'campaign', 'pacts', 'blocs'] as const;
 export type LayerId = (typeof LAYER_IDS)[number];
 
 /** What the map shows to a player who has not chosen: the tents and flags it has always shown. */
@@ -22,13 +22,13 @@ export function cleanLayers(x: unknown): LayerId[] | null {
 }
 
 /** The shapes a mark can take: all small, all fit in a square of 14, centred on the seat. */
-export type PinKind = 'ring' | 'dot' | 'bullseye' | 'square' | 'diamond' | 'down' | 'up' | 'hex';
+export type PinKind = 'ring' | 'dot' | 'bullseye' | 'square' | 'diamond' | 'down' | 'up' | 'hex' | 'flag';
 
 /** One mark on one seat. Coloured by a party where `party` is set, otherwise by `color`. */
 export interface Pin { seat: string; layer: LayerId; kind: PinKind; party?: number; color?: string; family?: BlocFamily; /** Its place among the marks in the same seat, from 0, and how many there are. */ slot: number; of: number }
 
 /** What each layer marks with, for the key. */
-export const LAYER_KIND: Partial<Record<LayerId, PinKind>> = { marginal: 'ring', flipped: 'dot', mine: 'square', unpolled: 'diamond', pacts: 'down', blocs: 'hex' };
+export const LAYER_KIND: Partial<Record<LayerId, PinKind>> = { marginal: 'ring', flipped: 'dot', mine: 'square', fielded: 'flag', unpolled: 'diamond', pacts: 'down', blocs: 'hex' };
 
 export const MARGINAL_COLOR = '#f59e0b';
 export const UNPOLLED_COLOR = '#94a3b8';
@@ -85,6 +85,8 @@ export function layerPins(input: LayerInput, on: ReadonlySet<LayerId>): Pin[] {
     if (on.has('unpolled') && d.stale) raw.push({ seat: seat.id, layer: 'unpolled', kind: 'diamond', color: UNPOLLED_COLOR });
     if (on.has('blocs')) raw.push({ seat: seat.id, layer: 'blocs', kind: 'hex', family: dominantFamily(seat.blocs), color: FAMILY_COLORS[dominantFamily(seat.blocs)] });
     if (on.has('mine') && me !== null && d.winner === me) raw.push({ seat: seat.id, layer: 'mine', kind: 'square', party: me });
+    // For a party the player made: a flag on every seat where it has a candidate.
+    if (on.has('fielded') && c?.career?.own && me !== null && contests(world, c, i, me)) raw.push({ seat: seat.id, layer: 'fielded', kind: 'flag', party: me });
     if (on.has('pacts') && c && me !== null) {
       const sd = c.standDowns[seat.id];
       if (sd) {

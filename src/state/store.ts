@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { foundedWorld, getWorld, newPartyWorld, worldOf } from '../data/world';
+import { foundedWorld, getWorld, newPartyWorld, ownWorld, worldOf } from '../data/world';
 import { translate, type Lang } from '../i18n/strings';
 import { earned, type AchievementId } from '../sim/campaign/achievements';
 import {
@@ -35,6 +35,7 @@ import type { RegionId } from '../sim/types';
 import { newGame, startOf, type GameState, type StartOptions } from './game';
 import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
+import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
 
@@ -214,6 +215,9 @@ interface Store {
   setBudget(patch: { line?: LineId; tax?: boolean; value: Dial }): void;
   reshuffle(portfolio: PortfolioId): void;
   appoint(portfolio: PortfolioId, option: number): void;
+  fieldSeat(seatId: string): void;
+  withdrawSeat(seatId: string): void;
+  fieldCheapest(limit: number): void;
   tableBill(id: string): void;
   deliver(index: number): void;
   pullLever(id: LeverId): void;
@@ -297,13 +301,16 @@ export const useStore = create<Store>((set, get) => {
 
     startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge }) => {
       // A founded party's first term is played in a country with its name already on every ballot.
-      const world = founded ? (scenario === 'career' ? foundedWorld() : newPartyWorld(scenario)) : getWorld(scenario);
+      const base = getWorld(scenario);
+      // A party the player has made their own may stand in any seat of a career, at a price; it needs a world in which it is on every ballot.
+      const own = !!(base?.rules.career && identity && !founded);
+      const world = founded ? (scenario === 'career' ? foundedWorld() : newPartyWorld(scenario)) : own ? ownWorld(scenario, player) ?? base : base;
       if (!world) return;
       const opts = { player, difficulty, seed: seed ?? randomSeed(), backstory, challenge };
       // Kept with the game so that it can be started again exactly as it was set up.
       const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances } : {}), ...(challenge ? { challenge } : {}) };
       // A platform of its own belongs to a party of the player's own making.
-      const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances }) : newCampaign(world, opts);
+      const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, own, held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
       if (founded && !world.rules.career) foundForContest(world, campaign, backstory);
       // A set challenge is for someone who has played before: no adviser walking them through it.
       const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
@@ -407,6 +414,9 @@ export const useStore = create<Store>((set, get) => {
     setBudget: (patch) => mutate((c) => { setBudget(c, patch); }),
     reshuffle: (portfolio) => mutate((c) => { reshuffle(c, portfolio); }),
     appoint: (portfolio, option) => mutate((c, _g, world) => { appoint(world, c, portfolio, option); }),
+    fieldSeat: (seatId) => mutate((c, _g, world) => { fieldSeat(world, c, seatId); }),
+    withdrawSeat: (seatId) => mutate((c, _g, world) => { withdrawSeat(world, c, seatId); }),
+    fieldCheapest: (limit) => mutate((c, _g, world) => { fieldCheapest(world, c, limit); }),
     tableBill: (id) => mutate((c) => { tableBill(c, id); }),
     deliver: (index) => mutate((c) => { if (deliver(c, index)) syncOpinion(c); }),
     pullLever: (id) => mutate((c, _g, world) => { if (pullLever(world, c, id)) syncOpinion(c); }),

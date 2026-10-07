@@ -328,7 +328,7 @@ export function Title() {
               <span>{t('creator.toggle')}</span>
             </label>
           )}
-          {own && <PartyCreator draft={shown} career={inCareer && !founding} onChange={(patch) => setDraft((d) => ({ ...(d ?? base), ...patch }))} />}
+          {own && <PartyCreator draft={shown} career={inCareer && !founding} slate={inCareer} onChange={(patch) => setDraft((d) => ({ ...(d ?? base), ...patch }))} />}
           {founding && kind === 'career' && <PlatformEditor stances={stances ?? newPlatform} base={newPlatform} onChange={setStances} />}
           </>}
 

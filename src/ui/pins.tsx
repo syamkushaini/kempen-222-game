@@ -14,6 +14,7 @@ function shape(kind: PinKind, color: string, halo: boolean): ReactNode {
     case 'diamond': return <path d="M0 -5.2L5.2 0L0 5.2L-5.2 0Z" fill="none" stroke={stroke} strokeWidth={w(1.9)} strokeLinejoin="round" />;
     case 'down': return <path d="M-4.8 -3.6H4.8L0 4.4Z" fill="none" stroke={stroke} strokeWidth={w(1.9)} strokeLinejoin="round" />;
     case 'up': return <path d="M-4.8 3.6H4.8L0 -4.4Z" fill={fill(true)} stroke={stroke} strokeWidth={halo ? 2.6 : 0} strokeLinejoin="round" />;
+    case 'flag': return <><path d="M-3 5.2V-5.2" fill="none" stroke={stroke} strokeWidth={w(1.7)} strokeLinecap="round" /><path d="M-3 -5.2L4.6 -2.4L-3 0.4Z" fill={fill(true)} stroke={stroke} strokeWidth={halo ? 2.6 : 0} strokeLinejoin="round" /></>;
     case 'hex': return <path d="M0 -5L4.3 -2.5V2.5L0 5L-4.3 2.5V-2.5Z" fill={fill(true)} stroke={stroke} strokeWidth={halo ? 2.6 : 0} strokeLinejoin="round" />;
   }
 }

@@ -15,6 +15,7 @@ import { incomeBoost, managerDays, pollDiscount, pollPrecision } from './perks';
 import { afterLender } from './loan';
 import { emptyTeam, openCampaign, teamWeek } from './team';
 import { startRelations } from './cast';
+import { fieldWithin, nominationsOpen } from './slate';
 import { beforeNomination, hasDiplomacy, nominationWeek, pactSeats, rivalDiplomacy, settleInbox, shiftRelation, shiftUnity } from './diplomacy';
 import { startFormation } from './formation';
 import { now, pushNews, ref } from './news';
@@ -365,8 +366,13 @@ export function endWeek(world: World, c: Campaign): void {
   publishPublicPoll(world, c);
 }
 
+/** How much of its money the autoplayer spends on candidates. */
+const AUTO_SLATE_SHARE = 0.3;
+
 /** Lets the rival logic play the player's week too. Used for testing balance. */
 export function autoPlayWeek(world: World, c: Campaign): void {
+  // A party the player made fields what it can afford of the cheapest seats, keeping most of its money for the campaign.
+  if (nominationsOpen(c)) fieldWithin(world, c, (c.parties[c.player]?.funds ?? 0) * AUTO_SLATE_SHARE);
   playWeek(world, c, c.player, truth(world, c), []);
   planChiefs(world, c, c.player);
 }

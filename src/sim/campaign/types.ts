@@ -421,6 +421,10 @@ export interface Career {
   tabled: Budget;
   /** Standing commitments taken on since the last election, in budget units. */
   fiscal: number;
+  /** The player's party is one they made, founded or made their own: it may stand in any seat, at a price (see slate.ts). */
+  own?: boolean;
+  /** The seats of a party the player made: where it has candidates carried over, and what was paid for those added this time. */
+  slate?: { held: string[]; added: Record<string, number> };
   cabinet: Minister[];
   /** Posts of the player's party waiting for the player to choose who fills them. Absent in a game saved before this existed. */
   appointments?: Appointment[];

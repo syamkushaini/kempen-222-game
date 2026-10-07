@@ -6,6 +6,13 @@ import { PARTY_IDS, type PartyId } from './types';
  */
 export type StandDowns = Record<string, number[]>;
 
+/** In a stand-down list: the party stands. */
+export const STANDS = -1;
+/** In a stand-down list: the party has no candidate here and stood aside for no one, so its voters scatter. A party made by the player may leave a seat unfielded. */
+export const WITHDRAWN = -2;
+/** Whether a party's entry in a stand-down list means it has a candidate. */
+export const stands = (v: number | undefined) => v === undefined || v === STANDS;
+
 /** Where a party's voters go when it stands aside: to the pact partner, or nowhere. The rest scatter to whoever is left. */
 export interface Transfer { to: number; home: number }
 
@@ -62,14 +69,15 @@ export function transferRate(from: number, to: number): Transfer {
 export function redistribute(shares: number[], stood: number[]): void {
   for (let q = 0; q < shares.length; q++) {
     const p = stood[q];
-    if (p < 0 || shares[q] === 0) continue;
+    if (stands(p) || shares[q] === 0) continue;
     const s = shares[q];
     shares[q] = 0;
-    const { to, home } = transferRate(q, p);
+    // Where there is no partner to go to, a party's voters stay home as often as they do anywhere, and the rest go to whoever is left.
+    const { to, home } = p === WITHDRAWN ? { to: 0, home: DEFAULT.home } : transferRate(q, p);
     let others = 0;
-    for (let r = 0; r < shares.length; r++) if (stood[r] < 0) others += shares[r];
+    for (let r = 0; r < shares.length; r++) if (stands(stood[r])) others += shares[r];
     const scatter = (1 - to - home) * s;
-    if (others > 0) for (let r = 0; r < shares.length; r++) if (stood[r] < 0) shares[r] += (scatter * shares[r]) / others;
-    shares[p] += to * s;
+    if (others > 0) for (let r = 0; r < shares.length; r++) if (stands(stood[r])) shares[r] += (scatter * shares[r]) / others;
+    if (p !== WITHDRAWN) shares[p] += to * s;
   }
 }

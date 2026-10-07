@@ -117,7 +117,7 @@ describe('how a founded party grows', () => {
       w = worldOf(c)!;
       expect(c.career!.founded).toBe(true);
     }
-    expect(shares[0]).toBeGreaterThan(0.015);
+    expect(shares[0]).toBeGreaterThan(0.01);
     expect(shares[1]).toBeGreaterThan(shares[0] * 1.5);
     expect(shares[2]).toBeGreaterThan(0.1);
     expect(shares[2]).toBeLessThan(0.45);

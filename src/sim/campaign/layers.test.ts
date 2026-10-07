@@ -26,7 +26,7 @@ const input = { world, campaign: c, display, last: lastWinners };
 describe('map layers', () => {
   it('start with the tents and flags, as the map always had', () => {
     expect(DEFAULT_LAYERS).toEqual(['campaign']);
-    expect(LAYER_IDS).toHaveLength(8);
+    expect(LAYER_IDS).toHaveLength(9);
   });
 
   it('read from storage keep only what is known, once each', () => {

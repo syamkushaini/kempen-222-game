@@ -258,10 +258,42 @@ export function foundedWorld(): World {
   return built;
 }
 
+/**
+ * The world a career is played in by a party the player has made their own (not founded from nothing): the same seats and
+ * results, with the party given a few votes in every seat it did not stand in, so that it can be fielded there. Without them
+ * the model would have nothing to say about the party in a seat it never contested.
+ */
+export function ownWorld(scenario: string, p: number): World | null {
+  const key = `own:${scenario}:${p}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const plan = blueprint(scenario);
+  if (!plan || !plan.rules.career) return null;
+  const seed = (votes: number[]) => {
+    if (votes[p] > 0) return votes;
+    const total = votes.reduce((a, b) => a + b, 0);
+    const out = [...votes];
+    out[p] = Math.max(1, Math.round(total * FOUNDING_SEED_SHARE));
+    return out;
+  };
+  const seats = plan.file.seats.map((sd) => ({
+    ...sd,
+    last: { ...sd.last, votes: seed(sd.last.votes) },
+    ...(sd.basis ? { basis: { ...sd.basis, votes: seed(sd.basis.votes) } } : {}),
+  }));
+  const built = createWorld({ ...plan.file, seats }, plan.rules, scenario);
+  cache.set(key, built);
+  return built;
+}
+
 /** The world a game is played in: its scenario's world, or for a career past its first election, one built from that election. */
-export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean }): World | null {
+export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean; player?: number }): World | null {
   const results = campaign.career?.results;
-  if (!results) return campaign.career?.founded ? foundedWorld() : campaign.newParty ? newPartyWorld(campaign.scenario) ?? getWorld(campaign.scenario) : getWorld(campaign.scenario);
+  if (!results) {
+    if (campaign.career?.founded) return foundedWorld();
+    if (campaign.career?.own && campaign.player !== undefined) return ownWorld(campaign.scenario, campaign.player) ?? getWorld(campaign.scenario);
+    return campaign.newParty ? newPartyWorld(campaign.scenario) ?? getWorld(campaign.scenario) : getWorld(campaign.scenario);
+  }
   const key = `${campaign.scenario}:${fingerprint(results)}`;
   let built = careerWorlds.get(key);
   if (!built) {

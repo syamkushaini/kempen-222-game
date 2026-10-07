@@ -2,7 +2,7 @@ import { emptyDynamics } from '../dynamics';
 import { projectElection, type World } from '../election';
 import { clamp, zeros } from '../math';
 import { Rng } from '../rng';
-import type { StandDowns } from '../transfer';
+import { STANDS, type StandDowns } from '../transfer';
 import { N_PARTIES, PARTY_IDS, type ElectionOutcome } from '../types';
 import { EFFECT, contests, effectiveDynamics, scaled, truth } from './actions';
 import { AFFINITY, TEMPER } from './cast';
@@ -218,7 +218,7 @@ export function breakPact(c: Campaign, p: number): boolean {
   for (const [seat, stood] of Object.entries(c.standDowns)) {
     if (stood[me] === p) stood[me] = -1;
     if (stood[p] === me) stood[p] = -1;
-    if (stood.every((v) => v < 0)) delete c.standDowns[seat];
+    if (stood.every((v) => v === STANDS)) delete c.standDowns[seat];
   }
   shiftRelation(c, me, p, -50);
   c.understandings = c.understandings.filter((x) => x !== p);
@@ -506,5 +506,6 @@ export function settleInbox(world: World, c: Campaign): void {
 }
 
 /** Seats where the line-up differs from last time because of pacts. */
-export const pactSeats = (c: Campaign) => Object.keys(c.standDowns).length;
+/** Seats where a party stands aside for another under a pact; seats a party made by the player has left unfielded are not pacts. */
+export const pactSeats = (c: Campaign) => Object.values(c.standDowns).filter((s) => s.some((v) => v >= 0)).length;
 

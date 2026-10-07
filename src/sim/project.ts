@@ -1,7 +1,7 @@
 import { BLOC_TURNOUT_LOGIT, type Baseline } from './baseline';
 import { BLOC_EARLY, BLOC_LEAN, BLOC_UNDECIDED } from './blocs';
 import { sigmoid, softmaxMasked, zeros } from './math';
-import { redistribute } from './transfer';
+import { redistribute, stands } from './transfer';
 import {
   N_BLOCS, N_PARTIES,
   type BlocProjection, type Dynamics, type SeatClass, type SeatData, type SeatOutcome,
@@ -49,7 +49,7 @@ export function projectSeat(
   stood?: number[],
 ): SeatOutcome {
   const mask = base.contesting[seatIndex];
-  const standing = stood ? mask.map((m, p) => m && stood[p] < 0) : mask;
+  const standing = stood ? mask.map((m, p) => m && stands(stood[p])) : mask;
   const bias = base.supportBias[seatIndex];
   const turnoutBias = base.turnoutBias[seatIndex];
   const stateSupport = dyn.support.state[seat.state];

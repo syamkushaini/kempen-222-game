@@ -23,6 +23,7 @@ import { membersWeek } from './members';
 import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
+import { closeSlate, openNominations } from './slate';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances } from './policy';
 import {
   freshParty, makeDrift, newCampaign, publishPublicPoll, startingFunds, weeklyIncome, type CampaignOptions,
@@ -158,7 +159,7 @@ export function foundForContest(world: World, c: Campaign, backstory: unknown): 
 }
 
 /** Opens a career at the start of a parliamentary term, with the coffers low after the last election. */
-export function startCareer(world: World, opts: CampaignOptions & { ideology?: IdeologyId | null; founded?: boolean; stances?: number[] }): Campaign {
+export function startCareer(world: World, opts: CampaignOptions & { ideology?: IdeologyId | null; founded?: boolean; stances?: number[]; own?: boolean; held?: string[] }): Campaign {
   const c = newCampaign(world, opts);
   // A party founded from nothing has no leader in the cast: without a past of the player's choosing, theirs is ordinary.
   if (opts.founded && !opts.backstory) c.team.leader = neutralLeader();
@@ -169,6 +170,11 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   // The government was elected on its usual programme, and will be held to it.
   c.career.promises = [...c.career.manifesto[c.player]];
   c.career.record.bestSeats = lastElection(world).tally[c.player];
+  // A party the player made stands where it stood before, and picks and pays for any other seat; a founded party has none to begin with.
+  if (opts.own || opts.founded) {
+    c.career.own = true;
+    c.career.slate = { held: opts.founded ? [] : opts.held ?? world.seats.filter((_, i) => world.baseline.contesting[i][c.player]).map((s) => s.id), added: {} };
+  }
   // Only the country's career has state polls of its own to hold: a state career is played in the one state.
   c.career.states = world.rules.kind === 'state' ? {} : startStates(world);
   // Candidates and endorsers wait for the campaign; the leader's past and platform count from the first day.
@@ -505,6 +511,7 @@ export function beginCampaign(world: World, c: Campaign): void {
   c.dyn = emptyDynamics();
   c.inbox = [];
   openCampaign(world, c);
+  openNominations(world, c);
   syncOpinion(c);
   publishPublicPoll(world, c);
 }
@@ -519,11 +526,13 @@ export function nextTerm(world: World, c: Campaign): boolean {
   const outcome = c.formation?.outcome;
   if (!k || k.midterm || !outcome || c.phase !== 'done' || !c.election) return false;
   const recorded = recordResults(world, c);
+  closeSlate(world, c);
   const rng = new Rng(c.rng);
   const next = freshCareer(k.term + 1, outcome, recorded);
   c.career = {
     ...next,
     ...(k.founded ? { founded: true } : {}),
+    ...(k.own ? { own: true, slate: k.slate } : {}),
     ...(k.nation ? { nation: { ...k.nation } } : {}),
     orders: k.orders, assets: k.assets, credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
     stances: k.stances, stances0: k.stances.map((row) => [...row]),

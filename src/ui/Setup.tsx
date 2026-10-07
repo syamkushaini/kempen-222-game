@@ -73,7 +73,7 @@ function UploadButton({ kind, onPick, onFail, label }: { kind: 'photo' | 'flag';
 }
 
 /** Giving the party the player has taken over a name, colours, a flag and a leader of their own. */
-export function PartyCreator({ draft, career, onChange }: { draft: Draft; career: boolean; onChange(patch: Partial<Draft>): void }) {
+export function PartyCreator({ draft, career, slate = false, onChange }: { draft: Draft; career: boolean; slate?: boolean; onChange(patch: Partial<Draft>): void }) {
   const t = useT();
   const ideologies: (IdeologyId | null)[] = [null, ...IDEOLOGY_IDS];
   const [failed, setFailed] = useState<'photo' | 'flag' | null>(null);
@@ -134,6 +134,7 @@ export function PartyCreator({ draft, career, onChange }: { draft: Draft; career
       </div>
       {failed === 'photo' && <p className="field-error small" role="alert">{t('creator.upload.bad')}</p>}
       <p className="muted small">{t('creator.upload.note')}</p>
+      {slate && <p className="muted small">{t('creator.slate.note')}</p>}
 
       {career && (
         <>

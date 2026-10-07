@@ -15,7 +15,7 @@ export interface SeatLook { winner: number; margin: number; stale: boolean }
 /** A column of support standing on a region: the parties' shares there, stacked. */
 export interface ColumnSpec { x: number; z: number; parts: { color: string; share: number }[] }
 /** A mark a map layer puts on a seat: its shape, colour, and its place among the marks on that seat. */
-export interface PinSpec { seat: string; kind: 'ring' | 'dot' | 'bullseye' | 'square' | 'diamond' | 'down' | 'up' | 'hex'; color: string; slot: number; of: number }
+export interface PinSpec { seat: string; kind: 'ring' | 'dot' | 'bullseye' | 'square' | 'diamond' | 'down' | 'up' | 'hex' | 'flag'; color: string; slot: number; of: number }
 /** The tint a seat takes where the player's branches are strong. */
 const HEAT_COLOR = '#14b8a6';
 export interface MarkSpec { seat: string; party: number; kind: 'tent' | 'flag'; slot: number; of: number }
@@ -453,6 +453,7 @@ export class MapScene3D {
       down: new ConeGeometry(0.62 * u, 1 * u, 3).rotateX(Math.PI),
       up: new ConeGeometry(0.62 * u, 1 * u, 3),
       hex: new CylinderGeometry(0.55 * u, 0.55 * u, 0.4 * u, 6),
+      flag: new ConeGeometry(0.34 * u, 1.2 * u, 4),
       dotCore: new SphereGeometry(0.24 * u, 10, 6),
     };
     this.disposables.push(...Object.values(geo));

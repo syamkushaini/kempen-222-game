@@ -54,6 +54,8 @@ const PIN_SIZE = 1.5;
 function layerUsable(id: LayerId, world: World, campaign: Campaign | undefined): boolean {
   if (id === 'mine' || id === 'machinery') return !!campaign && campaign.parties[campaign.player] !== null;
   if (id === 'pacts') return !!campaign && world.rules.diplomacy;
+  // Only a party the player made has a choice of where to stand.
+  if (id === 'fielded') return !!campaign?.career?.own;
   return true;
 }
 
@@ -62,7 +64,7 @@ function LayerKey({ id, me, size = 16 }: { id: LayerId; me: number | null; size?
   if (id === 'machinery') return <span className="layer-swatch" style={{ background: MACHINERY_COLOR, width: size, height: size }} aria-hidden="true" />;
   if (id === 'campaign') return <svg className="pin-key mark-key" width={size} height={size} style={{ width: size, height: size }} viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-6 4.5L0 -5.5L6 4.5Z M-1.4 4.5L0 1.2L1.4 4.5Z" fillRule="evenodd" /></svg>;
   const kind = LAYER_KIND[id]!;
-  const color = id === 'marginal' ? MARGINAL_COLOR : id === 'blocs' ? FAMILY_COLORS.middle : id === 'mine' || id === 'pacts' ? (me !== null ? partyColor(me) : '#888') : '#94a3b8';
+  const color = id === 'marginal' ? MARGINAL_COLOR : id === 'blocs' ? FAMILY_COLORS.middle : id === 'mine' || id === 'pacts' || id === 'fielded' ? (me !== null ? partyColor(me) : '#888') : '#94a3b8';
   return <PinKey kind={kind} color={color} size={size} />;
 }
 
@@ -76,6 +78,7 @@ function LayerLegend({ on, me }: { on: ReadonlySet<LayerId>; me: number | null }
       {on.has('flipped') && <span><PinKey kind="dot" color="#94a3b8" size={14} />{t('legend.layer.flipped')}</span>}
       {on.has('mine') && <span><PinKey kind="square" color={mine} size={14} />{t('legend.layer.mine')}</span>}
       {on.has('mine') && <span><PinKey kind="bullseye" color={mine} size={14} />{t('legend.layer.target')}</span>}
+      {on.has('fielded') && <span><PinKey kind="flag" color={mine} size={14} />{t('legend.layer.fielded')}</span>}
       {on.has('unpolled') && <span><PinKey kind="diamond" color={UNPOLLED_COLOR} size={14} />{t('legend.layer.unpolled')}</span>}
       {on.has('pacts') && <span><PinKey kind="down" color={mine} size={14} />{t('legend.layer.aside')}</span>}
       {on.has('pacts') && <span><PinKey kind="up" color={mine} size={14} />{t('legend.layer.asideFor')}</span>}
