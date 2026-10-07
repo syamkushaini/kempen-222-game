@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../state/store';
 import { useT } from './hooks';
+import { HowToPlay } from './HowToPlay';
 import { ConfirmButton, SavesPanel } from './SavesTab';
 
 /**
@@ -15,6 +16,7 @@ export function GameMenu() {
   const newGameSetup = useStore((s) => s.newGameSetup);
   const quitToTitle = useStore((s) => s.quitToTitle);
   const [saves, setSaves] = useState(false);
+  const [howTo, setHowTo] = useState(false);
   const game = useStore((s) => s.game?.id);
   // Loading another game from the saves here is a way out of the menu too.
   useEffect(() => { setOpen(false); }, [game, setOpen]);
@@ -27,6 +29,7 @@ export function GameMenu() {
   }, [open, setOpen]);
 
   if (!open) return null;
+  if (howTo) return <HowToPlay onClose={() => setHowTo(false)} />;
   const leave = (go: () => void) => () => { setOpen(false); go(); };
   return (
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
@@ -37,6 +40,7 @@ export function GameMenu() {
           <ConfirmButton className="btn" label={t('menu.restart')} confirmLabel={t('menu.restart.confirm')} onConfirm={leave(restart)} />
           <button className="btn" aria-expanded={saves} onClick={() => setSaves(!saves)}>{t('menu.saves')} {saves ? '▴' : '▾'}</button>
           {saves && <SavesPanel embedded />}
+          <button className="btn" onClick={() => setHowTo(true)}>{t('howto.title')}</button>
           <button className="btn" onClick={leave(newGameSetup)}>{t('menu.new')}</button>
           <button className="btn" onClick={leave(quitToTitle)}>{t('menu.main')}</button>
         </div>

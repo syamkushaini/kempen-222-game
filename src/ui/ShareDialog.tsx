@@ -9,6 +9,7 @@ import { voiceOf } from './cardVoice';
 import { leaderPortrait } from './faces';
 import { paintedLeader } from './painted';
 import { contestName, leaderName, partyColor, partyName, useT, type Format, type T } from './hooks';
+import { mapPicture } from './map3d';
 import { drawCard, type CardData } from './shareCard';
 
 const common = (t: T) => ({ tagline: t('share.tagline'), fiction: t('share.fiction') });
@@ -104,7 +105,8 @@ export function ShareDialog({ data, onClose }: { data: CardData; onClose(): void
     let live = true;
     const el = canvas.current;
     if (!el) return;
-    drawCard(el, data)
+    // If the 3D map is on screen behind this dialog, it goes on the card.
+    drawCard(el, { ...data, backdrop: data.backdrop ?? mapPicture() ?? undefined })
       .then(() => el.toBlob((blob) => { if (live && blob) setFile(new File([blob], 'kempen-222.png', { type: 'image/png' })); else if (live) setFailed(true); }, 'image/png'))
       .catch(() => { if (live) setFailed(true); });
     return () => { live = false; };

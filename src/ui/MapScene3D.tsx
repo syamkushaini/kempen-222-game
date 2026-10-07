@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { Mark } from '../sim/campaign/marks';
 import { useStore } from '../state/store';
 import { useT } from './hooks';
-import { MapScene3D as Scene, type MapShape, type SceneSeat, type SeatLook } from './scene3d';
+import { offerPicture } from './map3d';
+import { MapScene3D as Scene, type ColumnSpec, type MapShape, type SceneSeat, type SeatLook } from './scene3d';
 
 type Box = [number, number, number, number];
 
@@ -19,6 +20,8 @@ export interface MapScene3DProps {
   marks: Mark[];
   pin: Box | null;
   pulse: { id: string; n: number } | null;
+  /** Support by region as columns standing on the map, while the poll is open. */
+  columns: ColumnSpec[] | null;
   label: string;
   single: boolean;
   partyColor: (party: number) => string;
@@ -55,7 +58,9 @@ export default function MapScene3DView(props: MapScene3DProps) {
     s.setSelection(p.selectedSeat, p.selectedState);
     s.setDisplay(p.display);
     s.setMarks(p.marks, p.pin);
-    return () => { s.dispose(); scene.current = null; };
+    if (p.columns) s.setColumns(p.columns);
+    const withdraw = offerPicture(() => s.snapshot());
+    return () => { withdraw(); s.dispose(); scene.current = null; };
   }, [props.shapes, seatsKey, calm, props.single]);
 
   useEffect(() => { scene.current?.setAccessible(props.accessible); }, [props.accessible]);
@@ -63,6 +68,7 @@ export default function MapScene3DView(props: MapScene3DProps) {
   useEffect(() => { scene.current?.setSelection(props.selectedSeat, props.selectedState); }, [props.selectedSeat, props.selectedState, theme]);
   useEffect(() => { scene.current?.setDisplay(props.display); }, [props.display]);
   useEffect(() => { scene.current?.setMarks(props.marks, props.pin); }, [props.marks, props.pin]);
+  useEffect(() => { scene.current?.setColumns(props.columns); }, [props.columns]);
   useEffect(() => { if (props.pulse) scene.current?.pulse(props.pulse.id); }, [props.pulse?.n]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

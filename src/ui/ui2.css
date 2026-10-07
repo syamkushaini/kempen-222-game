@@ -351,3 +351,33 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 
 .recap-more summary { cursor: pointer; color: var(--muted); font-size: 13px; }
 .recap-more .recap h3 { display: none; }
+
+/* ---------- the verdict has its moment ---------- */
+.seat-dot.unseated { opacity: 0.08; }
+.overlay.verdict-moment { z-index: 60; background: var(--bg); align-content: center; gap: 12px; cursor: pointer; grid-template-columns: minmax(0, 880px); justify-content: center; }
+.verdict-chamber { width: 100%; }
+.verdict-chamber .chamber-line { display: none; }
+.verdict-words { display: flex; align-items: center; gap: 20px; justify-content: center; animation: fade-up 420ms ease-out; cursor: default; }
+.verdict-words .portrait { flex: none; border-radius: 50%; border: 3px solid var(--party, var(--line-2)); }
+.verdict-words h2 { font-size: clamp(22px, 3.4vw, 34px); line-height: 1.2; margin: 2px 0 6px; max-width: 22ch; text-wrap: balance; }
+.verdict-words.good h2 { color: var(--good); }
+.verdict-who { margin: 0; color: var(--muted); font-weight: 500; }
+.verdict-figure { font-size: 20px; font-weight: 700; margin: 0 0 12px; }
+.verdict-skip { text-align: center; }
+@media (max-width: 620px) { .verdict-words { flex-direction: column; text-align: center; } .verdict-words h2 { max-width: none; } }
+
+/* ---------- how to play ---------- */
+.tone-learn { --tone: #2aa3a3; }
+.howto { width: min(680px, 100%); max-height: 88vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.howto h3 { margin-top: 8px; }
+.howto-goal { display: flex; align-items: center; gap: 16px; padding: 12px; border-radius: 12px; background: var(--panel-2); }
+.howto-chamber { flex: none; width: 150px; }
+.howto-week { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.howto-week li { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); --tone: var(--primary); }
+.howto-words { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 16px; }
+.howto-words dt { font-weight: 600; text-transform: capitalize; }
+.howto-words dd { margin: 0; }
+@media (max-width: 520px) { .howto-goal { flex-direction: column; text-align: center; } }
+/* ---------- every control can be reached and seen: a clear ring wherever the keyboard is ---------- */
+:focus-visible { outline: 2px solid var(--ring, var(--primary)); outline-offset: 2px; border-radius: 6px; }
+.menu-item:focus-visible, .party-card:focus-visible, .btn:focus-visible, .tab:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }

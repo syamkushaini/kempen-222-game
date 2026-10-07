@@ -15,6 +15,8 @@ export interface ChamberProps {
   sides: Record<Side, string>;
   /** Parties declare their votes one after another, rather than all at once. */
   stagger?: boolean;
+  /** The chamber fills party by party, the largest first: for the moment a result is declared. */
+  reveal?: boolean;
 }
 
 /** What the scene, flat or 3D, is asked to draw. */
@@ -35,7 +37,7 @@ const calm = () => typeof matchMedia === 'function' && matchMedia('(prefers-redu
  * The House as a hemicycle, one mark for each seat: the side being counted fills from the left toward the majority line, the
  * other side from the right. Pointing at a seat picks out its whole party. In 3D where the player has it on, flat otherwise.
  */
-export function Chamber({ blocs, need, sides, stagger }: ChamberProps) {
+export function Chamber({ blocs, need, sides, stagger, reveal }: ChamberProps) {
   const t = useT();
   const want3d = useStore((s) => s.settings.map3d);
   const [hot, setHot] = useState<number | null>(null);
@@ -56,8 +58,23 @@ export function Chamber({ blocs, need, sides, stagger }: ChamberProps) {
     return blocs.map((b) => (b.vote !== undefined && !said.has(b.party) ? { ...b, vote: undefined } : b));
   }, [blocs, declared]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // A chamber that fills: the parties take their seats one after another, the largest first.
+  const entering = useMemo(() => [...new Set([...blocs].sort((a, b) => b.seats - a.seats).map((b) => b.party))], [blocs]);
+  const [seated, setSeated] = useState(reveal && !calm() ? 0 : entering.length);
+  useEffect(() => {
+    if (!reveal || calm()) { setSeated(entering.length); return; }
+    setSeated(0);
+    const id = setInterval(() => setSeated((n) => { if (n + 1 >= entering.length) clearInterval(id); return n + 1; }), 380);
+    return () => clearInterval(id);
+  }, [reveal, entering.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filled = useMemo(() => {
+    if (seated >= entering.length) return shown;
+    const here = new Set(entering.slice(0, seated));
+    return shown.map((b) => (here.has(b.party) ? b : { ...b, hidden: true }));
+  }, [shown, seated, entering]);
+
   const places = useMemo(() => hemicycle(total), [total]);
-  const members = useMemo(() => arrange(shown), [shown]);
+  const members = useMemo(() => arrange(filled), [filled]);
   if (total === 0) return null;
 
   const left = sideCount(blocs, 'left'), right = sideCount(blocs, 'right');
@@ -104,7 +121,7 @@ function FlatChamber({ places, members, line, need, hot, onHot, label }: Chamber
       {members.map((m, i) => {
         const p = places[i];
         if (!p) return null;
-        const cls = `seat-dot${m.vote ? ` ${m.vote}` : ''}${hot !== null && hot !== m.party ? ' dim' : ''}${hot === m.party ? ' hot' : ''}`;
+        const cls = `seat-dot${m.hidden ? ' unseated' : ''}${m.vote ? ` ${m.vote}` : ''}${hot !== null && hot !== m.party ? ' dim' : ''}${hot === m.party ? ' hot' : ''}`;
         return (
           <circle
             key={`${m.party}:${m.k}`} className={cls} r={r} data-party={m.party} fill={partyColor(m.party)}

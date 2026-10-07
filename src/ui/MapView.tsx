@@ -1,5 +1,6 @@
 import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { campaignMarks } from '../sim/campaign/marks';
+import { latestNationalPoll } from '../sim/campaign/polls';
 import type { Flip } from '../sim/campaign/night';
 import type { World } from '../sim/election';
 import type { RegionId, SeatClass } from '../sim/types';
@@ -158,6 +159,23 @@ export function MapView(props: {
     return (region ?? home) as [number, number, number, number];
   }, [map, home, single, selectedState]);
   const seatList = useMemo(() => world.seats.map((s) => ({ id: s.id, state: s.state })), [world]);
+  // With the poll open, each region carries a column of the parties' shares there.
+  const pollOpen = useStore((s) => s.pollOpen);
+  const polls = useStore((s) => s.game?.campaign.polls);
+  const columns = useMemo(() => {
+    const regions = pollOpen && use3d && map && polls ? latestNationalPoll(polls)?.regions : null;
+    if (!regions || !map) return null;
+    return (Object.keys(regions) as (keyof typeof regions)[]).flatMap((r) => {
+      const box = [Infinity, Infinity, -Infinity, -Infinity];
+      for (const seat of world.seats) {
+        const b = seat.region === r ? map.seats[seat.id]?.bbox : null;
+        if (b) { box[0] = Math.min(box[0], b[0]); box[1] = Math.min(box[1], b[1]); box[2] = Math.max(box[2], b[2]); box[3] = Math.max(box[3], b[3]); }
+      }
+      if (!Number.isFinite(box[0])) return [];
+      const parts = regions[r].map((share, p) => ({ share, color: partyColor(p) })).filter((x) => x.share > 0.02).sort((a, b) => b.share - a.share);
+      return [{ x: (box[0] + box[2]) / 2, z: (box[1] + box[3]) / 2, parts }];
+    });
+  }, [pollOpen, use3d, map, polls, world]);
   const backdropIds = useMemo(() => backdrop.map(([id]) => id), [backdrop]);
 
   /** A pointer's place in the map's own units, whatever size the map is drawn at. */
@@ -308,7 +326,7 @@ export function MapView(props: {
               shapes={map.seats} seats={seatList} backdrop={backdropIds} home={home as [number, number, number, number]} focus={focusBox}
               display={display} selectedSeat={preview ?? selectedSeat} selectedState={single ? null : selectedState} accessible={accessible}
               marks={marks} pin={marker as [number, number, number, number] | null} pulse={props.pulse ? { id: props.pulse.id, n: props.pulse.n } : null}
-              label={contestName(t, world)} single={single} partyColor={partyColor} onPick={pick}
+              columns={columns} label={contestName(t, world)} single={single} partyColor={partyColor} onPick={pick}
               onHover={(id, x, y) => setHover(id ? { id, x, y } : null)}
             />
           </Suspense>

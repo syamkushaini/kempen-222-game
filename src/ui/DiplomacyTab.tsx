@@ -92,7 +92,7 @@ export function DiplomacyTab() {
           return (
             <li key={p} className={open === p ? 'leader open' : 'leader'}>
               <button className="leader-head" aria-expanded={open === p} onClick={() => setOpen(open === p ? null : p)}>
-                <Portrait leader={p} size={38} />
+                <Portrait leader={p} size={52} />
                 <span className="grow">
                   <span className="seat-name">{leaderName(t, p)}</span>
                   <span className="muted small">

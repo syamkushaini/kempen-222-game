@@ -11,6 +11,8 @@ export interface Bloc {
   side: Side;
   /** How the bloc votes, when the chamber is showing a division. */
   vote?: Stance;
+  /** Its seats are not shown yet: the chamber is filling, and this bloc's turn has not come. */
+  hidden?: boolean;
 }
 
 export interface Place {
@@ -66,7 +68,7 @@ export function pitch(n: number): number {
   return Math.min(between, along);
 }
 
-export interface Member { party: number; side: Side; vote?: Stance; /** Its number within its own party and side, so that a member keeps its identity when the benches are rearranged. */ k: number }
+export interface Member { party: number; side: Side; vote?: Stance; hidden?: boolean; /** Its number within its own party and side, so that a member keeps its identity when the benches are rearranged. */ k: number }
 
 /**
  * Who sits where, from left to right: the blocs on the left in the order given, then those in the middle, then those on the
@@ -79,7 +81,7 @@ export function arrange(blocs: Bloc[]): Member[] {
   return order.flatMap((b) => Array.from({ length: Math.round(b.seats) }, () => {
     const k = seen.get(b.party) ?? 0;
     seen.set(b.party, k + 1);
-    return { party: b.party, side: b.side, vote: b.vote, k };
+    return { party: b.party, side: b.side, vote: b.vote, hidden: b.hidden, k };
   }));
 }
 

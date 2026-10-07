@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useStore } from '../state/store';
 import { latestNationalPoll } from '../sim/campaign/polls';
 import type { Campaign } from '../sim/campaign/types';
 import { lastOutcome, partyColor, partyName, partyShort, useFormat, useT, useWorld } from './hooks';
@@ -30,7 +30,8 @@ export function Standing({ campaign }: { campaign: Campaign }) {
   const t = useT();
   const f = useFormat();
   const world = useWorld();
-  const [open, setOpen] = useState(false);
+  const open = useStore((s) => s.pollOpen);
+  const setOpen = useStore((s) => s.setPollOpen);
   const kind = world.rules.kind;
   const me = campaign.player;
   const poll = latestNationalPoll(campaign.polls);
@@ -44,7 +45,7 @@ export function Standing({ campaign }: { campaign: Campaign }) {
 
   return (
     <section className={open ? 'panel standing open' : 'panel standing'}>
-      <button className="poll-strip" aria-expanded={open} title={t('standing.open')} onClick={() => setOpen((v) => !v)}>
+      <button className="poll-strip" aria-expanded={open} title={t('standing.open')} onClick={() => setOpen(!open)}>
         <i className="dot" data-party={me} style={{ background: partyColor(me) }} />
         {poll ? (
           <>

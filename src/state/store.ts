@@ -116,6 +116,9 @@ interface Store {
   /** The seat an action being pointed at would land on, shown on the map before it is taken. */
   preview: string | null;
   setPreview(seat: string | null): void;
+  /** The whole poll is open under the map: in 3D its columns stand on the regions. */
+  pollOpen: boolean;
+  setPollOpen(open: boolean): void;
   /** The answer to the player's latest pact proposal, and who gave it. */
   pactReply: { party: number; verdict: PactVerdict } | null;
   /** The answer to the player's latest offer in the talks after the election. */
@@ -260,6 +263,8 @@ export const useStore = create<Store>((set, get) => {
     flash: { seat: null, n: 0 },
     preview: null,
     setPreview: (seat) => { if (get().preview !== seat) set({ preview: seat }); },
+    pollOpen: false,
+    setPollOpen: (pollOpen) => set({ pollOpen }),
     pactReply: null,
     offerReply: null,
     showNight: false,

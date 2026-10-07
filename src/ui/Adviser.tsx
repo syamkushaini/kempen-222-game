@@ -27,6 +27,9 @@ export function Adviser() {
   const ctx = { campaign, selectedSeat, tab };
   const finished = step?.done?.(ctx) ?? false;
   useEffect(() => { if (finished) advance(STEPS.length); }, [finished, advance]);
+  // A game saved part-way through the longer tutorial of old may be on a step that no longer exists: it is over.
+  const stray = !!tutorial && !step;
+  useEffect(() => { if (stray) dismiss(); }, [stray, dismiss]);
 
   if (!tutorial || !step) return <Warning />;
   // Pointing at "Next" needs no help finding it; anything else may be off the screen.

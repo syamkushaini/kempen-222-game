@@ -124,7 +124,8 @@ export class Chamber3D {
       if (m.vote === 'no') b.colour.lerp(NO, 0.35).multiplyScalar(0.7);
       if (m.vote === 'waver') b.colour.lerp(WAVER, 0.3);
       if (this.hot !== null && this.hot !== b.party) b.colour.multiplyScalar(0.45);
-      b.liftGoal = (m.vote === 'aye' ? 1.2 : m.vote === 'no' ? -0.9 : 0) * this.size + (this.hot === b.party ? 0.9 * this.size : 0);
+      if (m.hidden) b.colour.multiplyScalar(0.18);
+      b.liftGoal = (m.hidden ? -1.2 : m.vote === 'aye' ? 1.2 : m.vote === 'no' ? -0.9 : 0) * this.size + (this.hot === b.party ? 0.9 * this.size : 0);
     });
   }
 
@@ -135,7 +136,7 @@ export class Chamber3D {
     this.camera.aspect = w / h;
     // One fixed view from above the front of the chamber, pulled back far enough for the whole half circle at this shape of picture.
     const half = Math.tan((FOV * Math.PI) / 360);
-    const dist = Math.max(1.25 / (half * this.camera.aspect), 0.68 / half);
+    const dist = Math.max(1.36 / (half * this.camera.aspect), 0.7 / half);
     const aim = new Vector3(0, 0.05, -0.5);
     this.camera.position.set(0, dist * 0.78, aim.z + dist * 0.63);
     this.camera.lookAt(aim);

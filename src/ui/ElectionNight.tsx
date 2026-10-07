@@ -14,6 +14,7 @@ import { GamePanel } from './SavesTab';
 import { electionCard, ShareDialog } from './ShareDialog';
 import { Review } from './Review';
 import { Tally } from './Tally';
+import { VerdictMoment } from './VerdictMoment';
 
 const STEP_MS = { normal: 210, fast: 45 };
 const UNDECLARED: SeatDisplay = { winner: -1, margin: 0, cls: 'safe', shares: null, stale: false };
@@ -56,6 +57,10 @@ function SeatBySeat() {
   }, [playing, fast, finished, TOTAL]);
 
   useEffect(() => { if (finished) finishNight(); }, [finished, finishNight]);
+  // The verdict has its moment once, when the count ends before the player's eyes: not for a night looked at again later.
+  const watched = useRef(!finished);
+  const [moment, setMoment] = useState(false);
+  useEffect(() => { if (finished && watched.current) { watched.current = false; setMoment(true); } }, [finished]);
 
   const { display, tally, votes, majorityAt } = useMemo(() => {
     const display: SeatDisplay[] = world.seats.map(() => UNDECLARED);
@@ -126,6 +131,7 @@ function SeatBySeat() {
 
   return (
     <main className="layout">
+      {moment && <VerdictMoment campaign={campaign} summary={summary} result={result} onDone={() => setMoment(false)} />}
       <section className="map-column">
         <MapView
           display={display}
@@ -284,6 +290,10 @@ function ByElectionCount() {
     return () => clearTimeout(id);
   }, [playing, finished, count, tense]);
   useEffect(() => { if (finished) finishNight(); }, [finished, finishNight]);
+  // The verdict has its moment once, when the count ends before the player's eyes: not for a night looked at again later.
+  const watched = useRef(!finished);
+  const [moment, setMoment] = useState(false);
+  useEffect(() => { if (finished && watched.current) { watched.current = false; setMoment(true); } }, [finished]);
 
   const seat = result.seats[0];
   const heard = useRef(count);
@@ -305,6 +315,7 @@ function ByElectionCount() {
 
   return (
     <main className="layout">
+      {moment && <VerdictMoment campaign={campaign} summary={summary} result={result} onDone={() => setMoment(false)} />}
       <section className="map-column">
         <MapView display={display} toolbar={<span className="muted num">{t('count.boxes', { n: count, total: BOXES })}</span>} />
         <div className="progress" aria-hidden="true"><span style={{ width: `${(count / BOXES) * 100}%` }} /></div>

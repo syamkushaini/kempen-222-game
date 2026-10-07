@@ -20,18 +20,23 @@ describe('the tutorial pointer', () => {
     expect(step('ceramah').spots(ctx('actions'))).toEqual(['go-ceramah']);
     expect(step('poll').spots(ctx('actions'))).toEqual(['tab-polls']);
     expect(step('poll').spots(ctx('polls'))).toEqual(['poll-seat']);
-    expect(step('funds').spots(ctx('actions'))).toEqual(['go-dinner', 'go-crowdfund']);
-    expect(step('gotv').spots(ctx('polls'))).toEqual(['tab-actions']);
   });
 
   it('points at the map, the End week button and Next where those are the next move', () => {
     expect(step('seat').spots(ctx('actions'))).toEqual(['map']);
-    for (const id of ['endWeek', 'middle', 'pollingDay']) expect(step(id).spots(ctx('actions')), id).toEqual(['end-week']);
-    for (const id of ['welcome', 'rivals']) expect(step(id).spots(ctx('actions')), id).toEqual(['next']);
+    expect(step('endWeek').spots(ctx('actions'))).toEqual(['end-week']);
+    expect(step('welcome').spots(ctx('actions'))).toEqual(['next']);
   });
 
   it('only waits for Next where there is nothing to do', () => {
-    expect(STEPS.filter((s) => !s.done).map((s) => s.id)).toEqual(['welcome', 'rivals']);
+    expect(STEPS.filter((s) => !s.done).map((s) => s.id)).toEqual(['welcome']);
+  });
+
+  it('is five steps long, and ends when the first week does', () => {
+    expect(STEPS.map((s) => s.id)).toEqual(['welcome', 'seat', 'ceramah', 'poll', 'endWeek']);
+    const c = start();
+    expect(step('endWeek').done!({ campaign: c, selectedSeat: null, tab: 'actions' })).toBe(false);
+    expect(step('endWeek').done!({ campaign: { ...c, week: 2 }, selectedSeat: null, tab: 'actions' })).toBe(true);
   });
 
   it('moves on when the thing is done', () => {

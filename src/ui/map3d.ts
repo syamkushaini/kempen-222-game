@@ -127,3 +127,16 @@ export function canDraw3D(): boolean {
   } catch { webgl = false; }
   return webgl;
 }
+
+// ---------- a picture of the map, for the result card ----------
+
+let picture: (() => string | null) | null = null;
+/** The 3D map on screen offers a picture of itself; whoever takes the offer down again gets a function to do it. */
+export function offerPicture(take: () => string | null): () => void {
+  picture = take;
+  return () => { if (picture === take) picture = null; };
+}
+/** A picture of the 3D map as it stands, or null where there is none on screen. */
+export function mapPicture(): string | null {
+  try { return picture?.() ?? null; } catch { return null; }
+}

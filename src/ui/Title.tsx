@@ -19,6 +19,7 @@ import { FeedbackLink } from './FeedbackLink';
 import { ACHIEVEMENT_IDS } from '../sim/campaign/achievements';
 import { FitText } from './FitText';
 import { HonoursDialog } from './Honours';
+import { HowToPlay } from './HowToPlay';
 import { Icon, type IconName } from './Icon';
 import { canDraw3D } from './map3d';
 import { Portrait } from './Portrait';
@@ -112,6 +113,7 @@ export function Title() {
   const clearSetupWanted = useStore((s) => s.clearSetupWanted);
   const [mode, setMode] = useState<Screen>(() => (setupWanted ? 'custom' : 'menu'));
   const [honours, setHonours] = useState(false);
+  const [howTo, setHowTo] = useState(false);
   const profile = useStore((s) => s.profile);
   const want3d = useStore((s) => s.settings.map3d);
   // The country turns behind the menu on a laptop that can draw it, for a player who has not asked for less.
@@ -159,6 +161,7 @@ export function Title() {
     <main className={mode === 'menu' ? 'title menu-stage' : 'title menu-stage sub'}>
       {backdrop && <Suspense fallback={null}><MenuScene /></Suspense>}
       {honours && <HonoursDialog onClose={() => setHonours(false)} />}
+      {howTo && <HowToPlay onClose={() => setHowTo(false)} />}
       {mode === 'menu' ? (
         <nav className="main-menu" aria-label={t('menu.label')}>
           <p className="title-intro">{t('title.intro')}</p>
@@ -172,6 +175,7 @@ export function Title() {
             <MenuItem primary={!auto} icon="plus" tone="new" title={t('menu.new')} hint={t('menu.new.hint')} onClick={() => pick('home')} />
             <MenuItem icon="folder" tone="load" title={t('menu.load')} hint={t('menu.load.hint', { n: saved })} onClick={() => pick('load')} />
             <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.hint')} onClick={() => pick('challenges')} />
+            <MenuItem icon="book" tone="learn" title={t('howto.title')} hint={t('howto.hint')} onClick={() => setHowTo(true)} />
             <MenuItem icon="trophy" tone="won" title={t('menu.honours')} hint={t('menu.honours.hint', { n: earnedCount, total: ACHIEVEMENT_IDS.length })} onClick={() => setHonours(true)} />
           </ul>
           <p className="muted small">{t('title.fiction')}</p>
@@ -270,7 +274,7 @@ export function Title() {
               return (
                 <RadioCard key={id} checked={player === p} className="party-card" style={{ borderTopColor: PARTIES[id].color }} onSelect={() => { setChosen(p); setDraft(null); }}>
                   <span className="card-head">
-                    <Portrait leader={p} size={44} />
+                    <Portrait leader={p} size={60} />
                     <span className="grow">
                       <strong>{PARTIES[id].name}</strong>
                       <span className="muted small">{t('title.leader', { name: LEADERS[id] })}</span>

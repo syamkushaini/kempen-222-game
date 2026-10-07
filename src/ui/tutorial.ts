@@ -17,19 +17,14 @@ const did = (c: Campaign, prefix: string) => c.news.some((n) => n.party === c.pl
 const onTab = (tab: SidebarTab, wanted: SidebarTab, ...spots: string[]) => (tab === wanted ? spots : [`tab-${wanted}`]);
 
 /**
- * The guided steps of the by-election. Progress is judged from the campaign
- * itself, so it survives a reload.
+ * The guided steps of the by-election: five, enough to teach the week (choose where, act, find out, move on). Everything
+ * else is explained the first time it is met, by the "What now?" line and by the words that explain themselves.
+ * Progress is judged from the campaign itself, so it survives a reload.
  */
 export const STEPS: TutorialStep[] = [
   { id: 'welcome', spots: () => ['next'] },
   { id: 'seat', done: (x) => x.selectedSeat !== null, spots: () => ['map'] },
   { id: 'ceramah', done: (x) => did(x.campaign, 'news.me.ceramah'), spots: (x) => onTab(x.tab, 'actions', 'go-ceramah') },
   { id: 'poll', done: (x) => x.campaign.polls.some((p) => !p.public), spots: (x) => onTab(x.tab, 'polls', 'poll-seat') },
-  { id: 'canvass', done: (x) => did(x.campaign, 'news.me.canvass'), spots: (x) => onTab(x.tab, 'actions', 'go-canvass') },
-  { id: 'funds', done: (x) => did(x.campaign, 'news.me.dinner') || did(x.campaign, 'news.me.crowdfund'), spots: (x) => onTab(x.tab, 'actions', 'go-dinner', 'go-crowdfund') },
   { id: 'endWeek', done: (x) => x.campaign.week >= 2, spots: () => ['end-week'] },
-  { id: 'rivals', spots: () => ['next'] },
-  { id: 'middle', done: (x) => x.campaign.week >= x.campaign.totalWeeks, spots: () => ['end-week'] },
-  { id: 'gotv', done: (x) => did(x.campaign, 'news.me.gotv'), spots: (x) => onTab(x.tab, 'actions', 'go-gotv') },
-  { id: 'pollingDay', done: (x) => x.campaign.phase !== 'campaign', spots: () => ['end-week'] },
 ];

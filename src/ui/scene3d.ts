@@ -12,6 +12,8 @@ import { approach, fitDistance, parseRings, PATTERNS, seatHeight, shapeParts } f
 export interface MapShape { d: string; bbox: [number, number, number, number] }
 export interface SceneSeat { id: string; state: string }
 export interface SeatLook { winner: number; margin: number; stale: boolean }
+/** A column of support standing on a region: the parties' shares there, stacked. */
+export interface ColumnSpec { x: number; z: number; parts: { color: string; share: number }[] }
 export interface MarkSpec { seat: string; party: number; kind: 'tent' | 'flag'; slot: number; of: number }
 
 export interface SceneOptions {
@@ -99,6 +101,10 @@ export class MapScene3D {
   private box: HTMLElement;
   private ro: ResizeObserver;
   private cleanup: (() => void)[] = [];
+  private columns = new Group();
+  private columnSpecs: ColumnSpec[] | null = null;
+  private rise = 0;
+  private riseGoal = 0;
   private swaying: { amplitude: number; period: number; from: number } | null = null;
 
   constructor(container: HTMLElement, private o: SceneOptions) {
@@ -117,7 +123,7 @@ export class MapScene3D {
     const sun = new DirectionalLight(0xffffff, 1.5);
     sun.position.set(-0.5, 1, 0.7);
     this.scene.add(sun);
-    this.scene.add(this.backdrop, this.props);
+    this.scene.add(this.backdrop, this.props, this.columns);
 
     this.build();
 
@@ -300,6 +306,7 @@ export class MapScene3D {
       this.blocks.forEach((b) => this.paint(b));
       if (this.o.calm) this.blocks.forEach((b) => { b.height = b.goal; b.mesh.scale.y = b.goal; });
       this.setMarks(this.markSpecs.marks, this.markSpecs.pin);
+      if (this.columnSpecs) this.buildColumns();
     }
     this.fit(false);
   }
@@ -345,6 +352,32 @@ export class MapScene3D {
       this.scene.add(g);
     }
     this.refresh();
+  }
+
+  /** Columns of support by region, rising out of the map while the poll is open and sinking when it is closed. */
+  setColumns(cols: ColumnSpec[] | null) {
+    if (cols) { this.columnSpecs = cols; this.buildColumns(); this.riseGoal = 1; if (this.o.calm) this.rise = 1; }
+    else { this.riseGoal = 0; if (this.o.calm) { this.rise = 0; this.columns.clear(); this.columnSpecs = null; } }
+    this.columns.scale.y = Math.max(this.rise, 1e-4);
+    this.refresh();
+  }
+
+  private buildColumns() {
+    this.columns.clear();
+    const wide = this.size * 0.035, tall = this.size * 0.2, base = this.size * 0.03 * this.o.lift;
+    for (const col of this.columnSpecs ?? []) {
+      let y = base;
+      for (const part of col.parts) {
+        const h = Math.max(part.share * tall, 1e-4);
+        const geo = new BoxGeometry(wide, h, wide);
+        const mat = new MeshLambertMaterial({ color: part.color });
+        this.disposables.push(geo, mat);
+        const box = new Mesh(geo, mat);
+        box.position.set(col.x, y + h / 2, col.z);
+        this.columns.add(box);
+        y += h;
+      }
+    }
   }
 
   /** A seat has just been declared: it flashes, so the eye is taken to it. */
@@ -443,7 +476,7 @@ export class MapScene3D {
 
   /** Whether anything is still on the move, which decides if another frame is wanted. */
   private settle(): boolean {
-    return this.swaying !== null || this.blocks.some((b) => b.height !== b.goal) || this.flashes.length > 0 || this.cameraMoving();
+    return this.swaying !== null || this.rise !== this.riseGoal || this.blocks.some((b) => b.height !== b.goal) || this.flashes.length > 0 || this.cameraMoving();
   }
 
   private cameraMoving() {
@@ -474,6 +507,12 @@ export class MapScene3D {
     this.camera.position.copy(t).add(off.setLength(len));
     this.camera.lookAt(t);
     if (this.swaying) this.setAngles(this.swaying.amplitude * Math.sin(((now - this.swaying.from) / 1000 / this.swaying.period) * Math.PI * 2), TILT);
+    if (this.rise !== this.riseGoal) {
+      this.rise = approach(this.rise, this.riseGoal, dt, 6);
+      if (Math.abs(this.rise - this.riseGoal) < 1e-3) this.rise = this.riseGoal;
+      this.columns.scale.y = Math.max(this.rise, 1e-4);
+      if (this.rise === 0) { this.columns.clear(); this.columnSpecs = null; }
+    }
     // Flashing seats lighten and settle back.
     const stamp = performance.now();
     this.flashes = this.flashes.filter((f) => {
@@ -510,10 +549,21 @@ export class MapScene3D {
 
   // ---------- tidying up ----------
 
-  /** A picture of the map as it stands, for the share card. */
+  /** A picture of the map for the result card: the whole contest from the usual angle, whatever the player was looking at. */
   snapshot(): string {
+    const pos = this.camera.position.clone(), aim = this.controls.target.clone(), goal = { ...this.goal };
+    const h = this.o.home;
+    this.goal = { x: (h[0] + h[2]) / 2, z: (h[1] + h[3]) / 2, dist: this.fitFor(h) * 0.82 };
+    const polar = TILT, d = this.goal.dist;
+    this.camera.position.set(this.goal.x, d * Math.cos(polar), this.goal.z + d * Math.sin(polar));
+    this.camera.lookAt(this.goal.x, 0, this.goal.z);
     this.render();
-    return this.renderer.domElement.toDataURL('image/png');
+    const data = this.renderer.domElement.toDataURL('image/png');
+    this.camera.position.copy(pos);
+    this.camera.lookAt(aim);
+    this.goal = goal;
+    this.render();
+    return data;
   }
 
   dispose() {

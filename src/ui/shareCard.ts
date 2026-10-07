@@ -24,6 +24,8 @@ export interface CardData {
   bars?: { label: string; share: number; color: string; mine?: boolean }[];
   /** The leader, as an image address, with a name under it and the party under that. */
   portrait?: { src: string; caption: string; sub: string };
+  /** A picture to lay behind everything, washed into the party's colour: the 3D map as it stood at the end. */
+  backdrop?: string;
   tagline: string;
   fiction: string;
 }
@@ -181,6 +183,20 @@ export async function drawCard(canvas: HTMLCanvasElement, data: CardData): Promi
   const wash = g.createLinearGradient(0, 0, CARD_W, CARD_H);
   wash.addColorStop(0, mix(light, '#ffffff', 0.1)); wash.addColorStop(0.55, light); wash.addColorStop(1, deep);
   g.fillStyle = wash; g.fillRect(0, 0, CARD_W, CARD_H);
+
+  // Behind everything, where there is one: the map as it stood, faint, so that the card is a picture of this result and no other.
+  if (data.backdrop) {
+    try {
+      const img = await loadImage(data.backdrop);
+      const scale = Math.max(CARD_W / img.width, CARD_H / img.height);
+      const w = img.width * scale, h = img.height * scale;
+      g.save();
+      g.globalAlpha = 0.55;
+      g.globalCompositeOperation = 'luminosity';
+      g.drawImage(img, (CARD_W - w) / 2, (CARD_H - h) / 2, w, h);
+      g.restore();
+    } catch { /* the card is whole without it */ }
+  }
 
   // Rays out of the middle of the stage, as on any rally poster.
   const sx = 800, sy = data.chamber ? 506 : 360;

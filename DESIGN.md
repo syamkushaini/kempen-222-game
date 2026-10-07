@@ -826,3 +826,12 @@ Sixty questions, one at a time. The designer's own words on the worst clutter: *
 - **Pointing at an action that lands on a seat shows that seat on the map** (a dashed green outline on the flat map, a lift in 3D) before anything is spent.
 - **Between elections the first tab is "This week"** (`TermDesk`): a decision waiting, the figure in most danger, the money and how long it lasts, and the time to the election, each with a button to the tab that deals with it, then the week's news.
 - **On a phone the map and the panel are separate screens**, changed from **a bar at the bottom** (Map, then the three groups, with counts); the days, funds and End week sit just above it. When the adviser points at the map the phone goes there by itself.
+
+**Stage 4 built: the verdict, learning, and the rest of the 3D (8 Oct 2026).**
+- **The verdict has its moment.** When a count ends before the player's eyes the screen clears, **the chamber fills party by party** (the largest first, the player's on the left against the majority line), and then the verdict is read out large beside the leader's portrait, with the seats and the share and one button to the figures. A press or any key skips ahead. A contest for one seat has no chamber to fill and goes straight to the words. A night looked at again later does not replay it.
+- **The result card carries the 3D map** where one is on screen: a picture of the whole contest from the usual angle (`snapshot`, offered through `offerPicture`), laid faintly behind the poster in the party's colour. Without 3D the card is as it was.
+- **Poll columns on the 3D map:** opening the poll line under the map makes a column rise over each region, the parties' shares there stacked; closing it lowers them.
+- **The tutorial is five steps** (welcome, choose the seat, hold a ceramah, commission a poll, end the week), down from eleven; a game saved part-way through the old one simply finds the tutorial over. After it, the "What now?" line and the words that explain themselves do the teaching.
+- **How to play** is one page, reached from the main menu and from the game's own menu: the goal with a small chamber, a week in four pictures, what the words mean (the game's glossary), and the keys.
+- **Larger faces** where a person matters (choosing a party, the leaders in Deals, the verdict). **A clear focus ring** wherever the keyboard is.
+- The label test now also holds the recap and verdict buttons and the phone bar's names to length in both languages.
