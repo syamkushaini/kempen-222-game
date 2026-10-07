@@ -709,3 +709,46 @@ Fifty questions, answered one at a time. These are wishes, not yet built. The de
 - Built last: the title opens on a choice of how to play (learn by playing, choose a contest, a whole career), with the last choice marked; in the colour-blind palette every party also has its own **shape** (dots and legends) and its own **fill** (bars, and a pattern laid over its seats on the map), so colour is never the only signal. Every item from the interview is now built.
 
 **A brand-new party in any contest (8 Oct 2026).** Suggested by the designer: let the player create and lead a totally new party instead of taking over an existing one. A career could already found one; now **the choice is the first thing asked on the party step** ("Take over a big party" or "Found a new party from nothing") for every contest except a hung parliament, whose votes are already in. In a single contest there are no years to grow in, so the new party arrives **with a following**: a share of the vote in every seat (`NEW_PARTY_SHARE`: 25% in a by-election, 14% in a state, 7% in the general election), a small purse (the same `FOUNDING_FUNDS`) and an ordinary leader unless a past is chosen. It takes the place of GENBA, as a founded career party does, in a world built by `newPartyWorld`, which keeps the contest's own id so maps and saves read it as the same contest. The game remembers it as `Campaign.newParty` (optional). Set by simulation with the autoplayer over twelve seeds: it ends a by-election on 12-22% and a state election on 10-15%, with no seat in either, and the general election on about 6% with one to three seats, so it is an underdog fight in which a good player can do better than the autoplayer. A single contest has no platform editor; the platform is a career matter.
+
+## Fourth interview: Three.js (8 Oct 2026)
+
+Thirty questions, answered one at a time. Nothing here is built yet. The agreed first step is **a working prototype of the 3D map**, to be judged before anything else is started.
+
+**What and where**
+- **First home for 3D: the Malaysia map itself.** It is a **view**, switched between **Flat and 3D** (a button in the map toolbar and a Display setting, remembered across games). The flat map stays the default on phones and wherever 3D cannot run.
+- **Second candidate, later: a 3D parliament chamber**, drawn as a **semicircle by party with a majority line**, shown during **government formation and House votes** (hung-parliament talks, coalition building, no-confidence motions, bills).
+- **The share card** takes a **snapshot of the 3D map** when it is available, and the current flat drawing otherwise.
+
+**The map**
+- **Geometry:** the **existing SVG seat outlines, extruded**, so 3D matches flat exactly with no new data. Tiny urban seats are reached **by zooming**, as now.
+- **Height means how firmly the leader holds the seat:** tall is safe, low is marginal, so close contests sit low and stand out.
+- **Style:** clean, **flat-shaded blocks** in party colours, one soft fixed light matching the light or dark theme.
+- **Camera:** tilt and zoom, **limited**, with a Reset button. No free orbit.
+- **Fog of war:** a seat with no fresh word sits **low, pale and patterned**.
+- **Markers:** the tents, flags and leader's pin become **small 3D props** standing on the seats.
+- **Picking:** the same tooltip card and the same taps as the flat map (a ray picks the seat); the Seats tab works unchanged.
+- **Colour-blind palette:** the same **patterns on the top faces** as the flat map.
+- **Election night:** each seat **rises and changes colour** as it is declared, with the existing pulse for a flip. Existing sounds are reused; no new audio.
+- **Change over time:** blocks **slide to their new height** when a poll arrives or a week ends. No ghost outlines.
+- **Simplicity:** height should **carry information the flat map's small bars and labels carry now**, so 3D lets things be removed rather than adding panels.
+
+**How it is built**
+- **Plain Three.js in one React component** (no react-three-fiber or drei); the simulation is untouched.
+- **Loaded only when 3D is switched on**, so the first load is no slower.
+- **Performance:** **60 fps on a normal laptop, 30 on phones**: one merged mesh per party colour, no per-seat objects.
+- **Devices:** laptop first. Phones and weak devices **fall back to the flat map** with a short note; with reduced motion, 3D is allowed but without animation.
+- **Testing:** the height, colour and geometry maths in **unit tests**, plus headless-Chrome screenshots (software WebGL) to confirm it draws.
+- **First slice:** the seat-level map in **a by-election and a state**, then the 222-seat general election.
+
+**What 3D must not do** (all four were ticked): slow down the first load; make the map harder to tap on a phone; change how the game plays (it is a view only); look gimmicky or dizzy (calm movement only, no spinning, swooping or shaking).
+
+**The 3D map prototype (8 Oct 2026).** Built to the interview above, for the seat-level map in every contest (not only a by-election and a state; the general election works too). What it does:
+- A **3D** button in the map's toolbar and a **Map view: Flat or 3D** choice in Display, remembered in the settings (`map3d`). Without WebGL the choice is greyed with a note and the map stays flat.
+- `scene3d.ts` is plain Three.js: each seat's outline (read from the existing SVG paths by `map3d.ts`) is extruded into a block. **Height is how firmly the seat is held** (`seatHeight`: the margin up to 30%, with a floor so toss-ups stay visible); a seat in the fog sits lowest, pale and hatched; an undeclared seat is nearly flat. Heights and markers are **in proportion to the area on show**, so they follow the camera into a state, and a one-seat contest gets four times the rise so there is something to see.
+- **Camera:** tilt (about 54 degrees) with a limited turn left and right, pan kept on the country, zoom with the + and - buttons or Ctrl or Cmd and scroll (a plain scroll stays the page's), and a button that puts it back. Choosing a state glides the camera there. `fitDistance` accounts for the tilt, since the near edge of a tilted box decides what fits.
+- **Taps and hovers** use the same code as the flat map (a ray picks the seat), so the card, the state-then-seat selection and the Seats tab are unchanged.
+- **Colour-blind palette:** the same ten patterns, painted on the top faces. Tents, flags and the leader's pin stand on the seats as small solid props. A declared seat **rises** from the ground; a seat just declared flashes. Reduced motion skips every glide and flash.
+- **Loading:** Three.js sits in its own chunk (about 600 kB, minified), fetched only when 3D is on; the main bundle is unchanged. The pattern list moved to `map3d.ts` and is shared with the flat map.
+- **Tested:** the outline reading (every seat on the national map), the holes and islands, the heights, the camera fit and the glide are unit tests; headless Chrome with software WebGL drew the state, general-election, by-election and colour-blind views, and hover, drag, reset and zoom were exercised there.
+
+**Not yet:** the 3D parliament chamber, the 3D share-card snapshot (`snapshot()` is in the scene, but nothing calls it), a seat-by-seat look at election night in the browser (the code path is the same `setDisplay`, but it was not watched live), phone testing, and a measured frame rate. The scene builds one mesh per seat (222 draw calls in a general election) rather than one merged mesh per party colour; that was needed to let each seat rise on its own, and should be measured before it is trusted on a phone.

@@ -1,12 +1,16 @@
-import { memo, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { campaignMarks } from '../sim/campaign/marks';
 import type { Flip } from '../sim/campaign/night';
 import type { World } from '../sim/election';
 import type { RegionId, SeatClass } from '../sim/types';
 import { useStore } from '../state/store';
+import { canDraw3D, PATTERNS } from './map3d';
 import { FIT, holdPoint, viewTransform, zoomBy, type View } from './mapGesture';
 import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay } from './hooks';
 import { Term } from './Term';
+
+// The 3D map and the library behind it are fetched only for a player who turns 3D on.
+const MapScene3D = lazy(() => import('./MapScene3D'));
 
 interface MapShape { d: string; bbox: [number, number, number, number] }
 interface MapData {
@@ -49,11 +53,6 @@ const SeatPath = memo(function SeatPath(props: {
   );
 });
 
-/** How each party is marked on the map in the colour-blind palette, over its colour: a line direction or dots, dark or light. */
-const PATTERNS: { kind: 'diag' | 'vert' | 'horiz' | 'dots' | 'hatch' | 'back'; ink: string }[] = [
-  { kind: 'dots', ink: '#000' }, { kind: 'diag', ink: '#000' }, { kind: 'vert', ink: '#000' }, { kind: 'horiz', ink: '#000' }, { kind: 'back', ink: '#000' },
-  { kind: 'hatch', ink: '#000' }, { kind: 'diag', ink: '#fff' }, { kind: 'vert', ink: '#fff' }, { kind: 'horiz', ink: '#fff' }, { kind: 'dots', ink: '#fff' },
-];
 const PAT = 9;
 
 function PatternDefs() {
@@ -93,6 +92,9 @@ export function MapView(props: {
   const single = world.seats.length === 1;
   const selectedState = useStore((s) => s.selectedState);
   const accessible = useStore((s) => s.settings.palette === 'accessible');
+  const want3d = useStore((s) => s.settings.map3d);
+  const setSettings = useStore((s) => s.setSettings);
+  const use3d = want3d && canDraw3D();
   const selectedSeat = useStore((s) => s.selectedSeat);
   const selectState = useStore((s) => s.selectState);
   const selectSeat = useStore((s) => s.selectSeat);
@@ -145,6 +147,15 @@ export function MapView(props: {
     const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
     return { k, transform: `translate(${W / 2 - k * cx}px, ${H / 2 - k * cy}px) scale(${k})` };
   }, [map, home, single, selectedState]);
+
+  // What the 3D camera frames: the open state, or the whole contest.
+  const focusBox = useMemo((): [number, number, number, number] | null => {
+    if (!map || !home) return null;
+    const region = !single && selectedState ? map.states[selectedState]?.bbox : null;
+    return (region ?? home) as [number, number, number, number];
+  }, [map, home, single, selectedState]);
+  const seatList = useMemo(() => world.seats.map((s) => ({ id: s.id, state: s.state })), [world]);
+  const backdropIds = useMemo(() => backdrop.map(([id]) => id), [backdrop]);
 
   /** A pointer's place in the map's own units, whatever size the map is drawn at. */
   const inMap = (p: { x: number; y: number }): [number, number] => {
@@ -206,14 +217,16 @@ export function MapView(props: {
 
   const seatFromEvent = (e: MouseEvent) => (e.target as Element).getAttribute?.('data-seat') ?? null;
 
-  const onClick = (e: MouseEvent) => {
-    const id = seatFromEvent(e);
-    if (!id) return;
+  const pick = (id: string) => {
     const seat = world.seats[world.seatIndex.get(id)!];
     // First click zooms to the region; a click inside the open region picks the seat.
     if (single) selectSeat(id, seat.state);
     else if (seat.state !== selectedState) selectState(seat.state);
     else selectSeat(id);
+  };
+  const onClick = (e: MouseEvent) => {
+    const id = seatFromEvent(e);
+    if (id) pick(id);
   };
 
   const onMove = (e: MouseEvent) => {
@@ -245,6 +258,10 @@ export function MapView(props: {
           <button className="crumb" onClick={() => selectState(null)} disabled={single || !selectedState}>{contestName(t, world)}</button>
           {!single && selectedState && <><span aria-hidden="true">›</span><span className="crumb here">{regionLabel(t, world, selectedState)}</span></>}
         </nav>
+        <button
+          className={`btn small map-3d-toggle${use3d ? ' active' : ''}`} aria-pressed={use3d} disabled={!canDraw3D()}
+          title={canDraw3D() ? t('map.3d.toggle') : t('map.3d.unsupported')} onClick={() => setSettings({ map3d: !want3d })}
+        >3D</button>
         {props.toolbar}
       </div>
 
@@ -260,7 +277,18 @@ export function MapView(props: {
 
       <div className={`map-frame${spot('map') ? ' spot' : ''}`} ref={frame}>
         {!map && <p className="muted map-loading">{t('app.loadingMap')}</p>}
-        {map && zoom && (
+        {use3d && map && focusBox && home && (
+          <Suspense fallback={<p className="muted map-loading">{t('map.3d.loading')}</p>}>
+            <MapScene3D
+              shapes={map.seats} seats={seatList} backdrop={backdropIds} home={home as [number, number, number, number]} focus={focusBox}
+              display={display} selectedSeat={selectedSeat} selectedState={single ? null : selectedState} accessible={accessible}
+              marks={marks} pin={marker as [number, number, number, number] | null} pulse={props.pulse ? { id: props.pulse.id, n: props.pulse.n } : null}
+              label={contestName(t, world)} single={single} partyColor={partyColor} onPick={pick}
+              onHover={(id, x, y) => setHover(id ? { id, x, y } : null)}
+            />
+          </Suspense>
+        )}
+        {!use3d && map && zoom && (
           <svg
             ref={svgRef} viewBox={`0 0 ${map.width} ${VIEW_HEIGHT}`} role="img" aria-label={contestName(t, world)} onMouseLeave={() => setHover(null)}
             className={view.k > 1 ? 'zoomed' : undefined} style={{ touchAction: view.k > 1 ? 'none' : 'pan-y' }}
@@ -322,7 +350,7 @@ export function MapView(props: {
             </g>
           </svg>
         )}
-        {map && zoom && (
+        {!use3d && map && zoom && (
           <div className="map-zoom-buttons" role="group" aria-label={t('map.zoom')}>
             <button className="btn small" onClick={() => zoomButton(1.6)} aria-label={t('map.zoomIn')} disabled={view.k >= 10}>+</button>
             <button className="btn small" onClick={() => zoomButton(1 / 1.6)} aria-label={t('map.zoomOut')} disabled={view.k <= 1}>−</button>

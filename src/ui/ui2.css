@@ -146,3 +146,9 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 /* the title opens on a choice of how to play */
 .modes .party-cards.three { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
 .modes .party-card { text-align: left; align-items: flex-start; }
+
+/* the 3D map */
+.map3d { width: 100%; aspect-ratio: 16 / 9; max-height: 70vh; border-radius: 8px; overflow: hidden; background: var(--panel-2); }
+.map3d canvas { cursor: grab; }
+.map3d-hint { margin: 6px 2px 0; }
+.map-3d-toggle.active { background: var(--primary); color: var(--bg); border-color: transparent; }

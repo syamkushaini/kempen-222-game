@@ -61,6 +61,8 @@ export interface Settings {
   density: 'comfortable' | 'compact';
   /** The "What now?" line above the map. */
   hints: boolean;
+  /** The map is drawn in 3D, where the browser can. */
+  map3d: boolean;
 }
 
 const SETTINGS_KEY = 'k222.settings';
@@ -69,7 +71,7 @@ export const saveStore = new SaveStore(storage);
 const profileStore = new ProfileStore(storage);
 
 function loadSettings(): Settings {
-  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', textSize: 'normal', density: 'comfortable', hints: true };
+  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', textSize: 'normal', density: 'comfortable', hints: true, map3d: false };
   try {
     const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
     if (!raw) return fallback;
@@ -82,6 +84,7 @@ function loadSettings(): Settings {
       textSize: raw.textSize === 'large' ? 'large' : 'normal',
       density: raw.density === 'compact' ? 'compact' : 'comfortable',
       hints: raw.hints !== false,
+      map3d: raw.map3d === true,
     };
   } catch {
     return fallback;

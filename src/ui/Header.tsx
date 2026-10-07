@@ -5,6 +5,7 @@ import { useStore, type Theme } from '../state/store';
 import { MenuButton } from './GameMenu';
 import { Gauge } from './Gauge';
 import { Icon, type IconName } from './Icon';
+import { canDraw3D } from './map3d';
 import { Term } from './Term';
 import { regionLabel, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
 
@@ -52,6 +53,15 @@ function SettingsControls() {
             <input type="checkbox" checked={settings.hints} onChange={(e) => setSettings({ hints: e.target.checked })} />
             <span>{t('guide.show')}</span>
           </label>
+          <span className="hud-label">{t('map.view')}</span>
+          <div className="segmented small" role="group" aria-label={t('map.view')}>
+            {([false, true] as const).map((v) => (
+              <button key={String(v)} className={settings.map3d === v ? 'active' : ''} aria-pressed={settings.map3d === v} disabled={v && !canDraw3D()} onClick={() => setSettings({ map3d: v })}>
+                {t(v ? 'map.view.3d' : 'map.view.flat')}
+              </button>
+            ))}
+          </div>
+          {!canDraw3D() && <p className="muted small">{t('map.3d.unsupported')}</p>}
           <span className="hud-label">{t('display.density')}</span>
           <div className="segmented small" role="group" aria-label={t('display.density')}>
             {(['comfortable', 'compact'] as const).map((d) => (
