@@ -1,7 +1,7 @@
 import {
-  AmbientLight, BufferGeometry, CanvasTexture, Color, ConeGeometry, CylinderGeometry, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute,
-  Group, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshLambertMaterial, PerspectiveCamera, Raycaster, RepeatWrapping,
-  Scene, Shape, SphereGeometry, Vector2, Vector3, WebGLRenderer, BoxGeometry, Path, SRGBColorSpace,
+  AmbientLight, BoxGeometry, BufferAttribute, BufferGeometry, Color, ConeGeometry, CylinderGeometry, DirectionalLight, ExtrudeGeometry, Group,
+  HemisphereLight, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshLambertMaterial, Path, PerspectiveCamera, Raycaster, Scene, Shape,
+  SphereGeometry, Vector2, Vector3, WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { approach, fitDistance, parseRings, PATTERNS, seatHeight, shapeParts } from './map3d';
@@ -43,31 +43,39 @@ const isDark = () => {
   return root ? root === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
 };
 
-/** A small repeating picture for a seat's top face: the party's colour with its pattern, or a pale hatch for a seat in the fog. */
-function tile(base: string, pattern: (typeof PATTERNS)[number] | null, ink = '#000'): CanvasTexture {
-  const c = document.createElement('canvas');
-  c.width = c.height = 32;
-  const g = c.getContext('2d')!;
-  g.fillStyle = base;
-  g.fillRect(0, 0, 32, 32);
-  const k = pattern?.kind ?? 'diag';
-  g.strokeStyle = g.fillStyle = pattern?.ink ?? ink;
-  g.globalAlpha = 0.45;
-  g.lineWidth = 4;
-  g.beginPath();
-  if (k === 'vert' || k === 'hatch') { g.moveTo(16, 0); g.lineTo(16, 32); }
-  if (k === 'horiz' || k === 'hatch') { g.moveTo(0, 16); g.lineTo(32, 16); }
-  if (k === 'diag') { g.moveTo(-4, 36); g.lineTo(36, -4); g.moveTo(-20, 20); g.lineTo(20, -20); g.moveTo(12, 52); g.lineTo(52, 12); }
-  if (k === 'back') { g.moveTo(-4, -4); g.lineTo(36, 36); g.moveTo(-20, 12); g.lineTo(20, 52); g.moveTo(12, -20); g.lineTo(52, 20); }
-  g.stroke();
-  if (k === 'dots') { g.beginPath(); g.arc(16, 16, 5, 0, Math.PI * 2); g.fill(); }
-  const tex = new CanvasTexture(c);
-  tex.wrapS = tex.wrapT = RepeatWrapping;
-  tex.colorSpace = SRGBColorSpace;
-  return tex;
-}
+/** The number each kind of pattern goes by in the material that draws it. Nought is none. */
+const PATTERN_NO: Record<(typeof PATTERNS)[number]['kind'], number> = { dots: 1, diag: 2, vert: 3, horiz: 4, back: 5, hatch: 6 };
+const FOG_PATTERN = PATTERN_NO.diag, FOG_INK = 0.55;
 
-interface Block { id: string; index: number; state: string; mesh: Mesh; edges: LineSegments; height: number; goal: number }
+/**
+ * The patterns of the colour-blind palette and of seats in the fog, drawn on the top faces by the material: a pattern number
+ * and an ink (0 dark to 1 light) for each seat, and the place on the map to keep the pattern still as heights change.
+ */
+const PATTERN_VERTEX = 'attribute float aPat;\nattribute float aInk;\nvarying float vPat;\nvarying float vInk;\nvarying vec2 vPlace;\n';
+const PATTERN_FRAGMENT = `uniform float uTile;
+varying float vPat;
+varying float vInk;
+varying vec2 vPlace;
+float seatPattern(float kind, vec2 p) {
+  vec2 q = fract(p);
+  if (kind < 1.5) return step(distance(q, vec2(0.5)), 0.17);
+  if (kind < 2.5) return step(fract(p.x + p.y), 0.26);
+  if (kind < 3.5) return step(q.x, 0.24);
+  if (kind < 4.5) return step(q.y, 0.24);
+  if (kind < 5.5) return step(fract(p.x - p.y), 0.26);
+  return max(step(q.x, 0.18), step(q.y, 0.18));
+}
+`;
+
+/**
+ * One seat. All the seats are drawn as a single mesh, so a seat is a run of that mesh's vertices: those to lift when it
+ * rises, those of its top face (which carry its pattern), and its run of the outline. `pick` is the seat's own shape, never
+ * drawn, kept only so that a ray can find which seat is under the pointer.
+ */
+interface Block {
+  id: string; index: number; state: string; pick: Mesh; height: number; goal: number;
+  start: number; count: number; upper: Uint32Array; top: Uint32Array; edgeStart: number; edgeCount: number;
+}
 
 export class MapScene3D {
   private renderer: WebGLRenderer;
@@ -81,14 +89,15 @@ export class MapScene3D {
   private props = new Group();
   private pin: Group | null = null;
   private palette = isDark() ? NIGHT : DAY;
-  private materials = new Map<string, Material>();
-  private textures = new Map<string, CanvasTexture>();
+  private land: BufferGeometry | null = null;
+  private outline: BufferGeometry | null = null;
+  private tile = { value: 1 };
   private disposables: { dispose(): void }[] = [];
   private focus: [number, number, number, number];
   private goal = { x: 0, z: 0, dist: 1 };
   private frame = 0;
   private last = 0;
-  private flashes: { block: Block; until: number; mats: MeshLambertMaterial[] }[] = [];
+  private flashes: { block: Block; until: number }[] = [];
   private accessible = false;
   private selected: string | null = null;
   private selectedState: string | null = null;
@@ -112,6 +121,7 @@ export class MapScene3D {
     // Where the tests can reach it: a development server only.
     if (import.meta.env.DEV) (window as unknown as { __map3d?: unknown }).__map3d = this;
     this.size = o.size;
+    this.tile.value = o.size * 0.012;
     this.focus = o.home;
     this.renderer = new WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
@@ -173,102 +183,168 @@ export class MapScene3D {
 
   // ---------- building ----------
 
+  /** A seat's outline lifted into a block one unit tall, lying on the map with north away from the camera. */
+  private extrude(d: string) {
+    const parts = shapeParts(parseRings(d));
+    const geo = new ExtrudeGeometry(parts.map((p) => {
+      const s = new Shape(p.outer.map(([x, y]) => new Vector2(x, -y)));
+      s.holes = p.holes.map((h) => new Path(h.map(([x, y]) => new Vector2(x, -y))));
+      return s;
+    }), { depth: 1, bevelEnabled: false, curveSegments: 1 });
+    geo.rotateX(-Math.PI / 2);
+    return { geo, parts };
+  }
+
   private build() {
     const { shapes, seats, backdrop } = this.o;
-    const make = (d: string) => {
-      const parts = shapeParts(parseRings(d));
-      const geos = parts.map((p) => {
-        const s = new Shape(p.outer.map(([x, y]) => new Vector2(x, -y)));
-        s.holes = p.holes.map((h) => new Path(h.map(([x, y]) => new Vector2(x, -y))));
-        return s;
-      });
-      const geo = new ExtrudeGeometry(geos, { depth: 1, bevelEnabled: false, curveSegments: 1 });
-      geo.rotateX(-Math.PI / 2);
-      this.disposables.push(geo);
-      return { geo, parts };
-    };
-    const lineMat = new LineBasicMaterial({ color: this.palette.line, transparent: true, opacity: 0.35 });
-    this.disposables.push(lineMat);
-    for (const id of backdrop) {
-      const shape = shapes[id];
-      if (!shape) continue;
-      const { geo } = make(shape.d);
-      const mat = new MeshLambertMaterial({ color: this.palette.backdrop });
-      this.disposables.push(mat);
-      const m = new Mesh(geo, mat);
-      m.scale.y = 0.001 * this.size;
-      this.backdrop.add(m);
-    }
+    const pos: number[] = [], nor: number[] = [], line: number[] = [];
+    const pickMat = new MeshBasicMaterial();
+    this.disposables.push(pickMat);
+
     for (const [index, seat] of seats.entries()) {
       const shape = shapes[seat.id];
       if (!shape) continue;
-      const { geo, parts } = make(shape.d);
-      const mesh = new Mesh(geo, [new MeshLambertMaterial(), new MeshLambertMaterial()]);
-      const points: number[] = [];
+      const { geo, parts } = this.extrude(shape.d);
+      this.disposables.push(geo);
+      const p = geo.getAttribute('position').array as Float32Array, n = geo.getAttribute('normal').array as Float32Array;
+      const start = pos.length / 3, upper: number[] = [], top: number[] = [];
+      // The faces are copied into the one mesh, all but the undersides, which nobody will ever see.
+      for (const group of geo.groups) {
+        const cap = group.materialIndex === 0;
+        for (let v = group.start; v < group.start + group.count; v += 3) {
+          const ys = [p[v * 3 + 1], p[(v + 1) * 3 + 1], p[(v + 2) * 3 + 1]];
+          if (cap && ys.every((y) => y < 0.5)) continue;
+          for (let k = 0; k < 3; k++) {
+            const at = pos.length / 3, o = (v + k) * 3;
+            pos.push(p[o], p[o + 1], p[o + 2]);
+            nor.push(n[o], n[o + 1], n[o + 2]);
+            if (ys[k] > 0.5) upper.push(at);
+            if (cap) top.push(at);
+          }
+        }
+      }
+      const edgeStart = line.length / 3;
       for (const part of parts) for (const ring of [part.outer, ...part.holes]) {
         for (let i = 0; i < ring.length; i++) {
           const a = ring[i], b = ring[(i + 1) % ring.length];
-          points.push(a[0], 1.001, a[1], b[0], 1.001, b[1]);
+          line.push(a[0], 0, a[1], b[0], 0, b[1]);
         }
       }
-      const eg = new BufferGeometry();
-      eg.setAttribute('position', new Float32BufferAttribute(points, 3));
-      this.disposables.push(eg);
-      const edges = new LineSegments(eg, lineMat);
-      mesh.add(edges);
-      mesh.userData.seat = seat.id;
-      const block: Block = { id: seat.id, index, state: seat.state, mesh, edges, height: 0.0001, goal: 0.0001 };
-      mesh.scale.y = block.height;
-      this.scene.add(mesh);
+      const pick = new Mesh(geo, pickMat);
+      pick.userData.seat = seat.id;
+      const block: Block = {
+        id: seat.id, index, state: seat.state, pick, height: -1, goal: 1e-4,
+        start, count: pos.length / 3 - start, upper: Uint32Array.from(upper), top: Uint32Array.from(top), edgeStart, edgeCount: line.length / 3 - edgeStart,
+      };
       this.blocks.push(block);
       this.byId.set(seat.id, block);
     }
+
+    const total = pos.length / 3;
+    const land = this.land = new BufferGeometry();
+    land.setAttribute('position', new BufferAttribute(Float32Array.from(pos), 3));
+    land.setAttribute('normal', new BufferAttribute(Float32Array.from(nor), 3));
+    land.setAttribute('color', new BufferAttribute(new Float32Array(total * 3), 3));
+    land.setAttribute('aPat', new BufferAttribute(new Float32Array(total), 1));
+    land.setAttribute('aInk', new BufferAttribute(new Float32Array(total), 1));
+    const paint = new MeshLambertMaterial({ vertexColors: true });
+    paint.onBeforeCompile = (shader) => {
+      shader.uniforms.uTile = this.tile;
+      shader.vertexShader = PATTERN_VERTEX + shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvPat = aPat;\nvInk = aInk;\nvPlace = position.xz;');
+      shader.fragmentShader = PATTERN_FRAGMENT + shader.fragmentShader.replace(
+        '#include <color_fragment>',
+        '#include <color_fragment>\nif (vPat > 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(vInk), 0.45 * seatPattern(vPat, vPlace / uTile));',
+      );
+    };
+    const mesh = new Mesh(land, paint);
+    // The seats rise and fall, so what is in view is not worked out from where they began.
+    mesh.frustumCulled = false;
+    this.scene.add(mesh);
+
+    const outline = this.outline = new BufferGeometry();
+    outline.setAttribute('position', new BufferAttribute(Float32Array.from(line), 3));
+    const lineMat = new LineBasicMaterial({ color: this.palette.line, transparent: true, opacity: 0.35 });
+    const edges = new LineSegments(outline, lineMat);
+    edges.frustumCulled = false;
+    this.scene.add(edges);
+    this.disposables.push(land, paint, outline, lineMat);
+    for (const b of this.blocks) this.lift(b, 1e-4);
+
+    // Around a one-seat contest, the seats beside it lie flat for context: one mesh for them all.
+    if (backdrop.length > 0) {
+      const flat: number[] = [], up: number[] = [];
+      for (const id of backdrop) {
+        const shape = shapes[id];
+        if (!shape) continue;
+        const { geo } = this.extrude(shape.d);
+        const p = geo.getAttribute('position').array as Float32Array;
+        for (const group of geo.groups) {
+          if (group.materialIndex !== 0) continue;
+          for (let v = group.start; v < group.start + group.count; v += 3) {
+            if (p[v * 3 + 1] < 0.5) continue;
+            for (let k = 0; k < 3; k++) { flat.push(p[(v + k) * 3], 0, p[(v + k) * 3 + 2]); up.push(0, 1, 0); }
+          }
+        }
+        geo.dispose();
+      }
+      const ground = new BufferGeometry();
+      ground.setAttribute('position', new BufferAttribute(Float32Array.from(flat), 3));
+      ground.setAttribute('normal', new BufferAttribute(Float32Array.from(up), 3));
+      const mat = new MeshLambertMaterial({ color: this.palette.backdrop });
+      this.disposables.push(ground, mat);
+      this.backdrop.add(new Mesh(ground, mat));
+    }
+  }
+
+  /** Sets a seat to a height: its upper vertices, its outline, and the unseen shape a ray is tested against. */
+  private lift(b: Block, h: number) {
+    if (!this.land || !this.outline || b.height === h) return;
+    b.height = h;
+    const y = Math.max(h, 1e-4);
+    const pos = this.land.getAttribute('position') as BufferAttribute, line = this.outline.getAttribute('position') as BufferAttribute;
+    const p = pos.array as Float32Array, l = line.array as Float32Array;
+    for (const v of b.upper) p[v * 3 + 1] = y;
+    const above = y + this.size * 2e-4;
+    for (let v = b.edgeStart; v < b.edgeStart + b.edgeCount; v++) l[v * 3 + 1] = above;
+    pos.needsUpdate = true;
+    line.needsUpdate = true;
+    b.pick.scale.y = y;
+    b.pick.updateMatrixWorld(true);
   }
 
   // ---------- looks ----------
 
-  private texture(key: string, make: () => CanvasTexture): CanvasTexture {
-    let t = this.textures.get(key);
-    if (!t) {
-      t = make();
-      t.repeat.set(1 / (this.size * 0.012), 1 / (this.size * 0.012));
-      this.textures.set(key, t);
-      this.disposables.push(t);
-    }
-    return t;
-  }
-
-  private material(key: string, make: () => Material): Material {
-    let m = this.materials.get(key);
-    if (!m) { m = make(); this.materials.set(key, m); this.disposables.push(m); }
-    return m;
-  }
-
-  /** The top and side of a block, for how the seat is to look now. */
-  private look(b: Block, d: SeatLook): [Material, Material] {
+  /** How a seat is to look now: its colour, a paler one for its sides, and the pattern on its top, if any. */
+  private look(b: Block, d: SeatLook): { colour: Color; pattern: number; ink: number } {
     const dim = this.selectedState !== null && b.state !== this.selectedState;
     const picked = b.id === this.selected;
-    const hex = d.winner < 0 ? this.palette.undeclared : this.o.partyColor(d.winner);
     const fog = d.stale && d.winner >= 0;
-    const colour = new Color(hex);
+    const colour = new Color(d.winner < 0 ? this.palette.undeclared : this.o.partyColor(d.winner));
     if (fog) colour.lerp(new Color(this.palette.pale), 0.55);
     if (dim) colour.lerp(new Color(this.palette.pale), 0.6);
     if (picked) colour.lerp(new Color('#ffffff'), 0.3);
-    const code = colour.getHexString();
-    const patterned = d.winner >= 0 && (fog || this.accessible);
-    const pattern = fog ? null : PATTERNS[d.winner % PATTERNS.length];
-    const topKey = `top:${code}:${patterned ? (fog ? 'fog' : d.winner) : 'plain'}`;
-    const top = this.material(topKey, () => new MeshLambertMaterial(patterned
-      ? { map: this.texture(topKey, () => tile(`#${code}`, pattern, fog ? '#8a90a0' : '#000')) }
-      : { color: colour }));
-    const side = this.material(`side:${code}`, () => new MeshLambertMaterial({ color: colour.clone().multiplyScalar(0.72) }));
-    return [top, side];
+    const mark = d.winner >= 0 && !fog && this.accessible ? PATTERNS[d.winner % PATTERNS.length] : null;
+    return { colour, pattern: fog ? FOG_PATTERN : mark ? PATTERN_NO[mark.kind] : 0, ink: fog ? FOG_INK : mark?.ink === '#fff' ? 1 : 0 };
+  }
+
+  /** Writes a seat's colour and pattern into the mesh, `lit` of the way to white for a seat that is flashing. */
+  private tint(b: Block, lit = 0) {
+    const d = this.display[b.index];
+    if (!d || !this.land) return;
+    const { colour, pattern, ink } = this.look(b, d);
+    if (lit > 0) colour.lerp(new Color('#ffffff'), lit);
+    const side = colour.clone().multiplyScalar(0.72);
+    const col = this.land.getAttribute('color') as BufferAttribute, pat = this.land.getAttribute('aPat') as BufferAttribute, inks = this.land.getAttribute('aInk') as BufferAttribute;
+    const c = col.array as Float32Array, pa = pat.array as Float32Array, ia = inks.array as Float32Array;
+    for (let v = b.start; v < b.start + b.count; v++) { c[v * 3] = side.r; c[v * 3 + 1] = side.g; c[v * 3 + 2] = side.b; pa[v] = 0; }
+    for (const v of b.top) { c[v * 3] = colour.r; c[v * 3 + 1] = colour.g; c[v * 3 + 2] = colour.b; pa[v] = pattern; ia[v] = ink; }
+    col.needsUpdate = pat.needsUpdate = inks.needsUpdate = true;
   }
 
   private paint(b: Block) {
     const d = this.display[b.index];
     if (!d) return;
-    b.mesh.material = this.look(b, d);
+    this.tint(b);
     b.goal = seatHeight(d, this.size) * this.o.lift;
   }
 
@@ -277,7 +353,7 @@ export class MapScene3D {
   setDisplay(display: SeatLook[]) {
     this.display = display;
     this.blocks.forEach((b) => this.paint(b));
-    if (this.o.calm) this.blocks.forEach((b) => { b.height = b.goal; b.mesh.scale.y = b.goal; });
+    if (this.o.calm) this.blocks.forEach((b) => this.lift(b, b.goal));
     this.settle();
     this.refresh();
   }
@@ -302,9 +378,9 @@ export class MapScene3D {
     const size = Math.max(box[2] - box[0], box[3] - box[1], 1e-6);
     if (Math.abs(size - this.size) > 1e-9) {
       this.size = size;
-      for (const t of this.textures.values()) t.repeat.set(1 / (size * 0.012), 1 / (size * 0.012));
+      this.tile.value = size * 0.012;
       this.blocks.forEach((b) => this.paint(b));
-      if (this.o.calm) this.blocks.forEach((b) => { b.height = b.goal; b.mesh.scale.y = b.goal; });
+      if (this.o.calm) this.blocks.forEach((b) => this.lift(b, b.goal));
       this.setMarks(this.markSpecs.marks, this.markSpecs.pin);
       if (this.columnSpecs) this.buildColumns();
     }
@@ -384,18 +460,9 @@ export class MapScene3D {
   pulse(id: string) {
     const b = this.byId.get(id);
     if (!b || this.o.calm) return;
-    this.endFlash(b);
-    const mats = (b.mesh.material as MeshLambertMaterial[]).map((m) => m.clone());
-    b.mesh.material = mats;
-    this.flashes.push({ block: b, until: performance.now() + 900, mats });
+    this.flashes = this.flashes.filter((f) => f.block !== b);
+    this.flashes.push({ block: b, until: performance.now() + 900 });
     this.refresh();
-  }
-
-  private endFlash(b: Block) {
-    const f = this.flashes.find((x) => x.block === b);
-    if (!f) return;
-    f.mats.forEach((m) => m.dispose());
-    this.flashes = this.flashes.filter((x) => x !== f);
   }
 
   /** For a backdrop: the map turns slowly a little to one side and back, for as long as it is on show. Nothing else moves it. */
@@ -495,8 +562,7 @@ export class MapScene3D {
     this.last = now;
     for (const b of this.blocks) {
       if (b.height === b.goal) continue;
-      b.height = approach(b.height, b.goal, dt, 7);
-      b.mesh.scale.y = Math.max(b.height, 1e-4);
+      this.lift(b, approach(b.height, b.goal, dt, 7));
     }
     // The camera glides to its goal unless the player is holding it.
     const t = this.controls.target;
@@ -517,11 +583,10 @@ export class MapScene3D {
     const stamp = performance.now();
     this.flashes = this.flashes.filter((f) => {
       const left = (f.until - stamp) / 900;
-      if (left <= 0) { this.paint(f.block); f.mats.forEach((m) => m.dispose()); return false; }
-      f.mats.forEach((m) => m.emissive.set('#ffffff').multiplyScalar(0.7 * left));
-      return true;
+      this.tint(f.block, Math.max(0, 0.6 * left));
+      return left > 0;
     });
-    for (const g of this.props.children) { const b = this.byId.get(g.userData.seat as string); g.position.y = b ? b.mesh.scale.y : 0; }
+    for (const g of this.props.children) { const b = this.byId.get(g.userData.seat as string); g.position.y = b ? Math.max(b.height, 0) : 0; }
     this.render();
     if (this.pointer) { this.hover(); this.pointer = null; }
     if (this.settle()) this.refresh();
@@ -534,8 +599,8 @@ export class MapScene3D {
   private pick(clientX: number, clientY: number): string | null {
     const r = this.renderer.domElement.getBoundingClientRect();
     this.ray.setFromCamera(new Vector2(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1), this.camera);
-    this.scene.updateMatrixWorld();
-    const hit = this.ray.intersectObjects(this.blocks.map((b) => b.mesh), false)[0];
+    // The seats' own shapes are never drawn; they are kept at each seat's height for the ray to find.
+    const hit = this.ray.intersectObjects(this.blocks.map((b) => b.pick), false)[0];
     return hit ? (hit.object.userData.seat as string) : null;
   }
 

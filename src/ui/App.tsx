@@ -120,7 +120,8 @@ function CampaignScreen() {
   // A seat picked on the map opens as a card over the side panel, from whichever tab is open. Closing the card keeps the seat chosen.
   const selectedSeat = useStore((s) => s.selectedSeat);
   const [card, setCard] = useState<string | null>(null);
-  useEffect(() => { setCard(selectedSeat && world.seats.length > 1 && !campaign.inbox.length ? selectedSeat : null); }, [selectedSeat]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A decision waiting in the inbox is a bar, not a screen: it does not stop a seat being looked at.
+  useEffect(() => { setCard(selectedSeat && world.seats.length > 1 ? selectedSeat : null); }, [selectedSeat]); // eslint-disable-line react-hooks/exhaustive-deps
   // What each tab has waiting: decisions for whoever runs things, bad news not yet read.
   const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : id === 'desk' ? (shown === 'desk' ? 0 : campaign.inbox.length) : 0);
   // On a phone the map and the panel are separate screens, changed from a bar at the bottom.

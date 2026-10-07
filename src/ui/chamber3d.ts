@@ -17,7 +17,6 @@ export interface ChamberOptions {
 interface Block { key: string; party: number; pos: Vector3; goal: Vector3; lift: number; liftGoal: number; colour: Color }
 
 const FOV = 32;
-const AYE = new Color('#2fbf71'), NO = new Color('#e5484d'), WAVER = new Color('#d9a441');
 
 const dark = () => {
   const root = document.documentElement.dataset.theme;
@@ -120,9 +119,10 @@ export class Chamber3D {
     this.order.forEach((b, i) => {
       const m = this.members[i];
       b.colour.set(this.o.partyColor(b.party));
-      if (m.vote === 'aye') b.colour.lerp(AYE, 0.35);
-      if (m.vote === 'no') b.colour.lerp(NO, 0.35).multiplyScalar(0.7);
-      if (m.vote === 'waver') b.colour.lerp(WAVER, 0.3);
+      // A vote is told by height, Ayes up and Noes down. The party's own colour is kept, only dimmed for a No, so that it can
+      // still be seen who is voting which way.
+      if (m.vote === 'no') b.colour.multiplyScalar(0.5);
+      if (m.vote === 'waver') b.colour.multiplyScalar(0.75);
       if (this.hot !== null && this.hot !== b.party) b.colour.multiplyScalar(0.45);
       if (m.hidden) b.colour.multiplyScalar(0.18);
       b.liftGoal = (m.hidden ? -1.2 : m.vote === 'aye' ? 1.2 : m.vote === 'no' ? -0.9 : 0) * this.size + (this.hot === b.party ? 0.9 * this.size : 0);

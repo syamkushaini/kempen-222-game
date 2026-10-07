@@ -381,3 +381,17 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 /* ---------- every control can be reached and seen: a clear ring wherever the keyboard is ---------- */
 :focus-visible { outline: 2px solid var(--ring, var(--primary)); outline-offset: 2px; border-radius: 6px; }
 .menu-item:focus-visible, .party-card:focus-visible, .btn:focus-visible, .tab:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* ---------- one look for whatever is chosen, wherever it is: a ring in the party's colour ---------- */
+:is(button, [role="radio"]):is([aria-pressed="true"], [aria-checked="true"]):not(.switch):not(.swatch-btn):not(.mark-btn) { box-shadow: inset 0 0 0 2px var(--primary); border-color: var(--primary); color: var(--ink); }
+.phone-nav button[aria-pressed="true"] { box-shadow: none; color: var(--primary); }
+/* and on a card, a tick as well */
+:is(.party-card, .bloc-card):is([aria-pressed="true"], [aria-checked="true"]) { position: relative; }
+:is(.party-card, .bloc-card):is([aria-pressed="true"], [aria-checked="true"])::after { content: '✓'; position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; }
+/* ---------- one main action on a screen: only it wears the party's colour ---------- */
+/* The Go on a card is a real button, but a quiet one: it must not shout over End week. */
+.action-card > .btn.primary, .action > .btn.primary { background: var(--panel-3); border-color: var(--line-3); color: var(--ink); font-weight: 600; box-shadow: 0 2px 0 rgb(0 0 0 / 0.3); }
+.action-card > .btn.primary:hover:not(:disabled), .action > .btn.primary:hover:not(:disabled) { background: var(--panel-4, var(--panel-3)); border-color: var(--primary); }
+.action-card > .btn.primary:active:not(:disabled), .action > .btn.primary:active:not(:disabled) { box-shadow: none; }
+/* The open tab is plain to see without being a button: a lit panel with the party's colour under it. */
+.tab.active { background: var(--panel-3); color: var(--ink); box-shadow: inset 0 -3px 0 var(--primary); }
