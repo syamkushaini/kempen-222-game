@@ -29,7 +29,6 @@ function Press() {
   const f = useFormat();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
-  const lastReport = useStore((s) => s.lastReport);
   const interview = useStore((s) => s.interview);
   const hireTroopers = useStore((s) => s.hireTroopers);
   const me = campaign.player;
@@ -44,7 +43,6 @@ function Press() {
 
   return (
     <>
-      {lastReport && <ul className="report"><NewsLine item={lastReport} /></ul>}
       <p className="muted small action-desc">{t('press.desc')}</p>
       <ul>
         {OUTLET_IDS.map((id, o) => {

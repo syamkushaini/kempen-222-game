@@ -111,6 +111,8 @@ interface Store {
   selectedSeat: string | null;
   /** The outcome of the player's most recent action, shown above the action list. */
   lastReport: NewsItem | null;
+  /** Puts away the message about the last action. It is still in the News tab. */
+  clearReport(): void;
   /** The seat the last action worked on, and a counter that restarts its flash on the map. */
   flash: { seat: string | null; n: number };
   /** The seat an action being pointed at would land on, shown on the map before it is taken. */
@@ -260,6 +262,7 @@ export const useStore = create<Store>((set, get) => {
     selectedState: null,
     selectedSeat: null,
     lastReport: null,
+    clearReport: () => set({ lastReport: null }),
     flash: { seat: null, n: 0 },
     preview: null,
     setPreview: (seat) => { if (get().preview !== seat) set({ preview: seat }); },

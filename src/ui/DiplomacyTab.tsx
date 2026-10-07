@@ -14,7 +14,6 @@ import { Pips } from './TeamTab';
 import { ConfirmButton } from './SavesTab';
 import { leaderName, partyShort, relationWord, useFog, useFormat, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
-import { NewsLine } from './NewsTab';
 import { PactTalks } from './PactTalks';
 import { Brief } from './Brief';
 import { RelationMap } from './RelationMap';
@@ -45,7 +44,6 @@ export function DiplomacyTab() {
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const selectedSeat = useStore((s) => s.selectedSeat);
-  const lastReport = useStore((s) => s.lastReport);
   const meet = useStore((s) => s.meet);
   const promise = useStore((s) => s.promise);
   const jointAttack = useStore((s) => s.jointAttack);
@@ -70,7 +68,6 @@ export function DiplomacyTab() {
 
   return (
     <section className="deals">
-      {lastReport && <ul className="report"><NewsLine item={lastReport} /></ul>}
       <div className="panel-head">
         <h2>{t('deals.title')}</h2>
         <Gauge value={pc.unity} label={t('deals.unity')} />

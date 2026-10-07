@@ -7,7 +7,6 @@ import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
 import { isMinor, type RegionId } from '../sim/types';
 import { useStore } from '../state/store';
 import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld, contestName } from './hooks';
-import { NewsLine } from './NewsTab';
 import { Loan } from './Loan';
 import { Brief } from './Brief';
 import { Icon, type IconName } from './Icon';
@@ -52,7 +51,6 @@ export function ActionsTab() {
   const campaign = useStore((s) => s.game!.campaign);
   const selectedSeat = useStore((s) => s.selectedSeat);
   const selectedState = useStore((s) => s.selectedState);
-  const lastReport = useStore((s) => s.lastReport);
   const act = useStore((s) => s.act);
   const selectSeat = useStore((s) => s.selectSeat);
   // While the adviser is walking the player through, every group stays open so nothing she names is hidden.
@@ -193,7 +191,6 @@ export function ActionsTab() {
 
   return (
     <section className="actions">
-      {lastReport && <ul className="report"><NewsLine item={lastReport} /></ul>}
       <p className="target-line">
         <span className="muted">{t('actions.target')}:</span>{' '}
         <i className="dot" data-party={me} style={{ background: partyColor(me) }} />

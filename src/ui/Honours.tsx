@@ -5,11 +5,11 @@ import { ACHIEVEMENT_IDS, type AchievementId } from '../sim/campaign/achievement
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from '../state/store';
 import { useFormat, useT } from './hooks';
-import type { NewsItem } from '../sim/campaign/types';
 import { Portrait } from './Portrait';
 import { NewsLine } from './NewsTab';
+import { Icon } from './Icon';
 
-const TOAST_MS = 7000;
+const TOAST_MS = 5000;
 
 /** The line on the title screen that opens the achievements and the gallery. */
 export function HonoursEntry() {
@@ -104,21 +104,27 @@ export function HonoursDialog({ onClose }: { onClose(): void }) {
   );
 }
 
-/** Achievements just earned, announced in a corner of the screen. They go away by themselves. */
-/** What the last action did, as a message that comes up for a few seconds, over whatever tab the player is on. */
+/** How long a message stays before it goes by itself. It can always be closed sooner. */
+const REPORT_MS = 6000;
+
+/**
+ * What the last action did, as a message over whatever tab the player is on. It closes with its × or a tap, and goes by
+ * itself after a few seconds: nothing about an action stays on the screen for good. The News tab keeps the record.
+ */
 function ActionToast() {
+  const t = useT();
   const report = useStore((s) => s.lastReport);
-  const [shown, setShown] = useState<NewsItem | null>(null);
+  const clear = useStore((s) => s.clearReport);
   useEffect(() => {
     if (!report) return;
-    setShown(report);
-    const id = setTimeout(() => setShown(null), 4200);
+    const id = setTimeout(clear, REPORT_MS);
     return () => clearTimeout(id);
-  }, [report]);
-  if (!shown) return null;
+  }, [report, clear]);
+  if (!report) return null;
   return (
-    <div className="action-toast panel" role="status" aria-live="polite" key={shown.week + shown.key + String(shown.vars?.rm ?? '')}>
-      <ul className="report"><NewsLine item={shown} /></ul>
+    <div className="action-toast panel" role="status" aria-live="polite" key={report.week + report.key + String(report.vars?.rm ?? '')} onClick={clear}>
+      <ul className="report"><NewsLine item={report} /></ul>
+      <button className="close-x" aria-label={t('toast.dismiss')} onClick={(e) => { e.stopPropagation(); clear(); }}><Icon name="close" size={18} /></button>
     </div>
   );
 }
@@ -129,7 +135,10 @@ export function Toasts() {
   const t = useT();
   const toasts = useStore((s) => s.toasts);
   const dismiss = useStore((s) => s.dismissToast);
-  const first = toasts[0];
+  // On the result screen what was earned is listed under the verdict, so it is not announced over the verdict as well.
+  const onResult = useStore((s) => { const c = s.game?.campaign; return !!c && (c.phase === 'night' || ((c.phase === 'formation' || c.phase === 'done') && (s.showNight || !c.formation))); });
+  useEffect(() => { if (onResult) toasts.forEach((id) => dismiss(id)); }, [onResult, toasts, dismiss]);
+  const first = onResult ? undefined : toasts[0];
 
   // One at a time, each given its moment.
   useEffect(() => {
@@ -148,7 +157,8 @@ export function Toasts() {
           <span className="action-title">{t(`ach.${first}` as StringKey)}</span>
           <span className="action-meta">{t(`ach.${first}.desc` as StringKey)}</span>
         </div>
-        <button className="link" onClick={() => dismiss(first)} aria-label={t('toast.dismiss')}>✕</button>
+        {toasts.length > 1 && <span className="muted small num toast-count">1/{toasts.length}</span>}
+        <button className="close-x" onClick={() => dismiss(first)} aria-label={t('toast.dismiss')}><Icon name="close" size={18} /></button>
       </div>
     </div>
   );

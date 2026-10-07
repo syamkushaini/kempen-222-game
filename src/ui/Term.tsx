@@ -31,7 +31,9 @@ export function Term({ id, children }: { id: TermId; children: ReactNode }) {
   const hints = useStore((s) => s.settings.hints);
   // The first time a word is met, it explains itself once, then keeps quiet unless pointed at.
   useEffect(() => {
-    if (!hints || speaking || seenTerms().includes(id)) return;
+    // On a touch screen a card that opens by itself is one more thing to close: there the word waits to be tapped.
+    const touch = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+    if (!hints || touch || speaking || seenTerms().includes(id)) return;
     const open = setTimeout(() => {
       if (speaking) return;
       speaking = true;

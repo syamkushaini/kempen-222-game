@@ -5,7 +5,7 @@ import { majorityLine } from '../sim/election';
 import { loadScenario, STATE_SEATS } from '../data/world';
 import { N_PARTIES, PARTY_IDS, type StateId } from '../sim/types';
 import { useStore } from '../state/store';
-import { lastOutcome, partyColor, partyName, partyShort, regionLabel, seatName, useFormat, useT, useWorld, type SeatDisplay } from './hooks';
+import { lastOutcome, partyColor, partyName, partyShort, regionLabel, seatName, useFormat, useT, useWorld, type SeatDisplay, useNarrow } from './hooks';
 import { sound } from './audio';
 import { MapView, type PulseKind } from './MapView';
 import { GoalResult } from './Challenges';
@@ -48,6 +48,7 @@ function SeatBySeat() {
   const [playing, setPlaying] = useState(true);
   const [fast, setFast] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const narrow = useNarrow();
   const finished = count >= TOTAL;
 
   useEffect(() => {
@@ -130,7 +131,7 @@ function SeatBySeat() {
   );
 
   return (
-    <main className="layout">
+    <main className={finished ? 'layout night done' : 'layout night'}>
       {moment && <VerdictMoment campaign={campaign} summary={summary} result={result} onDone={() => setMoment(false)} />}
       <section className="map-column">
         <MapView
@@ -141,7 +142,7 @@ function SeatBySeat() {
         <div className="progress" aria-hidden="true"><span style={{ width: `${(count / TOTAL) * 100}%` }} /></div>
       </section>
 
-      <aside className="sidebar">
+      <aside className={finished ? 'sidebar' : 'sidebar counting'}>
         <Tally tally={tally} votes={votes} title={t('night.title')} note={t('night.declared', { n: count, total: TOTAL })} highlight={campaign.player} />
 
         {!finished && (
@@ -164,7 +165,6 @@ function SeatBySeat() {
               <h2>{t('summary.title')}</h2>
               <p className={`verdict ${summary.verdict}`}>{t(`summary.verdict.${summary.verdict}`)}</p>
               <GoalResult summary={summary} />
-              <AchievementsEarned campaign={campaign} />
               <dl className="facts">
                 <div><dt>{t('summary.seats')}</dt><dd className="num">{summary.seats}</dd></div>
                 <div><dt>{t('summary.change')}</dt><dd className="num">{summary.seats - summary.before >= 0 ? '+' : ''}{summary.seats - summary.before}</dd></div>
@@ -174,18 +174,23 @@ function SeatBySeat() {
               {campaign.formation && (
                 <p className="note">{t(campaign.formation.outcome ? 'summary.settled' : 'summary.hung')}</p>
               )}
-              <h3>{t('summary.gained', { n: summary.gained.length })}</h3>
-              {seatLinks(summary.gained)}
-              <h3>{t('summary.lost', { n: summary.lost.length })}</h3>
-              {seatLinks(summary.lost)}
-              <Review campaign={campaign} result={result} />
-              <RateGame campaign={campaign} />
+              {/* what to do next comes straight after the verdict and the figures; the detail is below, for whoever wants it */}
               <div className="button-row">
                 {campaign.formation
                   ? <button className="btn primary" onClick={leaveNight}>{t(campaign.formation.outcome ? 'summary.toGovernment' : 'summary.toTalks')} ▸</button>
                   : <><button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button><button className="btn" onClick={restart}>{t('summary.restart')}</button></>}
                 <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>
               </div>
+              <AchievementsEarned campaign={campaign} />
+              <details className="fold" open={!narrow}>
+                <summary><h3>{t('night.more.seats')}</h3> <span className="muted num">+{summary.gained.length} · −{summary.lost.length}</span></summary>
+                <h4>{t('summary.gained', { n: summary.gained.length })}</h4>
+                {seatLinks(summary.gained)}
+                <h4>{t('summary.lost', { n: summary.lost.length })}</h4>
+                {seatLinks(summary.lost)}
+              </details>
+              <Review campaign={campaign} result={result} />
+              <RateGame campaign={campaign} />
               {sharing && <ShareDialog data={card} onClose={() => setSharing(false)} />}
             </section>
           )}
@@ -314,14 +319,14 @@ function ByElectionCount() {
     : UNDECLARED];
 
   return (
-    <main className="layout">
+    <main className={finished ? 'layout night done' : 'layout night'}>
       {moment && <VerdictMoment campaign={campaign} summary={summary} result={result} onDone={() => setMoment(false)} />}
       <section className="map-column">
         <MapView display={display} toolbar={<span className="muted num">{t('count.boxes', { n: count, total: BOXES })}</span>} />
         <div className="progress" aria-hidden="true"><span style={{ width: `${(count / BOXES) * 100}%` }} /></div>
       </section>
 
-      <aside className="sidebar roomy">
+      <aside className={finished ? 'sidebar roomy' : 'sidebar roomy counting'}>
         <section className="panel count">
           <div className="panel-head">
             <h2>{t('count.title', { seat: world.seats[0].name })}</h2>
@@ -377,21 +382,21 @@ function ByElectionCount() {
             <h2>{t('summary.title')}</h2>
             <p className={`verdict ${summary.verdict}`}>{t(`summary.verdict.${summary.verdict}`)}</p>
             <GoalResult summary={summary} />
-            <AchievementsEarned campaign={campaign} />
             <dl className="facts">
               <div><dt>{t('summary.voteShare')}</dt><dd className="num">{f.pct(summary.voteShare)}</dd></div>
               <div><dt>{t('seat.margin')}</dt><dd className="num">{f.pct(seat.margin)}</dd></div>
               <div><dt>{t('seat.turnout')}</dt><dd className="num">{f.pct(seat.turnout)}</dd></div>
               <div><dt>{t('summary.rank')}</dt><dd className="num">#{1 + seat.votes.filter((v) => v > seat.votes[campaign.player]).length}</dd></div>
             </dl>
-            <Review campaign={campaign} result={result} />
-            <RateGame campaign={campaign} />
-            <NextContest />
             <div className="button-row">
               <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>
               <button className="btn" onClick={restart}>{t('summary.restart')}</button>
               <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>
             </div>
+            <NextContest />
+            <AchievementsEarned campaign={campaign} />
+            <Review campaign={campaign} result={result} />
+            <RateGame campaign={campaign} />
             {sharing && <ShareDialog data={card} onClose={() => setSharing(false)} />}
           </section>
         )}

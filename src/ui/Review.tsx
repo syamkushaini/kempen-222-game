@@ -5,12 +5,14 @@ import type { Campaign } from '../sim/campaign/types';
 import { review, type CloseCall, type StateSwing } from '../sim/campaign/review';
 import type { Decision } from '../sim/campaign/types';
 import { useStore } from '../state/store';
-import { partyShort, regionLabel, renderNews, seatName, useFormat, useT, useWorld } from './hooks';
+import { partyShort, regionLabel, renderNews, seatName, useFormat, useNarrow, useT, useWorld } from './hooks';
 
 const signed = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)}`;
 
 /** After the count: the seats that turned on a few votes, where the party moved and how hard it worked there, and how the polls compared. */
 export function Review({ campaign, result }: { campaign: Campaign; result: ElectionOutcome }) {
+  // On a phone the long account of what decided it is one tap away, not in the way of the result.
+  const narrow = useNarrow();
   const t = useT();
   const f = useFormat();
   const world = useWorld();
@@ -40,7 +42,7 @@ export function Review({ campaign, result }: { campaign: Campaign; result: Elect
   const empty = !data.blocs.length && !data.moves.best.length && !data.moves.worst.length && !data.closeWins.length && !data.closeLosses.length && !data.states.length && !data.lastPoll;
   if (empty) return null;
   return (
-    <details className="review" open>
+    <details className="review fold" open={!narrow}>
       <summary><h3>{t('review.title')}</h3></summary>
 
       {data.closeWins.length > 0 && <><h4>{t('review.closeWins')}</h4><ul className="review-list">{calls(data.closeWins, 'review.won')}</ul></>}

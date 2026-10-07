@@ -8,7 +8,6 @@ import type { BlocId } from '../sim/types';
 import { useStore } from '../state/store';
 import { leaderName, partyName, partyShort, seatName, useFog, useFormat, useT, useWorld, type T } from './hooks';
 import { PartyMark } from './identity';
-import { NewsLine } from './NewsTab';
 import { Portrait } from './Portrait';
 import { ConfirmButton } from './SavesTab';
 import { Gauge } from './Gauge';
@@ -30,7 +29,6 @@ export function TeamTab() {
   const f = useFormat();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
-  const lastReport = useStore((s) => s.lastReport);
   const hire = useStore((s) => s.hire);
   const dismiss = useStore((s) => s.dismiss);
   const vetStaff = useStore((s) => s.vetStaff);
@@ -49,7 +47,6 @@ export function TeamTab() {
 
   return (
     <section className="orders team">
-      {lastReport && <ul className="report"><NewsLine item={lastReport} /></ul>}
 
       <div className="leader-card">
         <Portrait leader={me} size={64} />
