@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import { foundedWorld, getWorld, worldOf } from '../data/world';
+import { foundedWorld, getWorld, newPartyWorld, worldOf } from '../data/world';
 import { translate, type Lang } from '../i18n/strings';
 import { earned, type AchievementId } from '../sim/campaign/achievements';
 import {
-  answerEvent, dissolve, invest, nextTerm, resumeTerm, setOrders, skipAhead, startCareer, syncOpinion,
+  answerEvent, dissolve, foundForContest, invest, nextTerm, resumeTerm, setOrders, skipAhead, startCareer, syncOpinion,
 } from '../sim/campaign/career';
 import {
   deliver, leaveGovernment, pullLever, reshuffle, setBudget, tableBill, tableMotion,
@@ -270,13 +270,14 @@ export const useStore = create<Store>((set, get) => {
 
     startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge }) => {
       // A founded party's first term is played in a country with its name already on every ballot.
-      const world = founded && scenario === 'career' ? foundedWorld() : getWorld(scenario);
+      const world = founded ? (scenario === 'career' ? foundedWorld() : newPartyWorld(scenario)) : getWorld(scenario);
       if (!world) return;
       const opts = { player, difficulty, seed: seed ?? randomSeed(), backstory, challenge };
       // Kept with the game so that it can be started again exactly as it was set up.
       const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances } : {}), ...(challenge ? { challenge } : {}) };
       // A platform of its own belongs to a party of the player's own making.
       const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances }) : newCampaign(world, opts);
+      if (founded && !world.rules.career) foundForContest(world, campaign, backstory);
       // A set challenge is for someone who has played before: no adviser walking them through it.
       const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
       set({

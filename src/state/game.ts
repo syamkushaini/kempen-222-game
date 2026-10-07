@@ -61,7 +61,7 @@ export function startOf(game: GameState): StartOptions {
     scenario: c.scenario, player: c.player, difficulty: c.difficulty,
     ...(fixed ? { seed: fixed.seed } : {}),
     backstory: c.team.leader.backstory ?? null, ideology: null,
-    ...(c.career?.founded ? { founded: true, stances: [...c.career.stances0[c.player]] } : {}),
+    ...(c.career?.founded ? { founded: true, stances: [...c.career.stances0[c.player]] } : c.newParty ? { founded: true } : {}),
     ...(c.challenge ? { challenge: { ...c.challenge } } : {}),
   };
 }

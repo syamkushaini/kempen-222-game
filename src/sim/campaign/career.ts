@@ -117,6 +117,16 @@ function takeOffice(c: Campaign): void {
   c.career!.bills = [];
 }
 
+/**
+ * Makes the player's party, in a single contest, one founded for it: a purse of its own making, an ordinary leader unless
+ * the player chose a past, and a note on the campaign that it is new. The new party's following is in the world it is played in.
+ */
+export function foundForContest(world: World, c: Campaign, backstory: unknown): void {
+  c.newParty = true;
+  if (!backstory) c.team.leader = neutralLeader();
+  c.parties[c.player]!.funds = scaled(world, FOUNDING_FUNDS);
+}
+
 /** Opens a career at the start of a parliamentary term, with the coffers low after the last election. */
 export function startCareer(world: World, opts: CampaignOptions & { ideology?: IdeologyId | null; founded?: boolean; stances?: number[] }): Campaign {
   const c = newCampaign(world, opts);

@@ -206,7 +206,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
   if (!isObj(x)) return false;
   const election = x.election;
   return (
-    x.scenario === world.id &&
+    x.scenario === world.id && (x.newParty === undefined || typeof x.newParty === 'boolean') &&
     isNum(x.player) && Number.isInteger(x.player) && x.player >= 0 && x.player < N_PARTIES &&
     (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
     (x.challenge === undefined || (isObj(x.challenge) && typeof x.challenge.fog === 'boolean' && typeof x.challenge.noisy === 'boolean' && (x.challenge.goal === undefined || typeof x.challenge.goal === 'string'))) &&

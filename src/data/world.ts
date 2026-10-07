@@ -1,6 +1,6 @@
 import seatFile from './generated/seats.json';
 import { seatsAfter } from '../sim/campaign/career';
-import { FOUNDED, FOUNDING_SEED_SHARE, FOUNDING_SLOT } from '../sim/campaign/founding';
+import { FOUNDED, FOUNDING_SEED_SHARE, FOUNDING_SLOT, NEW_PARTY_SHARE } from '../sim/campaign/founding';
 import { inContention } from '../sim/campaign/outlook';
 import { BYELECTION_RULES, CAREER_RULES, GENERAL_RULES, HUNG_RULES, STATE_RULES, type ContestKind } from '../sim/campaign/rules';
 import type { Campaign, SeatResults } from '../sim/campaign/types';
@@ -148,28 +148,69 @@ export const SCENARIOS: ScenarioInfo[] = [
 
 const cache = new Map<string, World>([['general', world]]);
 
-/** The world for a scenario id, built on first use. Null if the id is unknown. */
-export function getWorld(id: string): World | null {
-  const cached = cache.get(id);
-  if (cached) return cached;
-  let built: World | null = null;
-  if (id === 'hung') built = createWorld(seatFile as SeatFile, HUNG_RULES, id);
-  else if (id === 'career') built = createWorld(seatFile as SeatFile, CAREER_RULES, id);
-  else if (id.startsWith('byelection:dun:')) {
+/** The results and rules a scenario is built from, or null if the id is unknown or its results have not been fetched. */
+function blueprint(id: string): { file: SeatFile; rules: typeof GENERAL_RULES } | null {
+  if (id === 'general') return { file: seatFile as SeatFile, rules: GENERAL_RULES };
+  if (id === 'hung') return { file: seatFile as SeatFile, rules: HUNG_RULES };
+  if (id === 'career') return { file: seatFile as SeatFile, rules: CAREER_RULES };
+  if (id.startsWith('byelection:dun:')) {
     // An assembly seat: the same single contest, fought on that state's own map and results.
     const [, , st, code] = id.split(':');
     const file = DUN_FILES[st as StateId];
     const seat = file?.seats.find((s) => s.id === code);
-    if (file && seat) built = createWorld({ ...file, seats: [seat] }, BYELECTION_RULES, id);
-  } else if (id === 'byelection' || id.startsWith('byelection:')) {
+    return file && seat ? { file: { ...file, seats: [seat] }, rules: BYELECTION_RULES } : null;
+  }
+  if (id === 'byelection' || id.startsWith('byelection:')) {
     const wanted = id === 'byelection' ? BYELECTION_SEAT : id.slice('byelection:'.length);
     const seat = (seatFile as SeatFile).seats.find((s) => s.id === wanted);
-    if (seat) built = createWorld({ ...(seatFile as SeatFile), seats: [seat] }, BYELECTION_RULES, id);
-  } else if (id.startsWith('state:')) {
-    const file = DUN_FILES[id.slice(6) as StateId];
-    if (file) built = createWorld(file, STATE_RULES, id);
+    return seat ? { file: { ...(seatFile as SeatFile), seats: [seat] }, rules: BYELECTION_RULES } : null;
   }
+  if (id.startsWith('state:')) {
+    const file = DUN_FILES[id.slice(6) as StateId];
+    return file ? { file, rules: STATE_RULES } : null;
+  }
+  return null;
+}
+
+/** The world for a scenario id, built on first use. Null if the id is unknown. */
+export function getWorld(id: string): World | null {
+  const cached = cache.get(id);
+  if (cached) return cached;
+  const plan = blueprint(id);
+  const built = plan ? createWorld(plan.file, plan.rules, id) : null;
   if (built) cache.set(id, built);
+  return built;
+}
+
+/** Whether a contest can be fought by a party the player founded: any single contest, but not a hung parliament, whose votes are already in. */
+export const canFound = (kind: ContestKind) => kind === 'byelection' || kind === 'state' || kind === 'general';
+
+/**
+ * The world for a contest fought by a brand-new party: the same seats and results, with the new party on every ballot
+ * and given the following a new party arrives with. It keeps the contest's own id, so maps and saves read it as the same contest.
+ */
+export function newPartyWorld(id: string): World | null {
+  const key = `new:${id}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const plan = blueprint(id);
+  const kind = plan?.rules.kind;
+  if (!plan || plan.rules.career || !kind || !canFound(kind)) return null;
+  const share = NEW_PARTY_SHARE[kind as keyof typeof NEW_PARTY_SHARE];
+  const p = PARTY_IDS.indexOf(FOUNDING_SLOT);
+  const seed = (votes: number[]) => {
+    const total = votes.reduce((a, b) => a + b, 0);
+    const out = [...votes];
+    out[p] = Math.max(out[p], Math.round(total * share));
+    return out;
+  };
+  const seats = plan.file.seats.map((s) => ({
+    ...s,
+    last: { ...s.last, votes: seed(s.last.votes) },
+    ...(s.basis ? { basis: { ...s.basis, votes: seed(s.basis.votes) } } : {}),
+  }));
+  const built = createWorld({ ...plan.file, seats }, plan.rules, id);
+  cache.set(key, built);
   return built;
 }
 
@@ -213,9 +254,9 @@ export function foundedWorld(): World {
 }
 
 /** The world a game is played in: its scenario's world, or for a career past its first election, one built from that election. */
-export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'>): World | null {
+export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean }): World | null {
   const results = campaign.career?.results;
-  if (!results) return campaign.career?.founded ? foundedWorld() : getWorld(campaign.scenario);
+  if (!results) return campaign.career?.founded ? foundedWorld() : campaign.newParty ? newPartyWorld(campaign.scenario) ?? getWorld(campaign.scenario) : getWorld(campaign.scenario);
   const key = fingerprint(results);
   let built = careerWorlds.get(key);
   if (!built) {

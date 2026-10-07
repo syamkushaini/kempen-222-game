@@ -15,6 +15,12 @@ export const FOUNDED = 'career:founded';
 /** The share of the vote it starts on in every seat: a name on the ballot and a handful of friends, not yet a movement. */
 export const FOUNDING_SEED_SHARE = 0.005;
 
+/**
+ * In a single contest there are no years to grow in, so a new party arrives with a following: the share of the vote it
+ * is given in every seat, by the kind of contest. A by-election is one seat, so its share is the largest.
+ */
+export const NEW_PARTY_SHARE = { byelection: 0.25, state: 0.14, general: 0.07 } as const;
+
 /** What a founded party starts with in the bank, before scaling to the size of the contest: more than a rival small party, far less than a big one. */
 export const FOUNDING_FUNDS = 150_000;
 

@@ -110,9 +110,10 @@ export function useNarrow(): boolean {
 export function useWorld(): World {
   const scenario = useStore((s) => s.game?.campaign.scenario);
   const results = useStore((s) => s.game?.campaign.career?.results ?? null);
+  const newParty = useStore((s) => s.game?.campaign.newParty);
   return useMemo(
-    () => (scenario ? worldOf({ scenario, career: results ? ({ results } as Campaign['career']) : null }) : null) ?? generalWorld,
-    [scenario, results],
+    () => (scenario ? worldOf({ scenario, newParty, career: results ? ({ results } as Campaign['career']) : null }) : null) ?? generalWorld,
+    [scenario, results, newParty],
   );
 }
 

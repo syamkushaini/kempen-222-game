@@ -487,6 +487,8 @@ export interface Campaign {
   nextScene: number;
   formation: Formation | null;
   career: Career | null;
+  /** The player leads a party founded for this contest, with a following of its own but no past. Absent in a career, where `career.founded` says so. */
+  newParty?: boolean;
   team: Team;
 }
 

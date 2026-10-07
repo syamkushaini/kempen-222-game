@@ -72,7 +72,7 @@ export function Title() {
   const [auto] = useState(() => saveStore.meta(AUTO_SLOT));
   const [backstory, setBackstory] = useState<BackstoryId | null>(null);
   const [own, setOwn] = useState(false);
-  // A party of one's own can take over one of the big three or be founded from nothing, which only a career has the years for.
+  // A party of one's own can take over one of the big three or be founded from nothing. A hung parliament's votes are already in, so it cannot be founded there.
   const [founded, setFounded] = useState(false);
   const [stances, setStances] = useState<number[] | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -103,7 +103,7 @@ export function Title() {
   const parties = playable(world);
   const player = chosen !== null && parties.includes(chosen) ? chosen : parties[0];
   const level = difficulty ?? (kind === 'byelection' ? 'easy' : 'normal');
-  const founding = own && kind === 'career' && founded;
+  const founding = own && founded && kind !== 'hung';
   const playerId = (founding ? FOUNDING_SLOT : PARTY_IDS[player]) as FieldedId;
   const newPlatform = startStances()[PARTY_IDS.indexOf(FOUNDING_SLOT)];
   // The creator starts from the party being taken over, and follows it until the player types something of their own.
@@ -194,6 +194,17 @@ export function Title() {
           </>}
 
           {step === 1 && <>
+          {kind !== 'hung' && (
+            <div className="founding" role="radiogroup" aria-label={t('platform.how')}>
+              <h3>{t('platform.how')}</h3>
+              {[false, true].map((v) => (
+                <button key={String(v)} role="radio" aria-checked={founding === v} className={founding === v ? 'party-card plain active' : 'party-card plain'} onClick={() => { setFounded(v); setDraft(null); if (v) setOwn(true); }}>
+                  <strong>{t(v ? 'platform.new' : 'platform.takeover')}</strong>
+                  <span className="small">{t(v ? (kind === 'career' ? 'platform.new.desc' : 'platform.new.desc.single') : 'platform.takeover.desc')}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {!founding && <>
           <h3>{t('title.party')}</h3>
           <div className="party-cards" role="radiogroup" aria-label={t('title.party')}>
@@ -225,23 +236,14 @@ export function Title() {
 
           <h3>{t('leader.pick')}</h3>
           <LeaderPicker value={backstory} party={founding ? -1 : player} onChange={setBackstory} />
-          <label className="check">
-            <input type="checkbox" checked={own} onChange={(e) => setOwn(e.target.checked)} />
-            <span>{t('creator.toggle')}</span>
-          </label>
-          {own && kind === 'career' && (
-            <div className="founding" role="radiogroup" aria-label={t('platform.how')}>
-              <span className="field-label">{t('platform.how')}</span>
-              {[false, true].map((v) => (
-                <button key={String(v)} role="radio" aria-checked={founded === v} className={founded === v ? 'party-card plain active' : 'party-card plain'} onClick={() => { setFounded(v); setDraft(null); }}>
-                  <strong>{t(v ? 'platform.new' : 'platform.takeover')}</strong>
-                  <span className="small">{t(v ? 'platform.new.desc' : 'platform.takeover.desc')}</span>
-                </button>
-              ))}
-            </div>
+          {!founding && (
+            <label className="check">
+              <input type="checkbox" checked={own} onChange={(e) => setOwn(e.target.checked)} />
+              <span>{t('creator.toggle')}</span>
+            </label>
           )}
           {own && <PartyCreator draft={shown} career={kind === 'career' && !founding} onChange={(patch) => setDraft((d) => ({ ...(d ?? base), ...patch }))} />}
-          {founding && <PlatformEditor stances={stances ?? newPlatform} base={newPlatform} onChange={setStances} />}
+          {founding && kind === 'career' && <PlatformEditor stances={stances ?? newPlatform} base={newPlatform} onChange={setStances} />}
           </>}
 
           {step === 2 && <>
@@ -277,7 +279,7 @@ export function Title() {
             {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>‹ {t('steps.back')}</button>}
             {step < STEPS.length - 1
               ? <button className="btn primary" onClick={() => setStep(step + 1)}>{t('steps.next')} ▸</button>
-              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy }, founded: founding, stances: founding ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
+              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy }, founded: founding, stances: founding && kind === 'career' ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
             }
           </div>
           </>
