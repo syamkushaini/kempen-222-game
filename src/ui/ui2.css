@@ -169,3 +169,70 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 .chamber3d { width: 100%; max-width: 620px; margin: 0 auto; aspect-ratio: 2 / 1; }
 .chamber3d canvas { display: block; width: 100%; height: 100%; }
 @media (prefers-reduced-motion: reduce) { .seat-dot { transition: none; } }
+
+/* a government falls */
+/* Above any dialog that opens the talks: the benches come down first, and the Palace speaks after. */
+.overlay.fall { z-index: 200; flex-direction: column; gap: 8px; cursor: pointer; background: var(--bg); }
+.fall-stage { width: min(92vw, 980px); aspect-ratio: 2 / 1; }
+.fall-stage canvas { display: block; width: 100%; height: 100%; }
+.fall-words { text-align: center; animation: fade-up 400ms ease-out; }
+.fall-words h2 { font-size: clamp(22px, 4vw, 36px); margin: 0 0 4px; }
+
+/* ---------- the main menu ---------- */
+.menu-stage { display: block; position: relative; max-width: 1100px; }
+/* the country, turning behind the menu: faded in when it is ready, and dimmed so the words stay easy to read */
+.menu-scene { position: fixed; inset: 60px 0 0 45vw; z-index: -1; opacity: 0; transition: opacity 1600ms ease; pointer-events: none; }
+.menu-scene.ready { opacity: 0.75; }
+.menu-stage.sub .menu-scene.ready { opacity: 0.12; }
+.menu-scene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, var(--bg) 0%, transparent 18%), linear-gradient(0deg, var(--bg) 0%, transparent 20%); }
+.menu-scene .map3d, .menu-scene canvas { background: transparent; }
+.main-menu { max-width: 460px; padding: clamp(8px, 5vh, 56px) 0 24px; display: flex; flex-direction: column; gap: 16px; }
+.main-menu .title-intro { margin: 0; }
+.menu-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.menu-item { --tone: var(--muted); display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 12px 14px; min-height: 64px; background: color-mix(in srgb, var(--panel) 92%, transparent); color: var(--ink); border: 1px solid var(--line-2); border-left: 4px solid var(--tone); border-radius: 12px; cursor: pointer; backdrop-filter: blur(6px); transition: transform 90ms ease-out, background-color 150ms, border-color 150ms, box-shadow 150ms, filter 150ms; }
+.menu-item:hover { background: var(--panel-2); border-color: var(--tone); box-shadow: 0 6px 20px -12px var(--tone); }
+.menu-item.primary { min-height: 80px; padding: 16px; background: var(--tone); border-color: var(--tone); color: #fff; }
+.menu-item.primary:hover { filter: brightness(1.08); background: var(--tone); }
+.menu-icon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: color-mix(in srgb, var(--tone) 20%, transparent); color: var(--tone); }
+.menu-item.primary .menu-icon { width: 52px; height: 52px; background: rgba(255, 255, 255, 0.18); color: #fff; }
+.menu-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.menu-title { font-size: 18px; font-weight: 600; letter-spacing: -0.1px; }
+.menu-item.primary .menu-title { font-size: 22px; }
+.menu-hint { font-size: 13px; line-height: 1.3; color: var(--muted); }
+.menu-item.primary .menu-hint { color: rgba(255, 255, 255, 0.82); }
+.menu-go { flex: none; color: var(--muted); transition: transform 150ms; }
+.menu-item:hover .menu-go { transform: translateX(3px); color: var(--tone); }
+.menu-item.primary .menu-go, .menu-item.primary:hover .menu-go { color: #fff; }
+.menu-foot { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+/* each choice has a colour of its own */
+.tone-go { --tone: #2f9e63; } .tone-new { --tone: var(--primary); } .tone-load { --tone: #3b82c4; } .tone-dare { --tone: #d08a2e; } .tone-won { --tone: #b06ad6; }
+.fit { display: block; overflow: hidden; min-width: 0; }
+.back-link { display: inline-flex; align-items: center; gap: 4px; }
+.save-dot { width: 12px; height: 12px; align-self: center; }
+/* the ways to play */
+.mode-card { align-items: flex-start; }
+.party-card.plain.mode-card { border-top-color: var(--tone, var(--line)); }
+.mode-card:hover { box-shadow: 0 8px 24px -14px var(--tone); }
+.mode-card strong { width: 100%; font-size: 17px; font-weight: 600; }
+.mode-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 10px; background: color-mix(in srgb, var(--tone) 20%, transparent); color: var(--tone); }
+.party-card.plain.mode-card:hover { border-color: var(--tone); }
+
+/* ---------- pressing a button is unmistakable: it sinks, brightens for a moment, and (with sound on) clicks ---------- */
+.btn, .menu-item, .party-card, .bloc-card, .choice, .chip, .icon-btn, .seat-row, .tab, .subtabs button { -webkit-tap-highlight-color: transparent; }
+.btn:active:not(:disabled), .menu-item:active, .party-card:active, .bloc-card:active, .choice:active:not(:disabled), .chip:active, .icon-btn:active { transform: translateY(2px) scale(0.975); filter: brightness(1.22); }
+.btn:not(:disabled), .menu-item { box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); }
+.btn:active:not(:disabled), .menu-item:active { box-shadow: none; }
+/* a chosen card keeps a solid border and a tick, so there is never a doubt which one is picked */
+.party-card.active, .bloc-card.active, [role="radio"][aria-checked="true"].party-card { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); position: relative; }
+.party-card.active::after, .bloc-card.active::after { content: '✓'; position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; }
+.chip.active, .segmented button.active { box-shadow: inset 0 0 0 1px var(--primary); }
+/* three ranks of button: one filled main action, outlined second choices, and plain links for the rest */
+.btn.primary { font-weight: 600; box-shadow: 0 2px 0 color-mix(in srgb, var(--primary) 60%, #000); }
+.btn.primary:active:not(:disabled) { box-shadow: none; }
+.btn:not(.primary):not(.armed) { background: transparent; border-color: var(--line-2); }
+.btn:not(.primary):not(.armed):hover:not(:disabled) { background: var(--panel-2); border-color: var(--ink-muted); }
+/* words in a button or a card never spill out of it */
+.btn, .party-card, .menu-item, .chip { overflow-wrap: anywhere; }
+.btn { text-wrap: balance; }
+@media (prefers-reduced-motion: reduce) { .btn:active:not(:disabled), .menu-item:active, .party-card:active { transform: none; } .menu-scene { transition: none; } }
+@media (max-width: 980px) { .main-menu { max-width: none; padding-top: 4px; } }

@@ -29,7 +29,7 @@ export function HonoursEntry() {
   );
 }
 
-function HonoursDialog({ onClose }: { onClose(): void }) {
+export function HonoursDialog({ onClose }: { onClose(): void }) {
   const t = useT();
   const f = useFormat();
   const profile = useStore((s) => s.profile);

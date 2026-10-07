@@ -9,7 +9,8 @@ import { MANUAL_SLOTS, type SaveMeta, type SlotId } from '../state/saves';
 import { saveStore, useStore } from '../state/store';
 import { downloadGame } from './download';
 import { FeedbackLink } from './FeedbackLink';
-import { contestName, useFormat, useT, type T } from './hooks';
+import { EmptyState } from './EmptyState';
+import { contestName, partyColor, useFormat, useT, type T } from './hooks';
 
 /** A button that asks for a second click before doing something destructive. */
 export function ConfirmButton(props: { label: string; name?: string; confirmLabel: string; onConfirm: () => void; disabled?: boolean; danger?: boolean; className?: string }) {
@@ -86,13 +87,17 @@ export function SaveSlots() {
   return (
     <>
       {!saveStore.available && <p className="note bad">{t('saves.noStorage')}</p>}
+      {/* On the title screen only the games that exist are listed; a game in play also needs the empty slots, to save into. */}
+      {!game && slots.every((m) => !m) && <EmptyState art="paper" title={t('saves.none')} text={t('saves.none.text')} />}
       <ul className="slot-list">
         {MANUAL_SLOTS.map((slot, i) => {
           const meta = slots[i];
+          if (!game && !meta) return null;
           const slotName = t('saves.slot', { n: slot });
           const saveName = `${t('saves.save')}: ${slotName}`;
           return (
             <li key={slot}>
+              {meta && <i className="dot save-dot" data-party={meta.player} style={{ background: partyColor(meta.player) }} />}
               <div className="grow">
                 <span className="seat-name">{meta ? meta.name : slotName}</span>
                 <span className="muted small">

@@ -99,6 +99,7 @@ export class MapScene3D {
   private box: HTMLElement;
   private ro: ResizeObserver;
   private cleanup: (() => void)[] = [];
+  private swaying: { amplitude: number; period: number; from: number } | null = null;
 
   constructor(container: HTMLElement, private o: SceneOptions) {
     this.box = container;
@@ -364,6 +365,12 @@ export class MapScene3D {
     this.flashes = this.flashes.filter((x) => x !== f);
   }
 
+  /** For a backdrop: the map turns slowly a little to one side and back, for as long as it is on show. Nothing else moves it. */
+  sway(amplitude = 0.3, period = 46) {
+    this.swaying = { amplitude, period, from: performance.now() };
+    this.refresh();
+  }
+
   // ---------- camera ----------
 
   private aspect() { return Math.max(0.1, this.box.clientWidth / Math.max(1, this.box.clientHeight)); }
@@ -436,7 +443,7 @@ export class MapScene3D {
 
   /** Whether anything is still on the move, which decides if another frame is wanted. */
   private settle(): boolean {
-    return this.blocks.some((b) => b.height !== b.goal) || this.flashes.length > 0 || this.cameraMoving();
+    return this.swaying !== null || this.blocks.some((b) => b.height !== b.goal) || this.flashes.length > 0 || this.cameraMoving();
   }
 
   private cameraMoving() {
@@ -466,6 +473,7 @@ export class MapScene3D {
     t.x = gx; t.z = gz;
     this.camera.position.copy(t).add(off.setLength(len));
     this.camera.lookAt(t);
+    if (this.swaying) this.setAngles(this.swaying.amplitude * Math.sin(((now - this.swaying.from) / 1000 / this.swaying.period) * Math.PI * 2), TILT);
     // Flashing seats lighten and settle back.
     const stamp = performance.now();
     this.flashes = this.flashes.filter((f) => {

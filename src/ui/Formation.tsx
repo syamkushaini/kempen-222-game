@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { scaled } from '../sim/campaign/actions';
 import { DEMANDS, SENIOR_COST, WANTS, clashWith, demandUnityCost } from '../sim/campaign/cast';
@@ -17,7 +17,19 @@ import { ConfirmButton, GamePanel } from './SavesTab';
 import { leaderName, partyColor, partyName, partyShort, relationWord, useFormat, useT, useWorld, type Format, type T } from './hooks';
 import { Chamber } from './Chamber';
 import { Portrait } from './Portrait';
-import { talksSeating, talksFocus } from './seating';
+import { houseSeating, talksSeating, talksFocus } from './seating';
+import { canDraw3D } from './map3d';
+
+// The physics engine and the scene that uses it are fetched only if a government falls.
+const GovernmentFalls = lazy(() => import('./GovernmentFalls'));
+
+/** Whether this fall has been shown already: once per game and week, so going back to the talks does not replay it. */
+function fallSeen(key: string): boolean {
+  try { return sessionStorage.getItem('k222.fall') === key; } catch { return true; }
+}
+function markFall(key: string) {
+  try { sessionStorage.setItem('k222.fall', key); } catch { /* it will simply not show */ }
+}
 import { NewsLine } from './NewsTab';
 
 const OTH = PARTY_IDS.indexOf('oth');
@@ -310,9 +322,22 @@ export function FormationScreen() {
   const offersToMe = f.claimants.filter((k) => k !== me && f.offers[k][me]);
   const days = [...new Set(campaign.news.filter((n) => n.week >= FORMATION_WEEK).map((n) => n.week))].sort((a, b) => b - a);
   const kind = headKind(world);
+  // A government that has just lost the House: the benches come down once, where 3D is on and motion is welcome.
+  const gameId = useStore((s) => s.game!.id);
+  const want3d = useStore((s) => s.settings.map3d);
+  const career = campaign.career;
+  const fallKey = `${gameId}:${career?.term}:${career?.week}`;
+  const calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const [fallShown, setFallShown] = useState(() => fallSeen(fallKey));
+  const falling = !!career?.midterm && !done && f.day === 1 && !fallShown && want3d && canDraw3D() && !calm;
 
   return (
     <main className="layout talks-layout">
+      {falling && career && (
+        <Suspense fallback={null}>
+          <GovernmentFalls blocs={houseSeating(world, campaign)} party={career.government.pm} onDone={() => { markFall(fallKey); setFallShown(true); }} />
+        </Suspense>
+      )}
       <section className="map-column talks">
         <section className="panel t-bars">
           <div className="panel-head">

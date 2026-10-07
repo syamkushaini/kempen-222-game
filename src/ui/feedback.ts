@@ -31,7 +31,7 @@ export function installFeedback(): () => void {
   const unlock = () => sound.unlock();
   const onClick = (e: MouseEvent) => {
     const target = e.target instanceof Element ? e.target.closest('button, [role="tab"], [role="radio"], select') : null;
-    if (target && !(target as HTMLButtonElement).disabled) sound.play('click');
+    if (target && !(target as HTMLButtonElement).disabled) sound.play(target.matches('[role="tab"], .subtabs button') ? 'tick' : 'click');
   };
   const onVisible = () => sound.setVisible(document.visibilityState === 'visible');
   document.addEventListener('pointerdown', unlock, true);

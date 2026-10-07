@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { byElectionId, fairSeats, getWorld, HOME_PARTIES, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS } from '../data/world';
 import type { ContestKind } from '../sim/campaign/rules';
@@ -16,7 +16,11 @@ import { lastOutcome, useFormat, useT } from './hooks';
 import { ChallengeList } from './Challenges';
 import { Credits } from './Credits';
 import { FeedbackLink } from './FeedbackLink';
-import { HonoursEntry } from './Honours';
+import { ACHIEVEMENT_IDS } from '../sim/campaign/achievements';
+import { FitText } from './FitText';
+import { HonoursDialog } from './Honours';
+import { Icon, type IconName } from './Icon';
+import { canDraw3D } from './map3d';
 import { Portrait } from './Portrait';
 import { saveLine, SaveSlots } from './SavesTab';
 import { PlatformEditor } from './Platform';
@@ -55,7 +59,29 @@ function RadioCard({ checked, className, style, onSelect, children }: { checked:
   );
 }
 
+// The country behind the menu, and the 3D library with it, are fetched after the menu is on screen.
+const MenuScene = lazy(() => import('./MenuScene'));
+
 const STEPS = ['steps.contest', 'steps.who', 'steps.rules'] as const;
+
+/** What the title screen is showing: the main menu, the ways to play, one of the two set-ups, the saved games or the challenges. */
+type Screen = 'menu' | 'home' | 'quick' | 'custom' | 'load' | 'challenges';
+
+/** One line of the main menu: an icon in its own colour, a name that fits its box, and a word on what is behind it. */
+function MenuItem({ icon, tone, title, hint, primary, onClick }: { icon: IconName; tone: string; title: string; hint: string; primary?: boolean; onClick(): void }) {
+  return (
+    <li>
+      <button className={`menu-item tone-${tone}${primary ? ' primary' : ''}`} onClick={onClick}>
+        <span className="menu-icon"><Icon name={icon} size={primary ? 26 : 22} /></span>
+        <span className="menu-text">
+          <FitText className="menu-title">{title}</FitText>
+          <span className="menu-hint">{hint}</span>
+        </span>
+        <span className="menu-go" aria-hidden="true"><Icon name="chevron" size={18} /></span>
+      </button>
+    </li>
+  );
+}
 
 export function Title() {
   const t = useT();
@@ -70,6 +96,7 @@ export function Title() {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [name, setName] = useState('');
   const [auto] = useState(() => saveStore.meta(AUTO_SLOT));
+  const [saved] = useState(() => saveStore.list().filter(Boolean).length);
   const [backstory, setBackstory] = useState<BackstoryId | null>(null);
   const [own, setOwn] = useState(false);
   // A party of one's own can take over one of the big three or be founded from nothing. A hung parliament's votes are already in, so it cannot be founded there.
@@ -83,15 +110,21 @@ export function Title() {
   // The screen opens on a choice of how to play; the one chosen last time is marked. "New game" from the menu lands straight on the set-up.
   const setupWanted = useStore((s) => s.setupWanted);
   const clearSetupWanted = useStore((s) => s.clearSetupWanted);
-  const [mode, setMode] = useState<'home' | 'quick' | 'custom'>(() => (setupWanted ? 'custom' : 'home'));
+  const [mode, setMode] = useState<Screen>(() => (setupWanted ? 'custom' : 'menu'));
+  const [honours, setHonours] = useState(false);
+  const profile = useStore((s) => s.profile);
+  const want3d = useStore((s) => s.settings.map3d);
+  // The country turns behind the menu on a laptop that can draw it, for a player who has not asked for less.
+  const [backdrop] = useState(() => want3d && canDraw3D() && typeof matchMedia === 'function' && matchMedia('(min-width: 981px)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches);
   const [lastMode] = useState<'quick' | 'custom' | null>(() => { try { const v = localStorage.getItem(MODE_KEY); return v === 'custom' || v === 'quick' ? v : null; } catch { return null; } });
   useEffect(() => { if (setupWanted) clearSetupWanted(); }, [setupWanted, clearSetupWanted]);
   const custom = mode === 'custom';
-  const pick = (value: 'home' | 'quick' | 'custom') => {
+  const earnedCount = ACHIEVEMENT_IDS.filter((id) => profile.achievements[id] !== undefined).length;
+  const pick = (value: Screen) => {
     setMode(value);
     setStep(0);
     if (value === 'quick') setKind('byelection');
-    if (value !== 'home') { try { localStorage.setItem(MODE_KEY, value); } catch { /* the choice is only for this visit */ } }
+    if (value === 'quick' || value === 'custom') { try { localStorage.setItem(MODE_KEY, value); } catch { /* the choice is only for this visit */ } }
   };
 
   // A state's results are fetched when it is first chosen, and the choice takes effect once they are here.
@@ -123,35 +156,59 @@ export function Title() {
   const standing = outlook(world, player);
 
   return (
-    <main className="title">
+    <main className={mode === 'menu' ? 'title menu-stage' : 'title menu-stage sub'}>
+      {backdrop && <Suspense fallback={null}><MenuScene /></Suspense>}
+      {honours && <HonoursDialog onClose={() => setHonours(false)} />}
+      {mode === 'menu' ? (
+        <nav className="main-menu" aria-label={t('menu.label')}>
+          <p className="title-intro">{t('title.intro')}</p>
+          <ul className="menu-list">
+            {auto && (
+              <MenuItem
+                primary icon="play" tone="go" title={t('title.continue')} hint={`${auto.name} · ${saveLine(t, auto)}`}
+                onClick={() => { const g = saveStore.load(AUTO_SLOT); if (g) loadGame(g); }}
+              />
+            )}
+            <MenuItem primary={!auto} icon="plus" tone="new" title={t('menu.new')} hint={t('menu.new.hint')} onClick={() => pick('home')} />
+            <MenuItem icon="folder" tone="load" title={t('menu.load')} hint={t('menu.load.hint', { n: saved })} onClick={() => pick('load')} />
+            <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.hint')} onClick={() => pick('challenges')} />
+            <MenuItem icon="trophy" tone="won" title={t('menu.honours')} hint={t('menu.honours.hint', { n: earnedCount, total: ACHIEVEMENT_IDS.length })} onClick={() => setHonours(true)} />
+          </ul>
+          <p className="muted small">{t('title.fiction')}</p>
+          <div className="menu-foot"><Credits /><FeedbackLink /></div>
+        </nav>
+      ) : (
       <section className="panel title-main">
-        <p className="title-intro">{t('title.intro')}</p>
-        <p className="muted small">{t('title.fiction')}</p>
-
-        {auto && (
-          <button className="btn primary continue" onClick={() => { const g = saveStore.load(AUTO_SLOT); if (g) loadGame(g); }}>
-            {t('title.continue')}: {auto.name}
-            <span className="small"> · {saveLine(t, auto)}</span>
-          </button>
+        {(mode === 'home' || mode === 'load' || mode === 'challenges') && (
+          <p><button className="link back-link" onClick={() => pick('menu')}><Icon name="back" size={14} /> {t('menu.back')}</button></p>
         )}
+        {mode === 'load' ? (
+          <>
+            <h2>{t('title.load')}</h2>
+            <SaveSlots />
+          </>
+        ) : mode === 'challenges' ? <ChallengeList /> : null}
 
-        {mode === 'home' ? (
+        {mode === 'load' || mode === 'challenges' ? null : mode === 'home' ? (
           <div className="modes">
             <h2>{t('title.modes')}</h2>
             <div className="party-cards three">
-              <button className="party-card plain" onClick={() => pick('quick')}>
-                <strong>{t('title.mode.quick')}</strong>
+              <button className="party-card plain mode-card tone-go" onClick={() => pick('quick')}>
+                <span className="mode-icon"><Icon name="book" size={22} /></span>
+                <strong><FitText>{t('title.mode.quick')}</FitText></strong>
                 <span className="small">{t('title.mode.quick.desc')}</span>
                 {!auto && lastMode === null && <span className="badge leaning start-here">{t('title.startHere')}</span>}
                 {lastMode === 'quick' && <span className="badge plain">{t('title.mode.last')}</span>}
               </button>
-              <button className="party-card plain" onClick={() => pick('custom')}>
-                <strong>{t('title.mode.custom')}</strong>
+              <button className="party-card plain mode-card tone-new" onClick={() => pick('custom')}>
+                <span className="mode-icon"><Icon name="ballot" size={22} /></span>
+                <strong><FitText>{t('title.mode.custom')}</FitText></strong>
                 <span className="small">{t('title.mode.custom.desc')}</span>
                 {lastMode === 'custom' && <span className="badge plain">{t('title.mode.last')}</span>}
               </button>
-              <button className="party-card plain" onClick={() => { pick('custom'); pickKind('career'); setStep(1); }}>
-                <strong>{t('title.mode.career')}</strong>
+              <button className="party-card plain mode-card tone-won" onClick={() => { pick('custom'); pickKind('career'); setStep(1); }}>
+                <span className="mode-icon"><Icon name="crown" size={22} /></span>
+                <strong><FitText>{t('title.mode.career')}</FitText></strong>
                 <span className="small">{t('title.mode.career.desc')}</span>
               </button>
             </div>
@@ -318,16 +375,8 @@ export function Title() {
             <p className="muted small">{t('quick.later')}</p>
           </div>
         )}
-        <ChallengeList />
       </section>
-
-      <section className="panel title-side">
-        <h3>{t('title.load')}</h3>
-        <SaveSlots />
-        <HonoursEntry />
-        <Credits />
-        <FeedbackLink />
-      </section>
+      )}
     </main>
   );
 }
