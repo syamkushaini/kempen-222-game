@@ -752,3 +752,53 @@ Thirty questions, answered one at a time. Nothing here is built yet. The agreed 
 - **Tested:** the outline reading (every seat on the national map), the holes and islands, the heights, the camera fit and the glide are unit tests; headless Chrome with software WebGL drew the state, general-election, by-election and colour-blind views, and hover, drag, reset and zoom were exercised there.
 
 **Not yet:** the 3D parliament chamber, the 3D share-card snapshot (`snapshot()` is in the scene, but nothing calls it), a seat-by-seat look at election night in the browser (the code path is the same `setDisplay`, but it was not watched live), phone testing, and a measured frame rate. The scene builds one mesh per seat (222 draw calls in a general election) rather than one merged mesh per party colour; that was needed to let each seat rise on its own, and should be measured before it is trusted on a phone.
+
+## Fifth interview: the chamber, the look and 3D in the interface (8 Oct 2026)
+
+Sixty questions, one at a time. The designer's own words on the worst clutter: *"Main Menu, please make each menu and button distinguishable, font is right size to the box, and the box when clicked has distinguish effect, for the improve UI and UX also please include 3js elements"*, and the side tabs. The biggest complaint is still **too much on screen**; in the side tabs the trouble is that **everything looks the same**.
+
+**Must not change:** how the game plays (rules, numbers, balance); saved games must still load; both languages stay complete; everything works with 3D off and on a phone.
+
+**Order of work:** the chamber, then the main menu, then the game screen, with 3D extras last. Each stage is shown and committed before the next begins.
+
+**The chamber**
+- **One seat, one block.** Government backers fill from one side, everyone else from the other, with a **majority line**.
+- **Talks:** a party's blocks **slide across** when it joins, and a count runs toward the line. **House votes:** parties declare **one at a time**, their blocks rising for Aye or dropping for No.
+- **Fixed camera**, one well-chosen angle. Pointing at a block **highlights its whole party** and names it, with its seats and which side it is on.
+- Without 3D it is **a flat semicircle of dots**, the same picture. It **replaces the seat bar**; one short list of parties stays beneath it.
+
+**The main menu**
+- **A game-style menu over a 3D scene:** a short list of big choices, with **a slowly turning 3D Malaysia in last election's colours** behind it, dimmed, not interactive. The menu is usable at once; the scene **fades in when ready**, and is skipped on phones, without WebGL or with reduced motion.
+- Every choice is told apart by **an icon, a colour accent and a clear order of size**.
+- **Pressing** a button: it sinks, flashes and gives a soft click; a selected card keeps a solid border and a tick.
+- **Text that overflows or wraps awkwardly is the fault to fix:** shorter wording in both languages first, then shrink to fit; never cut off. Layouts are **designed for the longer language and tested in both**.
+
+**The game screen**
+- **Header:** week, days, funds and End week only. Gauges move to the tabs they belong to; settings become **one gear button** opening a labelled panel. The player's **emblem and party name** sit in the header, and the party colour is on the main button; the rest stays neutral.
+- **Map panel:** the extras (state picker, view switch, 3D, legend) fold behind **one Map options button**. **3D is the default on laptops that can run it.** A **search box** finds a seat by name or code.
+- **Poll card:** a **slim strip** under the map (share, gap, seats, and a **small trend line**) that opens on tap.
+- **Side tabs:** keep the three groups, with the active one obvious. Rows become **cards with an icon and one clear action**; each tab shows **the best few and folds the rest**. **An icon for every action and tab.** Tabs with news carry **a dot or a count**.
+- **A seat opens as a card sliding over the side panel**, from any tab.
+- **Ending a week** gives **a short recap card**: three headlines and the player's change.
+- **Changed numbers** show a small **+/−** beside them that fades.
+- **Before an action is taken**, pointing at it **shows its effect on the map**.
+- **Laptop:** the map stays put and only the side panel scrolls. **Phone:** a **bottom bar** (Map, Campaign, People, Intel).
+- **Career between elections:** a **dashboard of what needs the player this week**.
+- **Saves:** a list of games with party colour and a line of status; empty slots hidden.
+
+**Look and feel**
+- **A polished game interface**, dark first with light kept in step. Buttons in **three clear levels** (one primary per screen, outlined secondary, plain text minor; red for danger).
+- **Portraits larger** on the menu, in deals and on the result. **A soft click** on main buttons and a tick on tabs.
+- **Motion with a purpose:** things move to show where they went; nothing bounces or loops.
+- **The verdict is a full-screen moment**, with the leader's portrait and the chamber behind, then the details.
+- **Learning:** the tutorial shortens to **five steps**, with hints as things come up, and there is a short **How to play** page with pictures in the menu.
+- **Access:** every control reachable and named, a clear focus ring, and a text equivalent for the 3D views.
+
+**More 3D**
+- **Election-night finale:** about five seconds, skippable: the map settles and the chamber fills.
+- **The share card** has the final 3D map as the picture behind the verdict.
+- **Poll bars** rise from the regions when the poll strip is opened in 3D mode.
+
+**Stage 1 built: the chamber (8 Oct 2026).** `hemicycle.ts` lays out any House as benches of a half circle (seats spread in proportion to bench length, taken left to right so a run of seats is a wedge) and `seating.ts` reads who sits where from the game's own state: the House (`houseSeating`, whose left side equals the confidence count), a division as the whips count it (`divisionSeating`) and the talks (`talksSeating`: the player's bid, or the strongest, on the left; its main rival on the right; the rest between). `Chamber.tsx` draws it flat in SVG for everyone and, where 3D is on, as `chamber3d.ts`: one instanced block per seat on stepped benches, a wall at the majority line, one fixed camera. Members keep their identity (`party:k`), so a party that signs **slides across the floor**; in a division parties declare **one at a time**, Ayes rising and Noes sinking. Pointing at a seat picks out its whole party and names it. It stands in the talks (in place of the claim bars, with one line per bid beneath), at the head of the House tab, and in vote scenes. **3D is now the default** for a player on a laptop or desktop who has not chosen (`prefers3d`). The division shown in a vote scene is the whips' forecast before the player decides, labelled as such; the simulation resolves the vote as before and nothing about it was changed.
+
+**Physics, one moment only (8 Oct 2026).** The designer offered Oimo.js, enable3d, ammo.js, cannon-es, rapier and Jolt. Asked where a physics engine belongs, given the wish for calm motion and a first load no slower, the answer was **one moment: when a government falls**, its blocks in the chamber tumble and scatter. **cannon-es** (the smallest, plain JavaScript) is to be used, fetched only at that moment. Everything else keeps its planned, smooth movement.

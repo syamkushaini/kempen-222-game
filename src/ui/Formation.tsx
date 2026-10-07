@@ -15,7 +15,9 @@ import { PARTY_IDS } from '../sim/types';
 import { useStore } from '../state/store';
 import { ConfirmButton, GamePanel } from './SavesTab';
 import { leaderName, partyColor, partyName, partyShort, relationWord, useFormat, useT, useWorld, type Format, type T } from './hooks';
+import { Chamber } from './Chamber';
 import { Portrait } from './Portrait';
+import { talksSeating, talksFocus } from './seating';
 import { NewsLine } from './NewsTab';
 
 const OTH = PARTY_IDS.indexOf('oth');
@@ -33,32 +35,32 @@ function describeOffer(t: T, f: Format, offer: Offer): string {
   return parts.join(' · ');
 }
 
-/** One bar per would-be head of government: the seats they can show the Palace, against the majority line. */
+/** The talks as a chamber: those signed for one bid on the left, for its main rival on the right, the rest between. One line for each bid beneath. */
 function ClaimBars({ f, me }: { f: Formation; me: number }) {
   const t = useT();
   const world = useWorld();
-  const total = world.seats.length, need = majorityLine(world);
+  const need = majorityLine(world);
   const shown = f.outcome ? [f.outcome.pm] : [...f.claimants].sort((a, b) => pledged(f, b) - pledged(f, a));
+  const { focus, rival } = talksFocus(f, me);
+  const sides = {
+    left: f.outcome ? t('chamber.gov') : focus === me ? t('chamber.yours') : t('chamber.theirs', { name: partyShort(t, focus) }),
+    right: f.outcome || rival === null ? t('chamber.opp') : t('chamber.theirs', { name: partyShort(t, rival) }),
+    middle: t('chamber.free'),
+  };
   return (
-    <ul className="claims">
-      {shown.map((k) => {
-        const backers = f.pledge.map((to, p) => (to === k && p !== OTH ? p : -1)).filter((p) => p >= 0).sort((a, b) => (a === k ? -1 : b === k ? 1 : f.seats[b] - f.seats[a]));
-        const indep = f.indep.filter((i) => i.pledge === k).length;
-        return (
+    <>
+      <Chamber blocs={talksSeating(f, me)} need={need} sides={sides} />
+      <ul className="claims">
+        {shown.map((k) => (
           <li key={k} className={k === me ? 'mine' : ''}>
             <div className="result-label">
-              <span>{leaderName(t, k)}{k === me && ` (${t('form.you')})`} · {partyShort(t, k)}</span>
-              <strong className="num">{pledged(f, k)}</strong>
-            </div>
-            <div className="seatbar" role="img" aria-label={`${partyShort(t, k)} ${pledged(f, k)}`}>
-              {backers.map((p) => <span key={p} title={partyName(t, p)} data-party={p} style={{ width: `${(f.seats[p] / total) * 100}%`, background: partyColor(p) }} />)}
-              {indep > 0 && <span title={partyName(t, OTH)} data-party={OTH} style={{ width: `${(indep / total) * 100}%`, background: partyColor(OTH) }} />}
-              <i className="majority-mark" style={{ left: `${(need / total) * 100}%` }} />
+              <span><i className="dot" data-party={k} style={{ background: partyColor(k) }} />{leaderName(t, k)}{k === me && ` (${t('form.you')})`} · {partyShort(t, k)}</span>
+              <strong className={`num ${pledged(f, k) >= need ? 'pos-text' : ''}`}>{pledged(f, k)}</strong>
             </div>
           </li>
-        );
-      })}
-    </ul>
+        ))}
+      </ul>
+    </>
   );
 }
 

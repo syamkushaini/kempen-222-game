@@ -332,7 +332,8 @@ export function openTalks(world: World, c: Campaign): void {
 }
 
 /** A partner stands by the government if it gets on with its head and the government looks like lasting. */
-const loyalty = (c: Campaign, p: number) => relation(c, c.career!.government.pm, p) / 100 + (c.career!.government.stability - 50) / 100 + 0.15;
+/** How far a partner stands behind the government: above zero it votes with it. */
+export const loyalty = (c: Campaign, p: number) => relation(c, c.career!.government.pm, p) / 100 + (c.career!.government.stability - 50) / 100 + 0.15;
 
 /** Members the government can count on in a confidence vote, before anyone wavers. */
 export function confidenceCount(world: World, c: Campaign, sway: (p: number) => number = () => 0): number {

@@ -12,6 +12,8 @@ import { useStore } from '../state/store';
 import type { StringKey } from '../i18n/strings';
 import { lastOutcome, leaderName, partyName, partyShort, regionLabel, seatName, useFog, useFormat, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
+import { Chamber } from './Chamber';
+import { divisionSeating } from './seating';
 
 /**
  * A scene that needs the player's answer: a call from another leader or an
@@ -160,7 +162,16 @@ function SceneCard({ scene }: { scene: Scene }) {
       return t('house.whip', { yes: w.yes, no: w.no, wavering: w.wavering });
     };
     title = t(mine ? 'scene.vote.title' : 'scene.houseVote.title', { bill: billName(t, id), party: from === null ? '' : partyName(t, from) });
-    body = <p>{t(mine ? 'scene.vote.body' : 'scene.houseVote.body', { bill: billName(t, id), need: majorityLine(world) })}</p>;
+    body = (
+      <>
+        <p>{t(mine ? 'scene.vote.body' : 'scene.houseVote.body', { bill: billName(t, id), need: majorityLine(world) })}</p>
+        <p className="muted small">{t('chamber.whips')}</p>
+        <Chamber
+          stagger blocs={divisionSeating(world, campaign, whipCount(world, campaign, id, proposer))} need={majorityLine(world)}
+          sides={{ left: t('chamber.gov'), right: t('chamber.opp'), middle: t('chamber.cross') }}
+        />
+      </>
+    );
     options = mine
       ? [
           { label: t('scene.vote.o0'), choice: 0, hint: count() },

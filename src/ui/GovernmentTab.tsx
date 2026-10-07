@@ -11,6 +11,8 @@ import { ConfirmButton } from './SavesTab';
 import { partyColor, partyName, partyShort, useFog, useT, useWorld, type T } from './hooks';
 import { NationCard } from './NationCard';
 import { Portrait } from './Portrait';
+import { Chamber } from './Chamber';
+import { houseSeating } from './seating';
 
 const DIALS: Dial[] = [-1, 0, 1];
 
@@ -70,6 +72,7 @@ export function GovernmentTab() {
         <h2>{t(`house.title.${seat}`)}</h2>
         <span className="muted">{t('orders.term', { n: k.term })}</span>
       </div>
+      <Chamber blocs={houseSeating(world, campaign)} need={need} sides={{ left: t('chamber.gov'), right: t('chamber.opp'), middle: t('chamber.cross') }} />
 
       <h3>{t('house.economy')}</h3>
       <dl className="facts orders-facts">

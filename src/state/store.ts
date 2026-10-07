@@ -70,8 +70,14 @@ const storage = browserStorage();
 export const saveStore = new SaveStore(storage);
 const profileStore = new ProfileStore(storage);
 
+/** Whether a player who has not chosen starts with the 3D map: on a laptop or desktop with a mouse, unless they have asked for less motion. */
+function prefers3d(): boolean {
+  if (typeof matchMedia !== 'function') return false;
+  return matchMedia('(min-width: 981px) and (pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 function loadSettings(): Settings {
-  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', textSize: 'normal', density: 'comfortable', hints: true, map3d: false };
+  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d() };
   try {
     const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
     if (!raw) return fallback;
@@ -84,7 +90,7 @@ function loadSettings(): Settings {
       textSize: raw.textSize === 'large' ? 'large' : 'normal',
       density: raw.density === 'compact' ? 'compact' : 'comfortable',
       hints: raw.hints !== false,
-      map3d: raw.map3d === true,
+      map3d: typeof raw.map3d === 'boolean' ? raw.map3d : prefers3d(),
     };
   } catch {
     return fallback;
