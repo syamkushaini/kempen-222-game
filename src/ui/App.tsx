@@ -15,6 +15,7 @@ import { GoalLine } from './Challenges';
 import { GameMenu } from './GameMenu';
 import { NextStep } from './NextStep';
 import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useWorld, useNarrow } from './hooks';
+import { AsideBanner } from './Aside';
 import { MapView } from './MapView';
 import { now } from '../sim/campaign/news';
 import { NewsTab } from './NewsTab';
@@ -291,6 +292,7 @@ export function App() {
   return (
     <div className="app">
       <Header />
+      <AsideBanner />
       {/* the screens read party colours when they draw, so a new palette starts them afresh */}
       <Fragment key={palette}>
         {!phase && <Title />}

@@ -105,6 +105,8 @@ export function Title() {
   const [founded, setFounded] = useState(false);
   // A state election can be one contest, or the first of a career in that state.
   const [stateCareer, setStateCareer] = useState(false);
+  // A country career may fight its state elections in person when they fall due, instead of leaving them to the game.
+  const [realStates, setRealStates] = useState(false);
   const [stances, setStances] = useState<number[] | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [fog, setFog] = useState(false);
@@ -354,6 +356,15 @@ export function Title() {
             <span>{t('challenge.noisy')}</span>
           </label>
           <p className="muted small">{t('challenge.noisy.desc')}</p>
+          {kind === 'career' && !founding && (
+            <>
+              <label className="check">
+                <input type="checkbox" checked={realStates} onChange={(e) => setRealStates(e.target.checked)} />
+                <span>{t('challenge.realStates')}</span>
+              </label>
+              <p className="muted small">{t('challenge.realStates.desc')}</p>
+            </>
+          )}
 
           <label className="field">
             <span>{t('saves.name')}</span>
@@ -365,7 +376,7 @@ export function Title() {
             {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>‹ {t('steps.back')}</button>}
             {step < STEPS.length - 1
               ? <button className="btn primary" onClick={() => setStep(step + 1)}>{t('steps.next')} ▸</button>
-              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy }, founded: founding, stances: founding && kind === 'career' ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
+              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy }, founded: founding, realStates: kind === 'career' && !founding && realStates, stances: founding && kind === 'career' ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
             }
           </div>
           </>

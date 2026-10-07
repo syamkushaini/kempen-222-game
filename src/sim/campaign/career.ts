@@ -159,7 +159,7 @@ export function foundForContest(world: World, c: Campaign, backstory: unknown): 
 }
 
 /** Opens a career at the start of a parliamentary term, with the coffers low after the last election. */
-export function startCareer(world: World, opts: CampaignOptions & { ideology?: IdeologyId | null; founded?: boolean; stances?: number[]; own?: boolean; held?: string[] }): Campaign {
+export function startCareer(world: World, opts: CampaignOptions & { ideology?: IdeologyId | null; founded?: boolean; stances?: number[]; own?: boolean; held?: string[]; realStates?: boolean }): Campaign {
   const c = newCampaign(world, opts);
   // A party founded from nothing has no leader in the cast: without a past of the player's choosing, theirs is ordinary.
   if (opts.founded && !opts.backstory) c.team.leader = neutralLeader();
@@ -170,6 +170,7 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   // The government was elected on its usual programme, and will be held to it.
   c.career.promises = [...c.career.manifesto[c.player]];
   c.career.record.bestSeats = lastElection(world).tally[c.player];
+  if (opts.realStates && !opts.founded && world.rules.kind !== 'state') c.career.realStates = true;
   // A party the player made stands where it stood before, and picks and pays for any other seat; a founded party has none to begin with.
   if (opts.own || opts.founded) {
     c.career.own = true;
@@ -533,6 +534,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...next,
     ...(k.founded ? { founded: true } : {}),
     ...(k.own ? { own: true, slate: k.slate } : {}),
+    ...(k.realStates ? { realStates: true } : {}),
     ...(k.nation ? { nation: { ...k.nation } } : {}),
     orders: k.orders, assets: k.assets, credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
     stances: k.stances, stances0: k.stances.map((row) => [...row]),

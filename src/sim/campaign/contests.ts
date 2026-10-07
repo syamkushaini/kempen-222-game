@@ -152,17 +152,20 @@ export interface StateResult { state: string; winner: number; was: number | unde
  * seats, with the country's mood as it is today and the effort the player
  * chose (0, 1 or 2). Whoever takes most seats governs the state.
  */
-export function resolveStatePolls(world: World, c: Campaign, choice: number): StateResult[] {
+export function resolveStatePolls(world: World, c: Campaign, choice: number, played: readonly string[] = []): StateResult[] {
   const k = c.career;
   const pc = c.parties[c.player];
   const effort = STATE_EFFORT[choice];
   if (!k || !pc || !effort || k.rounds >= ROUNDS.length) return [];
   const me = c.player;
-  const states = ROUNDS[k.rounds].states.filter((st) => world.states.includes(st));
+  const inRound = ROUNDS[k.rounds].states.filter((st) => world.states.includes(st));
+  // States the player fights in person are not left to the model: their own election settles them (see aside.ts).
+  const states = inRound.filter((st) => !played.includes(st));
   k.rounds++;
   const rng = new Rng(c.rng);
 
-  const price = scaled(world, effort.money);
+  // Where every state of the round is fought in person, there is nothing left for the effort to be spent on.
+  const price = states.length > 0 ? scaled(world, effort.money) : 0;
   const paid = Math.min(pc.funds, price);
   pc.funds -= paid;
   const lift = effort.lift * (price > 0 ? paid / price : 1);
@@ -179,15 +182,24 @@ export function resolveStatePolls(world: World, c: Campaign, choice: number): St
 
   const now = leaders(world, winners, states, k.states);
   const results: StateResult[] = states.filter((st) => now[st] !== undefined).map((st) => ({ state: st, winner: now[st], was: k.states[st] }));
+  applyStateResults(c, results);
+  return results;
+}
+
+/**
+ * What a state changing hands does, however it was decided: it is recorded, a story the whole country reads, and the player's
+ * party feels it. One line of news for each party that came out of the round governing somewhere.
+ */
+export function applyStateResults(c: Campaign, results: StateResult[]): void {
+  const k = c.career!;
+  const me = c.player;
   for (const r of results) {
     k.states[r.state] = r.winner;
     if (r.was === r.winner) continue;
-    // A state changing hands is a story the whole country reads.
     for (let b = 0; b < N_BLOCS; b++) { k.mood[b][r.winner] += 0.006; if (r.was !== undefined) k.mood[b][r.was] -= 0.004; }
     if (r.winner === me) shiftUnity(c, me, 2);
     if (r.was === me) shiftUnity(c, me, -3);
   }
-  // One line for each party that came out of the round governing somewhere.
   const byWinner = new Map<number, StateResult[]>();
   for (const r of results) byWinner.set(r.winner, [...(byWinner.get(r.winner) ?? []), r]);
   for (const [party, won] of byWinner) {
@@ -198,7 +210,6 @@ export function resolveStatePolls(world: World, c: Campaign, choice: number): St
       tone: party === me ? 'good' : gained.some((r) => r.was === me) ? 'bad' : 'neutral',
     });
   }
-  return results;
 }
 
 /** How many state governments a party leads. */

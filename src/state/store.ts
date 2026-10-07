@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { foundedWorld, getWorld, newPartyWorld, ownWorld, worldOf } from '../data/world';
+import { foundedWorld, getWorld, loadState, newPartyWorld, ownWorld, worldOf } from '../data/world';
 import { translate, type Lang } from '../i18n/strings';
 import { earned, type AchievementId } from '../sim/campaign/achievements';
 import {
@@ -31,11 +31,12 @@ import type {
 } from '../sim/campaign/types';
 import { randomSeed } from '../sim/rng';
 import type { World } from '../sim/election';
-import type { RegionId } from '../sim/types';
+import type { RegionId, StateId } from '../sim/types';
 import { newGame, startOf, type GameState, type StartOptions } from './game';
 import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
+import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
 
@@ -161,7 +162,7 @@ interface Store {
     /** A career that begins with a party the player founds from nothing, and the platform it stands on. */
     founded?: boolean;
     stances?: number[];
-    backstory?: BackstoryId | null; ideology?: IdeologyId | null; identity?: Identity | null; challenge?: Partial<Challenge>;
+    backstory?: BackstoryId | null; ideology?: IdeologyId | null; identity?: Identity | null; challenge?: Partial<Challenge>; realStates?: boolean;
   }): void;
   /** Moves the adviser to the next step, or ends the tutorial after the last one. */
   advanceTutorial(steps: number): void;
@@ -218,6 +219,10 @@ interface Store {
   fieldSeat(seatId: string): void;
   withdrawSeat(seatId: string): void;
   fieldCheapest(limit: number): void;
+  /** Answers a round of state polls by fighting some of its states in person (see aside.ts). */
+  playStates(sceneId: number, choice: number, states: string[]): Promise<void>;
+  /** A state election fought in person is over: back to the career, or on to the next state of the round. */
+  finishAside(): Promise<void>;
   tableBill(id: string): void;
   deliver(index: number): void;
   pullLever(id: LeverId): void;
@@ -299,7 +304,7 @@ export const useStore = create<Store>((set, get) => {
     selectState: (state) => set({ selectedState: state, selectedSeat: null }),
     selectSeat: (seatId, state) => set((s) => ({ selectedSeat: seatId, selectedState: state ?? s.selectedState })),
 
-    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge }) => {
+    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge, realStates = false }) => {
       // A founded party's first term is played in a country with its name already on every ballot.
       const base = getWorld(scenario);
       // A party the player has made their own may stand in any seat of a career, at a price; it needs a world in which it is on every ballot.
@@ -308,9 +313,9 @@ export const useStore = create<Store>((set, get) => {
       if (!world) return;
       const opts = { player, difficulty, seed: seed ?? randomSeed(), backstory, challenge };
       // Kept with the game so that it can be started again exactly as it was set up.
-      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances } : {}), ...(challenge ? { challenge } : {}) };
+      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}) };
       // A platform of its own belongs to a party of the player's own making.
-      const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, own, held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
+      const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, realStates, own, held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
       if (founded && !world.rules.career) foundForContest(world, campaign, backstory);
       // A set challenge is for someone who has played before: no adviser walking them through it.
       const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
@@ -417,6 +422,52 @@ export const useStore = create<Store>((set, get) => {
     fieldSeat: (seatId) => mutate((c, _g, world) => { fieldSeat(world, c, seatId); }),
     withdrawSeat: (seatId) => mutate((c, _g, world) => { withdrawSeat(world, c, seatId); }),
     fieldCheapest: (limit) => mutate((c, _g, world) => { fieldCheapest(world, c, limit); }),
+    playStates: async (sceneId, choice, wanted) => {
+      const before = get().game;
+      if (!before || before.aside) return;
+      // The states' results are fetched when they are first wanted.
+      await Promise.all(wanted.map((st) => loadState(st as StateId)));
+      const current = get().game;
+      if (!current || current.aside || current.id !== before.id) return;
+      const g = structuredClone(current);
+      const c = g.campaign;
+      const world = worldOf(c);
+      const scene = c.inbox.find((x) => x.id === sceneId && x.kind === 'event' && x.event === 'statePolls');
+      if (!world || !scene) return;
+      const stakes: Record<string, number> = {};
+      for (const st of wanted) { const sw = getWorld(`state:${st}`); if (sw && canFight(sw, c)) stakes[st] = stakeFor(sw, c.player); }
+      const states = playRound(world, c, choice, wanted.filter((st) => st in stakes), stakes);
+      if (!states) return;
+      c.inbox = c.inbox.filter((x) => x.id !== sceneId);
+      const first = states[0] as StateId;
+      g.aside = { parked: c, state: first, queue: states.slice(1) as StateId[] };
+      g.campaign = startAside(c, getWorld(`state:${first}`)!, first);
+      g.updatedAt = Date.now();
+      set({ game: g, view: 'last', tab: 'actions', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false, hiddenScene: null });
+    },
+    finishAside: async () => {
+      const before = get().game;
+      if (!before?.aside || before.campaign.phase !== 'done') return;
+      const next = before.aside.queue[0];
+      if (next) await loadState(next);
+      const current = get().game;
+      if (!current?.aside || current.id !== before.id || current.campaign.phase !== 'done') return;
+      const g = structuredClone(current);
+      const aside = g.aside!;
+      const stateWorld = worldOf(g.campaign);
+      if (!stateWorld) return;
+      settleAside(aside.parked, g.campaign, stateWorld, aside.state);
+      if (aside.queue.length > 0) {
+        const st = aside.queue[0];
+        g.aside = { parked: aside.parked, state: st, queue: aside.queue.slice(1) };
+        g.campaign = startAside(aside.parked, getWorld(`state:${st}`)!, st);
+      } else {
+        g.campaign = aside.parked;
+        delete g.aside;
+      }
+      g.updatedAt = Date.now();
+      set({ game: g, view: 'last', tab: g.aside ? 'actions' : 'desk', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false, hiddenScene: null });
+    },
     tableBill: (id) => mutate((c) => { tableBill(c, id); }),
     deliver: (index) => mutate((c) => { if (deliver(c, index)) syncOpinion(c); }),
     pullLever: (id) => mutate((c, _g, world) => { if (pullLever(world, c, id)) syncOpinion(c); }),

@@ -1,4 +1,4 @@
-import { worldOf } from '../data/world';
+import { STATE_SCENARIOS, worldOf } from '../data/world';
 import { START_UNITY, startRelations } from '../sim/campaign/cast';
 import { formCabinet, makeObligations, standstill, startEconomy } from '../sim/campaign/govern';
 import { ROUNDS, startStates } from '../sim/campaign/contests';
@@ -8,7 +8,7 @@ import { challengeById } from '../sim/campaign/challenges';
 import type { IdeologyId } from '../sim/campaign/leader';
 import type { BackstoryId, Campaign, Challenge, Difficulty } from '../sim/campaign/types';
 import { Rng } from '../sim/rng';
-import { isMinor, N_PARTIES, PARTY_IDS } from '../sim/types';
+import { isMinor, N_PARTIES, PARTY_IDS, type StateId } from '../sim/types';
 import { isValidCampaign } from '../sim/campaign/validate';
 import { isValidIdentity, type Identity } from './identity';
 
@@ -34,6 +34,17 @@ export interface GameState {
   identity: Identity | null;
   /** How the game was set up, so it can be started again from the beginning. Absent in a game saved before this was kept. */
   start?: StartOptions;
+  /**
+   * Set while a state election is being fought in person inside a career: `campaign` is then that state's election, and
+   * the career waits here, with the states still to fight in the same round.
+   */
+  aside?: Aside;
+}
+
+export interface Aside {
+  parked: Campaign;
+  state: StateId;
+  queue: StateId[];
 }
 
 /** The choices made on the title screen. A seed is kept only where it was fixed (a set challenge); otherwise each start draws its own. */
@@ -46,6 +57,8 @@ export interface StartOptions {
   ideology: IdeologyId | null;
   founded?: boolean;
   stances?: number[];
+  /** A career that fights its state elections in person. */
+  realStates?: boolean;
   challenge?: Partial<Challenge>;
 }
 
@@ -74,7 +87,7 @@ function isStart(x: unknown): x is StartOptions {
     (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
     (x.seed === undefined || Number.isInteger(x.seed)) &&
     (x.backstory === null || typeof x.backstory === 'string') && (x.ideology === null || typeof x.ideology === 'string') &&
-    (x.founded === undefined || typeof x.founded === 'boolean') &&
+    (x.founded === undefined || typeof x.founded === 'boolean') && (x.realStates === undefined || typeof x.realStates === 'boolean') &&
     (x.stances === undefined || (Array.isArray(x.stances) && x.stances.every((v) => typeof v === 'number'))) &&
     (x.challenge === undefined || isRecord(x.challenge))
   );
@@ -248,6 +261,20 @@ export function parseSave(text: string): ParseResult {
     (tutorial === null || (typeof tutorial === 'object' && Number.isInteger(tutorial.step) && (tutorial.step as number) >= 0));
   if (!valid) return { ok: false, error: 'damaged' };
 
+  // A career with a state election in the middle of it carries the career along, which has to be as sound as the game itself.
+  let aside: Aside | null = null;
+  if (s.aside !== undefined) {
+    const a = s.aside as { parked?: unknown; state?: unknown; queue?: unknown } | null;
+    const parked = a?.parked as { scenario?: unknown } | undefined;
+    let parkedWorld = null;
+    try { if (typeof parked?.scenario === 'string') parkedWorld = worldOf(parked as Parameters<typeof worldOf>[0]); } catch { /* damaged */ }
+    const states = [...STATE_SCENARIOS] as string[];
+    const sound = !!a && parkedWorld !== null && isValidCampaign(a.parked, parkedWorld) && typeof a.state === 'string' && states.includes(a.state) &&
+      Array.isArray(a.queue) && a.queue.every((x) => typeof x === 'string' && states.includes(x)) && (a.parked as Campaign).career?.realStates === true;
+    if (!sound) return { ok: false, error: 'damaged' };
+    aside = { parked: a!.parked as Campaign, state: a!.state as StateId, queue: a!.queue as StateId[] };
+  }
+
   return {
     ok: true,
     state: {
@@ -260,6 +287,7 @@ export function parseSave(text: string): ParseResult {
       tutorial: tutorial === null ? null : { step: tutorial.step as number },
       identity: s.identity as Identity | null,
       ...(isStart(s.start) ? { start: s.start } : {}),
+      ...(aside ? { aside } : {}),
     },
   };
 }

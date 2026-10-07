@@ -6,6 +6,7 @@ import { loadScenario, STATE_SEATS } from '../data/world';
 import { N_PARTIES, PARTY_IDS, type StateId } from '../sim/types';
 import { useStore } from '../state/store';
 import { lastOutcome, partyColor, partyName, partyShort, regionLabel, seatName, useFormat, useT, useWorld, type SeatDisplay, useNarrow } from './hooks';
+import { AgainButtons } from './Aside';
 import { sound } from './audio';
 import { MapView, type PulseKind } from './MapView';
 import { GoalResult } from './Challenges';
@@ -32,8 +33,6 @@ function SeatBySeat() {
   const TOTAL = world.seats.length, MAJORITY = majorityLine(world);
   const campaign = useStore((s) => s.game!.campaign);
   const finishNight = useStore((s) => s.finishNight);
-  const quitToTitle = useStore((s) => s.quitToTitle);
-  const restart = useStore((s) => s.restart);
   const leaveNight = useStore((s) => s.leaveNight);
   const selectSeat = useStore((s) => s.selectSeat);
   const selectedSeat = useStore((s) => s.selectedSeat);
@@ -178,7 +177,7 @@ function SeatBySeat() {
               <div className="button-row">
                 {campaign.formation
                   ? <button className="btn primary" onClick={leaveNight}>{t(campaign.formation.outcome ? 'summary.toGovernment' : 'summary.toTalks')} ▸</button>
-                  : <><button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button><button className="btn" onClick={restart}>{t('summary.restart')}</button></>}
+                  : <AgainButtons restart />}
                 <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>
               </div>
               <AchievementsEarned campaign={campaign} />
@@ -273,8 +272,6 @@ function ByElectionCount() {
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const finishNight = useStore((s) => s.finishNight);
-  const quitToTitle = useStore((s) => s.quitToTitle);
-  const restart = useStore((s) => s.restart);
   const electionSeed = campaign.election?.rng;
 
   const result = useMemo(() => electionResult(world, campaign)!, [world, electionSeed]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -389,8 +386,7 @@ function ByElectionCount() {
               <div><dt>{t('summary.rank')}</dt><dd className="num">#{1 + seat.votes.filter((v) => v > seat.votes[campaign.player]).length}</dd></div>
             </dl>
             <div className="button-row">
-              <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>
-              <button className="btn" onClick={restart}>{t('summary.restart')}</button>
+              <AgainButtons restart />
               <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>
             </div>
             <NextContest />

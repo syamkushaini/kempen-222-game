@@ -15,6 +15,7 @@ import { PARTY_IDS } from '../sim/types';
 import { useStore } from '../state/store';
 import { ConfirmButton, GamePanel } from './SavesTab';
 import { leaderName, partyColor, partyName, partyShort, relationWord, useFormat, useT, useWorld, type Format, type T } from './hooks';
+import { AgainButtons } from './Aside';
 import { Chamber } from './Chamber';
 import { Portrait } from './Portrait';
 import { houseSeating, talksSeating, talksFocus } from './seating';
@@ -312,7 +313,7 @@ function OutcomePanel() {
       <div className="button-row">
         {career
           ? <button className="btn primary" onClick={career.midterm ? resumeTerm : nextTerm}>{t(career.midterm ? 'career.resume' : 'career.next')} ▸</button>
-          : <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>}
+          : <AgainButtons />}
         {world.rules.kind !== 'hung' && !career?.midterm && <button className="btn" onClick={viewNight}>{t('form.viewNight')}</button>}
         {career && <button className="btn" onClick={quitToTitle}>{t('hud.quit')}</button>}
       </div>

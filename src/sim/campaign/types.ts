@@ -421,6 +421,8 @@ export interface Career {
   tabled: Budget;
   /** Standing commitments taken on since the last election, in budget units. */
   fiscal: number;
+  /** The player chose to fight state elections in person when a round of state polls falls due (see aside.ts), rather than leave them to the model. */
+  realStates?: boolean;
   /** The player's party is one they made, founded or made their own: it may stand in any seat, at a price (see slate.ts). */
   own?: boolean;
   /** The seats of a party the player made: where it has candidates carried over, and what was paid for those added this time. */

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { majorityLine } from '../sim/election';
 import { scaled } from '../sim/campaign/actions';
 import { BY_EFFORT, holderOf, ROUNDS, STATE_EFFORT } from '../sim/campaign/contests';
@@ -11,6 +11,7 @@ import type { Scene } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import type { StringKey } from '../i18n/strings';
 import { lastOutcome, leaderName, partyName, partyShort, regionLabel, seatName, useFog, useFormat, useT, useWorld } from './hooks';
+import { StateFight } from './StateFight';
 import { Portrait } from './Portrait';
 import { Chamber } from './Chamber';
 import { divisionSeating } from './seating';
@@ -37,11 +38,14 @@ function SceneCard({ scene }: { scene: Scene }) {
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const answerScene = useStore((s) => s.answerScene);
+  const playStates = useStore((s) => s.playStates);
+  // Which states of a round of state polls the player has ticked to fight in person.
+  const [fight, setFight] = useState<string[]>([]);
   const setTab = useStore((s) => s.setTab);
   const hideScene = useStore((s) => s.hideScene);
   const me = campaign.player;
   const from = scene.from;
-  const answer = (choice: number) => answerScene(scene.id, choice);
+  const answer = (choice: number) => (scene.event === 'statePolls' && fight.length > 0 ? void playStates(scene.id, choice, fight) : answerScene(scene.id, choice));
   const kind = world.rules.kind === 'state' ? 'state' : 'general';
 
   const preview = useMemo(
@@ -124,6 +128,7 @@ function SceneCard({ scene }: { scene: Scene }) {
           <p className="note">{t('scene.by.seat', { seat: world.seats[vacant].name, party: partyName(t, holderOf(world, campaign, scene.seat!)), pct: (lastOutcome(world).seats[vacant].margin * 100).toFixed(1) })}</p>
         )}
         {id === 'ultimatum' && from !== null && <p className="note">{t('scene.ultimatum.from', { leader: leaderName(t, from), party: partyName(t, from) })}</p>}
+        {voting.length > 0 && k.realStates && <StateFight states={voting} selected={fight} onChange={setFight} />}
         {voting.length > 0 && (
           <p className="note">{t('scene.states.list', { states: voting.map((st) => t('scene.states.holds', { state: regionLabel(t, world, st), party: k.states[st] === undefined ? '–' : partyShort(t, k.states[st]) })).join(' · ') })}</p>
         )}
