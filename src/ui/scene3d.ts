@@ -1,7 +1,7 @@
 import {
   AmbientLight, BoxGeometry, BufferAttribute, BufferGeometry, Color, ConeGeometry, CylinderGeometry, DirectionalLight, ExtrudeGeometry, Group,
-  HemisphereLight, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshLambertMaterial, Path, PerspectiveCamera, Raycaster, Scene, Shape,
-  SphereGeometry, Vector2, Vector3, WebGLRenderer,
+  HemisphereLight, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshLambertMaterial, OctahedronGeometry, Path, PerspectiveCamera, Raycaster, Scene, Shape,
+  SphereGeometry, TorusGeometry, Vector2, Vector3, WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { approach, fitDistance, parseRings, PATTERNS, seatHeight, shapeParts } from './map3d';
@@ -14,6 +14,10 @@ export interface SceneSeat { id: string; state: string }
 export interface SeatLook { winner: number; margin: number; stale: boolean }
 /** A column of support standing on a region: the parties' shares there, stacked. */
 export interface ColumnSpec { x: number; z: number; parts: { color: string; share: number }[] }
+/** A mark a map layer puts on a seat: its shape, colour, and its place among the marks on that seat. */
+export interface PinSpec { seat: string; kind: 'ring' | 'dot' | 'bullseye' | 'square' | 'diamond' | 'down' | 'up' | 'hex'; color: string; slot: number; of: number }
+/** The tint a seat takes where the player's branches are strong. */
+const HEAT_COLOR = '#14b8a6';
 export interface MarkSpec { seat: string; party: number; kind: 'tent' | 'flag'; slot: number; of: number }
 
 export interface SceneOptions {
@@ -87,6 +91,9 @@ export class MapScene3D {
   private byId = new Map<string, Block>();
   private backdrop = new Group();
   private props = new Group();
+  private pinsGroup = new Group();
+  private pinSpecs: PinSpec[] = [];
+  private heat: Record<string, number> | null = null;
   private pin: Group | null = null;
   private palette = isDark() ? NIGHT : DAY;
   private land: BufferGeometry | null = null;
@@ -133,7 +140,7 @@ export class MapScene3D {
     const sun = new DirectionalLight(0xffffff, 1.5);
     sun.position.set(-0.5, 1, 0.7);
     this.scene.add(sun);
-    this.scene.add(this.backdrop, this.props, this.columns);
+    this.scene.add(this.backdrop, this.props, this.pinsGroup, this.columns);
 
     this.build();
 
@@ -332,6 +339,8 @@ export class MapScene3D {
     const d = this.display[b.index];
     if (!d || !this.land) return;
     const { colour, pattern, ink } = this.look(b, d);
+    const warm = this.heat?.[b.id];
+    if (warm) colour.lerp(new Color(HEAT_COLOR), 0.08 + 0.4 * warm);
     if (lit > 0) colour.lerp(new Color('#ffffff'), lit);
     const side = colour.clone().multiplyScalar(0.72);
     const col = this.land.getAttribute('color') as BufferAttribute, pat = this.land.getAttribute('aPat') as BufferAttribute, inks = this.land.getAttribute('aInk') as BufferAttribute;
@@ -382,6 +391,7 @@ export class MapScene3D {
       this.blocks.forEach((b) => this.paint(b));
       if (this.o.calm) this.blocks.forEach((b) => this.lift(b, b.goal));
       this.setMarks(this.markSpecs.marks, this.markSpecs.pin);
+      this.setPins(this.pinSpecs);
       if (this.columnSpecs) this.buildColumns();
     }
     this.fit(false);
@@ -427,6 +437,46 @@ export class MapScene3D {
       this.pin = g;
       this.scene.add(g);
     }
+    this.refresh();
+  }
+
+  /** The marks the ticked layers put on seats. They stand on the seat's block, a little in front of the tents. */
+  setPins(pins: PinSpec[]) {
+    this.pinSpecs = pins;
+    this.pinsGroup.clear();
+    const u = this.size * 0.012;
+    const geo = {
+      ring: new TorusGeometry(0.62 * u, 0.13 * u, 6, 20).rotateX(Math.PI / 2),
+      dot: new SphereGeometry(0.42 * u, 12, 8),
+      square: new BoxGeometry(0.8 * u, 0.3 * u, 0.8 * u),
+      diamond: new OctahedronGeometry(0.55 * u),
+      down: new ConeGeometry(0.62 * u, 1 * u, 3).rotateX(Math.PI),
+      up: new ConeGeometry(0.62 * u, 1 * u, 3),
+      hex: new CylinderGeometry(0.55 * u, 0.55 * u, 0.4 * u, 6),
+      dotCore: new SphereGeometry(0.24 * u, 10, 6),
+    };
+    this.disposables.push(...Object.values(geo));
+    for (const pin of pins) {
+      const shape = this.o.shapes[pin.seat];
+      if (!shape) continue;
+      const [x0, y0, x1, y1] = shape.bbox;
+      const mat = new MeshLambertMaterial({ color: pin.color });
+      this.disposables.push(mat);
+      const g = new Group();
+      if (pin.kind === 'bullseye') { g.add(new Mesh(geo.ring, mat), new Mesh(geo.dotCore, mat)); }
+      else g.add(new Mesh(geo[pin.kind], mat));
+      g.position.set((x0 + x1) / 2 + (pin.slot - (pin.of - 1) / 2) * 1.5 * u, 0, (y0 + y1) / 2 + 1.1 * u);
+      g.userData.seat = pin.seat;
+      g.userData.lift = 0.55 * u;
+      this.pinsGroup.add(g);
+    }
+    this.refresh();
+  }
+
+  /** How strong the player's branches are under each seat, 0 to 1: the map takes a teal tint where they are. */
+  setHeat(heat: Record<string, number> | null) {
+    this.heat = heat;
+    this.blocks.forEach((b) => this.paint(b));
     this.refresh();
   }
 
@@ -587,6 +637,7 @@ export class MapScene3D {
       return left > 0;
     });
     for (const g of this.props.children) { const b = this.byId.get(g.userData.seat as string); g.position.y = b ? Math.max(b.height, 0) : 0; }
+    for (const g of this.pinsGroup.children) { const b = this.byId.get(g.userData.seat as string); g.position.y = (b ? Math.max(b.height, 0) : 0) + (g.userData.lift as number); }
     this.render();
     if (this.pointer) { this.hover(); this.pointer = null; }
     if (this.settle()) this.refresh();

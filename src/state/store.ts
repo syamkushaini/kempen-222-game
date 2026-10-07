@@ -34,6 +34,7 @@ import type { World } from '../sim/election';
 import type { RegionId } from '../sim/types';
 import { newGame, startOf, type GameState, type StartOptions } from './game';
 import type { Identity } from './identity';
+import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
 
@@ -63,6 +64,8 @@ export interface Settings {
   hints: boolean;
   /** The map is drawn in 3D, where the browser can. */
   map3d: boolean;
+  /** Which extra things the map shows, ticked by the player. */
+  layers: LayerId[];
 }
 
 const SETTINGS_KEY = 'k222.settings';
@@ -77,7 +80,7 @@ function prefers3d(): boolean {
 }
 
 function loadSettings(): Settings {
-  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d() };
+  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d(), layers: DEFAULT_LAYERS };
   try {
     const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
     if (!raw) return fallback;
@@ -91,6 +94,7 @@ function loadSettings(): Settings {
       density: raw.density === 'compact' ? 'compact' : 'comfortable',
       hints: raw.hints !== false,
       map3d: typeof raw.map3d === 'boolean' ? raw.map3d : prefers3d(),
+      layers: cleanLayers(raw.layers) ?? DEFAULT_LAYERS,
     };
   } catch {
     return fallback;
@@ -209,11 +213,11 @@ interface Store {
   hideScene(id: number | null): void;
   setBudget(patch: { line?: LineId; tax?: boolean; value: Dial }): void;
   reshuffle(portfolio: PortfolioId): void;
+  appoint(portfolio: PortfolioId, option: number): void;
   tableBill(id: string): void;
   deliver(index: number): void;
   pullLever(id: LeverId): void;
   tableMotion(): void;
-  appoint(portfolio: PortfolioId, option: number): void;
   leaveGovernment(): void;
   retire(): void;
 
@@ -402,11 +406,11 @@ export const useStore = create<Store>((set, get) => {
     openScene: (sceneOpen) => set({ sceneOpen, hiddenScene: null }),
     setBudget: (patch) => mutate((c) => { setBudget(c, patch); }),
     reshuffle: (portfolio) => mutate((c) => { reshuffle(c, portfolio); }),
+    appoint: (portfolio, option) => mutate((c, _g, world) => { appoint(world, c, portfolio, option); }),
     tableBill: (id) => mutate((c) => { tableBill(c, id); }),
     deliver: (index) => mutate((c) => { if (deliver(c, index)) syncOpinion(c); }),
     pullLever: (id) => mutate((c, _g, world) => { if (pullLever(world, c, id)) syncOpinion(c); }),
     tableMotion: () => mutate((c, _g, world) => {
-    appoint: (portfolio, option) => mutate((c, _g, world) => { appoint(world, c, portfolio, option); }),
       tableMotion(world, c);
       if (c.phase === 'formation') return { showNight: false, offerReply: null };
     }),

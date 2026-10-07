@@ -1,8 +1,13 @@
 import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import { stateNeeded } from '../data/world';
 import { campaignMarks } from '../sim/campaign/marks';
+import { FAMILY_COLORS, FAMILY_IDS, LAYER_IDS, LAYER_KIND, layerPins, MACHINERY_COLOR, machineryHeat, MARGINAL_COLOR, UNPOLLED_COLOR, type LayerId, type Pin } from '../sim/campaign/layers';
+import type { Campaign } from '../sim/campaign/types';
+import { lastElection } from '../sim/election';
 import { latestNationalPoll } from '../sim/campaign/polls';
 import type { Flip } from '../sim/campaign/night';
 import type { World } from '../sim/election';
+import { PinGlyph, PinKey } from './pins';
 import type { RegionId, SeatClass } from '../sim/types';
 import { useStore } from '../state/store';
 import { canDraw3D, PATTERNS } from './map3d';
@@ -25,8 +30,8 @@ interface MapData {
 
 /** State assemblies have their own maps; everything else uses the national one. */
 function loadMap(world: World): Promise<MapData> {
-  // An assembly seat's by-election id is byelection:dun:<state>:<code>.
-  const state = world.id.startsWith('state:') ? world.id.slice(6) : world.id.startsWith('byelection:dun:') ? world.id.split(':')[2] : null;
+  // A state election, a career in a state (career:<state>), and an assembly seat's by-election (byelection:dun:<state>:<code>) all use the state's own map.
+  const state = stateNeeded(world.id);
   const file = state
     ? import(`../data/generated/map-dun-${state}.json`)
     : import('../data/generated/map.json');
@@ -43,6 +48,42 @@ const CLASS_OPACITY: Record<SeatClass, number> = { safe: 1, leaning: 0.72, margi
 const STALE_OPACITY = 0.22;
 /** How large a mark is drawn, against the 12 units it is designed in: the same on screen at any zoom. */
 const MARK_SIZE = 1.7;
+const PIN_SIZE = 1.5;
+
+/** Whether a layer has anything to show in this game. */
+function layerUsable(id: LayerId, world: World, campaign: Campaign | undefined): boolean {
+  if (id === 'mine' || id === 'machinery') return !!campaign && campaign.parties[campaign.player] !== null;
+  if (id === 'pacts') return !!campaign && world.rules.diplomacy;
+  return true;
+}
+
+/** The little picture beside a layer's name: what it puts on the map. */
+function LayerKey({ id, me, size = 16 }: { id: LayerId; me: number | null; size?: number }) {
+  if (id === 'machinery') return <span className="layer-swatch" style={{ background: MACHINERY_COLOR, width: size, height: size }} aria-hidden="true" />;
+  if (id === 'campaign') return <svg className="pin-key mark-key" width={size} height={size} style={{ width: size, height: size }} viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-6 4.5L0 -5.5L6 4.5Z M-1.4 4.5L0 1.2L1.4 4.5Z" fillRule="evenodd" /></svg>;
+  const kind = LAYER_KIND[id]!;
+  const color = id === 'marginal' ? MARGINAL_COLOR : id === 'blocs' ? FAMILY_COLORS.middle : id === 'mine' || id === 'pacts' ? (me !== null ? partyColor(me) : '#888') : '#94a3b8';
+  return <PinKey kind={kind} color={color} size={size} />;
+}
+
+/** The key for each ticked layer, beside the key for the seats. */
+function LayerLegend({ on, me }: { on: ReadonlySet<LayerId>; me: number | null }) {
+  const t = useT();
+  const mine = me !== null ? partyColor(me) : '#888';
+  return (
+    <>
+      {on.has('marginal') && <span><PinKey kind="ring" color={MARGINAL_COLOR} size={14} />{t('legend.layer.marginal')}</span>}
+      {on.has('flipped') && <span><PinKey kind="dot" color="#94a3b8" size={14} />{t('legend.layer.flipped')}</span>}
+      {on.has('mine') && <span><PinKey kind="square" color={mine} size={14} />{t('legend.layer.mine')}</span>}
+      {on.has('mine') && <span><PinKey kind="bullseye" color={mine} size={14} />{t('legend.layer.target')}</span>}
+      {on.has('unpolled') && <span><PinKey kind="diamond" color={UNPOLLED_COLOR} size={14} />{t('legend.layer.unpolled')}</span>}
+      {on.has('pacts') && <span><PinKey kind="down" color={mine} size={14} />{t('legend.layer.aside')}</span>}
+      {on.has('pacts') && <span><PinKey kind="up" color={mine} size={14} />{t('legend.layer.asideFor')}</span>}
+      {on.has('machinery') && <span><span className="layer-swatch" style={{ background: MACHINERY_COLOR }} aria-hidden="true" />{t('legend.layer.machinery')}</span>}
+      {on.has('blocs') && FAMILY_IDS.map((f) => <span key={f}><PinKey kind="hex" color={FAMILY_COLORS[f]} size={14} />{t(`family.${f}`)}</span>)}
+    </>
+  );
+}
 
 const SeatPath = memo(function SeatPath(props: {
   id: string; d: string; fill: string | undefined; opacity: number; dim: boolean; selected: boolean;
@@ -275,7 +316,16 @@ export function MapView(props: {
   }
   // Where the parties have been working: tents for a seat worked hard lately, flags for one still being worked.
   const campaign = useStore((s) => s.game?.campaign);
-  const marks = useMemo(() => (campaign ? campaignMarks(campaign) : []), [campaign]);
+  // What the player has ticked to be shown on the map, and what that puts on it.
+  const layers = useStore((s) => s.settings.layers);
+  const on = useMemo(() => new Set<LayerId>(layers), [layers]);
+  const toggleLayer = (id: LayerId) => setSettings({ layers: on.has(id) ? layers.filter((x) => x !== id) : [...layers, id] });
+  const last = useMemo(() => lastElection(world).seats.map((o) => ({ winner: o.winner })), [world]);
+  const pins = useMemo(() => (single ? [] : layerPins({ world, campaign, display, last }, on)), [world, campaign, display, last, on, single]);
+  const heat = useMemo(() => (on.has('machinery') ? machineryHeat(world, campaign) : null), [on, world, campaign]);
+  const marks = useMemo(() => (campaign && on.has('campaign') ? campaignMarks(campaign) : []), [campaign, on]);
+  const pinColor = (p: Pin) => p.color ?? partyColor(p.party ?? 0);
+  const pins3d = useMemo(() => pins.map((p) => ({ seat: p.seat, kind: p.kind, color: p.color ?? partyColor(p.party ?? 0), slot: p.slot, of: p.of })), [pins]);
   const marker = !map || !props.marker ? null : single ? map.seats[world.seats[0].id]?.bbox : map.states[props.marker]?.bbox;
 
   return (
@@ -306,6 +356,23 @@ export function MapView(props: {
             </div>
             {!canDraw3D() && <p className="muted small">{t('map.3d.unsupported')}</p>}
             {use3d && <p className="muted small">{t('map.3d.hint')}</p>}
+            {!single && (
+              <>
+                <span className="hud-label">{t('layers.title')}</span>
+                <div className="layer-list" role="group" aria-label={t('layers.title')}>
+                  {LAYER_IDS.map((id) => {
+                    const usable = layerUsable(id, world, campaign);
+                    return (
+                      <label key={id} className={usable ? 'layer-row' : 'layer-row off'}>
+                        <input type="checkbox" checked={on.has(id)} disabled={!usable} onChange={() => toggleLayer(id)} />
+                        <LayerKey id={id} me={campaign?.player ?? null} />
+                        <span className="grow"><strong>{t(`layer.${id}`)}</strong><span className="muted small">{usable ? t(`layer.${id}.desc`) : t('layers.unavailable')}</span></span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </>
+            )}
             <span className="hud-label">{t('map.legend')}</span>
           <div className="legend">
             {[...seen].sort((a, b) => a - b).map((p) => (
@@ -319,6 +386,7 @@ export function MapView(props: {
             {marks.some((m) => m.kind === 'tent') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-6 4.5L0 -5.5L6 4.5Z" /></svg>{t('legend.tent')}</span>}
             {marks.some((m) => m.kind === 'flag') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-2.6 -5.5H-1.4V5.5H-2.6Z M-1.4 -5.5L5 -3L-1.4 -0.5Z" /></svg>{t('legend.flag')}</span>}
             {anyUndeclared && <span><i className="swatch undeclared" />{t('legend.undeclared')}</span>}
+            {!single && <LayerLegend on={on} me={campaign?.player ?? null} />}
           </div>
           </div>
         </details>
@@ -331,7 +399,7 @@ export function MapView(props: {
             <MapScene3D
               shapes={map.seats} seats={seatList} backdrop={backdropIds} home={home as [number, number, number, number]} focus={focusBox}
               display={display} selectedSeat={preview ?? selectedSeat} selectedState={single ? null : selectedState} accessible={accessible}
-              marks={marks} pin={marker as [number, number, number, number] | null} pulse={props.pulse ? { id: props.pulse.id, n: props.pulse.n } : null}
+              marks={marks} pins={pins3d} heat={heat} pin={marker as [number, number, number, number] | null} pulse={props.pulse ? { id: props.pulse.id, n: props.pulse.n } : null}
               columns={columns} label={contestName(t, world)} single={single} partyColor={partyColor} onPick={pick}
               onHover={(id, x, y) => setHover(id ? { id, x, y } : null)}
             />
@@ -364,6 +432,9 @@ export function MapView(props: {
                   />
                 );
               })}
+              {heat && world.seats.map((seat) => (heat[seat.id] && map.seats[seat.id]
+                ? <path key={`heat-${seat.id}`} d={map.seats[seat.id].d} fill={MACHINERY_COLOR} fillOpacity={0.06 + 0.4 * heat[seat.id]} className="seat-heat" pointerEvents="none" />
+                : null))}
               {accessible && world.seats.map((seat, i) => {
                 const d = display[i];
                 if (!d || d.winner < 0 || d.stale || !map.seats[seat.id]) return null;
@@ -387,6 +458,16 @@ export function MapView(props: {
                         ? <path d="M-6 4.5L0 -5.5L6 4.5Z M-1.4 4.5L0 1.2L1.4 4.5Z" fillRule="evenodd" />
                         : <><path d="M-2.6 -5.5H-1.4V5.5H-2.6Z" className="mark-pole" /><path d="M-1.4 -5.5L5 -3L-1.4 -0.5Z" /></>}
                     </g>
+                  </g>
+                );
+              })}
+              {pins.map((p) => {
+                const shape = map.seats[p.seat];
+                if (!shape) return null;
+                const [x0, y0, x1, y1] = shape.bbox;
+                return (
+                  <g key={`${p.layer}:${p.seat}:${p.kind}`} className="map-pin" transform={`translate(${(x0 + x1) / 2} ${(y0 + y1) / 2}) scale(${PIN_SIZE / (zoom.k * view.k)})`}>
+                    <g transform={`translate(${(p.slot - (p.of - 1) / 2) * 11} ${single ? 12 : 8})`}><PinGlyph kind={p.kind} color={pinColor(p)} /></g>
                   </g>
                 );
               })}
@@ -421,6 +502,15 @@ export function MapView(props: {
           </div>
         )}
       </div>
+      {!single && layers.some((id) => id !== 'campaign') && (
+        <div className="layer-chips" role="group" aria-label={t('layers.on')}>
+          {layers.filter((id) => id !== 'campaign').map((id) => (
+            <button key={id} className="chip" onClick={() => toggleLayer(id)} aria-label={t('layers.off', { name: t(`layer.${id}`) })}>
+              <LayerKey id={id} me={campaign?.player ?? null} size={13} /> {t(`layer.${id}`)} <span aria-hidden="true">×</span>
+            </button>
+          ))}
+        </div>
+      )}
 
     </div>
   );
