@@ -97,6 +97,8 @@ export interface Scene {
   /** Pact offers: seats the player would stand aside in, and seats the other party would. */
   give?: string[];
   get?: string[];
+  /** Pact offers from a partner: of the seats the player would give, those the partner asks for as the price of standing together. */
+  ask?: string[];
   /** Poaching: the seat whose incumbent is being courted. */
   seat?: string;
   /** Events between elections: which one. */
@@ -421,6 +423,8 @@ export interface Career {
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
+  /** The coalition the player has given a name and a mark: who belongs (see alliance.ts). */
+  alliance?: { name: number; mark: number; members: number[] };
   /** The promises in the player's manifesto that are made in their short form: half the price, half the appeal (see policy.ts). */
   brief?: PledgeId[];
   /** [party]: the player's promises that party has copied for its own manifesto (see policy.ts). */

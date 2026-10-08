@@ -30,6 +30,7 @@ import { supplyWeek } from './supply';
 import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
+import { allianceBonus, allianceWeek, dropMember } from './alliance';
 import { courtWeek } from './courts';
 import { patronageMult, patronageWeek } from './patronage';
 import { applyTenure, recordTenure } from './tenure';
@@ -88,7 +89,7 @@ export function syncOpinion(c: Campaign): void {
   const k = c.career;
   if (!k) return;
   const policy = policyEffect(c);
-  for (let b = 0; b < N_BLOCS; b++) for (let p = 0; p < N_PARTIES; p++) c.drift.support.nat[b][p] = k.mood[b][p] + k.profile[p] + policy[b][p] + (p === c.player ? k.grass ?? 0 : 0);
+  for (let b = 0; b < N_BLOCS; b++) for (let p = 0; p < N_PARTIES; p++) c.drift.support.nat[b][p] = k.mood[b][p] + k.profile[p] + policy[b][p] + (p === c.player ? k.grass ?? 0 : 0) + allianceBonus(c, p);
 }
 
 // ---------- starting ----------
@@ -382,6 +383,7 @@ export function termWeek(world: World, c: Campaign): void {
   paddedWeek(world, c, rngWeek);
   patronageWeek(c, rngWeek);
   courtWeek(c, rngWeek);
+  allianceWeek(c);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
   k.profile[me] = Math.min(PROFILE_CAP, k.profile[me] * 0.97 + seen);
@@ -501,6 +503,8 @@ export function governmentFalls(world: World, c: Campaign, who?: number): void {
   pushNews(c, { party: leaver, key: 'news.term.walkout', vars: { party: ref.party(leaver), pm: ref.party(g.pm) }, tone: g.pm === c.player ? 'bad' : 'neutral' });
   g.partners = g.partners.filter((p) => p !== leaver);
   g.deals[leaver] = null;
+  // A partner that walks out of the government walks out of the alliance too, and does not forget what it was called.
+  if (k.alliance?.members.includes(leaver) && leaver !== c.player) { dropMember(c, leaver); shiftRelation(c, g.pm, leaver, -15); }
   g.seats -= tally[leaver];
   if (g.seats >= majorityLine(world)) {
     g.stability = clamp(g.stability - 5, 5, 95);
@@ -658,6 +662,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.safe ? { safe: { ...k.safe } } : {}),
     ...(k.patronage ? { patronage: k.patronage } : {}),
     ...(k.drive ? { drive: k.drive } : {}),
+    ...(k.alliance ? { alliance: { ...k.alliance, members: [...k.alliance.members] } } : {}),
     ...(k.mandated?.length ? { mandated: [...k.mandated] } : {}),
     ...(k.shaky?.length ? { shaky: [...k.shaky] } : {}),
   };

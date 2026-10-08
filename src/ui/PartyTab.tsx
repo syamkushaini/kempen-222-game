@@ -3,6 +3,7 @@ import {
   ACTIVITY_IDS, ACTIVITIES, PADDING, canPad, padChance, paddedOf, FAVOUR_IDS, FOREIGN, canTakeForeign, exposureChance, inquiryChance, CHEST_BONUS, DISCIPLINE, DISCIPLINE_EVERY, REBRAND, canDiscipline, canRebrand, CHEST_PENALTY, HOLDINGS, fatigueOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
 } from '../sim/campaign/party';
 import { scaled } from '../sim/campaign/actions';
+import { ALLIANCE, ALLIANCE_MARKS, ALLIANCE_NAMES, allianceBonus, canFound, canInvite } from '../sim/campaign/alliance';
 import { CHIEF_NAMES, deputyChance, deputyOf, FACTION_IDS, WING_IDS, backing, challengeChance, factionsOf, PARTY_POLL_EVERY } from '../sim/campaign/factions';
 import { useState } from 'react';
 import { PARTIES } from '../data/parties';
@@ -17,7 +18,7 @@ import { useStore } from '../state/store';
 import { Gauge } from './Gauge';
 import { ConfirmButton } from './SavesTab';
 import { Brief } from './Brief';
-import { partyName, regionLabel, useFormat, useT, useWorld } from './hooks';
+import { partyName, partyShort, regionLabel, useFormat, useT, useWorld } from './hooks';
 
 const LOT = 100_000;
 
@@ -34,6 +35,11 @@ export function PartyTab() {
   const activity = useStore((s) => s.activity);
   const chest = useStore((s) => s.chest);
   const foreign = useStore((s) => s.foreign);
+  const foundAlliance = useStore((s) => s.foundAlliance);
+  const inviteAlly = useStore((s) => s.inviteAlly);
+  const dissolveAlliance = useStore((s) => s.dissolveAlliance);
+  const [allianceName, setAllianceName] = useState(0);
+  const [allianceMark, setAllianceMark] = useState(0);
   const padRolls = useStore((s) => s.padRolls);
   const discipline = useStore((s) => s.discipline);
   const merge = useStore((s) => s.merge);
@@ -197,6 +203,50 @@ export function PartyTab() {
         </li>
       </ul>
       {(k.govRun ?? 0) > 1 && <p className="note bad">{t('party.fatigue', { n: k.govRun!, pts: (Math.round(fatigueOf(k.govRun!) * 25 * 10) / 10).toFixed(1) })}</p>}
+
+      <h3>{t('alliance.title')}</h3>
+      <p className="muted small action-desc">{t('alliance.desc', { found: f.rm(scaled(world, ALLIANCE.found)), join: f.rm(scaled(world, ALLIANCE.join)), n: ALLIANCE.max })}</p>
+      {!k.alliance ? (
+        <ul>
+          <li className="action">
+            <div className="grow">
+              <div className="chips" role="group" aria-label={t('alliance.name')}>
+                {Array.from({ length: ALLIANCE_NAMES }, (_, n) => (
+                  <button key={n} className={allianceName === n ? 'chip active' : 'chip'} aria-pressed={allianceName === n} onClick={() => setAllianceName(n)}>{t(`alliance.name.${n}` as StringKey)}</button>
+                ))}
+              </div>
+              <div className="chips" role="group" aria-label={t('alliance.mark')}>
+                {ALLIANCE_MARKS.map((m, n) => (
+                  <button key={m} className={allianceMark === n ? 'chip active' : 'chip'} aria-pressed={allianceMark === n} aria-label={`${t('alliance.mark')} ${m}`} onClick={() => setAllianceMark(n)}>{m}</button>
+                ))}
+              </div>
+            </div>
+            <button className="btn small" disabled={!canFound(world, campaign, allianceName, allianceMark).ok} onClick={() => foundAlliance(allianceName, allianceMark)}>{t('alliance.found')}</button>
+          </li>
+        </ul>
+      ) : (
+        <ul>
+          <li className="action">
+            <div className="grow">
+              <span className="action-title">{ALLIANCE_MARKS[k.alliance.mark]} {t(`alliance.name.${k.alliance.name}` as StringKey)}</span>
+              <span className="action-meta">{k.alliance.members.map((p) => partyShort(t, p)).join(' · ')} — {t('alliance.lift', { pts: (allianceBonus(campaign, campaign.player) * 25).toFixed(1) })}</span>
+            </div>
+            <ConfirmButton label={t('alliance.dissolve')} confirmLabel={t('alliance.dissolve.confirm')} onConfirm={() => dissolveAlliance()} />
+          </li>
+          {houseTally(world, campaign).map((n, p) => ({ n, p })).filter(({ n, p }) => n > 0 && !k.alliance!.members.includes(p) && p !== campaign.player && !!campaign.parties[p]).map(({ p }) => {
+            const check = canInvite(world, campaign, p);
+            return (
+              <li className="action" key={p}>
+                <div className="grow">
+                  <span className="action-title">{partyName(t, p)}</span>
+                  {!check.ok && check.reason !== 'none' && check.reason !== 'phase' && <span className="action-reason">{t(`alliance.no.${check.reason}` as StringKey)}</span>}
+                </div>
+                <button className="btn small" disabled={!check.ok} onClick={() => inviteAlly(p)}>{t('alliance.invite')}</button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       <h3>{t('party.pad')}</h3>
       <p className="muted small action-desc">{t('party.pad.desc', { pct: Math.round(PADDING.share * 100) })}</p>

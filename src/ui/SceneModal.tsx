@@ -95,6 +95,7 @@ function SceneCard({ scene }: { scene: Scene }) {
     body = (
       <>
         <p>{t('scene.pact.body', { party: partyName(t, from), give: scene.give?.length ?? 0, get: scene.get?.length ?? 0 })}</p>
+        {scene.ask?.length ? <p className="note">{t('scene.pact.ask', { n: scene.ask.length })}</p> : null}
         {preview && (
           <p className="muted small">
             {t('scene.pact.preview', { me: partyShort(t, me), a0: preview.a[0], a1: preview.a[1], party: partyShort(t, from), b0: preview.b[0], b1: preview.b[1] })}

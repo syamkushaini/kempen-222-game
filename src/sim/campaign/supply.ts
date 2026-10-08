@@ -1,5 +1,6 @@
 import { majorityLine, type World } from '../election';
 import { clamp } from '../math';
+import { Rng } from '../rng';
 import { scaled } from './actions';
 import { WANTS } from './cast';
 import { houseTally } from './contests';
@@ -74,11 +75,55 @@ export function signSupply(world: World, c: Campaign, p: number, price: SupplyPr
   return true;
 }
 
-/** A week of the deals: each one comes up for review when its year is out, and lapses unless it is made again. */
+/** A supporter outside the cabinet is free to go: the weekly chance it does, when its leader has cooled towards the government or what it was promised is overdue. */
+export const WITHDRAW = { chance: 0.06, below: 5, stability: 4, relation: -8 };
+/** How many weeks before a deal ends that it can be renewed. */
+export const RENEW_WITHIN = 10;
+
+/** Whether a supporter has cause to leave: a cool leader, or a policy it was promised that has not been delivered after the date. */
+export function discontent(c: Campaign, p: number): boolean {
+  const k = c.career!;
+  const late = k.obligations.some((o) => o.party === p && !o.done && k.week > o.due);
+  return relation(c, c.player, p) < WITHDRAW.below || late;
+}
+
+/** Whether the deal with a party can be renewed now, for another year, at the same price. */
+export function canRenew(world: World, c: Campaign, p: number): { ok: true } | { ok: false; reason: SupplyRefusal } {
+  const k = c.career;
+  const pc = c.parties[c.player];
+  const d = k?.supply?.find((s) => s.party === p);
+  if (!k || !pc || !d || c.phase !== 'term' || !isPm(c) || c.inbox.length > 0) return { ok: false, reason: 'phase' };
+  if (d.until - k.week > RENEW_WITHIN) return { ok: false, reason: 'already' };
+  if (d.price === 'cash' && pc.funds < scaled(world, SUPPLY_CASH)) return { ok: false, reason: 'funds' };
+  if (relation(c, c.player, p) < SUPPLY_WARMTH) return { ok: false, reason: 'warmth' };
+  return { ok: true };
+}
+
+/** Renews a deal before it lapses: another year, the price paid again. */
+export function renewSupply(world: World, c: Campaign, p: number): boolean {
+  if (!canRenew(world, c, p).ok) return false;
+  const k = c.career!;
+  const d = k.supply!.find((s) => s.party === p)!;
+  if (d.price === 'cash') c.parties[c.player]!.funds -= scaled(world, SUPPLY_CASH);
+  else k.obligations.push({ party: p, demand: wantedDemand(p), due: k.week + 30, done: false });
+  d.until += SUPPLY_WEEKS;
+  shiftRelation(c, c.player, p, 3);
+  pushNews(c, { party: c.player, key: 'news.supply.renewed', vars: { party: ref.party(p), n: SUPPLY_WEEKS }, tone: 'good' });
+  return true;
+}
+
+/** A week of the deals: a supporter that has lost patience may withdraw, and each deal comes up for review when its year is out and lapses unless it is made again. */
 export function supplyWeek(c: Campaign): void {
   const k = c.career;
   if (!k?.supply) return;
   for (const s of [...k.supply]) {
+    if (discontent(c, s.party) && new Rng((c.seed ^ (k.week * 7919) ^ (s.party * 104729)) >>> 0).next() < WITHDRAW.chance) {
+      k.supply = k.supply.filter((x) => x !== s);
+      k.government.stability = clamp(k.government.stability - WITHDRAW.stability, 5, 95);
+      shiftRelation(c, c.player, s.party, WITHDRAW.relation);
+      pushNews(c, { party: s.party, key: 'news.supply.withdrew', vars: { party: ref.party(s.party) }, tone: 'bad' });
+      continue;
+    }
     if (k.week < s.until) continue;
     k.supply = k.supply.filter((x) => x !== s);
     k.government.stability = clamp(k.government.stability - 4, 5, 95);

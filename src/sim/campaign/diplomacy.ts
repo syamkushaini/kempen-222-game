@@ -422,6 +422,29 @@ export function addScene(c: Campaign, scene: Omit<Scene, 'id'>): void {
   c.inbox.push({ id: c.nextScene++, ...scene });
 }
 
+/** What a partner asks for as the price of a pact: how often, how many seats, and how strong the player must be in a seat for it to be worth asking. */
+export const ASK = { chance: 0.5, seats: 3, margin: 0.15, theirs: 0.12, refused: -5, accepted: 6, stability: 2 };
+
+/** A party the player is in government with, or in an alliance with: the ones that dare to ask. */
+const isFriend = (c: Campaign, p: number): boolean => {
+  const k = c.career;
+  if (!k) return false;
+  return k.government.partners.includes(p) || k.government.pm === p || (k.alliance?.members.includes(p) ?? false);
+};
+
+/** The seats where the player is clearly ahead and the partner has a following of its own, which it would like a clear run in. */
+function askedSeats(world: World, c: Campaign, p: number, already: string[], now: ElectionOutcome): string[] {
+  const out: { id: string; margin: number }[] = [];
+  for (const i of clashSeats(world, c, c.player, p)) {
+    const id = world.seats[i].id;
+    if (already.includes(id) || holder(world, i) !== c.player) continue;
+    const margin = now.seats[i].margin;
+    const own = world.seats[i].last.votes[p] / Math.max(1, world.seats[i].last.votes.reduce((a, b) => a + b, 0));
+    if (margin >= ASK.margin && own >= ASK.theirs) out.push({ id, margin });
+  }
+  return out.sort((a, b) => a.margin - b.margin).slice(0, ASK.seats).map((x) => x.id);
+}
+
 /**
  * Answers a campaign scene. Pact offers: 0 accept, 1 decline, 2 talk it over
  * (the offer lapses and the player opens talks themselves). Poaching: 0 pay to
@@ -432,8 +455,14 @@ export function resolveCampaignScene(world: World, c: Campaign, scene: Scene, ch
   if (scene.kind === 'agenda') resolveAgenda(world, c, scene, choice);
   else if (scene.kind === 'pactOffer' && scene.from !== null) {
     const prop = { give: scene.give ?? [], get: scene.get ?? [] };
-    if (choice === 0 && beforeNomination(c) && !inPact(c, me, scene.from)) signPact(world, c, me, scene.from, prop);
-    else if (choice === 1) shiftRelation(c, me, scene.from, -3);
+    if (choice === 0 && beforeNomination(c) && !inPact(c, me, scene.from)) {
+      signPact(world, c, me, scene.from, prop);
+      if (scene.ask?.length) shiftRelation(c, me, scene.from, ASK.accepted);
+    } else if (choice === 1) {
+      shiftRelation(c, me, scene.from, -3 + (scene.ask?.length ? ASK.refused : 0));
+      // A partner turned down on its price takes it to heart.
+      if (scene.ask?.length && c.career && c.career.government.partners.includes(scene.from)) c.career.government.stability = clamp(c.career.government.stability - ASK.stability, 5, 95);
+    }
   } else if (scene.kind === 'poach' && scene.from !== null && scene.seat) {
     const pc = c.parties[me]!;
     const price = scaled(world, COST.keepMoney);
@@ -479,7 +508,9 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
     const prop = draftPact(world, c, me, p, 'targeted', now);
     if (prop.give.length + prop.get.length < 2 || !agree(me, p, prop) || rng.next() > 0.6) continue;
     c.offered.push(p);
-    addScene(c, { kind: 'pactOffer', from: p, give: prop.give, get: prop.get });
+    // A partner, or a friend in the same alliance, may put a price on standing together: the seats where the player is strongest.
+    const ask = rng.next() < ASK.chance && isFriend(c, p) ? askedSeats(world, c, p, prop.give, now) : [];
+    addScene(c, { kind: 'pactOffer', from: p, give: [...prop.give, ...ask], get: prop.get, ...(ask.length ? { ask } : {}) });
   }
 
   // Raids on the player's sitting members; a divided party is easier pickings.

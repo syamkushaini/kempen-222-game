@@ -37,7 +37,8 @@ import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
-import { signSupply, type SupplyPrice } from '../sim/campaign/supply';
+import { dissolveAlliance, expel, foundAlliance, invite } from '../sim/campaign/alliance';
+import { renewSupply, signSupply, type SupplyPrice } from '../sim/campaign/supply';
 import { merge } from '../sim/campaign/merge';
 import { nameShadow } from '../sim/campaign/shadow';
 import { resolveAgenda } from '../sim/campaign/agenda';
@@ -226,6 +227,11 @@ interface Store {
   chest(lots: number): void;
   foreign(favour: FavourId): void;
   padRolls(): void;
+  foundAlliance(name: number, mark: number): void;
+  inviteAlly(party: number): void;
+  dissolveAlliance(): void;
+  expel(party: number): void;
+  renewSupply(party: number): void;
   setBrief(id: PledgeId, brief: boolean): void;
   referendum(id: PledgeId): void;
   patronage(level: number): void;
@@ -447,6 +453,11 @@ export const useStore = create<Store>((set, get) => {
     patronage: (level) => mutate((c) => { setPatronage(c, level); }),
     setBrief: (id, brief) => mutate((c) => { if (setBrief(c, id, brief)) syncOpinion(c); }),
     referendum: (id) => mutate((c, _g, world) => { callReferendum(world, c, id); }),
+    foundAlliance: (name, mark) => mutate((c, _g, world) => { foundAlliance(world, c, name, mark); }),
+    inviteAlly: (party) => mutate((c, _g, world) => { invite(world, c, party); }),
+    dissolveAlliance: () => mutate((c) => { dissolveAlliance(c); }),
+    expel: (party) => mutate((c, _g, world) => { expel(world, c, party); }),
+    renewSupply: (party) => mutate((c, _g, world) => { renewSupply(world, c, party); }),
     padRolls: () => mutate((c, _g, world) => { padRolls(world, c); }),
     grantSafe: (seat, faction) => mutate((c, _g, world) => { grantSafe(world, c, seat, faction); }),
     revokeSafe: (seat) => mutate((c) => { revokeSafe(c, seat); }),

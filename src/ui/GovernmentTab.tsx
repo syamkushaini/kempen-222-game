@@ -8,7 +8,8 @@ import { scaled } from '../sim/campaign/actions';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
 import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
 import { MAX_MEASURES } from '../sim/campaign/office';
-import { SUPPLY_CASH, canSupply } from '../sim/campaign/supply';
+import { canExpel } from '../sim/campaign/alliance';
+import { SUPPLY_CASH, canRenew, canSupply, discontent } from '../sim/campaign/supply';
 import { houseTally } from '../sim/campaign/contests';
 import { SHADOW_COST, canShadow, shadowOf } from '../sim/campaign/shadow';
 import { PORTFOLIO_IDS } from '../sim/campaign/types';
@@ -137,6 +138,7 @@ export function GovernmentTab() {
       )}
 
       {pm && <SupplyDeals />}
+      {pm && k.government.partners.length > 0 && <PutOut />}
       {seat === 'opp' && <ShadowCabinet />}
 
       {(k.appointments?.length ?? 0) > 0 && (
@@ -305,6 +307,7 @@ function SupplyDeals() {
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const supply = useStore((s) => s.supply);
+  const renew = useStore((s) => s.renewSupply);
   const k = campaign.career!;
   const seats = houseTally(world, campaign);
   const parties = seats.map((n, p) => ({ n, p })).filter(({ n, p }) => n > 0 && !k.government.partners.includes(p) && p !== k.government.pm && p !== campaign.player && !!campaign.parties[p]);
@@ -322,7 +325,9 @@ function SupplyDeals() {
               <div className="grow">
                 <span className="action-title">{partyName(t, d.party)}</span>
                 <span className="action-meta num">{t('supply.until', { week: d.until })}</span>
+                {discontent(campaign, d.party) && <span className="action-reason">{t('supply.restless')}</span>}
               </div>
+              <button className="btn small" disabled={!canRenew(world, campaign, d.party).ok} onClick={() => renew(d.party)}>{t('supply.renew')}</button>
             </li>
           ))}
         </ul>
@@ -346,6 +351,35 @@ function SupplyDeals() {
   );
 }
 
+
+/** The head of government may put a partner out of the cabinet: it leaves an enemy, and the others look to themselves. */
+function PutOut() {
+  const t = useT();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const expel = useStore((s) => s.expel);
+  const k = campaign.career!;
+  return (
+    <>
+      <h3>{t('expel.title')}</h3>
+      <p className="muted small action-desc">{t('expel.desc')}</p>
+      <ul>
+        {k.government.partners.map((p) => {
+          const check = canExpel(world, campaign, p);
+          return (
+            <li className="action" key={p}>
+              <div className="grow">
+                <span className="action-title">{partyName(t, p)}</span>
+                {!check.ok && check.reason === 'majority' && <span className="action-reason">{t('expel.majority')}</span>}
+              </div>
+              <ConfirmButton label={t('expel.do')} confirmLabel={t('expel.confirm')} disabled={!check.ok} onConfirm={() => expel(p)} />
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
 
 /** The opposition's cabinet in waiting: someone to shadow each post. */
 function ShadowCabinet() {
