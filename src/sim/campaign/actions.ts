@@ -9,10 +9,13 @@ import { addEndorsements } from './endorserData';
 import { travelCost } from './geo';
 import { edge, fundsBoost, gaffeCut, mediaBoost, stat } from './perks';
 import { chiefHand } from './chiefs';
-import { MEDIA_AIMED, MIN_SEGMENT, addPitch, aimReach } from './segments';
+import { issueEdge } from './policy';
+import { weatherFactor } from './weather';
+import { MEDIA_AIMED, MIN_SEGMENT, addAimedPitch, aimReach, isBloc, segmentShare, type SegmentId } from './segments';
 import { stateOf } from './agenda';
+import { ISSUE_IDS, type IssueId } from './types';
 import type {
-  ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, PartyCampaign, Quality, TargetKind,
+  ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, PartyCampaign, Posture, Quality, TargetKind,
 } from './types';
 
 export interface ActionDef {
@@ -49,6 +52,7 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   manifesto:  { family: 'media',     target: 'none',  days: 1,   presence: false, perWeek: 1 },
   radio:      { family: 'media',     target: 'state', days: 0.5, presence: false, perWeek: 1 },
   local:      { family: 'ground',    target: 'state', days: 1,   presence: true,  perWeek: 1 },
+  troops:     { family: 'media',     target: 'party', days: 0.5, presence: false, perWeek: 1 },
 };
 
 /**
@@ -171,8 +175,43 @@ export const EFFECT = {
   conference: 8, conferenceBranches: 3,
   radio: 0.022,
   local: 0.09, localUnity: 1,
+  troops: 0.045, troopsSelf: 0.02, troopsExposed: 0.25, troopsStep: 0.12, troopsBackfire: 0.05, troopsCred: 8,
+  online: 0.75,
   tycoon: 900_000, tycoonExposeChance: 0.12, tycoonHit: 0.08, tycoonMotivationHit: 0.1,
 };
+
+/** How each way of answering a question changes a debate: what a win is worth, what it takes from the rival, what a loss costs, and the chance of winning. */
+export const POSTURE: Record<Posture, { gain: number; rival: number; loss: number; odds: number }> = {
+  // Stick to the substance: steady, and worth what the party's line is worth on the question.
+  policy: { gain: 1, rival: 1, loss: 1, odds: 0 },
+  // Go for the rival’s record: more if it lands, a good deal worse if it does not.
+  attack: { gain: 1.3, rival: 1.6, loss: 1.6, odds: -0.05 },
+  // Be human: a warmer win, a gentler loss, and it helps the better-liked speaker.
+  warm: { gain: 0.9, rival: 0.7, loss: 0.7, odds: 0 },
+};
+/** How much of the difference between two parties' lines on the question counts towards the odds, at the most. */
+export const DEBATE_TOPIC = { scale: 0.25, cap: 0.2 };
+
+/**
+ * The chance of winning a debate. The better speaker is favoured; a question on which the party’s line is the country’s
+ * counts for it, and the way it is answered adds to that: substance counts double on a question the party is strong on,
+ * and warmth helps whoever has the more charm.
+ */
+export function debateOdds(world: World, c: Campaign, p: number, rival: number, topic?: IssueId, posture: Posture = 'policy'): number {
+  const speaker = EFFECT.debateBase + EFFECT.debatePerPoint * (stat(c, p, 'charisma') - stat(c, rival, 'charisma')) - gaffeCut(c, p);
+  let edge = 0;
+  if (topic && c.career) {
+    edge = Math.max(-DEBATE_TOPIC.cap, Math.min(DEBATE_TOPIC.cap, issueEdge(world, c.career, p, rival, ISSUE_IDS.indexOf(topic)) * DEBATE_TOPIC.scale));
+    if (posture === 'policy') edge *= 2;
+  }
+  const charm = posture === 'warm' ? (stat(c, p, 'charisma') >= stat(c, rival, 'charisma') ? 0.06 : -0.04) : 0;
+  return Math.min(0.85, Math.max(0.12, speaker + edge + charm + POSTURE[posture].odds));
+}
+
+/** What is done on a phone, and so wears the same audience out. */
+export const ONLINE: readonly ActionId[] = ['social', 'troops'];
+/** How much of an online action’s effect is left after the others done this week (each one takes a quarter off the next). */
+export const saturation = (pc: PartyCampaign): number => EFFECT.online ** Math.max(0, (pc.used.online ?? 0) - 1);
 
 /** Branch strength below which a state is new ground for the party, where building is slow. */
 export const NEW_GROUND = 20;
@@ -186,7 +225,7 @@ export const CAP = { seat: 0.6, state: 0.3, nat: 0.3, seatTurnout: 0.4, stateTur
 const MONEY = {
   ceramah: 30_000, walkabout: 8_000, megarally: 150_000, build: 60_000,
   tv: 350_000, social: 50_000,
-  townhall: 12_000, charity: 90_000, youth: 40_000, festival: 70_000, manifesto: 120_000, conference: 40_000, local: 45_000,
+  townhall: 12_000, charity: 90_000, youth: 40_000, festival: 70_000, manifesto: 120_000, conference: 40_000, local: 45_000, troops: 80_000,
 };
 
 /** An amount of money scaled to the size of the contest and rounded to a tidy figure. */
@@ -255,7 +294,7 @@ export function actionCost(world: World, c: Campaign, p: number, id: ActionId, t
   let money = 0;
   switch (id) {
     case 'ceramah': case 'walkabout': case 'megarally': case 'build': case 'tv': case 'social':
-    case 'townhall': case 'charity': case 'youth': case 'festival': case 'manifesto': case 'conference': case 'local':
+    case 'townhall': case 'charity': case 'youth': case 'festival': case 'manifesto': case 'conference': case 'local': case 'troops':
       money = scaled(world, MONEY[id]);
       break;
     case 'radio':
@@ -297,13 +336,13 @@ export function canDo(world: World, c: Campaign, p: number, id: ActionId, target
     if (i === undefined) return no('noTarget');
     if (!contests(world, c, i, p)) return no('notContesting');
     // A pitch to one voter group needs that group to be there.
-    if (target.segment !== undefined && (!PITCHED.includes(id) || chief || !(world.seats[i].blocs[BLOC_IDS.indexOf(target.segment)] >= MIN_SEGMENT))) return no('noTarget');
+    if (target.segment !== undefined && (!PITCHED.includes(id) || chief || !(segmentShare(world.seats[i], target.segment) >= MIN_SEGMENT))) return no('noTarget');
   } else if (def.target === 'state') {
     if (!target.state) return no('noTarget');
-    if (target.segment !== undefined && !(MEDIA_AIMED as readonly ActionId[]).includes(id)) return no('noTarget');
+    if (target.segment !== undefined && (!(MEDIA_AIMED as readonly ActionId[]).includes(id) || !isBloc(target.segment))) return no('noTarget');
     // Fundraising dinners work anywhere; everything else needs candidates in the state.
     if (id !== 'dinner' && !contestsState(world, c, p, target.state)) return no('notContesting');
-  } else if (def.target === 'none' && target.segment !== undefined && !(MEDIA_AIMED as readonly ActionId[]).includes(id)) {
+  } else if (def.target === 'none' && target.segment !== undefined && (!(MEDIA_AIMED as readonly ActionId[]).includes(id) || !isBloc(target.segment))) {
     return no('noTarget');
   } else if (def.target === 'party') {
     if (target.party === undefined || !c.parties[target.party]) return no('noTarget');
@@ -362,7 +401,7 @@ const addLateSwing = (c: Campaign, p: number, scale: number) => {
  * uses, with the luck of the day taken at its average of 1 and the seat's room to grow counted in. Nothing for an
  * action that is not aimed at one seat.
  */
-export function expectedSeatGain(world: World, c: Campaign, p: number, id: ActionId, seat: string, segment?: BlocId): number | null {
+export function expectedSeatGain(world: World, c: Campaign, p: number, id: ActionId, seat: string, segment?: SegmentId): number | null {
   if (segment !== undefined && PITCHED.includes(id)) return expectedPitchGain(world, c, p, id, seat, segment);
   const units = seatUnits(world, c, p, id, seat);
   return units === null ? null : Math.round(units * 25 * 10) / 10;
@@ -386,7 +425,7 @@ function seatUnits(world: World, c: Campaign, p: number, id: ActionId, seat: str
  * group (or, with none, to everyone), read off the model itself: so it counts how many of the group are in the seat, how
  * the party stands with them, and which other groups would take it badly. Null for an action that is not aimed at one seat.
  */
-export function expectedPitchGain(world: World, c: Campaign, p: number, id: ActionId, seat: string, segment: BlocId | null): number | null {
+export function expectedPitchGain(world: World, c: Campaign, p: number, id: ActionId, seat: string, segment: SegmentId | null): number | null {
   const units = seatUnits(world, c, p, id, seat);
   const i = world.seatIndex.get(seat);
   if (units === null || i === undefined) return null;
@@ -399,7 +438,7 @@ export function expectedPitchGain(world: World, c: Campaign, p: number, id: Acti
     ...now,
     support: { ...now.support, seat: { ...now.support.seat, [seat]: level }, seatBloc: { ...(now.support.seatBloc ?? {}), [seat]: (now.support.seatBloc?.[seat] ?? zeros2(N_BLOCS, N_PARTIES)).map((row) => [...row]) } },
   };
-  level[p] += segment === null ? units : addPitch(next, seat, p, segment, units, CAP.seat * 1.5);
+  level[p] += segment === null ? units : addAimedPitch(next, s, p, segment, units, CAP.seat * 1.5);
   const after = projectSeat(s, i, world.baseline, next, undefined, stood);
   const share = (o: typeof before) => (o.valid > 0 ? o.votes[p] / o.valid : 0);
   return Math.round((share(after) - share(before)) * 100 * 10) / 10;
@@ -433,6 +472,8 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
   const cost = actionCost(world, c, p, id, target, chief);
   const st = actionState(world, id, target);
 
+  // Posts and the work of a hand on the keyboards share the same audience: each one in a week lands on a more tired one.
+  if (ONLINE.includes(id)) pc.used.online = (pc.used.online ?? 0) + 1;
   pc.days -= cost.days;
   pc.funds -= cost.money;
   pc.spent += cost.money;
@@ -441,7 +482,8 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
   pc.used[key] = (pc.used[key] ?? 0) + 1;
 
   // Luck: how well it went on the day.
-  const roll = 0.6 + 0.8 * rng.next();
+  // What is done outdoors depends on the sky over the state; what is said on a phone does not.
+  const roll = (0.6 + 0.8 * rng.next()) * weatherFactor(world, c, id, st ?? (target.seat ? world.seats[world.seatIndex.get(target.seat)!]?.state : undefined));
   let quality: Quality = roll < 0.85 ? 'weak' : roll < 1.2 ? 'ok' : 'great';
   let raised: number | undefined;
   // A divided party's branches do not turn out for it.
@@ -452,7 +494,7 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
   const organised = edge(c, p, 'organisation');
   const onAir = mediaBoost(c, p);
   // A medium aimed at one voter group reaches it more and the others less.
-  const aimed = (reach: number[]) => (target.segment !== undefined && !chief ? aimReach(reach, target.segment) : reach);
+  const aimed = (reach: number[]) => (target.segment !== undefined && !chief && isBloc(target.segment) ? aimReach(reach, target.segment) : reach);
 
   switch (id) {
     case 'ceramah':
@@ -463,7 +505,7 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       const base = (id === 'ceramah' ? EFFECT.ceramah : EFFECT.walkabout) * (chief ? CHIEF.draw * chiefHand(world, c, p, st) : 1);
       const units = base * presence * KIND_FACTOR[id][seat.kind] * roll * room(s[p], CAP.seat);
       // Pitched to one voter group, the lift is theirs, and goes down with groups unlike them; otherwise it is everyone's.
-      s[p] += target.segment !== undefined && !chief ? addPitch(c.dyn, seat.id, p, target.segment, units, CAP.seat * 1.5) : units;
+      s[p] += target.segment !== undefined && !chief ? addAimedPitch(c.dyn, seat, p, target.segment, units, CAP.seat * 1.5) : units;
       if (id === 'ceramah') {
         const t = seatTurnout(c, seat.id);
         t[p] += EFFECT.ceramahMotivation * (chief ? CHIEF.draw : 1) * roll * room(t[p], CAP.seatTurnout);
@@ -498,19 +540,38 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       addLateSwing(c, p, 1);
       break;
     case 'social': {
+      const tired = saturation(pc);
       // Social media is a lottery: mostly fine, sometimes huge, sometimes a self-own.
       const r = rng.next();
       // Someone who knows the medium reads a post before it goes out.
       const flop = 0.1 - gaffeCut(c, p);
       const mult = r < flop ? -0.3 : r < 0.7 ? 1 : r < 0.95 ? 1.8 : 3.5;
       quality = r < flop ? 'flop' : r < 0.7 ? 'ok' : r < 0.95 ? 'great' : 'viral';
-      boostBlocs(c.dyn.support.nat, p, EFFECT.social * mult * (mult > 0 ? onAir : 1), aimed(SOCIAL_REACH), CAP.nat);
+      boostBlocs(c.dyn.support.nat, p, EFFECT.social * mult * (mult > 0 ? onAir * tired : 1), aimed(SOCIAL_REACH), CAP.nat);
       if (mult > 1) addLateSwing(c, p, 0.5);
       break;
     }
     case 'billboards':
       boostBlocs(stateSupport(c, st!), p, EFFECT.billboards * onAir * roll, null, CAP.state);
       break;
+    case 'troops': {
+      // A hand on the keyboards: accounts that are not people say what people would not. It works, for a while, and the longer it goes on the likelier it is to come out.
+      const rival = target.party!;
+      const tired = saturation(pc);
+      const exposed = EFFECT.troopsExposed + EFFECT.troopsStep * plays(pc, 'troops') - gaffeCut(c, p) - 0.03 * (stat(c, p, 'cunning') - 3);
+      if (rng.next() < exposed) {
+        boostBlocs(c.dyn.support.nat, p, -EFFECT.troopsBackfire, null, CAP.nat);
+        boostBlocs(c.dyn.support.nat, rival, EFFECT.troopsBackfire / 4, null, CAP.nat);
+        if (c.career && p === c.player) c.career.credibility = Math.max(0, c.career.credibility - EFFECT.troopsCred);
+        quality = 'backfire';
+      } else {
+        boostBlocs(c.dyn.support.nat, rival, -EFFECT.troops * tired * onAir, SOCIAL_REACH, CAP.nat);
+        boostBlocs(c.dyn.support.nat, p, EFFECT.troopsSelf * tired, SOCIAL_REACH, CAP.nat);
+        quality = 'ok';
+      }
+      notePlay(pc, 'troops');
+      break;
+    }
     case 'attack': {
       // In a career, what the party has dug up over the years makes an attack sharper and safer. Each one uses some up.
       const dossier = p === c.player && c.career ? c.career.dossier : 0;
@@ -539,7 +600,7 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
         quality = 'flop';
       } else {
         const units = EFFECT.townhall * presence * TOWNHALL_KIND[seat.kind] * roll * room(s[p], CAP.seat);
-        s[p] += target.segment !== undefined && !chief ? addPitch(c.dyn, seat.id, p, target.segment, units, CAP.seat * 1.5) : units;
+        s[p] += target.segment !== undefined && !chief ? addAimedPitch(c.dyn, seat, p, target.segment, units, CAP.seat * 1.5) : units;
         quality = roll < 0.85 ? 'ok' : 'great';
       }
       if (!chief && !pc.visits.includes(seat.id)) pc.visits.push(seat.id);
@@ -583,17 +644,18 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       break;
     }
     case 'debate': {
-      // A fair fight on live television: it goes to the better performer, and a repeat is worth less.
+      // A fair fight on live television: it goes to the better performer, and a repeat is worth less. The question asked and how it is answered count.
       const rival = target.party!;
       const first = EFFECT.debateRepeat ** plays(pc, 'debate');
-      const odds = Math.min(0.8, Math.max(0.15, EFFECT.debateBase + EFFECT.debatePerPoint * (stat(c, p, 'charisma') - stat(c, rival, 'charisma')) - gaffeCut(c, p)));
+      const odds = debateOdds(world, c, p, rival, target.topic, target.posture);
+      const post = POSTURE[target.posture ?? 'policy'];
       if (rng.next() < odds) {
-        boostBlocs(c.dyn.support.nat, p, EFFECT.debate * first * onAir, TV_REACH, CAP.nat);
-        boostBlocs(c.dyn.support.nat, rival, -EFFECT.debateRival * first, null, CAP.nat);
+        boostBlocs(c.dyn.support.nat, p, EFFECT.debate * first * onAir * post.gain, TV_REACH, CAP.nat);
+        boostBlocs(c.dyn.support.nat, rival, -EFFECT.debateRival * first * post.rival, null, CAP.nat);
         addLateSwing(c, p, 0.5);
         quality = 'great';
       } else {
-        boostBlocs(c.dyn.support.nat, p, -EFFECT.debateLoss, null, CAP.nat);
+        boostBlocs(c.dyn.support.nat, p, -EFFECT.debateLoss * post.loss, null, CAP.nat);
         quality = 'weak';
       }
       notePlay(pc, 'debate');

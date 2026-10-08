@@ -120,3 +120,64 @@ export function aimReach(reach: number[], target: BlocId): number[] {
     return r * factor;
   });
 }
+
+// ---------- groups that are not one of the thirteen ----------
+
+/**
+ * Three more groups a seat event can be aimed at, made of the thirteen: the voters who have not made up their minds (more of
+ * them where the last result was close), the young of the villages, and the fishing families of the coast. Each is a mix of
+ * groups with a share of the seat worked out from the seat itself.
+ */
+export const OVERLAY_IDS = ['swing', 'ruralYouth', 'fishers'] as const;
+export type OverlayId = (typeof OVERLAY_IDS)[number];
+export type SegmentId = BlocId | OverlayId;
+export const isOverlay = (s: string): s is OverlayId => (OVERLAY_IDS as readonly string[]).includes(s);
+export const isBloc = (s: string): s is BlocId => (BLOC_IDS as readonly string[]).includes(s);
+
+const COASTAL = ['kelantan', 'terengganu', 'pahang', 'melaka', 'perlis', 'penang', 'kedah', 'perak', 'selangor', 'johor', 'sabah', 'sarawak', 'labuan'];
+/** What each of the three is made of, as shares of a pitch aimed at it. The swing has no groups of its own: it is anyone who can still be moved. */
+export const OVERLAY_MIX: Record<Exclude<OverlayId, 'swing'>, Partial<Record<BlocId, number>>> = {
+  ruralYouth: { undi18: 0.6, heartland: 0.2, felda: 0.1, agri: 0.1 },
+  fishers: { agri: 0.5, heartland: 0.3, borneo_native: 0.2 },
+};
+/** How much more a pitch to the undecided is worth where many are, and how much less where few are: a plain pitch is 1. */
+export const SWING = { base: 0.7, per: 2 };
+
+const lastMargin = (seat: SeatData): number => {
+  const v = [...seat.last.votes].sort((a, b) => b - a);
+  const total = v.reduce((a, b) => a + b, 0);
+  return total > 0 ? (v[0] - (v[1] ?? 0)) / total : 1;
+};
+
+/** The share of a seat's voters in a group of either kind. */
+export function segmentShare(seat: SeatData, id: SegmentId): number {
+  if (isBloc(id)) return seat.blocs[BLOC_IDS.indexOf(id)];
+  if (id === 'swing') return Math.max(0.05, Math.min(0.35, 0.35 - 1.5 * lastMargin(seat)));
+  if (id === 'ruralYouth') return Math.min(0.4, seat.blocs[BLOC_IDS.indexOf('undi18')] * (0.5 + (1 - seat.urbanity)) * 1.2);
+  return COASTAL.includes(seat.state) && seat.kind !== 'urban' ? Math.min(0.2, 0.25 * (seat.blocs[BLOC_IDS.indexOf('agri')] + seat.blocs[BLOC_IDS.indexOf('heartland')])) : 0;
+}
+
+/** The groups of either kind a seat has enough of to be pitched to, the biggest first. */
+export function segmentsOf(seat: SeatData): SegmentId[] {
+  return [...segmentsIn(seat), ...OVERLAY_IDS.filter((id) => segmentShare(seat, id) >= MIN_SEGMENT)];
+}
+
+/** The ordinary groups that take a pitch to this one badly. */
+export function resentfulOf(seat: SeatData, id: SegmentId): BlocId[] {
+  if (isBloc(id)) return resentful(seat, id);
+  if (id === 'swing') return [];
+  const parts = Object.keys(OVERLAY_MIX[id]) as BlocId[];
+  return [...new Set(parts.flatMap((b) => resentful(seat, b)))];
+}
+
+/** Adds the lift of a pitch aimed at a group of either kind. Returns the part that is seen by all. */
+export function addAimedPitch(dyn: Dynamics, seat: SeatData, p: number, id: SegmentId, units: number, cap: number): number {
+  if (isBloc(id)) return addPitch(dyn, seat.id, p, id, units, cap);
+  if (id === 'swing') {
+    // The undecided are everyone and no one: the lift is a plain one, worth more where the seat is close.
+    return units * Math.max(0.5, SWING.base + SWING.per * segmentShare(seat, 'swing'));
+  }
+  let seen = 0;
+  for (const [b, w] of Object.entries(OVERLAY_MIX[id]) as [BlocId, number][]) seen += addPitch(dyn, seat.id, p, b, units * w, cap);
+  return seen;
+}

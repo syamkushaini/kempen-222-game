@@ -242,6 +242,19 @@ export function blocSizes(world: World): number[] {
   return size;
 }
 
+/**
+ * How much nearer party `a` stands to the voters on an issue than party `b` does, weighting each bloc by its size and by
+ * how much it cares: above zero where a's line is the one the country would choose, below it where b's is.
+ */
+export function issueEdge(world: World, career: Career, a: number, b: number, issue: number): number {
+  const size = blocSizes(world);
+  let edge = 0;
+  for (let bloc = 0; bloc < N_BLOCS; bloc++) {
+    edge += size[bloc] * CARE[bloc][issue] * (Math.abs(career.stances[b][issue] - IDEAL[bloc][issue]) - Math.abs(career.stances[a][issue] - IDEAL[bloc][issue]));
+  }
+  return edge * career.salience[issue];
+}
+
 /** The blocs that most like and most dislike a move to `to` on an issue, for showing the trade-off. */
 export function stanceReaction(career: Career, issue: number, from: number, to: number): { bloc: BlocId; change: number }[] {
   return BLOC_IDS.map((bloc, b) => ({

@@ -162,6 +162,7 @@ function playerNews(c: Campaign, r: ActionReport): NewsItem {
     case 'debate': return item(`news.me.debate.${quality === 'great' ? 'won' : 'lost'}`, { party: ref.party(target.party!) }, quality === 'great' ? 'good' : 'bad');
     case 'manifesto': return item(`news.me.manifesto.${quality === 'weak' ? 'weak' : 'ok'}`, {}, quality === 'weak' ? 'bad' : 'good');
     case 'radio': return item('news.me.radio', { state: ref.state(target.state!) });
+    case 'troops': return item(`news.me.troops.${quality === 'backfire' ? 'backfire' : 'ok'}`, { party: ref.party(target.party!) }, quality === 'backfire' ? 'bad' : 'neutral');
     case 'local': return item('news.me.local', { state: ref.state(target.state!) }, 'good');
   }
 }

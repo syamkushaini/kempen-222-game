@@ -1,5 +1,6 @@
 import type { StandDowns } from '../transfer';
-import type { BlocId, Dynamics, Region, RegionId } from '../types';
+import type { Dynamics, Region, RegionId } from '../types';
+import type { SegmentId } from './segments';
 
 export type Difficulty = 'easy' | 'normal' | 'hard';
 export type Phase = 'term' | 'campaign' | 'night' | 'formation' | 'done';
@@ -13,12 +14,17 @@ export const ACTION_IDS = [
   'dinner', 'crowdfund', 'tycoon',
   // Added later, each with a catch: a different audience, a risk, or a price paid in something other than money.
   'townhall', 'charity', 'youth', 'festival', 'conference', 'debate', 'manifesto', 'radio',
+  // Paid for in the dark: a hand on the keyboards.
+  'troops',
   // The thing that is done in one state and no other.
   'local',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 export type Family = 'ground' | 'machinery' | 'media' | 'funds';
 export type TargetKind = 'seat' | 'state' | 'party' | 'none';
+
+export type Posture = 'policy' | 'attack' | 'warm';
+export const POSTURES: readonly Posture[] = ['policy', 'attack', 'warm'];
 
 export interface ActionTarget {
   seat?: string;
@@ -27,7 +33,10 @@ export interface ActionTarget {
   /** Party index, for attacks. */
   party?: number;
   /** The voter group a seat event is pitched to; absent for one pitched to everyone. */
-  segment?: BlocId;
+  segment?: SegmentId;
+  /** A debate: the issue the question is about, and how the player answers it. */
+  topic?: IssueId;
+  posture?: Posture;
 }
 
 /** How an action turned out; drives the news line and nothing else. */

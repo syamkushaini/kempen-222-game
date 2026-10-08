@@ -1,7 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
-import { ACTIONS, PITCHED, actionCost, canDo, expectedPitchGain, expectedSeatGain, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
-import { MEDIA_AIMED, resentful, segmentsIn } from '../sim/campaign/segments';
+import { ACTIONS, PITCHED, actionCost, canDo, expectedPitchGain, expectedSeatGain, debateOdds, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
+import { ISSUE_IDS, POSTURES, type IssueId, type Posture } from '../sim/campaign/types';
+import { weatherIn } from '../sim/campaign/weather';
+import { MEDIA_AIMED, resentfulOf, segmentShare, segmentsOf, type SegmentId } from '../sim/campaign/segments';
 import { probeChance } from '../sim/campaign/spending';
 import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
@@ -17,7 +19,7 @@ import { EntriesPanel } from './Entries';
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
   { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival', 'local'] },
   { family: 'machinery', actions: ['canvass', 'gotv', 'build', 'conference'] },
-  { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack'] },
+  { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack', 'troops'] },
   { family: 'funds', actions: ['dinner', 'crowdfund', 'tycoon'] },
 ];
 
@@ -25,7 +27,7 @@ const FAMILIES: { family: Family; actions: ActionId[] }[] = [
 const ACTION_ICON: Record<ActionId, IconName> = {
   ceramah: 'megaphone', walkabout: 'walk', megarally: 'flag', canvass: 'home', gotv: 'ballot', build: 'tool',
   tv: 'tv', social: 'phone', billboards: 'board', attack: 'bolt', dinner: 'coins', crowdfund: 'heart', tycoon: 'crown',
-  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic', local: 'flag',
+  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic', local: 'flag', troops: 'bolt',
 };
 
 const GROUPS_KEY = 'k222.groups';
@@ -66,7 +68,11 @@ export function ActionsTab() {
   };
 
   // The voter group a seat event is pitched to; a new seat starts with a pitch to everyone.
-  const [segment, setSegment] = useState<BlocId | null>(null);
+  const [segment, setSegment] = useState<SegmentId | null>(null);
+  // A debate: the question to be answered, and the way of answering it.
+  const hottest = campaign.career ? [...ISSUE_IDS].sort((a, b) => campaign.career!.salience[ISSUE_IDS.indexOf(b)] - campaign.career!.salience[ISSUE_IDS.indexOf(a)]).slice(0, 4) : [];
+  const [debateTopic, setDebateTopic] = useState<IssueId | undefined>(undefined);
+  const [debatePosture, setDebatePosture] = useState<Posture>('policy');
   // The voter group a television, radio or social media push is aimed at; nobody in particular to begin with.
   const [mediaSegment, setMediaSegment] = useState<BlocId | null>(null);
   useEffect(() => { setSegment(null); }, [selectedSeat]);
@@ -202,7 +208,7 @@ export function ActionsTab() {
         return row(id, target, id, `${name} — ${stateName}${aimed}`, extraFor(id, target));
       }
       case 'party':
-        return rivals.map((r) => row(id, { party: r }, `${id}-${r}`, `${name} — ${partyShort(t, r)}`));
+        return rivals.map((r) => row(id, { party: r, ...(id === 'debate' ? { topic: debateTopic, posture: debatePosture } : {}) }, `${id}-${r}`, `${name} — ${partyShort(t, r)}`, id === 'debate' && campaign.career ? t('debate.odds', { pct: Math.round(debateOdds(world, campaign, me, r, debateTopic, debatePosture) * 100) }) : undefined));
       default: {
         const target: ActionTarget = mediaSegment && MEDIA_AIMED.includes(id as never) ? { segment: mediaSegment } : {};
         return row(id, target, id, target.segment ? `${name} · ${t(`bloc.${target.segment}`)}` : name, extraFor(id, target));
@@ -241,6 +247,7 @@ export function ActionsTab() {
           </ul>
         </details>
       )}
+      <p className={`muted small weather weather-${weatherIn(world, campaign, state)}`}>{t(`weather.${weatherIn(world, campaign, state)}` as StringKey, { state: regionLabel(t, world, state) })}</p>
       {FAMILIES.map(({ family, actions: all }) => {
         const actions = all.filter((id) => world.rules.actions.includes(id));
         if (actions.length === 0) return null;
@@ -256,6 +263,18 @@ export function ActionsTab() {
               )}
               {actions.map((id) => (
                 <li key={id} className="action-group">
+                  {id === 'debate' && hottest.length > 0 && (
+                    <section className="pitch" aria-label={t('debate.prep')}>
+                      <p className="muted small"><strong>{t('debate.prep')}</strong> — {t('debate.prep.note')}</p>
+                      <div className="chips" role="group" aria-label={t('debate.topic')}>
+                        <button className={debateTopic === undefined ? 'chip active' : 'chip'} aria-pressed={debateTopic === undefined} onClick={() => setDebateTopic(undefined)}>{t('debate.topic.any')}</button>
+                        {hottest.map((i) => <button key={i} className={debateTopic === i ? 'chip active' : 'chip'} aria-pressed={debateTopic === i} onClick={() => setDebateTopic(i)}>{t(`issue.${i}`)}</button>)}
+                      </div>
+                      <div className="chips" role="group" aria-label={t('debate.posture')}>
+                        {POSTURES.map((x) => <button key={x} className={debatePosture === x ? 'chip active' : 'chip'} aria-pressed={debatePosture === x} title={t(`debate.posture.${x}.desc` as StringKey)} onClick={() => setDebatePosture(x)}>{t(`debate.posture.${x}` as StringKey)}</button>)}
+                      </div>
+                    </section>
+                  )}
                   <Brief className="muted small action-desc" jargon text={t(`action.${id}.desc${fog && id === 'attack' ? '.fog' : ''}` as StringKey)} />
                   <ul>{render(id)}</ul>
                 </li>
@@ -291,17 +310,17 @@ function MediaAim({ segment, onPick }: { segment: BlocId | null; onPick(b: BlocI
  * shows, for each group in the seat, how many of the voters it is and what a night aimed at it should add to the party's
  * share here, beside the same night pitched to everyone. The biggest group is not always the best aim: the others may not like it.
  */
-function PitchPicker({ seatId, segment, onPick }: { seatId: string; segment: BlocId | null; onPick(b: BlocId | null): void }) {
+function PitchPicker({ seatId, segment, onPick }: { seatId: string; segment: SegmentId | null; onPick(b: SegmentId | null): void }) {
   const t = useT();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const me = campaign.player;
   const seat = world.seats[world.seatIndex.get(seatId)!];
-  const gain = (b: BlocId | null) => expectedPitchGain(world, campaign, me, 'ceramah', seatId, b) ?? 0;
-  const best = segmentsIn(seat);
-  const gains = new Map<BlocId | null, number>([[null, gain(null)], ...best.map((b) => [b, gain(b)] as [BlocId, number])]);
+  const gain = (b: SegmentId | null) => expectedPitchGain(world, campaign, me, 'ceramah', seatId, b) ?? 0;
+  const best = segmentsOf(seat);
+  const gains = new Map<SegmentId | null, number>([[null, gain(null)], ...best.map((b) => [b, gain(b)] as [SegmentId, number])]);
   const top = [...gains.entries()].sort((a, b) => b[1] - a[1])[0][0];
-  const bad = segment ? resentful(seat, segment) : [];
+  const bad = segment ? resentfulOf(seat, segment) : [];
   const pts = (n: number) => `${n >= 0 ? '+' : '−'}${Math.abs(n).toFixed(1)}`;
   return (
     <section className="pitch" aria-label={t('pitch.title')}>
@@ -312,7 +331,7 @@ function PitchPicker({ seatId, segment, onPick }: { seatId: string; segment: Blo
         </button>
         {best.map((b) => (
           <button key={b} className={segment === b ? 'chip active' : 'chip'} aria-pressed={segment === b} onClick={() => onPick(b)}>
-            {top === b && '★ '}{t(`bloc.${b}`)} <span className="num dim">{Math.round(seat.blocs[BLOC_IDS.indexOf(b)] * 100)}% · {pts(gains.get(b)!)}</span>
+            {top === b && '★ '}{t(`bloc.${b}`)} <span className="num dim">{Math.round(segmentShare(seat, b) * 100)}% · {pts(gains.get(b)!)}</span>
           </button>
         ))}
       </div>
