@@ -38,6 +38,8 @@ import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layer
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
 import { signSupply, type SupplyPrice } from '../sim/campaign/supply';
+import { merge } from '../sim/campaign/merge';
+import { nameShadow } from '../sim/campaign/shadow';
 import { resolveAgenda } from '../sim/campaign/agenda';
 import { discipline, doActivity, rebrand, setAside, trade, type Discipline, type ActivityId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
@@ -204,6 +206,10 @@ interface Store {
   /** Career: changes the standing orders for the weeks between elections. */
   setOrders(patch: Partial<Orders>): void;
   invest(lots: number): void;
+  /** The opposition names someone to shadow a portfolio. */
+  shadow(portfolio: PortfolioId): void;
+  /** Takes a small ally into the player's party. */
+  merge(party: number): void;
   /** Opens a seat to the leader's choice of candidate, for half a day. */
   openSeat(seat: string): void;
   /** The leader stands in a seat themselves. */
@@ -429,6 +435,8 @@ export const useStore = create<Store>((set, get) => {
     rebrand: (identity) => mutate((c, g, world) => { if (rebrand(world, c)) g.identity = identity; }),
     openSeat: (seat) => mutate((c, _g, world) => { openSeat(world, c, seat); }),
     standLeader: (seat) => mutate((c, _g, world) => { standLeader(world, c, seat); }),
+    merge: (party) => mutate((c, _g, world) => { merge(world, c, party); }),
+    shadow: (portfolio) => mutate((c, _g, world) => { nameShadow(world, c, portfolio); }),
     invest: (lots) => mutate((c, _g, world) => { invest(world, c, lots); }),
     trade: (holding, lots) => mutate((c, _g, world) => { trade(world, c, holding, lots); }),
     activity: (id) => mutate((c, _g, world) => { doActivity(world, c, id); }),

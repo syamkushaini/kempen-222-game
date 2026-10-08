@@ -415,6 +415,10 @@ export interface Career {
   redraw?: { by: number | null };
   /** The party's factions and wings, made the first time they are looked at (see factions.ts). */
   factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[] };
+  /** The shadow cabinet the player has named from the opposition benches, by portfolio (see shadow.ts). */
+  shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
+  /** Parties the player's party has taken in, in this career so far (see merge.ts). */
+  merged?: number[];
   /** Parties that keep the player's government in office from outside the cabinet, and until when (see supply.ts). */
   supply?: { party: number; until: number; price: 'cash' | 'policy' }[];
   /** The week each state's branches were last disciplined, by state. */

@@ -25,7 +25,9 @@ import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
 import { agendaTerm } from './agenda';
+import { foldMerged, standMerged } from './merge';
 import { supplyWeek } from './supply';
+import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
 import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, fatigueOf, grassrootsLift, holdingsWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
@@ -157,6 +159,8 @@ function takeOffice(c: Campaign): void {
   formCabinet(c, rng);
   c.rng = rng.state;
   makeObligations(c);
+  // A shadow cabinet has done its work once the party governs.
+  if (inGovernment(c, c.player)) delete c.career!.shadow;
   c.career!.bills = [];
   // A deal made with one government does not bind the next.
   delete c.career!.supply;
@@ -387,6 +391,7 @@ export function termWeek(world: World, c: Campaign): void {
   if (c.inbox.length === 0 && world.rules.kind !== 'state' && roundDue(c) !== null) raise(c, 'statePolls');
   agendaTerm(world, c);
   supplyWeek(c);
+  shadowWeek(c);
   factionsWeek(c);
   redrawWeek(c);
   if (c.inbox.length === 0 && partyPollWeek(c)) partyPoll(c, rng);
@@ -563,6 +568,8 @@ export function beginCampaign(world: World, c: Campaign): void {
   c.inbox = [];
   openCampaign(world, c);
   openNominations(world, c);
+  // Parties that were taken in do not stand.
+  standMerged(world, c);
   // Members and branches built over the years tell on polling day, in every seat the party stands in.
   const lift = grassrootsLift(world, c);
   if (lift > 0) {
@@ -582,7 +589,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   const k = c.career;
   const outcome = c.formation?.outcome;
   if (!k || k.midterm || !outcome || c.phase !== 'done' || !c.election) return false;
-  const recorded = recordResults(world, c);
+  const recorded = foldMerged(c, recordResults(world, c));
   closeSlate(world, c);
   const rng = new Rng(c.rng);
   // Every third parliament the boundaries are drawn again, and the seats the next term is fitted to are the redrawn ones.
@@ -598,6 +605,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     stances: k.stances, stances0: k.stances.map((row) => [...row]),
     // Acts already passed are not promised again, by anyone.
     ...(k.laws?.length ? { laws: [...k.laws] } : {}),
+    ...(k.shadow ? { shadow: { ...k.shadow } } : {}),
     manifesto: next.manifesto.map((m, p) => withoutLaws(k, p === c.player ? k.manifesto[p] : m)),
     promises: k.promises, flags: k.flags,
     economy: k.economy, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, record: k.record, states: k.states,

@@ -10,6 +10,8 @@ import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/typ
 import { MAX_MEASURES } from '../sim/campaign/office';
 import { SUPPLY_CASH, canSupply } from '../sim/campaign/supply';
 import { houseTally } from '../sim/campaign/contests';
+import { SHADOW_COST, canShadow, shadowOf } from '../sim/campaign/shadow';
+import { PORTFOLIO_IDS } from '../sim/campaign/types';
 import { majorityLine } from '../sim/election';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
@@ -135,6 +137,7 @@ export function GovernmentTab() {
       )}
 
       {pm && <SupplyDeals />}
+      {seat === 'opp' && <ShadowCabinet />}
 
       {(k.appointments?.length ?? 0) > 0 && (
         <section className="appointments" aria-label={t('appoint.title')}>
@@ -339,6 +342,40 @@ function SupplyDeals() {
         ))}
       </ul>
       {rows.every((r) => !r.cash.ok && !r.policy.ok && !why(r.cash) && !why(r.policy)) && deals.length === 0 && <p className="muted small">{t('supply.none')}</p>}
+    </>
+  );
+}
+
+
+/** The opposition's cabinet in waiting: someone to shadow each post. */
+function ShadowCabinet() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const shadow = useStore((s) => s.shadow);
+  const named = shadowOf(campaign);
+  const may = canShadow(world, campaign);
+  return (
+    <>
+      <h3>{t('shadow.title')} <span className="muted small num">{Object.keys(named).length} / {PORTFOLIO_IDS.length}</span></h3>
+      <p className="muted small action-desc">{t('shadow.desc', { rm: f.rm(scaled(world, SHADOW_COST)) })}</p>
+      <ul>
+        {PORTFOLIO_IDS.map((id) => {
+          const who = named[id];
+          return (
+            <li className="action" key={id}>
+              <div className="grow">
+                <span className="action-title">{t(`portfolio.${id}`)}</span>
+                <span className="action-meta">
+                  {who ? <>{MINISTER_NAMES[who.name]} <span aria-label={t('house.skill', { n: who.skill })}>{'★'.repeat(who.skill)}{'☆'.repeat(5 - who.skill)}</span></> : t('shadow.empty')}
+                </span>
+              </div>
+              <button className="btn small" disabled={!may} onClick={() => shadow(id)}>{t(who ? 'shadow.replace' : 'shadow.name')}</button>
+            </li>
+          );
+        })}
+      </ul>
     </>
   );
 }

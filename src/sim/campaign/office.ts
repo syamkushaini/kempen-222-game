@@ -226,12 +226,16 @@ export function candidatesFor(c: Campaign, portfolio: PortfolioId): Candidate[] 
   const used = new Set<number>(k.cabinet.filter((m) => m.portfolio !== portfolio).map((m) => m.name));
   const kinds = [...MINISTER_TRAITS];
   for (let i = kinds.length - 1; i > 0; i--) { const j = rng.int(i + 1); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; }
-  return kinds.slice(0, 3).map((trait) => {
+  const options = kinds.slice(0, 3).map((trait) => {
     let name = rng.int(MINISTER_NAMES.length);
     for (let i = 0; i < MINISTER_NAMES.length && used.has(name); i++) name = (name + 1) % MINISTER_NAMES.length;
     used.add(name);
     return { name, skill: skillFor(trait, rng), trait };
   });
+  // Whoever shadowed the post from the opposition benches is first on the list.
+  const shadow = k.shadow?.[portfolio];
+  if (shadow && !k.cabinet.some((m) => m.portfolio !== portfolio && m.name === shadow.name)) options[0] = { name: shadow.name, skill: shadow.skill, trait: shadow.skill >= 4 ? 'expert' : 'loyalist' };
+  return options;
 }
 
 /** Gives a candidate whose name has just been taken (by a minister, or an option elsewhere that was chosen) another one. */

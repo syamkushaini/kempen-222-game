@@ -16,6 +16,11 @@ export const WITHDRAWN = -2;
  * penalty for being unknown (see `ENTRANT_PENALTY` in project.ts).
  */
 export const ENTERS = -3;
+/**
+ * In a stand-down list: the party has merged into another and no longer stands: this value plus the party it merged into.
+ * Its voters follow far more readily than any pact's.
+ */
+export const MERGED = 1000;
 /** Whether a party's entry in a stand-down list means it has a candidate. */
 export const stands = (v: number | undefined) => v === undefined || v === STANDS || v === ENTERS;
 
@@ -23,6 +28,8 @@ export const stands = (v: number | undefined) => v === undefined || v === STANDS
 export interface Transfer { to: number; home: number }
 
 const DEFAULT: Transfer = { to: 0.35, home: 0.2 };
+/** Where a party has merged into another, its voters follow it. */
+const MERGED_RATE: Transfer = { to: 0.85, home: 0.05 };
 
 /**
  * Voters do not move as their leaders tell them. These rates say how many
@@ -74,12 +81,14 @@ export function transferRate(from: number, to: number): Transfer {
  */
 export function redistribute(shares: number[], stood: number[]): void {
   for (let q = 0; q < shares.length; q++) {
-    const p = stood[q];
-    if (stands(p) || shares[q] === 0) continue;
+    const entry = stood[q];
+    if (stands(entry) || shares[q] === 0) continue;
+    const merged = entry >= MERGED;
+    const p = merged ? entry - MERGED : entry;
     const s = shares[q];
     shares[q] = 0;
     // Where there is no partner to go to, a party's voters stay home as often as they do anywhere, and the rest go to whoever is left.
-    const { to, home } = p === WITHDRAWN ? { to: 0, home: DEFAULT.home } : transferRate(q, p);
+    const { to, home } = p === WITHDRAWN ? { to: 0, home: DEFAULT.home } : merged ? MERGED_RATE : transferRate(q, p);
     let others = 0;
     for (let r = 0; r < shares.length; r++) if (stands(stood[r])) others += shares[r];
     const scatter = (1 - to - home) * s;

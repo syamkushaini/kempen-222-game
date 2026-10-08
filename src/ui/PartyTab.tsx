@@ -10,11 +10,14 @@ import { PARTY_IDS } from '../sim/types';
 import { LEADERS } from '../sim/campaign/cast';
 import { DEFAULT_EMBLEMS, PARTY_COLORS, makeIdentity } from '../state/identity';
 import { PartyCreator, type Draft } from './Setup';
+import type { StringKey } from '../i18n/strings';
+import { MERGER, canMerge } from '../sim/campaign/merge';
+import { houseTally } from '../sim/campaign/contests';
 import { useStore } from '../state/store';
 import { Gauge } from './Gauge';
 import { ConfirmButton } from './SavesTab';
 import { Brief } from './Brief';
-import { regionLabel, useFormat, useT, useWorld } from './hooks';
+import { partyName, regionLabel, useFormat, useT, useWorld } from './hooks';
 
 const LOT = 100_000;
 
@@ -31,6 +34,7 @@ export function PartyTab() {
   const activity = useStore((s) => s.activity);
   const chest = useStore((s) => s.chest);
   const discipline = useStore((s) => s.discipline);
+  const merge = useStore((s) => s.merge);
   const [rebranding, setRebranding] = useState(false);
   const [pickedState, setPickedState] = useState<string | null>(null);
   const k = campaign.career;
@@ -138,6 +142,34 @@ export function PartyTab() {
             <ConfirmButton className="btn small" label={t('party.discipline.suspend', { n: DISCIPLINE.suspend.branches })} confirmLabel={t('party.discipline.confirm')} disabled={!term || !canDiscipline(world, campaign, st)} onConfirm={() => discipline(st, 'suspend')} />
             <ConfirmButton className="btn small" label={t('party.discipline.dissolve', { n: DISCIPLINE.dissolve.branches })} confirmLabel={t('party.discipline.confirm')} disabled={!term || !canDiscipline(world, campaign, st)} onConfirm={() => discipline(st, 'dissolve')} danger />
           </div>
+        );
+      })()}
+
+      <h3>{t('party.merge')}</h3>
+      <p className="muted small action-desc">{t('party.merge.desc', { n: Math.round(MERGER.size * 100), warm: MERGER.warmth })}</p>
+      {(() => {
+        const seats = houseTally(world, campaign);
+        const rows = seats.map((n, p) => ({ n, p })).filter(({ n, p }) => n > 0 && p !== campaign.player && !!campaign.parties[p]);
+        const mergedNow = k.merged ?? [];
+        return (
+          <>
+            {mergedNow.length > 0 && <p className="note">{t('party.merge.done', { parties: mergedNow.map((p) => partyName(t, p)).join(', ') })}</p>}
+            <ul>
+              {rows.map(({ n, p }) => {
+                const check = canMerge(world, campaign, p);
+                if (!check.ok && (check.reason === 'none' || check.reason === 'already' || check.reason === 'phase')) return null;
+                return (
+                  <li className="action" key={p}>
+                    <div className="grow">
+                      <span className="action-title">{partyName(t, p)} <span className="muted small num">· {n}</span></span>
+                      {!check.ok && <span className="action-reason">{t(`party.merge.reason.${check.reason}` as StringKey)}</span>}
+                    </div>
+                    <ConfirmButton className="btn small" label={t('party.merge.do')} confirmLabel={t('party.merge.confirm')} disabled={!term || !check.ok} onConfirm={() => merge(p)} danger />
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         );
       })()}
 
