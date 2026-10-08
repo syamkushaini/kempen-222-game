@@ -17,24 +17,89 @@ interface Tone {
   gain?: number;
   /** Pitch the tone glides to by its end. */
   to?: number;
+  /** Filter a noise burst: [type, cutoff]. Defaults to a low thump filter. */
+  noise?: [BiquadFilterType, number];
+  /** Seconds for the note to swell in; short by default for a crisp start. */
+  attack?: number;
 }
 
 const tone = (f: number, at: number, dur: number, wave: OscillatorType = 'triangle', gain = 0.12, to?: number): Tone => ({ f, at, dur, wave, gain, to });
-const thump = (at: number): Tone[] => [tone(150, at, 0.14, 'sine', 0.4, 55), { f: 0, at, dur: 0.05, gain: 0.18 }];
+const thump = (at: number, gain = 0.4): Tone[] => [
+  tone(170, at, 0.16, 'sine', gain, 48),
+  tone(340, at, 0.05, 'triangle', gain * 0.22, 90),
+  { f: 0, at, dur: 0.06, gain: 0.2, noise: ['lowpass', 1400] },
+];
 
 export const SFX: Record<Sfx, Tone[]> = {
-  click: [tone(700, 0, 0.035, 'triangle', 0.07)],
-  tick: [tone(440, 0, 0.06, 'sine', 0.09), tone(660, 0.05, 0.07, 'sine', 0.06)],
-  ring: [tone(880, 0, 0.09, 'sine'), tone(1175, 0.1, 0.09, 'sine'), tone(880, 0.26, 0.09, 'sine'), tone(1175, 0.36, 0.12, 'sine')],
-  good: [tone(523.25, 0, 0.09), tone(659.25, 0.08, 0.09), tone(783.99, 0.16, 0.2)],
-  bad: [tone(311.13, 0, 0.16, 'sawtooth', 0.05), tone(233.08, 0.13, 0.3, 'sawtooth', 0.05)],
-  coin: [tone(987.77, 0, 0.06, 'square', 0.04), tone(1318.5, 0.06, 0.2, 'square', 0.04)],
-  gavel: [...thump(0), ...thump(0.2)],
-  seat: [tone(520, 0, 0.03, 'sine', 0.04)],
-  seatWon: [tone(659.25, 0, 0.07, 'triangle', 0.13), tone(880, 0.06, 0.14, 'triangle', 0.13)],
-  seatLost: [tone(392, 0, 0.08, 'triangle', 0.1), tone(293.66, 0.07, 0.18, 'triangle', 0.1)],
-  fanfare: [tone(523.25, 0, 0.12), tone(659.25, 0.12, 0.12), tone(783.99, 0.24, 0.12), tone(1046.5, 0.36, 0.5), tone(392, 0.36, 0.5, 'triangle', 0.08)],
-  badge: [tone(783.99, 0, 0.08, 'sine'), tone(987.77, 0.08, 0.08, 'sine'), tone(1174.66, 0.16, 0.08, 'sine'), tone(1567.98, 0.24, 0.35, 'sine')],
+  // A crisp tap with a bright edge, not a flat beep.
+  click: [
+    tone(1250, 0, 0.03, 'triangle', 0.06, 900),
+    tone(2500, 0, 0.018, 'sine', 0.03),
+    { f: 0, at: 0, dur: 0.015, gain: 0.05, noise: ['highpass', 5000] },
+  ],
+  // A wooden knock, two quick hits.
+  tick: [
+    tone(540, 0, 0.045, 'sine', 0.1, 420),
+    tone(1620, 0, 0.02, 'triangle', 0.03),
+    tone(810, 0.055, 0.05, 'sine', 0.06, 640),
+  ],
+  // A bell that rings twice, with its shimmer above.
+  ring: [
+    tone(880, 0, 0.12, 'sine'), tone(1760, 0, 0.08, 'sine', 0.03),
+    tone(1175, 0.13, 0.12, 'sine'), tone(2350, 0.13, 0.08, 'sine', 0.03),
+    tone(880, 0.3, 0.1, 'sine', 0.09),
+    tone(1175, 0.42, 0.16, 'sine', 0.1), tone(2350, 0.42, 0.12, 'sine', 0.025),
+  ],
+  // Good news: a little rising arpeggio with a shine on top.
+  good: [
+    tone(523.25, 0, 0.1), tone(659.25, 0.07, 0.1), tone(783.99, 0.14, 0.12),
+    tone(1046.5, 0.21, 0.28, 'triangle', 0.1),
+    tone(2093, 0.21, 0.18, 'sine', 0.025),
+  ],
+  // Bad news: two sour notes sinking together.
+  bad: [
+    tone(311.13, 0, 0.18, 'sawtooth', 0.045, 293.66),
+    tone(233.08, 0.14, 0.32, 'sawtooth', 0.045, 220),
+    tone(466.16, 0.14, 0.3, 'sine', 0.02, 440),
+  ],
+  // Money: the classic two bright pings, now with a sparkle.
+  coin: [
+    tone(987.77, 0, 0.07, 'square', 0.035),
+    tone(1975.5, 0, 0.05, 'sine', 0.02),
+    tone(1318.5, 0.07, 0.22, 'square', 0.035),
+    tone(2637, 0.07, 0.15, 'sine', 0.02),
+  ],
+  // The Speaker's gavel: two heavy knocks on wood.
+  gavel: [...thump(0), ...thump(0.22, 0.32)],
+  // One seat flips on the tally: a soft pop.
+  seat: [tone(620, 0, 0.035, 'sine', 0.05, 520)],
+  // Your seat: a warm two-note lift with a third above.
+  seatWon: [
+    tone(659.25, 0, 0.08, 'triangle', 0.12),
+    tone(830.61, 0.05, 0.08, 'triangle', 0.1),
+    tone(987.77, 0.1, 0.18, 'triangle', 0.12),
+    tone(1975.5, 0.1, 0.12, 'sine', 0.02),
+  ],
+  // Their seat: two notes sliding down.
+  seatLost: [
+    tone(415.3, 0, 0.09, 'triangle', 0.09, 392),
+    tone(311.13, 0.08, 0.2, 'triangle', 0.09, 293.66),
+  ],
+  // Victory: a brassy call, stacked thirds, held high at the end.
+  fanfare: [
+    tone(523.25, 0, 0.12, 'sawtooth', 0.05), tone(523.25, 0, 0.12, 'triangle', 0.09),
+    tone(659.25, 0.12, 0.12, 'sawtooth', 0.05), tone(659.25, 0.12, 0.12, 'triangle', 0.09),
+    tone(783.99, 0.24, 0.12, 'sawtooth', 0.05), tone(783.99, 0.24, 0.12, 'triangle', 0.09),
+    tone(1046.5, 0.36, 0.55, 'sawtooth', 0.045), tone(1046.5, 0.36, 0.55, 'triangle', 0.1),
+    tone(659.25, 0.36, 0.55, 'triangle', 0.06), tone(392, 0.36, 0.55, 'triangle', 0.06),
+    tone(2093, 0.42, 0.3, 'sine', 0.02),
+  ],
+  // An honour earned: a quick climb of glassy notes.
+  badge: [
+    tone(783.99, 0, 0.08, 'sine'), tone(987.77, 0.07, 0.08, 'sine'),
+    tone(1174.66, 0.14, 0.08, 'sine'), tone(1567.98, 0.21, 0.12, 'sine'),
+    tone(2093, 0.28, 0.3, 'sine', 0.09), tone(3136, 0.28, 0.2, 'sine', 0.02),
+  ],
 };
 
 // ---------- the tune ----------
@@ -43,8 +108,15 @@ export const SFX: Record<Sfx, Tone[]> = {
 export const SCALE = [146.83, 164.81, 185, 220, 246.94, 293.66, 329.63, 369.99, 440, 493.88, 587.33];
 /** The bass note under each bar, as steps of the scale; the tune goes round these. */
 const BASS = [0, 4, 3, 1];
+/** A triad over each bass step, as steps of the scale, for the slow pad. */
+const CHORDS = [
+  [0, 2, 4],
+  [4, 6, 8],
+  [3, 5, 7],
+  [1, 3, 5],
+];
 export const BEATS = 8;
-const BEAT_SECONDS = 0.46;
+const BEAT_SECONDS = 0.44;
 
 /**
  * One bar of melody: for each half-beat a step of the scale, or -1 for a
@@ -68,6 +140,8 @@ type Ctor = typeof AudioContext;
 class Sound {
   private ctx: AudioContext | null = null;
   private out: GainNode | null = null;
+  /** Echo send for the tune's melody, so the line hangs in the air a little. */
+  private echo: DelayNode | null = null;
   private noise: AudioBuffer | null = null;
   private sfx = true;
   private music = false;
@@ -95,9 +169,22 @@ class Sound {
       if (!AC) return;
       try {
         this.ctx = new AC();
+        // Everything goes through a gentle low-pass, so the game never sounds harsh.
         this.out = this.ctx.createGain();
         this.out.gain.value = 0.6;
-        this.out.connect(this.ctx.destination);
+        const warmth = this.ctx.createBiquadFilter();
+        warmth.type = 'lowpass';
+        warmth.frequency.value = 7500;
+        this.out.connect(warmth).connect(this.ctx.destination);
+        // A short echo, fed only by the melody.
+        this.echo = this.ctx.createDelay(1);
+        this.echo.delayTime.value = BEAT_SECONDS * 1.5;
+        const back = this.ctx.createGain();
+        back.gain.value = 0.32;
+        const wet = this.ctx.createGain();
+        wet.gain.value = 0.5;
+        this.echo.connect(back).connect(this.echo);
+        this.echo.connect(wet).connect(this.out);
       } catch { this.ctx = null; return; }
     }
     if (this.ctx.state === 'suspended') void this.ctx.resume().catch(() => undefined);
@@ -125,17 +212,19 @@ class Sound {
     const ctx = this.ctx!;
     const at = start + t.at;
     const env = ctx.createGain();
+    const swell = t.attack ?? attack;
     env.gain.setValueAtTime(0.0001, at);
-    env.gain.linearRampToValueAtTime(t.gain ?? 0.12, at + attack);
-    env.gain.exponentialRampToValueAtTime(0.0001, at + Math.max(t.dur, attack + 0.01));
+    env.gain.linearRampToValueAtTime(t.gain ?? 0.12, at + swell);
+    env.gain.exponentialRampToValueAtTime(0.0001, at + Math.max(t.dur, swell + 0.01));
     env.connect(to);
     if (t.f === 0) {
       this.noise ??= this.makeNoise();
       const src = ctx.createBufferSource();
       src.buffer = this.noise;
       const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = 1800;
+      const [type, freq] = t.noise ?? ['lowpass', 1800];
+      filter.type = type;
+      filter.frequency.value = freq;
       src.connect(filter).connect(env);
       src.start(at);
       src.stop(at + t.dur + 0.02);
@@ -173,18 +262,48 @@ class Sound {
     this.timer = undefined;
   }
 
+  /** A soft drum kit for one bar: kick on the strong beats, hats between. */
+  private drums(at: number): void {
+    if (!this.out) return;
+    for (let i = 0; i < BEATS; i++) {
+      const t = at + i * BEAT_SECONDS;
+      if (i % 2 === 0) {
+        // Kick: a low sine that drops away fast, deepest on the first beat.
+        const hard = i === 0;
+        this.voice({ f: hard ? 120 : 105, at: 0, dur: 0.12, wave: 'sine', gain: hard ? 0.16 : 0.1, to: 42 }, t, this.out, 0.004);
+      } else {
+        // Hat: a tick of bright noise, swung a touch late.
+        this.voice({ f: 0, at: 0.03, dur: 0.03, gain: 0.028, noise: ['highpass', 6500] }, t, this.out, 0.002);
+      }
+    }
+  }
+
   private writeAhead(): void {
     const ctx = this.ctx;
-    if (!ctx || !this.out || ctx.state !== 'running') return;
+    const out = this.out;
+    if (!ctx || !out || ctx.state !== 'running') return;
     // After a pause the clock has moved on: pick the tune up from now rather than racing to catch up.
     if (this.barAt < ctx.currentTime) this.barAt = ctx.currentTime + 0.05;
     while (this.barAt < ctx.currentTime + 1) {
       const length = BEATS * BEAT_SECONDS;
-      const bass = SCALE[BASS[this.bar % BASS.length]];
-      this.voice({ f: bass, at: 0, dur: length * 1.05, wave: 'sine', gain: 0.05 }, this.barAt, this.out, 0.9);
-      this.voice({ f: bass * 1.5, at: 0, dur: length * 1.05, wave: 'triangle', gain: 0.018 }, this.barAt, this.out, 1.2);
+      const chord = this.bar % BASS.length;
+      const bass = SCALE[BASS[chord]];
+      this.drums(this.barAt);
+      // Bass: a round sine with its fifth breathing under it.
+      this.voice({ f: bass / 2, at: 0, dur: length * 1.02, wave: 'sine', gain: 0.07 }, this.barAt, out, 0.5);
+      this.voice({ f: bass * 0.75, at: length / 2, dur: length * 0.5, wave: 'sine', gain: 0.028 }, this.barAt, out, 0.6);
+      // Pad: the bar's chord, swelling in and out slowly.
+      for (const step of CHORDS[chord]) {
+        this.voice({ f: SCALE[step], at: 0, dur: length * 1.05, wave: 'triangle', gain: 0.016, attack: length * 0.4 }, this.barAt, out, length * 0.4);
+        this.voice({ f: SCALE[step] * 2, at: 0, dur: length * 1.05, wave: 'sine', gain: 0.008, attack: length * 0.5 }, this.barAt, out, length * 0.5);
+      }
+      // Melody: the wandering line, sent through the echo.
       melodyBar(this.seed, this.bar).forEach((step, i) => {
-        if (step >= 0) this.voice({ f: SCALE[step], at: i * BEAT_SECONDS, dur: 1.1, wave: 'triangle', gain: 0.035 }, this.barAt, this.out!, 0.01);
+        if (step >= 0) {
+          const note: Tone = { f: SCALE[step], at: i * BEAT_SECONDS, dur: 0.9, wave: 'triangle', gain: 0.038 };
+          this.voice(note, this.barAt, out, 0.01);
+          if (this.echo) this.voice(note, this.barAt, this.echo, 0.01);
+        }
       });
       this.bar++;
       this.barAt += length;
