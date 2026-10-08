@@ -1,10 +1,11 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
-import { ACTIONS, actionCost, canDo, expectedSeatGain, expectedYield, spendingLimit } from '../sim/campaign/actions';
+import { ACTIONS, PITCHED, actionCost, canDo, expectedPitchGain, expectedSeatGain, expectedYield, spendingLimit } from '../sim/campaign/actions';
+import { resentful, segmentsIn } from '../sim/campaign/segments';
 import { probeChance } from '../sim/campaign/spending';
 import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
-import { isMinor, type RegionId } from '../sim/types';
+import { BLOC_IDS, isMinor, type BlocId, type RegionId } from '../sim/types';
 import { useStore } from '../state/store';
 import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld, contestName } from './hooks';
 import { Loan } from './Loan';
@@ -64,19 +65,24 @@ export function ActionsTab() {
     try { localStorage.setItem(GROUPS_KEY, JSON.stringify(next)); } catch { /* the choice is only for this visit */ }
   };
 
+  // The voter group a seat event is pitched to; a new seat starts with a pitch to everyone.
+  const [segment, setSegment] = useState<BlocId | null>(null);
+  useEffect(() => { setSegment(null); }, [selectedSeat]);
+
   const me = campaign.player;
   const pc = campaign.parties[me]!;
   const seat = selectedSeat ? world.seats[world.seatIndex.get(selectedSeat)!] : null;
   // State actions follow the map: the open state, else the selected seat's state, else where the leader is.
   const state: RegionId = selectedState ?? seat?.state ?? pc.location;
   const area = world.rules.kind === 'general' ? 'state' : 'area';
+  const contesting = !!seat && PITCHED.some((id) => world.rules.actions.includes(id)) && canDo(world, campaign, me, 'walkabout', { seat: seat.id }).ok;
   // Attacks are aimed at the parties that matter nationally, not at a party of one seat.
   const rivals = campaign.parties.map((p, i) => (p && i !== me && !isMinor(i) ? i : -1)).filter((i) => i >= 0);
 
   /** Whether an action can be done now, or only waits for the player to pick a seat on the map. */
   const available = (id: ActionId) => {
     const targets: ActionTarget[] =
-      ACTIONS[id].target === 'seat' ? [{ seat: seat?.id }]
+      ACTIONS[id].target === 'seat' ? [{ seat: seat?.id, ...(segment && PITCHED.includes(id) ? { segment } : {}) }]
       : ACTIONS[id].target === 'state' ? [{ state }]
       : ACTIONS[id].target === 'party' ? rivals.map((party) => ({ party }))
       : [{}];
@@ -138,7 +144,7 @@ export function ActionsTab() {
   const row = (id: ActionId, target: ActionTarget, key: string, title: string, extra?: string, hint?: ReactNode) => {
     const check = canDo(world, campaign, me, id, target);
     const cost = actionCost(world, campaign, me, id, target);
-    const gain = target.seat ? expectedSeatGain(world, campaign, me, id, target.seat) : null;
+    const gain = target.seat ? expectedSeatGain(world, campaign, me, id, target.seat, target.segment) : null;
     const reason = check.ok ? null
       : check.reason === 'noTarget' ? t(`reason.noTarget.${ACTIONS[id].target === 'state' ? area : (ACTIONS[id].target as 'seat' | 'party')}`)
       : t(`reason.${check.reason}` as StringKey);
@@ -180,8 +186,11 @@ export function ActionsTab() {
     const name = t(`action.${id}`);
     const stateName = regionLabel(t, world, state);
     switch (ACTIONS[id].target) {
-      case 'seat':
-        return row(id, { seat: seat?.id }, id, `${name} — ${seat ? seat.name : t('actions.noSeat')}`);
+      case 'seat': {
+        const target: ActionTarget = { seat: seat?.id, ...(segment && PITCHED.includes(id) ? { segment } : {}) };
+        const aimed = target.segment ? ` · ${t(`bloc.${target.segment}`)}` : '';
+        return row(id, target, id, `${name} — ${seat ? seat.name : t('actions.noSeat')}${aimed}`);
+      }
       case 'state':
         return row(id, { state }, id, `${name} — ${stateName}`, extraFor(id, { state }));
       case 'party':
@@ -205,6 +214,7 @@ export function ActionsTab() {
         {t('spend.line', { spent: f.rm(pc.spent), limit: f.rm(spendingLimit(world)) })}
         {pc.fined ? ` ${t('spend.fined')}` : pc.spent > spendingLimit(world) ? ` ${fog ? t('spend.over.fog') : t('spend.over', { pct: f.pct(probeChance(world, campaign, me), 0) })}` : ''}
       </p>
+      {seat && contesting && <PitchPicker seatId={seat.id} segment={segment} onPick={setSegment} />}
       {ideas.length > 0 && (
         <details className="action-family suggested" open={open.suggested} onToggle={(e) => setGroup('suggested', e.currentTarget.open)}>
           <summary>
@@ -242,6 +252,42 @@ export function ActionsTab() {
           </details>
         );
       })}
+    </section>
+  );
+}
+
+
+/**
+ * A seat is several electorates at once, and a ceramah, walkabout or town hall can be pitched to one of them. The row
+ * shows, for each group in the seat, how many of the voters it is and what a night aimed at it should add to the party's
+ * share here, beside the same night pitched to everyone. The biggest group is not always the best aim: the others may not like it.
+ */
+function PitchPicker({ seatId, segment, onPick }: { seatId: string; segment: BlocId | null; onPick(b: BlocId | null): void }) {
+  const t = useT();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const me = campaign.player;
+  const seat = world.seats[world.seatIndex.get(seatId)!];
+  const gain = (b: BlocId | null) => expectedPitchGain(world, campaign, me, 'ceramah', seatId, b) ?? 0;
+  const best = segmentsIn(seat);
+  const gains = new Map<BlocId | null, number>([[null, gain(null)], ...best.map((b) => [b, gain(b)] as [BlocId, number])]);
+  const top = [...gains.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  const bad = segment ? resentful(seat, segment) : [];
+  const pts = (n: number) => `${n >= 0 ? '+' : '−'}${Math.abs(n).toFixed(1)}`;
+  return (
+    <section className="pitch" aria-label={t('pitch.title')}>
+      <p className="muted small"><strong>{t('pitch.title')}</strong> — {t('pitch.note')}</p>
+      <div className="chips" role="group" aria-label={t('pitch.title')}>
+        <button className={segment === null ? 'chip active' : 'chip'} aria-pressed={segment === null} onClick={() => onPick(null)}>
+          {top === null && '★ '}{t('pitch.all')} <span className="num dim">{pts(gains.get(null)!)}</span>
+        </button>
+        {best.map((b) => (
+          <button key={b} className={segment === b ? 'chip active' : 'chip'} aria-pressed={segment === b} onClick={() => onPick(b)}>
+            {top === b && '★ '}{t(`bloc.${b}`)} <span className="num dim">{Math.round(seat.blocs[BLOC_IDS.indexOf(b)] * 100)}% · {pts(gains.get(b)!)}</span>
+          </button>
+        ))}
+      </div>
+      {bad.length > 0 && <p className="muted small">{t('pitch.resent', { groups: bad.map((b) => t(`bloc.${b}`)).join(', ') })}</p>}
     </section>
   );
 }

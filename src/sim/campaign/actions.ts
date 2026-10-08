@@ -1,6 +1,7 @@
 import { BLOC_IDS, N_BLOCS, N_PARTIES, isMinor, type BlocId, type Dynamics, type ElectionOutcome, type RegionId, type SeatKind } from '../types';
 import { combineDynamics } from '../dynamics';
 import { projectElection, type World } from '../election';
+import { projectSeat } from '../project';
 import { zeros, zeros2 } from '../math';
 import { Rng } from '../rng';
 import { ENTERS, stands } from '../transfer';
@@ -8,6 +9,7 @@ import { addEndorsements } from './endorserData';
 import { travelCost } from './geo';
 import { edge, fundsBoost, gaffeCut, mediaBoost, stat } from './perks';
 import { chiefHand } from './chiefs';
+import { MIN_SEGMENT, addPitch } from './segments';
 import type {
   ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, PartyCampaign, Quality, TargetKind,
 } from './types';
@@ -64,6 +66,9 @@ export const gotvWeeks = (c: Campaign) => Math.max(1, Math.round(c.totalWeeks / 
 // ---------- tuning ----------
 // Support numbers are logit units: +0.10 in a seat is roughly a 2.5-point gain
 // in vote share in a close two-way race.
+
+/** Events in one seat that can be pitched to one voter group (see segments.ts). */
+export const PITCHED: readonly ActionId[] = ['ceramah', 'walkabout', 'townhall'];
 
 /** How well in-person events land by seat type. Rallies are a rural art; walkabouts suit towns. */
 const KIND_FACTOR: Record<'ceramah' | 'walkabout', Record<SeatKind, number>> = {
@@ -254,6 +259,8 @@ export function canDo(world: World, c: Campaign, p: number, id: ActionId, target
     const i = target.seat === undefined ? undefined : world.seatIndex.get(target.seat);
     if (i === undefined) return no('noTarget');
     if (!contests(world, c, i, p)) return no('notContesting');
+    // A pitch to one voter group needs that group to be there.
+    if (target.segment !== undefined && (!PITCHED.includes(id) || chief || !(world.seats[i].blocs[BLOC_IDS.indexOf(target.segment)] >= MIN_SEGMENT))) return no('noTarget');
   } else if (def.target === 'state') {
     if (!target.state) return no('noTarget');
     // Fundraising dinners work anywhere; everything else needs candidates in the state.
@@ -315,18 +322,47 @@ const addLateSwing = (c: Campaign, p: number, scale: number) => {
  * uses, with the luck of the day taken at its average of 1 and the seat's room to grow counted in. Nothing for an
  * action that is not aimed at one seat.
  */
-export function expectedSeatGain(world: World, c: Campaign, p: number, id: ActionId, seat: string): number | null {
+export function expectedSeatGain(world: World, c: Campaign, p: number, id: ActionId, seat: string, segment?: BlocId): number | null {
+  if (segment !== undefined && PITCHED.includes(id)) return expectedPitchGain(world, c, p, id, seat, segment);
+  const units = seatUnits(world, c, p, id, seat);
+  return units === null ? null : Math.round(units * 25 * 10) / 10;
+}
+
+/** The lift in the seat's support, in logit units, that an ordinary day of a seat action would give: the formula the action uses, with luck taken at its average. */
+function seatUnits(world: World, c: Campaign, p: number, id: ActionId, seat: string): number | null {
   const i = world.seatIndex.get(seat);
   if (i === undefined) return null;
   const s = world.seats[i];
   const boost = c.dyn.support.seat[seat]?.[p] ?? 0;
   const presence = edge(c, p, 'charisma');
   const room_ = room(boost, CAP.seat);
-  let units: number;
-  if (id === 'ceramah' || id === 'walkabout') units = EFFECT[id] * presence * KIND_FACTOR[id][s.kind] * room_;
-  else if (id === 'townhall') units = (1 - EFFECT.townhallFlopChance) * EFFECT.townhall * presence * TOWNHALL_KIND[s.kind] * room_ - EFFECT.townhallFlopChance * EFFECT.townhallFlop;
-  else return null;
-  return Math.round(units * 25 * 10) / 10;
+  if (id === 'ceramah' || id === 'walkabout') return EFFECT[id] * presence * KIND_FACTOR[id][s.kind] * room_;
+  if (id === 'townhall') return (1 - EFFECT.townhallFlopChance) * EFFECT.townhall * presence * TOWNHALL_KIND[s.kind] * room_ - EFFECT.townhallFlopChance * EFFECT.townhallFlop;
+  return null;
+}
+
+/**
+ * What a seat event would add to the party's share of the vote in the seat, in points, if it were pitched to one voter
+ * group (or, with none, to everyone), read off the model itself: so it counts how many of the group are in the seat, how
+ * the party stands with them, and which other groups would take it badly. Null for an action that is not aimed at one seat.
+ */
+export function expectedPitchGain(world: World, c: Campaign, p: number, id: ActionId, seat: string, segment: BlocId | null): number | null {
+  const units = seatUnits(world, c, p, id, seat);
+  const i = world.seatIndex.get(seat);
+  if (units === null || i === undefined) return null;
+  const s = world.seats[i];
+  const now = effectiveDynamics(c);
+  const stood = c.standDowns[seat];
+  const before = projectSeat(s, i, world.baseline, now, undefined, stood);
+  const level = [...(now.support.seat[seat] ?? zeros(N_PARTIES))];
+  const next: Dynamics = {
+    ...now,
+    support: { ...now.support, seat: { ...now.support.seat, [seat]: level }, seatBloc: { ...(now.support.seatBloc ?? {}), [seat]: (now.support.seatBloc?.[seat] ?? zeros2(N_BLOCS, N_PARTIES)).map((row) => [...row]) } },
+  };
+  level[p] += segment === null ? units : addPitch(next, seat, p, segment, units, CAP.seat * 1.5);
+  const after = projectSeat(s, i, world.baseline, next, undefined, stood);
+  const share = (o: typeof before) => (o.valid > 0 ? o.votes[p] / o.valid : 0);
+  return Math.round((share(after) - share(before)) * 100 * 10) / 10;
 }
 
 /** What a fundraising action would bring in before luck. */
@@ -383,7 +419,9 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       const s = seatSupport(c, seat.id);
       // A chief draws half the leader's crowd, more or less according to who the chief is.
       const base = (id === 'ceramah' ? EFFECT.ceramah : EFFECT.walkabout) * (chief ? CHIEF.draw * chiefHand(world, c, p, st) : 1);
-      s[p] += base * presence * KIND_FACTOR[id][seat.kind] * roll * room(s[p], CAP.seat);
+      const units = base * presence * KIND_FACTOR[id][seat.kind] * roll * room(s[p], CAP.seat);
+      // Pitched to one voter group, the lift is theirs, and goes down with groups unlike them; otherwise it is everyone's.
+      s[p] += target.segment !== undefined && !chief ? addPitch(c.dyn, seat.id, p, target.segment, units, CAP.seat * 1.5) : units;
       if (id === 'ceramah') {
         const t = seatTurnout(c, seat.id);
         t[p] += EFFECT.ceramahMotivation * (chief ? CHIEF.draw : 1) * roll * room(t[p], CAP.seatTurnout);
@@ -457,7 +495,8 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
         boostBlocs(c.dyn.support.nat, p, -EFFECT.townhallFlopNat, null, CAP.nat);
         quality = 'flop';
       } else {
-        s[p] += EFFECT.townhall * presence * TOWNHALL_KIND[seat.kind] * roll * room(s[p], CAP.seat);
+        const units = EFFECT.townhall * presence * TOWNHALL_KIND[seat.kind] * roll * room(s[p], CAP.seat);
+        s[p] += target.segment !== undefined && !chief ? addPitch(c.dyn, seat.id, p, target.segment, units, CAP.seat * 1.5) : units;
         quality = roll < 0.85 ? 'ok' : 'great';
       }
       if (!chief && !pc.visits.includes(seat.id)) pc.visits.push(seat.id);

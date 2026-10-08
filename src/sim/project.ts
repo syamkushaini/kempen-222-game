@@ -63,6 +63,7 @@ export function projectSeat(
   const turnoutBias = base.turnoutBias[seatIndex];
   const stateSupport = dyn.support.state[seat.state];
   const seatSupport = dyn.support.seat[seat.id];
+  const seatBloc = dyn.support.seatBloc?.[seat.id];
   const stateTurnout = dyn.turnout.state[seat.state];
   const seatTurnout = dyn.turnout.seat[seat.id];
   const hasLate = dyn.lateSwing.some((v) => v !== 0);
@@ -88,6 +89,7 @@ export function projectSeat(
         BLOC_LEAN[b][p] + bias[p] + dyn.support.nat[b][p] +
         (stateSupport ? stateSupport[b][p] : 0) +
         (seatSupport ? seatSupport[p] : 0) +
+        (seatBloc ? seatBloc[b][p] : 0) +
         (shock?.support ? shock.support[p] : 0);
     }
     softmaxMasked(logits, mask, decided);

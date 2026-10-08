@@ -291,6 +291,7 @@ function decay(dyn: Dynamics) {
   for (const row of dyn.support.nat) for (let p = 0; p < N_PARTIES; p++) row[p] *= DECAY.nat;
   for (const rows of Object.values(dyn.support.state)) for (const row of rows!) for (let p = 0; p < N_PARTIES; p++) row[p] *= DECAY.state;
   for (const v of Object.values(dyn.support.seat)) for (let p = 0; p < N_PARTIES; p++) v[p] *= DECAY.seat;
+  for (const rows of Object.values(dyn.support.seatBloc ?? {})) for (const row of rows) for (let p = 0; p < N_PARTIES; p++) row[p] *= DECAY.seat;
   for (let p = 0; p < N_PARTIES; p++) dyn.turnout.party[p] *= DECAY.motivation;
   for (const v of Object.values(dyn.turnout.state)) for (let p = 0; p < N_PARTIES; p++) v![p] *= DECAY.motivation;
   for (const v of Object.values(dyn.turnout.seat)) for (let p = 0; p < N_PARTIES; p++) v[p] *= DECAY.motivation;

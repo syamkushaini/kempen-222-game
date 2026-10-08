@@ -1,5 +1,5 @@
 import type { StandDowns } from '../transfer';
-import type { Dynamics, Region, RegionId } from '../types';
+import type { BlocId, Dynamics, Region, RegionId } from '../types';
 
 export type Difficulty = 'easy' | 'normal' | 'hard';
 export type Phase = 'term' | 'campaign' | 'night' | 'formation' | 'done';
@@ -24,6 +24,8 @@ export interface ActionTarget {
   state?: RegionId;
   /** Party index, for attacks. */
   party?: number;
+  /** The voter group a seat event is pitched to; absent for one pitched to everyone. */
+  segment?: BlocId;
 }
 
 /** How an action turned out; drives the news line and nothing else. */

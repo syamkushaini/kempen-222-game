@@ -103,6 +103,11 @@ export interface Dynamics {
     state: Record<RegionId, number[][]>;
     /** seat id -> [party] */
     seat: Record<string, number[]>;
+    /**
+     * seat id -> [bloc][party]: what a campaign pitched to one voter group in one seat has done, which is felt by that
+     * group (and by those like it, or unlike it) and not by the seat as a whole. Absent until something is aimed at a group.
+     */
+    seatBloc?: Record<string, number[][]>;
   };
   turnout: {
     /** [bloc]: how motivated the whole bloc is, whoever they support. */
