@@ -27,7 +27,7 @@ import {
 import { closeNight, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
   ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
-  OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId,
+  IssueId, OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId,
 } from '../sim/campaign/types';
 import { randomSeed } from '../sim/rng';
 import type { World } from '../sim/election';
@@ -37,6 +37,7 @@ import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
+import { writeLetter, type Tone } from '../sim/campaign/letters';
 import { agreeEarly, dropEarly } from '../sim/campaign/earlypact';
 import { formUnity } from '../sim/campaign/grand';
 import { offerDeputy } from '../sim/campaign/plots';
@@ -232,6 +233,7 @@ interface Store {
   chest(lots: number): void;
   foreign(favour: FavourId): void;
   padRolls(): void;
+  writeLetter(issue: IssueId, tone: Tone): void;
   agreeEarly(party: number): void;
   dropEarly(party: number): void;
   formUnity(): void;
@@ -474,6 +476,7 @@ export const useStore = create<Store>((set, get) => {
     dropEarly: (party) => mutate((c) => { dropEarly(c, party); }),
     formUnity: () => mutate((c, _g, world) => { formUnity(world, c); }),
     offerDeputy: (party) => mutate((c) => { offerDeputy(c, party); }),
+    writeLetter: (issue, tone) => mutate((c) => { if (writeLetter(c, issue, tone)) syncOpinion(c); }),
     padRolls: () => mutate((c, _g, world) => { padRolls(world, c); }),
     grantSafe: (seat, faction) => mutate((c, _g, world) => { grantSafe(world, c, seat, faction); }),
     revokeSafe: (seat) => mutate((c) => { revokeSafe(c, seat); }),

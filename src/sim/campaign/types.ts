@@ -432,6 +432,14 @@ export interface Career {
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
+  /** The three advisers, what worries each and how many times they have said so (see advisers.ts). */
+  advisers?: Record<'treasurer' | 'strategist' | 'conscience', { name: number; concern: string | null; count: number }>;
+  /** The adviser who has asked for a word and is waiting for the answer. */
+  adviserPending?: 'treasurer' | 'strategist' | 'conscience';
+  /** The week of the last open letter or speech the player wrote (see letters.ts). */
+  letter?: number;
+  /** Stories still to be printed about how past decisions turned out (see echoes.ts). */
+  echoes?: { week: number; event: string; kind: 'good' | 'bad' | 'mixed' }[];
   /** The Speaker of this parliament (see chamber.ts). */
   speaker?: { name: number; lean: number };
   /** The Chief Secretary to the government, who has views of their own (see ksu.ts). */

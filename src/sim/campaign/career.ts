@@ -33,6 +33,8 @@ import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './fact
 import { allianceBonus, allianceWeek, dropMember } from './alliance';
 import { sectorsWeek } from './sectors';
 import { trialWeek } from './trial';
+import { advisersWeek } from './advisers';
+import { echoWeek } from './echoes';
 import { ksuWeek } from './ksu';
 import { grandWeek } from './grand';
 import { signEarlyPacts } from './earlypact';
@@ -392,6 +394,8 @@ export function termWeek(world: World, c: Campaign): void {
   allianceWeek(c);
   grandWeek(world, c);
   ksuWeek(c, rngWeek);
+  echoWeek(c);
+  advisersWeek(c);
   sectorsWeek(c, rngWeek);
   trialWeek(c);
 
@@ -701,6 +705,8 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.safe ? { safe: { ...k.safe } } : {}),
     ...(k.patronage ? { patronage: k.patronage } : {}),
     ...(k.drive ? { drive: k.drive } : {}),
+    ...(k.advisers ? { advisers: structuredClone(k.advisers) } : {}),
+    ...(k.echoes?.length ? { echoes: k.echoes.map((e) => ({ ...e })) } : {}),
     ...(k.sectors ? { sectors: { ...k.sectors } } : {}),
     ...(k.sectorAid ? { sectorAid: { ...k.sectorAid } } : {}),
     ...(k.alliance ? { alliance: { ...k.alliance, members: [...k.alliance.members] } } : {}),

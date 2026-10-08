@@ -2,7 +2,8 @@ import { useState } from 'react';
 import {
   BRIEF, FISCAL_ROOM, fits, isBrief, isEnacted, ISSUE_GROUPS, manifestoCost, MAX_PLEDGES, PLEDGES, stanceCost, stanceReaction,
 } from '../sim/campaign/policy';
-import { ISSUE_IDS, PLEDGE_IDS, type PledgeId } from '../sim/campaign/types';
+import { ISSUE_IDS, PLEDGE_IDS, type IssueId, type PledgeId } from '../sim/campaign/types';
+import { LETTER, TONES, canWrite, letterWait } from '../sim/campaign/letters';
 import { agenda, canRepeal } from '../sim/campaign/govern';
 import { REFERENDUM, canReferendum, isContested, referendumOdds } from '../sim/campaign/courts';
 import { scaled } from '../sim/campaign/actions';
@@ -23,6 +24,8 @@ export function PolicyTab() {
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const setBrief = useStore((s) => s.setBrief);
+  const writeLetter = useStore((s) => s.writeLetter);
+  const [letterIssue, setLetterIssue] = useState<IssueId>('wages');
   const referendum = useStore((s) => s.referendum);
   const setStance = useStore((s) => s.setStance);
   const togglePledge = useStore((s) => s.togglePledge);
@@ -102,6 +105,18 @@ export function PolicyTab() {
         {t('policy.legend')}{' '}
         {rivals.map((p) => <span key={p} className="legend-party"><i className="dot" data-party={p} style={{ background: partyColor(p) }} />{partyShort(t, p)}</span>)}
       </p>
+
+      <h3>{t('letter.title')}</h3>
+      <p className="muted small action-desc">{t('letter.desc', { n: LETTER.every })}</p>
+      <div className="chips" role="group" aria-label={t('letter.issue')}>
+        {ISSUE_IDS.map((id) => <button key={id} className={letterIssue === id ? 'chip active' : 'chip'} aria-pressed={letterIssue === id} onClick={() => setLetterIssue(id)}>{t(`issue.${id}`)}</button>)}
+      </div>
+      <div className="button-row tight">
+        {TONES.map((tone) => (
+          <button key={tone} className="btn small" disabled={!canWrite(campaign, letterIssue).ok} onClick={() => writeLetter(letterIssue, tone)}>{t(`letter.${tone}` as StringKey)}</button>
+        ))}
+      </div>
+      {letterWait(campaign) > 0 && <p className="muted small">{t('letter.wait', { n: letterWait(campaign) })}</p>}
 
       <h3>{t('manifesto.title')}</h3>
       <Brief className="muted small action-desc" text={t(k.launched ? 'manifesto.launched' : 'manifesto.intro')} />

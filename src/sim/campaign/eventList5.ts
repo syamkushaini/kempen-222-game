@@ -44,6 +44,15 @@ export const SEASON_EVENTS: Record<string, EventDef> = {
       { effects: [{ t: 'ksu', act: 'replace' }, eff('cred', -1)] },
     ],
   },
+  // An adviser who has said the same thing three times asks for a word (see advisers.ts).
+  adviserUltimatum: {
+    role: 'any', weight: 0,
+    choices: [
+      { effects: [{ t: 'adviser', act: 'listen' }] },
+      { effects: [{ t: 'adviser', act: 'ignore' }] },
+      { effects: [{ t: 'adviser', act: 'dismiss' }] },
+    ],
+  },
   // The Speaker rules on a motion, and the House waits to see whether the government will accept it.
   speakerRuling: {
     role: 'any', weight: 2,

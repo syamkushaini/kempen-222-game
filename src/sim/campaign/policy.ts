@@ -255,6 +255,11 @@ export function issueEdge(world: World, career: Career, a: number, b: number, is
   return edge * career.salience[issue];
 }
 
+/** How each bloc feels about where a party stands on one issue, from −0.5 (at the opposite end of what it wants) to 0.5 (exactly what it wants), times how much it cares. */
+export function blocFeeling(career: Career, p: number, issue: number): number[] {
+  return BLOC_IDS.map((_, b) => (0.5 - Math.abs(career.stances[p][issue] - IDEAL[b][issue]) / 4) * CARE[b][issue]);
+}
+
 /** The blocs that most like and most dislike a move to `to` on an issue, for showing the trade-off. */
 export function stanceReaction(career: Career, issue: number, from: number, to: number): { bloc: BlocId; change: number }[] {
   return BLOC_IDS.map((bloc, b) => ({

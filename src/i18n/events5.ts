@@ -34,6 +34,16 @@ export const SEASON_EVENTS_EN: Record<string, EventText> = {
       'The walkout made the evening news. It made nothing else.',
     ],
   },
+  adviserUltimatum: {
+    title: 'A word, please',
+    body: 'One of your three advisers has asked for a quiet word, and has closed the door. They have said the same thing three times now, in three different ways, and the third time was in writing. They would like to know whether anyone is listening.',
+    options: ['Listen, and do something about it', 'Thank them, and carry on', 'Let them go, and find someone who agrees with you'],
+    results: [
+      'They left the room looking ten years younger. It will be remembered.',
+      'They said nothing, which is what they do before they say something. They will be back.',
+      'A new face is at the table. The old one is not yet at anyone else’s, which is a mercy.',
+    ],
+  },
   courtCase: {
     title: 'A summons',
     body: 'The summons arrived at breakfast. It concerns something from before you were a leader, or something that the party has done since, and it has been carefully worded by someone who knows what the newspapers will print. The lawyers are in the hall. Your whole career is on the table.',
@@ -135,6 +145,16 @@ export const SEASON_EVENTS_MS: Record<string, EventText> = {
       'Dewan meneruskan. Tiada siapa ingat siapa yang mengalah, seperti yang sepatutnya.',
       ['Cabaran berjaya, dan Speaker malu. Hari yang baik untuk kerajaan.', 'Dewan mengundi keputusan itu kekal, dan kerajaan kelihatan bodoh.'],
       'Keluar dewan itu masuk berita malam. Tidak masuk apa-apa yang lain.',
+    ],
+  },
+  adviserUltimatum: {
+    title: 'Sepatah kata, tolong',
+    body: 'Salah seorang daripada tiga penasihat anda meminta sepatah kata senyap, dan menutup pintu. Mereka telah berkata perkara yang sama tiga kali, dalam tiga cara berbeza, dan kali ketiga secara bertulis. Mereka mahu tahu sama ada ada orang mendengar.',
+    options: ['Dengar, dan berbuat sesuatu', 'Berterima kasih, dan teruskan', 'Lepaskan mereka, dan cari seseorang yang bersetuju dengan anda'],
+    results: [
+      'Mereka keluar dari bilik kelihatan sepuluh tahun lebih muda. Ia akan diingati.',
+      'Mereka tidak berkata apa-apa, iaitu apa yang mereka buat sebelum berkata sesuatu. Mereka akan kembali.',
+      'Satu wajah baharu di meja. Yang lama belum di meja orang lain, satu rahmat.',
     ],
   },
   courtCase: {

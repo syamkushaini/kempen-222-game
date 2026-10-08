@@ -7,12 +7,15 @@ import { GOVERNING_EVENTS } from './eventList3';
 import { STORY_EVENTS } from './eventList4';
 import { SEASON_EVENTS } from './eventList5';
 import { FEDERATION_EVENTS } from './eventList6';
+import { STORY_EVENTS_2 } from './eventList7';
 import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { membersFeel } from './members';
 import { nationOf, shiftNation } from './nation';
+import { answerAdviser } from './advisers';
+import { queueEcho } from './echoes';
 import { KSU, replaceKsu, shiftKsu } from './ksu';
 import { endCareer } from './legacy';
 import { fightOdds } from './trial';
@@ -22,7 +25,7 @@ import { scaleHoldings } from './party';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
 /** Everything that can happen between elections. */
-export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS };
+export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2 };
 
 /** Where the player sits: heading the government, a partner in it, or across the floor. */
 export type Seat = 'pm' | 'gov' | 'opp';
@@ -47,6 +50,7 @@ export type Effect =
   | { t: 'minister'; act: 'sack' | 'keep' }
   | { t: 'end'; kind: 'ousted' | 'retired' }
   | { t: 'ksu'; act: 'follow' | 'override' | 'replace' }
+  | { t: 'adviser'; act: 'listen' | 'ignore' | 'dismiss' }
   | { t: 'flag'; id: string }
   | { t: 'falls' };
 
@@ -84,6 +88,8 @@ export interface EventDef {
     staff?: boolean;
     /** The player's party governs at least one state. */
     states?: boolean;
+    /** The player governs this state, or the career is in it. */
+    holds?: string;
   };
   choices: Choice[];
 }
@@ -97,12 +103,15 @@ const EVENT_CHANCE = 0.06;
 export const COUNTRY_ONLY: ReadonlySet<string> = new Set([
   'borneoThird', 'oilRights', 'borneoHighway', 'peninsulaGaffe', 'stateDefiance', 'royaltiesRow', 'summitHost', 'seaIncident',
   'mediationAward', 'refugeeBoats', 'twoPowers', 'tradeDispute', 'borderStandoff', 'sanctionsThreat', 'strandedAbroad', 'haze',
-  'claimsTalks', 'claimsStalled', 'claimsVerdict', 'cityHousing', 'flashFloods', 'mayorRow', 'subsidyReform', 'megaProject', 'ratingsWarning', 'pensionCall', 'tolls',
+  'claimsTalks', 'claimsStalled', 'claimsVerdict', 'sovereignFund', 'fundProbe', 'fundTrial', 'cityHousing', 'flashFloods', 'mayorRow', 'subsidyReform', 'megaProject', 'ratingsWarning', 'pensionCall', 'tolls',
 ]);
 /** Things only a state's government deals with: a state's quarrels with the centre. */
 export const STATE_ONLY: ReadonlySet<string> = new Set(['fedGrantCut', 'fedTalks', 'fedSettlement']);
 /** A career in one state is told apart from the country's by its scenario: career:<state>. */
 export const inStateCareer = (c: Pick<Campaign, 'scenario'>) => c.scenario.startsWith('career:');
+
+/** Whether the player is in a state’s own career, or their party governs the state. */
+export const governsState = (c: Campaign, st: string): boolean => c.scenario === `career:${st}` || c.career?.states[st] === c.player;
 
 export function eligible(c: Campaign, id: string): boolean {
   const def = EVENTS[id];
@@ -131,6 +140,7 @@ export function eligible(c: Campaign, id: string): boolean {
   if (n.backstory && c.team.leader.backstory !== n.backstory) return false;
   if (n.staff && !c.team.staff.some((s) => s !== null)) return false;
   if (n.states && statesHeld(c, c.player) === 0) return false;
+  if (n.holds && !governsState(c, n.holds)) return false;
   return true;
 }
 
@@ -226,6 +236,7 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
         delete k.scandal;
         break;
       case 'end': endCareer(c, e.kind); break;
+      case 'adviser': answerAdviser(c, e.act); break;
       case 'ksu': if (e.act === 'replace') replaceKsu(c); else shiftKsu(c, e.act === 'follow' ? KSU.follow : KSU.override); break;
       case 'falls': falls = true; break;
     }
@@ -284,6 +295,8 @@ export function resolveEvent(world: World, c: Campaign, scene: Scene, choice: nu
   membersFeel(c, [...picked.effects, ...(picked.gamble ? (suffix === 'w' ? picked.gamble.win : picked.gamble.lose) : [])]);
   if (picked.then) c.career.queue.push({ event: picked.then.event, week: c.career.week + picked.then.after });
   const bad = picked.gamble ? suffix === 'l' : false;
+  // A month or two on, the papers go back to it.
+  if (scene.event && !['byElection', 'statePolls', 'ultimatum', 'budget', 'motion'].includes(scene.event)) queueEcho(c, scene.event, [...picked.effects, ...(picked.gamble ? (suffix === 'w' ? picked.gamble.win : picked.gamble.lose) : [])]);
   pushNews(c, { party: c.player, key: `event.${scene.event}.r${choice}${suffix}`, tone: bad ? 'bad' : suffix === 'w' ? 'good' : 'neutral' });
   return falls;
 }

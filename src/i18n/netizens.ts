@@ -10,7 +10,7 @@ export const HANDLES = [
 export const NETIZEN_KINDS = [
   'crowdGreat', 'crowdWeak', 'viral', 'flop', 'attack', 'backfire', 'tycoon', 'poll', 'pact', 'katak',
   'candidate', 'staff', 'endorser', 'fine', 'troopers', 'gaffe', 'budget', 'billPassed', 'billDefeated', 'motion',
-  'walkout', 'dissolved', 'byElection', 'statePolls', 'downturn',
+  'walkout', 'dissolved', 'byElection', 'statePolls', 'downturn', 'echoGood', 'echoBad', 'echoMixed',
 ] as const;
 export type NetizenKind = (typeof NETIZEN_KINDS)[number];
 
@@ -40,6 +40,9 @@ export const NETIZENS_EN: Record<NetizenKind, string[]> = {
   byElection: ['By-election! Suddenly our potholes are getting fixed.', 'One seat, forty ministers visiting. We should have by-elections every month.', 'New roads, new streetlights. Thank you, whoever resigned.'],
   statePolls: ['State polls. Different flags, same promises.', 'My state votes this month. The durian stall has more consistent pricing than these manifestos.', 'Whoever wins, please fix the water supply. That is the whole manifesto.'],
   downturn: ['Prices up, pay the same. Somebody explain “resilient economy” to my salary.', 'Economists say tighten belts. Mine is on the last hole.', 'Global downturn, they say. My downturn started years ago.'],
+  echoGood: ['Funny how that decision looks better a month on.', 'Credit where it is due: that one worked.', 'Remember when everyone said it was a mistake?'],
+  echoBad: ['A month later and it is still coming back to bite them.', 'They said it would be fine. It is not fine.', 'Who is going to say “I told you so” first?'],
+  echoMixed: ['Some got what they wanted, some did not. Welcome to government.', 'Too early to say, too late to take back.', 'Ask me in a year.'],
 };
 
 export const NETIZENS_MS: Record<NetizenKind, string[]> = {
@@ -68,4 +71,7 @@ export const NETIZENS_MS: Record<NetizenKind, string[]> = {
   byElection: ['Pilihan raya kecil! Tiba-tiba lubang jalan kami ditampal.', 'Satu kerusi, empat puluh menteri datang melawat. Patut buat PRK tiap bulan.', 'Jalan baharu, lampu jalan baharu. Terima kasih kepada sesiapa yang letak jawatan.'],
   statePolls: ['Pilihan raya negeri. Bendera lain, janji sama.', 'Negeri aku mengundi bulan ni. Harga durian lagi konsisten daripada manifesto.', 'Siapa pun menang, tolong baiki bekalan air. Itu je manifestonya.'],
   downturn: ['Harga naik, gaji sama. Tolong terangkan “ekonomi berdaya tahan” kepada gaji aku.', 'Pakar ekonomi suruh ikat perut. Tali pinggang aku dah lubang terakhir.', 'Kemelesetan global, katanya. Kemelesetan aku dah lama mula.'],
+  echoGood: ['Lucu, keputusan tu nampak lebih baik sebulan kemudian.', 'Patut puji: yang tu menjadi.', 'Ingat tak masa semua orang kata ia silap?'],
+  echoBad: ['Sebulan kemudian dan ia masih menggigit balik.', 'Mereka kata tak apa. Tapi ada apa-apa.', 'Siapa nak kata “aku dah cakap” dulu?'],
+  echoMixed: ['Ada yang dapat apa dia nak, ada yang tidak. Selamat datang ke pemerintahan.', 'Terlalu awal nak kata, terlalu lewat nak tarik balik.', 'Tanya aku setahun lagi.'],
 };
