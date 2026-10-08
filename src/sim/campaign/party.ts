@@ -123,6 +123,22 @@ export function holdingsWeek(world: World, c: Campaign, rng: Rng): void {
   }
   k.holdings = Object.fromEntries(HOLDING_IDS.filter((x) => held[x] > 0).map((x) => [x, held[x]]));
   k.assets = HOLDING_IDS.reduce((a, x) => a + held[x], 0);
+  probeWeek(world, c, rng);
+}
+
+/** Investigators may come to the party's businesses: the more it owns the likelier, and they leave with part of the largest. */
+function probeWeek(world: World, c: Campaign, rng: Rng): void {
+  const k = c.career!;
+  if (k.assets <= 0 || rng.next() >= probeChance(world, k)) return;
+  const held = holdingsOf(k);
+  const biggest = HOLDING_IDS.reduce((a, id) => (held[id] > held[a] ? id : a), HOLDING_IDS[0]);
+  const lost = Math.round(held[biggest] * (PROBE.loss[0] + (PROBE.loss[1] - PROBE.loss[0]) * rng.next()));
+  held[biggest] -= lost;
+  k.holdings = Object.fromEntries(HOLDING_IDS.filter((x) => held[x] > 0).map((x) => [x, held[x]]));
+  k.assets = HOLDING_IDS.reduce((a, x) => a + held[x], 0);
+  k.credibility = clamp(k.credibility - 3, 0, 100);
+  if (k.government.pm === c.player || k.government.partners.includes(c.player)) k.government.trust = clamp(k.government.trust - 2, 0, 100);
+  pushNews(c, { party: c.player, key: 'news.probe', vars: { rm: `@rm:${lost}`, what: `@holding:${biggest}` }, tone: 'bad' });
 }
 
 // ---------- who belongs ----------
@@ -252,4 +268,78 @@ export function grassrootsLift(world: World, c: Campaign): number {
   const branches = built.length ? built.reduce((a, m) => a + m, 0) / built.length : 0;
   const members = clamp((rollsFactor(world, c) - 1) / (FULL_ROLLS - 1), 0, 1);
   return GRASSROOTS_MAX * members * clamp((branches - BRANCHES_FROM) / (BRANCHES_TO - BRANCHES_FROM), 0, 1);
+}
+
+// ---------- what staying in power does ----------
+
+/** How much voters tire of a party for every parliament in a row it has sat in government beyond the first, in logit units across all groups. */
+export const FATIGUE_PER_TERM = 0.05;
+
+/** The weariness voters feel at the start of this parliament: nothing for a first term in government, and more with each one after. */
+export const fatigueOf = (run: number): number => FATIGUE_PER_TERM * Math.max(0, run - 1);
+
+/** A party that wins this share of the seats has won more than is good for it. */
+export const LANDSLIDE = 0.675;
+
+/** What a landslide does to the party that wins it: the factions grow bold, the party grows careless, and everyone wants their share. */
+export const LANDSLIDE_HIT = { unity: 10, faction: 10, wing: 5 };
+
+/** Applies a landslide to the player's party. */
+export function landslide(c: Campaign): void {
+  const k = c.career!;
+  const f = factionsOf(c);
+  f.mood = f.mood.map((m) => clamp(m - LANDSLIDE_HIT.faction, 0, 100));
+  f.wing = f.wing.map((m) => clamp(m - LANDSLIDE_HIT.wing, 0, 100));
+  shiftUnity(c, c.player, -LANDSLIDE_HIT.unity);
+  pushNews(c, { party: c.player, key: 'news.landslide', vars: {}, tone: 'bad' });
+  void k;
+}
+
+// ---------- the war chest ----------
+
+/** What it costs to take money back out of the chest before a campaign has begun. */
+export const CHEST_PENALTY = 0.15;
+/** What the chest earns by the time a campaign begins: donors match what a party has shown it is ready to put in. */
+export const CHEST_BONUS = 0.1;
+
+/** Sets aside (positive lots) or takes back (negative) money for the next campaign. */
+export function setAside(world: World, c: Campaign, lots: number): boolean {
+  const k = c.career;
+  const pc = c.parties[c.player];
+  if (!k || !pc || c.phase !== 'term' || !Number.isInteger(lots) || lots === 0) return false;
+  const amount = scaled(world, ASSET_UNIT) * Math.abs(lots);
+  const chest = k.chest ?? 0;
+  if (lots > 0) {
+    if (amount > pc.funds) return false;
+    pc.funds -= amount;
+    k.chest = chest + amount;
+  } else {
+    if (amount > chest) return false;
+    k.chest = chest - amount;
+    pc.funds += Math.round(amount * (1 - CHEST_PENALTY));
+    if (k.chest === 0) delete k.chest;
+  }
+  return true;
+}
+
+/** The campaign begins: what was set aside comes out, with what the donors add. */
+export function openChest(c: Campaign): number {
+  const k = c.career;
+  const pc = c.parties[c.player];
+  if (!k?.chest || !pc) return 0;
+  const sum = Math.round(k.chest * (1 + CHEST_BONUS));
+  pc.funds += sum;
+  delete k.chest;
+  pushNews(c, { party: c.player, key: 'news.chest.opened', vars: { rm: `@rm:${sum}` }, tone: 'good' });
+  return sum;
+}
+
+// ---------- the law's interest in what the party owns ----------
+
+/** The weekly chance of a probe into the party's businesses, for each RM100k at general-election scale it owns, and the most it can be. */
+export const PROBE = { perLot: 0.0004, max: 0.02, loss: [0.1, 0.25] as const };
+
+/** The chance this week that investigators come to the party's businesses: more with more to look at. */
+export function probeChance(world: World, k: Career): number {
+  return Math.min(PROBE.max, (k.assets / scaled(world, ASSET_UNIT)) * PROBE.perLot);
 }

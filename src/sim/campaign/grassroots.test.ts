@@ -78,6 +78,9 @@ describe('a term limit that has become law', () => {
     expect(isPm(c)).toBe(true);
     nextParliament(c);
     expect(c.career!.pmRun).toBe(2);
+    // Two parliaments in a row in government: the voters have begun to tire.
+    expect(c.career!.govRun).toBe(2);
+    expect(c.news.some((n) => n.key === 'news.fatigue')).toBe(true);
     expect(c.career!.limited).toBeUndefined();
     expect(isPm(c)).toBe(true);
     // Carry the law over: it was written into the career, and travels with it.

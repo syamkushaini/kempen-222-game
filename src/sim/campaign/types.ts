@@ -417,6 +417,10 @@ export interface Career {
   factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[] };
   /** Parties that keep the player's government in office from outside the cabinet, and until when (see supply.ts). */
   supply?: { party: number; until: number; price: 'cash' | 'policy' }[];
+  /** Parliaments in a row the player's party has sat in government, as head or as partner, this one included: the longer it has, the more tired the voters are of it (see party.ts). */
+  govRun?: number;
+  /** Money set aside for the next campaign, out of reach of the weeks between (see party.ts). */
+  chest?: number;
   /** Parliaments in a row the player's party has headed the government, this one included. */
   pmRun?: number;
   /** The party's leader may not head the government this term: a term limit passed into law applies (see nextTerm). The party governs, and the player leads it from outside the premiership. */

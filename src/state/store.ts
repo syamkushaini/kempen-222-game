@@ -39,7 +39,7 @@ import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
 import { signSupply, type SupplyPrice } from '../sim/campaign/supply';
 import { resolveAgenda } from '../sim/campaign/agenda';
-import { doActivity, trade, type ActivityId, type HoldingId } from '../sim/campaign/party';
+import { doActivity, setAside, trade, type ActivityId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
@@ -204,6 +204,8 @@ interface Store {
   /** Career: changes the standing orders for the weeks between elections. */
   setOrders(patch: Partial<Orders>): void;
   invest(lots: number): void;
+  /** Sets money aside for the next campaign (positive lots), or takes it back at a price (negative). */
+  chest(lots: number): void;
   /** Asks a party to keep the government in office from outside the cabinet. */
   supply(party: number, price: SupplyPrice): void;
   /** The head of government repeals an Act. */
@@ -414,6 +416,7 @@ export const useStore = create<Store>((set, get) => {
     setOrders: (patch) => mutate((c, _g, world) => setOrders(world, c, patch)),
     repeal: (id) => mutate((c) => { repeal(c, id); }),
     supply: (party, price) => mutate((c, _g, world) => { signSupply(world, c, party, price); }),
+    chest: (lots) => mutate((c, _g, world) => { setAside(world, c, lots); }),
     invest: (lots) => mutate((c, _g, world) => { invest(world, c, lots); }),
     trade: (holding, lots) => mutate((c, _g, world) => { trade(world, c, holding, lots); }),
     activity: (id) => mutate((c, _g, world) => { doActivity(world, c, id); }),

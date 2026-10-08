@@ -28,7 +28,7 @@ import { agendaTerm } from './agenda';
 import { supplyWeek } from './supply';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
-import { grassrootsLift, holdingsWeek, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
+import { LANDSLIDE, fatigueOf, grassrootsLift, holdingsWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
 import {
   freshParty, makeDrift, newCampaign, publishPublicPoll, startingFunds, weeklyIncome, type CampaignOptions,
@@ -182,6 +182,7 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   // The government was elected on its usual programme, and will be held to it.
   c.career.promises = [...c.career.manifesto[c.player]];
   c.career.record.bestSeats = lastElection(world).tally[c.player];
+  c.career.govRun = inGovernment(c, c.player) ? 1 : 0;
   c.career.pmRun = c.career.government.pm === c.player ? 1 : 0;
   if (opts.realStates && !opts.founded && world.rules.kind !== 'state') c.career.realStates = true;
   // A party the player made stands where it stood before, and picks and pays for any other seat; a founded party has none to begin with.
@@ -534,6 +535,7 @@ export function beginCampaign(world: World, c: Campaign): void {
   k.delivery = {};
   k.bills = [];
   pushNews(c, { party: null, key: 'news.term.dissolved', vars: { n: world.rules.weeks }, tone: 'neutral' });
+  openChest(c);
 
   c.parties = c.parties.map((pc, p) => {
     if (!pc) return null;
@@ -591,6 +593,11 @@ export function nextTerm(world: World, c: Campaign): boolean {
   // Two parliaments at the head of the government is all a term limit allows: in the third the party governs, and its leader does not.
   const run = outcome.pm === c.player ? (k.pmRun ?? 0) + 1 : 0;
   c.career.pmRun = run;
+  // Staying in government wears on the voters, and on the party's own conduct: more with each parliament in a row.
+  const govRun = outcome.pm === c.player || outcome.partners.includes(c.player) ? (k.govRun ?? 0) + 1 : 0;
+  c.career.govRun = govRun;
+  c.career.chest = k.chest;
+  if (c.career.chest === undefined) delete c.career.chest;
   if (run > TERM_LIMIT && isEnacted(k, 'termLimit')) c.career.limited = true;
   const seats = recorded.votes.reduce((a, row) => a + (row[c.player] > 0 && row[c.player] === Math.max(...row) ? 1 : 0), 0);
   const r = c.career.record;
@@ -628,6 +635,12 @@ export function nextTerm(world: World, c: Campaign): boolean {
   if (drawn) pushNews(c, { party: k.redraw!.by, key: k.redraw!.by === null ? 'news.redraw.done.fair' : 'news.redraw.done.pushed', vars: { n: drawn.flipped, party: k.redraw!.by === null ? '' : ref.party(k.redraw!.by) }, tone: 'neutral' });
   if (c.career.limited) pushNews(c, { party: c.player, key: 'news.term.limited', vars: { n: TERM_LIMIT }, tone: 'neutral' });
   pushNews(c, { party: null, key: 'news.term.start', vars: { party: ref.party(outcome.pm), n: outcome.seats }, tone: 'neutral' });
+  if (fatigueOf(govRun) > 0) {
+    for (const row of c.career.mood) row[c.player] -= fatigueOf(govRun);
+    pushNews(c, { party: c.player, key: 'news.fatigue', vars: { n: govRun }, tone: 'bad' });
+  }
+  // A win this large is more than a party can hold together.
+  if (seats >= Math.ceil(LANDSLIDE * world.seats.length)) landslide(c);
   // A leader whose party has no seats left has no party to lead.
   if (seats === 0) endCareer(c, 'wipedOut');
   return true;

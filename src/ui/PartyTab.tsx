@@ -1,6 +1,6 @@
 import { termIncome, termSpending } from '../sim/campaign/career';
 import {
-  ACTIVITY_IDS, ACTIVITIES, HOLDINGS, grassrootsLift, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
+  ACTIVITY_IDS, ACTIVITIES, CHEST_BONUS, CHEST_PENALTY, HOLDINGS, fatigueOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
 } from '../sim/campaign/party';
 import { scaled } from '../sim/campaign/actions';
 import { CHIEF_NAMES, FACTION_IDS, WING_IDS, backing, challengeChance, factionsOf, PARTY_POLL_EVERY } from '../sim/campaign/factions';
@@ -22,6 +22,7 @@ export function PartyTab() {
   const campaign = useStore((s) => s.game!.campaign);
   const trade = useStore((s) => s.trade);
   const activity = useStore((s) => s.activity);
+  const chest = useStore((s) => s.chest);
   const k = campaign.career;
   const pc = campaign.parties[campaign.player]!;
   if (!k) return <p className="muted">{t('party.none')}</p>;
@@ -113,8 +114,23 @@ export function PartyTab() {
         })}
       </ul>
 
+      <h3>{t('party.chest')}</h3>
+      <p className="muted small action-desc">{t('party.chest.desc', { bonus: Math.round(CHEST_BONUS * 100), penalty: Math.round(CHEST_PENALTY * 100) })}</p>
+      <ul>
+        <li className="action">
+          <div className="grow">
+            <span className="action-title">{t('party.chest.held', { rm: f.rm(k.chest ?? 0) })}</span>
+          </div>
+          <div className="button-row tight">
+            <button className="btn small" disabled={!term || pc.funds < lot} onClick={() => chest(1)}>{t('party.chest.add', { rm: f.rm(lot) })}</button>
+            <button className="btn small" disabled={!term || (k.chest ?? 0) < lot} onClick={() => chest(-1)}>{t('party.chest.take')}</button>
+          </div>
+        </li>
+      </ul>
+      {(k.govRun ?? 0) > 1 && <p className="note bad">{t('party.fatigue', { n: k.govRun!, pts: (Math.round(fatigueOf(k.govRun!) * 25 * 10) / 10).toFixed(1) })}</p>}
+
       <h3>{t('party.holdings')}</h3>
-      <p className="muted small action-desc">{t('party.holdings.desc')}</p>
+      <p className="muted small action-desc">{t('party.holdings.desc')} {t('party.probe', { pct: (probeChance(world, k) * 100).toFixed(1) })}</p>
       <ul>
         {HOLDING_IDS.map((id) => {
           const value = held[id];
