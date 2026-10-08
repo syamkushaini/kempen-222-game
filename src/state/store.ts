@@ -153,7 +153,7 @@ interface Store {
   showNight: boolean;
   /** A scene the player has set aside to look around before answering. */
   hiddenScene: number | null;
-  /** The inbox is open: the decision at its head is on screen. In a campaign or a term it opens only when the player opens it. */
+  /** The inbox is open: the decision at its head is on screen. A new decision opens it by itself (see Inbox in App.tsx); one set aside waits in a bar until the player opens it. */
   sceneOpen: boolean;
   /** When the autosave last succeeded, or null if it has not or cannot. */
   autosavedAt: number | null;

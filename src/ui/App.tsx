@@ -1,4 +1,4 @@
-import { Fragment, lazy, Suspense, useEffect, useState } from 'react';
+import { Fragment, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { useStore, type MapView as MapViewId, type SidebarTab } from '../state/store';
 import { hasChiefs } from '../sim/campaign/ai';
@@ -89,9 +89,18 @@ function ViewSwitch() {
  */
 function Inbox() {
   const t = useT();
+  const ids = useStore((s) => s.game!.campaign.inbox.map((x) => x.id).join(','));
   const waiting = useStore((s) => s.game!.campaign.inbox.length);
   const open = useStore((s) => s.sceneOpen);
   const openScene = useStore((s) => s.openScene);
+  // A decision that has just arrived comes up by itself, so that it is not missed. One the player has set aside, or has seen and closed,
+  // stays a bar until they open it again.
+  const seen = useRef(new Set<string>());
+  useEffect(() => {
+    const fresh = ids.split(',').filter((id) => id !== '' && !seen.current.has(id));
+    for (const id of fresh) seen.current.add(id);
+    if (fresh.length > 0 && !open) openScene(true);
+  }, [ids]); // eslint-disable-line react-hooks/exhaustive-deps
   if (waiting === 0 || open) return null;
   return (
     <button className="inbox-bar" key={waiting} onClick={() => openScene(true)}>

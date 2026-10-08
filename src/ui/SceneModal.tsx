@@ -28,7 +28,7 @@ export function SceneModal() {
   const hidden = useStore((s) => s.hiddenScene);
   const open = useStore((s) => s.sceneOpen);
   const phase = useStore((s) => s.game?.campaign.phase);
-  // In a campaign or a term a decision waits in the inbox until it is opened. In the talks and on the night after,
+  // In a campaign or a term a decision that has been set aside waits in the inbox until it is opened; a new one opens it by itself. In the talks and on the night after,
   // the decisions are the business of the screen, and come up by themselves.
   const inbox = phase === 'campaign' || phase === 'term';
   return scene && (!inbox || open) && scene.id !== hidden ? <SceneCard key={scene.id} scene={scene} /> : null;
