@@ -328,9 +328,13 @@ export const useStore = create<Store>((set, get) => {
     const world = current && worldOf(current.campaign);
     if (!current || !world) return;
     const g = structuredClone(current);
+    const before = new Set(current.campaign.inbox.map((x) => x.id));
     const extra = fn(g.campaign, g, world) ?? {};
     g.updatedAt = Date.now();
-    set({ game: g, ...extra });
+    // A decision that has just arrived comes up by itself, whichever action brought it, so that it is not missed. One the
+    // player has set aside stays a bar until they open it again; a newer one overrides that.
+    const arrived = g.campaign.inbox.some((x) => !before.has(x.id));
+    set({ game: g, ...extra, ...(arrived && g.campaign.phase !== 'formation' ? { sceneOpen: true, hiddenScene: null } : {}) });
   };
 
   return {
