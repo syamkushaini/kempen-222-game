@@ -14,6 +14,16 @@ export const SEASON_EVENTS_EN: Record<string, EventText> = {
       'A stand-in holds the desk. It looks careful and it looks slow, and both are true.',
     ],
   },
+  courtCase: {
+    title: 'A summons',
+    body: 'The summons arrived at breakfast. It concerns something from before you were a leader, or something that the party has done since, and it has been carefully worded by someone who knows what the newspapers will print. The lawyers are in the hall. Your whole career is on the table.',
+    options: ['Fight it, with the best lawyers money can find', 'Settle quietly, and pay', 'Step down, and take it as a private citizen'],
+    results: [
+      ['The court found for you. It was a long fortnight, and you will not forget who stood outside.', 'The court did not find for you. It is over, and so is the career.'],
+      'It was settled before it was heard. The sum was large and the story was larger.',
+      'You left by the side door and said little. The party said less.',
+    ],
+  },
   borderStandoff: {
     title: 'Boots at the border',
     body: 'A neighbour’s patrols have crossed a line on the map that neither of you has ever agreed on. A local commander has called it provocation, and the cameras are already at the post.',
@@ -85,6 +95,16 @@ export const SEASON_EVENTS_MS: Record<string, EventText> = {
       'Selesai sebelum tengah hari. Jawatan itu anda yang perlu isi, dan keyakinan parti terhadap pertimbangannya sendiri sedikit lebam.',
       ['Kamera pergi tanpa yakin tetapi tanpa makanan. Tiada siapa menemui apa-apa yang baharu, dan berita itu mati.', 'Lebih banyak terbongkar keesokan harinya, dan sidang akhbar itu diulang di setiap saluran.'],
       'Seorang pemangku memegang meja itu. Ia kelihatan berhati-hati dan kelihatan lambat, dan kedua-duanya benar.',
+    ],
+  },
+  courtCase: {
+    title: 'Saman',
+    body: 'Saman tiba pada waktu sarapan. Ia tentang sesuatu sebelum anda menjadi pemimpin, atau sesuatu yang parti telah lakukan sejak itu, dan ia dirangka dengan teliti oleh seseorang yang tahu apa akan dicetak akhbar. Peguam di dewan. Seluruh kerjaya anda di atas meja.',
+    options: ['Lawan, dengan peguam terbaik yang wang boleh dapat', 'Selesaikan secara senyap, dan bayar', 'Letak jawatan, dan terima sebagai rakyat biasa'],
+    results: [
+      ['Mahkamah memihak anda. Dua minggu yang panjang, dan anda tak akan lupa siapa yang berdiri di luar.', 'Mahkamah tidak memihak anda. Ia sudah selesai, begitu juga kerjaya.'],
+      'Ia diselesaikan sebelum dibicarakan. Jumlahnya besar dan ceritanya lebih besar.',
+      'Anda keluar melalui pintu tepi dan berkata sedikit. Parti berkata kurang.',
     ],
   },
   borderStandoff: {

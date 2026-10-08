@@ -8,6 +8,9 @@ import { scaled } from '../sim/campaign/actions';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
 import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
 import { MAX_MEASURES } from '../sim/campaign/office';
+import { SECTOR, SECTORS, SECTOR_IDS, canAid, sectorsOf } from '../sim/campaign/sectors';
+import { leverStrain } from '../sim/campaign/govern';
+import { Gauge } from './Gauge';
 import { COMMITTEE, canInquire, committeeWait, inquiryOdds } from '../sim/campaign/committee';
 import { canExpel } from '../sim/campaign/alliance';
 import { SUPPLY_CASH, canRenew, canSupply, discontent } from '../sim/campaign/supply';
@@ -138,6 +141,7 @@ export function GovernmentTab() {
         </>
       )}
 
+      <Sectors />
       {pm && <SupplyDeals />}
       {pm && k.government.partners.length > 0 && <PutOut />}
       {seat === 'opp' && <ShadowCabinet />}
@@ -251,6 +255,7 @@ export function GovernmentTab() {
                 <div className="grow">
                   <span className="action-title">{t(`lever.${id}`)}</span>
                   <span className="action-meta">{t(`lever.${id}.desc${fog && id === 'agency' ? '.fog' : ''}` as StringKey)}</span>
+                  {leverStrain(k, id) > 0 && <span className="action-reason">{t('house.lever.strain', { n: k.leverUses?.[id] ?? 0 })}</span>}
                 </div>
                 <ConfirmButton label={t('house.lever.pull')} confirmLabel={t('house.lever.confirm')} disabled={!canPull(campaign, id)} onConfirm={() => pullLever(id)} />
               </li>
@@ -353,6 +358,37 @@ function SupplyDeals() {
   );
 }
 
+
+/** The sectors of the economy: how each is doing, who lives by it, and, for the head of government, a hand to lend one. */
+function Sectors() {
+  const t = useT();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const aid = useStore((s) => s.aidSector);
+  const k = campaign.career!;
+  const now = sectorsOf(k);
+  return (
+    <>
+      <h3>{t('sectors.title')}</h3>
+      <p className="muted small action-desc">{t('sectors.desc', { n: SECTOR.every })}</p>
+      <ul>
+        {SECTOR_IDS.map((id) => {
+          const check = canAid(world, campaign, id);
+          return (
+            <li className="action" key={id}>
+              <div className="grow">
+                <span className="action-title">{t(`sector.${id}`)}</span>
+                <span className="action-meta">{t('sectors.lives', { blocs: SECTORS[id].blocs.map((b) => t(`bloc.${b}` as StringKey)).join(', ') })}</span>
+                <Gauge value={now[id]} label={t('sectors.level')} />
+              </div>
+              {check.ok && <button className="btn small" onClick={() => aid(id)}>{t('sectors.aid')}</button>}
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
 
 /** The opposition may call the government before a select committee, and spend its dossier on it. */
 function CommitteeInquiry() {

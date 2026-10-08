@@ -13,6 +13,8 @@ import { scaled } from './actions';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { membersFeel } from './members';
 import { nationOf, shiftNation } from './nation';
+import { endCareer } from './legacy';
+import { fightOdds } from './trial';
 import { dismiss } from './office';
 import { pushNews } from './news';
 import { scaleHoldings } from './party';
@@ -42,13 +44,14 @@ export type Effect =
   | { t: 'relation'; who: Who; n: number }
   | { t: 'salience'; issue: IssueId; n: number }
   | { t: 'minister'; act: 'sack' | 'keep' }
+  | { t: 'end'; kind: 'ousted' | 'retired' }
   | { t: 'flag'; id: string }
   | { t: 'falls' };
 
 export interface Choice {
   effects: Effect[];
   /** A gamble on top: the chance of it coming off (a number, or the player's unity or credibility as a percentage). */
-  gamble?: { chance: number | 'unity' | 'cred' | 'stability'; win: Effect[]; lose: Effect[] };
+  gamble?: { chance: number | 'unity' | 'cred' | 'stability' | 'case'; win: Effect[]; lose: Effect[] };
   /** A later event this choice sets in motion, and after how many weeks. */
   then?: { event: string; after: number };
 }
@@ -220,6 +223,7 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
         if (k.scandal && e.act === 'sack') dismiss(c, k.scandal);
         delete k.scandal;
         break;
+      case 'end': endCareer(c, e.kind); break;
       case 'falls': falls = true; break;
     }
   }
@@ -227,7 +231,8 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
 }
 
 /** The chance a gamble comes off, as the player would be told it. */
-export function gambleChance(c: Campaign, chance: number | 'unity' | 'cred' | 'stability'): number {
+export function gambleChance(c: Campaign, chance: number | 'unity' | 'cred' | 'stability' | 'case'): number {
+  if (chance === 'case') return fightOdds(c);
   if (chance === 'unity') return clamp(c.parties[c.player]!.unity / 100, 0.1, 0.9);
   if (chance === 'cred') return clamp(c.career!.credibility / 100, 0.1, 0.9);
   if (chance === 'stability') return clamp(c.career!.government.stability / 100, 0.1, 0.9);

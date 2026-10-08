@@ -3,7 +3,7 @@ import {
 } from '../sim/campaign/career';
 import { useState } from 'react';
 import { contestsState, scaled } from '../sim/campaign/actions';
-import { ROUNDS, STATE_GOVERNMENT_INCOME } from '../sim/campaign/contests';
+import { ROUNDS, STATE_GOVERNMENT_INCOME, statesHeld } from '../sim/campaign/contests';
 import { others, relation } from '../sim/campaign/diplomacy';
 import { seatOf } from '../sim/campaign/events';
 import { memberMoods, membersOf, moodWord } from '../sim/campaign/members';
@@ -46,6 +46,7 @@ export function OrdersTab() {
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const setOrders = useStore((s) => s.setOrders);
+  const [together, setTogether] = useState(false);
   const setPatronage = useStore((s) => s.patronage);
   const invest = useStore((s) => s.invest);
   const dissolve = useStore((s) => s.dissolve);
@@ -117,7 +118,10 @@ export function OrdersTab() {
       </p>
       {seat === 'pm' && canDissolve(campaign) && (
         <div className="button-row tight">
-          <ConfirmButton label={t('orders.dissolve')} confirmLabel={t('orders.dissolve.confirm')} onConfirm={dissolve} />
+          {world.rules.kind === 'general' && !campaign.scenario.startsWith('career:') && statesHeld(campaign, me) > 0 && (
+            <label className="check"><input type="checkbox" checked={together} onChange={(e) => setTogether(e.target.checked)} /> {t('orders.dissolve.together', { n: statesHeld(campaign, me) })}</label>
+          )}
+          <ConfirmButton label={t('orders.dissolve')} confirmLabel={t('orders.dissolve.confirm')} onConfirm={() => dissolve(together)} />
         </div>
       )}
 

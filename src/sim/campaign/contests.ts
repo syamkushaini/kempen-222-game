@@ -163,7 +163,7 @@ const STATE_NOISE = 0.06;
 export const STATE_GOVERNMENT_INCOME = 2_000;
 
 /** The party with the most seats in each state: who would form its government. Ties go to whoever is in office. */
-function leaders(world: World, winners: number[], states: readonly string[], incumbent: Record<string, number>): Record<string, number> {
+export function leaders(world: World, winners: number[], states: readonly string[], incumbent: Record<string, number>): Record<string, number> {
   const out: Record<string, number> = {};
   for (const st of states) {
     const count = new Array<number>(N_PARTIES).fill(0);

@@ -6,6 +6,7 @@ const eff = (t: 'unity' | 'funds' | 'cred' | 'stability' | 'trust' | 'fiscal', n
 const econ = (growth: number, inflation = 0): Effect => ({ t: 'economy', growth, inflation });
 const nat = (health = 0, education = 0, standing = 0): Effect => ({ t: 'nation', health, education, standing });
 const sack: Effect = { t: 'minister', act: 'sack' };
+const end = (kind: 'ousted' | 'retired'): Effect => ({ t: 'end', kind });
 const keep: Effect = { t: 'minister', act: 'keep' };
 
 /**
@@ -21,6 +22,16 @@ export const SEASON_EVENTS: Record<string, EventDef> = {
       { effects: [sack, eff('cred', -3), eff('trust', -2)] },
       { effects: [], gamble: { chance: 'cred', win: [keep, eff('cred', 1), mood('all', 0.004)], lose: [sack, eff('cred', -7), eff('trust', -5), eff('stability', -3)] } },
       { effects: [sack, eff('cred', -2), eff('trust', -1), eff('stability', -2)] },
+    ],
+  },
+
+  // The courts come for the leader (see trial.ts). A case lost ends the career.
+  courtCase: {
+    role: 'any', weight: 0,
+    choices: [
+      { effects: [eff('funds', -150_000)], gamble: { chance: 'case', win: [eff('cred', 4), mood('all', 0.01)], lose: [end('ousted')] } },
+      { effects: [eff('funds', -200_000), eff('cred', -8), eff('unity', -4)] },
+      { effects: [end('retired')] },
     ],
   },
 

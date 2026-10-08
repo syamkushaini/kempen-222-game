@@ -37,6 +37,7 @@ import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
+import { aidSector, type SectorId } from '../sim/campaign/sectors';
 import { openInquiry } from '../sim/campaign/committee';
 import { dissolveAlliance, expel, foundAlliance, invite } from '../sim/campaign/alliance';
 import { renewSupply, signSupply, type SupplyPrice } from '../sim/campaign/supply';
@@ -255,7 +256,8 @@ interface Store {
   launchManifesto(): void;
   /** Runs up to this many weeks of the term, stopping when something needs a decision. */
   advance(weeks: number): void;
-  dissolve(): void;
+  dissolve(together?: boolean): void;
+  aidSector(id: SectorId): void;
   /** After the election and the talks: on to the next parliament. */
   nextTerm(): void;
   /** After a change of government between elections: back to the term. */
@@ -484,8 +486,9 @@ export const useStore = create<Store>((set, get) => {
       if (c.phase === 'campaign') return { tab: 'actions', lastReport: null, selectedSeat: null, selectedState: c.parties[c.player]!.location };
       if (c.phase === 'formation') return { showNight: false, offerReply: null };
     }),
-    dissolve: () => mutate((c, _g, world) => {
-      if (dissolve(world, c)) return { tab: 'actions', lastReport: null, selectedSeat: null, selectedState: c.parties[c.player]!.location };
+    aidSector: (id) => mutate((c, _g, world) => { aidSector(world, c, id); }),
+    dissolve: (together) => mutate((c, _g, world) => {
+      if (dissolve(world, c, !!together)) return { tab: 'actions', lastReport: null, selectedSeat: null, selectedState: c.parties[c.player]!.location };
       // The Palace said no: the answer is shown, and the request can be made again after a while.
       if (c.career?.palaceNo === c.career?.week) return { lastReport: c.news[c.news.length - 1] ?? null };
     }),

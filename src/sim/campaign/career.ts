@@ -5,7 +5,7 @@ import { Rng } from '../rng';
 import { N_BLOCS, N_PARTIES, PARTY_IDS, type RegionId } from '../types';
 import { contestsState, scaled } from './actions';
 import { START_UNITY } from './cast';
-import { houseTally, resolveByElection, resolveStatePolls, roundDue, startStates, STATE_GOVERNMENT_INCOME, statesHeld, vacantSeat } from './contests';
+import { applyStateResults, houseTally, leaders, resolveByElection, resolveStatePolls, roundDue, startStates, STATE_GOVERNMENT_INCOME, statesHeld, vacantSeat } from './contests';
 import { relation, shiftRelation } from './diplomacy';
 import { EVENTS, raise, resolveEvent, rollEvent } from './events';
 import {
@@ -31,6 +31,8 @@ import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
 import { allianceBonus, allianceWeek, dropMember } from './alliance';
+import { sectorsWeek } from './sectors';
+import { trialWeek } from './trial';
 import { applyPride } from './pride';
 import { courtWeek } from './courts';
 import { patronageMult, patronageWeek } from './patronage';
@@ -385,6 +387,8 @@ export function termWeek(world: World, c: Campaign): void {
   patronageWeek(c, rngWeek);
   courtWeek(c, rngWeek);
   allianceWeek(c);
+  sectorsWeek(c, rngWeek);
+  trialWeek(c);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
   k.profile[me] = Math.min(PROFILE_CAP, k.profile[me] * 0.97 + seen);
@@ -540,7 +544,7 @@ export function canDissolve(c: Campaign): boolean {
 }
 
 /** The player, as head of government, asks for a dissolution and goes to the country early. */
-export function dissolve(world: World, c: Campaign): boolean {
+export function dissolve(world: World, c: Campaign, together = false): boolean {
   if (!canDissolve(c)) return false;
   const k = c.career!;
   // The Palace need not grant it. A government that has lost its footing, or a majority, is asked to try to govern first.
@@ -557,6 +561,14 @@ export function dissolve(world: World, c: Campaign): boolean {
   if (cost > 0) {
     for (const row of k.mood) row[c.player] -= cost;
     pushNews(c, { party: c.player, key: 'news.dissolve.opportunist', vars: { pct: Math.round(cost * 25 * 10) / 10 }, tone: 'bad' });
+  }
+  // The states the party governs can be taken to the polls on the same day: one wave of campaign for all of them.
+  if (together && !c.scenario.startsWith('career:') && statesHeld(c, c.player) > 0) {
+    const mine = Object.keys(k.states).filter((st) => k.states[st] === c.player);
+    if (mine.length > 0) {
+      k.together = true;
+      pushNews(c, { party: c.player, key: 'news.dissolve.together', vars: { states: `@states:${mine.join(',')}` }, tone: 'neutral' });
+    }
   }
   beginCampaign(world, c);
   return true;
@@ -643,6 +655,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   const petitioned = petition(world, c, counted);
   const recorded = petitioned.results;
   recordTenure(world, c, recorded);
+  const togetherStates = k.together ? Object.keys(k.states).filter((st) => k.states[st] === c.player && world.states.includes(st)) : [];
   closeSlate(world, c);
   const rng = new Rng(c.rng);
   // Every third parliament the boundaries are drawn again, and the seats the next term is fitted to are the redrawn ones.
@@ -682,6 +695,8 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.safe ? { safe: { ...k.safe } } : {}),
     ...(k.patronage ? { patronage: k.patronage } : {}),
     ...(k.drive ? { drive: k.drive } : {}),
+    ...(k.sectors ? { sectors: { ...k.sectors } } : {}),
+    ...(k.sectorAid ? { sectorAid: { ...k.sectorAid } } : {}),
     ...(k.alliance ? { alliance: { ...k.alliance, members: [...k.alliance.members] } } : {}),
     ...(k.mandated?.length ? { mandated: [...k.mandated] } : {}),
     ...(k.shaky?.length ? { shaky: [...k.shaky] } : {}),
@@ -725,6 +740,12 @@ export function nextTerm(world: World, c: Campaign): boolean {
   syncOpinion(c);
   takeOffice(c);
   if (drawn) pushNews(c, { party: k.redraw!.by, key: k.redraw!.by === null ? 'news.redraw.done.fair' : 'news.redraw.done.pushed', vars: { n: drawn.flipped, party: k.redraw!.by === null ? '' : ref.party(k.redraw!.by) }, tone: 'neutral' });
+  if (togetherStates.length > 0) {
+    // The states that went to the polls with the House are decided by how this country voted in them.
+    const winners = recorded.votes.map((row) => row.indexOf(Math.max(...row)));
+    const now = leaders(world, winners, togetherStates, k.states);
+    applyStateResults(c, togetherStates.filter((st) => now[st] !== undefined).map((st) => ({ state: st, winner: now[st], was: k.states[st] })));
+  }
   if (petitioned.lost.length > 0) pushNews(c, { party: c.player, key: 'news.petition', vars: { n: petitioned.lost.length, seats: `@seats:${petitioned.lost.join(',')}` }, tone: 'bad' });
   if (leaderOut) {
     c.career.credibility = clamp(c.career.credibility - LEADER_OUT.credibility, 0, 100);

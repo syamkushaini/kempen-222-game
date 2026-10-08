@@ -423,6 +423,14 @@ export interface Career {
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
+  /** How many times the government has leaned on each institution in this parliament (see govern.ts). */
+  leverUses?: Partial<Record<LeverId, number>>;
+  /** The sectors of the economy, each from 0 to 100 around a middling 50 (see sectors.ts). */
+  sectors?: Record<string, number>;
+  /** [sector]: the week the government last gave it support. */
+  sectorAid?: Record<string, number>;
+  /** The government dissolved the states it governs together with the House (see career.ts). */
+  together?: boolean;
   /** The post whose holder is at the centre of a scandal the player has yet to answer (see events.ts). */
   scandal?: PortfolioId;
   /** The week the opposition last opened a committee inquiry (see committee.ts). */

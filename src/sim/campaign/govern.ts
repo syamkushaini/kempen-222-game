@@ -317,6 +317,9 @@ export function deliver(c: Campaign, index: number): boolean {
 // ---------- leaning on institutions ----------
 
 const LEVER_GAP = 52;
+/** What each earlier use of the same lever this parliament adds: to the trust it costs, the chance the agency's attack backfires, the harm to the cities and the young, and the loss of credibility. */
+export const LEVER_STRAIN = { trust: 2, backfire: 0.1, mood: 0.01, credibility: 1, max: 4 };
+export const leverStrain = (k: Career, id: LeverId): number => Math.min(LEVER_STRAIN.max, k.leverUses?.[id] ?? 0);
 export function canPull(c: Campaign, id: LeverId): boolean {
   const k = c.career;
   if (!k || c.phase !== 'term' || !isPm(c) || c.inbox.length > 0) return false;
@@ -342,23 +345,27 @@ export function pullLever(world: World, c: Campaign, id: LeverId): boolean {
   const g = k.government;
   const rng = new Rng(c.rng);
   k.levers[LEVER_IDS.indexOf(id)] = k.week;
+  // Leaning on the same institution again and again is noticed: each time costs more, and the agency's targets are readier for it.
+  const strain = leverStrain(k, id);
+  (k.leverUses ??= {})[id] = (k.leverUses[id] ?? 0) + 1;
+  g.trust = clamp(g.trust - LEVER_STRAIN.trust * strain, 0, 100);
   let key = `news.gov.lever.${id}`;
   if (id === 'agency') {
     const target = mainOpposition(world, c);
     g.trust = clamp(g.trust - 6, 0, 100);
     if (target >= 0) {
       shiftRelation(c, me, target, -25);
-      if (rng.next() < 0.7) lift(k, target, 'all', -0.03);
+      if (rng.next() < 0.7 - LEVER_STRAIN.backfire * strain) lift(k, target, 'all', -0.03);
       else { lift(k, target, 'all', 0.02); k.credibility = clamp(k.credibility - 5, 0, 100); key += '.backfire'; }
     }
   } else if (id === 'police') {
     g.trust = clamp(g.trust - 4, 0, 100);
     c.parties.forEach((pc, p) => { if (pc && !inGov(c, p)) k.profile[p] = Math.max(0, k.profile[p] - 0.02); });
-    lift(k, me, ['urban_lib', 'undi18'], -0.02);
+    lift(k, me, ['urban_lib', 'undi18'], -0.02 - LEVER_STRAIN.mood * strain);
     k.salience[ISSUE_IDS.indexOf('liberties')] = clamp(k.salience[ISSUE_IDS.indexOf('liberties')] + 0.4, 0.5, 2);
   } else {
     g.trust = clamp(g.trust - 3, 0, 100);
-    k.credibility = clamp(k.credibility - 2, 0, 100);
+    k.credibility = clamp(k.credibility - 2 - LEVER_STRAIN.credibility * strain, 0, 100);
     k.profile[me] = Math.min(0.12, k.profile[me] + 0.04);
   }
   c.rng = rng.state;
