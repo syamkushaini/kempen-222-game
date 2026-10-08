@@ -402,6 +402,10 @@ export interface Career {
   dossier: number;
   /** [party][issue]: where each party stands, -2 to 2. */
   stances: number[][];
+  /** Parliaments in a row the player's party has headed the government, this one included. */
+  pmRun?: number;
+  /** The party's leader may not head the government this term: a term limit passed into law applies (see nextTerm). The party governs, and the player leads it from outside the premiership. */
+  limited?: boolean;
   /** How the player answered each time their state's question was put in a state career, in order (see agenda.ts). */
   agendaAnswers?: number[];
   /** Promises that became law, in this term or one before: an Act of Parliament need not be promised twice. Absent in a game saved before it existed. */

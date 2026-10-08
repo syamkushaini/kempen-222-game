@@ -22,7 +22,7 @@ export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS
 export type Seat = 'pm' | 'gov' | 'opp';
 export function seatOf(c: Campaign): Seat {
   const g = c.career!.government;
-  return g.pm === c.player ? 'pm' : g.partners.includes(c.player) ? 'gov' : 'opp';
+  return g.pm === c.player ? (c.career!.limited ? 'gov' : 'pm') : g.partners.includes(c.player) ? 'gov' : 'opp';
 }
 
 export type Who = 'pm' | 'partners' | 'opp' | PartyId;

@@ -186,7 +186,7 @@ function rivalBill(c: Campaign): void {
   const k = c.career!;
   const pm = k.government.pm;
   const next = k.manifesto[pm][k.rivalBills];
-  if (pm === c.player || !next || k.week < 20 || (k.week - 20) % 40 !== 0) return;
+  if ((pm === c.player && !k.limited) || !next || k.week < 20 || (k.week - 20) % 40 !== 0) return;
   k.rivalBills++;
   addScene(c, { kind: 'houseVote', from: pm, bill: `pledge:${next}` });
 }

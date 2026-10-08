@@ -52,7 +52,7 @@ export function plotPressure(c: Campaign, p: number): number {
 /** A week in the life of the player's government: each partner moves towards the door or back from it. */
 export function plotsWeek(world: World, c: Campaign): void {
   const k = c.career;
-  if (!k || c.phase !== 'term' || k.government.pm !== c.player) { if (k?.plots) delete k.plots; return; }
+  if (!k || c.phase !== 'term' || k.government.pm !== c.player || k.limited) { if (k?.plots) delete k.plots; return; }
   const g = k.government;
   for (const p of [...g.partners]) {
     if (!g.partners.includes(p)) continue;

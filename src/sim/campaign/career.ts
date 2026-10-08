@@ -25,8 +25,8 @@ import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
 import { agendaTerm } from './agenda';
-import { holdingsWeek, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
-import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws } from './policy';
+import { grassrootsLift, holdingsWeek, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
+import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
 import {
   freshParty, makeDrift, newCampaign, publishPublicPoll, startingFunds, weeklyIncome, type CampaignOptions,
 } from './turn';
@@ -58,6 +58,8 @@ export const ASSET_LOT = 100_000;
 const MAX_FOCUS_STATES = 3;
 /** Weeks without leaning on an institution before public trust starts to recover, how much of the gap to the ceiling it makes up each week, and the ceiling. */
 export const TRUST_QUIET = 26;
+/** The parliaments in a row a leader may head the government once a term limit is law. */
+export const TERM_LIMIT = 2;
 export const TRUST_RECOVERY = 0.004;
 export const TRUST_CEILING = 80;
 const PROFILE_CAP = 0.08;
@@ -175,6 +177,7 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   // The government was elected on its usual programme, and will be held to it.
   c.career.promises = [...c.career.manifesto[c.player]];
   c.career.record.bestSeats = lastElection(world).tally[c.player];
+  c.career.pmRun = c.career.government.pm === c.player ? 1 : 0;
   if (opts.realStates && !opts.founded && world.rules.kind !== 'state') c.career.realStates = true;
   // A party the player made stands where it stood before, and picks and pays for any other seat; a founded party has none to begin with.
   if (opts.own || opts.founded) {
@@ -476,7 +479,7 @@ export function resumeTerm(c: Campaign): boolean {
 
 export function canDissolve(c: Campaign): boolean {
   const k = c.career;
-  return !!k && c.phase === 'term' && c.inbox.length === 0 && k.government.pm === c.player && k.week >= EARLIEST_DISSOLUTION;
+  return !!k && c.phase === 'term' && c.inbox.length === 0 && k.government.pm === c.player && !k.limited && k.week >= EARLIEST_DISSOLUTION;
 }
 
 /** The player, as head of government, asks for a dissolution and goes to the country early. */
@@ -516,6 +519,12 @@ export function beginCampaign(world: World, c: Campaign): void {
   c.inbox = [];
   openCampaign(world, c);
   openNominations(world, c);
+  // Members and branches built over the years tell on polling day, in every seat the party stands in.
+  const lift = grassrootsLift(world, c);
+  if (lift > 0) {
+    for (const row of c.drift.support.nat) row[me] += lift;
+    pushNews(c, { party: me, key: 'news.grassroots', vars: { pts: Math.round(lift * 25 * 10) / 10 }, tone: 'good' });
+  }
   syncOpinion(c);
   publishPublicPoll(world, c);
 }
@@ -547,6 +556,10 @@ export function nextTerm(world: World, c: Campaign): boolean {
     promises: k.promises, flags: k.flags,
     economy: k.economy, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, record: k.record, states: k.states,
   };
+  // Two parliaments at the head of the government is all a term limit allows: in the third the party governs, and its leader does not.
+  const run = outcome.pm === c.player ? (k.pmRun ?? 0) + 1 : 0;
+  c.career.pmRun = run;
+  if (run > TERM_LIMIT && isEnacted(k, 'termLimit')) c.career.limited = true;
   const seats = recorded.votes.reduce((a, row) => a + (row[c.player] > 0 && row[c.player] === Math.max(...row) ? 1 : 0), 0);
   const r = c.career.record;
   r.elections++;
@@ -580,6 +593,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   closeCampaign(c);
   syncOpinion(c);
   takeOffice(c);
+  if (c.career.limited) pushNews(c, { party: c.player, key: 'news.term.limited', vars: { n: TERM_LIMIT }, tone: 'neutral' });
   pushNews(c, { party: null, key: 'news.term.start', vars: { party: ref.party(outcome.pm), n: outcome.seats }, tone: 'neutral' });
   // A leader whose party has no seats left has no party to lead.
   if (seats === 0) endCareer(c, 'wipedOut');

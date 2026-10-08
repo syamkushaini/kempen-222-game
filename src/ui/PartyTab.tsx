@@ -1,6 +1,6 @@
 import { termIncome, termSpending } from '../sim/campaign/career';
 import {
-  ACTIVITY_IDS, ACTIVITIES, HOLDINGS, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
+  ACTIVITY_IDS, ACTIVITIES, HOLDINGS, grassrootsLift, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
 } from '../sim/campaign/party';
 import { scaled } from '../sim/campaign/actions';
 import { useStore } from '../state/store';
@@ -59,6 +59,7 @@ export function PartyTab() {
         <Gauge value={k.credibility} label={t('hint.cred')} />
       </div>
       <p className="muted small">{t('party.members.note', { ordinary: f.int(ordinary) })}</p>
+      <p className="note">{t('party.grassroots', { pts: (Math.round(grassrootsLift(world, campaign) * 25 * 10) / 10).toFixed(1) })}</p>
 
       <h3>{t('party.activities')}</h3>
       <p className="muted small action-desc">{t(term ? 'party.activities.desc' : 'party.activities.campaign')}</p>

@@ -228,3 +228,27 @@ export function doActivity(world: World, c: Campaign, id: ActivityId): boolean {
   void ref;
   return true;
 }
+
+// ---------- what an organisation built over the years is worth on polling day ----------
+
+/** The most an organisation built over years can add to the party's support everywhere, in logit units (about three and a half points of vote). */
+export const GRASSROOTS_MAX = 0.14;
+/** Members, against the ordinary roll, at which the roll's side of it is complete: a party with sixty per cent more members than usual. */
+const FULL_ROLLS = 1.6;
+/** Branch strength at which the branches' side of it begins, and is complete at the other end. */
+const BRANCHES_FROM = 40, BRANCHES_TO = 80;
+
+/**
+ * What the party's members and branches add at the next election, to every group of voters: nothing for a party with
+ * the members and branches it started with, the full amount for one with sixty per cent more members and strong branches
+ * everywhere it stands. Both halves have to be there, so it is built over terms, with drives, schools and branches,
+ * and not bought in a week. It is what lets a party in the end win a majority on its own.
+ */
+export function grassrootsLift(world: World, c: Campaign): number {
+  const pc = c.parties[c.player];
+  if (!c.career || !pc) return 0;
+  const built = pc.machinery.filter((m, i) => m > 0 && contestsState(world, c, c.player, world.states[i]));
+  const branches = built.length ? built.reduce((a, m) => a + m, 0) / built.length : 0;
+  const members = clamp((rollsFactor(world, c) - 1) / (FULL_ROLLS - 1), 0, 1);
+  return GRASSROOTS_MAX * members * clamp((branches - BRANCHES_FROM) / (BRANCHES_TO - BRANCHES_FROM), 0, 1);
+}

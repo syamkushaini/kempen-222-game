@@ -10,7 +10,8 @@ import {
   type Budget, type Campaign, type Candidate, type Career, type Dial, type Economy, type LineId, type Minister, type MinisterTrait, type PortfolioId,
 } from './types';
 
-export const isPm = (c: Campaign) => c.career!.government.pm === c.player;
+/** Whether the player is head of government. A leader held to a term limit leads the governing party but not the government. */
+export const isPm = (c: Campaign) => c.career!.government.pm === c.player && !c.career!.limited;
 export const inGov = (c: Campaign, p: number) => c.career!.government.pm === p || c.career!.government.partners.includes(p);
 
 /** Adds to a party's standing with the blocs named, or with everyone. */
