@@ -1,6 +1,8 @@
 import type { World } from '../election';
 import { clamp, zeros2 } from '../math';
-import { BLOC_IDS, N_BLOCS, N_PARTIES, PARTY_IDS, type BlocId, type PartyId } from '../types';
+import { Rng } from '../rng';
+import { BLOC_IDS, N_BLOCS, N_PARTIES, PARTY_IDS, isMinor, type BlocId, type PartyId } from '../types';
+import { pushNews } from './news';
 import { ISSUE_IDS, N_ISSUES, type Campaign, type Career, type IssueId, type PledgeId } from './types';
 
 // Every stance runs from -2 to 2 between two poles; the translations name
@@ -137,7 +139,17 @@ export const MAX_PLEDGES = 6;
 /** What the treasury can bear before commentators start laughing. */
 export const FISCAL_ROOM = 10;
 
-export const manifestoCost = (pledges: PledgeId[]) => pledges.reduce((a, id) => a + PLEDGES[id].cost, 0);
+/** A promise made in its short form costs and appeals half as much, and counts for less when it is kept. */
+export const BRIEF = { share: 0.5, kept: 2, failed: 1 };
+export const isBrief = (career: Career, id: PledgeId): boolean => career.brief?.includes(id) ?? false;
+
+export const manifestoCost = (pledges: PledgeId[], brief: readonly PledgeId[] = []) => pledges.reduce((a, id) => a + PLEDGES[id].cost * (brief.includes(id) ? BRIEF.share : 1), 0);
+
+/** How the voters feel about a promise on the whole, each bloc counted alike: what a rival sees in it when it thinks of copying. */
+export const pledgeValue = (id: PledgeId): number => Object.values(PLEDGES[id].appeal).reduce((a, v) => a + v, 0);
+
+/** The most a rival's copy of a promise takes from what it was worth to the player, and the least that is left. */
+export const COPY = { perCopier: 0.2, floor: 0.5, believed: 0.5, from: 0.2, chance: 0.5, perParty: 2 };
 
 /** Whether a promise fits where the party stands. Promising what you argue against convinces nobody. */
 export function fits(career: Career, p: number, id: PledgeId): boolean {
@@ -147,14 +159,21 @@ export function fits(career: Career, p: number, id: PledgeId): boolean {
   return needs[1] > 0 ? stance >= 1 : stance <= -1;
 }
 
-function pledgeAppeal(career: Career, p: number, pledges: PledgeId[]): number[] {
+function pledgeAppeal(career: Career, p: number, pledges: PledgeId[], mine = false): number[] {
   const out = new Array<number>(N_BLOCS).fill(0);
+  const brief = mine ? career.brief ?? [] : [];
   for (const id of pledges) {
-    const weight = fits(career, p, id) ? 1 : 0.5;
+    let weight = fits(career, p, id) ? 1 : 0.5;
+    if (brief.includes(id)) weight *= BRIEF.share;
+    if (mine) {
+      // A promise a rival has copied is worth less to the one who made it first.
+      const copiers = Object.values(career.copied ?? {}).filter((l) => l.includes(id)).length;
+      weight *= Math.max(COPY.floor, 1 - COPY.perCopier * copiers);
+    } else if (career.copied?.[p]?.includes(id)) weight *= COPY.believed;
     for (const [bloc, v] of Object.entries(PLEDGES[id].appeal)) out[BLOC_IDS.indexOf(bloc as BlocId)] += v * weight;
   }
   // A manifesto that costs more than the country has is discounted across the board.
-  const over = Math.max(0, manifestoCost(pledges) - FISCAL_ROOM);
+  const over = Math.max(0, manifestoCost(pledges, brief) - FISCAL_ROOM);
   return out.map((v) => (v > 0 ? v * Math.max(0.4, 1 - 0.12 * over) : v));
 }
 
@@ -192,7 +211,7 @@ export function policyEffect(c: Campaign): number[][] {
     const mine = p === c.player;
     // Rivals publish when the election is called; the player when they choose to.
     const published = mine ? career.launched : c.phase !== 'term';
-    const promised = published ? pledgeAppeal(career, p, career.manifesto[p]) : null;
+    const promised = published ? pledgeAppeal(career, p, career.manifesto[p], mine) : null;
     // What is already law is in neither: it is not a promise any more, and dropping it from the manifesto is not a broken one.
     const usual = published ? pledgeAppeal(career, p, withoutLaws(career, DEFAULT_MANIFESTO[PARTY_IDS[p]])) : null;
     for (let b = 0; b < N_BLOCS; b++) {
@@ -264,10 +283,50 @@ export function togglePledge(c: Campaign, id: PledgeId): boolean {
   const career = c.career;
   if (!career || career.launched || !(id in PLEDGES) || isEnacted(career, id)) return false;
   const mine = career.manifesto[c.player];
-  if (mine.includes(id)) career.manifesto[c.player] = mine.filter((x) => x !== id);
+  if (mine.includes(id)) {
+    career.manifesto[c.player] = mine.filter((x) => x !== id);
+    if (career.brief) { career.brief = career.brief.filter((x) => x !== id); if (career.brief.length === 0) delete career.brief; }
+  }
   else if (mine.length < MAX_PLEDGES) mine.push(id);
   else return false;
   return true;
+}
+
+/** Makes a promise in the player's manifesto a short one, or a full one again. Only before it is published. */
+export function setBrief(c: Campaign, id: PledgeId, brief: boolean): boolean {
+  const career = c.career;
+  if (!career || career.launched || !career.manifesto[c.player].includes(id)) return false;
+  const now = isBrief(career, id);
+  if (now === brief) return false;
+  if (brief) (career.brief ??= []).push(id);
+  else { career.brief = career.brief!.filter((x) => x !== id); if (career.brief.length === 0) delete career.brief; }
+  return true;
+}
+
+/**
+ * The rivals read the player's manifesto, and the larger parties copy what is popular in it: up to two promises each,
+ * half the time, for any that is worth at least a fifth across the blocs. What they copy is believed less coming from
+ * them, and it is worth less to the player for being everyone's.
+ */
+export function copyPledges(c: Campaign, rng: Rng): void {
+  const k = c.career!;
+  const popular = k.manifesto[c.player]
+    .filter((id) => pledgeValue(id) >= COPY.from)
+    .sort((a, b) => pledgeValue(b) - pledgeValue(a));
+  if (popular.length === 0) return;
+  c.parties.forEach((pc, p) => {
+    if (!pc || p === c.player || isMinor(p) || PARTY_IDS[p] === 'oth') return;
+    const took: PledgeId[] = [];
+    for (const id of popular) {
+      if (took.length >= COPY.perParty || k.manifesto[p].length >= MAX_PLEDGES || k.manifesto[p].includes(id) || isEnacted(k, id)) continue;
+      if (rng.next() >= COPY.chance + (fits(k, p, id) ? 0.2 : 0)) continue;
+      k.manifesto[p].push(id);
+      took.push(id);
+    }
+    if (took.length === 0) return;
+    (k.copied ??= {})[p] = took;
+    pushNews(c, { party: p, key: 'news.copied', vars: { party: `@party:${p}`, bill: `@bill:pledge:${took[0]}`, n: took.length }, tone: 'neutral' });
+  });
 }
 
 /** Publishes the player's manifesto. Promises that do not add up, or that contradict the party's line, cost credibility. */
@@ -275,9 +334,10 @@ export function launchManifesto(c: Campaign): boolean {
   const career = c.career;
   if (!career || career.launched) return false;
   const mine = career.manifesto[c.player];
-  const over = Math.max(0, manifestoCost(mine) - FISCAL_ROOM);
+  const over = Math.max(0, manifestoCost(mine, career.brief) - FISCAL_ROOM);
   const odd = mine.filter((id) => !fits(career, c.player, id)).length;
   career.credibility = clamp(career.credibility - 3 * over - 4 * odd, 0, 100);
   career.launched = true;
+  copyPledges(c, new Rng((c.rng ^ 0xc0b1) >>> 0));
   return true;
 }

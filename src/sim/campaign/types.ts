@@ -421,6 +421,14 @@ export interface Career {
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
+  /** The promises in the player's manifesto that are made in their short form: half the price, half the appeal (see policy.ts). */
+  brief?: PledgeId[];
+  /** [party]: the player's promises that party has copied for its own manifesto (see policy.ts). */
+  copied?: Record<number, PledgeId[]>;
+  /** Acts the voters themselves approved in a referendum; no court strikes them down (see courts.ts). */
+  mandated?: PledgeId[];
+  /** Acts that passed on a thin margin; a constitutional court may strike them down (see courts.ts). */
+  shaky?: PledgeId[];
   /** [seat]: the party that holds it and for how many terms in a row (see tenure.ts). */
   tenure?: Record<string, [number, number]>;
   /** How freely the party draws on the states it governs, 0 to 2 (see patronage.ts). */

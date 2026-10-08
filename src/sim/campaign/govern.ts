@@ -9,7 +9,7 @@ import { startFormation } from './formation';
 import { nationWeek } from './nation';
 import { pushNews, ref } from './news';
 import { cabinetWeek, economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
-import { PLEDGES, isEnacted } from './policy';
+import { BRIEF, PLEDGES, isBrief, isEnacted } from './policy';
 import { supportersOf, supports } from './supply';
 import {
   ISSUE_IDS, LEVER_IDS,
@@ -140,12 +140,19 @@ export function canRepeal(c: Campaign, id: PledgeId): boolean {
   return !!k && c.phase === 'term' && isPm(c) && c.inbox.length === 0 && isEnacted(k, id) && !k.flags.includes(`repeal${k.term}`);
 }
 
+/** An Act that is no longer on the books is no longer shaky, nor protected by a vote of the people. */
+export function forgetAct(k: Career, id: PledgeId): void {
+  if (k.shaky) { k.shaky = k.shaky.filter((x) => x !== id); if (k.shaky.length === 0) delete k.shaky; }
+  if (k.mandated) { k.mandated = k.mandated.filter((x) => x !== id); if (k.mandated.length === 0) delete k.mandated; }
+}
+
 /** The head of government repeals an Act: its friends punish them, its enemies are a little pleased, and the public sees what it is. */
 export function repeal(c: Campaign, id: PledgeId): boolean {
   if (!canRepeal(c, id)) return false;
   const k = c.career!;
   k.laws = (k.laws ?? []).filter((x) => x !== id);
   if (k.laws.length === 0) delete k.laws;
+  forgetAct(k, id);
   k.flags.push(`repeal${k.term}`);
   k.government.trust = clamp(k.government.trust - 3, 0, 100);
   k.credibility = clamp(k.credibility - 3, 0, 100);
@@ -155,18 +162,25 @@ export function repeal(c: Campaign, id: PledgeId): boolean {
 }
 
 /** What a passed bill does for the party that brought it. */
-function enact(c: Campaign, id: string, proposer: number) {
+export function enact(c: Campaign, id: string, proposer: number, share?: number) {
   const k = c.career!;
   const def = billDef(id)!;
-  for (const [bloc, v] of Object.entries(def.appeal)) lift(k, proposer, [bloc as BlocId], v * 0.5);
-  k.fiscal += def.cost;
-  // An Act stays on the books: it leaves every party's manifesto, and is not promised again at the next election.
   const [kind, name] = id.split(':');
+  // A promise made in its short form does half as much, and costs half as much.
+  const scale = kind === 'pledge' && proposer === c.player && isBrief(k, name as PledgeId) ? BRIEF.share : 1;
+  for (const [bloc, v] of Object.entries(def.appeal)) lift(k, proposer, [bloc as BlocId], v * 0.5 * scale);
+  k.fiscal += def.cost * scale;
+  // An Act stays on the books: it leaves every party's manifesto, and is not promised again at the next election.
   if (kind === 'pledge' && PLEDGES[name as PledgeId]?.law && !isEnacted(k, name as PledgeId)) {
     (k.laws ??= []).push(name as PledgeId);
     k.manifesto = k.manifesto.map((m) => m.filter((x) => x !== name));
+    // An Act that scraped through the House is one a court may later strike down.
+    if (share !== undefined && share < SHAKY_BELOW) (k.shaky ??= []).push(name as PledgeId);
   }
 }
+
+/** The share of the House's votes below which an Act that passed is thought shaky. */
+export const SHAKY_BELOW = 0.55;
 
 /**
  * The player's bill comes to its vote. 0: put it to the vote. 1: sweeten it
@@ -189,14 +203,14 @@ export function resolveVote(world: World, c: Campaign, scene: Scene, choice: num
   const result = divide(world, c, id, me, { sweetened: choice === 1, confidence: choice === 2 });
   const vars = { bill: billRef(id), yes: result.yes, no: result.no };
   if (result.passed) {
-    enact(c, id, me);
-    if (kind === 'pledge') { k.delivery[name as PledgeId] = 'kept'; k.record.kept.push(name as PledgeId); k.credibility = clamp(k.credibility + 3, 0, 100); }
+    enact(c, id, me, result.yes / Math.max(1, result.yes + result.no));
+    if (kind === 'pledge') { k.delivery[name as PledgeId] = 'kept'; k.record.kept.push(name as PledgeId); k.credibility = clamp(k.credibility + (isBrief(k, name as PledgeId) ? BRIEF.kept : 3), 0, 100); }
     else settle(c, name as DemandId);
     pushNews(c, { party: me, key: 'news.gov.passed', vars, tone: 'good' });
     return;
   }
   if (kind === 'pledge') k.delivery[name as PledgeId] = 'failed';
-  k.credibility = clamp(k.credibility - 2, 0, 100);
+  k.credibility = clamp(k.credibility - (kind === 'pledge' && isBrief(k, name as PledgeId) ? BRIEF.failed : 2), 0, 100);
   k.government.stability = clamp(k.government.stability - 5, 5, 95);
   pushNews(c, { party: me, key: 'news.gov.defeated', vars, tone: 'bad' });
   if (choice === 2) { k.record.falls++; openTalks(world, c); }
@@ -228,7 +242,7 @@ export function resolveHouseVote(world: World, c: Campaign, scene: Scene, choice
     shiftRelation(c, me, pm, inGov(c, me) ? -15 : -5);
     if (inGov(c, me)) k.government.stability = clamp(k.government.stability - 6, 5, 95);
   }
-  if (result.passed) enact(c, id, pm);
+  if (result.passed) enact(c, id, pm, result.yes / Math.max(1, result.yes + result.no));
   else k.government.stability = clamp(k.government.stability - 4, 5, 95);
   pushNews(c, {
     party: pm, key: result.passed ? 'news.house.passed' : 'news.house.defeated',

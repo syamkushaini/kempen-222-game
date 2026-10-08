@@ -30,6 +30,7 @@ import { supplyWeek } from './supply';
 import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
+import { courtWeek } from './courts';
 import { patronageMult, patronageWeek } from './patronage';
 import { applyTenure, recordTenure } from './tenure';
 import { applySafe } from './safeseat';
@@ -380,6 +381,7 @@ export function termWeek(world: World, c: Campaign): void {
   rollsWeek(world, c);
   paddedWeek(world, c, rngWeek);
   patronageWeek(c, rngWeek);
+  courtWeek(c, rngWeek);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
   k.profile[me] = Math.min(PROFILE_CAP, k.profile[me] * 0.97 + seen);
@@ -645,6 +647,21 @@ export function nextTerm(world: World, c: Campaign): boolean {
   c.career.govRun = govRun;
   c.career.chest = k.chest;
   if (c.career.chest === undefined) delete c.career.chest;
+  // What the party has built up, and what follows it, goes with it into the next parliament.
+  const carry = {
+    ...(k.factions ? { factions: structuredClone(k.factions) } : {}),
+    ...(k.fresh?.length ? { fresh: [...k.fresh] } : {}),
+    ...(k.tenure ? { tenure: structuredClone(k.tenure) } : {}),
+    ...(k.trail ? { trail: k.trail } : {}),
+    ...(k.foreign ? { foreign: k.foreign } : {}),
+    ...(k.padded ? { padded: k.padded } : {}),
+    ...(k.safe ? { safe: { ...k.safe } } : {}),
+    ...(k.patronage ? { patronage: k.patronage } : {}),
+    ...(k.drive ? { drive: k.drive } : {}),
+    ...(k.mandated?.length ? { mandated: [...k.mandated] } : {}),
+    ...(k.shaky?.length ? { shaky: [...k.shaky] } : {}),
+  };
+  Object.assign(c.career, carry);
   // A leader who stood in a seat of their own and lost it is out of the House, whatever their party did: they cannot head a government.
   const own = c.team.leaderSeat ? world.seatIndex.get(c.team.leaderSeat) : undefined;
   const leaderOut = own !== undefined && recorded.votes[own].indexOf(Math.max(...recorded.votes[own])) !== c.player;

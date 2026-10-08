@@ -16,7 +16,7 @@ import type { IdeologyId } from '../sim/campaign/leader';
 import { retire } from '../sim/campaign/legacy';
 import { hireTroopers, interview } from '../sim/campaign/media';
 import { dismiss, hire, vet } from '../sim/campaign/staff';
-import { launchManifesto, setStance, togglePledge } from '../sim/campaign/policy';
+import { launchManifesto, setBrief, setStance, togglePledge } from '../sim/campaign/policy';
 import {
   breakPact, courtDefector, type Stake, jointAttack, meetLeader, proposePact, resolveCampaignScene, seekUnderstanding,
   type PactProposal, type PactVerdict,
@@ -42,6 +42,7 @@ import { merge } from '../sim/campaign/merge';
 import { nameShadow } from '../sim/campaign/shadow';
 import { resolveAgenda } from '../sim/campaign/agenda';
 import { forceByElection } from '../sim/campaign/contests';
+import { callReferendum } from '../sim/campaign/courts';
 import { setPatronage } from '../sim/campaign/patronage';
 import { grantSafe, revokeSafe } from '../sim/campaign/safeseat';
 import { discipline, doActivity, padRolls, rebrand, setAside, takeForeign, trade, type Discipline, type ActivityId, type FavourId, type HoldingId } from '../sim/campaign/party';
@@ -225,6 +226,8 @@ interface Store {
   chest(lots: number): void;
   foreign(favour: FavourId): void;
   padRolls(): void;
+  setBrief(id: PledgeId, brief: boolean): void;
+  referendum(id: PledgeId): void;
   patronage(level: number): void;
   grantSafe(seat: string, faction: number): void;
   revokeSafe(seat: string): void;
@@ -442,6 +445,8 @@ export const useStore = create<Store>((set, get) => {
     chest: (lots) => mutate((c, _g, world) => { setAside(world, c, lots); }),
     foreign: (favour) => mutate((c, _g, world) => { takeForeign(world, c, favour); }),
     patronage: (level) => mutate((c) => { setPatronage(c, level); }),
+    setBrief: (id, brief) => mutate((c) => { if (setBrief(c, id, brief)) syncOpinion(c); }),
+    referendum: (id) => mutate((c, _g, world) => { callReferendum(world, c, id); }),
     padRolls: () => mutate((c, _g, world) => { padRolls(world, c); }),
     grantSafe: (seat, faction) => mutate((c, _g, world) => { grantSafe(world, c, seat, faction); }),
     revokeSafe: (seat) => mutate((c) => { revokeSafe(c, seat); }),

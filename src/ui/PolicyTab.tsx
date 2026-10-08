@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import {
-  FISCAL_ROOM, fits, isEnacted, ISSUE_GROUPS, manifestoCost, MAX_PLEDGES, PLEDGES, stanceCost, stanceReaction,
+  BRIEF, FISCAL_ROOM, fits, isBrief, isEnacted, ISSUE_GROUPS, manifestoCost, MAX_PLEDGES, PLEDGES, stanceCost, stanceReaction,
 } from '../sim/campaign/policy';
 import { ISSUE_IDS, PLEDGE_IDS, type PledgeId } from '../sim/campaign/types';
-import { canRepeal } from '../sim/campaign/govern';
+import { agenda, canRepeal } from '../sim/campaign/govern';
+import { REFERENDUM, canReferendum, isContested, referendumOdds } from '../sim/campaign/courts';
+import { scaled } from '../sim/campaign/actions';
 import type { BlocId } from '../sim/types';
+import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { Gauge } from './Gauge';
 import { ConfirmButton } from './SavesTab';
-import { partyColor, partyShort, useT } from './hooks';
+import { partyColor, partyShort, useFormat, useT, useWorld } from './hooks';
 import { Brief } from './Brief';
 
 const POSITIONS = [-2, -1, 0, 1, 2];
@@ -16,7 +19,11 @@ const POSITIONS = [-2, -1, 0, 1, 2];
 /** Where the party stands on each issue, where its rivals stand, and what it will promise at the next election. */
 export function PolicyTab() {
   const t = useT();
+  const f = useFormat();
+  const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
+  const setBrief = useStore((s) => s.setBrief);
+  const referendum = useStore((s) => s.referendum);
   const setStance = useStore((s) => s.setStance);
   const togglePledge = useStore((s) => s.togglePledge);
   const repeal = useStore((s) => s.repeal);
@@ -28,7 +35,7 @@ export function PolicyTab() {
   const me = campaign.player;
   const rivals = campaign.parties.map((pc, p) => (pc && p !== me ? p : -1)).filter((p) => p >= 0);
   const mine = k.manifesto[me];
-  const cost = manifestoCost(mine);
+  const cost = manifestoCost(mine, k.brief);
   const blocNames = (ids: BlocId[]) => ids.map((b) => t(`bloc.${b}`)).join(', ');
 
   return (
@@ -119,13 +126,41 @@ export function PolicyTab() {
                   <span className="action-meta">{t('manifesto.line', { cost: def.cost, blocs: blocNames(likes) })}</span>
                   {hates.length > 0 && <span className="action-meta">{t('policy.dislikes', { blocs: blocNames(hates) })}</span>}
                   {enacted && <span className="action-meta">{t('manifesto.enacted')}</span>}
+                  {Object.entries(k.copied ?? {}).some(([, l]) => l.includes(id)) && <span className="action-meta">{t('manifesto.copied', { parties: Object.entries(k.copied ?? {}).filter(([, l]) => l.includes(id)).map(([p]) => partyShort(t, Number(p))).join(', ') })}</span>}
                   {!enacted && !fits(k, me, id) && <span className="action-reason">{t('manifesto.misfit', { issue: t(`issue.${def.needs![0]}`) })}</span>}
                 </span>
               </label>
+              {on && !k.launched && !enacted && (
+                <div className="button-row tight">
+                  <button className={isBrief(k, id) ? 'chip' : 'chip active'} aria-pressed={!isBrief(k, id)} onClick={() => setBrief(id, false)}>{t('manifesto.full')}</button>
+                  <button className={isBrief(k, id) ? 'chip active' : 'chip'} aria-pressed={isBrief(k, id)} onClick={() => setBrief(id, true)}>{t('manifesto.brief')}</button>
+                </div>
+              )}
+              {on && k.launched && isBrief(k, id) && <span className="action-meta">{t('manifesto.briefNote')}</span>}
             </li>
           );
         })}
       </ul>
+      {!k.launched && <p className="muted small">{t('manifesto.briefDesc', { pct: Math.round(BRIEF.share * 100) })}</p>}
+      {campaign.phase === 'term' && agenda(campaign).some((b) => b.startsWith('pledge:') && isContested(b.slice(7) as PledgeId)) && (
+        <>
+          <h4>{t('referendum.title')}</h4>
+          <p className="muted small action-desc">{t('referendum.desc', { rm: f.rm(scaled(world, REFERENDUM.money)) })}</p>
+          <ul className="plain-list">
+            {agenda(campaign).filter((b) => b.startsWith('pledge:') && isContested(b.slice(7) as PledgeId)).map((b) => {
+              const id = b.slice(7) as PledgeId;
+              const check = canReferendum(world, campaign, id);
+              return (
+                <li key={id}>
+                  {t(`pledge.${id}`)} <span className="muted small num">{t('referendum.odds', { pct: Math.round(referendumOdds(world, campaign, id) * 100) })}</span>{' '}
+                  <ConfirmButton className="btn small" label={t('referendum.call')} confirmLabel={t('manifesto.repeal.confirm')} onConfirm={() => referendum(id)} />
+                  {!check.ok && <span className="action-reason"> {t(`referendum.no.${check.reason}` as StringKey)}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
       <h4>{t('manifesto.lawsTitle')}</h4>
       {(k.laws?.length ?? 0) === 0
         ? <p className="muted small">{t('manifesto.lawsNone')}</p>

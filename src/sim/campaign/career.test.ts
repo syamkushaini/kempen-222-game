@@ -150,6 +150,8 @@ describe('policy', () => {
     const cred = c.career!.credibility;
     expect(launchManifesto(c)).toBe(true);
     expect(c.career!.credibility).toBeLessThan(cred);
+    // What a rival has copied is worth less, which is not what is tested here.
+    delete c.career!.copied;
     expect(policyEffect(c)[bloc('urban_b40')][PS]).toBeGreaterThan(0);
     expect(togglePledge(c, 'cashAid')).toBe(false); // locked
     expect(launchManifesto(c)).toBe(false);
