@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getWorld, worldOf } from '../../data/world';
 import { PARTY_IDS } from '../types';
 import { projectElection } from '../election';
-import { answerEvent, nextTerm, resumeTerm, skipAhead, startCareer, TERM_LIMIT, canDissolve } from './career';
+import { answerEvent, beginCampaign, nextTerm, resumeTerm, skipAhead, startCareer, syncOpinion, TERM_LIMIT, canDissolve } from './career';
 import { effectiveDynamics } from './actions';
 import { endDay } from './formation';
 import { GRASSROOTS_MAX, baseRolls, grassrootsLift } from './party';
@@ -45,6 +45,24 @@ describe('an organisation built over the years', () => {
     const none = seats(0), full = seats(GRASSROOTS_MAX);
     expect(full - none).toBeGreaterThanOrEqual(8);
     expect(full).toBeLessThan(112 + 25);
+  });
+});
+
+describe('an organisation at the start of a campaign', () => {
+  it('is kept in the career and in the opinion the campaign starts from, not lost when opinion is worked out again', () => {
+    const c = career();
+    c.parties[PS]!.machinery = c.parties[PS]!.machinery.map((m) => (m > 0 ? 90 : 0));
+    c.career!.rolls = baseRolls(base, c) * 1.7;
+    beginCampaign(base, c);
+    expect(c.career!.grass).toBeCloseTo(GRASSROOTS_MAX, 6);
+    const nat = c.drift.support.nat.map((row) => row[PS]);
+    syncOpinion(c);
+    expect(c.drift.support.nat.map((row) => row[PS])).toEqual(nat);
+    expect(nat.every((v, b) => v >= c.career!.grass! + c.career!.mood[b][PS] - 0.5)).toBe(true);
+    // Rivals do not have it.
+    const BP = PARTY_IDS.indexOf('bp');
+    expect(c.drift.support.nat[0][BP]).not.toBeCloseTo(c.drift.support.nat[0][PS], 3);
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
   });
 });
 

@@ -421,6 +421,8 @@ export interface Career {
   disciplined?: Record<string, number>;
   /** States where the party has stood for the first time and its branches are still young, so that they grow slowly (see party.ts). */
   fresh?: string[];
+  /** What the party's members and branches are worth at this election, in logit units across all groups, fixed when the campaign begins (see party.ts). Absent outside a campaign. */
+  grass?: number;
   /** Parliaments in a row the player's party has sat in government, as head or as partner, this one included: the longer it has, the more tired the voters are of it (see party.ts). */
   govRun?: number;
   /** Money set aside for the next campaign, out of reach of the weeks between (see party.ts). */

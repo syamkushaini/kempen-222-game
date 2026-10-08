@@ -82,7 +82,7 @@ export function syncOpinion(c: Campaign): void {
   const k = c.career;
   if (!k) return;
   const policy = policyEffect(c);
-  for (let b = 0; b < N_BLOCS; b++) for (let p = 0; p < N_PARTIES; p++) c.drift.support.nat[b][p] = k.mood[b][p] + k.profile[p] + policy[b][p];
+  for (let b = 0; b < N_BLOCS; b++) for (let p = 0; p < N_PARTIES; p++) c.drift.support.nat[b][p] = k.mood[b][p] + k.profile[p] + policy[b][p] + (p === c.player ? k.grass ?? 0 : 0);
 }
 
 // ---------- starting ----------
@@ -566,7 +566,7 @@ export function beginCampaign(world: World, c: Campaign): void {
   // Members and branches built over the years tell on polling day, in every seat the party stands in.
   const lift = grassrootsLift(world, c);
   if (lift > 0) {
-    for (const row of c.drift.support.nat) row[me] += lift;
+    k.grass = lift;
     pushNews(c, { party: me, key: 'news.grassroots', vars: { pts: Math.round(lift * 25 * 10) / 10 }, tone: 'good' });
   }
   syncOpinion(c);

@@ -250,7 +250,7 @@ export function doActivity(world: World, c: Campaign, id: ActivityId): boolean {
 // ---------- what an organisation built over the years is worth on polling day ----------
 
 /** The most an organisation built over years can add to the party's support everywhere, in logit units (about three and a half points of vote). */
-export const GRASSROOTS_MAX = 0.14;
+export const GRASSROOTS_MAX = 0.25;
 /** Members, against the ordinary roll, at which the roll's side of it is complete: a party with sixty per cent more members than usual. */
 const FULL_ROLLS = 1.6;
 /** Branch strength at which the branches' side of it begins, and is complete at the other end. */

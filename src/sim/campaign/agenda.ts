@@ -152,25 +152,28 @@ export function resolveAgenda(world: World, c: Campaign, scene: Scene, choice: n
   if (!st || !answer) return;
   const me = c.player;
   const k = c.career;
-  const term = c.phase === 'term' && !!k;
+  // In a career opinion is kept as mood and the campaign's drift is worked out from it; in a single contest it is the drift itself.
+  const term = !!k;
+  const waiting = c.phase === 'term';
   const before = (k?.agendaAnswers ?? []).filter((a) => a !== 2).at(-1);
   const repeat = term && before !== undefined && choice !== 2 && choice === before;
   const flip = term && before !== undefined && choice !== 2 && choice !== before;
   const weight = repeat ? 0.5 : 1;
   for (const [bloc, v] of Object.entries(answer.lift)) {
     const b = BLOC_IDS.indexOf(bloc as BlocId);
-    if (term) k!.mood[b][me] += v * weight * 0.5;
-    else c.drift.support.nat[b][me] += v;
+    const amount = v * weight * (waiting ? 0.5 : 1);
+    if (term) k!.mood[b][me] += amount;
+    if (!waiting) c.drift.support.nat[b][me] += amount;
   }
   if (term) {
     k!.agendaAnswers = [...(k!.agendaAnswers ?? []), choice];
     if (repeat) k!.credibility = Math.min(100, k!.credibility + 2);
     if (flip) k!.credibility = Math.max(0, k!.credibility - 4);
   }
-  if (answer.turnout && !term) c.drift.turnout.party[me] += answer.turnout;
+  if (answer.turnout && !waiting) c.drift.turnout.party[me] += answer.turnout;
   const pc = c.parties[me];
   if (pc && answer.funds) pc.funds = Math.max(0, pc.funds + Math.sign(answer.funds) * scaled(world, Math.abs(answer.funds)));
   if (answer.unity) shiftUnity(c, me, answer.unity);
-  if (!term) c.agenda = `answered:${choice}`;
+  if (!waiting) c.agenda = `answered:${choice}`;
   pushNews(c, { party: me, key: `agenda.${st}.o${choice}.news`, vars: {}, tone: flip ? 'bad' : choice === 2 ? 'neutral' : 'good' });
 }
