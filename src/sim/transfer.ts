@@ -10,8 +10,14 @@ export type StandDowns = Record<string, number[]>;
 export const STANDS = -1;
 /** In a stand-down list: the party has no candidate here and stood aside for no one, so its voters scatter. A party made by the player may leave a seat unfielded. */
 export const WITHDRAWN = -2;
+/**
+ * In a stand-down list: the party has put up a candidate in a seat where it had none last time. It stands, but as a
+ * newcomer: it is not in the seat's fitted baseline, so it starts with the party's reach among the seat's voters less a
+ * penalty for being unknown (see `ENTRANT_PENALTY` in project.ts).
+ */
+export const ENTERS = -3;
 /** Whether a party's entry in a stand-down list means it has a candidate. */
-export const stands = (v: number | undefined) => v === undefined || v === STANDS;
+export const stands = (v: number | undefined) => v === undefined || v === STANDS || v === ENTERS;
 
 /** Where a party's voters go when it stands aside: to the pact partner, or nowhere. The rest scatter to whoever is left. */
 export interface Transfer { to: number; home: number }

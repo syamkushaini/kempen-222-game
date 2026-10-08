@@ -36,6 +36,7 @@ import { newGame, startOf, type GameState, type StartOptions } from './game';
 import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
+import { enterSeat, leaveSeat } from '../sim/campaign/entry';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
@@ -221,6 +222,9 @@ interface Store {
   fieldSeat(seatId: string): void;
   withdrawSeat(seatId: string): void;
   fieldCheapest(limit: number): void;
+  /** Puts a candidate in a seat the party has never stood in, or takes one back. */
+  enterSeat(seatId: string): void;
+  leaveSeat(seatId: string): void;
   /** Answers a round of state polls by fighting some of its states in person (see aside.ts). */
   playStates(sceneId: number, choice: number, states: string[]): Promise<void>;
   /** A state election fought in person is over: back to the career, or on to the next state of the round. */
@@ -428,6 +432,8 @@ export const useStore = create<Store>((set, get) => {
     fieldSeat: (seatId) => mutate((c, _g, world) => { fieldSeat(world, c, seatId); }),
     withdrawSeat: (seatId) => mutate((c, _g, world) => { withdrawSeat(world, c, seatId); }),
     fieldCheapest: (limit) => mutate((c, _g, world) => { fieldCheapest(world, c, limit); }),
+    enterSeat: (seatId) => mutate((c, _g, world) => { enterSeat(world, c, seatId); }),
+    leaveSeat: (seatId) => mutate((c, _g, world) => { leaveSeat(world, c, seatId); }),
     playStates: async (sceneId, choice, wanted) => {
       const before = get().game;
       if (!before || before.aside) return;

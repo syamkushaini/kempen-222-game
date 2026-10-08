@@ -564,6 +564,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   c.pacts = [];
   c.understandings = [];
   c.katak = [];
+  delete c.entered;
   c.offered = [];
   c.inbox = [];
   c.polls = [];

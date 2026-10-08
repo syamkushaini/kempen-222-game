@@ -1,7 +1,7 @@
 import { BLOC_TURNOUT_LOGIT, type Baseline } from './baseline';
 import { BLOC_EARLY, BLOC_LEAN, BLOC_UNDECIDED } from './blocs';
 import { sigmoid, softmaxMasked, zeros } from './math';
-import { redistribute, stands } from './transfer';
+import { ENTERS, redistribute, stands } from './transfer';
 import {
   N_BLOCS, N_PARTIES,
   type BlocProjection, type Dynamics, type SeatClass, type SeatData, type SeatOutcome,
@@ -19,6 +19,13 @@ export interface SeatShock {
    */
   pollingDay?: number;
 }
+
+/**
+ * How far below an established party a newcomer starts in a seat it has never stood in, in logit units: no branch, no
+ * name on the ballot before, a candidate nobody knows. About a third of the vote an established party with the same
+ * appeal would draw.
+ */
+export const ENTRANT_PENALTY = -1.0;
 
 export const MARGINAL_BELOW = 0.05;
 export const LEANING_BELOW = 0.15;
@@ -48,9 +55,11 @@ export function projectSeat(
   shock?: SeatShock,
   stood?: number[],
 ): SeatOutcome {
-  const mask = base.contesting[seatIndex];
+  // A party that has put up a candidate where it had none joins the contest as a newcomer.
+  const entrants = stood ? stood.some((v) => v === ENTERS) : false;
+  const mask = entrants ? base.contesting[seatIndex].map((m, p) => m || stood![p] === ENTERS) : base.contesting[seatIndex];
   const standing = stood ? mask.map((m, p) => m && stands(stood[p])) : mask;
-  const bias = base.supportBias[seatIndex];
+  const bias = entrants ? base.supportBias[seatIndex].map((v, p) => (stood![p] === ENTERS ? ENTRANT_PENALTY : v)) : base.supportBias[seatIndex];
   const turnoutBias = base.turnoutBias[seatIndex];
   const stateSupport = dyn.support.state[seat.state];
   const seatSupport = dyn.support.seat[seat.id];

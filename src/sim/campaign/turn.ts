@@ -5,7 +5,7 @@ import {
   N_BLOCS, N_PARTIES, PARTY_IDS, isMinor,
   type Dynamics, type ElectionOutcome, type RegionId,
 } from '../types';
-import { freshParty, standingPact, weeklyIncome } from './field';
+import { freshParty, isOutsider, standingPact, weeklyIncome } from './field';
 import { record, standing } from './ledger';
 import { makeRecap } from './recap';
 import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, truth } from './actions';
@@ -26,7 +26,7 @@ import type {
   BackstoryId, Challenge, NewsItem, Poll, PollQuality, PollScope,
 } from './types';
 
-export { atHome, campaigns, freshParty, lastShares, playable, standingPact, startingFunds, weeklyIncome } from './field';
+export { atHome, campaigns, freshParty, isOutsider, lastShares, playable, standingPact, startingFunds, weeklyIncome } from './field';
 
 /** How far opinion has drifted since the last election (standard deviations, logit units). */
 const DRIFT = { nat: 0.08, state: 0.06, seat: 0.08 };
@@ -63,7 +63,7 @@ const ALLIED = 30;
 
 export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   const rng = new Rng(opts.seed);
-  const parties = PARTY_IDS.map((_, p) => freshParty(world, p));
+  const parties = PARTY_IDS.map((_, p) => freshParty(world, p, p === opts.player && isOutsider(world, p)));
   const opening = standingPact(world);
 
   const bare: Omit<Campaign, 'team'> = {

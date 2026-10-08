@@ -503,6 +503,8 @@ export interface Campaign {
   met: number[];
   /** Seats whose incumbent has changed sides this campaign. */
   katak: string[];
+  /** Seats where the player's party has put up a candidate it had none in last time, and what each cost (see entry.ts). */
+  entered?: Record<string, number>;
   /** Parties that have already put a pact offer to the player. */
   offered: number[];
   /** Scenes waiting for the player's answer. */

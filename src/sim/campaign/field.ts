@@ -74,6 +74,15 @@ export function atHome(world: World, p: number): boolean {
   return (kind === 'state' || kind === 'byelection') && world.seats[0].region === HOME_GROUND[PARTY_IDS[p]];
 }
 
+/**
+ * Parties of Sabah and Sarawak that can be led in another state's election, as outsiders: they hold no seat there and
+ * have to put up candidates in the seats they choose (see entry.ts), starting with no branches in the state.
+ */
+const OUTSIDER_IDS: PartyId[] = ['gbk', 'gbs', 'legasi'];
+
+/** Whether a party is in this contest as an outsider: led by the player, with no seat or following of its own on this ground. */
+export const isOutsider = (world: World, p: number) => world.rules.kind === 'state' && OUTSIDER_IDS.includes(PARTY_IDS[p]) && !campaigns(world, p);
+
 /** Parties the player can lead in this contest: a party on its home ground first, then the national ones. */
 export function playable(world: World): number[] {
   const all = PARTY_IDS.map((_, p) => p);
@@ -85,7 +94,10 @@ export function playable(world: World): number[] {
     ...(national ? all.filter((p) => KINGMAKER_IDS.includes(PARTY_IDS[p])) : []),
   ];
   // In a one-seat contest the party must also be on that ballot, or it could do nothing there.
-  return offered.filter((p) => campaigns(world, p) && (world.seats.length > 1 || world.baseline.contesting[0][p]));
+  const here = offered.filter((p) => campaigns(world, p) && (world.seats.length > 1 || world.baseline.contesting[0][p]));
+  // In another state's election the parties of Sabah and Sarawak may come as outsiders, after everyone else.
+  const outsiders = world.rules.kind === 'state' ? all.filter((p) => isOutsider(world, p) && !here.includes(p)) : [];
+  return [...here, ...outsiders];
 }
 
 export function startingFunds(world: World, p: number): number {
@@ -97,9 +109,9 @@ export function weeklyIncome(world: World, p: number, c?: Campaign): number {
 }
 
 /** A party's campaign as it stands on the first day: money in the bank, a rested leader, and branches where it has support. */
-export function freshParty(world: World, p: number): PartyCampaign | null {
+export function freshParty(world: World, p: number, outsider = false): PartyCampaign | null {
   const id = PARTY_IDS[p];
-  if (!isFielded(id) || !campaigns(world, p)) return null;
+  if (!isFielded(id) || (!campaigns(world, p) && !outsider)) return null;
   const shares = lastShares(world);
   const general = world.rules.kind === 'general';
   const start = START[id];

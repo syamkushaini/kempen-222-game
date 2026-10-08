@@ -3,7 +3,7 @@ import { combineDynamics } from '../dynamics';
 import { projectElection, type World } from '../election';
 import { zeros, zeros2 } from '../math';
 import { Rng } from '../rng';
-import { stands } from '../transfer';
+import { ENTERS, stands } from '../transfer';
 import { addEndorsements } from './endorserData';
 import { travelCost } from './geo';
 import { edge, fundsBoost, gaffeCut, mediaBoost, stat } from './perks';
@@ -180,7 +180,8 @@ function usageKey(id: ActionId, target: ActionTarget): string {
 
 /** Whether a party has a candidate in a seat: it stood there last time and has not stood aside under a pact (or, for a party the player made, left the seat unfielded). */
 export function contests(world: World, c: Campaign, i: number, p: number): boolean {
-  return world.baseline.contesting[i][p] && stands(c.standDowns[world.seats[i].id]?.[p]);
+  const row = c.standDowns[world.seats[i].id]?.[p];
+  return (world.baseline.contesting[i][p] || row === ENTERS) && stands(row);
 }
 
 export function contestsState(world: World, c: Campaign, p: number, st: RegionId): boolean {

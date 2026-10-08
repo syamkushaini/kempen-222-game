@@ -11,6 +11,7 @@ import { Loan } from './Loan';
 import { Brief } from './Brief';
 import { Icon, type IconName } from './Icon';
 import { NominationsPanel } from './Nominations';
+import { EntriesPanel } from './Entries';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
   { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival'] },
@@ -193,6 +194,7 @@ export function ActionsTab() {
   return (
     <section className="actions">
       <NominationsPanel />
+      <EntriesPanel />
       <p className="target-line">
         <span className="muted">{t('actions.target')}:</span>{' '}
         <i className="dot" data-party={me} style={{ background: partyColor(me) }} />

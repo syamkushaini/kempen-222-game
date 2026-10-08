@@ -58,12 +58,12 @@ describe('the last four states', () => {
     }
   });
 
-  it('let the parties of Sabah and Sarawak be led on their own ground, ahead of the national ones', () => {
-    expect(ids(playable(world('melaka')))).toEqual(['ps', 'bp', 'pt']);
-    expect(ids(playable(world('johor')))).toEqual(['ps', 'bp', 'pt']);
-    expect(ids(playable(world('sarawak')))).toEqual(['gbk', 'ps']);
-    expect(ids(playable(world('sabah')))).toEqual(['gbs', 'legasi', 'ps', 'bp', 'pt']);
-    // Nowhere else: not in a general election, and not in another state.
+  it('let the parties of Sabah and Sarawak be led on their own ground, ahead of the national ones, and elsewhere as outsiders after them', () => {
+    expect(ids(playable(world('melaka')))).toEqual(['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi']);
+    expect(ids(playable(world('johor')))).toEqual(['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi']);
+    expect(ids(playable(world('sarawak')))).toEqual(['gbk', 'ps', 'gbs', 'legasi']);
+    expect(ids(playable(world('sabah')))).toEqual(['gbs', 'legasi', 'ps', 'bp', 'pt', 'gbk']);
+    // Not at home in a general election, or in another state.
     expect(ids(playable(general))).toEqual(['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi']);
     for (const p of [P('gbk'), P('gbs'), P('legasi')]) {
       expect(atHome(general, p)).toBe(false);
