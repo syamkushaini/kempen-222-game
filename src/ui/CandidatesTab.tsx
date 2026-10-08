@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { contests } from '../sim/campaign/actions';
-import { HOPEFUL_NAMES } from '../sim/campaign/candidates';
+import { CHOOSE_DAYS, HOPEFUL_NAMES, canOpen, canStand } from '../sim/campaign/candidates';
 import { enteredSeats } from '../sim/campaign/entry';
 import { STANDS } from '../sim/transfer';
 import { useStore } from '../state/store';
@@ -21,6 +21,9 @@ export function CandidatesTab() {
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const selectSeat = useStore((s) => s.selectSeat);
+  const openSeat = useStore((s) => s.openSeat);
+  const standLeader = useStore((s) => s.standLeader);
+  const setTab = useStore((s) => s.setTab);
   const display = useDisplay();
   const [filter, setFilter] = useState<Filter>('hold');
   const [query, setQuery] = useState('');
@@ -38,8 +41,9 @@ export function CandidatesTab() {
     const d = display[i];
     const mine = last.seats[i].valid > 0 ? last.seats[i].votes[me] / last.seats[i].valid : 0;
     const key = campaign.team.keySeats.find((x) => x.seat === seat.id);
-    const candidate = key && key.pick !== null ? key.options[key.pick] : null;
-    return { seat, i, aside, fighting, holder, d, mine, key, candidate, blown: !!key?.blown, fresh: entered.has(seat.id), unseen: !fighting && !aside && row !== undefined && row !== STANDS };
+    const candidate = key && key.pick !== null ? key.options[key.pick] : campaign.team.defaults?.[seat.id] ?? null;
+    const chosen = !!key && key.pick !== null;
+    return { seat, i, chosen, aside, fighting, holder, d, mine, key, candidate, blown: !!key?.blown, fresh: entered.has(seat.id), unseen: !fighting && !aside && row !== undefined && row !== STANDS };
   }), [world, campaign, display, k, last, me, entered]);
 
   const counts = {
@@ -71,6 +75,7 @@ export function CandidatesTab() {
         <span className="muted small">{t('slate.summary', { n: counts.hold + counts.target, total: world.seats.length })}</span>
       </div>
       <p className="muted small">{t('slate.intro', { hold: counts.hold, close: counts.close, named: withCandidates })}</p>
+      {campaign.team.leaderSeat && <p className="note">{t('slate.leader', { seat: world.seats[world.seatIndex.get(campaign.team.leaderSeat)!].name })}</p>}
       <div className="chips" role="group" aria-label={t('slate.filter')}>
         {FILTERS.map((id) => (
           <button key={id} className={filter === id ? 'chip active' : 'chip'} aria-pressed={filter === id} onClick={() => { setFilter(id); setShown(PAGE); }}>
@@ -96,16 +101,24 @@ export function CandidatesTab() {
                   {r.fresh && <> · {t('entry.status.in')}</>}
                 </span>
                 {r.candidate && (
-                  <span className={r.blown ? 'action-reason' : 'muted small'}>
-                    {t('slate.candidate', { name: HOPEFUL_NAMES[r.candidate.name], kind: t(`hopeful.${r.candidate.kind}`) })}
-                    {r.blown && ` · ${t('slate.blown')}`}
+                  <span className={r.blown || r.candidate.blown ? 'action-reason' : 'muted small'}>
+                    {t(r.chosen ? 'slate.candidate' : 'slate.party', { name: HOPEFUL_NAMES[r.candidate.name], kind: t(`hopeful.${r.candidate.kind}`) })}
+                    {(r.blown || r.candidate.blown) && ` · ${t('slate.blown')}`}
                     {!r.blown && r.candidate.vetted && r.candidate.skeleton && ` · ${t('slate.skeleton')}`}
                   </span>
                 )}
-                {!r.candidate && r.key && <span className="muted small">{t('slate.undecided')}</span>}
+                {!r.chosen && r.key && <span className="muted small">{t('slate.undecided')}</span>}
+                {campaign.team.leaderSeat === r.seat.id && <span className="muted small">{t('slate.you')}</span>}
               </span>
               {r.fighting && <span className={`badge ${r.d.cls}`}>{f.pct(r.d.margin)}</span>}
             </button>
+            {campaign.phase === 'campaign' && r.fighting && (
+              <div className="button-row tight slate-actions">
+                {canOpen(world, campaign, r.seat.id) && <button className="btn small" onClick={() => { openSeat(r.seat.id); setTab('team'); }}>{t('slate.open', { n: CHOOSE_DAYS })}</button>}
+                {r.key && !r.chosen && <button className="btn small" onClick={() => setTab('team')}>{t('slate.toTeam')}</button>}
+                {canStand(world, campaign, r.seat.id) && <button className="btn small" onClick={() => standLeader(r.seat.id)}>{t('slate.stand')}</button>}
+              </div>
+            )}
           </li>
         ))}
       </ul>

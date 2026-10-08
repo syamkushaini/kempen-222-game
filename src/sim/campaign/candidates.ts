@@ -95,11 +95,77 @@ export function choose(world: World, c: Campaign, seat: string, option: number):
   if (!key || !h || key.pick !== null || !canChoose(c)) return false;
   key.pick = option;
   const me = c.player;
+  // The party's own choice makes way for the leader's.
+  delete c.team.defaults?.[seat];
   // A candidate is there for the whole campaign, so what they bring does not fade.
   (c.drift.support.seat[seat] ??= zeros(N_PARTIES))[me] += liftIn(world, key, option);
   (c.drift.turnout.seat[seat] ??= zeros(N_PARTIES))[me] += HOPEFULS[h.kind].turnout;
   shiftUnity(c, me, HOPEFULS[h.kind].unity);
   pushNews(c, { party: me, key: 'news.candidate.named', vars: { seat: ref.seat(seat), name: HOPEFUL_NAMES[h.name], kind: `@hopeful:${h.kind}` }, tone: 'neutral' });
+  return true;
+}
+
+// ---------- every seat has a candidate ----------
+
+/** The part of a hopeful's usual chance of a past that applies to the party's own choice in a seat the leader leaves alone. */
+const DEFAULT_RISK = 0.15;
+/** What it costs the leader's week to look at the hopefuls for a seat of their own choosing, in days. */
+export const CHOOSE_DAYS = 0.5;
+
+/** The party's own choice of candidate in every seat it stands in that the leader has not been asked to choose for. */
+export function makeDefaults(world: World, c: Campaign, rng: Rng): Record<string, Hopeful> {
+  const me = c.player;
+  const out: Record<string, Hopeful> = {};
+  const kinds = HOPEFUL_KINDS.filter((k) => k !== 'graduate');
+  world.seats.forEach((seat, i) => {
+    if (!contests(world, c, i, me) || c.team.keySeats.some((k) => k.seat === seat.id)) return;
+    const kind = kinds[rng.int(kinds.length)];
+    out[seat.id] = { kind, name: rng.int(HOPEFUL_NAMES.length), skeleton: rng.next() < HOPEFULS[kind].risk * DEFAULT_RISK, vetted: false };
+  });
+  return out;
+}
+
+/** Whether the leader can look at the hopefuls for a seat, and choose: before nomination day, in a seat that has only the party's own choice, with half a day to spare. */
+export function canOpen(world: World, c: Campaign, seat: string): boolean {
+  const pc = c.parties[c.player];
+  const i = world.seatIndex.get(seat);
+  return !!pc && i !== undefined && canChoose(c) && !!c.team.defaults?.[seat] && contests(world, c, i, c.player) && pc.days >= CHOOSE_DAYS;
+}
+
+/** Opens a seat to the leader's choice: three hopefuls come forward, as they do in the seats that matter most. Costs half a day. */
+export function openSeat(world: World, c: Campaign, seat: string): boolean {
+  if (!canOpen(world, c, seat)) return false;
+  const pc = c.parties[c.player]!;
+  pc.days -= CHOOSE_DAYS;
+  const rng = new Rng((c.seed ^ 0x0c4e1) + world.seatIndex.get(seat)! * 31 + (c.career?.term ?? 0));
+  const graduates = c.career ? holdingScale(world, c.career, 'college') : 0;
+  const kinds: HopefulKind[] = rng.shuffled(HOPEFUL_KINDS.filter((k) => k !== 'graduate')).slice(0, OPTIONS);
+  if (graduates > 0 && rng.next() < Math.min(1, graduates)) kinds[kinds.length - 1] = 'graduate';
+  const options: Hopeful[] = kinds.map((kind) => ({ kind, name: rng.int(HOPEFUL_NAMES.length), skeleton: rng.next() < HOPEFULS[kind].risk, vetted: false }));
+  c.team.keySeats.push({ seat, options, pick: null, blown: false });
+  return true;
+}
+
+// ---------- the leader stands too ----------
+
+/** What a leader who stands in a seat adds there, before their own charm: a leader on the ballot is a draw. */
+export const LEADER_LIFT = 0.08;
+/** Charm adds this much more for each point above ordinary. */
+export const LEADER_CHARM = 0.03;
+
+/** Whether the leader can put themselves up in a seat: before nomination day, once, in a seat the party stands in. */
+export function canStand(world: World, c: Campaign, seat: string): boolean {
+  const i = world.seatIndex.get(seat);
+  return i !== undefined && canChoose(c) && c.team.leaderSeat === undefined && contests(world, c, i, c.player);
+}
+
+/** The leader puts themselves up in a seat. If the party's candidate there was already chosen, they stand down for the leader. */
+export function standLeader(world: World, c: Campaign, seat: string): boolean {
+  if (!canStand(world, c, seat)) return false;
+  c.team.leaderSeat = seat;
+  const me = c.player;
+  (c.drift.support.seat[seat] ??= zeros(N_PARTIES))[me] += LEADER_LIFT + LEADER_CHARM * (c.team.leader.stats[0] - 3);
+  pushNews(c, { party: me, key: 'news.leader.stands', vars: { seat: ref.seat(seat) }, tone: 'neutral' });
   return true;
 }
 
@@ -115,6 +181,15 @@ export function vetHopeful(world: World, c: Campaign, seat: string, option: numb
 /** A week on the ballot: any candidate with a past may be found out, and the seat with them. */
 export function candidatesWeek(c: Campaign, rng: Rng): void {
   const me = c.player;
+  // The party's own choices have pasts too, and some come out; the leader hears of them together.
+  const outed: string[] = [];
+  for (const [seat, h] of Object.entries(c.team.defaults ?? {})) {
+    if (!h.skeleton || h.blown || seat === c.team.leaderSeat || rng.next() >= EXPOSURE) continue;
+    h.blown = true;
+    (c.drift.support.seat[seat] ??= zeros(N_PARTIES))[me] -= SCANDAL_HIT;
+    outed.push(seat);
+  }
+  if (outed.length) { shiftUnity(c, me, -Math.min(4, outed.length)); pushNews(c, { party: me, key: 'news.candidate.scandals', vars: { n: outed.length, seats: `@seats:${outed.join(',')}` }, tone: 'bad' }); }
   for (const key of c.team.keySeats) {
     if (key.pick === null || key.blown || !key.options[key.pick].skeleton || rng.next() >= EXPOSURE) continue;
     key.blown = true;

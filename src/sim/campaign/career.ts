@@ -63,6 +63,8 @@ const MAX_FOCUS_STATES = 3;
 export const TRUST_QUIET = 26;
 /** The parliaments in a row a leader may head the government once a term limit is law. */
 export const TERM_LIMIT = 2;
+/** What losing the seat the leader stood in costs: the leader's word, and the party's heart. */
+export const LEADER_OUT = { credibility: 10, unity: 8 };
 export const TRUST_RECOVERY = 0.004;
 export const TRUST_CEILING = 80;
 const PROFILE_CAP = 0.08;
@@ -608,7 +610,10 @@ export function nextTerm(world: World, c: Campaign): boolean {
   c.career.govRun = govRun;
   c.career.chest = k.chest;
   if (c.career.chest === undefined) delete c.career.chest;
-  if (run > TERM_LIMIT && isEnacted(k, 'termLimit')) c.career.limited = true;
+  // A leader who stood in a seat of their own and lost it is out of the House, whatever their party did: they cannot head a government.
+  const own = c.team.leaderSeat ? world.seatIndex.get(c.team.leaderSeat) : undefined;
+  const leaderOut = own !== undefined && recorded.votes[own].indexOf(Math.max(...recorded.votes[own])) !== c.player;
+  if ((run > TERM_LIMIT && isEnacted(k, 'termLimit')) || (leaderOut && outcome.pm === c.player)) c.career.limited = true;
   const seats = recorded.votes.reduce((a, row) => a + (row[c.player] > 0 && row[c.player] === Math.max(...row) ? 1 : 0), 0);
   const r = c.career.record;
   r.elections++;
@@ -643,7 +648,12 @@ export function nextTerm(world: World, c: Campaign): boolean {
   syncOpinion(c);
   takeOffice(c);
   if (drawn) pushNews(c, { party: k.redraw!.by, key: k.redraw!.by === null ? 'news.redraw.done.fair' : 'news.redraw.done.pushed', vars: { n: drawn.flipped, party: k.redraw!.by === null ? '' : ref.party(k.redraw!.by) }, tone: 'neutral' });
-  if (c.career.limited) pushNews(c, { party: c.player, key: 'news.term.limited', vars: { n: TERM_LIMIT }, tone: 'neutral' });
+  if (leaderOut) {
+    c.career.credibility = clamp(c.career.credibility - LEADER_OUT.credibility, 0, 100);
+    c.parties[c.player]!.unity = clamp(c.parties[c.player]!.unity - LEADER_OUT.unity, 0, 100);
+    pushNews(c, { party: c.player, key: outcome.pm === c.player ? 'news.leader.lost.pm' : 'news.leader.lost', vars: { seat: ref.seat(c.team.leaderSeat!) }, tone: 'bad' });
+  }
+  if (c.career.limited && !leaderOut) pushNews(c, { party: c.player, key: 'news.term.limited', vars: { n: TERM_LIMIT }, tone: 'neutral' });
   pushNews(c, { party: null, key: 'news.term.start', vars: { party: ref.party(outcome.pm), n: outcome.seats }, tone: 'neutral' });
   if (fatigueOf(govRun) > 0) {
     for (const row of c.career.mood) row[c.player] -= fatigueOf(govRun);

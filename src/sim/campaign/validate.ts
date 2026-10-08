@@ -127,6 +127,8 @@ function isValidTeam(x: unknown, world: World): boolean {
     isList(x.keySeats, (k) => isObj(k) && typeof k.seat === 'string' && world.seatIndex.has(k.seat) && typeof k.blown === 'boolean' &&
       isList(k.options, (h) => isPerson(h) && (HOPEFUL_KINDS as readonly unknown[]).includes((h as Record<string, unknown>).kind)) &&
       (k.pick === null || (isNum(k.pick) && Number.isInteger(k.pick) && k.pick >= 0 && k.pick < (k.options as unknown[]).length))) &&
+    (x.defaults === undefined || (isObj(x.defaults) && Object.entries(x.defaults).every(([seat, h]) => world.seatIndex.has(seat) && isPerson(h) && (HOPEFUL_KINDS as readonly unknown[]).includes((h as Record<string, unknown>).kind)))) &&
+    (x.leaderSeat === undefined || (typeof x.leaderSeat === 'string' && world.seatIndex.has(x.leaderSeat))) &&
     isList(x.endorsers, isPartyOrNull, ENDORSER_IDS.length) &&
     isList(x.media, (row) => isList(row, (v) => isNum(v) && v >= -2 && v <= 2, N_PARTIES), OUTLET_IDS.length) &&
     (x.troopers === 0 || x.troopers === 1 || x.troopers === 2) &&

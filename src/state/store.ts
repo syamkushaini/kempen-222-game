@@ -8,7 +8,7 @@ import {
 import {
   appoint, deliver, leaveGovernment, repeal, pullLever, reshuffle, setBudget, tableBill, tableMotion,
 } from '../sim/campaign/govern';
-import { choose, vetHopeful } from '../sim/campaign/candidates';
+import { choose, openSeat, standLeader, vetHopeful } from '../sim/campaign/candidates';
 import { canChoose } from '../sim/campaign/events';
 import { borrow } from '../sim/campaign/loan';
 import { courtEndorser } from '../sim/campaign/endorsers';
@@ -204,6 +204,10 @@ interface Store {
   /** Career: changes the standing orders for the weeks between elections. */
   setOrders(patch: Partial<Orders>): void;
   invest(lots: number): void;
+  /** Opens a seat to the leader's choice of candidate, for half a day. */
+  openSeat(seat: string): void;
+  /** The leader stands in a seat themselves. */
+  standLeader(seat: string): void;
   /** Suspends or dissolves a state's branches. */
   discipline(state: string, how: Discipline): void;
   /** Changes the party's name, flag and colours, at a price. */
@@ -423,6 +427,8 @@ export const useStore = create<Store>((set, get) => {
     chest: (lots) => mutate((c, _g, world) => { setAside(world, c, lots); }),
     discipline: (state, how) => mutate((c, _g, world) => { discipline(world, c, state, how); }),
     rebrand: (identity) => mutate((c, g, world) => { if (rebrand(world, c)) g.identity = identity; }),
+    openSeat: (seat) => mutate((c, _g, world) => { openSeat(world, c, seat); }),
+    standLeader: (seat) => mutate((c, _g, world) => { standLeader(world, c, seat); }),
     invest: (lots) => mutate((c, _g, world) => { invest(world, c, lots); }),
     trade: (holding, lots) => mutate((c, _g, world) => { trade(world, c, holding, lots); }),
     activity: (id) => mutate((c, _g, world) => { doActivity(world, c, id); }),
