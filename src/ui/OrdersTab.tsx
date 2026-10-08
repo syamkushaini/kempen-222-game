@@ -1,6 +1,7 @@
 import {
-  ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, inGovernment, machineryTargets, ledger, termIncome, termSpending,
+  ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, machineryTargets, ledger, termIncome, termSpending,
 } from '../sim/campaign/career';
+import { grantsCost, hasPublicMoney, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
 import { useState } from 'react';
 import { contestsState, scaled } from '../sim/campaign/actions';
 import { ROUNDS, STATE_GOVERNMENT_INCOME, statesHeld } from '../sim/campaign/contests';
@@ -67,7 +68,8 @@ export function OrdersTab() {
   const targets = machineryTargets(world, campaign);
   const lot = scaled(world, ASSET_LOT);
   const leaders = others(campaign, me);
-  const governing = inGovernment(campaign, me);
+  // Whether the party has public money to handle: in government at the centre, or governing a state.
+  const governing = hasPublicMoney(campaign);
   const band = stabilityBand(g.stability);
   const members = membersOf(campaign), moods = memberMoods(campaign);
 
@@ -237,7 +239,7 @@ export function OrdersTab() {
           <div className="grow">
             <span className="action-title">{t('orders.source.state')}</span>
             <span className="action-meta">{t(governing ? 'orders.source.state.desc' : 'orders.source.state.no')}</span>
-            {governing && <span className="action-meta num">{t('orders.perWeek', { rm: f.rm(income.state) })}</span>}
+            {governing && <span className="action-meta num">{t('orders.perWeek', { rm: f.rm(income.diverted) })}</span>}
           </div>
           <LevelSwitch label={t('orders.source.state')} value={o.state} disabled={!governing} onChange={(level) => setOrders({ state: level })} />
         </li>
@@ -262,16 +264,33 @@ export function OrdersTab() {
           </div>
         </li>
         <li><Loan /></li>
-        {income.states > 0 && (
-          <li className="action">
-            <div className="grow">
-              <span className="action-title">{t('orders.source.states')}</span>
-              <span className="action-meta">{t('orders.source.states.desc')}</span>
-            </div>
-            <strong className="num">{f.rm(income.states)}</strong>
-          </li>
-        )}
       </ul>
+      {governing && (
+        <section className="gov-funds" aria-label={t('orders.gov.title')}>
+          <h3>{t('orders.gov.title')}</h3>
+          <p className="muted small">{t('orders.gov.desc')}</p>
+          <ul>
+            <li className="action">
+              <div className="grow">
+                <span className="action-title">{t('orders.gov.allocation')}</span>
+                <span className="action-meta">{t('orders.gov.allocation.desc', { rm: f.rm(income.allocation), cap: f.rm(treasuryCap(world, campaign)) })}</span>
+              </div>
+              <strong className="num">{f.rm(treasuryOf(campaign))}</strong>
+            </li>
+            <li className="action">
+              <div className="grow">
+                <span className="action-title">{t('orders.gov.grants')}</span>
+                <span className="action-meta">{t('orders.gov.grants.desc')}</span>
+                <span className="action-meta num">{t('orders.perWeek', { rm: f.rm(grantsCost(world, campaign)) })}</span>
+              </div>
+              <LevelSwitch label={t('orders.gov.grants')} value={o.grants ?? 0} onChange={(level) => setOrders({ grants: level })} />
+            </li>
+          </ul>
+          {Object.keys(k.goodwill ?? {}).length > 0 && (
+            <p className="note">{t('orders.gov.goodwill', { places: Object.entries(k.goodwill!).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([st, v]) => `${regionLabel(t, world, st)} ${Math.round(v)}`).join(' · ') })}</p>
+          )}
+        </section>
+      )}
       <h3>{t('orders.ledger')}</h3>
       <table className="ledger num">
         <tbody>

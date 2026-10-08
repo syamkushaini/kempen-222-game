@@ -603,3 +603,6 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 /* a pitch's figures keep their own weight, whether or not the chip is the chosen one */
 .pitch .chip .dim { opacity: 0.75; font-weight: 400; }
 .pitch { margin: 8px 0 12px; }
+/* The government's money, shown beside the party's. */
+.hud-sub { display: block; font-weight: 500; }
+.gov-funds { margin-top: 12px; }

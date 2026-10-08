@@ -113,7 +113,8 @@ describe('state polls', () => {
     expect(states.penang).toBe(PS);
     const c = career();
     expect(c.career!.states).toEqual(states);
-    expect(termIncome(base, c).states).toBe(2_000 * statesHeld(c, PS));
+    // The patronage of the states a party governs goes to the government's treasury, on top of its allocation as head of government.
+    expect(termIncome(base, c).allocation).toBe(36_000 + 2_000 * statesHeld(c, PS));
     expect(statesHeld(c, PS)).toBeGreaterThan(1);
   });
 

@@ -5,6 +5,7 @@ import { Rng } from '../rng';
 import { PARTY_IDS } from '../types';
 import { scaled } from './actions';
 import { ledger, startCareer, termIncome, termSpending } from './career';
+import { ALLOCATION, allocation } from './treasury';
 import { STATE_GOVERNMENT_INCOME, seatsHeldBy, statesHeld } from './contests';
 import {
   CHIEF_NAMES, DEPUTY_EDGE, WALKOUT, challengerLeaves, deputyChance, deputyOf, factionsOf, factionsWeek, leaveChance, partyPoll, pollOdds, resolvePartyPoll,
@@ -33,7 +34,8 @@ describe('the states as a purse', () => {
     expect(setPatronage(c, 1)).toBe(false);
     withStates(c);
     expect(statesHeld(c, PS)).toBeGreaterThan(0);
-    const income = (level: number) => { setPatronage(c, level); return termIncome(base, c).states; };
+    // What the states bring in goes to the government's treasury, on top of the head of government's share.
+    const income = (level: number) => { setPatronage(c, level); return allocation(base, c) - scaled(base, ALLOCATION.pm); };
     const [a, b, d] = [income(0), income(1), income(2)];
     expect(a).toBe(Math.round(scaled(base, STATE_GOVERNMENT_INCOME) * statesHeld(c, PS)));
     expect(b).toBeGreaterThan(a);

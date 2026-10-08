@@ -5,7 +5,7 @@ import { Rng } from '../rng';
 import { N_BLOCS, N_PARTIES, PARTY_IDS, type RegionId } from '../types';
 import { contestsState, scaled } from './actions';
 import { START_UNITY } from './cast';
-import { applyStateResults, houseTally, leaders, resolveByElection, resolveStatePolls, roundDue, startStates, STATE_GOVERNMENT_INCOME, statesHeld, vacantSeat } from './contests';
+import { applyStateResults, houseTally, leaders, resolveByElection, resolveStatePolls, roundDue, startStates, statesHeld, vacantSeat } from './contests';
 import { relation, shiftRelation } from './diplomacy';
 import { EVENTS, raise, resolveEvent, rollEvent } from './events';
 import {
@@ -24,6 +24,7 @@ import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
+import { allocation, diverted, hasPublicMoney, syncGoodwill, treasuryWeek } from './treasury';
 import { agendaTerm } from './agenda';
 import { foldMerged, standMerged } from './merge';
 import { supplyWeek } from './supply';
@@ -40,7 +41,7 @@ import { grandWeek } from './grand';
 import { signEarlyPacts } from './earlypact';
 import { applyPride } from './pride';
 import { courtWeek } from './courts';
-import { patronageMult, patronageWeek } from './patronage';
+import { patronageWeek } from './patronage';
 import { applyTenure, recordTenure } from './tenure';
 import { applySafe } from './safeseat';
 import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, crowdIncome, fatigueOf, foreignWeek, paddedWeek, grassrootsLift, holdingsWeek, trailWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
@@ -69,7 +70,6 @@ export const BUDGET: Record<keyof Orders['budget'], number[]> = {
 /** Between elections, donations run at this share of what a campaign brings in. */
 const PEACETIME = 0.1;
 const DONOR_INCOME = 8_000;
-const STATE_INCOME = 10_000;
 /** Weekly return on money invested in party businesses. */
 /** Businesses are bought and sold in lots of this size; selling loses a tenth. */
 export const ASSET_LOT = 100_000;
@@ -98,6 +98,7 @@ export function syncOpinion(c: Campaign): void {
   if (!k) return;
   const policy = policyEffect(c);
   for (let b = 0; b < N_BLOCS; b++) for (let p = 0; p < N_PARTIES; p++) c.drift.support.nat[b][p] = k.mood[b][p] + k.profile[p] + policy[b][p] + (p === c.player ? k.grass ?? 0 : 0) + allianceBonus(c, p);
+  syncGoodwill(c);
 }
 
 // ---------- starting ----------
@@ -147,7 +148,7 @@ function firstStateGovernment(world: World, tally: number[], federal: number[], 
 }
 
 const defaultOrders = (): Orders => ({
-  focus: 'tour', courting: null, budget: { machinery: 1, media: 1, research: 0 }, focusStates: [], donors: 0, state: 0,
+  focus: 'tour', courting: null, budget: { machinery: 1, media: 1, research: 0 }, focusStates: [], donors: 0, state: 0, grants: 0,
 });
 
 function freshCareer(term: number, government: Outcome, results: SeatResults | null): Career {
@@ -237,9 +238,10 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
 
 // ---------- money ----------
 
-export interface Income { members: number; donors: number; crowd: number; state: number; assets: number; states: number; total: number }
+/** What comes in each week, by source. `total` is the party's; the government's allocation is a treasury of its own (see treasury.ts). */
+export interface Income { members: number; donors: number; crowd: number; diverted: number; assets: number; total: number; allocation: number }
 
-/** What comes in each week between elections, by source. */
+/** What comes into the party's purse each week between elections, by source, and what the government hands its own treasury. */
 export function termIncome(world: World, c: Campaign): Income {
   const k = c.career!;
   const pc = c.parties[c.player]!;
@@ -247,11 +249,10 @@ export function termIncome(world: World, c: Campaign): Income {
   const members = Math.round(weeklyIncome(world, c.player, c) * PEACETIME * (0.6 + 0.4 * pc.unity / 100) * (0.8 + k.credibility / 250) * (drive ? 1.6 : 1) * incomeBoost(c, c.player) * rollsFactor(world, c));
   const donors = Math.round(scaled(world, DONOR_INCOME) * k.orders.donors * (drive ? 1.3 : 1));
   const crowd = crowdIncome(world, c);
-  const state = inGovernment(c, c.player) ? scaled(world, STATE_INCOME) * k.orders.state : 0;
+  // The party's share of the government's money is only what is diverted to it.
+  const divert = diverted(world, c);
   const assets = holdingsYield(k);
-  // A party that governs states has their patronage to draw on.
-  const states = Math.round(scaled(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player) * patronageMult(k));
-  return { members, donors, crowd, state, assets, states, total: members + donors + crowd + state + assets + states };
+  return { members, donors, crowd, diverted: divert, assets, total: members + donors + crowd + divert + assets, allocation: allocation(world, c) };
 }
 
 export interface LedgerLine { id: string; amount: number }
@@ -260,7 +261,7 @@ export interface LedgerLine { id: string; amount: number }
 export function ledger(world: World, c: Campaign): { income: LedgerLine[]; spending: LedgerLine[]; net: number } {
   const i = termIncome(world, c);
   const s = termSpending(world, c);
-  const income = ([['members', i.members], ['donors', i.donors], ['crowd', i.crowd], ['state', i.state], ['assets', i.assets], ['states', i.states]] as const)
+  const income = ([['members', i.members], ['donors', i.donors], ['crowd', i.crowd], ['state', i.diverted], ['assets', i.assets]] as const)
     .filter(([, amount]) => amount !== 0).map(([id, amount]) => ({ id, amount }));
   const spending = ([['machinery', s.machinery], ['media', s.media], ['research', s.research], ['wages', s.wages]] as const)
     .filter(([, amount]) => amount > 0).map(([id, amount]) => ({ id, amount }));
@@ -292,7 +293,8 @@ export function setOrders(world: World, c: Campaign, patch: Partial<Orders>): vo
     o.focusStates = [...new Set(patch.focusStates)].filter((st) => world.states.includes(st) && contestsState(world, c, c.player, st)).slice(0, MAX_FOCUS_STATES);
   }
   if (isLevel(patch.donors)) o.donors = patch.donors;
-  if (isLevel(patch.state)) o.state = inGovernment(c, c.player) ? patch.state : 0;
+  if (isLevel(patch.state)) o.state = hasPublicMoney(c) ? patch.state : 0;
+  if (isLevel(patch.grants)) o.grants = hasPublicMoney(c) ? patch.grants : 0;
 }
 
 /** Buys (positive) or sells (negative) lots of party businesses, as plain property. Selling in a hurry loses a tenth. The Party tab buys and sells each kind. */
@@ -356,9 +358,11 @@ export function termWeek(world: World, c: Campaign): void {
   const o = k.orders;
 
   // Money. If the orders cost more than there is, everything is cut back in proportion.
+  // The government's money is its own: the allocation comes into the treasury, grants go out of it, and only what is diverted reaches the party.
   const income = termIncome(world, c);
   const plan = termSpending(world, c);
-  pc.funds += afterLender(c, pc, income.total);
+  const toParty = treasuryWeek(world, c);
+  pc.funds += afterLender(c, pc, income.total - income.diverted + toParty);
   const afford = plan.total > 0 ? Math.min(1, pc.funds / plan.total) : 1;
   pc.funds -= Math.round(plan.total * afford);
   // The retainer is cut back with everything else, and a team on part pay does not work.
@@ -541,7 +545,7 @@ export function resumeTerm(c: Campaign): boolean {
   c.phase = 'term';
   c.inbox = [];
   takeOffice(c);
-  if (!inGovernment(c, c.player)) k.orders.state = 0;
+  if (!hasPublicMoney(c)) { k.orders.state = 0; k.orders.grants = 0; }
   // News from the talks is filed with the week they happened in.
   for (const item of c.news) if (item.week >= FORMATION_WEEK) item.week = k.week;
   return true;
@@ -676,6 +680,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.founded ? { founded: true } : {}),
     ...(k.own ? { own: true, slate: k.slate } : {}),
     ...(k.realStates ? { realStates: true } : {}),
+    treasury: k.treasury, goodwill: k.goodwill, goodwillApplied: {},
     ...(k.nation ? { nation: { ...k.nation } } : {}),
     orders: k.orders, assets: k.assets, ...(k.holdings ? { holdings: { ...k.holdings } } : {}), ...(k.rolls !== undefined ? { rolls: k.rolls } : {}), ...(k.activity ? { activity: { ...k.activity } } : {}), credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
     stances: k.stances, stances0: k.stances.map((row) => [...row]),
@@ -724,7 +729,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   r.bestSeats = Math.max(r.bestSeats, seats);
   if (outcome.pm === c.player) r.victories++;
   r.terms = [...(r.terms ?? []), { seats, pm: outcome.pm === c.player }];
-  if (!inGovernment(c, c.player)) c.career.orders.state = 0;
+  if (!hasPublicMoney(c)) { c.career.orders.state = 0; c.career.orders.grants = 0; }
   // The campaign's bills arrive after the votes are counted: half of what was left goes on them.
   const pc = c.parties[c.player]!;
   pc.funds = Math.round(pc.funds * 0.5);

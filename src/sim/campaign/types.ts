@@ -295,8 +295,10 @@ export interface Orders {
   focusStates: RegionId[];
   /** How hard the party leans on tycoons and corporate donors. */
   donors: Level;
-  /** How hard a governing party leans on state resources. */
+  /** How hard a governing party leans on state resources: how much of the government's money it diverts to the party each week. */
   state: Level;
+  /** How much of the government's money goes each week to development grants in the target regions. Absent in a game saved before the treasury existed. */
+  grants?: Level;
 }
 
 /** An election's result in every seat, kept so the next term can be fitted to it. */
@@ -545,6 +547,11 @@ export interface Career {
   fiscal: number;
   /** The player chose to fight state elections in person when a round of state polls falls due (see aside.ts), rather than leave them to the model. */
   realStates?: boolean;
+  /** The government's money, apart from the party's: what has come in as the weekly allocation and has not yet been granted or diverted. Absent before the treasury existed. */
+  treasury?: number;
+  /** The goodwill development grants have won the party in each region, 0 to 100, and how much of it is already in the hidden drift of opinion. */
+  goodwill?: Record<string, number>;
+  goodwillApplied?: Record<string, number>;
   /** The player's party is one they made, founded or made their own: it may stand in any seat, at a price (see slate.ts). */
   own?: boolean;
   /** The seats of a party the player made: where it has candidates carried over, and what was paid for those added this time. */

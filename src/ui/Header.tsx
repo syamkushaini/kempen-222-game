@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { termIncome, termSpending } from '../sim/campaign/career';
+import { hasPublicMoney, treasuryOf } from '../sim/campaign/treasury';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import { MenuButton } from './GameMenu';
@@ -124,6 +125,12 @@ function TermHud() {
         <span className="hud-label">{t('hud.funds')}</span>
         <strong className="num hud-value">{f.rm(me.funds)} <span className={`small ${net < 0 ? 'neg' : 'muted'}`}>{net < 0 ? '−' : '+'}{f.rm(Math.abs(net))}</span></strong>
       </div>
+      {hasPublicMoney(campaign) && (
+        <div className="hud-item">
+          <span className="hud-label">{t('hud.gov')}</span>
+          <strong className="num hud-value">{f.rm(treasuryOf(campaign))} <span className="small muted">+{f.rm(termIncome(world, campaign).allocation)}</span></strong>
+        </div>
+      )}
       {!k.ending && <div className="button-row tight term-buttons">
         <button className="btn small" disabled={waiting} onClick={() => advance(1)}>{t('term.next')} ▸</button>
         <button className="btn small" disabled={waiting} onClick={() => advance(4)}>{t('term.month')} ▸▸</button>
@@ -151,6 +158,7 @@ export function TermBar() {
       <div className="hud-item">
         <span className="hud-label">{t('hud.funds')}</span>
         <strong className="num hud-value">{f.rm(me.funds)} <span className={`small ${net < 0 ? 'neg' : 'muted'}`}>{net < 0 ? '−' : '+'}{f.rm(Math.abs(net))}</span></strong>
+        {hasPublicMoney(campaign) && <span className="hud-sub small muted">{t('hud.gov')} {f.rm(treasuryOf(campaign))}</span>}
       </div>
       <div className="button-row tight term-buttons">
         <button className="btn small" disabled={waiting} onClick={() => advance(1)} aria-label={t('term.next')}>▸ 1</button>

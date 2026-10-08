@@ -68,14 +68,20 @@ describe('standing orders', () => {
 
   it('ignore what makes no sense', () => {
     const c = career(PT);
-    setOrders(base, c, { focusStates: ['johor', 'kedah', 'perak', 'selangor', 'atlantis'], state: 3, courting: PT });
+    // A party that governs neither at the centre nor in a state has no public money to lean on.
+    c.career!.states = {};
+    setOrders(base, c, { focusStates: ['johor', 'kedah', 'perak', 'selangor', 'atlantis'], state: 3, grants: 2, courting: PT });
     expect(c.career!.orders.focusStates).toEqual(['johor', 'kedah', 'perak']);
-    expect(c.career!.orders.state).toBe(0); // the opposition has no state resources to lean on
+    expect(c.career!.orders.state).toBe(0);
+    expect(c.career!.orders.grants).toBe(0);
     expect(c.career!.orders.courting).toBeNull();
     expect(inGovernment(c, PT)).toBe(false);
     const gov = career(BP);
     setOrders(base, gov, { state: 2 });
-    expect(termIncome(base, gov).state).toBe(20_000);
+    // What a partner can divert to the party is limited by what the government hands its treasury.
+    const income = termIncome(base, gov);
+    expect(income.allocation).toBeGreaterThan(0);
+    expect(income.diverted).toBe(Math.min(20_000, income.allocation));
   });
 
   it('cut everything back in proportion when the money runs out', () => {

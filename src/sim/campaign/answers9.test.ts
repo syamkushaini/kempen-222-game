@@ -49,7 +49,7 @@ describe('small donors', () => {
     c.career!.credibility = 80;
     const inc = termIncome(base, c);
     expect(inc.crowd).toBeGreaterThan(0);
-    expect(inc.total).toBe(inc.members + inc.donors + inc.crowd + inc.state + inc.assets + inc.states);
+    expect(inc.total).toBe(inc.members + inc.donors + inc.crowd + inc.diverted + inc.assets);
   });
 });
 

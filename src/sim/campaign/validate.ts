@@ -172,7 +172,10 @@ function isValidCareer(x: unknown, world: World): boolean {
       isList(r.basis, (b) => b === null || (isObj(b) && isVotes(b.votes) && isNum(b.turnout)), seats))) &&
     isObj(o) && (FOCUS_IDS as readonly unknown[]).includes(o.focus) && isPartyOrNull(o.courting) &&
     isObj(o.budget) && isLevel(o.budget.machinery) && isLevel(o.budget.media) && isLevel(o.budget.research) &&
-    isList(o.focusStates, (st) => world.states.includes(st as string)) && isLevel(o.donors) && isLevel(o.state) &&
+    isList(o.focusStates, (st) => world.states.includes(st as string)) && isLevel(o.donors) && isLevel(o.state) && (o.grants === undefined || isLevel(o.grants)) &&
+    (x.treasury === undefined || (isNum(x.treasury) && x.treasury >= 0)) &&
+    (x.goodwill === undefined || (isObj(x.goodwill) && Object.values(x.goodwill).every((v) => isNum(v) && v >= 0 && v <= 100))) &&
+    (x.goodwillApplied === undefined || (isObj(x.goodwillApplied) && Object.values(x.goodwillApplied).every(isNum))) &&
     isNum(x.assets) && x.assets >= 0 && (x.holdings === undefined || (isObj(x.holdings) && Object.values(x.holdings).every((v) => isNum(v) && v >= 0))) && (x.rolls === undefined || isNum(x.rolls)) && (x.drive === undefined || isNum(x.drive)) && (x.activity === undefined || (isObj(x.activity) && Object.values(x.activity).every(isNum))) && isNum(x.credibility) && isNum(x.dossier) &&
     isList(x.stances, (row) => isList(row, (v) => isNum(v) && v >= -2 && v <= 2, N_ISSUES), N_PARTIES) &&
     isList(x.stances0, (row) => isList(row, isNum, N_ISSUES), N_PARTIES) &&
