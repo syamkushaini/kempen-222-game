@@ -36,6 +36,9 @@ You lead one of three national parties through the last weeks before polling day
 - **Time.** Each week has seven days. Every action costs days, and the leader's travel is added: free within a zone, half a day between peninsular zones, a full day across the South China Sea.
 - **Money.** Almost everything costs money. Members' donations arrive weekly; dinners, online appeals and one tycoon cheque raise more, each with a catch.
 - **Actions.** Ceramah and walkabouts work in one seat. Door-to-door drives, get-out-the-vote operations, billboards and mega rallies work across a state. Television, social media and attacks work nationally.
+- **Pitching.** A ceramah, walkabout or town hall can be aimed at one voter group in the seat. It lifts that group, softly its neighbours, and sours groups set against it, so the biggest group is not always the best aim.
+- **New ground.** Before nomination day the party may put a candidate in a seat it never stood in, at a price and as a newcomer. A party of Sabah or Sarawak may lead a campaign in another state this way.
+- **A state's question.** Each state election raises one local question after the first week (padi, oil royalty, water, the causeway, the 1963 agreement) with three answers that cost somewhere.
 - **Seat types.** Ceramah are strong in rural seats and weak in cities; walkabouts suit towns; door-to-door work reaches rural blocs best; social media reaches the young.
 - **Fading.** Campaign effects fade each week, and repeating the same thing in the same place gives less each time.
 - **Polls.** True support is hidden. A free public national poll comes out weekly; state and seat polls cost money and carry a margin of error. The "Your intelligence" map shows what you have polled.
@@ -54,7 +57,8 @@ A career starts at the opening of a parliament, with the government the last ele
 - **Skip-ahead.** Time moves a week, four weeks, or to the next decision. It stops whenever something lands on your desk.
 - **Money.** Members' donations are clean but modest. Tycoon money and state resources pay more and bring favours asked, leaks and probes. Party businesses pay a steady return on money invested.
 - **Policy.** You hold a position on twelve issues. Every position pleases some blocs and annoys others, and you can see where rivals stand. Changing your mind costs credibility, and credibility decides how far voters believe you.
-- **Manifesto.** Up to six costed promises for the next election. Promises that cost more than the country has, or that contradict your own positions, convince fewer voters.
+- **Manifesto.** Up to six costed promises for the next election, from twenty-eight on offer. Promises that cost more than the country has, or that contradict your own positions, convince fewer voters. A promise of an Act that passes the House stays law: nobody promises it again, in this term or the next.
+- **The party.** The Party tab shows the membership roll (which sets the dues), five kinds of business (property, a hotel, a newspaper, a plantation, a training college) and three things to do between campaigns: a membership drive, the assembly, a school for cadres. The Candidates tab lists the party's seats.
 - **Events.** A hundred and two of them: floods, leaks, strikes, budgets, restless deputies, hotel-room plots, durian with the enemy. Each shows what a choice will do and what is left to chance. Some set off later events, and two belong to each leader's past.
 - **By-elections.** When a seat falls vacant you choose how hard to fight it; the voters of that seat decide, and the winner sits in the House from then on.
 - **State polls.** The states vote in three rounds through the term (weeks 70, 130 and 190). You choose the effort; each state goes to whoever wins most of its parliamentary seats. A state you govern pays the party a little every week.
