@@ -415,7 +415,8 @@ describe('events between elections', () => {
 
   it('bring a leader’s own past back to them, and nobody else’s', () => {
     const seen = new Set<string>();
-    for (const seed of [1, 2, 3, 4]) {
+    // The pool is large, so a leader’s own past takes a few terms to come round: enough games are played for it to show.
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
       const c = startCareer(careerWorld, { player: PS, difficulty: 'normal', seed, backstory: 'fixer' });
       for (let guard = 0; guard < 3000 && c.phase !== 'campaign' && !c.career!.ending; guard++) {
         if (c.phase === 'term') { if (c.inbox.length) answerEvent(careerWorld, c, c.inbox.shift()!, 0); else skipAhead(careerWorld, c, 26); }

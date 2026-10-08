@@ -13,6 +13,7 @@ import { GoalResult } from './Challenges';
 import { AchievementsEarned, RateGame } from './ResultExtras';
 import { GamePanel } from './SavesTab';
 import { electionCard, ShareDialog } from './ShareDialog';
+import { Analysis } from './Analysis';
 import { Review } from './Review';
 import { Tally } from './Tally';
 import { VerdictMoment } from './VerdictMoment';
@@ -60,6 +61,8 @@ function SeatBySeat() {
   // The verdict has its moment once, when the count ends before the player's eyes: not for a night looked at again later.
   const watched = useRef(!finished);
   const [moment, setMoment] = useState(false);
+  // The analysis of the whole election opens after the verdict, once; the summary has a button to read it again.
+  const [analysis, setAnalysis] = useState(false);
   useEffect(() => { if (finished && watched.current) { watched.current = false; setMoment(true); } }, [finished]);
 
   const { display, tally, votes, majorityAt } = useMemo(() => {
@@ -131,7 +134,8 @@ function SeatBySeat() {
 
   return (
     <main className={finished ? 'layout night done' : 'layout night'}>
-      {moment && <VerdictMoment campaign={campaign} summary={summary} result={result} onDone={() => setMoment(false)} />}
+      {moment && <VerdictMoment campaign={campaign} summary={summary} result={result} onDone={() => { setMoment(false); setAnalysis(true); }} />}
+      {analysis && <Analysis campaign={campaign} summary={summary} result={result} onClose={() => setAnalysis(false)} />}
       <section className="map-column">
         <MapView
           display={display}
@@ -178,6 +182,7 @@ function SeatBySeat() {
                 {campaign.formation
                   ? <button className="btn primary" onClick={leaveNight}>{t(campaign.formation.outcome ? 'summary.toGovernment' : 'summary.toTalks')} ▸</button>
                   : <AgainButtons restart />}
+                <button className="btn" onClick={() => setAnalysis(true)}>{t('analysis.open')}</button>
                 <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>
               </div>
               <AchievementsEarned campaign={campaign} />
@@ -188,7 +193,6 @@ function SeatBySeat() {
                 <h4>{t('summary.lost', { n: summary.lost.length })}</h4>
                 {seatLinks(summary.lost)}
               </details>
-              <Review campaign={campaign} result={result} />
               <RateGame campaign={campaign} />
               {sharing && <ShareDialog data={card} onClose={() => setSharing(false)} />}
             </section>

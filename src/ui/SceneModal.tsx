@@ -18,6 +18,7 @@ import { StateFight } from './StateFight';
 import { Portrait } from './Portrait';
 import { Chamber } from './Chamber';
 import { divisionSeating } from './seating';
+import { ScenePicture } from './art';
 
 /**
  * A scene that needs the player's answer: a call from another leader or an
@@ -252,6 +253,7 @@ function SceneCard({ scene }: { scene: Scene }) {
   return (
     <div className="overlay">
       <div className="dialog panel" role="dialog" aria-modal="true" aria-label={title}>
+        <ScenePicture kind={scene.kind} event={scene.event} seed={scene.id} />
         <div className="dialog-head">
           {scene.kind === 'event' || scene.kind === 'agenda' || scene.kind === 'partyPoll' || scene.kind === 'redraw' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
             : from === null ? <Portrait emblem="palace" size={46} /> : <Portrait leader={from} size={46} />}
