@@ -9,6 +9,7 @@ import { AFFINITY, TEMPER } from './cast';
 import { record, standing } from './ledger';
 import { pushNews, ref } from './news';
 import { resolveAgenda } from './agenda';
+import { rivalEntries } from './entry';
 import type { Campaign, NewsItem, Scene } from './types';
 
 // ---------- basics ----------
@@ -496,8 +497,12 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
     }
   }
 
-  // Now and then one rival's member crosses to another.
-  if (rng.next() < 0.12) {
+  // Rivals look for new ground of their own.
+  rivalEntries(world, c, rng);
+
+  // Now and then one rival's member crosses to another; the richest suitor makes it likelier, and pays for it.
+  const suitorPurse = Math.min(0.1, 0.05 * (richest / scaled(world, 2_000_000)));
+  if (rng.next() < 0.12 + suitorPurse) {
     const weakest = [...ai].sort((x, y) => c.parties[x]!.unity - c.parties[y]!.unity)[0];
     const seats = world.seats.map((s, i) => ({ s, i })).filter(({ s, i }) => {
       const to = now.seats[i].winner === weakest ? now.seats[i].runnerUp : now.seats[i].winner;
@@ -506,6 +511,10 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
     if (seats.length) {
       const { s, i } = seats[rng.int(seats.length)];
       const to = now.seats[i].winner === weakest ? now.seats[i].runnerUp : now.seats[i].winner;
+      // The suitor pays what the player would: twice the usual sum.
+      const price = scaled(world, COST.courtMoney) * 2;
+      if (c.parties[to]!.funds < price) { c.rng = rng.state; return; }
+      c.parties[to]!.funds -= price;
       defect(c, s.id, weakest, to);
       pushNews(c, { party: to, key: 'news.katak', vars: { seat: ref.seat(s.id), from: ref.party(weakest), to: ref.party(to) }, tone: 'neutral' });
     }

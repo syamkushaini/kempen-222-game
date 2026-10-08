@@ -4,6 +4,8 @@ import { projectElection } from '../election';
 import { BLOC_IDS, PARTY_IDS, type BlocId } from '../types';
 import { canDo, doAction, effectiveDynamics, expectedPitchGain, expectedSeatGain } from './actions';
 import { MIN_SEGMENT, heard, pitchValue, resentful, segmentsIn } from './segments';
+import { playWeek } from './ai';
+import { truth } from './actions';
 import { newCampaign } from './turn';
 import { isValidCampaign } from './validate';
 
@@ -100,5 +102,29 @@ describe('pitching an event to one voter group', () => {
     doAction(world, c, PS, 'ceramah', { seat: seat.id, segment: 'heartland' });
     expect(c.dyn.support.seatBloc?.[seat.id]).toBeDefined();
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world)).toBe(true);
+  });
+});
+
+describe('rivals aiming their events', () => {
+  it('pitch seat events to a group when they can read the race, and not on the easiest level', () => {
+    const aimed = (difficulty: 'easy' | 'normal') => {
+      const c = newCampaign(world, { player: PS, difficulty, seed: 4 });
+      const PT = PARTY_IDS.indexOf('pt');
+      let n = 0, total = 0;
+      for (let w = 0; w < 3; w++) {
+        for (const r of playWeek(world, c, PT, truth(world, c), [])) {
+          if (r.id !== 'ceramah' && r.id !== 'walkabout' && r.id !== 'townhall') continue;
+          total++;
+          if (r.target.segment !== undefined) n++;
+        }
+        c.parties[PT]!.days = 7;
+        c.parties[PT]!.used = {};
+      }
+      return { n, total };
+    };
+    const normal = aimed('normal');
+    expect(normal.total).toBeGreaterThan(3);
+    expect(normal.n).toBeGreaterThan(0);
+    expect(aimed('easy').n).toBe(0);
   });
 });

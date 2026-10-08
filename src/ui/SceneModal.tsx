@@ -194,7 +194,12 @@ function SceneCard({ scene }: { scene: Scene }) {
   } else if (scene.kind === 'agenda' && scene.event && AGENDA[scene.event as StateId]) {
     const st = scene.event as StateId;
     title = t(`agenda.${st}.title` as StringKey);
-    body = <p>{t(`agenda.${st}.body` as StringKey)}</p>;
+    body = (
+      <>
+        <p>{t(`agenda.${st}.body` as StringKey)}</p>
+        {campaign.phase === 'term' && (campaign.career?.agendaAnswers?.length ?? 0) > 0 && <p className="note">{t('agenda.again')}</p>}
+      </>
+    );
     // What an answer does, plainly: who it pleases, who it costs, and what it costs the party.
     const hint = (choice: AgendaChoice): string => {
       const lifts = Object.entries(choice.lift) as [string, number][];

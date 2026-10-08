@@ -24,6 +24,7 @@ import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
+import { agendaTerm } from './agenda';
 import { holdingsWeek, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws } from './policy';
 import {
@@ -55,6 +56,10 @@ const STATE_INCOME = 10_000;
 /** Businesses are bought and sold in lots of this size; selling loses a tenth. */
 export const ASSET_LOT = 100_000;
 const MAX_FOCUS_STATES = 3;
+/** Weeks without leaning on an institution before public trust starts to recover, how much of the gap to the ceiling it makes up each week, and the ceiling. */
+export const TRUST_QUIET = 26;
+export const TRUST_RECOVERY = 0.004;
+export const TRUST_CEILING = 80;
 const PROFILE_CAP = 0.08;
 
 export const inGovernment = (c: Campaign, p: number) => !!c.career && (c.career.government.pm === p || c.career.government.partners.includes(p));
@@ -344,7 +349,11 @@ export function termWeek(world: World, c: Campaign): void {
 
   // Easy money has a slow price as well as a sudden one.
   k.credibility = clamp(k.credibility - 0.03 * o.donors, 0, 100);
-  if (inGovernment(c, me)) k.government.trust = clamp(k.government.trust - 0.05 * o.state, 0, 100);
+  if (inGovernment(c, me)) {
+    k.government.trust = clamp(k.government.trust - 0.05 * o.state, 0, 100);
+    // A government that leaves state resources alone and has not leaned on an institution for half a year slowly earns some trust back.
+    if (o.state === 0 && k.levers.every((w) => w === 0 || k.week - w >= TRUST_QUIET)) k.government.trust = clamp(k.government.trust + TRUST_RECOVERY * (TRUST_CEILING - k.government.trust), 0, 100);
+  }
   pc.unity = clamp(pc.unity + Math.sign(65 - pc.unity) * 0.05, 0, 100);
   k.salience = k.salience.map((s) => s + (1 - s) * 0.02);
   k.government.stability = clamp(k.government.stability + rng.normal(0, k.government.pm === me ? 0.15 : 0.4), 5, 95);
@@ -355,6 +364,7 @@ export function termWeek(world: World, c: Campaign): void {
   syncOpinion(c);
   // One thing at a time: nothing new arrives while a vote is waiting. The states' own elections come when they are due.
   if (c.inbox.length === 0 && world.rules.kind !== 'state' && roundDue(c) !== null) raise(c, 'statePolls');
+  agendaTerm(world, c);
   if (c.inbox.length === 0) rollEvent(c, rng);
   // A by-election needs a seat to be fought in.
   for (const scene of c.inbox) if (scene.event === 'byElection' && !scene.seat) scene.seat = vacantSeat(world, c, rng);

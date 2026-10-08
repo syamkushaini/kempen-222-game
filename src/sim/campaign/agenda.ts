@@ -126,18 +126,51 @@ export function agendaWeek(world: World, c: Campaign): void {
   addScene(c, { kind: 'agenda', from: null, event: st });
 }
 
-/** Answers the state's question: the leader takes a position, and the voters it was aimed at notice. */
+/** The weeks of a state career in which the state's question is put again, in each term. */
+export const REASK_WEEKS = [80, 170];
+
+/** In a state career the question comes back twice a term: it is put, and the leader is held to what they said before. */
+export function agendaTerm(world: World, c: Campaign): void {
+  const k = c.career;
+  const st = stateOf(world);
+  if (!k || !st || !AGENDA[st] || c.phase !== 'term' || c.inbox.length > 0) return;
+  const n = REASK_WEEKS.findIndex((w) => k.week >= w && !k.flags.includes(`agenda${k.term}-${w}`));
+  if (n < 0) return;
+  k.flags.push(`agenda${k.term}-${REASK_WEEKS[n]}`);
+  addScene(c, { kind: 'agenda', from: null, event: st });
+}
+
+/**
+ * Answers the state's question: the leader takes a position, and the voters it was aimed at notice. In a campaign the
+ * effect lasts to polling day; in the years of a career it moves opinion. Put again, a leader who says what they said
+ * before is believed (and heard less, having said it); one who changes their answer is called a flip-flopper.
+ */
 export function resolveAgenda(world: World, c: Campaign, scene: Scene, choice: number): void {
   const st = scene.event as StateId | undefined;
   const event = st && (STATE_IDS as string[]).includes(st) ? AGENDA[st] : null;
   const answer = event?.choices[choice];
   if (!st || !answer) return;
   const me = c.player;
-  for (const [bloc, v] of Object.entries(answer.lift)) c.drift.support.nat[BLOC_IDS.indexOf(bloc as BlocId)][me] += v;
-  if (answer.turnout) c.drift.turnout.party[me] += answer.turnout;
+  const k = c.career;
+  const term = c.phase === 'term' && !!k;
+  const before = (k?.agendaAnswers ?? []).filter((a) => a !== 2).at(-1);
+  const repeat = term && before !== undefined && choice !== 2 && choice === before;
+  const flip = term && before !== undefined && choice !== 2 && choice !== before;
+  const weight = repeat ? 0.5 : 1;
+  for (const [bloc, v] of Object.entries(answer.lift)) {
+    const b = BLOC_IDS.indexOf(bloc as BlocId);
+    if (term) k!.mood[b][me] += v * weight * 0.5;
+    else c.drift.support.nat[b][me] += v;
+  }
+  if (term) {
+    k!.agendaAnswers = [...(k!.agendaAnswers ?? []), choice];
+    if (repeat) k!.credibility = Math.min(100, k!.credibility + 2);
+    if (flip) k!.credibility = Math.max(0, k!.credibility - 4);
+  }
+  if (answer.turnout && !term) c.drift.turnout.party[me] += answer.turnout;
   const pc = c.parties[me];
   if (pc && answer.funds) pc.funds = Math.max(0, pc.funds + Math.sign(answer.funds) * scaled(world, Math.abs(answer.funds)));
   if (answer.unity) shiftUnity(c, me, answer.unity);
-  c.agenda = `answered:${choice}`;
-  pushNews(c, { party: me, key: `agenda.${st}.o${choice}.news`, vars: {}, tone: choice === 2 ? 'neutral' : 'good' });
+  if (!term) c.agenda = `answered:${choice}`;
+  pushNews(c, { party: me, key: `agenda.${st}.o${choice}.news`, vars: {}, tone: flip ? 'bad' : choice === 2 ? 'neutral' : 'good' });
 }

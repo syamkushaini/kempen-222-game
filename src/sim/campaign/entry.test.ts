@@ -127,3 +127,21 @@ describe('a party of Sarawak in the election of another state', () => {
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world)).toBe(true);
   });
 });
+
+describe('rivals looking for new ground', () => {
+  it('put candidates in seats they never stood in, and pay for them, in a general election', () => {
+    const general = getWorld('general')!;
+    let entered = 0;
+    for (const seed of [1, 2, 3, 4]) {
+      const c = newCampaign(general, { player: PS, difficulty: 'normal', seed });
+      const before = c.parties.map((p) => p?.funds ?? 0);
+      for (let w = 0; w < 4 && c.phase === 'campaign'; w++) { autoPlayWeek(general, c); endWeek(general, c); }
+      Object.entries(c.standDowns).forEach(([seat, row]) => row.forEach((v, p) => {
+        if (v === ENTERS && p !== PS) { entered++; expect(general.baseline.contesting[general.seatIndex.get(seat)!][p]).toBe(false); }
+      }));
+      expect(isValidCampaign(JSON.parse(JSON.stringify(c)), general)).toBe(true);
+      void before;
+    }
+    expect(entered).toBeGreaterThan(0);
+  });
+});

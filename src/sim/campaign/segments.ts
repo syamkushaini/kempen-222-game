@@ -1,4 +1,4 @@
-import { BLOC_IDS, N_BLOCS, N_PARTIES, type BlocId, type SeatData } from '../types';
+import { BLOC_IDS, N_BLOCS, N_PARTIES, type BlocId, type SeatData, type SeatOutcome } from '../types';
 import { zeros2 } from '../math';
 import type { Dynamics } from '../types';
 
@@ -81,4 +81,23 @@ export function addPitch(dyn: Dynamics, seatId: string, p: number, target: BlocI
     rows[b][p] += lift * room;
   });
   return units * SEEN;
+}
+
+/**
+ * A cheap read of which group a computer-led party should aim a seat event at, from how the seat is projected to vote
+ * now. A lift moves most votes where a party is near half of a group, so each group counts by how many of it there are
+ * and how open it is: the share the party has among them, times what is left. Returns the group and how much better
+ * aiming there is than a plain event across the seat (above 1), or null where nothing beats a plain one by a tenth.
+ */
+export function bestAim(seat: SeatData, outcome: SeatOutcome, p: number): { segment: BlocId; ratio: number } | null {
+  const open = outcome.blocs.map((b) => { const s = b.shares[p] ?? 0; return s * (1 - s); });
+  const plain = BLOC_IDS.reduce((a, _, o) => a + seat.blocs[o] * open[o], 0);
+  if (plain <= 0) return null;
+  let best: { segment: BlocId; ratio: number } | null = null;
+  for (const b of segmentsIn(seat)) {
+    const aimed = SEEN * plain + BLOC_IDS.reduce((a, o, i) => a + seat.blocs[i] * heard(b, o) * open[i], 0);
+    const ratio = aimed / plain;
+    if (ratio > 1.1 && (!best || ratio > best.ratio)) best = { segment: b, ratio };
+  }
+  return best;
 }

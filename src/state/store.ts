@@ -37,6 +37,7 @@ import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
+import { resolveAgenda } from '../sim/campaign/agenda';
 import { doActivity, trade, type ActivityId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
@@ -382,6 +383,8 @@ export const useStore = create<Store>((set, get) => {
       if (!scene) return;
       if (scene.kind === 'event' && scene.event && !canChoose(world, c, scene.event, choice)) return;
       c.inbox = c.inbox.filter((x) => x.id !== id);
+      // The state's question, put again in the years of a state career.
+      if (scene.kind === 'agenda' && c.phase === 'term') { resolveAgenda(world, c, scene, choice); return { hiddenScene: null, sceneOpen: c.inbox.length > 0 }; }
       if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote') {
         answerEvent(world, c, scene, choice);
         // The answer may have brought the government down: on to the talks.

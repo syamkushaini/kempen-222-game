@@ -402,6 +402,8 @@ export interface Career {
   dossier: number;
   /** [party][issue]: where each party stands, -2 to 2. */
   stances: number[][];
+  /** How the player answered each time their state's question was put in a state career, in order (see agenda.ts). */
+  agendaAnswers?: number[];
   /** Promises that became law, in this term or one before: an Act of Parliament need not be promised twice. Absent in a game saved before it existed. */
   laws?: PledgeId[];
   /** Stances as they were at the last election. */
