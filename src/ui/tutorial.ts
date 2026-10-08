@@ -28,3 +28,16 @@ export const STEPS: TutorialStep[] = [
   { id: 'poll', done: (x) => x.campaign.polls.some((p) => !p.public), spots: (x) => onTab(x.tab, 'polls', 'poll-seat') },
   { id: 'endWeek', done: (x) => x.campaign.week >= 2, spots: () => ['end-week'] },
 ];
+
+/**
+ * Where the guide should be, given what the player has already done. A step waits for its own thing, but a player who
+ * has done something later (ended the week without polling, say) must not be held on the step behind: the guide skips
+ * to the step after the furthest one already done. Returns `STEPS.length` when the last step is done, which ends it.
+ */
+export function stepFor(current: number, x: TutorialContext): number {
+  // A step that waits for "Next" is a welcome to be read, not something to be done ahead of.
+  if (!STEPS[current]?.done) return current;
+  let furthest = -1;
+  for (let i = current; i < STEPS.length; i++) if (STEPS[i].done?.(x)) furthest = i;
+  return furthest >= 0 ? furthest + 1 : current;
+}

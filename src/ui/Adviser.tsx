@@ -6,7 +6,7 @@ import { lastOutcome, useSpot, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
 import { Jargon } from './Term';
 import { atHome } from '../sim/campaign/turn';
-import { STEPS } from './tutorial';
+import { STEPS, stepFor } from './tutorial';
 
 /** The steps at which the adviser has something of its own to say to a party on its home ground. */
 const HOME_LINES = new Set(['funds', 'rivals', 'middle']);
@@ -20,13 +20,16 @@ export function Adviser() {
   const selectedSeat = useStore((s) => s.selectedSeat);
   const tab = useStore((s) => s.tab);
   const advance = useStore((s) => s.advanceTutorial);
+  const jump = useStore((s) => s.jumpTutorial);
   const dismiss = useStore((s) => s.dismissTutorial);
   const spot = useSpot();
 
   const step = tutorial ? STEPS[tutorial.step] : undefined;
   const ctx = { campaign, selectedSeat, tab };
-  const finished = step?.done?.(ctx) ?? false;
-  useEffect(() => { if (finished) advance(STEPS.length); }, [finished, advance]);
+  // The guide goes to the step after the furthest one already done, so that doing things out of order (ending the
+  // week without a poll) cannot leave it stuck on a step for the rest of the campaign.
+  const target = tutorial && step ? stepFor(tutorial.step, ctx) : 0;
+  useEffect(() => { if (tutorial && target > tutorial.step) jump(target, STEPS.length); }, [target, tutorial, jump]);
   // A game saved part-way through the longer tutorial of old may be on a step that no longer exists: it is over.
   const stray = !!tutorial && !step;
   useEffect(() => { if (stray) dismiss(); }, [stray, dismiss]);

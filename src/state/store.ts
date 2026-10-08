@@ -166,6 +166,8 @@ interface Store {
   }): void;
   /** Moves the adviser to the next step, or ends the tutorial after the last one. */
   advanceTutorial(steps: number): void;
+  /** Moves the adviser straight to a later step, or ends the tutorial if that is past the last. */
+  jumpTutorial(to: number, steps: number): void;
   dismissTutorial(): void;
   act(id: ActionId, target: ActionTarget): void;
   poll(scope: PollScope, target: string | null, quality: PollQuality): void;
@@ -329,6 +331,10 @@ export const useStore = create<Store>((set, get) => {
     advanceTutorial: (steps) => mutate((_c, g) => {
       if (!g.tutorial) return;
       g.tutorial = g.tutorial.step + 1 >= steps ? null : { step: g.tutorial.step + 1 };
+    }),
+    jumpTutorial: (to, steps) => mutate((_c, g) => {
+      if (!g.tutorial || to <= g.tutorial.step) return;
+      g.tutorial = to >= steps ? null : { step: to };
     }),
     dismissTutorial: () => mutate((_c, g) => { g.tutorial = null; }),
     act: (id, target) => mutate((c, _g, world) => {
