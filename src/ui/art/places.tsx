@@ -159,7 +159,20 @@ export const squatters: Drawing = () => (
 export const stage: Drawing = () => (
   <g><rect x="-120" y="-24" width="240" height="24" fill="#4a4f5c" /><rect x="-120" y="-120" width="240" height="96" fill="var(--primary, #c0392b)" opacity="0.9" /><path d="M-120 -120 H120 L100 -100 H-100z" fill="#00000030" />{[-90, -30, 30, 90].map((x) => <circle key={x} cx={x} cy="-130" r="6" fill="#ffe9a8" />)}</g>
 );
-/** An interior wall: panelled, with a window. Used for rooms. */
-export const wallroom: Drawing = () => (
-  <g><rect x="-440" y="-250" width="880" height="250" fill="#34425a" /><rect x="-440" y="-250" width="880" height="14" fill="#00000030" />{[-300, -100, 100, 300].map((x) => <rect key={x} x={x - 40} y="-210" width="80" height="120" rx="4" fill="#243046" />)}</g>
+/** An interior wall, as a kopitiam or a party office has it: plaster above and tiles below, a window or two, posters on the wall. */
+export const wallroom: Drawing = ({ i }) => (
+  <g>
+    <rect x="-440" y="-460" width="880" height="460" fill="#cdbb98" />
+    <rect x="-440" y="-92" width="880" height="92" fill="#8f9a86" />
+    <rect x="-440" y="-96" width="880" height="7" fill="#6f7a66" />
+    {Array.from({ length: 30 }, (_, k) => <path key={k} d={`M${-430 + k * 30} -88 v88`} stroke="#6f7a66" strokeOpacity="0.5" strokeWidth="1.3" />)}
+    {[-310, 90].map((x) => <g key={x}><rect x={x - 46} y="-250" width="92" height="104" rx="4" fill="#e2e0cc" /><path d={`M${x} -250 v104 M${x - 46} -198 h92`} stroke="#2a2623" strokeWidth="2.4" /></g>)}
+    {[-160, 250].map((x, k) => (
+      <g key={x} transform={`translate(${x} -150)`}>
+        <rect x="-26" y="-92" width="52" height="64" rx="2" fill={['#e8e0cc', '#e9d3a0'][(i + k) % 2]} />
+        <rect x="-26" y="-92" width="52" height="13" fill={['#2f4f96', '#b4342d', '#2f7d5b'][(i + k) % 3]} />
+        <circle cx="0" cy="-56" r="14" fill="#d9a977" /><path d="M-8 -52 q8 11 16 0" fill="#f3ead2" stroke="#2a2623" strokeWidth="1.5" /><path d="M-7 -63 l4 1 M7 -63 l-4 1" stroke="#2a2623" strokeWidth="1.6" strokeLinecap="round" />
+      </g>
+    ))}
+  </g>
 );

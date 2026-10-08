@@ -30,7 +30,7 @@ export const docs: Drawing = () => (
 );
 /** A sack of money. */
 export const moneybag: Drawing = () => (
-  <g><path d="M-26 0 Q-40 -40 -14 -62 H14 Q40 -40 26 0z" fill="#b99a4c" /><path d="M-14 -62 l-6 -12 h40 l-6 12z" fill="#b99a4c" /><rect x="-12" y="-66" width="24" height="5" fill="#7a5a28" /><text x="0" y="-22" textAnchor="middle" fontSize="30" fontWeight="700" fill="#4a3a14" fontFamily="system-ui">RM</text></g>
+  <g><path d="M-26 0 Q-40 -40 -14 -62 H14 Q40 -40 26 0z" fill="#b99a4c" /><path d="M-14 -62 l-6 -12 h40 l-6 12z" fill="#b99a4c" /><rect x="-12" y="-66" width="24" height="5" fill="#7a5a28" /><circle cx="0" cy="-26" r="9" fill="none" stroke="#4a3a14" strokeWidth="3" /><path d="M-4 -26 h8 M0 -33 v14" stroke="#4a3a14" strokeWidth="2.4" /></g>
 );
 /** A stack of banknotes. */
 export const cash: Drawing = () => (
@@ -42,7 +42,7 @@ export const gavel: Drawing = () => (
 );
 /** A ballot box. */
 export const ballot: Drawing = () => (
-  <g><rect x="-34" y="-52" width="68" height="52" rx="4" fill="#2b5f9e" /><rect x="-18" y="-56" width="36" height="6" rx="2" fill="#173a63" /><Paper x={-9} y={-90} r={6} w={22} h={30} lines={3} /><text x="0" y="-18" textAnchor="middle" fontSize="16" fontWeight="700" fill="#fff" fontFamily="system-ui">UNDI</text></g>
+  <g><rect x="-34" y="-52" width="68" height="52" rx="4" fill="#2b5f9e" /><rect x="-18" y="-56" width="36" height="6" rx="2" fill="#173a63" /><Paper x={-9} y={-90} r={6} w={22} h={30} lines={3} /><path d="M-10 -24 l7 8 l14 -17" fill="none" stroke="#f3ead2" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /></g>
 );
 /** A smartphone with a speech bubble and a heart. */
 export const phone: Drawing = () => (
@@ -54,7 +54,7 @@ export const tv: Drawing = () => (
 );
 /** Sacks of rice. */
 export const rice: Drawing = () => (
-  <g>{[[-26, 0], [10, 0], [-8, -34]].map(([x, y], k) => <g key={k} transform={`translate(${x} ${y})`}><path d="M-17 0 Q-22 -20 -14 -34 H14 Q22 -20 17 0z" fill="#e9dcb7" /><rect x="-14" y="-38" width="28" height="6" rx="2" fill="#c9b684" /><text x="0" y="-12" textAnchor="middle" fontSize="11" fontWeight="700" fill="#8a6a2a" fontFamily="system-ui">BERAS</text></g>)}</g>
+  <g>{[[-26, 0], [10, 0], [-8, -34]].map(([x, y], k) => <g key={k} transform={`translate(${x} ${y})`}><path d="M-17 0 Q-22 -20 -14 -34 H14 Q22 -20 17 0z" fill="#e9dcb7" /><rect x="-14" y="-38" width="28" height="6" rx="2" fill="#c9b684" />{[-8, 0, 8].map((x) => <ellipse key={x} cx={x} cy="-14" rx="2.4" ry="5" fill="#8a6a2a" transform={`rotate(${x * 2} ${x} -14)`} />)}</g>)}</g>
 );
 /** A tap with a drop of water. */
 export const tap: Drawing = () => (
@@ -62,7 +62,7 @@ export const tap: Drawing = () => (
 );
 /** A petrol pump. */
 export const pump: Drawing = () => (
-  <g><rect x="-22" y="-82" width="44" height="82" rx="4" fill="#d8504a" /><rect x="-16" y="-74" width="32" height="22" fill="#2a2f3a" /><text x="0" y="-57" textAnchor="middle" fontSize="12" fill="#7fe08a" fontFamily="monospace">RM2.05</text><path d="M22 -50 q18 4 14 24 v10" fill="none" stroke="#2a2f3a" strokeWidth="4" /></g>
+  <g><rect x="-22" y="-82" width="44" height="82" rx="4" fill="#d8504a" /><rect x="-16" y="-74" width="32" height="22" fill="#2a2f3a" /><path d="M-10 -60 h6 M-2 -60 h6 M6 -60 h4" stroke="#8fd9a0" strokeWidth="3" strokeLinecap="round" /><path d="M22 -50 q18 4 14 24 v10" fill="none" stroke="#2a2f3a" strokeWidth="4" /></g>
 );
 /** A party flag on a pole. */
 export const flag: Drawing = () => (
@@ -120,13 +120,38 @@ export const ribbon: Drawing = () => (
 export const envelope: Drawing = () => (
   <g transform="rotate(-6)"><rect x="-34" y="-46" width="68" height="46" rx="3" fill="#c9a56a" /><path d="M-34 -46 L0 -20 L34 -46" fill="none" stroke="#8a6a3a" strokeWidth="2.5" /><circle cx="0" cy="-22" r="6" fill="#c0392b" /></g>
 );
-/** An empty chair. */
-export const chair: Drawing = () => (
-  <g><rect x="-20" y="-60" width="40" height="46" rx="6" fill="#7a2f3a" /><rect x="-24" y="-24" width="48" height="12" rx="3" fill="#8a3a46" /><rect x="-20" y="-14" width="5" height="14" fill="#3a2a22" /><rect x="15" y="-14" width="5" height="14" fill="#3a2a22" /></g>
+/** A glass of teh tarik with its froth. */
+export const teh: Drawing = () => (
+  <g><path d="M-9 -34 h18 l-3 34 h-12z" fill="#e8f0f2" fillOpacity="0.65" /><path d="M-8 -26 h16 l-2.4 26 h-11.2z" fill="#b9733a" /><path d="M-9 -34 q9 -8 18 0 q-2 6 -9 6 q-7 0 -9 -6z" fill="#f3e6c8" /><ellipse cx="0" cy="0" rx="12" ry="2.6" fill="#2a2623" fillOpacity="0.25" /></g>
 );
-/** A round table with cups. */
+/** A plastic chair, the monobloc kind, found at every stall and every committee meeting. */
+export const chair: Drawing = ({ i }) => (
+  <g>
+    <path d="M-17 -64 q17 -8 34 0 l-2 30 h-30z" fill={['#b4342d', '#2f4f96', '#e8e0cc'][i % 3]} />
+    <path d="M-20 -34 h40 l-3 11 h-34z" fill={['#b4342d', '#2f4f96', '#e8e0cc'][i % 3]} />
+    {[-15, 15].map((x) => <rect key={x} x={x - 2} y="-23" width="4" height="23" rx="1.5" fill="#e8e0cc" />)}
+    {[-9, 9].map((x) => <rect key={x} x={x - 1.5} y="-23" width="3" height="21" rx="1.5" fill="#d6cdb4" />)}
+    <path d="M-10 -56 h20 M-10 -48 h20" stroke="#2a2623" strokeOpacity="0.35" strokeWidth="1.6" />
+  </g>
+);
+/** A round kopitiam table with glasses of teh tarik on it. */
 export const table: Drawing = () => (
-  <g><ellipse cx="0" cy="-46" rx="60" ry="12" fill="#a77d4e" /><rect x="-4" y="-46" width="8" height="46" fill="#7a5a3a" /><ellipse cx="0" cy="0" rx="26" ry="5" fill="#6a4a2a" />{[-30, 0, 30].map((x) => <rect key={x} x={x - 6} y="-60" width="12" height="12" rx="2" fill="#f2efe6" />)}</g>
+  <g>
+    <ellipse cx="0" cy="-46" rx="60" ry="12" fill="#c8a56a" /><rect x="-4" y="-46" width="8" height="46" fill="#8a6a3a" /><ellipse cx="0" cy="0" rx="26" ry="5" fill="#6a4a2a" />
+    {[-30, 0, 30].map((x) => <g key={x} transform={`translate(${x} -44) scale(0.7)`}><path d="M-9 -34 h18 l-3 34 h-12z" fill="#e8f0f2" fillOpacity="0.65" /><path d="M-8 -26 h16 l-2.4 26 h-11.2z" fill="#b9733a" /><path d="M-9 -34 q9 -8 18 0 q-2 6 -9 6 q-7 0 -9 -6z" fill="#f3e6c8" /></g>)}
+  </g>
+);
+/** A satirical campaign poster pasted on a post: a grinning face with a very large smile, and nothing written on it. */
+export const poster: Drawing = ({ i }) => (
+  <g>
+    <rect x="-2" y="-96" width="4" height="96" fill="#8a6a3a" />
+    <rect x="-27" y="-140" width="54" height="64" rx="2" fill={['#e8e0cc', '#e9d3a0', '#d6e0d2'][i % 3]} />
+    <rect x="-27" y="-140" width="54" height="14" fill={['#2f4f96', '#b4342d', '#2f7d5b'][i % 3]} />
+    <circle cx="0" cy="-104" r="15" fill="#d9a977" />
+    <path d="M-9 -100 q9 12 18 0" fill="#f3ead2" stroke="#2a2623" strokeWidth="1.6" />
+    <path d="M-8 -111 l4 1 M8 -111 l-4 1" stroke="#2a2623" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M-12 -118 q12 -12 24 0" fill="#2a2623" />
+  </g>
 );
 /** A durian. */
 export const durian: Drawing = () => (
@@ -170,7 +195,7 @@ export const trophy: Drawing = () => (
 );
 /** A coin. */
 export const coin: Drawing = () => (
-  <g><circle cx="0" cy="-22" r="22" fill="#e8c56b" stroke="#b5902f" strokeWidth="4" /><text x="0" y="-14" textAnchor="middle" fontSize="22" fontWeight="700" fill="#8a6a1a" fontFamily="system-ui">$</text></g>
+  <g><circle cx="0" cy="-22" r="22" fill="#e8c56b" stroke="#b5902f" strokeWidth="4" /><path d="M6 -30 q-10 -6 -12 0 q-1 5 8 6 q10 2 7 8 q-4 5 -14 0 M0 -34 v26" fill="none" stroke="#8a6a1a" strokeWidth="2.6" strokeLinecap="round" /></g>
 );
 /** A megaphone. */
 export const megaphone: Drawing = () => (
@@ -190,7 +215,7 @@ export const bed: Drawing = () => (
 );
 /** A question mark. */
 export const question: Drawing = () => (
-  <g><text x="0" y="-18" textAnchor="middle" fontSize="96" fontWeight="800" fill="#ffffffcc" fontFamily="system-ui">?</text></g>
+  <g><path d="M-22 -70 q0 -22 22 -22 q22 0 22 18 q0 12 -14 18 q-8 4 -8 14 v4" fill="none" stroke="#f3ead2" strokeWidth="9" strokeLinecap="round" /><circle cx="0" cy="-6" r="6" fill="#f3ead2" /></g>
 );
 /** An exclamation mark in a circle. */
 export const alarm: Drawing = () => (
