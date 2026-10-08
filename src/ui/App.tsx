@@ -90,11 +90,11 @@ function ViewSwitch() {
 function Inbox() {
   const t = useT();
   const waiting = useStore((s) => s.game!.campaign.inbox.length);
-  const open = useStore((s) => s.sceneOpen);
+  const aside = useStore((s) => s.game!.campaign.inbox.every((x) => s.hiddenScene.includes(x.id)));
   const openScene = useStore((s) => s.openScene);
-  if (waiting === 0 || open) return null;
+  if (waiting === 0 || !aside) return null;
   return (
-    <button className="inbox-bar" key={waiting} onClick={() => openScene(true)}>
+    <button className="inbox-bar" key={waiting} onClick={() => openScene()}>
       <Icon name="inbox" />
       <span className="grow">{t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })}</span>
       <strong>{t('inbox.open')} ▸</strong>

@@ -24,14 +24,11 @@ import { divisionSeating } from './seating';
  * audience at the Palace. Shown over the game, oldest first, until answered.
  */
 export function SceneModal() {
-  const scene = useStore((s) => s.game?.campaign.inbox[0]);
+  const inbox = useStore((s) => s.game?.campaign.inbox);
   const hidden = useStore((s) => s.hiddenScene);
-  const open = useStore((s) => s.sceneOpen);
-  const phase = useStore((s) => s.game?.campaign.phase);
-  // In a campaign or a term a decision that has been set aside waits in the inbox until it is opened; a new one opens it by itself. In the talks and on the night after,
-  // the decisions are the business of the screen, and come up by themselves.
-  const inbox = phase === 'campaign' || phase === 'term';
-  return scene && (!inbox || open) && scene.id !== hidden ? <SceneCard key={scene.id} scene={scene} /> : null;
+  // Every decision comes up by itself, oldest first; only one the player has set aside waits, as a bar, until they open it again.
+  const scene = inbox?.find((x) => !hidden.includes(x.id));
+  return scene ? <SceneCard key={scene.id} scene={scene} /> : null;
 }
 
 function SceneCard({ scene }: { scene: Scene }) {

@@ -51,7 +51,7 @@ export function TermDesk() {
     <section className="desk">
       <ul className="desk-list">
         {waiting > 0 && (
-          <DeskCard icon="inbox" tone="dare" title={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} go={t('inbox.open')} onGo={() => openScene(true)}>
+          <DeskCard icon="inbox" tone="dare" title={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} go={t('inbox.open')} onGo={() => openScene()}>
             <span className="action-meta">{t('desk.waiting')}</span>
           </DeskCard>
         )}

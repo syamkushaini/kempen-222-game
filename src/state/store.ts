@@ -152,9 +152,8 @@ interface Store {
   /** Election night stays on screen after the count until the player moves on. */
   showNight: boolean;
   /** A scene the player has set aside to look around before answering. */
-  hiddenScene: number | null;
+  hiddenScene: number[];
   /** The inbox is open: the decision at its head is on screen. A new decision opens it by itself (see Inbox in App.tsx); one set aside waits in a bar until the player opens it. */
-  sceneOpen: boolean;
   /** When the autosave last succeeded, or null if it has not or cannot. */
   autosavedAt: number | null;
   autosaveFailed: boolean;
@@ -169,7 +168,7 @@ interface Store {
   dismissToast(id: AchievementId): void;
   setView(view: MapView): void;
   setTab(tab: SidebarTab): void;
-  openScene(open: boolean): void;
+  openScene(): void;
   selectState(state: RegionId | null): void;
   selectSeat(seatId: string | null, state?: RegionId): void;
 
@@ -275,7 +274,7 @@ interface Store {
   resumeTerm(): void;
 
   /** Sets a waiting scene aside (or brings it back with null) so the player can look around first. */
-  hideScene(id: number | null): void;
+  hideScene(id: number): void;
   setBudget(patch: { line?: LineId; tax?: boolean; value: Dial } | { measure: MeasureId; on: boolean }): void;
   reshuffle(portfolio: PortfolioId): void;
   appoint(portfolio: PortfolioId, option: number): void;
@@ -328,13 +327,11 @@ export const useStore = create<Store>((set, get) => {
     const world = current && worldOf(current.campaign);
     if (!current || !world) return;
     const g = structuredClone(current);
-    const before = new Set(current.campaign.inbox.map((x) => x.id));
     const extra = fn(g.campaign, g, world) ?? {};
     g.updatedAt = Date.now();
-    // A decision that has just arrived comes up by itself, whichever action brought it, so that it is not missed. One the
-    // player has set aside stays a bar until they open it again; a newer one overrides that.
-    const arrived = g.campaign.inbox.some((x) => !before.has(x.id));
-    set({ game: g, ...extra, ...(arrived && g.campaign.phase !== 'formation' ? { sceneOpen: true, hiddenScene: null } : {}) });
+    // Decisions come up by themselves; only the ones the player has set aside wait as a bar, and a new one is never among them.
+    const hidden = (extra.hiddenScene ?? get().hiddenScene).filter((id) => g.campaign.inbox.some((x) => x.id === id));
+    set({ game: g, ...extra, hiddenScene: hidden });
   };
 
   return {
@@ -355,8 +352,7 @@ export const useStore = create<Store>((set, get) => {
     pactReply: null,
     offerReply: null,
     showNight: false,
-    hiddenScene: null,
-    sceneOpen: false,
+    hiddenScene: [],
     autosavedAt: null,
     autosaveFailed: false,
     profile: profileStore.load(),
@@ -391,7 +387,7 @@ export const useStore = create<Store>((set, get) => {
       const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
       set({
         game: newGame(name.trim() || translate(get().settings.lang, 'saves.defaultName'), campaign, Date.now(), tutorial, identity, start),
-        view: 'last', tab: campaign.phase === 'term' ? 'desk' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false,
+        view: 'last', tab: campaign.phase === 'term' ? 'desk' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false,
         // A general election opens on the leader's home state; smaller contests open on the whole map.
         selectedState: world.rules.kind === 'general' && campaign.phase === 'campaign' ? campaign.parties[player]!.location : null,
       });
@@ -442,17 +438,16 @@ export const useStore = create<Store>((set, get) => {
       if (scene.kind === 'event' && scene.event && !canChoose(world, c, scene.event, choice)) return;
       c.inbox = c.inbox.filter((x) => x.id !== id);
       // The state's question, put again in the years of a state career.
-      if (scene.kind === 'agenda' && c.phase === 'term') { resolveAgenda(world, c, scene, choice); return { hiddenScene: null, sceneOpen: c.inbox.length > 0 }; }
+      if (scene.kind === 'agenda' && c.phase === 'term') { resolveAgenda(world, c, scene, choice); return { hiddenScene: [] }; }
       if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'partyPoll' || scene.kind === 'redraw') {
         answerEvent(world, c, scene, choice);
         // The answer may have brought the government down: on to the talks.
-        if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: null, sceneOpen: false };
+        if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: [] };
         // The inbox stays open while there is more in it, and closes itself when it is empty.
-        return { hiddenScene: null, sceneOpen: c.inbox.length > 0 };
+        return { hiddenScene: [] };
       }
       if (c.phase === 'campaign') resolveCampaignScene(world, c, scene, choice);
       else resolveFormationScene(c, scene, choice);
-      return { sceneOpen: c.inbox.length > 0 };
     }),
 
     offer: (party, offer) => mutate((c, _g, world) => {
@@ -524,8 +519,8 @@ export const useStore = create<Store>((set, get) => {
       if (resumeTerm(c)) return { tab: 'desk', offerReply: null };
     }),
 
-    hideScene: (id) => set({ hiddenScene: id, sceneOpen: false }),
-    openScene: (sceneOpen) => set({ sceneOpen, hiddenScene: null }),
+    hideScene: (id) => set((s) => ({ hiddenScene: [...s.hiddenScene, id] })),
+    openScene: () => set({ hiddenScene: [] }),
     setBudget: (patch) => mutate((c) => { setBudget(c, patch); }),
     reshuffle: (portfolio) => mutate((c) => { reshuffle(c, portfolio); }),
     appoint: (portfolio, option) => mutate((c, _g, world) => { appoint(world, c, portfolio, option); }),
@@ -555,7 +550,7 @@ export const useStore = create<Store>((set, get) => {
       g.aside = { parked: c, state: first, queue: states.slice(1) as StateId[] };
       g.campaign = startAside(c, getWorld(`state:${first}`)!, first);
       g.updatedAt = Date.now();
-      set({ game: g, view: 'last', tab: 'actions', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false, hiddenScene: null });
+      set({ game: g, view: 'last', tab: 'actions', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, hiddenScene: [] });
     },
     finishAside: async () => {
       const before = get().game;
@@ -578,7 +573,7 @@ export const useStore = create<Store>((set, get) => {
         delete g.aside;
       }
       g.updatedAt = Date.now();
-      set({ game: g, view: 'last', tab: g.aside ? 'actions' : 'desk', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false, hiddenScene: null });
+      set({ game: g, view: 'last', tab: g.aside ? 'actions' : 'desk', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, hiddenScene: [] });
     },
     tableBill: (id) => mutate((c) => { tableBill(c, id); }),
     deliver: (index) => mutate((c) => { if (deliver(c, index)) syncOpinion(c); }),
@@ -605,7 +600,7 @@ export const useStore = create<Store>((set, get) => {
     loadGame: (state) => set((s) => ({
       loads: s.loads + 1,
       game: state,
-      view: 'last', tab: state.campaign.phase === 'term' ? 'desk' : 'actions', lastReport: null, pactReply: null, offerReply: null, selectedSeat: null, sceneOpen: false,
+      view: 'last', tab: state.campaign.phase === 'term' ? 'desk' : 'actions', lastReport: null, pactReply: null, offerReply: null, selectedSeat: null,
       // A saved game reopens on the count only if it was still running, or if there is nothing after it.
       showNight: state.campaign.phase === 'night' || (state.campaign.phase === 'done' && !state.campaign.formation),
       selectedState: state.campaign.phase === 'campaign' && (state.campaign.scenario === 'general' || state.campaign.scenario === 'career')
@@ -615,7 +610,7 @@ export const useStore = create<Store>((set, get) => {
       // Save now: the delayed autosave would find the game already gone.
       const g = get().game;
       if (g) saveStore.save(AUTO_SLOT, g);
-      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null, sceneOpen: false });
+      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null });
     },
     restart: () => {
       const g = get().game;
