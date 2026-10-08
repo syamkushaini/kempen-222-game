@@ -176,7 +176,7 @@ function isValidCareer(x: unknown, world: World): boolean {
     isList(x.stances0, (row) => isList(row, isNum, N_ISSUES), N_PARTIES) &&
     isList(x.turned, isNum, N_ISSUES) && isList(x.salience, isNum, N_ISSUES) &&
     isList(x.mood, (row) => isList(row, isNum, N_PARTIES), N_BLOCS) && isList(x.profile, isNum, N_PARTIES) &&
-    isList(x.manifesto, (m) => isList(m, isPledge), N_PARTIES) && typeof x.launched === 'boolean' && isList(x.promises, isPledge) &&
+    isList(x.manifesto, (m) => isList(m, isPledge), N_PARTIES) && (x.laws === undefined || isList(x.laws, isPledge)) && typeof x.launched === 'boolean' && isList(x.promises, isPledge) &&
     isList(x.flags, (v) => typeof v === 'string') && isList(x.fired, (v) => typeof v === 'string') &&
     isList(x.queue, (q) => isObj(q) && typeof q.event === 'string' && isNum(q.week)) && isNum(x.quietUntil) &&
     isValidOffice(x)

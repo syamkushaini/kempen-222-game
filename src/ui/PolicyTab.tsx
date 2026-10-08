@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  FISCAL_ROOM, fits, ISSUE_GROUPS, manifestoCost, MAX_PLEDGES, PLEDGES, stanceCost, stanceReaction,
+  FISCAL_ROOM, fits, isEnacted, ISSUE_GROUPS, manifestoCost, MAX_PLEDGES, PLEDGES, stanceCost, stanceReaction,
 } from '../sim/campaign/policy';
 import { ISSUE_IDS, PLEDGE_IDS, type PledgeId } from '../sim/campaign/types';
 import type { BlocId } from '../sim/types';
@@ -105,23 +105,29 @@ export function PolicyTab() {
         {PLEDGE_IDS.map((id: PledgeId) => {
           const def = PLEDGES[id];
           const on = mine.includes(id);
+          const enacted = isEnacted(k, id);
           const likes = (Object.entries(def.appeal) as [BlocId, number][]).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([b]) => b);
           const hates = (Object.entries(def.appeal) as [BlocId, number][]).filter(([, v]) => v < 0).map(([b]) => b);
           return (
             <li key={id}>
               <label>
-                <input type="checkbox" checked={on} disabled={k.launched || (!on && mine.length >= MAX_PLEDGES)} onChange={() => togglePledge(id)} />
+                <input type="checkbox" checked={on} disabled={k.launched || enacted || (!on && mine.length >= MAX_PLEDGES)} onChange={() => togglePledge(id)} />
                 <span className="grow">
-                  <span className="action-title">{t(`pledge.${id}`)}</span>
+                  <span className="action-title">{t(`pledge.${id}`)}{def.law && <span className="badge plain" title={t('manifesto.lawNote')}>{t('manifesto.law')}</span>}</span>
                   <span className="action-meta">{t('manifesto.line', { cost: def.cost, blocs: blocNames(likes) })}</span>
                   {hates.length > 0 && <span className="action-meta">{t('policy.dislikes', { blocs: blocNames(hates) })}</span>}
-                  {!fits(k, me, id) && <span className="action-reason">{t('manifesto.misfit', { issue: t(`issue.${def.needs![0]}`) })}</span>}
+                  {enacted && <span className="action-meta">{t('manifesto.enacted')}</span>}
+                  {!enacted && !fits(k, me, id) && <span className="action-reason">{t('manifesto.misfit', { issue: t(`issue.${def.needs![0]}`) })}</span>}
                 </span>
               </label>
             </li>
           );
         })}
       </ul>
+      <h4>{t('manifesto.lawsTitle')}</h4>
+      {(k.laws?.length ?? 0) === 0
+        ? <p className="muted small">{t('manifesto.lawsNone')}</p>
+        : <ul className="plain-list">{k.laws!.map((id) => <li key={id}>{t(`pledge.${id}`)}</li>)}</ul>}
       {!k.launched && (
         <div className="button-row">
           <ConfirmButton className="btn" label={t('manifesto.launch')} confirmLabel={t('manifesto.launch.confirm')} onConfirm={launchManifesto} />

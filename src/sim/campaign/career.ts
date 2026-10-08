@@ -24,7 +24,7 @@ import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
-import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances } from './policy';
+import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws } from './policy';
 import {
   freshParty, makeDrift, newCampaign, publishPublicPoll, startingFunds, weeklyIncome, type CampaignOptions,
 } from './turn';
@@ -538,7 +538,9 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.nation ? { nation: { ...k.nation } } : {}),
     orders: k.orders, assets: k.assets, credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
     stances: k.stances, stances0: k.stances.map((row) => [...row]),
-    manifesto: next.manifesto.map((m, p) => (p === c.player ? [...k.manifesto[p]] : m)),
+    // Acts already passed are not promised again, by anyone.
+    ...(k.laws?.length ? { laws: [...k.laws] } : {}),
+    manifesto: next.manifesto.map((m, p) => withoutLaws(k, p === c.player ? k.manifesto[p] : m)),
     promises: k.promises, flags: k.flags,
     economy: k.economy, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, record: k.record, states: k.states,
   };

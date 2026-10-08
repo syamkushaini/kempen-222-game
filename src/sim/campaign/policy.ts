@@ -74,6 +74,8 @@ export interface PledgeDef {
   appeal: Partial<Record<BlocId, number>>;
   /** A stance the promise only makes sense with: the issue, and which side of the middle. */
   needs?: [IssueId, 1 | -1];
+  /** An Act of Parliament: once passed it stays on the books, and no party need promise it again. A programme is paid for year after year and can be promised again. */
+  law?: true;
 }
 
 export const PLEDGES: Record<PledgeId, PledgeDef> = {
@@ -93,7 +95,29 @@ export const PLEDGES: Record<PledgeId, PledgeDef> = {
   valuesSchools:   { cost: 1, appeal: { heartland: .08, civil: .03, felda: .03, urban_lib: -.1, borneo_urban: -.05, smallbiz: -.04, borneo_native: -.03 }, needs: ['values', 1] },
   repealLaws:      { cost: 0, appeal: { urban_lib: .08, undi18: .04, borneo_urban: .03, heartland: -.03, civil: -.03 }, needs: ['liberties', 1] },
   homes:           { cost: 3, appeal: { urban_b40: .07, m40: .05, undi18: .05, gig: .04 } },
+  // Acts: a promise of law costs the treasury nothing, and is kept for good once it passes.
+  partyHopBan:     { cost: 0, appeal: { m40: .06, urban_lib: .05, civil: .03, heartland: .03, undi18: .03 }, needs: ['reform', 1], law: true },
+  fixedTerm:       { cost: 0, appeal: { urban_lib: .06, m40: .04, civil: .02, undi18: .03 }, needs: ['reform', 1], law: true },
+  infoAct:         { cost: 0, appeal: { urban_lib: .07, m40: .05, undi18: .04, borneo_urban: .04, civil: -.04 }, needs: ['graft', 1], law: true },
+  localVote:       { cost: 1, appeal: { urban_lib: .06, m40: .05, borneo_urban: .04, civil: -.03, heartland: -.02 }, needs: ['reform', 1], law: true },
+  gigRights:       { cost: 1, appeal: { gig: .1, urban_b40: .05, undi18: .05, smallbiz: -.05 }, needs: ['wages', 1], law: true },
+  oilRoyalty:      { cost: 2, appeal: { borneo_native: .1, borneo_urban: .08, heartland: .03, civil: -.02 }, needs: ['federalism', 1], law: true },
+  // Programmes: each year's money, and each can be promised again.
+  schoolMeals:     { cost: 2, appeal: { urban_b40: .06, heartland: .04, agri: .04, felda: .04, borneo_native: .05, undi18: .02 } },
+  healthCover:     { cost: 4, appeal: { seniors: .07, urban_b40: .06, m40: .05, gig: .04, smallbiz: -.04 }, needs: ['health', 1] },
+  greenGrid:       { cost: 2, appeal: { m40: .05, urban_lib: .05, undi18: .04, borneo_urban: .03, felda: -.02 } },
+  villageRoads:    { cost: 3, appeal: { agri: .08, felda: .06, borneo_native: .1, heartland: .05, urban_lib: -.02 }, needs: ['rural', 1] },
+  smeLoans:        { cost: 2, appeal: { smallbiz: .1, gig: .04, m40: .03, borneo_urban: .02 } },
+  seniorPension:   { cost: 3, appeal: { seniors: .1, heartland: .03, felda: .03, agri: .03, undi18: -.02 } },
 };
+// The Acts that were promised before there were any others: they are laws too.
+for (const id of ['graftCommission', 'termLimit', 'repealLaws', 'minWage'] as const) PLEDGES[id].law = true;
+
+/** Whether a promise has already become law in this career, so that nobody need promise it again. */
+export const isEnacted = (career: Career, id: PledgeId): boolean => career.laws?.includes(id) ?? false;
+
+/** A manifesto without what is already law. */
+export const withoutLaws = (career: Career, manifesto: readonly PledgeId[]): PledgeId[] => manifesto.filter((id) => !isEnacted(career, id));
 
 /** What a party promises if nobody thinks about it: roughly what it promised last time. */
 const DEFAULT_MANIFESTO: Record<PartyId, PledgeId[]> = {
@@ -169,7 +193,8 @@ export function policyEffect(c: Campaign): number[][] {
     // Rivals publish when the election is called; the player when they choose to.
     const published = mine ? career.launched : c.phase !== 'term';
     const promised = published ? pledgeAppeal(career, p, career.manifesto[p]) : null;
-    const usual = published ? pledgeAppeal(career, p, DEFAULT_MANIFESTO[PARTY_IDS[p]]) : null;
+    // What is already law is in neither: it is not a promise any more, and dropping it from the manifesto is not a broken one.
+    const usual = published ? pledgeAppeal(career, p, withoutLaws(career, DEFAULT_MANIFESTO[PARTY_IDS[p]])) : null;
     for (let b = 0; b < N_BLOCS; b++) {
       const shift = stanceAppeal(career, career.stances[p], b) - stanceAppeal(career, career.stances0[p], b);
       out[b][p] = (shift + (promised ? promised[b] - usual![b] : 0)) * belief(c, p);
@@ -237,7 +262,7 @@ export function setStance(c: Campaign, issue: number, to: number): boolean {
 /** Adds a promise to the player's manifesto or takes it out. Only before it is published. */
 export function togglePledge(c: Campaign, id: PledgeId): boolean {
   const career = c.career;
-  if (!career || career.launched || !(id in PLEDGES)) return false;
+  if (!career || career.launched || !(id in PLEDGES) || isEnacted(career, id)) return false;
   const mine = career.manifesto[c.player];
   if (mine.includes(id)) career.manifesto[c.player] = mine.filter((x) => x !== id);
   else if (mine.length < MAX_PLEDGES) mine.push(id);

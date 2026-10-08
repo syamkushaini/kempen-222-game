@@ -251,6 +251,9 @@ export const N_ISSUES = ISSUE_IDS.length;
 export const PLEDGE_IDS = [
   'cashAid', 'fuelSubsidy', 'minWage', 'taxCut', 'graftCommission', 'termLimit', 'hospitals', 'transitPass',
   'debtWriteOff', 'civilPay', 'borneoFund', 'settlerDebt', 'floorPrices', 'valuesSchools', 'repealLaws', 'homes',
+  // Added with the laws that, once passed, stay on the books (see `law` in policy.ts): promises of an Act, of a programme, and of money for a region.
+  'partyHopBan', 'fixedTerm', 'infoAct', 'localVote', 'gigRights', 'oilRoyalty',
+  'schoolMeals', 'healthCover', 'greenGrid', 'villageRoads', 'smeLoans', 'seniorPension',
 ] as const;
 export type PledgeId = (typeof PLEDGE_IDS)[number];
 
@@ -391,6 +394,8 @@ export interface Career {
   dossier: number;
   /** [party][issue]: where each party stands, -2 to 2. */
   stances: number[][];
+  /** Promises that became law, in this term or one before: an Act of Parliament need not be promised twice. Absent in a game saved before it existed. */
+  laws?: PledgeId[];
   /** Stances as they were at the last election. */
   stances0: number[][];
   /** [issue]: the last week the player changed that stance, or 0. */

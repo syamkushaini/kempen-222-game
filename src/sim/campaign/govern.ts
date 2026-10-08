@@ -9,7 +9,7 @@ import { startFormation } from './formation';
 import { nationWeek } from './nation';
 import { pushNews, ref } from './news';
 import { cabinetWeek, economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
-import { PLEDGES } from './policy';
+import { PLEDGES, isEnacted } from './policy';
 import {
   ISSUE_IDS, LEVER_IDS,
   type Campaign, type Career, type DemandId, type IssueId, type LeverId, type Obligation, type PledgeId, type PortfolioId, type Scene,
@@ -38,6 +38,8 @@ const PLEDGE_PORTFOLIO: Record<PledgeId, PortfolioId> = {
   cashAid: 'finance', fuelSubsidy: 'finance', minWage: 'economy', taxCut: 'finance', graftCommission: 'home', termLimit: 'home',
   hospitals: 'health', transitPass: 'works', debtWriteOff: 'education', civilPay: 'finance', borneoFund: 'rural',
   settlerDebt: 'rural', floorPrices: 'rural', valuesSchools: 'education', repealLaws: 'home', homes: 'works',
+  partyHopBan: 'home', fixedTerm: 'home', infoAct: 'home', localVote: 'home', gigRights: 'economy', oilRoyalty: 'finance',
+  schoolMeals: 'education', healthCover: 'health', greenGrid: 'works', villageRoads: 'rural', smeLoans: 'economy', seniorPension: 'finance',
 };
 
 /** Promises to partners that need an Act of Parliament rather than a signature. */
@@ -137,6 +139,12 @@ function enact(c: Campaign, id: string, proposer: number) {
   const def = billDef(id)!;
   for (const [bloc, v] of Object.entries(def.appeal)) lift(k, proposer, [bloc as BlocId], v * 0.5);
   k.fiscal += def.cost;
+  // An Act stays on the books: it leaves every party's manifesto, and is not promised again at the next election.
+  const [kind, name] = id.split(':');
+  if (kind === 'pledge' && PLEDGES[name as PledgeId]?.law && !isEnacted(k, name as PledgeId)) {
+    (k.laws ??= []).push(name as PledgeId);
+    k.manifesto = k.manifesto.map((m) => m.filter((x) => x !== name));
+  }
 }
 
 /**
