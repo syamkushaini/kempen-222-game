@@ -21,6 +21,7 @@ import { beforeNomination, hasDiplomacy, nominationWeek, pactSeats, rivalDiploma
 import { startFormation } from './formation';
 import { now, pushNews, ref } from './news';
 import { CHIEF_NOISE, RIVAL_NOISE, hasChiefs, planChiefs, playWeek, runChiefs, type ChiefReport } from './ai';
+import { applyWhatIf } from './whatif';
 import { latestNationalPoll, pollCost, takePoll } from './polls';
 import type {
   ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Difficulty,
@@ -100,6 +101,8 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   if (opts.challenge?.fog || opts.challenge?.noisy || opts.challenge?.goal) {
     c.challenge = { fog: !!opts.challenge.fog, noisy: !!opts.challenge.noisy, ...(opts.challenge.goal ? { goal: opts.challenge.goal } : {}) };
   }
+  // The real election, played again with one thing changed.
+  if (opts.challenge?.whatIf && world.rules.kind === 'general' && !world.rules.career) applyWhatIf(world, c, opts.challenge.whatIf);
   // A career sets its own opening terms first, then lets the leader's past have its say.
   if (!world.rules.career) applyBackstory(c);
   for (const pact of opening.pacts) {

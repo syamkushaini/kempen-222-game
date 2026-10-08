@@ -244,3 +244,8 @@ Soalan-soalan ini ditulis selepas membaca kod career mode semasa dan mengukurnya
     a) Kekal sebagai sub-tab ★ b) Tab utama
 100. Apa satu perkara yang paling anda mahu career mode lakukan yang belum disebut di atas?
      (jawapan bebas)
+
+
+## Status (8 Oct 2026)
+
+Every question above has been answered with the option marked ★ (the designer took it in each batch that was asked, and asked for the rest to be taken the same way) and built, except: 100, which is a free answer for the designer; 44, 70, 83, 95 and 99, which were already as the ★ option asked for. See `DESIGN.md` for what each answer became.

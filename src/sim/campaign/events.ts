@@ -94,6 +94,18 @@ export interface EventDef {
   choices: Choice[];
 }
 
+/**
+ * Difficulty changes how cruel the years are and not only how well the rivals play: on the hard level what goes wrong goes wrong a
+ * third worse and what goes right a little less well, and trouble comes more often; on the easy level the other way about.
+ */
+export const REALISM: Record<'easy' | 'normal' | 'hard', { bad: number; good: number; chance: number }> = {
+  easy: { bad: 0.8, good: 1.1, chance: 0.85 },
+  normal: { bad: 1, good: 1, chance: 1 },
+  hard: { bad: 1.3, good: 0.95, chance: 1.25 },
+};
+/** A consequence as the level of difficulty has it: a loss scaled one way, a gain the other. */
+export const realistic = (c: Campaign, n: number): number => n * (n < 0 ? REALISM[c.difficulty].bad : REALISM[c.difficulty].good);
+
 /** How many weeks pass, at least, between one random event and the next. */
 const QUIET_WEEKS = 3;
 const EVENT_CHANCE = 0.06;
@@ -167,7 +179,7 @@ export function rollEvent(c: Campaign, rng: Rng): boolean {
     const onCalendar = def.at === k.week || (def.yearly === weekOfYear && k.week > 4);
     if (onCalendar && (def.yearly ? eligibleYearly(c, id) : eligible(c, id))) { fire(c, id); return true; }
   }
-  if (k.week < k.quietUntil || rng.next() > EVENT_CHANCE) return false;
+  if (k.week < k.quietUntil || rng.next() > EVENT_CHANCE * REALISM[c.difficulty].chance) return false;
   const pool = Object.keys(EVENTS).filter((id) => EVENTS[id].weight > 0 && eligible(c, id));
   const total = pool.reduce((a, id) => a + EVENTS[id].weight, 0);
   if (total <= 0) return false;
@@ -209,15 +221,15 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
     switch (e.t) {
       case 'mood': {
         const rows = e.blocs === 'all' ? Array.from({ length: N_BLOCS }, (_, b) => b) : e.blocs.map((b) => BLOC_IDS.indexOf(b));
-        for (const b of rows) k.mood[b][me] += e.n;
+        for (const b of rows) k.mood[b][me] += realistic(c, e.n);
         break;
       }
       case 'rival': for (const p of partiesOf(c, e.who)) for (let b = 0; b < N_BLOCS; b++) k.mood[b][p] += e.n; break;
-      case 'unity': shiftUnity(c, me, e.n); break;
-      case 'funds': pc.funds = Math.max(0, pc.funds + Math.sign(e.n) * scaled(world, Math.abs(e.n))); break;
-      case 'cred': k.credibility = clamp(k.credibility + e.n, 0, 100); break;
-      case 'stability': k.government.stability = clamp(k.government.stability + e.n, 5, 95); break;
-      case 'trust': k.government.trust = clamp(k.government.trust + e.n, 0, 100); break;
+      case 'unity': shiftUnity(c, me, realistic(c, e.n)); break;
+      case 'funds': pc.funds = Math.max(0, pc.funds + Math.sign(e.n) * scaled(world, Math.abs(realistic(c, e.n)))); break;
+      case 'cred': k.credibility = clamp(k.credibility + realistic(c, e.n), 0, 100); break;
+      case 'stability': k.government.stability = clamp(k.government.stability + realistic(c, e.n), 5, 95); break;
+      case 'trust': k.government.trust = clamp(k.government.trust + realistic(c, e.n), 0, 100); break;
       case 'machinery': pc.machinery = pc.machinery.map((m) => (m > 0 ? clamp(m + e.n, 0, 100) : 0)); break;
       case 'dossier': k.dossier = clamp(k.dossier + e.n, 0, 100); break;
       case 'donors': k.orders.donors = clamp(k.orders.donors + e.n, 0, 3) as Level; break;

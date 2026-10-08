@@ -3,6 +3,8 @@ import {
   ACTIVITY_IDS, ACTIVITIES, PADDING, canPad, padChance, paddedOf, FAVOUR_IDS, FOREIGN, canTakeForeign, exposureChance, inquiryChance, CHEST_BONUS, DISCIPLINE, DISCIPLINE_EVERY, REBRAND, canDiscipline, canRebrand, CHEST_PENALTY, HOLDINGS, fatigueOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
 } from '../sim/campaign/party';
 import { scaled } from '../sim/campaign/actions';
+import { styleOf } from '../sim/campaign/ai';
+import { TEMPER } from '../sim/campaign/cast';
 import { EARLY, canAgreeEarly, earlyPacts } from '../sim/campaign/earlypact';
 import { tieBetween } from '../sim/campaign/cast';
 import { ALLIANCE, ALLIANCE_MARKS, ALLIANCE_NAMES, allianceBonus, canFound, canInvite } from '../sim/campaign/alliance';
@@ -207,6 +209,24 @@ export function PartyTab() {
         </li>
       </ul>
       {(k.govRun ?? 0) > 1 && <p className="note bad">{t('party.fatigue', { n: k.govRun!, pts: (Math.round(fatigueOf(k.govRun!) * 25 * 10) / 10).toFixed(1) })}</p>}
+
+      <h3>{t('rivals.title')}</h3>
+      <p className="muted small action-desc">{t('rivals.desc')}</p>
+      <ul>
+        {campaign.parties.map((pc, p) => ({ pc, p })).filter(({ pc, p }) => !!pc && p !== campaign.player && PARTY_IDS[p] !== 'oth').map(({ p }) => {
+          const temper = TEMPER[PARTY_IDS[p] as keyof typeof TEMPER];
+          return (
+            <li className="action" key={p}>
+              <div className="grow">
+                <span className="action-title">{partyName(t, p)}</span>
+                <span className="action-meta">{styleOf(p).map((id) => t(`style.${id}` as StringKey)).join(' · ') || '—'}</span>
+                {styleOf(p).map((id) => <span key={id} className="action-meta">{t(`style.${id}.desc` as StringKey)}</span>)}
+                {temper && <span className="action-meta">{temper.warmth >= 1.15 ? `${t('temper.warm')} · ` : temper.warmth <= 0.8 ? `${t('temper.cold')} · ` : ''}{t(temper.grudge >= 1.3 ? 'temper.grudge' : 'temper.forgiving')}</span>}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
 
       <h3>{t('early.title')}</h3>
       <p className="muted small action-desc">{t('early.desc', { n: EARLY.max })}</p>

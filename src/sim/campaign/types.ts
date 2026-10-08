@@ -381,7 +381,7 @@ export interface CareerRecord {
 export const LEGACY_IDS = ['statesman', 'reformer', 'survivor', 'promiser', 'plotter', 'premier', 'kingmaker', 'conscience', 'nearly', 'footnote'] as const;
 export type LegacyId = (typeof LEGACY_IDS)[number];
 export type EndingKind = 'retired' | 'ousted' | 'wipedOut';
-export interface Ending { kind: EndingKind; legacy: LegacyId; score: number }
+export interface Ending { kind: EndingKind; legacy: LegacyId; score: number; /** Acts of Parliament still on the books when the career ended. */ laws?: number }
 
 /** A career: the long game across terms. Null in one-off contests. */
 export interface Career {
@@ -574,7 +574,7 @@ export interface Career {
  * `fog` hides the chances of anything left to luck; `noisy` doubles the error of every poll.
  */
 /** Optional ways to make a campaign harder, and the goal of a set challenge (an id in challenges.ts). */
-export interface Challenge { fog: boolean; noisy: boolean; goal?: string }
+export interface Challenge { fog: boolean; noisy: boolean; goal?: string; /** A change to history, for a replay of the real election with something different (see whatif.ts). */ whatIf?: string }
 
 /** A campaign in progress: everything the rules need, as plain JSON. */
 export interface Campaign {

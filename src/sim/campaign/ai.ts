@@ -38,6 +38,25 @@ const PROFILES: Record<FieldedId, Profile> = {
   suara:  { ground: 1.2, machinery: 1.2, media: 0.4, attack: 0.3, reserve: 30_000, shady: false },
 };
 
+/** The ways a rival campaigns that a player can learn to read, from what they do. */
+export const STYLE_IDS = ['aggressive', 'populist', 'machine', 'online', 'cautious', 'shady'] as const;
+export type StyleId = (typeof STYLE_IDS)[number];
+
+/**
+ * How a rival is known to campaign, in the one or two words that fit it best: aggressive (goes for the throat), populist (the
+ * ceramah circuit), a machine (branches and money), online (lives on the phone), cautious (avoids fights) and shady (takes the
+ * money that comes with strings). The player reads them off what the party does week by week.
+ */
+export function styleOf(p: number): StyleId[] {
+  const pr = PROFILES[PARTY_IDS[p] as FieldedId];
+  if (!pr) return [];
+  const out: [StyleId, number][] = [
+    ['aggressive', pr.attack - 0.9], ['populist', pr.ground - 1.15], ['machine', pr.machinery - 1.25], ['online', pr.media - 1.25],
+    ['cautious', 0.55 - pr.attack], ['shady', pr.shady ? 0.3 : -1],
+  ];
+  return out.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([id]) => id);
+}
+
 /** Difficulty changes how well rivals read the race and choose, never their resources. */
 const SKILL: Record<Difficulty, { noise: number; blunder: number }> = {
   easy:   { noise: 0.08, blunder: 0.4 },
