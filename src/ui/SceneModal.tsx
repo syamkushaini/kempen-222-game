@@ -8,7 +8,7 @@ import { CHIEF_NAMES, FACTION_IDS, POLL_ANSWERS, backing, deputyOf, pollOdds, ty
 import type { StateId } from '../sim/types';
 import { canChoose, EVENTS, gambleChance, ULTIMATUM_MONEY, type Choice, type Effect } from '../sim/campaign/events';
 import { bluffChance } from '../sim/campaign/plots';
-import { billDef, confidenceCount, deficit, looseness, standstill, whipCount } from '../sim/campaign/govern';
+import { billDef, confidenceCount, deficit, looseness, standstill, voteNeed, whipCount } from '../sim/campaign/govern';
 import { billName } from './GovernmentTab';
 import type { Scene } from '../sim/campaign/types';
 import { useStore } from '../state/store';
@@ -173,10 +173,10 @@ function SceneCard({ scene }: { scene: Scene }) {
     title = t(mine ? 'scene.vote.title' : 'scene.houseVote.title', { bill: billName(t, id), party: from === null ? '' : partyName(t, from) });
     body = (
       <>
-        <p>{t(mine ? 'scene.vote.body' : 'scene.houseVote.body', { bill: billName(t, id), need: majorityLine(world) })}</p>
+        <p>{t(mine ? 'scene.vote.body' : 'scene.houseVote.body', { bill: billName(t, id), need: voteNeed(world, id) })}</p>
         <p className="muted small">{t('chamber.whips')}</p>
         <Chamber
-          stagger blocs={divisionSeating(world, campaign, whipCount(world, campaign, id, proposer))} need={majorityLine(world)}
+          stagger blocs={divisionSeating(world, campaign, whipCount(world, campaign, id, proposer))} need={voteNeed(world, id)}
           sides={{ left: t('chamber.gov'), right: t('chamber.opp'), middle: t('chamber.cross') }}
         />
       </>

@@ -28,7 +28,8 @@ describe('the added actions', () => {
     const by = getWorld('byelection')!;
     expect(by.rules.actions).toEqual(expect.arrayContaining(['townhall', 'charity', 'festival', 'conference']));
     expect(by.rules.actions).not.toContain('debate');
-    expect(by.rules.actions).not.toContain('manifesto');
+    // A by-election has a manifesto too, about one thing.
+    expect(by.rules.actions).toContain('manifesto');
   });
 
   it('are explained and reported in both languages', () => {

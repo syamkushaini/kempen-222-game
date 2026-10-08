@@ -37,6 +37,7 @@ import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
+import { usePower, type PowerId } from '../sim/campaign/statepowers';
 import { writeLetter, type Tone } from '../sim/campaign/letters';
 import { agreeEarly, dropEarly } from '../sim/campaign/earlypact';
 import { formUnity } from '../sim/campaign/grand';
@@ -233,6 +234,7 @@ interface Store {
   chest(lots: number): void;
   foreign(favour: FavourId): void;
   padRolls(): void;
+  usePower(id: PowerId): void;
   writeLetter(issue: IssueId, tone: Tone): void;
   agreeEarly(party: number): void;
   dropEarly(party: number): void;
@@ -477,6 +479,7 @@ export const useStore = create<Store>((set, get) => {
     formUnity: () => mutate((c, _g, world) => { formUnity(world, c); }),
     offerDeputy: (party) => mutate((c) => { offerDeputy(c, party); }),
     writeLetter: (issue, tone) => mutate((c) => { if (writeLetter(c, issue, tone)) syncOpinion(c); }),
+    usePower: (id) => mutate((c, _g, world) => { usePower(world, c, id); }),
     padRolls: () => mutate((c, _g, world) => { padRolls(world, c); }),
     grantSafe: (seat, faction) => mutate((c, _g, world) => { grantSafe(world, c, seat, faction); }),
     revokeSafe: (seat) => mutate((c) => { revokeSafe(c, seat); }),

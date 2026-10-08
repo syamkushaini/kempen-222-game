@@ -3,7 +3,7 @@ import { getWorld, worldOf } from '../../data/world';
 import { PARTY_IDS } from '../types';
 import { answerEvent, nextTerm, resumeTerm, skipAhead, startCareer } from './career';
 import { endDay } from './formation';
-import { resolveVote } from './govern';
+import { enact, resolveVote } from './govern';
 import { PLEDGES, isEnacted, togglePledge, withoutLaws } from './policy';
 import { closeNight, endWeek } from './turn';
 import { PLEDGE_IDS, type Campaign, type PledgeId, type Scene } from './types';
@@ -15,6 +15,13 @@ const vote = (bill: string): Scene => ({ id: 1, kind: 'vote', from: null, bill }
 
 /** A career in which the player's government has put an Act through the House. Tries seeds until the vote carries. */
 function withLaw(id: PledgeId): Campaign {
+  // An amendment of the constitution needs two thirds of the House, which the starting government has not got: it is enacted outright here (the two-thirds rule is tested on its own).
+  if (PLEDGES[id].amend) {
+    const c = startCareer(base, { player: PS, difficulty: 'normal', seed: 1 });
+    enact(c, `pledge:${id}`, PS, 0.9);
+    c.career!.delivery[id] = 'kept';
+    return c;
+  }
   for (let seed = 1; seed < 40; seed++) {
     const c = startCareer(base, { player: PS, difficulty: 'normal', seed });
     resolveVote(base, c, vote(`pledge:${id}`), 0);

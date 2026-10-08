@@ -134,6 +134,13 @@ export function whipCount(world: World, c: Campaign, id: string, proposer: numbe
   return out;
 }
 
+/** How many votes a bill needs: a majority of the House, or two thirds of it for an amendment of the constitution. */
+export function voteNeed(world: World, id: string): number {
+  const [kind, name] = id.split(':');
+  const amend = kind === 'pledge' && !!PLEDGES[name as PledgeId]?.amend;
+  return amend ? Math.ceil((world.seats.length * 2) / 3) : majorityLine(world);
+}
+
 /** Holds the vote: the wavering make up their minds. Returns the final count. */
 function divide(world: World, c: Campaign, id: string, proposer: number, terms: VoteTerms): { yes: number; no: number; passed: boolean } {
   const whip = whipCount(world, c, id, proposer, terms);
@@ -146,7 +153,8 @@ function divide(world: World, c: Campaign, id: string, proposer: number, terms: 
   });
   c.rng = rng.state;
   // A tied House is the Speaker’s: it goes the way they lean.
-  return { yes, no, passed: yes > no || (yes === no && speakerOf(c).lean > 0) };
+  const need = voteNeed(world, id);
+  return { yes, no, passed: need > majorityLine(world) ? yes >= need : yes > no || (yes === no && speakerOf(c).lean > 0) };
 }
 
 const k0 = (c: Campaign) => c.career!;

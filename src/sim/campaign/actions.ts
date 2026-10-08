@@ -15,7 +15,7 @@ import { MEDIA_AIMED, MIN_SEGMENT, addAimedPitch, aimReach, isBloc, segmentShare
 import { stateOf } from './agenda';
 import { ISSUE_IDS, type IssueId } from './types';
 import type {
-  ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, PartyCampaign, Posture, Quality, TargetKind,
+  ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, LocalTheme, PartyCampaign, Posture, Quality, TargetKind,
 } from './types';
 
 export interface ActionDef {
@@ -153,6 +153,16 @@ export const LOCAL_PLAIN = blocTable({ undi18: 0.3, heartland: 0.7, felda: 0.7, 
 export const localPlace = (world: World, st: RegionId | undefined): string => stateOf(world) ?? st ?? '';
 export const localReach = (world: World, st: RegionId | undefined): number[] => LOCAL_REACH[localPlace(world, st)] ?? LOCAL_PLAIN;
 export const hasLocal = (world: World, st: RegionId | undefined): boolean => localPlace(world, st) in LOCAL_REACH;
+
+/** Who a local manifesto on one theme speaks to: roads to the villages, water to everyone who has gone without, jobs to the towns, housing to the young and the middle. */
+export const THEME_REACH: Record<LocalTheme, number[]> = {
+  roads: blocTable({ undi18: 0.2, heartland: 1.3, felda: 1.4, agri: 1.4, civil: 0.4, urban_b40: 0.3, gig: 0.3, m40: 0.3, urban_lib: 0.1, smallbiz: 0.7, seniors: 0.8, borneo_native: 1.5, borneo_urban: 0.4 }),
+  water: blocTable({ undi18: 0.5, heartland: 1.1, felda: 1, agri: 1, civil: 0.6, urban_b40: 1.1, gig: 0.7, m40: 0.7, urban_lib: 0.4, smallbiz: 0.6, seniors: 1, borneo_native: 1.2, borneo_urban: 0.6 }),
+  jobs: blocTable({ undi18: 1.2, heartland: 0.5, felda: 0.4, agri: 0.4, civil: 0.3, urban_b40: 1.4, gig: 1.4, m40: 0.8, urban_lib: 0.7, smallbiz: 1, seniors: 0.1, borneo_native: 0.4, borneo_urban: 0.9 }),
+  housing: blocTable({ undi18: 1.2, heartland: 0.4, felda: 0.3, agri: 0.2, civil: 0.9, urban_b40: 1.4, gig: 1.1, m40: 1.3, urban_lib: 0.9, smallbiz: 0.6, seniors: 0.4, borneo_native: 0.3, borneo_urban: 0.9 }),
+};
+/** How much more a local manifesto on one theme does for those it speaks to than the all-purpose one, in a state’s election or a by-election. */
+export const THEME_FOCUS = 1.4;
 
 export const EFFECT = {
   ceramah: 0.18, ceramahMotivation: 0.08,
@@ -665,7 +675,9 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       // The party's promises in one document. A divided party launches it badly, and a believed leader sells it better.
       const believed = c.career ? 0.5 + c.career.credibility / 200 : 1;
       const united = pc.unity >= 40;
-      boostBlocs(c.dyn.support.nat, p, EFFECT.manifesto * believed * (united ? 1 : EFFECT.manifestoDivided) * onAir, MANIFESTO_REACH, CAP.nat);
+      // In a state’s election or a by-election the promises are local ones, about one thing.
+      const localTheme = world.rules.kind !== 'general' ? target.theme : undefined;
+      boostBlocs(c.dyn.support.nat, p, EFFECT.manifesto * believed * (united ? 1 : EFFECT.manifestoDivided) * onAir * (localTheme ? THEME_FOCUS : 1), localTheme ? THEME_REACH[localTheme] : MANIFESTO_REACH, CAP.nat);
       quality = united ? 'great' : 'weak';
       notePlay(pc, 'manifesto');
       break;

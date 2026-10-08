@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { ACTIONS, PITCHED, actionCost, canDo, expectedPitchGain, expectedSeatGain, debateOdds, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
-import { ISSUE_IDS, POSTURES, type IssueId, type Posture } from '../sim/campaign/types';
+import { ISSUE_IDS, LOCAL_THEMES, POSTURES, type IssueId, type LocalTheme, type Posture } from '../sim/campaign/types';
 import { weatherIn } from '../sim/campaign/weather';
 import { MEDIA_AIMED, resentfulOf, segmentShare, segmentsOf, type SegmentId } from '../sim/campaign/segments';
 import { probeChance } from '../sim/campaign/spending';
@@ -69,6 +69,8 @@ export function ActionsTab() {
 
   // The voter group a seat event is pitched to; a new seat starts with a pitch to everyone.
   const [segment, setSegment] = useState<SegmentId | null>(null);
+  // A state’s or a seat’s manifesto is about one thing.
+  const [localTheme, setLocalTheme] = useState<LocalTheme>('roads');
   // A debate: the question to be answered, and the way of answering it.
   const hottest = campaign.career ? [...ISSUE_IDS].sort((a, b) => campaign.career!.salience[ISSUE_IDS.indexOf(b)] - campaign.career!.salience[ISSUE_IDS.indexOf(a)]).slice(0, 4) : [];
   const [debateTopic, setDebateTopic] = useState<IssueId | undefined>(undefined);
@@ -210,7 +212,7 @@ export function ActionsTab() {
       case 'party':
         return rivals.map((r) => row(id, { party: r, ...(id === 'debate' ? { topic: debateTopic, posture: debatePosture } : {}) }, `${id}-${r}`, `${name} — ${partyShort(t, r)}`, id === 'debate' && campaign.career ? t('debate.odds', { pct: Math.round(debateOdds(world, campaign, me, r, debateTopic, debatePosture) * 100) }) : undefined));
       default: {
-        const target: ActionTarget = mediaSegment && MEDIA_AIMED.includes(id as never) ? { segment: mediaSegment } : {};
+        const target: ActionTarget = mediaSegment && MEDIA_AIMED.includes(id as never) ? { segment: mediaSegment } : id === 'manifesto' && world.rules.kind !== 'general' ? { theme: localTheme } : {};
         return row(id, target, id, target.segment ? `${name} · ${t(`bloc.${target.segment}`)}` : name, extraFor(id, target));
       }
     }
@@ -263,6 +265,14 @@ export function ActionsTab() {
               )}
               {actions.map((id) => (
                 <li key={id} className="action-group">
+                  {id === 'manifesto' && world.rules.kind !== 'general' && (
+                    <section className="pitch" aria-label={t('theme.title')}>
+                      <p className="muted small"><strong>{t('theme.title')}</strong> — {t('theme.note')}</p>
+                      <div className="chips" role="group" aria-label={t('theme.title')}>
+                        {LOCAL_THEMES.map((x) => <button key={x} className={localTheme === x ? 'chip active' : 'chip'} aria-pressed={localTheme === x} onClick={() => setLocalTheme(x)}>{t(`theme.${x}` as StringKey)}</button>)}
+                      </div>
+                    </section>
+                  )}
                   {id === 'debate' && hottest.length > 0 && (
                     <section className="pitch" aria-label={t('debate.prep')}>
                       <p className="muted small"><strong>{t('debate.prep')}</strong> — {t('debate.prep.note')}</p>

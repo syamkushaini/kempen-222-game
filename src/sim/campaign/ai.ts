@@ -169,7 +169,7 @@ export function rankOptions(world: World, c: Campaign, p: number, reading: Readi
   const lateness = weeksLeft <= c.totalWeeks / 2.5 ? 1 : 0.4;
   consider('tv', {}, totalValue * EFFECT.tv * 0.8 * lateness, profile.media);
   consider('social', {}, totalValue * EFFECT.social * 0.7 * lateness, profile.media);
-  consider('manifesto', {}, totalValue * EFFECT.manifesto * mean(MANIFESTO_REACH) * lateness, profile.media);
+  if (world.rules.kind !== 'byelection') consider('manifesto', {}, totalValue * EFFECT.manifesto * mean(MANIFESTO_REACH) * lateness, profile.media);
   // A day on the party itself is for a party that is coming apart.
   if (pc.unity < 50) consider('conference', {}, totalValue * 0.004 * (50 - pc.unity), profile.machinery);
 

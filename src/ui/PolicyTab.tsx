@@ -137,7 +137,7 @@ export function PolicyTab() {
               <label>
                 <input type="checkbox" checked={on} disabled={k.launched || enacted || (!on && mine.length >= MAX_PLEDGES)} onChange={() => togglePledge(id)} />
                 <span className="grow">
-                  <span className="action-title">{t(`pledge.${id}`)}{def.law && <span className="badge plain" title={t('manifesto.lawNote')}>{t('manifesto.law')}</span>}</span>
+                  <span className="action-title">{t(`pledge.${id}`)}{def.law && <span className="badge plain" title={t('manifesto.lawNote')}>{t('manifesto.law')}</span>}{def.amend && <span className="badge plain" title={t('manifesto.amendNote')}>{t('manifesto.amend')}</span>}</span>
                   <span className="action-meta">{t('manifesto.line', { cost: def.cost, blocs: blocNames(likes) })}</span>
                   {hates.length > 0 && <span className="action-meta">{t('policy.dislikes', { blocs: blocNames(hates) })}</span>}
                   {enacted && <span className="action-meta">{t('manifesto.enacted')}</span>}

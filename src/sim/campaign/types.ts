@@ -23,6 +23,9 @@ export type ActionId = (typeof ACTION_IDS)[number];
 export type Family = 'ground' | 'machinery' | 'media' | 'funds';
 export type TargetKind = 'seat' | 'state' | 'party' | 'none';
 
+/** What a local manifesto is about, in a state’s election or a by-election. */
+export const LOCAL_THEMES = ['roads', 'water', 'jobs', 'housing'] as const;
+export type LocalTheme = (typeof LOCAL_THEMES)[number];
 export type Posture = 'policy' | 'attack' | 'warm';
 export const POSTURES: readonly Posture[] = ['policy', 'attack', 'warm'];
 
@@ -37,6 +40,8 @@ export interface ActionTarget {
   /** A debate: the issue the question is about, and how the player answers it. */
   topic?: IssueId;
   posture?: Posture;
+  /** A manifesto for a state or a seat: the one thing it is about. */
+  theme?: LocalTheme;
 }
 
 /** How an action turned out; drives the news line and nothing else. */
@@ -438,6 +443,8 @@ export interface Career {
   adviserPending?: 'treasurer' | 'strategist' | 'conscience';
   /** The week of the last open letter or speech the player wrote (see letters.ts). */
   letter?: number;
+  /** [power]: the week the state’s government last used it (see statepowers.ts). */
+  powers?: Record<string, number>;
   /** Stories still to be printed about how past decisions turned out (see echoes.ts). */
   echoes?: { week: number; event: string; kind: 'good' | 'bad' | 'mixed' }[];
   /** The Speaker of this parliament (see chamber.ts). */

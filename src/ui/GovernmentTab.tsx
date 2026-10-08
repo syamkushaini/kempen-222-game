@@ -11,6 +11,7 @@ import { MAX_MEASURES } from '../sim/campaign/office';
 import { SECTOR, SECTORS, SECTOR_IDS, canAid, sectorsOf } from '../sim/campaign/sectors';
 import { leverStrain } from '../sim/campaign/govern';
 import { Gauge } from './Gauge';
+import { POWERS, POWER_IDS, canUse, inStateCareer, powerWait } from '../sim/campaign/statepowers';
 import { SPEAKER_NAMES, leanWord, rebelShare, speakerOf } from '../sim/campaign/chamber';
 import { GRAND, canUnite } from '../sim/campaign/grand';
 import { ksuOf } from '../sim/campaign/ksu';
@@ -146,6 +147,7 @@ export function GovernmentTab() {
       )}
 
       <HouseFigures />
+      {pm && inStateCareer(campaign) && <StatePowers />}
       <Sectors />
       {pm && <SupplyDeals />}
       {pm && <Unity />}
@@ -364,6 +366,37 @@ function SupplyDeals() {
   );
 }
 
+
+/** What the state itself has to spend and to give away: the land, the forests, its own development money. */
+function StatePowers() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const use = useStore((s) => s.usePower);
+  return (
+    <>
+      <h3>{t('powers.title')}</h3>
+      <p className="muted small action-desc">{t('powers.desc')}</p>
+      <ul>
+        {POWER_IDS.map((id) => {
+          const check = canUse(world, campaign, id);
+          return (
+            <li className="action" key={id}>
+              <div className="grow">
+                <span className="action-title">{t(`power.${id}`)}</span>
+                <span className="action-meta">{t(`power.${id}.desc`)} {POWERS[id].money > 0 ? `+${f.rm(scaled(world, POWERS[id].money))}` : `−${f.rm(scaled(world, -POWERS[id].money))}`}</span>
+                {!check.ok && check.reason === 'wait' && <span className="action-reason">{t('powers.wait', { n: powerWait(campaign, id) })}</span>}
+                {!check.ok && check.reason === 'funds' && <span className="action-reason">{t('reason.funds')}</span>}
+              </div>
+              <button className="btn small" disabled={!check.ok} onClick={() => use(id)}>{t('powers.use')}</button>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
 
 /** Who sits in the chair, who heads the civil service, and how the party’s own backbenchers feel. */
 function HouseFigures() {

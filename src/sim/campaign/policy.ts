@@ -78,6 +78,8 @@ export interface PledgeDef {
   needs?: [IssueId, 1 | -1];
   /** An Act of Parliament: once passed it stays on the books, and no party need promise it again. A programme is paid for year after year and can be promised again. */
   law?: true;
+  /** An amendment to the constitution: it needs two thirds of the House, not a majority. */
+  amend?: true;
 }
 
 export const PLEDGES: Record<PledgeId, PledgeDef> = {
@@ -112,6 +114,8 @@ export const PLEDGES: Record<PledgeId, PledgeDef> = {
   smeLoans:        { cost: 2, appeal: { smallbiz: .1, gig: .04, m40: .03, borneo_urban: .02 } },
   seniorPension:   { cost: 3, appeal: { seniors: .1, heartland: .03, felda: .03, agri: .03, undi18: -.02 } },
 };
+// Acts that change the constitution itself need two thirds of the House.
+for (const id of ['termLimit', 'fixedTerm', 'partyHopBan', 'oilRoyalty', 'localVote'] as const) PLEDGES[id].amend = true;
 // The Acts that were promised before there were any others: they are laws too.
 for (const id of ['graftCommission', 'termLimit', 'repealLaws', 'minWage'] as const) PLEDGES[id].law = true;
 
