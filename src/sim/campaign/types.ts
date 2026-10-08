@@ -423,6 +423,10 @@ export interface Career {
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
+  /** The post whose holder is at the centre of a scandal the player has yet to answer (see events.ts). */
+  scandal?: PortfolioId;
+  /** The week the opposition last opened a committee inquiry (see committee.ts). */
+  committee?: number;
   /** The coalition the player has given a name and a mark: who belongs (see alliance.ts). */
   alliance?: { name: number; mark: number; members: number[] };
   /** The promises in the player's manifesto that are made in their short form: half the price, half the appeal (see policy.ts). */

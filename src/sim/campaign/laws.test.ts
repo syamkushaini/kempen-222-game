@@ -65,6 +65,8 @@ describe('an Act that has passed', () => {
 
   it('is still law in the next parliament, and nobody promises it there', () => {
     const c = withLaw('termLimit');
+    // The voters carried it, so no court looks at it (the court is tested on its own).
+    c.career!.mandated = ['termLimit'];
     for (let guard = 0; guard < 3000 && c.phase !== 'campaign'; guard++) {
       if (c.phase === 'term') { if (c.inbox.length) answerEvent(base, c, c.inbox.shift()!, 0); else skipAhead(base, c, 26); }
       else if (c.phase === 'formation') endDay(base, c);

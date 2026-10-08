@@ -3,7 +3,7 @@ import { clamp } from '../math';
 import { Rng } from '../rng';
 import { BLOC_IDS, N_BLOCS, PARTY_IDS, type BlocId, type PartyId } from '../types';
 import { scaled } from './actions';
-import { shiftRelation, shiftUnity } from './diplomacy';
+import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
 import {
   LINE_IDS, MINISTER_TRAITS, PORTFOLIO_IDS,
@@ -264,6 +264,16 @@ function stepIn(c: Campaign, m: Minister): void {
   k.appointments.push({ portfolio: m.portfolio, options: candidatesFor(c, m.portfolio) });
 }
 
+/** A minister of the player's party leaves their post: a stand-in holds it, and the one who went is not on offer again. */
+export function dismiss(c: Campaign, portfolio: PortfolioId): void {
+  const k = c.career!;
+  const m = k.cabinet.find((x) => x.portfolio === portfolio);
+  if (!m || m.party !== c.player) return;
+  const gone = m.name;
+  stepIn(c, m);
+  k.appointments = (k.appointments ?? []).map((a) => (a.portfolio === portfolio ? { ...a, options: a.options.filter((o) => o.name !== gone) } : a));
+}
+
 /** Whether the post is one the player has yet to fill. */
 export const waitingForChoice = (k: Career, portfolio: PortfolioId) => !!k.appointments?.some((a) => a.portfolio === portfolio);
 
@@ -305,14 +315,17 @@ export function cabinetWeek(c: Campaign, rng: Rng): void {
       shiftUnity(c, me, -6);
       pushNews(c, { party: me, key: 'news.gov.ambition', vars: { name: MINISTER_NAMES[m.name], post: `@portfolio:${m.portfolio}` }, tone: 'bad' });
     } else {
-      // A fixer's past catches up with them: they resign, the party pays for it, and the post is the player's to fill again.
-      k.credibility = clamp(k.credibility - 8, 0, 100);
-      k.government.trust = clamp(k.government.trust - 5, 0, 100);
+      // A fixer's past catches up with them: it is the player's to answer, at a press conference, before anything is settled.
       pushNews(c, { party: me, key: 'news.gov.scandal', vars: { name: MINISTER_NAMES[m.name], post: `@portfolio:${m.portfolio}` }, tone: 'bad' });
-      const resigned = m.name;
-      stepIn(c, m);
-      // The one who resigned is not on offer again.
-      k.appointments = k.appointments!.map((a) => (a.portfolio === m.portfolio ? { ...a, options: a.options.filter((o) => o.name !== resigned) } : a));
+      if (!k.scandal && c.inbox.length === 0) {
+        k.scandal = m.portfolio;
+        addScene(c, { kind: 'event', from: null, event: 'ministerScandal' });
+      } else {
+        // Something else is already on the desk: it is dealt with as it always was, the hard way.
+        k.credibility = clamp(k.credibility - 8, 0, 100);
+        k.government.trust = clamp(k.government.trust - 5, 0, 100);
+        dismiss(c, m.portfolio);
+      }
     }
   }
 }

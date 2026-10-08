@@ -8,6 +8,7 @@ import { scaled } from '../sim/campaign/actions';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
 import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
 import { MAX_MEASURES } from '../sim/campaign/office';
+import { COMMITTEE, canInquire, committeeWait, inquiryOdds } from '../sim/campaign/committee';
 import { canExpel } from '../sim/campaign/alliance';
 import { SUPPLY_CASH, canRenew, canSupply, discontent } from '../sim/campaign/supply';
 import { houseTally } from '../sim/campaign/contests';
@@ -140,6 +141,7 @@ export function GovernmentTab() {
       {pm && <SupplyDeals />}
       {pm && k.government.partners.length > 0 && <PutOut />}
       {seat === 'opp' && <ShadowCabinet />}
+      {seat === 'opp' && <CommitteeInquiry />}
 
       {(k.appointments?.length ?? 0) > 0 && (
         <section className="appointments" aria-label={t('appoint.title')}>
@@ -351,6 +353,34 @@ function SupplyDeals() {
   );
 }
 
+
+/** The opposition may call the government before a select committee, and spend its dossier on it. */
+function CommitteeInquiry() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const inquiry = useStore((s) => s.inquiry);
+  const k = campaign.career!;
+  const check = canInquire(world, campaign);
+  return (
+    <>
+      <h3>{t('committee.title')}</h3>
+      <p className="muted small action-desc">{t('committee.desc', { dossier: COMMITTEE.dossier, rm: f.rm(scaled(world, COMMITTEE.money)), n: COMMITTEE.every })}</p>
+      <ul>
+        <li className="action">
+          <div className="grow">
+            <span className="action-meta num">{t('committee.state', { dossier: Math.round(k.dossier), pct: Math.round(inquiryOdds(campaign) * 100) })}</span>
+            {!check.ok && check.reason !== 'seat' && check.reason !== 'phase' && (
+              <span className="action-reason">{t(`committee.no.${check.reason}` as StringKey, { n: committeeWait(campaign) })}</span>
+            )}
+          </div>
+          <button className="btn small" disabled={!check.ok} onClick={() => inquiry()}>{t('committee.open')}</button>
+        </li>
+      </ul>
+    </>
+  );
+}
 
 /** The head of government may put a partner out of the cabinet: it leaves an enemy, and the others look to themselves. */
 function PutOut() {

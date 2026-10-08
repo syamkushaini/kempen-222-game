@@ -5,18 +5,20 @@ import { EVENTS as CORE_EVENTS } from './eventList';
 import { MORE_EVENTS } from './eventList2';
 import { GOVERNING_EVENTS } from './eventList3';
 import { STORY_EVENTS } from './eventList4';
+import { SEASON_EVENTS } from './eventList5';
 import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { membersFeel } from './members';
 import { nationOf, shiftNation } from './nation';
+import { dismiss } from './office';
 import { pushNews } from './news';
 import { scaleHoldings } from './party';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
 /** Everything that can happen between elections. */
-export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS };
+export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS };
 
 /** Where the player sits: heading the government, a partner in it, or across the floor. */
 export type Seat = 'pm' | 'gov' | 'opp';
@@ -38,6 +40,7 @@ export type Effect =
   | { t: 'dividend'; pct: number }
   | { t: 'relation'; who: Who; n: number }
   | { t: 'salience'; issue: IssueId; n: number }
+  | { t: 'minister'; act: 'sack' | 'keep' }
   | { t: 'flag'; id: string }
   | { t: 'falls' };
 
@@ -87,7 +90,7 @@ const EVENT_CHANCE = 0.06;
 /** Things only a country's government deals with: foreign affairs, the federation's own quarrels, national schemes and taxes. A state's does not. */
 export const COUNTRY_ONLY: ReadonlySet<string> = new Set([
   'borneoThird', 'oilRights', 'borneoHighway', 'peninsulaGaffe', 'stateDefiance', 'royaltiesRow', 'summitHost', 'seaIncident',
-  'mediationAward', 'refugeeBoats', 'twoPowers', 'tradeDispute', 'subsidyReform', 'megaProject', 'ratingsWarning', 'pensionCall', 'tolls',
+  'mediationAward', 'refugeeBoats', 'twoPowers', 'tradeDispute', 'borderStandoff', 'sanctionsThreat', 'strandedAbroad', 'haze', 'subsidyReform', 'megaProject', 'ratingsWarning', 'pensionCall', 'tolls',
 ]);
 /** A career in one state is told apart from the country's by its scenario: career:<state>. */
 export const inStateCareer = (c: Pick<Campaign, 'scenario'>) => c.scenario.startsWith('career:');
@@ -207,6 +210,11 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
       case 'relation': for (const p of partiesOf(c, e.who)) shiftRelation(c, me, p, e.n); break;
       case 'salience': { const i = ISSUE_IDS.indexOf(e.issue); k.salience[i] = clamp(k.salience[i] + e.n, 0.5, 2); break; }
       case 'flag': if (!k.flags.includes(e.id)) k.flags.push(e.id); break;
+      case 'minister':
+        // The minister at the centre of a scandal is sacked, or kept; either way it is settled.
+        if (k.scandal && e.act === 'sack') dismiss(c, k.scandal);
+        delete k.scandal;
+        break;
       case 'falls': falls = true; break;
     }
   }
