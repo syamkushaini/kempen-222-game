@@ -77,3 +77,8 @@
 .call.majority { animation: majority-call 1200ms ease-out; }
 @keyframes majority-call { 0% { transform: scale(0.96); box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 40%, transparent); } 40% { transform: scale(1.02); box-shadow: 0 0 0 10px transparent; } 100% { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .seat-pulse { animation: none; opacity: 0; } .call.majority { animation: none; } }
+
+/* the coffee dialog on the main menu */
+.dialog.support { max-width: 420px; text-align: center; }
+.dialog.support .panel-head { text-align: left; }
+.support-qr { display: block; width: 100%; max-width: 320px; height: auto; margin: 8px auto; border-radius: 14px; }
