@@ -696,3 +696,8 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 .scene-svg.ink .part:not(.soft) :is(rect, path, circle, ellipse, polygon):not([stroke]):not(.soft):nth-child(3n) { stroke-width: 2.2px; }
 .scene-svg.ink .part:not(.soft) :is(rect, path, circle, ellipse, polygon):not([stroke]):not(.soft):nth-child(5n + 2) { stroke-width: 1.05px; }
 .scene-svg.ink .soft, .scene-svg.ink .wash { stroke: none; }
+/* a picture an image model has drawn lies over the sketch, and fades in once it has come */
+.scene-art { position: relative; }
+.scene-art .scene-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 260ms ease-out; }
+.scene-art .scene-photo.shown { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .scene-art .scene-photo { transition: none; } }

@@ -1,0 +1,1144 @@
+{
+ "style": "A premium indie game scenario illustration for a satirical political strategy game, in a high-quality hand-drawn digital ink sketch style. Art style: editorial political cartoon, detailed digital ink sketching with sharp, expressive cross-hatched linework and subtle stippling textures for shadows; organic, imperfect, hand-inked linework with varying stroke weights. Colour: a sophisticated, desaturated palette on a warm vintage cream paper texture; sharp charcoal-black outlines; fills like light, semi-transparent watercolour washes, with strategic pops of deep royal blue, vibrant campaign red and emerald green against muted earthy tones. Culture: grounded accurately in contemporary Malaysian political and everyday culture: batik shirts with rolled-up sleeves, loose-fitting songkoks, headscarves, casual local clothing, glasses of teh tarik, plastic chairs, kampung houses on stilts, shophouses, satirical campaign posters with caricatured faces. Composition: wide-angle cinematic 16:9 framing, a clean composition with one clear focal point and two to six expressive characters, suitable as a standalone story event card in a video game.",
+ "avoid": "Do not include any text, letters, numbers, captions, logos, watermarks or interface elements. Do not depict any real or recognisable person, real party emblem or real flag; all characters and parties are fictional.",
+ "lead": "The moment to draw, called",
+ "tail": "Show it as a single visual story, not a diagram: who is doing what, where, with a little satire in the details.",
+ "scenes": {
+  "flood": {
+   "title": "The monsoon floods",
+   "body": "The east coast is under water again. Thousands are in relief centres, and every politician in the country has discovered a sudden love of rubber boots."
+  },
+  "oldVideo": {
+   "title": "An old video resurfaces",
+   "body": "Someone has found a clip of you from ten years ago saying the opposite of everything you now believe. It is spreading faster than you can remember what you meant."
+  },
+  "youthWing": {
+   "title": "The youth wing wants a say",
+   "body": "The youth wing has issued a statement, which is new, demanding seats on the supreme council and a third of the candidates under forty."
+  },
+  "byElection": {
+   "title": "A by-election",
+   "body": "A seat has fallen vacant. One seat rarely changes who governs, but everyone will read the result as a verdict on you."
+  },
+  "statePolls": {
+   "title": "The states go to the polls",
+   "body": "State assemblies are being dissolved. Whoever wins most seats in a state forms its government, and a state government is money, jobs and a platform for five years."
+  },
+  "influencer": {
+   "title": "An influencer names a price",
+   "body": "A lifestyle influencer with three million followers will say nice things about you. There is a rate card."
+  },
+  "warlord": {
+   "title": "A state chief wants his own list",
+   "body": "Your most powerful state chief wants to choose every candidate in his state himself. He delivers the votes there, and knows it."
+  },
+  "forum": {
+   "title": "A reform forum",
+   "body": "A coalition of civil society groups invites every party leader to sign a public pledge on institutional reform, on stage, with cameras."
+  },
+  "riders": {
+   "title": "The riders’ strike",
+   "body": "Delivery riders have switched off their apps over pay. Dinner is late across the country, and both sides want you to say something."
+  },
+  "settlers": {
+   "title": "The settlers’ debts",
+   "body": "Land-scheme settlers are drowning in debts to the agency that was set up to help them. Their association asks where you stand."
+  },
+  "podcast": {
+   "title": "A podcast invitation",
+   "body": "The country’s most popular podcast wants you for three unscripted hours. Careers have been made on that sofa, and ended there."
+  },
+  "adviser": {
+   "title": "A respected name offers to help",
+   "body": "A retired senior civil servant, widely admired and never accused of anything, offers to join you as an adviser. Your old guard would rather he did not."
+  },
+  "accountsLeak": {
+   "title": "The donor list leaks",
+   "body": "A spreadsheet of your donors is doing the rounds. It is accurate, which is the problem."
+  },
+  "donorFavour": {
+   "title": "A donor would like a word",
+   "body": "One of your larger donors has a small matter: a licence, stuck in a ministry, that a friendly word could move. There would be gratitude."
+  },
+  "donorLeak": {
+   "title": "The licence comes out",
+   "body": "A reporter has the story of the licence, the donor and your friendly word. She would like a comment before she publishes."
+  },
+  "probe": {
+   "title": "A visit from the anti-graft agency",
+   "body": "Officers have asked, politely, for files on how certain government programmes came to be delivered through your party’s branches."
+  },
+  "firmWindfall": {
+   "title": "The party’s firm has a good year",
+   "body": "One of the party’s companies has made an unexpected profit. The directors ask what to do with it."
+  },
+  "firmBust": {
+   "title": "The party’s firm is in trouble",
+   "body": "One of the party’s companies cannot pay its creditors. It can be rescued, at a price."
+  },
+  "pricesGov": {
+   "title": "Prices are rising",
+   "body": "Chicken, eggs and cooking oil are all up. The opposition has discovered the price of everything, and the public expects the government to do something."
+  },
+  "minister": {
+   "title": "A minister in the headlines",
+   "body": "One of your ministers has been photographed somewhere he should not be, with someone he should not know, holding something he cannot explain."
+  },
+  "budget": {
+   "title": "Budget day",
+   "body": "The budget is tabled today. The plan is the one set out under “Next year’s budget” in the House tab; look it over first if you have not."
+  },
+  "budgetRevolt": {
+   "title": "A revolt over the budget",
+   "body": "Your partners have read the budget and found nothing in it for them. They say they cannot vote for it as it stands. If a budget falls, so does the government."
+  },
+  "motion": {
+   "title": "A motion of no confidence",
+   "body": "The opposition has tabled a motion of no confidence. The Speaker has set the vote for this week, and everyone is telephoning your partners."
+  },
+  "ultimatum": {
+   "title": "An ultimatum",
+   "body": "A partner’s leader asks to see you alone, and does not sit down. His members are restless, he says, and other people have been making them offers. Things must change, or they will find another arrangement."
+  },
+  "downgrade": {
+   "title": "The rating agencies call",
+   "body": "The national debt has passed three-quarters of national income, and a rating agency has put the country on watch. Borrowing is about to cost more."
+  },
+  "budgetAsk": {
+   "title": "The budget is being drafted",
+   "body": "The Finance Minister is writing the budget, and partners are expected to say what they want before it is too late to get it."
+  },
+  "downturnGov": {
+   "title": "A global downturn",
+   "body": "Export orders are falling and factories are cutting shifts. The slowdown started elsewhere, which will not matter to anyone who loses a job here."
+  },
+  "walkoutThreat": {
+   "title": "A partner threatens to walk",
+   "body": "A coalition partner says it can no longer support the government unless things change. By things, it means cabinet posts."
+  },
+  "plotWhispers": {
+   "title": "Whispers of a plot",
+   "body": "There is talk of late-night meetings in a hotel, of numbers being counted, and of statutory declarations being drafted. Nobody will say who by."
+  },
+  "pricesOpp": {
+   "title": "Prices are rising",
+   "body": "Chicken, eggs and cooking oil are all up. The government is explaining global markets. This is the easiest week an opposition ever has."
+  },
+  "shadowBudget": {
+   "title": "The alternative budget",
+   "body": "The government’s budget is next week. An opposition is expected to say what it would do instead."
+  },
+  "permit": {
+   "title": "No permit for the rally",
+   "body": "The police have refused a permit for your rally, citing traffic."
+  },
+  "hotelMeeting": {
+   "title": "A late dinner at the hotel",
+   "body": "A dozen members of the House were seen leaving a hotel in a hurry last night. Some were yours, some your partners’. One was heard to say it was just a dinner. A senior man of the opposition has been seen at the same hotel at the same hour, smiling."
+  },
+  "hotelNumbers": {
+   "title": "The numbers",
+   "body": "He is back, with a list. If every name on it holds, the government loses its majority tonight. If one of them is lying, you are the story."
+  },
+  "downturnOpp": {
+   "title": "A global downturn",
+   "body": "Export orders are falling and factories are cutting shifts. The slowdown started elsewhere, which will not matter to anyone who loses a job here."
+  },
+  "targeted": {
+   "title": "The agency opens a file on you",
+   "body": "The anti-graft agency has announced an investigation into your party’s accounts. The timing, your people say, is no coincidence."
+  },
+  "fundGov": {
+   "title": "Billions missing from the fund",
+   "body": "A foreign newspaper reports that billions have gone missing from Dana Gemilang, the national investment fund. It names accounts, dates and a yacht."
+  },
+  "fundGovEnd": {
+   "title": "The audit report lands",
+   "body": "Whatever was said at the time, the facts about Dana Gemilang are now on paper. The money went where the newspaper said it went."
+  },
+  "fundOpp": {
+   "title": "Billions missing from the fund",
+   "body": "A foreign newspaper reports that billions have gone missing from Dana Gemilang, the national investment fund. It names accounts, dates and a yacht."
+  },
+  "fundOppEnd": {
+   "title": "The fund scandal breaks open",
+   "body": "Documents, a whistleblower and a paper trail: what was rumour about Dana Gemilang is now fact, and the government has nowhere to hide."
+  },
+  "deputy": {
+   "title": "Your deputy is restless",
+   "body": "Your deputy has begun giving interviews about “the next generation of leadership”. He has not said whose generation, but he has had new photographs taken."
+  },
+  "assemblyFight": {
+   "title": "A challenge at the party assembly",
+   "body": "Your deputy will contest the presidency. The delegates are being counted, courted and, in some cases, driven to very good restaurants."
+  },
+  "assemblyCalm": {
+   "title": "The party assembly",
+   "body": "With the succession settled, the assembly is a coronation rehearsal. The only question is what you say about the young."
+  },
+  "organiserWarlords": {
+   "title": "The division chiefs want their due",
+   "body": "They have carried boxes, hung banners and delivered votes for you for thirty years. Now they would like to be the candidates. All of them."
+  },
+  "organiserReunion": {
+   "title": "An old comrade needs a favour",
+   "body": "He chaired the branch where you started. His son’s firm has bid for a small council contract, and he wonders whether you still remember your friends."
+  },
+  "technocratLecture": {
+   "title": "“Professor”",
+   "body": "You were asked about the price of eggs at a kenduri and answered for forty minutes, with a diagram. The clip has two million views and a nickname for you."
+  },
+  "technocratOffer": {
+   "title": "A job abroad",
+   "body": "A development bank in Washington would like you back, at a salary with several more digits. The offer reached the newspapers before it reached your family."
+  },
+  "firebrandSpeech": {
+   "title": "A speech from another life",
+   "body": "Someone has found the tape. You are twenty-two, on the back of a lorry, calling half of the people you now sit beside thieves and the other half cowards."
+  },
+  "firebrandRally": {
+   "title": "The crowd wants the moon",
+   "body": "Ten thousand people in the rain, chanting for a promise you cannot afford to make. The microphone is in your hand."
+  },
+  "tycoonAudit": {
+   "title": "The tax office remembers you",
+   "body": "An audit of companies you sold years ago. The timing may be a coincidence; nobody in politics believes in those."
+  },
+  "tycoonFriends": {
+   "title": "A quiet word about a licence",
+   "body": "Your old business partner would never ask for anything improper. He only wonders whether the ministry might look at his application again. He has brought a donation, separately."
+  },
+  "fixerDebt": {
+   "title": "The book of debts",
+   "body": "Fifteen years ago you saved a young politician from bankruptcy and never mentioned it again. He now sits on the other side’s front bench, and he knows things."
+  },
+  "fixerProfile": {
+   "title": "“The Man Who Counts”",
+   "body": "A magazine is writing six thousand words on how you make deals. The journalist has done her homework, which is the problem."
+  },
+  "activistVigil": {
+   "title": "The anniversary",
+   "body": "Twenty years since they came for you at four in the morning. Your old supporters are holding a candlelight vigil, and they have left a space at the front."
+  },
+  "activistComrades": {
+   "title": "Old comrades, new complaints",
+   "body": "The people you marched with have written an open letter. It uses the word “betrayal” four times and “compromise” as if it were a crime."
+  },
+  "staffPoached": {
+   "title": "A better offer",
+   "body": "One of your best people has been offered double by a rival party, and has had the decency to tell you before saying yes."
+  },
+  "staffLeak": {
+   "title": "The memo",
+   "body": "Your strategy memo for the next election is on a news site, including the page headed “seats we have given up on”. The members in those seats can read."
+  },
+  "internRevolt": {
+   "title": "The volunteers would like to be paid",
+   "body": "The young people who run your social media have calculated their hourly rate. It is a short calculation. They have posted it, with a chart."
+  },
+  "speechwriter": {
+   "title": "A familiar paragraph",
+   "body": "The best passage in your conference speech turns out to have been delivered first by an American senator in 1988. Your speechwriter says great minds think alike."
+  },
+  "talkShow": {
+   "title": "An invitation you should probably refuse",
+   "body": "The country’s most-watched talk show wants you for an hour. The host has ended three careers and is polite about it."
+  },
+  "deepfake": {
+   "title": "A recording of you that you never made",
+   "body": "An audio clip is going round in which you insult your own voters. It is fake, and very well made."
+  },
+  "editorDinner": {
+   "title": "Dinner with the editors",
+   "body": "Off the record, six editors, one long table. They want to know what you really think. So does everyone they will tell."
+  },
+  "newsroomRaid": {
+   "title": "The police visit a newsroom",
+   "body": "Officers have taken computers from a news site after a story about a minister. The site is publishing from a coffee shop and its readership has tripled."
+  },
+  "filmBan": {
+   "title": "The censors want a film banned",
+   "body": "The board says a new local film offends public morals. Nobody has seen it, which has not prevented anyone from having a view."
+  },
+  "ringgitSlide": {
+   "title": "The ringgit slides",
+   "body": "The currency has lost a tenth of its value in a month. Importers are frightened, exporters are quiet, and everyone’s holiday just got dearer."
+  },
+  "tolls": {
+   "title": "The toll concessions are up",
+   "body": "The highway contracts are up for renewal. Every government promises to abolish tolls, and every government then reads the contracts."
+  },
+  "riceShortage": {
+   "title": "No local rice on the shelves",
+   "body": "Shoppers are photographing empty shelves where the cheap local rice used to be. Imported rice is plentiful, at twice the price."
+  },
+  "megaProject": {
+   "title": "A railway across the country",
+   "body": "A foreign contractor offers to build a coast-to-coast railway, with a loan to match. The east coast wants it. The Treasury wants to see the small print."
+  },
+  "gigStrike": {
+   "title": "The riders switch off their apps",
+   "body": "Delivery riders across the cities have logged off over a cut in their rates. Dinner is late everywhere, and the platforms say their hands are tied by the market."
+  },
+  "dryTaps": {
+   "title": "The taps run dry",
+   "body": "A pollution scare has shut a treatment plant, and a million homes have no water for the fourth time this year."
+  },
+  "pensionCall": {
+   "title": "Let us take our own money",
+   "body": "A campaign wants people allowed to draw on their retirement savings now. Most who would do so have little saved, and need it badly."
+  },
+  "subsidyReform": {
+   "title": "The fuel subsidy",
+   "body": "Half of the fuel subsidy goes to the people who need it least. The plan to target it has been ready for a decade, waiting for someone brave or foolish."
+  },
+  "foreignWorkers": {
+   "title": "Who does the work",
+   "body": "Factories and plantations say they cannot run without more foreign workers. The unions say they could, if the pay were better."
+  },
+  "windfall": {
+   "title": "A windfall",
+   "body": "Oil is up and so is the revenue: several billion more than the budget expected. Everybody has a view on whose money it is."
+  },
+  "haze": {
+   "title": "The haze season",
+   "body": "The sky is the colour of milk. The schools are closed, the airports are slow, and every mask in the country has doubled in price. The fires are across the water, but the lungs are here."
+  },
+  "youthQuota": {
+   "title": "A third of the seats for the young",
+   "body": "The youth wing demands that a third of your candidates be under forty. The members over forty, who are most of them, have feelings about this."
+  },
+  "topTable": {
+   "title": "The top table",
+   "body": "The women’s wing chief has pointed out, with a photograph, that the party’s leadership looks like a reunion of the same boys’ school."
+  },
+  "founderMemoir": {
+   "title": "The founder’s memoir",
+   "body": "The party’s founder has published his memoirs at ninety. Chapter eleven is about you. It is called “The Disappointment”."
+  },
+  "branchBrawl": {
+   "title": "Chairs fly at a branch meeting",
+   "body": "A dispute over who chairs a division was settled by throwing the chairs. Somebody filmed it, and set it to music."
+  },
+  "defectorsKnock": {
+   "title": "Three members would like to come over",
+   "body": "Three rival members of Parliament are unhappy where they are and would be happy where you are. They have terms. They always have terms."
+  },
+  "partyPolls": {
+   "title": "The party elections",
+   "body": "Every three years the party votes on its own leadership. This year a challenger has emerged, with money behind them and a slogan about fresh starts."
+  },
+  "merchandise": {
+   "title": "The T-shirts",
+   "body": "The party’s campaign T-shirts cost three times the going rate. The supplier is a company owned by the treasurer’s brother-in-law."
+  },
+  "oldGuard": {
+   "title": "New faces",
+   "body": "Half of your front bench was there when the party was founded. Your strategists would like candidates who were not also there when television was."
+  },
+  "acquittal": {
+   "title": "A rival walks free",
+   "body": "A court has thrown out the corruption charges against a senior rival. He is on the steps with a garland, thanking the judges and promising revenge."
+  },
+  "boundaries": {
+   "title": "New boundaries",
+   "body": "The Election Commission has proposed new constituency boundaries. By coincidence they would give your party about eight more seats."
+  },
+  "auditReport": {
+   "title": "The Auditor-General reports",
+   "body": "This year’s report finds a ministry that paid for forty laptops at the price of four hundred, and a bridge with no river."
+  },
+  "custodyDeath": {
+   "title": "A death in custody",
+   "body": "A young man arrested over a stolen motorcycle has died in a police lock-up. His family want answers, and the answers so far do not match each other."
+  },
+  "whistleblower": {
+   "title": "A brown envelope",
+   "body": "A civil servant has brought you documents showing a contract awarded without tender. They are either the story of the year or a trap."
+  },
+  "shadowCabinet": {
+   "title": "A shadow cabinet",
+   "body": "The press keeps asking who would run the ministries if you won. Naming names answers the question, and tells everyone not named where they stand."
+  },
+  "borneoThird": {
+   "title": "A third of Parliament for Borneo",
+   "body": "Sabah and Sarawak want a third of the seats in Parliament, as they say was understood when the federation was formed. The peninsula’s parties would pay for it in seats."
+  },
+  "oilRights": {
+   "title": "Whose oil",
+   "body": "Sarawak has passed a law claiming the oil and gas off its shore. The national oil company has lawyers and so does Kuching."
+  },
+  "borneoHighway": {
+   "title": "The road that never ends",
+   "body": "The highway across Borneo was due five years ago. A video of a lorry sunk to its axles on the “completed” stretch has reached the peninsula."
+  },
+  "peninsulaGaffe": {
+   "title": "One of yours on Borneo",
+   "body": "One of your peninsular members has explained on camera that Sabahans should be grateful for what they get. He has also mispronounced three place names."
+  },
+  "stateDefiance": {
+   "title": "A state says no",
+   "body": "A state government run by a rival party has refused to implement a federal directive. It cites its own powers, a lawyer and a lot of adjectives."
+  },
+  "durianFeast": {
+   "title": "Durian with the enemy",
+   "body": "A rival leader has invited you to his orchard for the first fruit of the season. There will be cameras. There will also be very good durian."
+  },
+  "footballFinal": {
+   "title": "The final",
+   "body": "The national team is in a final for the first time in a generation. Every politician in the country has discovered a lifelong love of football."
+  },
+  "openHouse": {
+   "title": "Open house season",
+   "body": "The festive season is here and every leader is expected to feed the nation. The question is whether to feed all of it at once."
+  },
+  "danceTrend": {
+   "title": "The dance",
+   "body": "Your media team has a plan. It involves you, a song with eighty million plays, and fifteen seconds of choreography."
+  },
+  "examLeak": {
+   "title": "The exam papers leak",
+   "body": "The national school-leaving exam was circulating on phones the night before. Half a million families want to know what happens now."
+  },
+  "potholes": {
+   "title": "The man who fills potholes",
+   "body": "A retired mechanic has been filling potholes in his town with his own cement, and painting the date the council was first told beside each one."
+  },
+  "shophouses": {
+   "title": "A row of old shophouses",
+   "body": "A developer wants to replace a street of pre-war shophouses with a tower. The families who have traded there for four generations would rather he did not."
+  },
+  "roguePoll": {
+   "title": "A poll nobody believes",
+   "body": "A pollster nobody has heard of has you ten points down. It is nonsense, and it is the headline everywhere."
+  },
+  "marketScolding": {
+   "title": "A scolding at the market",
+   "body": "A woman selling vegetables has told you, at length and on camera, what a kilo of chillies costs and what she thinks of people who do not know."
+  },
+  "wardsFull": {
+   "title": "Beds in the corridors",
+   "body": "The hospitals are full. Patients wait on trolleys in the corridors, and a nurse’s tearful video from the emergency ward has been watched four million times."
+  },
+  "outbreak": {
+   "title": "A fever that spreads",
+   "body": "An infectious disease has appeared in two states and is moving. The health ministry wants an answer by tonight, and every option costs something."
+  },
+  "examResults": {
+   "title": "The results nobody wanted",
+   "body": "This year’s national exam results are the worst in a decade. Parents are furious, teachers are blaming the syllabus, and the syllabus is blaming everyone."
+  },
+  "campusProtest": {
+   "title": "Students at the gates",
+   "body": "Thousands of students have walked out over fees and loan repayments. They have a banner, a hashtag and, you notice, a very good press officer."
+  },
+  "teacherStrike": {
+   "title": "Teachers threaten to strike",
+   "body": "The teachers’ union has set a deadline. Class sizes, pay and paperwork are all on the list, and the exam season is six weeks away."
+  },
+  "ratingsWarning": {
+   "title": "A warning from the rating agencies",
+   "body": "Two international agencies have put the country’s credit on negative watch. Debt is high and growing, they say, and the markets are listening."
+  },
+  "tradeDispute": {
+   "title": "Tariffs on our exports",
+   "body": "A major trading partner has announced tariffs on our main exports, citing “unfair practices” your officials can’t quite identify."
+  },
+  "seaIncident": {
+   "title": "Boats in our waters",
+   "body": "Foreign patrol vessels have been loitering near our offshore platforms for a week, and the fishermen say they are being harassed. A navy admiral is on your phone."
+  },
+  "mediationAward": {
+   "title": "The mediator rules",
+   "body": "The regional mediator has delivered a finding on the sea dispute. It gives each side something and neither side what it wanted."
+  },
+  "summitHost": {
+   "title": "Our turn to host",
+   "body": "It is your country’s turn to host the regional leaders’ summit. The foreign ministry is delighted. The finance ministry has seen the venue’s price."
+  },
+  "refugeeBoats": {
+   "title": "Boats on the horizon",
+   "body": "Boats carrying people fleeing trouble in a neighbouring country have reached our coast. There are children among them. There are also people with strong opinions on the shore."
+  },
+  "investorDelegation": {
+   "title": "A very large factory",
+   "body": "A foreign manufacturer will build a large plant here, if it receives generous tax holidays. A neighbouring country has offered similar. The delegation is staying at a very nice hotel."
+  },
+  "twoPowers": {
+   "title": "Two great powers, one invitation each",
+   "body": "Two great powers have each invited you to join their economic and security arrangements. They watch each other and they are watching you."
+  },
+  "royaltiesRow": {
+   "title": "The royalties row",
+   "body": "Sabah and Sarawak are asking for a larger share of oil and gas revenue, citing the terms on which the federation was formed. Their leaders are in the corridor, and their patience is not."
+  },
+  "palaceConcern": {
+   "title": "The ruler is uneasy",
+   "body": "Word has reached you, through the usual channels, that the Palace is troubled by a recent government decision. Nobody has said so in public. Nobody needs to."
+  },
+  "papers": {
+   "title": "The accountant’s papers",
+   "body": "A junior accountant at a state-linked company has asked to see you, and brought a box file. The papers show money going where it should not. Most of it went to your rivals’ friends. Some of it, he says carefully, went to people close to you."
+  },
+  "papersStory": {
+   "title": "The papers run",
+   "body": "The story has run for a fortnight, however it got out. It names two of your rivals’ men, and one of your own division chiefs, who has been with the party for thirty years and delivers his seat every time."
+  },
+  "papersBook": {
+   "title": "The accountant writes a book",
+   "body": "The accountant lost his job, as they do. Now he has written a book about it, and he would like you at the launch. Your division chiefs would like you anywhere else. A third option has been suggested, by someone who did not give his name."
+  },
+  "bridge": {
+   "title": "The bridge is gone",
+   "body": "The only bridge to four kampung went in last night’s flood. Children are crossing to school by sampan, and the clinic is on the wrong side of the river. Everyone agrees something must be done. Nobody has said by whom."
+  },
+  "bridgeContract": {
+   "title": "Who builds the bridge",
+   "body": "The contract for the new bridge has been awarded. The winning company belongs to the brother-in-law of one of your division chiefs, and the price is twice the engineer’s estimate. He would like you to know the party will not be forgotten."
+  },
+  "bridgeOpening": {
+   "title": "The ribbon",
+   "body": "The bridge is finished, eight months late, and it is a good bridge. There will be an opening, with a ribbon, a tent and a goat. The village head has been told somebody important is coming, and has asked, politely, who."
+  },
+  "riceShort": {
+   "title": "No rice on the shelves",
+   "body": "Local white rice has vanished from the shops. The imported kind is there, at a third more. The millers blame the weather, the wholesalers blame the millers, and the queue outside the supermarket blames you."
+  },
+  "ricePrice": {
+   "title": "The price of rice",
+   "body": "The millers say they cannot sell at the controlled price and keep their doors open. The farmers say they see none of the difference either way. Your ministers have three opinions between two of them."
+  },
+  "riceInquiry": {
+   "title": "The inquiry reports",
+   "body": "The inquiry into the shortage has reported. It finds a cartel of five wholesalers who agreed between them what the country would pay for rice. Two of the five have been generous to your party for years."
+  },
+  "ministerScandal": {
+   "title": "The minister and the press conference",
+   "body": "A minister of your own party has been named in a story that will not go away: contracts, a cousin, and a house nobody can explain. The cameras are outside, and so is a crowd. You are expected to say something."
+  },
+  "courtCase": {
+   "title": "A summons",
+   "body": "The summons arrived at breakfast. It concerns something from before you were a leader, or something that the party has done since, and it has been carefully worded by someone who knows what the newspapers will print. The lawyers are in the hall. Your whole career is on the table."
+  },
+  "ksuMemo": {
+   "title": "A memo from the head of the civil service",
+   "body": "The Chief Secretary has sent a note marked personal. It runs to four pages and says, politely, that the government’s plans for the year are either not affordable, not legal, or not what the minister told the Cabinet. He has attached a version of his own."
+  },
+  "adviserUltimatum": {
+   "title": "A word, please",
+   "body": "One of your three advisers has asked for a quiet word, and has closed the door. They have said the same thing three times now, in three different ways, and the third time was in writing. They would like to know whether anyone is listening."
+  },
+  "speakerRuling": {
+   "title": "The Speaker rules",
+   "body": "The Speaker has ruled a motion in order that the government says is not, and the House is in uproar. Members are on their feet, and the rule book is open in three places."
+  },
+  "borderStandoff": {
+   "title": "Boots at the border",
+   "body": "A neighbour’s patrols have crossed a line on the map that neither of you has ever agreed on. A local commander has called it provocation, and the cameras are already at the post."
+  },
+  "sanctionsThreat": {
+   "title": "Tariffs, or else",
+   "body": "A great power has told your trade minister that a package of tariffs is coming unless your government drops a rule on foreign investors. The exporters are frightened, and the people who vote for rules are not."
+  },
+  "strandedAbroad": {
+   "title": "Citizens stranded",
+   "body": "A war has closed an airspace, and four thousand of your citizens, students, pilgrims and workers, are stuck on the wrong side. The families have found the phone numbers of every minister."
+  },
+  "monsoon": {
+   "title": "The monsoon comes again",
+   "body": "The rains have come down on the east coast and the river towns again, as they do at the end of every year. The water is in the schools, and so is every camera. Whoever is in office is judged on the first week, and whoever is not is judged on whether they came."
+  },
+  "priceSurge": {
+   "title": "Prices go up again",
+   "body": "Cooking oil, chicken and eggs have all gone up in a month. The traders blame the weather and the importers blame the exchange rate, and the housewives blame the government, in public, with their shopping."
+  },
+  "claimsTalks": {
+   "title": "The claims of the Borneo states",
+   "body": "The Borneo governments have written to you, again, about the terms on which they joined the federation: the share of oil, the control of land, the say in their own schools. This time they have asked for a date for talks, and a press conference to say so."
+  },
+  "claimsStalled": {
+   "title": "The talks stall",
+   "body": "The talks have been going for ten weeks and the Borneo side has left the table once already. They want a transfer in writing before the next round, and the treasury wants to know what is being agreed in its name."
+  },
+  "claimsVerdict": {
+   "title": "The settlement",
+   "body": "The talks, the court and the committee have all come to an end together, as these things do. There is a form of words, and it gives the Borneo governments most of what they asked for. The Cabinet is divided, and the cameras are in the lobby."
+  },
+  "fedGrantCut": {
+   "title": "The grant that did not come",
+   "body": "The centre has not paid the state its yearly grant, and the letter explaining why is four lines long. The treasurer wants to know whether to cut roads or schools, and the opposition wants to know whether to be glad."
+  },
+  "fedTalks": {
+   "title": "The grant, in committee",
+   "body": "The centre has agreed to hear the state’s case, in a room with no windows, on a day of its choosing. You may bring a lawyer. You may also bring a friend."
+  },
+  "fedSettlement": {
+   "title": "What the centre will pay",
+   "body": "The centre has made an offer. It is less than the state is owed, and more than the state expected. The treasurer would take it, and the opposition, in the corridor, is hoping you will not."
+  },
+  "cityHousing": {
+   "title": "The city and its rents",
+   "body": "Rents in the capital have gone up by a third in two years, and a family of six has been photographed living in a shipping container on a rooftop. The city hall says it is the ministry’s problem, and the ministry says the reverse."
+  },
+  "flashFloods": {
+   "title": "The city under water",
+   "body": "Twenty minutes of rain and the main roads of the capital are rivers. Cars are on the pavements, and the drains, a councillor tells the cameras, were last cleaned in a previous reign."
+  },
+  "mayorRow": {
+   "title": "The mayor and the minister",
+   "body": "The mayor of the capital, who is appointed and not elected, has been publicly rebuked by a minister over a car park. The mayor has replied that he serves at the pleasure of the Palace and the people, in that order. The city is enjoying it."
+  },
+  "adatSuccession": {
+   "title": "The chiefs choose",
+   "body": "The chiefs of the old adat are to choose a successor, as they have for centuries, and the state’s politics has come to the door. One of your own people has been put forward by a faction of the chiefs; another candidate has a bigger following in the villages. The chiefs have not asked for your opinion."
+  },
+  "weekendChange": {
+   "title": "Which day of rest",
+   "body": "The state’s weekly holiday has been Friday and Saturday for years. The chambers of commerce say it costs them a day of trading with the rest of the country; the religious councils say it is a matter of the way the week is lived. Both want a ruling before the new year."
+  },
+  "nativeLand": {
+   "title": "Land of the natives",
+   "body": "A native community has gone to court to claim customary land that was given to a plantation company in the state’s name decades ago. The community has the records of its elders and the company has a title deed. The cameras have been to the village."
+  },
+  "longhouseRoad": {
+   "title": "A road through the longhouse",
+   "body": "The new road to the interior will pass through the land of a longhouse community: two alignments, one through their farmland, one round it at three times the cost. The headman has written to the state and the road contractor has written to everyone else."
+  },
+  "processionRoute": {
+   "title": "The procession and the main road",
+   "body": "A great annual procession of one of the state’s communities wants to take its old route along the main road. The traffic police want a new one; the neighbours along the road, of other faiths, are divided, and say so, politely, in the letters column."
+  },
+  "rulerRemarks": {
+   "title": "Words from the palace",
+   "body": "The state’s ruler has spoken, at a public function, about a matter that is the government’s to decide. He did not name the government. Everyone present understood. The newspapers are asking whether the Menteri Besar will answer."
+  },
+  "portBid": {
+   "title": "The port’s new owner",
+   "body": "The government has put the national port out for a long lease. Two bidders remain: a foreign operator with the best price, and a consortium led by a friend of the party’s treasurer, with a worse one. The treasurer says it is only a coincidence, and has put it in writing."
+  },
+  "portProtest": {
+   "title": "The port workers walk out",
+   "body": "The port’s workers fear for their jobs under the new lease and have walked out. Ships are queuing in the roads outside, and the cost of every day is read out on the evening news."
+  },
+  "portAudit": {
+   "title": "The auditors look at the lease",
+   "body": "The auditor-general has examined the port lease and found irregularities, the sort that could be explained or concealed. The report is on your desk, and a copy is in a journalist’s."
+  },
+  "youthFund": {
+   "title": "Where the youth fund went",
+   "body": "A reporter has found that a youth development fund, set up with great fanfare, has paid most of its grants to the sons and nieces of the party’s own officials. The fund’s head says the grants were “within the rules”. The rules, it turns out, were written by the fund’s head."
+  },
+  "youthFundProbe": {
+   "title": "The inquiry into the fund",
+   "body": "The auditors have reported. The grants to relatives were real and the rules were bent, but not quite broken. The fund’s head wants to resign quietly; two of your own officials, who benefited, want the report buried."
+  },
+  "youthFundVerdict": {
+   "title": "The young decide",
+   "body": "The youth wing of your own party has held its annual meeting. The matter of the fund is the only item anyone wants to discuss. The young want to know whether the party is the kind that does what it says."
+  },
+  "riverFactory": {
+   "title": "The smell by the river",
+   "body": "The villages on the river have complained of a smell, and of fish with sores. The factory upstream says it is within its permit. The permit was issued by your own department, to a company that has built a good deal in the state."
+  },
+  "fishKill": {
+   "title": "A river of dead fish",
+   "body": "Overnight the river turned. Thousands of fish are floating on the surface, the villagers have been told not to draw water, and the factory’s chimney is, as the television pointed out, working at full tilt."
+  },
+  "riverCourt": {
+   "title": "The river in court",
+   "body": "The villages have taken the factory to court, and the state with it, for permitting what it permitted. The judge is known to be careful. Your officials say you will not be blamed, which is what officials say."
+  },
+  "sovereignFund": {
+   "title": "The missing billions",
+   "body": "An overseas newspaper has published a story that a state investment fund borrowed heavily, lost much of it in deals abroad, and cannot say where the rest went. The sum is larger than the national health budget. The fund’s chairman says it is all misunderstood."
+  },
+  "fundProbe": {
+   "title": "The auditors and the fund",
+   "body": "The inquiry has gone through the fund’s books. The auditors have found accounts they cannot follow and transfers to companies that appear to have no employees. Several of the fund’s directors are old friends of the political class, and have been calling."
+  },
+  "fundTrial": {
+   "title": "The fund’s directors in court",
+   "body": "Four directors of the fund are in the dock, and a fifth is abroad. The prosecution has papers, and the defence has patience. The country has watched this for a year, and the public gallery is full each day."
+  },
+  "hotelAftermath": {
+   "title": "The morning after",
+   "body": "The count is closer than anyone will say. Three members have sent a letter to the Palace, and four have sent a letter to you. The papers have the dinner menu, the room numbers and the names. The Palace is expected to say something by noon."
+  },
+  "nasiLemakPrice": {
+   "title": "The price of breakfast",
+   "body": "A photograph of a packet of nasi lemak with a single egg and a price that has gone up again is the most shared picture in the country. The comments are not about the egg. Everyone is looking at you."
+  },
+  "cooperativeBank": {
+   "title": "The cooperative’s rescue",
+   "body": "A farmers’ cooperative bank, which has held the savings of half a district since before independence, cannot meet its withdrawals. Its chairman is on the phone, and so is every smallholder who has ever trusted a signboard."
+  },
+  "gigInsurance": {
+   "title": "Insurance for the riders",
+   "body": "A rider was hurt on the road delivering a plate of fried rice, and his employer’s app said he was “not on shift”. The video has two million views. A union that did not exist last month has a petition and a spokesperson."
+  },
+  "nightMarket": {
+   "title": "The night market",
+   "body": "The council wants to move the old night market off the main road so that the traffic can flow. The stallholders say the market is the traffic. The residents’ association says it cannot sleep, and has sent a petition that is longer than the stallholders’."
+  },
+  "electricityTariff": {
+   "title": "The electricity tariff",
+   "body": "The utility says it can no longer carry the cost of fuel. It wants a higher tariff for industry, which it says homes will not feel, and which every factory owner says homes will feel at the till."
+  },
+  "cropGlut": {
+   "title": "A glut",
+   "body": "It was a bumper season, and the farmers are being punished for it: so much fruit and so many vegetables that the wholesalers are paying less than it costs to pick them. A lorry of unsold produce has been tipped outside the district office."
+  },
+  "lakeResort": {
+   "title": "The lake resort",
+   "body": "A developer wants to build a resort on the shore of the hill lake, with a hundred rooms, a golf course and a helipad. The state would gain jobs and a good deal of money. The lake would gain a helipad."
+  },
+  "trawlers": {
+   "title": "The fishermen and the trawlers",
+   "body": "Large trawlers have been working close to the shore at night, and the small boats come back with half a catch. The fishermen’s association wants the zones enforced. The trawler owners have friends."
+  },
+  "heritageHouse": {
+   "title": "The heritage house",
+   "body": "The new road will pass through the garden of an old house that was built before the war, and that is on nobody’s list of heritage. A group of students and retired teachers has chained itself to the gate with some dignity."
+  },
+  "stateBanquet": {
+   "title": "The banquet bill",
+   "body": "The bill for a state dinner has leaked: sixty-eight dishes, two imported chefs and a sculpture of the state capital in ice. The dinner was for forty guests, one of whom was a minister who left early."
+  },
+  "hawkerLicence": {
+   "title": "Hawkers and the new rule",
+   "body": "A new rule says every hawker must hold a licence, with a photograph, a health certificate and three stamps from three offices. The offices do not open at the same time. The hawkers have pointed this out with a march."
+  },
+  "ferryStops": {
+   "title": "The ferry stops",
+   "body": "The only ferry between the islands and the mainland has stopped running, because the operator says the fares do not cover the diesel. Schoolchildren are stuck, and the market has come to a halt. The headman has sent a polite and rather long letter."
+  },
+  "fakeNewsLaw": {
+   "title": "The false-news bill",
+   "body": "A rumour about a bank that does not exist emptied three shops of rice in an afternoon. The cabinet wants a law against false news with a jail term and a ban on anonymous accounts. The lawyers want to know who decides what is false."
+  },
+  "memeWar": {
+   "title": "The meme",
+   "body": "A picture of you with the wrong expression and a caption you did not write has spread to every group chat in the country. It is quite a good picture. A bad person has made it worse."
+  },
+  "whatsappLeak": {
+   "title": "The chat group",
+   "body": "Screenshots of the party’s own committee group chat have been leaked, including some opinions of the leader that were meant for the group, and an extraordinary number of emojis. The group has seventy-one members, any of whom could have sent them."
+  },
+  "tongueSlip": {
+   "title": "A slip of the tongue",
+   "body": "In a live speech you called a district by the wrong name, then used a word that is not a word, then tried to correct it with a proverb you got wrong. A clip of the three together has been set to music."
+  },
+  "newsPortal": {
+   "title": "The new portal",
+   "body": "A small independent news portal, run from a shophouse by six people and an elderly cat, offers you an interview. It has a loyal readership and very little money. It has also asked, separately, whether you would like to advertise."
+  },
+  "twoBranches": {
+   "title": "Two branches, one hall",
+   "body": "Two branches of the party in the same town have been using the same hall for years, on alternate Thursdays. A dispute over who gets the good chairs has turned into a dispute over who is the real branch."
+  },
+  "youngTalent": {
+   "title": "The young engineer",
+   "body": "A twenty-eight-year-old engineer, whose video explaining the flood barrier has been watched by a million people, would like to stand for the party. The division chief has been in the party for forty years and has a nephew who would like the seat."
+  },
+  "veteranMp": {
+   "title": "The veteran who will not go",
+   "body": "A member of Parliament, eighty-one years old and beloved, has said he will stand again, and that he will do so on a wheelchair if necessary. He is in the habit of calling the party leader “young man”."
+  },
+  "billboardSponsor": {
+   "title": "The billboard sponsor",
+   "body": "A company that makes cooking oil offers to pay for every one of your billboards in the state, in return for its logo, in a corner, at a reasonable size. The corner is large. The reasonable size is not."
+  },
+  "womensQuota": {
+   "title": "The women’s wing wants a quota",
+   "body": "The women’s wing has written to the leader, politely, asking for a third of the candidates in the next election to be women. It has attached a list of forty names, each of whom has already knocked on more doors than the men they would replace."
+  },
+  "memberApp": {
+   "title": "The membership app",
+   "body": "The party still takes new members with a paper form, a photocopier and a clerk named Hasnah. A volunteer who works for a software firm says the whole process could be on a phone by next month, if the party would trust her with the database."
+  },
+  "hallFire": {
+   "title": "The party hall burns",
+   "body": "In the night the old party hall caught fire, probably from the wiring, which had been on the list of things to do since before the last election. The flags are gone. The photographs of the founders are mostly gone. The fire brigade says it was “a mercy” that it was a Tuesday."
+  },
+  "cabinetLeak": {
+   "title": "The leak from the cabinet",
+   "body": "The minutes of a cabinet meeting, including the words of several ministers about each other, are in the hands of a newspaper. There are eleven different accounts of how, and nine people who are certain it was somebody else."
+  },
+  "extraHoliday": {
+   "title": "One more holiday",
+   "body": "A union of civil servants has asked for another public holiday, to be taken on the Friday that falls before a long weekend. Shopkeepers say they would lose a day’s takings. Everyone else says they would gain a day."
+  },
+  "airMiles": {
+   "title": "The air miles",
+   "body": "An analysis of the minister’s travel claims shows he spent a hundred and forty days abroad last year, in places where, an aide admits, “there was not very much to see”. His family was present for a number of the trips. The photographs are on a beach."
+  },
+  "houseWalkout": {
+   "title": "A walkout in the House",
+   "body": "The Speaker has ruled that the opposition’s motion cannot be debated. The opposition benches are muttering about walking out in protest. The government benches, with some pleasure, are saying that they would be sorry to see them go."
+  },
+  "sharpQuestion": {
+   "title": "Question time",
+   "body": "Your name is down for the first oral question to the Prime Minister, and the House will be full, and the press gallery will be full. You have forty-five seconds, a dossier and an idea about what to do with them."
+  },
+  "partyAnniversary": {
+   "title": "The anniversary",
+   "body": "The party is fifty years old this month. The committee has proposed a banquet for two thousand, a commemorative stamp, and a song. Nobody has asked whether anyone wants the song."
+  },
+  "consultants": {
+   "title": "The consultants’ report",
+   "body": "A firm of foreign consultants was paid a very large sum to write a report on how to improve public services. The report has arrived, in three hundred pages, and says several things that the civil service has been saying for twenty years, in a better font."
+  },
+  "schoolMeals": {
+   "title": "Meals for the children",
+   "body": "A teacher in a district school has written a short and moving account of children who arrive without breakfast and fall asleep by ten. A charity has offered to cover half of a meals scheme if the government will cover the rest."
+  },
+  "trafficJam": {
+   "title": "The jam",
+   "body": "A study has shown that the average commuter in the capital spends two and a half hours a day in a car, and that the jam on the main highway is now longer than the highway. The study was commissioned, and the commissioner was stuck in the jam."
+  },
+  "goldMedal": {
+   "title": "The gold medal",
+   "body": "A young athlete from a village near the coast has won the country’s first gold medal in her sport at a major games. She has said, in an interview, that she thanks her mother, her coach and a man at a kedai who lent her a bicycle. She has not mentioned you, as yet."
+  },
+  "scamCalls": {
+   "title": "The scam calls",
+   "body": "A grandmother has lost her life’s savings to a phone call from someone claiming to be a bank officer. She is one of thousands. The calls are made from abroad, the money goes through four countries, and the police say they would love some cooperation."
+  },
+  "tuitionCentres": {
+   "title": "The tuition centres",
+   "body": "Parents are paying more for evening tuition than for the school itself. The centres are unlicensed, uninspected and, according to one teacher, “doing what the school used to”. A group of parents has written to every politician in the district."
+  },
+  "strayCats": {
+   "title": "The strays",
+   "body": "A council in a big town has decided to deal with its stray cats, of which there are many, and has an order drafted and a van reserved. A group of children have drawn posters. The posters have gone viral. The van has become a symbol."
+  },
+  "visaFree": {
+   "title": "Visas for visitors",
+   "body": "The tourism board says that waiving visas for visitors from a very large neighbour would bring in a million tourists a year. The home ministry says that a million visitors are a million people nobody has met. The hotel association has already ordered extra towels."
+  },
+  "foreignCampus": {
+   "title": "A foreign campus",
+   "body": "A famous foreign university has offered to open a campus in the capital, with its own lecturers and its own degrees. Our own universities say they would be left with the students who could not get in. The students say they would like a choice."
+  },
+  "carbonRule": {
+   "title": "The carbon rule",
+   "body": "A group of trading partners will soon charge a tax at their borders on any goods made with a high carbon footprint. Our exporters will pay unless they change how they produce. The exporters say they need time. The partners say they have been told that before."
+  },
+  "cabinetReshuffle": {
+   "title": "The reshuffle",
+   "body": "The coalition partners have noticed that three of the best ministries are held by your own party, and have sent a polite note with a list of their own candidates. The note is two lines long. The list is two pages."
+  },
+  "giveawayBudget": {
+   "title": "The giveaway",
+   "body": "The election is not far off, and your advisers have come with a folder marked “Sweeteners”. It holds a cash handout for everyone, a package for the poorest and a page headed “Or you could just not”. They have read the folder aloud twice."
+  },
+  "emergencyPowers": {
+   "title": "The call for emergency powers",
+   "body": "The slump is deep, and a group of your own ministers have asked for emergency powers to ride out the crisis, which they say Parliament is too slow to manage. The constitution allows it. The constitution also allows many things that nobody has been proud of."
+  },
+  "healthRumour": {
+   "title": "The rumour about your health",
+   "body": "A rumour that you are unwell has been running for a week, from a message that began with “my cousin works at the hospital”. The market has been twitchy, and a minister has been seen practising an acceptance speech in the mirror."
+  },
+  "nationalAddress": {
+   "title": "A word to the nation",
+   "body": "The economy is slowing and the news is full of it. Your advisers want an address on television, in the evening, with the flag behind you. They disagree about what you should say."
+  },
+  "stateVisit": {
+   "title": "The state visit",
+   "body": "A great power’s leader is visiting, and the trade ministry has a deal ready to sign, with the visit as its moment. The foreign ministry has a briefing about the visitor’s record on rights that is thicker than the deal."
+  },
+  "payReview": {
+   "title": "The civil service pay review",
+   "body": "The civil service pay review is due, and the public service union has a figure. The treasury has another. The gap between them is the size of a small ministry, and there are a million voters on the other side of it."
+  },
+  "judicialPanel": {
+   "title": "Judges to appoint",
+   "body": "Three senior seats on the bench are about to be vacant, and the list of those who might fill them has arrived. Some of the names are the very best the profession has. Some are known to be friends of friends."
+  },
+  "seatTalks": {
+   "title": "The seats for the next election",
+   "body": "The election is on the way, and the partners want more seats than they won last time. Each of them has a figure, and the figures add up to more than there are seats. A partner’s chief negotiator has started a sentence with “in all fairness”."
+  },
+  "inflationCommittee": {
+   "title": "The inflation committee",
+   "body": "Prices are climbing, and the cabinet has formed a committee, as it does. The committee has three proposals: a price cap, a wage subsidy, or a promise to leave it to the central bank. It has asked the Prime Minister to choose, so that it can be blamed for none."
+  },
+  "railStrike": {
+   "title": "The railway workers",
+   "body": "The railway workers have voted to strike, from Monday, over a pay offer they call “an insult to the sleepers”. The pun was theirs. The trains will stop, and so will the commuters’ patience."
+  },
+  "mpAllowance": {
+   "title": "The MPs’ allowance",
+   "body": "The allowances for MPs have not changed in eleven years, and a committee has recommended a rise that is, it says, modest. The public has not seen it that way. It is a headline waiting for a Prime Minister to approve it."
+  },
+  "juniorCredit": {
+   "title": "Whose scheme is it?",
+   "body": "The Prime Minister has launched a popular scheme, with a ribbon, a banner and a speech that did not mention that it began as a proposal from your party. Your ministers drafted it, your officials cost it, and your name is in the footnotes."
+  },
+  "postsForMine": {
+   "title": "A post for your people",
+   "body": "The Prime Minister has offered your party a deputy ministry and an ambassadorship, which your members think is a poor return on twenty seats. A senior member has been heard to say that the offer was “generous, for a mouse”."
+  },
+  "outvoted": {
+   "title": "Outvoted in cabinet",
+   "body": "Your minister argued at length against a measure, and lost, eleven to two. The decision has been announced as a collective one. Your party’s members are waiting to see whether you will own it."
+  },
+  "unpopularBill": {
+   "title": "A bill your voters dislike",
+   "body": "The government will bring a bill to the House that your voters will hate: a new charge that falls hardest on the districts where your party is strong. The Prime Minister’s office has phoned to ask how many of your members will vote for it."
+  },
+  "crossoverOffer": {
+   "title": "An offer from the other side",
+   "body": "Someone close to the leader of the opposition has told you, over a long lunch, that the opposition would offer your party the leading role in a new alliance if you left the government. Nothing was written down, and nothing was refused."
+  },
+  "partnerMinisterRow": {
+   "title": "Your minister in the headlines",
+   "body": "One of your party’s ministers has been photographed at an event that he should not have gone to, in a car that is not a ministerial one. The Prime Minister’s office has not said anything, which is a message of its own."
+  },
+  "allocationFight": {
+   "title": "The development allocations",
+   "body": "The new allocations for roads, clinics and schools have been announced, and your party’s districts have been given a good deal less than the Prime Minister’s party’s. The explanation, in a footnote, is “technical reasons”."
+  },
+  "posterLogo": {
+   "title": "Whose logo goes first",
+   "body": "A joint poster for the government’s achievements has been designed, and the order in which the parties’ logos appear has become, for two weeks, the most serious subject in the coalition. Your logo has been put at the bottom, in a smaller size."
+  },
+  "mergerOffer": {
+   "title": "An offer to merge",
+   "body": "The Prime Minister’s party has suggested, in the warmest terms, that your two parties merge, “for the sake of stability”. It would offer you good posts. It would also, as a lawyer in your party points out, offer you the end of your party."
+  },
+  "trailingInCoalition": {
+   "title": "Sinking with the ship",
+   "body": "The polls show your party’s support falling faster than the government’s. Your members say that it is being blamed for decisions it did not make, and that voters cannot tell the partners from the Prime Minister’s party, except by the logo in the corner."
+  },
+  "budgetShare": {
+   "title": "The share of the budget",
+   "body": "The budget for your party’s ministries is to be cut by a tenth, to pay for what the Prime Minister’s party calls “shared priorities”. Your minister has produced a table to show that the cut is not shared, and has put it in the minister’s own pocket, since nobody else would read it."
+  },
+  "coalitionSummit": {
+   "title": "The coalition summit",
+   "body": "The partners are invited to a summit at a hotel, to show unity. It will be the usual: a long table, a short communiqué and a group photograph in which everybody stands next to the person they like least."
+  },
+  "stateSeatSwap": {
+   "title": "Seats in a state election",
+   "body": "A state election is on the way, and the Prime Minister’s party wants to contest more seats in a state where your party has always held a few. It offers you the choice of other seats elsewhere. Your members in the state have said what they think of other seats elsewhere."
+  },
+  "leverageFile": {
+   "title": "A file about the Prime Minister’s party",
+   "body": "A member of your party has put in your hands a file about a minister of the Prime Minister’s party: some invoices, a few emails and a photograph with a very large cake. It is not a matter of law, as such, but it would not look good on the front page."
+  },
+  "honoursList": {
+   "title": "The honours list",
+   "body": "The honours list is being drawn up, and the Prime Minister’s office has invited each partner to submit names. Your members have a great many names, and a surprising number of them are members."
+  },
+  "restlessMembers": {
+   "title": "Members who want out",
+   "body": "A group of your members says that the party has spent too long in government and has too little to show for it. They have started to hold their own meetings, and have asked, in a note, for “a conversation about the future”."
+  },
+  "shadowGaffe": {
+   "title": "Your shadow minister’s gaffe",
+   "body": "Your shadow finance minister, in an interview, confused the national debt with the national deficit, then compared the national budget to a wedding, then said that he was “speaking as a father”. The government has put the clip on a loop."
+  },
+  "censureMotion": {
+   "title": "A censure motion",
+   "body": "The government is wobbling, and a motion of censure against a minister who has made one blunder too many is ready, with your name at the top of it. Your whips say that you can carry it if your members stay on side, and that there is no point in losing it."
+  },
+  "bipartisanOffer": {
+   "title": "An offer from the Prime Minister",
+   "body": "The Prime Minister has proposed that the two sides work together on a long-term plan for the country’s water supply. It is a good idea, and it is, you suspect, a trap, since a joint plan would be the government’s plan by the next election."
+  },
+  "crossoverHints": {
+   "title": "Members of the government hint",
+   "body": "Three members of the government’s own backbenches have said, in the presence of reporters and a good meal, that they are “open to conversations”. The government is shaky, and the arithmetic in the House, for the first time, has become interesting."
+  },
+  "inquiryCall": {
+   "title": "A call for a Royal Commission",
+   "body": "A series of accidents on a government-funded project has killed four workers, and the government’s response has been to call it “regrettable”. Your members say that this is a case for a Royal Commission. The evidence is thin, but the feeling is thick."
+  },
+  "massRally": {
+   "title": "A rally for the capital",
+   "body": "The election is on the way, and your organisers say that the moment has come for the great rally, with trains from every state, a stage the size of a house and a speech that your speechwriters have been polishing for a year. It will cost a great deal, and be remembered, one way or the other."
+  },
+  "oppositionPact": {
+   "title": "An alliance of the opposition",
+   "body": "The smaller opposition parties have asked you to lead a pact for the election: one candidate against the government in each seat, with the seats shared out in advance. Everyone agrees. Nobody agrees about which seats."
+  },
+  "speakerBars": {
+   "title": "Members barred from the House",
+   "body": "The Speaker has barred four of your members from the House for a week, for what he calls “disorderly conduct” and what they call “speaking”. The government benches are quiet. Your own are not."
+  },
+  "taxPledge": {
+   "title": "The tax pledge",
+   "body": "Your economic team says the party should promise a tax cut in the manifesto. The treasury shadow says that the party cannot afford one. The party’s members say they would like to hear the word “cut”, and nothing more precise than that."
+  },
+  "civilServantFile": {
+   "title": "A file from the ministry",
+   "body": "A civil servant has left a brown envelope at your office. It contains a memo that, if real, shows that a ministry was told about a safety problem a year ago and did nothing. The covering note is unsigned and spelled very well."
+  },
+  "pollLead": {
+   "title": "The polls say you are ahead",
+   "body": "A series of polls puts the opposition ahead, and your aides are in a very good mood, and have started to speak of “when we govern”. It is the most dangerous point in any campaign, and a few members have noticed."
+  },
+  "nationalMourning": {
+   "title": "A national day of mourning",
+   "body": "A tragedy has struck the country: a bus has gone off a mountain road with forty on board. The Prime Minister has declared a day of mourning and asked all parties to suspend their politics. The road, as it happens, was on your list of roads that the government had failed to fix."
+  },
+  "whispersAgainstYou": {
+   "title": "Whispers against you",
+   "body": "A group of your senior members has been meeting over dinner, and three of them have been seen in the same car. Nobody has said anything. Everybody has noticed that nobody has said anything."
+  },
+  "creditRow": {
+   "title": "Your idea, their announcement",
+   "body": "Last month your party proposed a rebate for small farmers. This morning the government announced something very like it, and the Prime Minister described it as “the government’s own plan, long in preparation”."
+  },
+  "ethicsComplaint": {
+   "title": "A complaint against you",
+   "body": "A complaint has been lodged with the parliamentary ethics committee about an interest you did not declare: a share in a small family firm that sells, among other things, pencils to a government department. The amount is fourteen ringgit."
+  },
+  "foreignInvite": {
+   "title": "An invitation from abroad",
+   "body": "A foreign government has invited the leader of the opposition to a visit and a meeting with a minister. It is a mark of respect. It is also the sort of trip that the Prime Minister will describe as “going abroad to complain about your own country”."
+  },
+  "budgetTip": {
+   "title": "The budget in an envelope",
+   "body": "A copy of the government’s budget, due to be tabled next week, has reached your desk in an envelope. It might be the real one. It might be a very good fake. The sender, as always, has not left a name."
+  },
+  "showcaseState": {
+   "title": "Your state as a showcase",
+   "body": "Your party’s state government is the best argument you have: it is, the voters say, the best-run in the country. The trouble is that it is also in the news for a failed hospital contract and a very unhappy rubbish collection."
+  },
+  "millionPetition": {
+   "title": "A petition with a million names",
+   "body": "A petition on the cost of living has gathered a million signatures, and a student group has brought the boxes to your office in a lorry. They have asked you to take it to Parliament. They have also asked for a photograph."
+  },
+  "govtFumbles": {
+   "title": "Prices, and the government",
+   "body": "The cost of living has been rising for months, and the government has put out its third reassurance. Your shadow ministers are lined up with a number of ideas, ranging from the useful to the indignant."
+  },
+  "wooPartner": {
+   "title": "A partner you might woo",
+   "body": "A smaller party in the government is not happy: it feels ignored and underpaid. Its leader has been seen near your office, in a hat. You could try to bring it over, though it would take more than a hat."
+  },
+  "resignCalls": {
+   "title": "A minister who should go",
+   "body": "A minister has said in public that the rules “were made for ordinary people”. A video of this has gone round, with captions. Your members would like him gone, and your press office has three versions of a statement."
+  },
+  "leadFreeze": {
+   "title": "Left out of the planning",
+   "body": "The leader of the opposition has held a strategy meeting for the whole opposition, and your party was not told. You learned about it from the photograph, in which a row of men in identical shirts are looking at a whiteboard."
+  },
+  "govtCourts": {
+   "title": "The government’s offer for your district",
+   "body": "The government has offered a very large road project to your district, a thing you have asked for, for years. The offer arrived the same week as a vote in which your support would be welcome. Neither side has mentioned the connection."
+  },
+  "seatDealLead": {
+   "title": "A seat-sharing proposal",
+   "body": "The leader of the opposition has proposed that your party, which holds seats in several states, should give up a number of them to the larger party in return for a few others. The numbers have been worked out on a spreadsheet by someone who has never been to the seats."
+  },
+  "swingVotes": {
+   "title": "Your votes decide the vote",
+   "body": "A bill in the House is going to be very close, and your party’s members, who are few, are going to decide it. Both sides have rung. One has offered a development fund. The other has offered a speech."
+  },
+  "speakingTime": {
+   "title": "No time to speak",
+   "body": "In the debate on the budget, the time for speeches has been shared out in proportion to the size of the party. Yours is small, and has been allotted four minutes, between two speeches of an hour each."
+  },
+  "constituencyClinic": {
+   "title": "The clinic that closed",
+   "body": "The only clinic in the district has closed for want of a doctor, and the government says that it will reopen “in due course”. Your office is full of people with fevers and questions."
+  },
+  "ministryOffer": {
+   "title": "A call from the Prime Minister’s office",
+   "body": "The Prime Minister’s office has telephoned, with perfect politeness, to ask whether your party might be “open to a role in the government”. It would involve a ministry, and several departments, and a car with a flag. It would also involve a good deal of explaining to your voters."
+  },
+  "nicheCause": {
+   "title": "The cause only you carry",
+   "body": "Your party has been the only one to take up the cause of long-term care for the old, a matter that nobody else seems to find exciting. It has not been on a front page in a year, and a poll shows that three in ten voters think it is important."
+  },
+  "donorSmall": {
+   "title": "A donor’s offer",
+   "body": "A businessman you have never met has offered your party a large donation. He asks for nothing, which is, as every party treasurer knows, a very expensive price. He has a firm that builds things, and he has been seen near the minister of works."
+  },
+  "mergerInvite": {
+   "title": "An invitation to merge",
+   "body": "The leader of the opposition has proposed that your party and the larger one merge, “for the sake of a united alternative”. It would give you a share of the top posts and the end of your name, and the larger party would find it very convenient."
+  },
+  "defectionYours": {
+   "title": "One of yours crosses over",
+   "body": "One of your members of Parliament has told you that he is going to the government benches, “for the good of his district”. He has said it kindly, and he has said it in front of a camera, and he has taken the party’s office chair."
+  },
+  "constituencyFlood": {
+   "title": "Water in your district",
+   "body": "The river has burst its banks in your district, and a hundred homes are under water. The government’s relief is, for now, a promise. The people are in a school, and your office is the nearest building with a telephone."
+  },
+  "localProtest": {
+   "title": "A protest in your district",
+   "body": "Residents of a village have begun to protest outside a quarry that is shaking their houses. They have posters, and a banner, and a very good drummer. Someone has told them that you are sympathetic."
+  },
+  "shadowPortfolio": {
+   "title": "An offer of a shadow portfolio",
+   "body": "The leader of the opposition has offered one of your members the shadow portfolio for rural development, a post with a large title and no budget. It is flattering. It is also the leader’s way of making your party part of the leader’s team."
+  },
+  "mediaBlackout": {
+   "title": "The silence of the press",
+   "body": "Your party has been out of the news for a month. The editors say it is not their fault: there was a football match, a scandal and a very large fish. Your members want to know why nobody has asked them what they think."
+  },
+  "volunteerShortage": {
+   "title": "No one to knock on doors",
+   "body": "A by-election is coming, and your branch in the district has eleven volunteers, of whom six are over seventy, and two are the candidate’s relatives. A canvass of five thousand houses needs more."
+  },
+  "borrowedLogo": {
+   "title": "Whose logo on the ballot?",
+   "body": "The leader of the opposition says that to stand a chance against the government, your candidates should contest under the larger party’s logo, in a few seats. It would help, and it would mean your name was off the ballot."
+  },
+  "trappedVote": {
+   "title": "A vote that traps you",
+   "body": "The government has brought a bill that your members support in principle, and a clause that they cannot stand. Voting for it will help the government. Voting against it will look as though you oppose the bill’s purpose."
+  },
+  "endorsement": {
+   "title": "An endorsement from the elders",
+   "body": "A group of respected village elders has said that they will endorse your party in the district, on a condition: that you visit every village in the district, and eat a meal in each. It is, they say, a matter of respect."
+  },
+  "councilWin": {
+   "title": "A win in the local council",
+   "body": "Your party has won a surprise seat in a local council by-election, in a place where you have never done well. It is a small thing, and the papers have called it “an early sign”. Your members want to do something with it."
+  },
+  "kind-pactOffer": {
+   "title": "An offer from another party",
+   "body": "The leader of another party calls with an offer of a pact: seats to stand aside in, seats in return. Two leaders at a table with glasses of teh tarik, a handshake half offered."
+  },
+  "kind-poach": {
+   "title": "A rival tries to take a seat",
+   "body": "A rival party is trying to lure away a sitting member at night, an envelope on the table, a hotel lobby behind."
+  },
+  "kind-summons": {
+   "title": "A summons to the Palace",
+   "body": "Evening, a golden-domed Palace behind, a party leader arriving by car to be asked who can command a majority in the House."
+  },
+  "kind-unityAdvice": {
+   "title": "The Palace advises unity",
+   "body": "A ruler on a throne chair advising three party leaders in sashes to explore a government of national unity."
+  },
+  "kind-vote": {
+   "title": "A vote in the House",
+   "body": "The House is about to vote on a bill: a party leader whipping members, a ballot box, a gavel, members waving and wavering."
+  },
+  "kind-houseVote": {
+   "title": "A vote called by another party",
+   "body": "Members of the House in a crowd, waiting to see how a vote the leader of another party has called will fall, a ballot box in front."
+  },
+  "kind-agenda": {
+   "title": "A state asks for something",
+   "body": "A village headman and townsfolk outside a kampung house and shophouses, putting a question to the new leader."
+  },
+  "kind-partyPoll": {
+   "title": "The party's own election",
+   "body": "A party assembly: delegates in sashes around a ballot box, a stage in party colours behind, rival camps watching each other."
+  },
+  "kind-redraw": {
+   "title": "The boundaries are drawn again",
+   "body": "Officials and a politician over a large map of constituencies, a pencil, papers, a kampung and shophouses behind."
+  }
+ }
+}
