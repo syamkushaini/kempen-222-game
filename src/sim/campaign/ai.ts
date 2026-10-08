@@ -6,6 +6,7 @@ import {
   actionCost, canDo, contests, contestsState, doAction, expectedYield, gotvWeeks,
 } from './actions';
 import { stat } from './perks';
+import { bestAim } from './segments';
 import type { ActionId, ActionReport, ActionTarget, Campaign, Difficulty } from './types';
 
 /** What makes each rival campaign differently. Weights multiply how attractive a kind of action looks. */
@@ -36,6 +37,25 @@ const PROFILES: Record<FieldedId, Profile> = {
   cahaya: { ground: 1.2, machinery: 1.2, media: 0.5, attack: 0.3, reserve: 40_000, shady: false },
   suara:  { ground: 1.2, machinery: 1.2, media: 0.4, attack: 0.3, reserve: 30_000, shady: false },
 };
+
+/** The ways a rival campaigns that a player can learn to read, from what they do. */
+export const STYLE_IDS = ['aggressive', 'populist', 'machine', 'online', 'cautious', 'shady'] as const;
+export type StyleId = (typeof STYLE_IDS)[number];
+
+/**
+ * How a rival is known to campaign, in the one or two words that fit it best: aggressive (goes for the throat), populist (the
+ * ceramah circuit), a machine (branches and money), online (lives on the phone), cautious (avoids fights) and shady (takes the
+ * money that comes with strings). The player reads them off what the party does week by week.
+ */
+export function styleOf(p: number): StyleId[] {
+  const pr = PROFILES[PARTY_IDS[p] as FieldedId];
+  if (!pr) return [];
+  const out: [StyleId, number][] = [
+    ['aggressive', pr.attack - 0.9], ['populist', pr.ground - 1.15], ['machine', pr.machinery - 1.25], ['online', pr.media - 1.25],
+    ['cautious', 0.55 - pr.attack], ['shady', pr.shady ? 0.3 : -1],
+  ];
+  return out.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([id]) => id);
+}
 
 /** Difficulty changes how well rivals read the race and choose, never their resources. */
 const SKILL: Record<Difficulty, { noise: number; blunder: number }> = {
@@ -83,7 +103,12 @@ export function readRace(world: World, c: Campaign, p: number, truth: ElectionOu
 }
 
 /** How a party reads the race: how much each seat is worth fighting for, and who stands in the way there. */
-export interface Reading { value: number[]; mainRival: number[] }
+export interface Reading {
+  value: number[];
+  mainRival: number[];
+  /** The race as it stands, where the reader has it: lets a party aim a seat event at the group that will move most. */
+  truth?: ElectionOutcome;
+}
 
 /**
  * Every action open to party `p` right now, best value for effort first.
@@ -116,10 +141,14 @@ export function rankOptions(world: World, c: Campaign, p: number, reading: Readi
   for (const { v, i } of ranked) {
     const seat = world.seats[i];
     const boost = c.dyn.support.seat[seat.id]?.[p] ?? 0;
-    consider('ceramah', { seat: seat.id }, v * EFFECT.ceramah * CERAMAH_KIND[seat.kind] * room(boost, CAP.seat), profile.ground);
-    consider('walkabout', { seat: seat.id }, v * EFFECT.walkabout * WALK_KIND[seat.kind] * room(boost, CAP.seat), profile.ground);
+    // A party that can read the seat aims at the group that will move most, and a party that cannot holds a plain event.
+    const aim = reading.truth && c.difficulty !== 'easy' ? bestAim(seat, reading.truth.seats[i], p) : null;
+    const worth = aim ? aim.ratio : 1;
+    const at: ActionTarget = aim ? { seat: seat.id, segment: aim.segment } : { seat: seat.id };
+    consider('ceramah', at, v * EFFECT.ceramah * CERAMAH_KIND[seat.kind] * room(boost, CAP.seat) * worth, profile.ground);
+    consider('walkabout', at, v * EFFECT.walkabout * WALK_KIND[seat.kind] * room(boost, CAP.seat) * worth, profile.ground);
     // A town hall is worth what it gains less the one time in five it goes wrong on camera.
-    consider('townhall', { seat: seat.id }, v * EFFECT.townhall * TOWNHALL_KIND[seat.kind] * (1 - EFFECT.townhallFlopChance) * room(boost, CAP.seat), profile.ground);
+    consider('townhall', at, v * EFFECT.townhall * TOWNHALL_KIND[seat.kind] * (1 - EFFECT.townhallFlopChance) * room(boost, CAP.seat) * worth, profile.ground);
   }
   for (const st of myStates) {
     const m = pc.machinery[world.states.indexOf(st)] / 60;
@@ -140,7 +169,7 @@ export function rankOptions(world: World, c: Campaign, p: number, reading: Readi
   const lateness = weeksLeft <= c.totalWeeks / 2.5 ? 1 : 0.4;
   consider('tv', {}, totalValue * EFFECT.tv * 0.8 * lateness, profile.media);
   consider('social', {}, totalValue * EFFECT.social * 0.7 * lateness, profile.media);
-  consider('manifesto', {}, totalValue * EFFECT.manifesto * mean(MANIFESTO_REACH) * lateness, profile.media);
+  if (world.rules.kind !== 'byelection') consider('manifesto', {}, totalValue * EFFECT.manifesto * mean(MANIFESTO_REACH) * lateness, profile.media);
   // A day on the party itself is for a party that is coming apart.
   if (pc.unity < 50) consider('conference', {}, totalValue * 0.004 * (50 - pc.unity), profile.machinery);
 
@@ -186,7 +215,7 @@ export function playWeek(world: World, c: Campaign, p: number, truth: ElectionOu
   const reports: ActionReport[] = [];
   const { value, mainRival } = readRace(world, c, p, truth, rng, skill.noise, watched);
 
-  const reading: Reading = { value, mainRival };
+  const reading: Reading = { value, mainRival, truth };
 
   for (let guard = 0; guard < 40 && pc.days >= 0.5; guard++) {
     const options = rankOptions(world, c, p, reading, profile);

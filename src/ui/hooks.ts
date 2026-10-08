@@ -175,6 +175,11 @@ export function renderNews(t: T, f: Format, world: World, item: NewsItem): strin
       kind === 'demand' ? t(`demand.${value}` as StringKey) :
       kind === 'portfolio' ? t(`portfolio.${value}` as StringKey) :
       kind === 'role' ? t(`role.${value}` as StringKey) :
+      kind === 'holding' ? t(`holding.${value}` as StringKey) :
+      kind === 'event' ? t(`event.${value}.title` as StringKey) :
+      kind === 'adviser' ? t(`adviser.${value}` as StringKey) :
+      kind === 'alliance' ? t(`alliance.name.${value}` as StringKey) :
+      kind === 'faction' ? t(`faction.${value}` as StringKey) :
       kind === 'hopeful' ? t(`hopeful.${value}` as StringKey) :
       kind === 'endorser' ? t(`endorser.${value}` as StringKey) :
       kind === 'outlet' ? t(`outlet.${value}` as StringKey) :

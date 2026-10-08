@@ -3,14 +3,15 @@ import { clamp } from '../math';
 import { Rng } from '../rng';
 import { BLOC_IDS, N_BLOCS, PARTY_IDS, type BlocId, type PartyId } from '../types';
 import { scaled } from './actions';
-import { shiftRelation, shiftUnity } from './diplomacy';
+import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
 import {
   LINE_IDS, MINISTER_TRAITS, PORTFOLIO_IDS,
-  type Budget, type Campaign, type Candidate, type Career, type Dial, type Economy, type LineId, type Minister, type MinisterTrait, type PortfolioId,
+  type Budget, type Campaign, type Candidate, type Career, type Dial, type Economy, type LineId, type MeasureId, type Minister, type MinisterTrait, type PortfolioId,
 } from './types';
 
-export const isPm = (c: Campaign) => c.career!.government.pm === c.player;
+/** Whether the player is head of government. A leader held to a term limit leads the governing party but not the government. */
+export const isPm = (c: Campaign) => c.career!.government.pm === c.player && !c.career!.limited;
 export const inGov = (c: Campaign, p: number) => c.career!.government.pm === p || c.career!.government.partners.includes(p);
 
 /** Adds to a party's standing with the blocs named, or with everyone. */
@@ -23,6 +24,23 @@ export function lift(k: Career, p: number, blocs: BlocId[] | 'all', n: number) {
 
 export const startEconomy = (): Economy => ({ growth: 4.2, inflation: 2.8, jobless: 3.6, debt: 63 });
 export const standstill = (): Budget => ({ lines: { aid: 0, health: 0, education: 0, rural: 0, civil: 0 }, tax: 0 });
+
+/** What a budget can pay for in particular: the line it belongs to, what it adds to the cost (in the same units as a dial), and who notices. */
+export interface MeasureDef { line: LineId; cost: number; appeal: Partial<Record<BlocId, number>> }
+export const MEASURES: Record<MeasureId, MeasureDef> = {
+  cashTopUp:    { line: 'aid', cost: 1, appeal: { urban_b40: 0.03, heartland: 0.02, gig: 0.02, felda: 0.02, smallbiz: -0.01 } },
+  fuelPrice:    { line: 'aid', cost: 0.8, appeal: { gig: 0.03, urban_b40: 0.03, heartland: 0.02, undi18: 0.01, urban_lib: -0.01 } },
+  clinics:      { line: 'health', cost: 0.8, appeal: { seniors: 0.03, borneo_native: 0.03, agri: 0.02 } },
+  hospitalBeds: { line: 'health', cost: 1, appeal: { seniors: 0.03, urban_b40: 0.03, m40: 0.02 } },
+  scholarships: { line: 'education', cost: 0.7, appeal: { undi18: 0.04, m40: 0.02 } },
+  schoolRepairs: { line: 'education', cost: 0.7, appeal: { borneo_native: 0.03, felda: 0.02, agri: 0.02, civil: 0.01 } },
+  roads:        { line: 'rural', cost: 1, appeal: { agri: 0.03, felda: 0.03, borneo_native: 0.04, heartland: 0.02 } },
+  farmInputs:   { line: 'rural', cost: 0.8, appeal: { agri: 0.04, felda: 0.03 } },
+  civilBonus:   { line: 'civil', cost: 0.9, appeal: { civil: 0.05, seniors: 0.01 } },
+  pensions:     { line: 'civil', cost: 0.8, appeal: { seniors: 0.04, civil: 0.03 } },
+};
+/** Most things one budget can pay for in particular. */
+export const MAX_MEASURES = 3;
 
 /** Who notices each line of the budget. */
 const LINE_BLOCS: Record<LineId, BlocId[]> = {
@@ -37,7 +55,7 @@ export const skillOf = (k: Career, portfolio: PortfolioId) => k.cabinet.find((m)
 
 /** How far a budget loosens (positive) or tightens the purse: spending lines up, taxes down, plus standing commitments. */
 export function looseness(k: Career, budget: Budget = k.tabled): number {
-  return LINE_IDS.reduce((a, id) => a + budget.lines[id], 0) - 2 * budget.tax + 0.5 * k.fiscal;
+  return LINE_IDS.reduce((a, id) => a + budget.lines[id], 0) - 2 * budget.tax + 0.5 * k.fiscal + (budget.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0);
 }
 
 /** The deficit a budget produces, as a share of national income. A capable finance minister shaves it. */
@@ -70,9 +88,21 @@ export function economyWeek(c: Campaign, rng: Rng) {
 }
 
 /** The head of government changes next year's budget plan. It takes effect when it is tabled. */
-export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; value: Dial }): boolean {
+export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; value: Dial } | { measure: MeasureId; on: boolean }): boolean {
   const k = c.career;
-  if (!k || c.phase !== 'term' || !isPm(c) || ![-1, 0, 1].includes(patch.value)) return false;
+  if (k && c.phase === 'term' && isPm(c) && 'measure' in patch) {
+    if (!(patch.measure in MEASURES)) return false;
+    const have = k.budget.measures ?? [];
+    if (patch.on && !have.includes(patch.measure)) {
+      if (have.length >= MAX_MEASURES) return false;
+      k.budget.measures = [...have, patch.measure];
+    } else if (!patch.on) {
+      if (have.length > 0) k.budget.measures = have.filter((m) => m !== patch.measure);
+      if (k.budget.measures?.length === 0) delete k.budget.measures;
+    }
+    return true;
+  }
+  if (!k || c.phase !== 'term' || !isPm(c) || !('value' in patch) || ![-1, 0, 1].includes(patch.value)) return false;
   if (patch.tax) k.budget.tax = patch.value;
   else if (patch.line && LINE_IDS.includes(patch.line)) k.budget.lines[patch.line] = patch.value;
   else return false;
@@ -83,7 +113,11 @@ export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; va
 export function tableBudget(c: Campaign, plan: Budget): void {
   const k = c.career!;
   const g = k.government;
-  k.tabled = { lines: { ...plan.lines }, tax: plan.tax };
+  k.tabled = { lines: { ...plan.lines }, tax: plan.tax, ...(plan.measures?.length ? { measures: [...plan.measures] } : {}) };
+  // What it pays for in particular is noticed by those it is for.
+  for (const m of plan.measures ?? []) {
+    for (const [bloc, v] of Object.entries(MEASURES[m].appeal)) { lift(k, g.pm, [bloc as BlocId], v); for (const p of g.partners) lift(k, p, [bloc as BlocId], v * 0.4); }
+  }
   for (const id of LINE_IDS) {
     if (plan.lines[id] === 0) continue;
     lift(k, g.pm, LINE_BLOCS[id], 0.02 * plan.lines[id]);
@@ -192,12 +226,16 @@ export function candidatesFor(c: Campaign, portfolio: PortfolioId): Candidate[] 
   const used = new Set<number>(k.cabinet.filter((m) => m.portfolio !== portfolio).map((m) => m.name));
   const kinds = [...MINISTER_TRAITS];
   for (let i = kinds.length - 1; i > 0; i--) { const j = rng.int(i + 1); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; }
-  return kinds.slice(0, 3).map((trait) => {
+  const options = kinds.slice(0, 3).map((trait) => {
     let name = rng.int(MINISTER_NAMES.length);
     for (let i = 0; i < MINISTER_NAMES.length && used.has(name); i++) name = (name + 1) % MINISTER_NAMES.length;
     used.add(name);
     return { name, skill: skillFor(trait, rng), trait };
   });
+  // Whoever shadowed the post from the opposition benches is first on the list.
+  const shadow = k.shadow?.[portfolio];
+  if (shadow && !k.cabinet.some((m) => m.portfolio !== portfolio && m.name === shadow.name)) options[0] = { name: shadow.name, skill: shadow.skill, trait: shadow.skill >= 4 ? 'expert' : 'loyalist' };
+  return options;
 }
 
 /** Gives a candidate whose name has just been taken (by a minister, or an option elsewhere that was chosen) another one. */
@@ -224,6 +262,16 @@ function stepIn(c: Campaign, m: Minister): void {
   delete m.done;
   k.appointments = (k.appointments ?? []).filter((a) => a.portfolio !== m.portfolio);
   k.appointments.push({ portfolio: m.portfolio, options: candidatesFor(c, m.portfolio) });
+}
+
+/** A minister of the player's party leaves their post: a stand-in holds it, and the one who went is not on offer again. */
+export function dismiss(c: Campaign, portfolio: PortfolioId): void {
+  const k = c.career!;
+  const m = k.cabinet.find((x) => x.portfolio === portfolio);
+  if (!m || m.party !== c.player) return;
+  const gone = m.name;
+  stepIn(c, m);
+  k.appointments = (k.appointments ?? []).map((a) => (a.portfolio === portfolio ? { ...a, options: a.options.filter((o) => o.name !== gone) } : a));
 }
 
 /** Whether the post is one the player has yet to fill. */
@@ -267,14 +315,17 @@ export function cabinetWeek(c: Campaign, rng: Rng): void {
       shiftUnity(c, me, -6);
       pushNews(c, { party: me, key: 'news.gov.ambition', vars: { name: MINISTER_NAMES[m.name], post: `@portfolio:${m.portfolio}` }, tone: 'bad' });
     } else {
-      // A fixer's past catches up with them: they resign, the party pays for it, and the post is the player's to fill again.
-      k.credibility = clamp(k.credibility - 8, 0, 100);
-      k.government.trust = clamp(k.government.trust - 5, 0, 100);
+      // A fixer's past catches up with them: it is the player's to answer, at a press conference, before anything is settled.
       pushNews(c, { party: me, key: 'news.gov.scandal', vars: { name: MINISTER_NAMES[m.name], post: `@portfolio:${m.portfolio}` }, tone: 'bad' });
-      const resigned = m.name;
-      stepIn(c, m);
-      // The one who resigned is not on offer again.
-      k.appointments = k.appointments!.map((a) => (a.portfolio === m.portfolio ? { ...a, options: a.options.filter((o) => o.name !== resigned) } : a));
+      if (!k.scandal && c.inbox.length === 0) {
+        k.scandal = m.portfolio;
+        addScene(c, { kind: 'event', from: null, event: 'ministerScandal' });
+      } else {
+        // Something else is already on the desk: it is dealt with as it always was, the hard way.
+        k.credibility = clamp(k.credibility - 8, 0, 100);
+        k.government.trust = clamp(k.government.trust - 5, 0, 100);
+        dismiss(c, m.portfolio);
+      }
     }
   }
 }

@@ -28,6 +28,7 @@ export function LegacyScreen() {
           </div>
         </div>
         <p className="title-intro">{t(`legacy.${end.legacy}.text`)}</p>
+        {end.laws ? <p className="muted small">{t('legacy.laws', { n: end.laws })}</p> : null}
         <dl className="facts">
           <div><dt>{t('legacy.score')}</dt><dd className="num">{end.score}</dd></div>
           <div><dt>{t('legacy.years')}</dt><dd className="num">{years.toFixed(1)}</dd></div>

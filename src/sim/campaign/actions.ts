@@ -1,15 +1,21 @@
 import { BLOC_IDS, N_BLOCS, N_PARTIES, isMinor, type BlocId, type Dynamics, type ElectionOutcome, type RegionId, type SeatKind } from '../types';
 import { combineDynamics } from '../dynamics';
 import { projectElection, type World } from '../election';
+import { projectSeat } from '../project';
 import { zeros, zeros2 } from '../math';
 import { Rng } from '../rng';
-import { stands } from '../transfer';
+import { ENTERS, stands } from '../transfer';
 import { addEndorsements } from './endorserData';
 import { travelCost } from './geo';
 import { edge, fundsBoost, gaffeCut, mediaBoost, stat } from './perks';
 import { chiefHand } from './chiefs';
+import { issueEdge } from './policy';
+import { weatherFactor } from './weather';
+import { MEDIA_AIMED, MIN_SEGMENT, addAimedPitch, aimReach, isBloc, segmentShare, type SegmentId } from './segments';
+import { stateOf } from './agenda';
+import { ISSUE_IDS, type IssueId } from './types';
 import type {
-  ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, PartyCampaign, Quality, TargetKind,
+  ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, LocalTheme, PartyCampaign, Posture, Quality, TargetKind,
 } from './types';
 
 export interface ActionDef {
@@ -45,6 +51,8 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   debate:     { family: 'media',     target: 'party', days: 1,   presence: false, perWeek: 1 },
   manifesto:  { family: 'media',     target: 'none',  days: 1,   presence: false, perWeek: 1 },
   radio:      { family: 'media',     target: 'state', days: 0.5, presence: false, perWeek: 1 },
+  local:      { family: 'ground',    target: 'state', days: 1,   presence: true,  perWeek: 1 },
+  troops:     { family: 'media',     target: 'party', days: 0.5, presence: false, perWeek: 1 },
 };
 
 /**
@@ -64,6 +72,9 @@ export const gotvWeeks = (c: Campaign) => Math.max(1, Math.round(c.totalWeeks / 
 // ---------- tuning ----------
 // Support numbers are logit units: +0.10 in a seat is roughly a 2.5-point gain
 // in vote share in a close two-way race.
+
+/** Events in one seat that can be pitched to one voter group (see segments.ts). */
+export const PITCHED: readonly ActionId[] = ['ceramah', 'walkabout', 'townhall'];
 
 /** How well in-person events land by seat type. Rallies are a rural art; walkabouts suit towns. */
 const KIND_FACTOR: Record<'ceramah' | 'walkabout', Record<SeatKind, number>> = {
@@ -112,13 +123,54 @@ export const SOCIAL_REACH = blocTable({
   m40: 0.7, urban_lib: 1, smallbiz: 0.5, seniors: 0.1, borneo_native: 0.2, borneo_urban: 0.8,
 });
 
+/**
+ * What is done in one state and in no other, and who it reaches: Negeri Sembilan's adat, Sabah's Kaamatan, Sarawak's Gawai,
+ * the padi harvest in Kedah. A state that has nothing of its own gets a plain open house.
+ */
+export const LOCAL_IDS = ['nsembilan', 'sabah', 'sarawak', 'kelantan', 'terengganu', 'kedah', 'perlis', 'pahang', 'penang', 'selangor', 'perak', 'melaka', 'johor', 'kl', 'putrajaya', 'labuan'] as const;
+export const LOCAL_REACH: Record<string, number[]> = {
+  nsembilan: blocTable({ undi18: 0.1, heartland: 1, felda: 0.6, agri: 0.6, civil: 0.3, urban_b40: 0.1, gig: 0.1, m40: 0.2, urban_lib: 0.05, smallbiz: 0.3, seniors: 1.3, borneo_native: 0, borneo_urban: 0 }),
+  sabah: blocTable({ undi18: 0.2, heartland: 0.1, felda: 0.1, agri: 0.5, civil: 0.2, urban_b40: 0.2, gig: 0.2, m40: 0.2, urban_lib: 0.1, smallbiz: 0.2, seniors: 0.6, borneo_native: 1.6, borneo_urban: 0.8 }),
+  sarawak: blocTable({ undi18: 0.2, heartland: 0.1, felda: 0.1, agri: 0.5, civil: 0.2, urban_b40: 0.2, gig: 0.2, m40: 0.2, urban_lib: 0.1, smallbiz: 0.2, seniors: 0.6, borneo_native: 1.6, borneo_urban: 0.8 }),
+  kelantan: blocTable({ undi18: 0.2, heartland: 1.2, felda: 0.6, agri: 0.8, civil: 0.4, urban_b40: 0.2, gig: 0.1, m40: 0.2, urban_lib: 0, smallbiz: 0.4, seniors: 1.3, borneo_native: 0, borneo_urban: 0 }),
+  terengganu: blocTable({ undi18: 0.2, heartland: 1.2, felda: 0.7, agri: 0.8, civil: 0.4, urban_b40: 0.2, gig: 0.1, m40: 0.2, urban_lib: 0, smallbiz: 0.4, seniors: 1.3, borneo_native: 0, borneo_urban: 0 }),
+  kedah: blocTable({ undi18: 0.1, heartland: 1, felda: 0.8, agri: 1.6, civil: 0.2, urban_b40: 0.1, gig: 0.1, m40: 0.1, urban_lib: 0, smallbiz: 0.3, seniors: 1, borneo_native: 0, borneo_urban: 0 }),
+  perlis: blocTable({ undi18: 0.1, heartland: 1.2, felda: 0.5, agri: 1.3, civil: 0.3, urban_b40: 0.1, gig: 0.1, m40: 0.1, urban_lib: 0, smallbiz: 0.3, seniors: 1, borneo_native: 0, borneo_urban: 0 }),
+  pahang: blocTable({ undi18: 0.1, heartland: 0.7, felda: 1.7, agri: 0.9, civil: 0.2, urban_b40: 0.1, gig: 0.1, m40: 0.1, urban_lib: 0, smallbiz: 0.3, seniors: 0.9, borneo_native: 0, borneo_urban: 0 }),
+  penang: blocTable({ undi18: 0.5, heartland: 0, felda: 0, agri: 0, civil: 0.6, urban_b40: 1, gig: 0.8, m40: 1, urban_lib: 1, smallbiz: 1.1, seniors: 0.4, borneo_native: 0, borneo_urban: 0 }),
+  selangor: blocTable({ undi18: 0.9, heartland: 0.1, felda: 0.1, agri: 0, civil: 0.7, urban_b40: 0.7, gig: 1.3, m40: 1, urban_lib: 0.8, smallbiz: 0.6, seniors: 0.2, borneo_native: 0, borneo_urban: 0.2 }),
+  perak: blocTable({ undi18: 0.3, heartland: 0.5, felda: 0.2, agri: 0.3, civil: 0.6, urban_b40: 0.8, gig: 0.4, m40: 0.8, urban_lib: 0.4, smallbiz: 1, seniors: 0.8, borneo_native: 0, borneo_urban: 0 }),
+  melaka: blocTable({ undi18: 0.3, heartland: 0.5, felda: 0.2, agri: 0.2, civil: 0.8, urban_b40: 0.5, gig: 0.3, m40: 0.8, urban_lib: 0.3, smallbiz: 0.9, seniors: 0.9, borneo_native: 0, borneo_urban: 0 }),
+  johor: blocTable({ undi18: 0.3, heartland: 0.8, felda: 0.9, agri: 0.4, civil: 0.8, urban_b40: 0.5, gig: 0.4, m40: 0.5, urban_lib: 0.2, smallbiz: 0.8, seniors: 0.8, borneo_native: 0, borneo_urban: 0 }),
+  kl: blocTable({ undi18: 0.8, heartland: 0, felda: 0, agri: 0, civil: 0.5, urban_b40: 0.9, gig: 1.2, m40: 1, urban_lib: 0.9, smallbiz: 0.8, seniors: 0.2, borneo_native: 0, borneo_urban: 0.3 }),
+  putrajaya: blocTable({ undi18: 0.2, heartland: 0.1, felda: 0, agri: 0, civil: 1.7, urban_b40: 0.1, gig: 0.1, m40: 0.8, urban_lib: 0.3, smallbiz: 0.2, seniors: 0.2, borneo_native: 0, borneo_urban: 0 }),
+  labuan: blocTable({ undi18: 0.3, heartland: 0, felda: 0, agri: 0.2, civil: 0.6, urban_b40: 0.6, gig: 0.3, m40: 0.5, urban_lib: 0.2, smallbiz: 0.7, seniors: 0.6, borneo_native: 0.7, borneo_urban: 1 }),
+};
+/** An open house for a state with nothing of its own: a little for everyone, a little more for the villages. */
+export const LOCAL_PLAIN = blocTable({ undi18: 0.3, heartland: 0.7, felda: 0.7, agri: 0.7, civil: 0.4, urban_b40: 0.4, gig: 0.3, m40: 0.4, urban_lib: 0.2, smallbiz: 0.4, seniors: 0.7, borneo_native: 0.5, borneo_urban: 0.3 });
+
+/** The place a local event belongs to: the state itself in a state's election, else the state chosen on the map. */
+export const localPlace = (world: World, st: RegionId | undefined): string => stateOf(world) ?? st ?? '';
+export const localReach = (world: World, st: RegionId | undefined): number[] => LOCAL_REACH[localPlace(world, st)] ?? LOCAL_PLAIN;
+export const hasLocal = (world: World, st: RegionId | undefined): boolean => localPlace(world, st) in LOCAL_REACH;
+
+/** Who a local manifesto on one theme speaks to: roads to the villages, water to everyone who has gone without, jobs to the towns, housing to the young and the middle. */
+export const THEME_REACH: Record<LocalTheme, number[]> = {
+  roads: blocTable({ undi18: 0.2, heartland: 1.3, felda: 1.4, agri: 1.4, civil: 0.4, urban_b40: 0.3, gig: 0.3, m40: 0.3, urban_lib: 0.1, smallbiz: 0.7, seniors: 0.8, borneo_native: 1.5, borneo_urban: 0.4 }),
+  water: blocTable({ undi18: 0.5, heartland: 1.1, felda: 1, agri: 1, civil: 0.6, urban_b40: 1.1, gig: 0.7, m40: 0.7, urban_lib: 0.4, smallbiz: 0.6, seniors: 1, borneo_native: 1.2, borneo_urban: 0.6 }),
+  jobs: blocTable({ undi18: 1.2, heartland: 0.5, felda: 0.4, agri: 0.4, civil: 0.3, urban_b40: 1.4, gig: 1.4, m40: 0.8, urban_lib: 0.7, smallbiz: 1, seniors: 0.1, borneo_native: 0.4, borneo_urban: 0.9 }),
+  housing: blocTable({ undi18: 1.2, heartland: 0.4, felda: 0.3, agri: 0.2, civil: 0.9, urban_b40: 1.4, gig: 1.1, m40: 1.3, urban_lib: 0.9, smallbiz: 0.6, seniors: 0.4, borneo_native: 0.3, borneo_urban: 0.9 }),
+};
+/** How much more a local manifesto on one theme does for those it speaks to than the all-purpose one, in a state’s election or a by-election. */
+export const THEME_FOCUS = 1.4;
+
 export const EFFECT = {
   ceramah: 0.18, ceramahMotivation: 0.08,
   walkabout: 0.08,
   megarally: 0.06, megarallyMotivation: 0.12,
   canvass: 0.05,
   gotv: 0.2,
-  build: 10,
+  build: 10, buildNew: 0.4,
   tv: 0.03,
   social: 0.018,
   billboards: 0.012,
@@ -132,8 +184,47 @@ export const EFFECT = {
   manifesto: 0.045, manifestoDivided: 0.4,
   conference: 8, conferenceBranches: 3,
   radio: 0.022,
+  local: 0.09, localUnity: 1,
+  troops: 0.045, troopsSelf: 0.02, troopsExposed: 0.25, troopsStep: 0.12, troopsBackfire: 0.05, troopsCred: 8,
+  online: 0.75,
   tycoon: 900_000, tycoonExposeChance: 0.12, tycoonHit: 0.08, tycoonMotivationHit: 0.1,
 };
+
+/** How each way of answering a question changes a debate: what a win is worth, what it takes from the rival, what a loss costs, and the chance of winning. */
+export const POSTURE: Record<Posture, { gain: number; rival: number; loss: number; odds: number }> = {
+  // Stick to the substance: steady, and worth what the party's line is worth on the question.
+  policy: { gain: 1, rival: 1, loss: 1, odds: 0 },
+  // Go for the rival’s record: more if it lands, a good deal worse if it does not.
+  attack: { gain: 1.3, rival: 1.6, loss: 1.6, odds: -0.05 },
+  // Be human: a warmer win, a gentler loss, and it helps the better-liked speaker.
+  warm: { gain: 0.9, rival: 0.7, loss: 0.7, odds: 0 },
+};
+/** How much of the difference between two parties' lines on the question counts towards the odds, at the most. */
+export const DEBATE_TOPIC = { scale: 0.25, cap: 0.2 };
+
+/**
+ * The chance of winning a debate. The better speaker is favoured; a question on which the party’s line is the country’s
+ * counts for it, and the way it is answered adds to that: substance counts double on a question the party is strong on,
+ * and warmth helps whoever has the more charm.
+ */
+export function debateOdds(world: World, c: Campaign, p: number, rival: number, topic?: IssueId, posture: Posture = 'policy'): number {
+  const speaker = EFFECT.debateBase + EFFECT.debatePerPoint * (stat(c, p, 'charisma') - stat(c, rival, 'charisma')) - gaffeCut(c, p);
+  let edge = 0;
+  if (topic && c.career) {
+    edge = Math.max(-DEBATE_TOPIC.cap, Math.min(DEBATE_TOPIC.cap, issueEdge(world, c.career, p, rival, ISSUE_IDS.indexOf(topic)) * DEBATE_TOPIC.scale));
+    if (posture === 'policy') edge *= 2;
+  }
+  const charm = posture === 'warm' ? (stat(c, p, 'charisma') >= stat(c, rival, 'charisma') ? 0.06 : -0.04) : 0;
+  return Math.min(0.85, Math.max(0.12, speaker + edge + charm + POSTURE[posture].odds));
+}
+
+/** What is done on a phone, and so wears the same audience out. */
+export const ONLINE: readonly ActionId[] = ['social', 'troops'];
+/** How much of an online action’s effect is left after the others done this week (each one takes a quarter off the next). */
+export const saturation = (pc: PartyCampaign): number => EFFECT.online ** Math.max(0, (pc.used.online ?? 0) - 1);
+
+/** Branch strength below which a state is new ground for the party, where building is slow. */
+export const NEW_GROUND = 20;
 
 /** How much of each kind of campaign effect survives into the next week. */
 export const DECAY = { seat: 0.85, state: 0.9, nat: 0.92, motivation: 0.9 };
@@ -144,7 +235,7 @@ export const CAP = { seat: 0.6, state: 0.3, nat: 0.3, seatTurnout: 0.4, stateTur
 const MONEY = {
   ceramah: 30_000, walkabout: 8_000, megarally: 150_000, build: 60_000,
   tv: 350_000, social: 50_000,
-  townhall: 12_000, charity: 90_000, youth: 40_000, festival: 70_000, manifesto: 120_000, conference: 40_000,
+  townhall: 12_000, charity: 90_000, youth: 40_000, festival: 70_000, manifesto: 120_000, conference: 40_000, local: 45_000, troops: 80_000,
 };
 
 /** An amount of money scaled to the size of the contest and rounded to a tidy figure. */
@@ -180,7 +271,8 @@ function usageKey(id: ActionId, target: ActionTarget): string {
 
 /** Whether a party has a candidate in a seat: it stood there last time and has not stood aside under a pact (or, for a party the player made, left the seat unfielded). */
 export function contests(world: World, c: Campaign, i: number, p: number): boolean {
-  return world.baseline.contesting[i][p] && stands(c.standDowns[world.seats[i].id]?.[p]);
+  const row = c.standDowns[world.seats[i].id]?.[p];
+  return (world.baseline.contesting[i][p] || row === ENTERS) && stands(row);
 }
 
 export function contestsState(world: World, c: Campaign, p: number, st: RegionId): boolean {
@@ -212,7 +304,7 @@ export function actionCost(world: World, c: Campaign, p: number, id: ActionId, t
   let money = 0;
   switch (id) {
     case 'ceramah': case 'walkabout': case 'megarally': case 'build': case 'tv': case 'social':
-    case 'townhall': case 'charity': case 'youth': case 'festival': case 'manifesto': case 'conference':
+    case 'townhall': case 'charity': case 'youth': case 'festival': case 'manifesto': case 'conference': case 'local': case 'troops':
       money = scaled(world, MONEY[id]);
       break;
     case 'radio':
@@ -253,10 +345,15 @@ export function canDo(world: World, c: Campaign, p: number, id: ActionId, target
     const i = target.seat === undefined ? undefined : world.seatIndex.get(target.seat);
     if (i === undefined) return no('noTarget');
     if (!contests(world, c, i, p)) return no('notContesting');
+    // A pitch to one voter group needs that group to be there.
+    if (target.segment !== undefined && (!PITCHED.includes(id) || chief || !(segmentShare(world.seats[i], target.segment) >= MIN_SEGMENT))) return no('noTarget');
   } else if (def.target === 'state') {
     if (!target.state) return no('noTarget');
+    if (target.segment !== undefined && (!(MEDIA_AIMED as readonly ActionId[]).includes(id) || !isBloc(target.segment))) return no('noTarget');
     // Fundraising dinners work anywhere; everything else needs candidates in the state.
     if (id !== 'dinner' && !contestsState(world, c, p, target.state)) return no('notContesting');
+  } else if (def.target === 'none' && target.segment !== undefined && (!(MEDIA_AIMED as readonly ActionId[]).includes(id) || !isBloc(target.segment))) {
+    return no('noTarget');
   } else if (def.target === 'party') {
     if (target.party === undefined || !c.parties[target.party]) return no('noTarget');
     if (target.party === p) return no('self');
@@ -314,18 +411,47 @@ const addLateSwing = (c: Campaign, p: number, scale: number) => {
  * uses, with the luck of the day taken at its average of 1 and the seat's room to grow counted in. Nothing for an
  * action that is not aimed at one seat.
  */
-export function expectedSeatGain(world: World, c: Campaign, p: number, id: ActionId, seat: string): number | null {
+export function expectedSeatGain(world: World, c: Campaign, p: number, id: ActionId, seat: string, segment?: SegmentId): number | null {
+  if (segment !== undefined && PITCHED.includes(id)) return expectedPitchGain(world, c, p, id, seat, segment);
+  const units = seatUnits(world, c, p, id, seat);
+  return units === null ? null : Math.round(units * 25 * 10) / 10;
+}
+
+/** The lift in the seat's support, in logit units, that an ordinary day of a seat action would give: the formula the action uses, with luck taken at its average. */
+function seatUnits(world: World, c: Campaign, p: number, id: ActionId, seat: string): number | null {
   const i = world.seatIndex.get(seat);
   if (i === undefined) return null;
   const s = world.seats[i];
   const boost = c.dyn.support.seat[seat]?.[p] ?? 0;
   const presence = edge(c, p, 'charisma');
   const room_ = room(boost, CAP.seat);
-  let units: number;
-  if (id === 'ceramah' || id === 'walkabout') units = EFFECT[id] * presence * KIND_FACTOR[id][s.kind] * room_;
-  else if (id === 'townhall') units = (1 - EFFECT.townhallFlopChance) * EFFECT.townhall * presence * TOWNHALL_KIND[s.kind] * room_ - EFFECT.townhallFlopChance * EFFECT.townhallFlop;
-  else return null;
-  return Math.round(units * 25 * 10) / 10;
+  if (id === 'ceramah' || id === 'walkabout') return EFFECT[id] * presence * KIND_FACTOR[id][s.kind] * room_;
+  if (id === 'townhall') return (1 - EFFECT.townhallFlopChance) * EFFECT.townhall * presence * TOWNHALL_KIND[s.kind] * room_ - EFFECT.townhallFlopChance * EFFECT.townhallFlop;
+  return null;
+}
+
+/**
+ * What a seat event would add to the party's share of the vote in the seat, in points, if it were pitched to one voter
+ * group (or, with none, to everyone), read off the model itself: so it counts how many of the group are in the seat, how
+ * the party stands with them, and which other groups would take it badly. Null for an action that is not aimed at one seat.
+ */
+export function expectedPitchGain(world: World, c: Campaign, p: number, id: ActionId, seat: string, segment: SegmentId | null): number | null {
+  const units = seatUnits(world, c, p, id, seat);
+  const i = world.seatIndex.get(seat);
+  if (units === null || i === undefined) return null;
+  const s = world.seats[i];
+  const now = effectiveDynamics(c);
+  const stood = c.standDowns[seat];
+  const before = projectSeat(s, i, world.baseline, now, undefined, stood);
+  const level = [...(now.support.seat[seat] ?? zeros(N_PARTIES))];
+  const next: Dynamics = {
+    ...now,
+    support: { ...now.support, seat: { ...now.support.seat, [seat]: level }, seatBloc: { ...(now.support.seatBloc ?? {}), [seat]: (now.support.seatBloc?.[seat] ?? zeros2(N_BLOCS, N_PARTIES)).map((row) => [...row]) } },
+  };
+  level[p] += segment === null ? units : addAimedPitch(next, s, p, segment, units, CAP.seat * 1.5);
+  const after = projectSeat(s, i, world.baseline, next, undefined, stood);
+  const share = (o: typeof before) => (o.valid > 0 ? o.votes[p] / o.valid : 0);
+  return Math.round((share(after) - share(before)) * 100 * 10) / 10;
 }
 
 /** What a fundraising action would bring in before luck. */
@@ -356,6 +482,8 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
   const cost = actionCost(world, c, p, id, target, chief);
   const st = actionState(world, id, target);
 
+  // Posts and the work of a hand on the keyboards share the same audience: each one in a week lands on a more tired one.
+  if (ONLINE.includes(id)) pc.used.online = (pc.used.online ?? 0) + 1;
   pc.days -= cost.days;
   pc.funds -= cost.money;
   pc.spent += cost.money;
@@ -364,7 +492,8 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
   pc.used[key] = (pc.used[key] ?? 0) + 1;
 
   // Luck: how well it went on the day.
-  const roll = 0.6 + 0.8 * rng.next();
+  // What is done outdoors depends on the sky over the state; what is said on a phone does not.
+  const roll = (0.6 + 0.8 * rng.next()) * weatherFactor(world, c, id, st ?? (target.seat ? world.seats[world.seatIndex.get(target.seat)!]?.state : undefined));
   let quality: Quality = roll < 0.85 ? 'weak' : roll < 1.2 ? 'ok' : 'great';
   let raised: number | undefined;
   // A divided party's branches do not turn out for it.
@@ -374,6 +503,8 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
   const presence = chief ? 1 : edge(c, p, 'charisma');
   const organised = edge(c, p, 'organisation');
   const onAir = mediaBoost(c, p);
+  // A medium aimed at one voter group reaches it more and the others less.
+  const aimed = (reach: number[]) => (target.segment !== undefined && !chief && isBloc(target.segment) ? aimReach(reach, target.segment) : reach);
 
   switch (id) {
     case 'ceramah':
@@ -382,7 +513,9 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       const s = seatSupport(c, seat.id);
       // A chief draws half the leader's crowd, more or less according to who the chief is.
       const base = (id === 'ceramah' ? EFFECT.ceramah : EFFECT.walkabout) * (chief ? CHIEF.draw * chiefHand(world, c, p, st) : 1);
-      s[p] += base * presence * KIND_FACTOR[id][seat.kind] * roll * room(s[p], CAP.seat);
+      const units = base * presence * KIND_FACTOR[id][seat.kind] * roll * room(s[p], CAP.seat);
+      // Pitched to one voter group, the lift is theirs, and goes down with groups unlike them; otherwise it is everyone's.
+      s[p] += target.segment !== undefined && !chief ? addAimedPitch(c.dyn, seat, p, target.segment, units, CAP.seat * 1.5) : units;
       if (id === 'ceramah') {
         const t = seatTurnout(c, seat.id);
         t[p] += EFFECT.ceramahMotivation * (chief ? CHIEF.draw : 1) * roll * room(t[p], CAP.seatTurnout);
@@ -407,28 +540,48 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
     }
     case 'build': {
       const i = stateIndex(world, st!);
-      pc.machinery[i] = Math.min(100, pc.machinery[i] + Math.round(EFFECT.build * organised));
+      // Where the party has no ground to speak of, branches are slow to take: it is years of work, not a day's.
+      pc.machinery[i] = Math.min(100, pc.machinery[i] + Math.round(EFFECT.build * organised * (pc.machinery[i] < NEW_GROUND ? EFFECT.buildNew : 1)));
       quality = 'ok';
       break;
     }
     case 'tv':
-      boostBlocs(c.dyn.support.nat, p, EFFECT.tv * presence * onAir * roll, TV_REACH, CAP.nat);
+      boostBlocs(c.dyn.support.nat, p, EFFECT.tv * presence * onAir * roll, aimed(TV_REACH), CAP.nat);
       addLateSwing(c, p, 1);
       break;
     case 'social': {
+      const tired = saturation(pc);
       // Social media is a lottery: mostly fine, sometimes huge, sometimes a self-own.
       const r = rng.next();
       // Someone who knows the medium reads a post before it goes out.
       const flop = 0.1 - gaffeCut(c, p);
       const mult = r < flop ? -0.3 : r < 0.7 ? 1 : r < 0.95 ? 1.8 : 3.5;
       quality = r < flop ? 'flop' : r < 0.7 ? 'ok' : r < 0.95 ? 'great' : 'viral';
-      boostBlocs(c.dyn.support.nat, p, EFFECT.social * mult * (mult > 0 ? onAir : 1), SOCIAL_REACH, CAP.nat);
+      boostBlocs(c.dyn.support.nat, p, EFFECT.social * mult * (mult > 0 ? onAir * tired : 1), aimed(SOCIAL_REACH), CAP.nat);
       if (mult > 1) addLateSwing(c, p, 0.5);
       break;
     }
     case 'billboards':
       boostBlocs(stateSupport(c, st!), p, EFFECT.billboards * onAir * roll, null, CAP.state);
       break;
+    case 'troops': {
+      // A hand on the keyboards: accounts that are not people say what people would not. It works, for a while, and the longer it goes on the likelier it is to come out.
+      const rival = target.party!;
+      const tired = saturation(pc);
+      const exposed = EFFECT.troopsExposed + EFFECT.troopsStep * plays(pc, 'troops') - gaffeCut(c, p) - 0.03 * (stat(c, p, 'cunning') - 3);
+      if (rng.next() < exposed) {
+        boostBlocs(c.dyn.support.nat, p, -EFFECT.troopsBackfire, null, CAP.nat);
+        boostBlocs(c.dyn.support.nat, rival, EFFECT.troopsBackfire / 4, null, CAP.nat);
+        if (c.career && p === c.player) c.career.credibility = Math.max(0, c.career.credibility - EFFECT.troopsCred);
+        quality = 'backfire';
+      } else {
+        boostBlocs(c.dyn.support.nat, rival, -EFFECT.troops * tired * onAir, SOCIAL_REACH, CAP.nat);
+        boostBlocs(c.dyn.support.nat, p, EFFECT.troopsSelf * tired, SOCIAL_REACH, CAP.nat);
+        quality = 'ok';
+      }
+      notePlay(pc, 'troops');
+      break;
+    }
     case 'attack': {
       // In a career, what the party has dug up over the years makes an attack sharper and safer. Each one uses some up.
       const dossier = p === c.player && c.career ? c.career.dossier : 0;
@@ -456,7 +609,8 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
         boostBlocs(c.dyn.support.nat, p, -EFFECT.townhallFlopNat, null, CAP.nat);
         quality = 'flop';
       } else {
-        s[p] += EFFECT.townhall * presence * TOWNHALL_KIND[seat.kind] * roll * room(s[p], CAP.seat);
+        const units = EFFECT.townhall * presence * TOWNHALL_KIND[seat.kind] * roll * room(s[p], CAP.seat);
+        s[p] += target.segment !== undefined && !chief ? addAimedPitch(c.dyn, seat, p, target.segment, units, CAP.seat * 1.5) : units;
         quality = roll < 0.85 ? 'ok' : 'great';
       }
       if (!chief && !pc.visits.includes(seat.id)) pc.visits.push(seat.id);
@@ -486,6 +640,12 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       boostBlocs(stateSupport(c, st!), p, EFFECT.festival * (0.9 + 0.2 * rng.next()), null, CAP.state);
       quality = 'ok';
       break;
+    case 'local': {
+      // The event of the place: the groups that belong to it feel it most, and the party's own people are glad to be there.
+      boostBlocs(stateSupport(c, st!), p, EFFECT.local * presence * roll, localReach(world, st!), CAP.state);
+      quality = 'ok';
+      break;
+    }
     case 'conference': {
       // The leader's days go on the party itself; the branches nearby take heart.
       const home = stateIndex(world, pc.location);
@@ -494,17 +654,18 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       break;
     }
     case 'debate': {
-      // A fair fight on live television: it goes to the better performer, and a repeat is worth less.
+      // A fair fight on live television: it goes to the better performer, and a repeat is worth less. The question asked and how it is answered count.
       const rival = target.party!;
       const first = EFFECT.debateRepeat ** plays(pc, 'debate');
-      const odds = Math.min(0.8, Math.max(0.15, EFFECT.debateBase + EFFECT.debatePerPoint * (stat(c, p, 'charisma') - stat(c, rival, 'charisma')) - gaffeCut(c, p)));
+      const odds = debateOdds(world, c, p, rival, target.topic, target.posture);
+      const post = POSTURE[target.posture ?? 'policy'];
       if (rng.next() < odds) {
-        boostBlocs(c.dyn.support.nat, p, EFFECT.debate * first * onAir, TV_REACH, CAP.nat);
-        boostBlocs(c.dyn.support.nat, rival, -EFFECT.debateRival * first, null, CAP.nat);
+        boostBlocs(c.dyn.support.nat, p, EFFECT.debate * first * onAir * post.gain, TV_REACH, CAP.nat);
+        boostBlocs(c.dyn.support.nat, rival, -EFFECT.debateRival * first * post.rival, null, CAP.nat);
         addLateSwing(c, p, 0.5);
         quality = 'great';
       } else {
-        boostBlocs(c.dyn.support.nat, p, -EFFECT.debateLoss, null, CAP.nat);
+        boostBlocs(c.dyn.support.nat, p, -EFFECT.debateLoss * post.loss, null, CAP.nat);
         quality = 'weak';
       }
       notePlay(pc, 'debate');
@@ -514,13 +675,15 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       // The party's promises in one document. A divided party launches it badly, and a believed leader sells it better.
       const believed = c.career ? 0.5 + c.career.credibility / 200 : 1;
       const united = pc.unity >= 40;
-      boostBlocs(c.dyn.support.nat, p, EFFECT.manifesto * believed * (united ? 1 : EFFECT.manifestoDivided) * onAir, MANIFESTO_REACH, CAP.nat);
+      // In a state’s election or a by-election the promises are local ones, about one thing.
+      const localTheme = world.rules.kind !== 'general' ? target.theme : undefined;
+      boostBlocs(c.dyn.support.nat, p, EFFECT.manifesto * believed * (united ? 1 : EFFECT.manifestoDivided) * onAir * (localTheme ? THEME_FOCUS : 1), localTheme ? THEME_REACH[localTheme] : MANIFESTO_REACH, CAP.nat);
       quality = united ? 'great' : 'weak';
       notePlay(pc, 'manifesto');
       break;
     }
     case 'radio':
-      boostBlocs(stateSupport(c, st!), p, EFFECT.radio * onAir * roll, RADIO_REACH, CAP.state);
+      boostBlocs(stateSupport(c, st!), p, EFFECT.radio * onAir * roll, aimed(RADIO_REACH), CAP.state);
       break;
     case 'dinner':
       raised = tidy(expectedYield(world, c, p, 'dinner', st!) * fundsBoost(c, p) * roll);

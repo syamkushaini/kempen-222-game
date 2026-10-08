@@ -1,6 +1,8 @@
 import type { World } from '../election';
 import { clamp, zeros2 } from '../math';
-import { BLOC_IDS, N_BLOCS, N_PARTIES, PARTY_IDS, type BlocId, type PartyId } from '../types';
+import { Rng } from '../rng';
+import { BLOC_IDS, N_BLOCS, N_PARTIES, PARTY_IDS, isMinor, type BlocId, type PartyId } from '../types';
+import { pushNews } from './news';
 import { ISSUE_IDS, N_ISSUES, type Campaign, type Career, type IssueId, type PledgeId } from './types';
 
 // Every stance runs from -2 to 2 between two poles; the translations name
@@ -74,6 +76,10 @@ export interface PledgeDef {
   appeal: Partial<Record<BlocId, number>>;
   /** A stance the promise only makes sense with: the issue, and which side of the middle. */
   needs?: [IssueId, 1 | -1];
+  /** An Act of Parliament: once passed it stays on the books, and no party need promise it again. A programme is paid for year after year and can be promised again. */
+  law?: true;
+  /** An amendment to the constitution: it needs two thirds of the House, not a majority. */
+  amend?: true;
 }
 
 export const PLEDGES: Record<PledgeId, PledgeDef> = {
@@ -93,7 +99,31 @@ export const PLEDGES: Record<PledgeId, PledgeDef> = {
   valuesSchools:   { cost: 1, appeal: { heartland: .08, civil: .03, felda: .03, urban_lib: -.1, borneo_urban: -.05, smallbiz: -.04, borneo_native: -.03 }, needs: ['values', 1] },
   repealLaws:      { cost: 0, appeal: { urban_lib: .08, undi18: .04, borneo_urban: .03, heartland: -.03, civil: -.03 }, needs: ['liberties', 1] },
   homes:           { cost: 3, appeal: { urban_b40: .07, m40: .05, undi18: .05, gig: .04 } },
+  // Acts: a promise of law costs the treasury nothing, and is kept for good once it passes.
+  partyHopBan:     { cost: 0, appeal: { m40: .06, urban_lib: .05, civil: .03, heartland: .03, undi18: .03 }, needs: ['reform', 1], law: true },
+  fixedTerm:       { cost: 0, appeal: { urban_lib: .06, m40: .04, civil: .02, undi18: .03 }, needs: ['reform', 1], law: true },
+  infoAct:         { cost: 0, appeal: { urban_lib: .07, m40: .05, undi18: .04, borneo_urban: .04, civil: -.04 }, needs: ['graft', 1], law: true },
+  localVote:       { cost: 1, appeal: { urban_lib: .06, m40: .05, borneo_urban: .04, civil: -.03, heartland: -.02 }, needs: ['reform', 1], law: true },
+  gigRights:       { cost: 1, appeal: { gig: .1, urban_b40: .05, undi18: .05, smallbiz: -.05 }, needs: ['wages', 1], law: true },
+  oilRoyalty:      { cost: 2, appeal: { borneo_native: .1, borneo_urban: .08, heartland: .03, civil: -.02 }, needs: ['federalism', 1], law: true },
+  // Programmes: each year's money, and each can be promised again.
+  schoolMeals:     { cost: 2, appeal: { urban_b40: .06, heartland: .04, agri: .04, felda: .04, borneo_native: .05, undi18: .02 } },
+  healthCover:     { cost: 4, appeal: { seniors: .07, urban_b40: .06, m40: .05, gig: .04, smallbiz: -.04 }, needs: ['health', 1] },
+  greenGrid:       { cost: 2, appeal: { m40: .05, urban_lib: .05, undi18: .04, borneo_urban: .03, felda: -.02 } },
+  villageRoads:    { cost: 3, appeal: { agri: .08, felda: .06, borneo_native: .1, heartland: .05, urban_lib: -.02 }, needs: ['rural', 1] },
+  smeLoans:        { cost: 2, appeal: { smallbiz: .1, gig: .04, m40: .03, borneo_urban: .02 } },
+  seniorPension:   { cost: 3, appeal: { seniors: .1, heartland: .03, felda: .03, agri: .03, undi18: -.02 } },
 };
+// Acts that change the constitution itself need two thirds of the House.
+for (const id of ['termLimit', 'fixedTerm', 'partyHopBan', 'oilRoyalty', 'localVote'] as const) PLEDGES[id].amend = true;
+// The Acts that were promised before there were any others: they are laws too.
+for (const id of ['graftCommission', 'termLimit', 'repealLaws', 'minWage'] as const) PLEDGES[id].law = true;
+
+/** Whether a promise has already become law in this career, so that nobody need promise it again. */
+export const isEnacted = (career: Career, id: PledgeId): boolean => career.laws?.includes(id) ?? false;
+
+/** A manifesto without what is already law. */
+export const withoutLaws = (career: Career, manifesto: readonly PledgeId[]): PledgeId[] => manifesto.filter((id) => !isEnacted(career, id));
 
 /** What a party promises if nobody thinks about it: roughly what it promised last time. */
 const DEFAULT_MANIFESTO: Record<PartyId, PledgeId[]> = {
@@ -113,7 +143,17 @@ export const MAX_PLEDGES = 6;
 /** What the treasury can bear before commentators start laughing. */
 export const FISCAL_ROOM = 10;
 
-export const manifestoCost = (pledges: PledgeId[]) => pledges.reduce((a, id) => a + PLEDGES[id].cost, 0);
+/** A promise made in its short form costs and appeals half as much, and counts for less when it is kept. */
+export const BRIEF = { share: 0.5, kept: 2, failed: 1 };
+export const isBrief = (career: Career, id: PledgeId): boolean => career.brief?.includes(id) ?? false;
+
+export const manifestoCost = (pledges: PledgeId[], brief: readonly PledgeId[] = []) => pledges.reduce((a, id) => a + PLEDGES[id].cost * (brief.includes(id) ? BRIEF.share : 1), 0);
+
+/** How the voters feel about a promise on the whole, each bloc counted alike: what a rival sees in it when it thinks of copying. */
+export const pledgeValue = (id: PledgeId): number => Object.values(PLEDGES[id].appeal).reduce((a, v) => a + v, 0);
+
+/** The most a rival's copy of a promise takes from what it was worth to the player, and the least that is left. */
+export const COPY = { perCopier: 0.2, floor: 0.5, believed: 0.5, from: 0.2, chance: 0.5, perParty: 2 };
 
 /** Whether a promise fits where the party stands. Promising what you argue against convinces nobody. */
 export function fits(career: Career, p: number, id: PledgeId): boolean {
@@ -123,14 +163,21 @@ export function fits(career: Career, p: number, id: PledgeId): boolean {
   return needs[1] > 0 ? stance >= 1 : stance <= -1;
 }
 
-function pledgeAppeal(career: Career, p: number, pledges: PledgeId[]): number[] {
+function pledgeAppeal(career: Career, p: number, pledges: PledgeId[], mine = false): number[] {
   const out = new Array<number>(N_BLOCS).fill(0);
+  const brief = mine ? career.brief ?? [] : [];
   for (const id of pledges) {
-    const weight = fits(career, p, id) ? 1 : 0.5;
+    let weight = fits(career, p, id) ? 1 : 0.5;
+    if (brief.includes(id)) weight *= BRIEF.share;
+    if (mine) {
+      // A promise a rival has copied is worth less to the one who made it first.
+      const copiers = Object.values(career.copied ?? {}).filter((l) => l.includes(id)).length;
+      weight *= Math.max(COPY.floor, 1 - COPY.perCopier * copiers);
+    } else if (career.copied?.[p]?.includes(id)) weight *= COPY.believed;
     for (const [bloc, v] of Object.entries(PLEDGES[id].appeal)) out[BLOC_IDS.indexOf(bloc as BlocId)] += v * weight;
   }
   // A manifesto that costs more than the country has is discounted across the board.
-  const over = Math.max(0, manifestoCost(pledges) - FISCAL_ROOM);
+  const over = Math.max(0, manifestoCost(pledges, brief) - FISCAL_ROOM);
   return out.map((v) => (v > 0 ? v * Math.max(0.4, 1 - 0.12 * over) : v));
 }
 
@@ -168,8 +215,9 @@ export function policyEffect(c: Campaign): number[][] {
     const mine = p === c.player;
     // Rivals publish when the election is called; the player when they choose to.
     const published = mine ? career.launched : c.phase !== 'term';
-    const promised = published ? pledgeAppeal(career, p, career.manifesto[p]) : null;
-    const usual = published ? pledgeAppeal(career, p, DEFAULT_MANIFESTO[PARTY_IDS[p]]) : null;
+    const promised = published ? pledgeAppeal(career, p, career.manifesto[p], mine) : null;
+    // What is already law is in neither: it is not a promise any more, and dropping it from the manifesto is not a broken one.
+    const usual = published ? pledgeAppeal(career, p, withoutLaws(career, DEFAULT_MANIFESTO[PARTY_IDS[p]])) : null;
     for (let b = 0; b < N_BLOCS; b++) {
       const shift = stanceAppeal(career, career.stances[p], b) - stanceAppeal(career, career.stances0[p], b);
       out[b][p] = (shift + (promised ? promised[b] - usual![b] : 0)) * belief(c, p);
@@ -196,6 +244,24 @@ export function blocSizes(world: World): number[] {
     sizeCache.set(world, size);
   }
   return size;
+}
+
+/**
+ * How much nearer party `a` stands to the voters on an issue than party `b` does, weighting each bloc by its size and by
+ * how much it cares: above zero where a's line is the one the country would choose, below it where b's is.
+ */
+export function issueEdge(world: World, career: Career, a: number, b: number, issue: number): number {
+  const size = blocSizes(world);
+  let edge = 0;
+  for (let bloc = 0; bloc < N_BLOCS; bloc++) {
+    edge += size[bloc] * CARE[bloc][issue] * (Math.abs(career.stances[b][issue] - IDEAL[bloc][issue]) - Math.abs(career.stances[a][issue] - IDEAL[bloc][issue]));
+  }
+  return edge * career.salience[issue];
+}
+
+/** How each bloc feels about where a party stands on one issue, from −0.5 (at the opposite end of what it wants) to 0.5 (exactly what it wants), times how much it cares. */
+export function blocFeeling(career: Career, p: number, issue: number): number[] {
+  return BLOC_IDS.map((_, b) => (0.5 - Math.abs(career.stances[p][issue] - IDEAL[b][issue]) / 4) * CARE[b][issue]);
 }
 
 /** The blocs that most like and most dislike a move to `to` on an issue, for showing the trade-off. */
@@ -237,12 +303,52 @@ export function setStance(c: Campaign, issue: number, to: number): boolean {
 /** Adds a promise to the player's manifesto or takes it out. Only before it is published. */
 export function togglePledge(c: Campaign, id: PledgeId): boolean {
   const career = c.career;
-  if (!career || career.launched || !(id in PLEDGES)) return false;
+  if (!career || career.launched || !(id in PLEDGES) || isEnacted(career, id)) return false;
   const mine = career.manifesto[c.player];
-  if (mine.includes(id)) career.manifesto[c.player] = mine.filter((x) => x !== id);
+  if (mine.includes(id)) {
+    career.manifesto[c.player] = mine.filter((x) => x !== id);
+    if (career.brief) { career.brief = career.brief.filter((x) => x !== id); if (career.brief.length === 0) delete career.brief; }
+  }
   else if (mine.length < MAX_PLEDGES) mine.push(id);
   else return false;
   return true;
+}
+
+/** Makes a promise in the player's manifesto a short one, or a full one again. Only before it is published. */
+export function setBrief(c: Campaign, id: PledgeId, brief: boolean): boolean {
+  const career = c.career;
+  if (!career || career.launched || !career.manifesto[c.player].includes(id)) return false;
+  const now = isBrief(career, id);
+  if (now === brief) return false;
+  if (brief) (career.brief ??= []).push(id);
+  else { career.brief = career.brief!.filter((x) => x !== id); if (career.brief.length === 0) delete career.brief; }
+  return true;
+}
+
+/**
+ * The rivals read the player's manifesto, and the larger parties copy what is popular in it: up to two promises each,
+ * half the time, for any that is worth at least a fifth across the blocs. What they copy is believed less coming from
+ * them, and it is worth less to the player for being everyone's.
+ */
+export function copyPledges(c: Campaign, rng: Rng): void {
+  const k = c.career!;
+  const popular = k.manifesto[c.player]
+    .filter((id) => pledgeValue(id) >= COPY.from)
+    .sort((a, b) => pledgeValue(b) - pledgeValue(a));
+  if (popular.length === 0) return;
+  c.parties.forEach((pc, p) => {
+    if (!pc || p === c.player || isMinor(p) || PARTY_IDS[p] === 'oth') return;
+    const took: PledgeId[] = [];
+    for (const id of popular) {
+      if (took.length >= COPY.perParty || k.manifesto[p].length >= MAX_PLEDGES || k.manifesto[p].includes(id) || isEnacted(k, id)) continue;
+      if (rng.next() >= COPY.chance + (fits(k, p, id) ? 0.2 : 0)) continue;
+      k.manifesto[p].push(id);
+      took.push(id);
+    }
+    if (took.length === 0) return;
+    (k.copied ??= {})[p] = took;
+    pushNews(c, { party: p, key: 'news.copied', vars: { party: `@party:${p}`, bill: `@bill:pledge:${took[0]}`, n: took.length }, tone: 'neutral' });
+  });
 }
 
 /** Publishes the player's manifesto. Promises that do not add up, or that contradict the party's line, cost credibility. */
@@ -250,9 +356,10 @@ export function launchManifesto(c: Campaign): boolean {
   const career = c.career;
   if (!career || career.launched) return false;
   const mine = career.manifesto[c.player];
-  const over = Math.max(0, manifestoCost(mine) - FISCAL_ROOM);
+  const over = Math.max(0, manifestoCost(mine, career.brief) - FISCAL_ROOM);
   const odd = mine.filter((id) => !fits(career, c.player, id)).length;
   career.credibility = clamp(career.credibility - 3 * over - 4 * odd, 0, 100);
   career.launched = true;
+  copyPledges(c, new Rng((c.rng ^ 0xc0b1) >>> 0));
   return true;
 }

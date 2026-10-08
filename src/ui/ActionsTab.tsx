@@ -1,21 +1,25 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
-import { ACTIONS, actionCost, canDo, expectedSeatGain, expectedYield, spendingLimit } from '../sim/campaign/actions';
+import { ACTIONS, PITCHED, actionCost, canDo, expectedPitchGain, expectedSeatGain, debateOdds, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
+import { ISSUE_IDS, LOCAL_THEMES, POSTURES, type IssueId, type LocalTheme, type Posture } from '../sim/campaign/types';
+import { weatherIn } from '../sim/campaign/weather';
+import { MEDIA_AIMED, resentfulOf, segmentShare, segmentsOf, type SegmentId } from '../sim/campaign/segments';
 import { probeChance } from '../sim/campaign/spending';
 import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
-import { isMinor, type RegionId } from '../sim/types';
+import { BLOC_IDS, isMinor, type BlocId, type RegionId } from '../sim/types';
 import { useStore } from '../state/store';
 import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, useWorld, contestName } from './hooks';
 import { Loan } from './Loan';
 import { Brief } from './Brief';
 import { Icon, type IconName } from './Icon';
 import { NominationsPanel } from './Nominations';
+import { EntriesPanel } from './Entries';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
-  { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival'] },
+  { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival', 'local'] },
   { family: 'machinery', actions: ['canvass', 'gotv', 'build', 'conference'] },
-  { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack'] },
+  { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack', 'troops'] },
   { family: 'funds', actions: ['dinner', 'crowdfund', 'tycoon'] },
 ];
 
@@ -23,7 +27,7 @@ const FAMILIES: { family: Family; actions: ActionId[] }[] = [
 const ACTION_ICON: Record<ActionId, IconName> = {
   ceramah: 'megaphone', walkabout: 'walk', megarally: 'flag', canvass: 'home', gotv: 'ballot', build: 'tool',
   tv: 'tv', social: 'phone', billboards: 'board', attack: 'bolt', dinner: 'coins', crowdfund: 'heart', tycoon: 'crown',
-  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic',
+  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic', local: 'flag', troops: 'bolt',
 };
 
 const GROUPS_KEY = 'k222.groups';
@@ -63,28 +67,44 @@ export function ActionsTab() {
     try { localStorage.setItem(GROUPS_KEY, JSON.stringify(next)); } catch { /* the choice is only for this visit */ }
   };
 
+  // The voter group a seat event is pitched to; a new seat starts with a pitch to everyone.
+  const [segment, setSegment] = useState<SegmentId | null>(null);
+  // A state’s or a seat’s manifesto is about one thing.
+  const [localTheme, setLocalTheme] = useState<LocalTheme>('roads');
+  // A debate: the question to be answered, and the way of answering it.
+  const hottest = campaign.career ? [...ISSUE_IDS].sort((a, b) => campaign.career!.salience[ISSUE_IDS.indexOf(b)] - campaign.career!.salience[ISSUE_IDS.indexOf(a)]).slice(0, 4) : [];
+  const [debateTopic, setDebateTopic] = useState<IssueId | undefined>(undefined);
+  const [debatePosture, setDebatePosture] = useState<Posture>('policy');
+  // The voter group a television, radio or social media push is aimed at; nobody in particular to begin with.
+  const [mediaSegment, setMediaSegment] = useState<BlocId | null>(null);
+  useEffect(() => { setSegment(null); }, [selectedSeat]);
+
   const me = campaign.player;
   const pc = campaign.parties[me]!;
   const seat = selectedSeat ? world.seats[world.seatIndex.get(selectedSeat)!] : null;
   // State actions follow the map: the open state, else the selected seat's state, else where the leader is.
   const state: RegionId = selectedState ?? seat?.state ?? pc.location;
   const area = world.rules.kind === 'general' ? 'state' : 'area';
+  const contesting = !!seat && PITCHED.some((id) => world.rules.actions.includes(id)) && canDo(world, campaign, me, 'walkabout', { seat: seat.id }).ok;
   // Attacks are aimed at the parties that matter nationally, not at a party of one seat.
   const rivals = campaign.parties.map((p, i) => (p && i !== me && !isMinor(i) ? i : -1)).filter((i) => i >= 0);
 
   /** Whether an action can be done now, or only waits for the player to pick a seat on the map. */
   const available = (id: ActionId) => {
     const targets: ActionTarget[] =
-      ACTIONS[id].target === 'seat' ? [{ seat: seat?.id }]
+      ACTIONS[id].target === 'seat' ? [{ seat: seat?.id, ...(segment && PITCHED.includes(id) ? { segment } : {}) }]
       : ACTIONS[id].target === 'state' ? [{ state }]
       : ACTIONS[id].target === 'party' ? rivals.map((party) => ({ party }))
       : [{}];
     return targets.some((target) => { const check = canDo(world, campaign, me, id, target); return check.ok || check.reason === 'noTarget'; });
   };
 
+  /** An action's name: a local event is named for the place it belongs to. */
+  const nameOf = (id: ActionId, st?: RegionId) => (id === 'local' && hasLocal(world, st) ? t(`local.${localPlace(world, st)}` as StringKey) : t(`action.${id}` as StringKey));
+
   /** What an action is called when it is aimed at something. */
   const titleOf = (id: ActionId, target: ActionTarget) => {
-    const name = t(`action.${id}`);
+    const name = nameOf(id, target.state);
     if (target.seat) return `${name} — ${world.seats[world.seatIndex.get(target.seat)!].name}`;
     if (target.state) return `${name} — ${regionLabel(t, world, target.state)}`;
     if (target.party !== undefined) return `${name} — ${partyShort(t, target.party)}`;
@@ -137,7 +157,7 @@ export function ActionsTab() {
   const row = (id: ActionId, target: ActionTarget, key: string, title: string, extra?: string, hint?: ReactNode) => {
     const check = canDo(world, campaign, me, id, target);
     const cost = actionCost(world, campaign, me, id, target);
-    const gain = target.seat ? expectedSeatGain(world, campaign, me, id, target.seat) : null;
+    const gain = target.seat ? expectedSeatGain(world, campaign, me, id, target.seat, target.segment) : null;
     const reason = check.ok ? null
       : check.reason === 'noTarget' ? t(`reason.noTarget.${ACTIONS[id].target === 'state' ? area : (ACTIONS[id].target as 'seat' | 'party')}`)
       : t(`reason.${check.reason}` as StringKey);
@@ -176,23 +196,32 @@ export function ActionsTab() {
   };
 
   const render = (id: ActionId) => {
-    const name = t(`action.${id}`);
+    const name = nameOf(id, state);
     const stateName = regionLabel(t, world, state);
     switch (ACTIONS[id].target) {
-      case 'seat':
-        return row(id, { seat: seat?.id }, id, `${name} — ${seat ? seat.name : t('actions.noSeat')}`);
-      case 'state':
-        return row(id, { state }, id, `${name} — ${stateName}`, extraFor(id, { state }));
+      case 'seat': {
+        const target: ActionTarget = { seat: seat?.id, ...(segment && PITCHED.includes(id) ? { segment } : {}) };
+        const aimed = target.segment ? ` · ${t(`bloc.${target.segment}`)}` : '';
+        return row(id, target, id, `${name} — ${seat ? seat.name : t('actions.noSeat')}${aimed}`);
+      }
+      case 'state': {
+        const target: ActionTarget = { state, ...(mediaSegment && MEDIA_AIMED.includes(id as never) ? { segment: mediaSegment } : {}) };
+        const aimed = target.segment ? ` · ${t(`bloc.${target.segment}`)}` : '';
+        return row(id, target, id, `${name} — ${stateName}${aimed}`, extraFor(id, target));
+      }
       case 'party':
-        return rivals.map((r) => row(id, { party: r }, `${id}-${r}`, `${name} — ${partyShort(t, r)}`));
-      default:
-        return row(id, {}, id, name, extraFor(id, {}));
+        return rivals.map((r) => row(id, { party: r, ...(id === 'debate' ? { topic: debateTopic, posture: debatePosture } : {}) }, `${id}-${r}`, `${name} — ${partyShort(t, r)}`, id === 'debate' && campaign.career ? t('debate.odds', { pct: Math.round(debateOdds(world, campaign, me, r, debateTopic, debatePosture) * 100) }) : undefined));
+      default: {
+        const target: ActionTarget = mediaSegment && MEDIA_AIMED.includes(id as never) ? { segment: mediaSegment } : id === 'manifesto' && world.rules.kind !== 'general' ? { theme: localTheme } : {};
+        return row(id, target, id, target.segment ? `${name} · ${t(`bloc.${target.segment}`)}` : name, extraFor(id, target));
+      }
     }
   };
 
   return (
     <section className="actions">
       <NominationsPanel />
+      <EntriesPanel />
       <p className="target-line">
         <span className="muted">{t('actions.target')}:</span>{' '}
         <i className="dot" data-party={me} style={{ background: partyColor(me) }} />
@@ -203,6 +232,7 @@ export function ActionsTab() {
         {t('spend.line', { spent: f.rm(pc.spent), limit: f.rm(spendingLimit(world)) })}
         {pc.fined ? ` ${t('spend.fined')}` : pc.spent > spendingLimit(world) ? ` ${fog ? t('spend.over.fog') : t('spend.over', { pct: f.pct(probeChance(world, campaign, me), 0) })}` : ''}
       </p>
+      {seat && contesting && <PitchPicker seatId={seat.id} segment={segment} onPick={setSegment} />}
       {ideas.length > 0 && (
         <details className="action-family suggested" open={open.suggested} onToggle={(e) => setGroup('suggested', e.currentTarget.open)}>
           <summary>
@@ -219,6 +249,7 @@ export function ActionsTab() {
           </ul>
         </details>
       )}
+      <p className={`muted small weather weather-${weatherIn(world, campaign, state)}`}>{t(`weather.${weatherIn(world, campaign, state)}` as StringKey, { state: regionLabel(t, world, state) })}</p>
       {FAMILIES.map(({ family, actions: all }) => {
         const actions = all.filter((id) => world.rules.actions.includes(id));
         if (actions.length === 0) return null;
@@ -229,8 +260,31 @@ export function ActionsTab() {
               <span className="muted small">{t('actions.group', { n: actions.length, ready: actions.filter(available).length })}</span>
             </summary>
             <ul className="action-list">
+              {family === 'media' && actions.some((id) => MEDIA_AIMED.includes(id as never)) && (
+                <li className="action-group"><MediaAim segment={mediaSegment} onPick={setMediaSegment} /></li>
+              )}
               {actions.map((id) => (
                 <li key={id} className="action-group">
+                  {id === 'manifesto' && world.rules.kind !== 'general' && (
+                    <section className="pitch" aria-label={t('theme.title')}>
+                      <p className="muted small"><strong>{t('theme.title')}</strong> — {t('theme.note')}</p>
+                      <div className="chips" role="group" aria-label={t('theme.title')}>
+                        {LOCAL_THEMES.map((x) => <button key={x} className={localTheme === x ? 'chip active' : 'chip'} aria-pressed={localTheme === x} onClick={() => setLocalTheme(x)}>{t(`theme.${x}` as StringKey)}</button>)}
+                      </div>
+                    </section>
+                  )}
+                  {id === 'debate' && hottest.length > 0 && (
+                    <section className="pitch" aria-label={t('debate.prep')}>
+                      <p className="muted small"><strong>{t('debate.prep')}</strong> — {t('debate.prep.note')}</p>
+                      <div className="chips" role="group" aria-label={t('debate.topic')}>
+                        <button className={debateTopic === undefined ? 'chip active' : 'chip'} aria-pressed={debateTopic === undefined} onClick={() => setDebateTopic(undefined)}>{t('debate.topic.any')}</button>
+                        {hottest.map((i) => <button key={i} className={debateTopic === i ? 'chip active' : 'chip'} aria-pressed={debateTopic === i} onClick={() => setDebateTopic(i)}>{t(`issue.${i}`)}</button>)}
+                      </div>
+                      <div className="chips" role="group" aria-label={t('debate.posture')}>
+                        {POSTURES.map((x) => <button key={x} className={debatePosture === x ? 'chip active' : 'chip'} aria-pressed={debatePosture === x} title={t(`debate.posture.${x}.desc` as StringKey)} onClick={() => setDebatePosture(x)}>{t(`debate.posture.${x}` as StringKey)}</button>)}
+                      </div>
+                    </section>
+                  )}
                   <Brief className="muted small action-desc" jargon text={t(`action.${id}.desc${fog && id === 'attack' ? '.fog' : ''}` as StringKey)} />
                   <ul>{render(id)}</ul>
                 </li>
@@ -240,6 +294,58 @@ export function ActionsTab() {
           </details>
         );
       })}
+    </section>
+  );
+}
+
+
+/** Television, radio and social media can be aimed at one group of voters: it hears them better, the groups unlike it hear them less. */
+function MediaAim({ segment, onPick }: { segment: BlocId | null; onPick(b: BlocId | null): void }) {
+  const t = useT();
+  return (
+    <section className="pitch" aria-label={t('media.aim.title')}>
+      <p className="muted small"><strong>{t('media.aim.title')}</strong> — {t('media.aim.note')}</p>
+      <div className="chips" role="group" aria-label={t('media.aim.title')}>
+        <button className={segment === null ? 'chip active' : 'chip'} aria-pressed={segment === null} onClick={() => onPick(null)}>{t('pitch.all')}</button>
+        {BLOC_IDS.map((b) => (
+          <button key={b} className={segment === b ? 'chip active' : 'chip'} aria-pressed={segment === b} onClick={() => onPick(b)}>{t(`bloc.${b}`)}</button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * A seat is several electorates at once, and a ceramah, walkabout or town hall can be pitched to one of them. The row
+ * shows, for each group in the seat, how many of the voters it is and what a night aimed at it should add to the party's
+ * share here, beside the same night pitched to everyone. The biggest group is not always the best aim: the others may not like it.
+ */
+function PitchPicker({ seatId, segment, onPick }: { seatId: string; segment: SegmentId | null; onPick(b: SegmentId | null): void }) {
+  const t = useT();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const me = campaign.player;
+  const seat = world.seats[world.seatIndex.get(seatId)!];
+  const gain = (b: SegmentId | null) => expectedPitchGain(world, campaign, me, 'ceramah', seatId, b) ?? 0;
+  const best = segmentsOf(seat);
+  const gains = new Map<SegmentId | null, number>([[null, gain(null)], ...best.map((b) => [b, gain(b)] as [SegmentId, number])]);
+  const top = [...gains.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  const bad = segment ? resentfulOf(seat, segment) : [];
+  const pts = (n: number) => `${n >= 0 ? '+' : '−'}${Math.abs(n).toFixed(1)}`;
+  return (
+    <section className="pitch" aria-label={t('pitch.title')}>
+      <p className="muted small"><strong>{t('pitch.title')}</strong> — {t('pitch.note')}</p>
+      <div className="chips" role="group" aria-label={t('pitch.title')}>
+        <button className={segment === null ? 'chip active' : 'chip'} aria-pressed={segment === null} onClick={() => onPick(null)}>
+          {top === null && '★ '}{t('pitch.all')} <span className="num dim">{pts(gains.get(null)!)}</span>
+        </button>
+        {best.map((b) => (
+          <button key={b} className={segment === b ? 'chip active' : 'chip'} aria-pressed={segment === b} onClick={() => onPick(b)}>
+            {top === b && '★ '}{t(`bloc.${b}`)} <span className="num dim">{Math.round(segmentShare(seat, b) * 100)}% · {pts(gains.get(b)!)}</span>
+          </button>
+        ))}
+      </div>
+      {bad.length > 0 && <p className="muted small">{t('pitch.resent', { groups: bad.map((b) => t(`bloc.${b}`)).join(', ') })}</p>}
     </section>
   );
 }

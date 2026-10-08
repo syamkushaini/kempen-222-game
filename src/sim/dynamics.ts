@@ -28,6 +28,7 @@ export function isValidDynamics(d: unknown): d is Dynamics {
     isMatrix(x.support.nat) &&
     isRecordOf(x.support.state, isMatrix) &&
     isRecordOf(x.support.seat, (v) => isNumArray(v, N_PARTIES)) &&
+    (x.support.seatBloc === undefined || isRecordOf(x.support.seatBloc, isMatrix)) &&
     typeof x.turnout === 'object' && x.turnout !== null &&
     isNumArray(x.turnout.nat, N_BLOCS) &&
     isNumArray(x.turnout.party, N_PARTIES) &&
@@ -56,6 +57,7 @@ export function combineDynamics(a: Dynamics, b: Dynamics): Dynamics {
       nat: addMatrix(a.support.nat, b.support.nat),
       state: mergeRecords(a.support.state, b.support.state, addMatrix),
       seat: mergeRecords(a.support.seat, b.support.seat, addVec),
+      ...(a.support.seatBloc || b.support.seatBloc ? { seatBloc: mergeRecords(a.support.seatBloc ?? {}, b.support.seatBloc ?? {}, addMatrix) } : {}),
     },
     turnout: {
       nat: addVec(a.turnout.nat, b.turnout.nat),

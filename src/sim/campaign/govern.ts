@@ -9,7 +9,10 @@ import { startFormation } from './formation';
 import { nationWeek } from './nation';
 import { pushNews, ref } from './news';
 import { cabinetWeek, economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
-import { PLEDGES } from './policy';
+import { draftingShift } from './ksu';
+import { rebelShare, speakerOf, speakerTip } from './chamber';
+import { BRIEF, PLEDGES, isBrief, isEnacted } from './policy';
+import { supportersOf, supports } from './supply';
 import {
   ISSUE_IDS, LEVER_IDS,
   type Campaign, type Career, type DemandId, type IssueId, type LeverId, type Obligation, type PledgeId, type PortfolioId, type Scene,
@@ -38,6 +41,8 @@ const PLEDGE_PORTFOLIO: Record<PledgeId, PortfolioId> = {
   cashAid: 'finance', fuelSubsidy: 'finance', minWage: 'economy', taxCut: 'finance', graftCommission: 'home', termLimit: 'home',
   hospitals: 'health', transitPass: 'works', debtWriteOff: 'education', civilPay: 'finance', borneoFund: 'rural',
   settlerDebt: 'rural', floorPrices: 'rural', valuesSchools: 'education', repealLaws: 'home', homes: 'works',
+  partyHopBan: 'home', fixedTerm: 'home', infoAct: 'home', localVote: 'home', gigRights: 'economy', oilRoyalty: 'finance',
+  schoolMeals: 'education', healthCover: 'health', greenGrid: 'works', villageRoads: 'rural', smeLoans: 'economy', seniorPension: 'finance',
 };
 
 /** Promises to partners that need an Act of Parliament rather than a signature. */
@@ -60,7 +65,13 @@ export function billDef(id: string): BillDef | null {
 export const MAX_BILLS = 2;
 
 /** Weeks a bill takes to reach its vote. A capable minister drafts faster. */
-export const prepWeeks = (k: Career, id: string) => Math.max(3, 9 - skillOf(k, billDef(id)?.portfolio ?? 'home'));
+export const prepWeeks = (k: Career, id: string) => {
+  const def = billDef(id);
+  const base = 9 - skillOf(k, def?.portfolio ?? 'home');
+  // The head of the civil service drafts it: slowly if cautious and the bill is costly, quickly if reforming and it is reform.
+  const reform = !!def?.issue && (def.issue[0] === 'reform' || def.issue[0] === 'graft');
+  return Math.max(3, base + draftingShift(reform, def?.cost ?? 0, k.ksu?.outlook ?? 'political'));
+};
 
 /** Bills the player, as head of government, could put to the House: promises not yet settled, and what partners are owed. */
 export function agenda(c: Campaign): string[] {
@@ -101,10 +112,18 @@ export function whipCount(world: World, c: Campaign, id: string, proposer: numbe
       out.yes += yes; out.no += n - yes;
       return;
     }
+    // The proposer's own backbenchers, when their party is in uproar, do not all do as they are told.
+    if (p === proposer && !terms.forced) {
+      const rebels = Math.floor(n * rebelShare(c.parties[p]?.unity ?? 100));
+      out.yes += n - rebels; out.no += rebels;
+      out.lean[p] = 1;
+      out.votes[p] = 'yes';
+      return;
+    }
     const align = def?.issue ? (k.stances[p][ISSUE_IDS.indexOf(def.issue[0])] * def.issue[1]) / 2 : 0.2;
     const warmth = relation(c, proposer, p) / 200;
     const margin = p === proposer ? 1
-      : inGov(c, p) && inGov(c, proposer)
+      : (inGov(c, p) || supports(c, p)) && inGov(c, proposer)
         ? 0.35 + k.government.stability / 250 + 0.5 * align + warmth + (terms.sweetened ? 0.25 : 0) + (terms.confidence ? 0.4 : 0) - 0.5
         : 0.6 * align + warmth + (terms.sweetened ? 0.15 : 0) - 0.35;
     out.lean[p] = margin;
@@ -115,6 +134,13 @@ export function whipCount(world: World, c: Campaign, id: string, proposer: numbe
   return out;
 }
 
+/** How many votes a bill needs: a majority of the House, or two thirds of it for an amendment of the constitution. */
+export function voteNeed(world: World, id: string): number {
+  const [kind, name] = id.split(':');
+  const amend = kind === 'pledge' && !!PLEDGES[name as PledgeId]?.amend;
+  return amend ? Math.ceil((world.seats.length * 2) / 3) : majorityLine(world);
+}
+
 /** Holds the vote: the wavering make up their minds. Returns the final count. */
 function divide(world: World, c: Campaign, id: string, proposer: number, terms: VoteTerms): { yes: number; no: number; passed: boolean } {
   const whip = whipCount(world, c, id, proposer, terms);
@@ -123,21 +149,64 @@ function divide(world: World, c: Campaign, id: string, proposer: number, terms: 
   let { yes, no } = whip;
   whip.votes.forEach((v, p) => {
     if (v !== 'wavering') return;
-    if (rng.next() < 0.5 + whip.lean[p] / 0.16) yes += seats[p]; else no += seats[p];
+    if (rng.next() < 0.5 + whip.lean[p] / 0.16 + (proposer === k0(c).government.pm ? speakerTip(c) : -speakerTip(c))) yes += seats[p]; else no += seats[p];
   });
   c.rng = rng.state;
-  return { yes, no, passed: yes > no };
+  // A tied House is the Speaker’s: it goes the way they lean.
+  const need = voteNeed(world, id);
+  return { yes, no, passed: need > majorityLine(world) ? yes >= need : yes > no || (yes === no && speakerOf(c).lean > 0) };
 }
 
+const k0 = (c: Campaign) => c.career!;
 const billRef = (id: string) => `@bill:${id}`;
 
+/** One Act a government may repeal in a term: it goes back to being something that can be promised, at a price in trust and in the voters who liked it. */
+export function canRepeal(c: Campaign, id: PledgeId): boolean {
+  const k = c.career;
+  return !!k && c.phase === 'term' && isPm(c) && c.inbox.length === 0 && isEnacted(k, id) && !k.flags.includes(`repeal${k.term}`);
+}
+
+/** An Act that is no longer on the books is no longer shaky, nor protected by a vote of the people. */
+export function forgetAct(k: Career, id: PledgeId): void {
+  if (k.shaky) { k.shaky = k.shaky.filter((x) => x !== id); if (k.shaky.length === 0) delete k.shaky; }
+  if (k.mandated) { k.mandated = k.mandated.filter((x) => x !== id); if (k.mandated.length === 0) delete k.mandated; }
+}
+
+/** The head of government repeals an Act: its friends punish them, its enemies are a little pleased, and the public sees what it is. */
+export function repeal(c: Campaign, id: PledgeId): boolean {
+  if (!canRepeal(c, id)) return false;
+  const k = c.career!;
+  k.laws = (k.laws ?? []).filter((x) => x !== id);
+  if (k.laws.length === 0) delete k.laws;
+  forgetAct(k, id);
+  k.flags.push(`repeal${k.term}`);
+  k.government.trust = clamp(k.government.trust - 3, 0, 100);
+  k.credibility = clamp(k.credibility - 3, 0, 100);
+  for (const [bloc, v] of Object.entries(PLEDGES[id].appeal)) lift(k, c.player, [bloc as BlocId], v > 0 ? -v * 0.5 : -v * 0.3);
+  pushNews(c, { party: c.player, key: 'news.gov.repealed', vars: { bill: `@bill:pledge:${id}` }, tone: 'bad' });
+  return true;
+}
+
 /** What a passed bill does for the party that brought it. */
-function enact(c: Campaign, id: string, proposer: number) {
+export function enact(c: Campaign, id: string, proposer: number, share?: number) {
   const k = c.career!;
   const def = billDef(id)!;
-  for (const [bloc, v] of Object.entries(def.appeal)) lift(k, proposer, [bloc as BlocId], v * 0.5);
-  k.fiscal += def.cost;
+  const [kind, name] = id.split(':');
+  // A promise made in its short form does half as much, and costs half as much.
+  const scale = kind === 'pledge' && proposer === c.player && isBrief(k, name as PledgeId) ? BRIEF.share : 1;
+  for (const [bloc, v] of Object.entries(def.appeal)) lift(k, proposer, [bloc as BlocId], v * 0.5 * scale);
+  k.fiscal += def.cost * scale;
+  // An Act stays on the books: it leaves every party's manifesto, and is not promised again at the next election.
+  if (kind === 'pledge' && PLEDGES[name as PledgeId]?.law && !isEnacted(k, name as PledgeId)) {
+    (k.laws ??= []).push(name as PledgeId);
+    k.manifesto = k.manifesto.map((m) => m.filter((x) => x !== name));
+    // An Act that scraped through the House is one a court may later strike down.
+    if (share !== undefined && share < SHAKY_BELOW) (k.shaky ??= []).push(name as PledgeId);
+  }
 }
+
+/** The share of the House's votes below which an Act that passed is thought shaky. */
+export const SHAKY_BELOW = 0.55;
 
 /**
  * The player's bill comes to its vote. 0: put it to the vote. 1: sweeten it
@@ -160,14 +229,14 @@ export function resolveVote(world: World, c: Campaign, scene: Scene, choice: num
   const result = divide(world, c, id, me, { sweetened: choice === 1, confidence: choice === 2 });
   const vars = { bill: billRef(id), yes: result.yes, no: result.no };
   if (result.passed) {
-    enact(c, id, me);
-    if (kind === 'pledge') { k.delivery[name as PledgeId] = 'kept'; k.record.kept.push(name as PledgeId); k.credibility = clamp(k.credibility + 3, 0, 100); }
+    enact(c, id, me, result.yes / Math.max(1, result.yes + result.no));
+    if (kind === 'pledge') { k.delivery[name as PledgeId] = 'kept'; k.record.kept.push(name as PledgeId); k.credibility = clamp(k.credibility + (isBrief(k, name as PledgeId) ? BRIEF.kept : 3), 0, 100); }
     else settle(c, name as DemandId);
     pushNews(c, { party: me, key: 'news.gov.passed', vars, tone: 'good' });
     return;
   }
   if (kind === 'pledge') k.delivery[name as PledgeId] = 'failed';
-  k.credibility = clamp(k.credibility - 2, 0, 100);
+  k.credibility = clamp(k.credibility - (kind === 'pledge' && isBrief(k, name as PledgeId) ? BRIEF.failed : 2), 0, 100);
   k.government.stability = clamp(k.government.stability - 5, 5, 95);
   pushNews(c, { party: me, key: 'news.gov.defeated', vars, tone: 'bad' });
   if (choice === 2) { k.record.falls++; openTalks(world, c); }
@@ -178,7 +247,7 @@ function rivalBill(c: Campaign): void {
   const k = c.career!;
   const pm = k.government.pm;
   const next = k.manifesto[pm][k.rivalBills];
-  if (pm === c.player || !next || k.week < 20 || (k.week - 20) % 40 !== 0) return;
+  if ((pm === c.player && !k.limited) || !next || k.week < 20 || (k.week - 20) % 40 !== 0) return;
   k.rivalBills++;
   addScene(c, { kind: 'houseVote', from: pm, bill: `pledge:${next}` });
 }
@@ -199,7 +268,7 @@ export function resolveHouseVote(world: World, c: Campaign, scene: Scene, choice
     shiftRelation(c, me, pm, inGov(c, me) ? -15 : -5);
     if (inGov(c, me)) k.government.stability = clamp(k.government.stability - 6, 5, 95);
   }
-  if (result.passed) enact(c, id, pm);
+  if (result.passed) enact(c, id, pm, result.yes / Math.max(1, result.yes + result.no));
   else k.government.stability = clamp(k.government.stability - 4, 5, 95);
   pushNews(c, {
     party: pm, key: result.passed ? 'news.house.passed' : 'news.house.defeated',
@@ -274,6 +343,9 @@ export function deliver(c: Campaign, index: number): boolean {
 // ---------- leaning on institutions ----------
 
 const LEVER_GAP = 52;
+/** What each earlier use of the same lever this parliament adds: to the trust it costs, the chance the agency's attack backfires, the harm to the cities and the young, and the loss of credibility. */
+export const LEVER_STRAIN = { trust: 2, backfire: 0.1, mood: 0.01, credibility: 1, max: 4 };
+export const leverStrain = (k: Career, id: LeverId): number => Math.min(LEVER_STRAIN.max, k.leverUses?.[id] ?? 0);
 export function canPull(c: Campaign, id: LeverId): boolean {
   const k = c.career;
   if (!k || c.phase !== 'term' || !isPm(c) || c.inbox.length > 0) return false;
@@ -299,23 +371,27 @@ export function pullLever(world: World, c: Campaign, id: LeverId): boolean {
   const g = k.government;
   const rng = new Rng(c.rng);
   k.levers[LEVER_IDS.indexOf(id)] = k.week;
+  // Leaning on the same institution again and again is noticed: each time costs more, and the agency's targets are readier for it.
+  const strain = leverStrain(k, id);
+  (k.leverUses ??= {})[id] = (k.leverUses[id] ?? 0) + 1;
+  g.trust = clamp(g.trust - LEVER_STRAIN.trust * strain, 0, 100);
   let key = `news.gov.lever.${id}`;
   if (id === 'agency') {
     const target = mainOpposition(world, c);
     g.trust = clamp(g.trust - 6, 0, 100);
     if (target >= 0) {
       shiftRelation(c, me, target, -25);
-      if (rng.next() < 0.7) lift(k, target, 'all', -0.03);
+      if (rng.next() < 0.7 - LEVER_STRAIN.backfire * strain) lift(k, target, 'all', -0.03);
       else { lift(k, target, 'all', 0.02); k.credibility = clamp(k.credibility - 5, 0, 100); key += '.backfire'; }
     }
   } else if (id === 'police') {
     g.trust = clamp(g.trust - 4, 0, 100);
     c.parties.forEach((pc, p) => { if (pc && !inGov(c, p)) k.profile[p] = Math.max(0, k.profile[p] - 0.02); });
-    lift(k, me, ['urban_lib', 'undi18'], -0.02);
+    lift(k, me, ['urban_lib', 'undi18'], -0.02 - LEVER_STRAIN.mood * strain);
     k.salience[ISSUE_IDS.indexOf('liberties')] = clamp(k.salience[ISSUE_IDS.indexOf('liberties')] + 0.4, 0.5, 2);
   } else {
     g.trust = clamp(g.trust - 3, 0, 100);
-    k.credibility = clamp(k.credibility - 2, 0, 100);
+    k.credibility = clamp(k.credibility - 2 - LEVER_STRAIN.credibility * strain, 0, 100);
     k.profile[me] = Math.min(0.12, k.profile[me] + 0.04);
   }
   c.rng = rng.state;
@@ -340,7 +416,8 @@ export const loyalty = (c: Campaign, p: number) => relation(c, c.career!.governm
 export function confidenceCount(world: World, c: Campaign, sway: (p: number) => number = () => 0): number {
   const g = c.career!.government;
   const seats = houseTally(world, c);
-  return seats[g.pm] + g.partners.reduce((a, p) => a + (loyalty(c, p) + sway(p) > 0 ? seats[p] : 0), 0) + Math.floor(seats[OTH] / 2);
+  // Those who keep the government in office from outside count with its partners.
+  return seats[g.pm] + [...g.partners, ...supportersOf(c)].reduce((a, p) => a + (loyalty(c, p) + sway(p) > 0 ? seats[p] : 0), 0) + Math.floor(seats[OTH] / 2);
 }
 
 /** Holds a confidence vote. Returns true if the government survives. */

@@ -3,9 +3,12 @@ import { majorityLine } from '../sim/election';
 import { scaled } from '../sim/campaign/actions';
 import { BY_EFFORT, holderOf, ROUNDS, STATE_EFFORT } from '../sim/campaign/contests';
 import { COST, pactPreview } from '../sim/campaign/diplomacy';
+import { AGENDA, type AgendaChoice } from '../sim/campaign/agenda';
+import { CHIEF_NAMES, FACTION_IDS, POLL_ANSWERS, backing, deputyOf, pollOdds, type FactionId } from '../sim/campaign/factions';
+import type { StateId } from '../sim/types';
 import { canChoose, EVENTS, gambleChance, ULTIMATUM_MONEY, type Choice, type Effect } from '../sim/campaign/events';
 import { bluffChance } from '../sim/campaign/plots';
-import { billDef, confidenceCount, deficit, looseness, standstill, whipCount } from '../sim/campaign/govern';
+import { billDef, confidenceCount, deficit, looseness, standstill, voteNeed, whipCount } from '../sim/campaign/govern';
 import { billName } from './GovernmentTab';
 import type { Scene } from '../sim/campaign/types';
 import { useStore } from '../state/store';
@@ -21,14 +24,11 @@ import { divisionSeating } from './seating';
  * audience at the Palace. Shown over the game, oldest first, until answered.
  */
 export function SceneModal() {
-  const scene = useStore((s) => s.game?.campaign.inbox[0]);
+  const inbox = useStore((s) => s.game?.campaign.inbox);
   const hidden = useStore((s) => s.hiddenScene);
-  const open = useStore((s) => s.sceneOpen);
-  const phase = useStore((s) => s.game?.campaign.phase);
-  // In a campaign or a term a decision waits in the inbox until it is opened. In the talks and on the night after,
-  // the decisions are the business of the screen, and come up by themselves.
-  const inbox = phase === 'campaign' || phase === 'term';
-  return scene && (!inbox || open) && scene.id !== hidden ? <SceneCard key={scene.id} scene={scene} /> : null;
+  // Every decision comes up by itself, oldest first; only one the player has set aside waits, as a bar, until they open it again.
+  const scene = inbox?.find((x) => !hidden.includes(x.id));
+  return scene ? <SceneCard key={scene.id} scene={scene} /> : null;
 }
 
 function SceneCard({ scene }: { scene: Scene }) {
@@ -92,6 +92,7 @@ function SceneCard({ scene }: { scene: Scene }) {
     body = (
       <>
         <p>{t('scene.pact.body', { party: partyName(t, from), give: scene.give?.length ?? 0, get: scene.get?.length ?? 0 })}</p>
+        {scene.ask?.length ? <p className="note">{t('scene.pact.ask', { n: scene.ask.length })}</p> : null}
         {preview && (
           <p className="muted small">
             {t('scene.pact.preview', { me: partyShort(t, me), a0: preview.a[0], a1: preview.a[1], party: partyShort(t, from), b0: preview.b[0], b1: preview.b[1] })}
@@ -169,10 +170,10 @@ function SceneCard({ scene }: { scene: Scene }) {
     title = t(mine ? 'scene.vote.title' : 'scene.houseVote.title', { bill: billName(t, id), party: from === null ? '' : partyName(t, from) });
     body = (
       <>
-        <p>{t(mine ? 'scene.vote.body' : 'scene.houseVote.body', { bill: billName(t, id), need: majorityLine(world) })}</p>
+        <p>{t(mine ? 'scene.vote.body' : 'scene.houseVote.body', { bill: billName(t, id), need: voteNeed(world, id) })}</p>
         <p className="muted small">{t('chamber.whips')}</p>
         <Chamber
-          stagger blocs={divisionSeating(world, campaign, whipCount(world, campaign, id, proposer))} need={majorityLine(world)}
+          stagger blocs={divisionSeating(world, campaign, whipCount(world, campaign, id, proposer))} need={voteNeed(world, id)}
           sides={{ left: t('chamber.gov'), right: t('chamber.opp'), middle: t('chamber.cross') }}
         />
       </>
@@ -189,6 +190,50 @@ function SceneCard({ scene }: { scene: Scene }) {
           { label: t('scene.houseVote.o1'), choice: 1, hint: count({ forced: { [me]: 'no' } }) },
           { label: t('scene.houseVote.o2'), choice: 2, hint: count({ forced: { [me]: 'abstain' } }) },
         ];
+  } else if (scene.kind === 'agenda' && scene.event && AGENDA[scene.event as StateId]) {
+    const st = scene.event as StateId;
+    title = t(`agenda.${st}.title` as StringKey);
+    body = (
+      <>
+        <p>{t(`agenda.${st}.body` as StringKey)}</p>
+        {campaign.phase === 'term' && (campaign.career?.agendaAnswers?.length ?? 0) > 0 && <p className="note">{t('agenda.again')}</p>}
+      </>
+    );
+    // What an answer does, plainly: who it pleases, who it costs, and what it costs the party.
+    const hint = (choice: AgendaChoice): string => {
+      const lifts = Object.entries(choice.lift) as [string, number][];
+      const up = lifts.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).map(([b]) => t(`bloc.${b}` as StringKey));
+      const down = lifts.filter(([, v]) => v < 0).map(([b]) => t(`bloc.${b}` as StringKey));
+      const parts = [
+        up.length ? `▲ ${up.join(', ')}` : '', down.length ? `▼ ${down.join(', ')}` : '',
+        choice.funds ? `${choice.funds > 0 ? '+' : '−'}${f.rm(scaled(world, Math.abs(choice.funds)))}` : '',
+        choice.unity ? `${t('hint.unity')} ${choice.unity > 0 ? '+' : '−'}${Math.abs(choice.unity)}` : '',
+      ].filter(Boolean);
+      return parts.length ? parts.join(' · ') : t('hint.agenda.silence');
+    };
+    options = AGENDA[st]!.choices.map((choice, i) => ({
+      label: t(`agenda.${st}.o${i}` as StringKey), choice: i, hint: hint(choice),
+      disabled: !!choice.funds && choice.funds < 0 && campaign.parties[me]!.funds < scaled(world, Math.abs(choice.funds)),
+    }));
+  } else if (scene.kind === 'partyPoll') {
+    const isDeputy = scene.event === 'deputy';
+    const who = scene.event as FactionId;
+    title = t('partyPoll.title');
+    body = isDeputy
+      ? <p>{t('partyPoll.deputy', { name: CHIEF_NAMES[deputyOf(campaign).name], faction: t(`faction.${FACTION_IDS[deputyOf(campaign).faction]}` as StringKey), pct: backing(campaign) })}</p>
+      : <p>{t('partyPoll.body', { faction: t(`faction.${who}` as StringKey), pct: backing(campaign) })}</p>;
+    options = POLL_ANSWERS.map((a, i) => ({
+      label: t(`partyPoll.o${i}` as StringKey), choice: i,
+      hint: [a.money ? `−${f.rm(scaled(world, a.money))}` : '', i === 1 ? t('partyPoll.o1.cost') : '', fog ? '' : t('partyPoll.odds', { pct: f.pct(pollOdds(campaign, i, isDeputy), 0) })].filter(Boolean).join(' · '),
+      disabled: a.money > 0 && campaign.parties[me]!.funds < scaled(world, a.money),
+    }));
+  } else if (scene.kind === 'redraw') {
+    title = t('redraw.title');
+    body = <p>{t('redraw.body')}</p>;
+    options = [
+      { label: t('redraw.o0'), choice: 0, hint: t('redraw.o0.hint') },
+      { label: t('redraw.o1'), choice: 1, hint: `${t('hint.trust')} −6 · ${t('hint.cred')} −3 · ${t('redraw.o1.hint')}` },
+    ];
   } else if (scene.kind === 'summons') {
     title = t('scene.palace.title');
     body = <p>{t(`scene.summons.body.${kind}`, { n: majorityLine(world), days: campaign.formation?.deadline ?? 0 })}</p>;
@@ -203,16 +248,16 @@ function SceneCard({ scene }: { scene: Scene }) {
   }
 
   // Matters of the term: they can be set aside while the player looks around, but time waits for an answer.
-  const desk = scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote';
+  const desk = scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'agenda' || scene.kind === 'partyPoll' || scene.kind === 'redraw';
   return (
     <div className="overlay">
       <div className="dialog panel" role="dialog" aria-modal="true" aria-label={title}>
         <div className="dialog-head">
-          {scene.kind === 'event' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
+          {scene.kind === 'event' || scene.kind === 'agenda' || scene.kind === 'partyPoll' || scene.kind === 'redraw' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
             : from === null ? <Portrait emblem="palace" size={46} /> : <Portrait leader={from} size={46} />}
           <div className="grow">
             <p className={from === null && !desk ? 'dialog-from palace' : 'dialog-from'}>
-              {scene.kind === 'event' ? t('scene.from.desk') : desk ? t('scene.from.house') : from === null ? t('scene.from.palace') : t('scene.from.phone')}
+              {scene.kind === 'event' ? t('scene.from.desk') : scene.kind === 'agenda' ? t('scene.agenda.from') : desk ? t('scene.from.house') : from === null ? t('scene.from.palace') : t('scene.from.phone')}
             </p>
             <h2>{title}</h2>
           </div>

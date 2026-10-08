@@ -172,7 +172,7 @@ export function Header() {
   const player = useStore((s) => s.game?.campaign.player);
   const narrow = useNarrow();
   const waiting = useStore((s) => (s.game && (s.game.campaign.phase === 'campaign' || s.game.campaign.phase === 'term') ? s.game.campaign.inbox.length : 0));
-  const sceneOpen = useStore((s) => s.sceneOpen);
+  const aside = useStore((s) => !!s.game && s.game.campaign.inbox.every((x) => s.hiddenScene.includes(x.id)));
   const openScene = useStore((s) => s.openScene);
   const week = useStore((s) => s.game?.campaign.week);
   const totalWeeks = useStore((s) => s.game?.campaign.totalWeeks);
@@ -209,8 +209,8 @@ export function Header() {
       {phase === 'campaign' && !narrow && <Hud />}
       {phase === 'term' && !narrow && <TermHud />}
       {/* On a phone the panel may be scrolled far down, or the map may be showing: a decision that is waiting says so here, always in sight. */}
-      {narrow && waiting > 0 && !sceneOpen && (
-        <button className="icon-btn inbox-button" title={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} aria-label={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} onClick={() => openScene(true)}>
+      {narrow && waiting > 0 && aside && (
+        <button className="icon-btn inbox-button" title={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} aria-label={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} onClick={() => openScene()}>
           <Icon name="inbox" size={20} /><span className="count-badge">{waiting}</span>
         </button>
       )}

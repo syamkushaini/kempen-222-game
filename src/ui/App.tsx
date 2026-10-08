@@ -25,6 +25,7 @@ import { SeatDetail, SeatsTab } from './SeatsTab';
 import { WeekRecap } from './WeekRecap';
 import { Standing } from './Standing';
 import { TeamTab } from './TeamTab';
+import { CandidatesTab } from './CandidatesTab';
 import { VotersTab } from './VotersTab';
 import { Icon, type IconName } from './Icon';
 import { Title } from './Title';
@@ -38,6 +39,7 @@ const FormationScreen = lazy(() => import('./Formation').then((m) => ({ default:
 const LegacyScreen = lazy(() => import('./LegacyScreen').then((m) => ({ default: m.LegacyScreen })));
 const GovernmentTab = lazy(() => import('./GovernmentTab').then((m) => ({ default: m.GovernmentTab })));
 const OrdersTab = lazy(() => import('./OrdersTab').then((m) => ({ default: m.OrdersTab })));
+const PartyTab = lazy(() => import('./PartyTab').then((m) => ({ default: m.PartyTab })));
 const PolicyTab = lazy(() => import('./PolicyTab').then((m) => ({ default: m.PolicyTab })));
 const TermDesk = lazy(() => import('./TermDesk').then((m) => ({ default: m.TermDesk })));
 
@@ -50,7 +52,7 @@ installIdentity();
 type GroupId = 'run' | 'people' | 'intel';
 const GROUPS: { id: GroupId; icon: IconName; tabs: SidebarTab[] }[] = [
   { id: 'run', icon: 'flag', tabs: ['desk', 'orders', 'house', 'actions', 'chiefs', 'policy'] },
-  { id: 'people', icon: 'people', tabs: ['team', 'deals'] },
+  { id: 'people', icon: 'people', tabs: ['team', 'party', 'slate', 'deals'] },
   { id: 'intel', icon: 'intel', tabs: ['seats', 'polls', 'voters', 'news'] },
 ];
 /** Tabs that belong only to the years between elections, and only to the campaign. */
@@ -58,7 +60,7 @@ const TERM_ONLY: SidebarTab[] = ['desk', 'orders', 'house'];
 const CAMPAIGN_ONLY: SidebarTab[] = ['actions', 'chiefs', 'deals'];
 /** The picture that goes with each tab, beside its name. */
 const TAB_ICON: Record<SidebarTab, IconName> = {
-  desk: 'inbox', orders: 'doc', house: 'landmark', policy: 'sliders', actions: 'megaphone', team: 'crown', chiefs: 'flag', deals: 'chat',
+  desk: 'inbox', orders: 'doc', house: 'landmark', policy: 'sliders', actions: 'megaphone', team: 'crown', party: 'coins', slate: 'ballot', chiefs: 'flag', deals: 'chat',
   seats: 'target', polls: 'intel', voters: 'people', news: 'book', saves: 'folder',
 };
 const groupLabel = (id: GroupId, term: boolean): StringKey => (id === 'run' ? (term ? 'group.run.term' : 'group.run.campaign') : `group.${id}`) as StringKey;
@@ -82,17 +84,17 @@ function ViewSwitch() {
 }
 
 /**
- * Decisions wait here until the player opens them: a calls from another leader, an event on the desk. A new one
- * pulses once so that it is noticed; the week cannot end while one is waiting, and the bar says so.
+ * A decision the player has set aside waits here until they open it again (a new one comes up by itself, from the store).
+ * The week cannot end while one is waiting, and the bar says so.
  */
 function Inbox() {
   const t = useT();
   const waiting = useStore((s) => s.game!.campaign.inbox.length);
-  const open = useStore((s) => s.sceneOpen);
+  const aside = useStore((s) => s.game!.campaign.inbox.every((x) => s.hiddenScene.includes(x.id)));
   const openScene = useStore((s) => s.openScene);
-  if (waiting === 0 || open) return null;
+  if (waiting === 0 || !aside) return null;
   return (
-    <button className="inbox-bar" key={waiting} onClick={() => openScene(true)}>
+    <button className="inbox-bar" key={waiting} onClick={() => openScene()}>
       <Icon name="inbox" />
       <span className="grow">{t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })}</span>
       <strong>{t('inbox.open')} ▸</strong>
@@ -112,7 +114,7 @@ function CampaignScreen() {
   const term = campaign.phase === 'term';
   const available = (id: SidebarTab) =>
     (id !== 'chiefs' || hasChiefs(world)) && (id !== 'deals' || hasDiplomacy(world)) &&
-    (id !== 'policy' || !!campaign.career) && !(term ? CAMPAIGN_ONLY : TERM_ONLY).includes(id);
+    (id !== 'policy' || !!campaign.career) && (id !== 'party' || !!campaign.career) && !(term ? CAMPAIGN_ONLY : TERM_ONLY).includes(id);
   const groups = GROUPS.map((g) => ({ ...g, tabs: g.tabs.filter(available) })).filter((g) => g.tabs.length > 0);
   const every = groups.flatMap((g) => g.tabs);
   const shown = every.includes(tab) ? tab : every[0];
@@ -209,6 +211,8 @@ function CampaignScreen() {
             {shown === 'policy' && <PolicyTab />}
             {shown === 'actions' && <ActionsTab />}
             {shown === 'team' && <TeamTab />}
+            {shown === 'party' && <PartyTab />}
+            {shown === 'slate' && <CandidatesTab />}
             {shown === 'chiefs' && <ChiefsTab />}
             {shown === 'deals' && <DiplomacyTab />}
             {shown === 'seats' && <SeatsTab />}

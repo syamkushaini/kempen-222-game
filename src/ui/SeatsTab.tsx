@@ -6,6 +6,7 @@ import {
   lastOutcome, partyColor, partyName, partyShort, regionLabel, useDisplay, useFormat, useIntel, useT, useTruth, useWorld, type SeatDisplay,
 } from './hooks';
 import { SeatNomination } from './Nominations';
+import { SeatEntry } from './Entries';
 
 const TARGETS = 8;
 const DEFEND = 5;
@@ -181,6 +182,7 @@ export function SeatDetail({ seatId, onClose }: { seatId: string; onClose?: () =
         <p key={from} className="note">{t('seat.aside', { from: partyName(t, from), to: partyName(t, to) })}</p>
       ))}
       <SeatNomination seatId={seatId} />
+      <SeatEntry seatId={seatId} />
       <div className="button-row tight">{quick('ceramah')}{quick('walkabout')}</div>
 
       <h3>{t('seat.poll')}{intel && <span className="h3-note"> · {t('seat.pollMeta', { n: intel.week, moe: Math.round(intel.moe * 100) })}</span>}</h3>

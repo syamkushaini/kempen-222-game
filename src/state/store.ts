@@ -6,9 +6,9 @@ import {
   answerEvent, dissolve, foundForContest, invest, nextTerm, resumeTerm, setOrders, skipAhead, startCareer, syncOpinion,
 } from '../sim/campaign/career';
 import {
-  appoint, deliver, leaveGovernment, pullLever, reshuffle, setBudget, tableBill, tableMotion,
+  appoint, deliver, leaveGovernment, repeal, pullLever, reshuffle, setBudget, tableBill, tableMotion,
 } from '../sim/campaign/govern';
-import { choose, vetHopeful } from '../sim/campaign/candidates';
+import { choose, openSeat, standLeader, vetHopeful } from '../sim/campaign/candidates';
 import { canChoose } from '../sim/campaign/events';
 import { borrow } from '../sim/campaign/loan';
 import { courtEndorser } from '../sim/campaign/endorsers';
@@ -16,9 +16,9 @@ import type { IdeologyId } from '../sim/campaign/leader';
 import { retire } from '../sim/campaign/legacy';
 import { hireTroopers, interview } from '../sim/campaign/media';
 import { dismiss, hire, vet } from '../sim/campaign/staff';
-import { launchManifesto, setStance, togglePledge } from '../sim/campaign/policy';
+import { launchManifesto, setBrief, setStance, togglePledge } from '../sim/campaign/policy';
 import {
-  breakPact, courtDefector, jointAttack, meetLeader, proposePact, resolveCampaignScene, seekUnderstanding,
+  breakPact, courtDefector, type Stake, jointAttack, meetLeader, proposePact, resolveCampaignScene, seekUnderstanding,
   type PactProposal, type PactVerdict,
 } from '../sim/campaign/diplomacy';
 import {
@@ -26,8 +26,8 @@ import {
 } from '../sim/campaign/formation';
 import { closeNight, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
-  ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, NewsItem, Offer, Orders,
-  OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId,
+  ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
+  IssueId, OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId,
 } from '../sim/campaign/types';
 import { randomSeed } from '../sim/rng';
 import type { World } from '../sim/election';
@@ -36,6 +36,24 @@ import { newGame, startOf, type GameState, type StartOptions } from './game';
 import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
+import { enterSeat, leaveSeat } from '../sim/campaign/entry';
+import { usePower, type PowerId } from '../sim/campaign/statepowers';
+import { writeLetter, type Tone } from '../sim/campaign/letters';
+import { agreeEarly, dropEarly } from '../sim/campaign/earlypact';
+import { formUnity } from '../sim/campaign/grand';
+import { offerDeputy } from '../sim/campaign/plots';
+import { aidSector, type SectorId } from '../sim/campaign/sectors';
+import { openInquiry } from '../sim/campaign/committee';
+import { dissolveAlliance, expel, foundAlliance, invite } from '../sim/campaign/alliance';
+import { renewSupply, signSupply, type SupplyPrice } from '../sim/campaign/supply';
+import { merge } from '../sim/campaign/merge';
+import { nameShadow } from '../sim/campaign/shadow';
+import { resolveAgenda } from '../sim/campaign/agenda';
+import { forceByElection } from '../sim/campaign/contests';
+import { callReferendum } from '../sim/campaign/courts';
+import { setPatronage } from '../sim/campaign/patronage';
+import { grantSafe, revokeSafe } from '../sim/campaign/safeseat';
+import { discipline, doActivity, padRolls, rebrand, setAside, takeForeign, trade, type Discipline, type ActivityId, type FavourId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
@@ -45,7 +63,7 @@ import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
  * or (developer mode only) how the country would really vote today.
  */
 export type MapView = 'last' | 'estimate' | 'truth';
-export type SidebarTab = 'desk' | 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
+export type SidebarTab = 'desk' | 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'party' | 'slate' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
 export type Theme = 'system' | 'light' | 'dark';
 export type Palette = 'standard' | 'accessible';
 export type TextSize = 'normal' | 'large';
@@ -134,9 +152,8 @@ interface Store {
   /** Election night stays on screen after the count until the player moves on. */
   showNight: boolean;
   /** A scene the player has set aside to look around before answering. */
-  hiddenScene: number | null;
-  /** The inbox is open: the decision at its head is on screen. In a campaign or a term it opens only when the player opens it. */
-  sceneOpen: boolean;
+  hiddenScene: number[];
+  /** The inbox is open: the decision at its head is on screen. A new decision opens it by itself (see Inbox in App.tsx); one set aside waits in a bar until the player opens it. */
   /** When the autosave last succeeded, or null if it has not or cannot. */
   autosavedAt: number | null;
   autosaveFailed: boolean;
@@ -151,7 +168,7 @@ interface Store {
   dismissToast(id: AchievementId): void;
   setView(view: MapView): void;
   setTab(tab: SidebarTab): void;
-  openScene(open: boolean): void;
+  openScene(): void;
   selectState(state: RegionId | null): void;
   selectSeat(seatId: string | null, state?: RegionId): void;
 
@@ -166,6 +183,8 @@ interface Store {
   }): void;
   /** Moves the adviser to the next step, or ends the tutorial after the last one. */
   advanceTutorial(steps: number): void;
+  /** Moves the adviser straight to a later step, or ends the tutorial if that is past the last. */
+  jumpTutorial(to: number, steps: number): void;
   dismissTutorial(): void;
   act(id: ActionId, target: ActionTarget): void;
   poll(scope: PollScope, target: string | null, quality: PollQuality): void;
@@ -186,7 +205,7 @@ interface Store {
   breakPact(party: number): void;
   promise(party: number): void;
   jointAttack(ally: number, target: number): void;
-  court(seat: string): void;
+  court(seat: string, stake?: Stake): void;
   answerScene(id: number, choice: number): void;
 
   offer(party: number, offer: Offer): void;
@@ -198,6 +217,48 @@ interface Store {
   /** Career: changes the standing orders for the weeks between elections. */
   setOrders(patch: Partial<Orders>): void;
   invest(lots: number): void;
+  /** The opposition names someone to shadow a portfolio. */
+  shadow(portfolio: PortfolioId): void;
+  /** Takes a small ally into the player's party. */
+  merge(party: number): void;
+  /** Opens a seat to the leader's choice of candidate, for half a day. */
+  openSeat(seat: string): void;
+  /** The leader stands in a seat themselves. */
+  standLeader(seat: string): void;
+  /** Suspends or dissolves a state's branches. */
+  discipline(state: string, how: Discipline): void;
+  /** Changes the party's name, flag and colours, at a price. */
+  rebrand(identity: Identity): void;
+  /** Sets money aside for the next campaign (positive lots), or takes it back at a price (negative). */
+  chest(lots: number): void;
+  foreign(favour: FavourId): void;
+  padRolls(): void;
+  usePower(id: PowerId): void;
+  writeLetter(issue: IssueId, tone: Tone): void;
+  agreeEarly(party: number): void;
+  dropEarly(party: number): void;
+  formUnity(): void;
+  offerDeputy(party: number): void;
+  inquiry(): void;
+  foundAlliance(name: number, mark: number): void;
+  inviteAlly(party: number): void;
+  dissolveAlliance(): void;
+  expel(party: number): void;
+  renewSupply(party: number): void;
+  setBrief(id: PledgeId, brief: boolean): void;
+  referendum(id: PledgeId): void;
+  patronage(level: number): void;
+  grantSafe(seat: string, faction: number): void;
+  revokeSafe(seat: string): void;
+  forceByElection(seat: string): void;
+  /** Asks a party to keep the government in office from outside the cabinet. */
+  supply(party: number, price: SupplyPrice): void;
+  /** The head of government repeals an Act. */
+  repeal(id: PledgeId): void;
+  /** Buys (positive lots) or sells (negative) one kind of party business. */
+  trade(holding: HoldingId, lots: number): void;
+  /** Does one of the things a party does between elections. */
+  activity(id: ActivityId): void;
   /** Takes the loan a lender is offering against the party's coming income. */
   borrow(): void;
   setStance(issue: number, to: number): void;
@@ -205,20 +266,24 @@ interface Store {
   launchManifesto(): void;
   /** Runs up to this many weeks of the term, stopping when something needs a decision. */
   advance(weeks: number): void;
-  dissolve(): void;
+  dissolve(together?: boolean): void;
+  aidSector(id: SectorId): void;
   /** After the election and the talks: on to the next parliament. */
   nextTerm(): void;
   /** After a change of government between elections: back to the term. */
   resumeTerm(): void;
 
   /** Sets a waiting scene aside (or brings it back with null) so the player can look around first. */
-  hideScene(id: number | null): void;
-  setBudget(patch: { line?: LineId; tax?: boolean; value: Dial }): void;
+  hideScene(id: number): void;
+  setBudget(patch: { line?: LineId; tax?: boolean; value: Dial } | { measure: MeasureId; on: boolean }): void;
   reshuffle(portfolio: PortfolioId): void;
   appoint(portfolio: PortfolioId, option: number): void;
   fieldSeat(seatId: string): void;
   withdrawSeat(seatId: string): void;
   fieldCheapest(limit: number): void;
+  /** Puts a candidate in a seat the party has never stood in, or takes one back. */
+  enterSeat(seatId: string): void;
+  leaveSeat(seatId: string): void;
   /** Answers a round of state polls by fighting some of its states in person (see aside.ts). */
   playStates(sceneId: number, choice: number, states: string[]): Promise<void>;
   /** A state election fought in person is over: back to the career, or on to the next state of the round. */
@@ -264,7 +329,9 @@ export const useStore = create<Store>((set, get) => {
     const g = structuredClone(current);
     const extra = fn(g.campaign, g, world) ?? {};
     g.updatedAt = Date.now();
-    set({ game: g, ...extra });
+    // Decisions come up by themselves; only the ones the player has set aside wait as a bar, and a new one is never among them.
+    const hidden = (extra.hiddenScene ?? get().hiddenScene).filter((id) => g.campaign.inbox.some((x) => x.id === id));
+    set({ game: g, ...extra, hiddenScene: hidden });
   };
 
   return {
@@ -285,8 +352,7 @@ export const useStore = create<Store>((set, get) => {
     pactReply: null,
     offerReply: null,
     showNight: false,
-    hiddenScene: null,
-    sceneOpen: false,
+    hiddenScene: [],
     autosavedAt: null,
     autosaveFailed: false,
     profile: profileStore.load(),
@@ -321,7 +387,7 @@ export const useStore = create<Store>((set, get) => {
       const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
       set({
         game: newGame(name.trim() || translate(get().settings.lang, 'saves.defaultName'), campaign, Date.now(), tutorial, identity, start),
-        view: 'last', tab: campaign.phase === 'term' ? 'desk' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false,
+        view: 'last', tab: campaign.phase === 'term' ? 'desk' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false,
         // A general election opens on the leader's home state; smaller contests open on the whole map.
         selectedState: world.rules.kind === 'general' && campaign.phase === 'campaign' ? campaign.parties[player]!.location : null,
       });
@@ -329,6 +395,10 @@ export const useStore = create<Store>((set, get) => {
     advanceTutorial: (steps) => mutate((_c, g) => {
       if (!g.tutorial) return;
       g.tutorial = g.tutorial.step + 1 >= steps ? null : { step: g.tutorial.step + 1 };
+    }),
+    jumpTutorial: (to, steps) => mutate((_c, g) => {
+      if (!g.tutorial || to <= g.tutorial.step) return;
+      g.tutorial = to >= steps ? null : { step: to };
     }),
     dismissTutorial: () => mutate((_c, g) => { g.tutorial = null; }),
     act: (id, target) => mutate((c, _g, world) => {
@@ -361,22 +431,23 @@ export const useStore = create<Store>((set, get) => {
     breakPact: (party) => mutate((c) => { breakPact(c, party); }),
     promise: (party) => mutate((c, _g, world) => ({ lastReport: seekUnderstanding(world, c, party) })),
     jointAttack: (ally, target) => mutate((c, _g, world) => ({ lastReport: jointAttack(world, c, ally, target) })),
-    court: (seat) => mutate((c, _g, world) => ({ lastReport: courtDefector(world, c, seat) })),
+    court: (seat, stake) => mutate((c, _g, world) => ({ lastReport: courtDefector(world, c, seat, stake) })),
     answerScene: (id, choice) => mutate((c, _g, world) => {
       const scene = c.inbox.find((x) => x.id === id);
       if (!scene) return;
       if (scene.kind === 'event' && scene.event && !canChoose(world, c, scene.event, choice)) return;
       c.inbox = c.inbox.filter((x) => x.id !== id);
-      if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote') {
+      // The state's question, put again in the years of a state career.
+      if (scene.kind === 'agenda' && c.phase === 'term') { resolveAgenda(world, c, scene, choice); return { hiddenScene: [] }; }
+      if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'partyPoll' || scene.kind === 'redraw') {
         answerEvent(world, c, scene, choice);
         // The answer may have brought the government down: on to the talks.
-        if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: null, sceneOpen: false };
+        if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: [] };
         // The inbox stays open while there is more in it, and closes itself when it is empty.
-        return { hiddenScene: null, sceneOpen: c.inbox.length > 0 };
+        return { hiddenScene: [] };
       }
       if (c.phase === 'campaign') resolveCampaignScene(world, c, scene, choice);
       else resolveFormationScene(c, scene, choice);
-      return { sceneOpen: c.inbox.length > 0 };
     }),
 
     offer: (party, offer) => mutate((c, _g, world) => {
@@ -389,7 +460,38 @@ export const useStore = create<Store>((set, get) => {
     endDay: () => mutate((c, _g, world) => { endDay(world, c); return { offerReply: null }; }),
 
     setOrders: (patch) => mutate((c, _g, world) => setOrders(world, c, patch)),
+    repeal: (id) => mutate((c) => { repeal(c, id); }),
+    supply: (party, price) => mutate((c, _g, world) => { signSupply(world, c, party, price); }),
+    chest: (lots) => mutate((c, _g, world) => { setAside(world, c, lots); }),
+    foreign: (favour) => mutate((c, _g, world) => { takeForeign(world, c, favour); }),
+    patronage: (level) => mutate((c) => { setPatronage(c, level); }),
+    setBrief: (id, brief) => mutate((c) => { if (setBrief(c, id, brief)) syncOpinion(c); }),
+    referendum: (id) => mutate((c, _g, world) => { callReferendum(world, c, id); }),
+    foundAlliance: (name, mark) => mutate((c, _g, world) => { foundAlliance(world, c, name, mark); }),
+    inviteAlly: (party) => mutate((c, _g, world) => { invite(world, c, party); }),
+    dissolveAlliance: () => mutate((c) => { dissolveAlliance(c); }),
+    expel: (party) => mutate((c, _g, world) => { expel(world, c, party); }),
+    renewSupply: (party) => mutate((c, _g, world) => { renewSupply(world, c, party); }),
+    inquiry: () => mutate((c, _g, world) => { openInquiry(world, c); }),
+    agreeEarly: (party) => mutate((c, _g, world) => { agreeEarly(world, c, party); }),
+    dropEarly: (party) => mutate((c) => { dropEarly(c, party); }),
+    formUnity: () => mutate((c, _g, world) => { formUnity(world, c); }),
+    offerDeputy: (party) => mutate((c) => { offerDeputy(c, party); }),
+    writeLetter: (issue, tone) => mutate((c) => { if (writeLetter(c, issue, tone)) syncOpinion(c); }),
+    usePower: (id) => mutate((c, _g, world) => { usePower(world, c, id); }),
+    padRolls: () => mutate((c, _g, world) => { padRolls(world, c); }),
+    grantSafe: (seat, faction) => mutate((c, _g, world) => { grantSafe(world, c, seat, faction); }),
+    revokeSafe: (seat) => mutate((c) => { revokeSafe(c, seat); }),
+    forceByElection: (seat) => mutate((c, _g, world) => { forceByElection(world, c, seat); }),
+    discipline: (state, how) => mutate((c, _g, world) => { discipline(world, c, state, how); }),
+    rebrand: (identity) => mutate((c, g, world) => { if (rebrand(world, c)) g.identity = identity; }),
+    openSeat: (seat) => mutate((c, _g, world) => { openSeat(world, c, seat); }),
+    standLeader: (seat) => mutate((c, _g, world) => { standLeader(world, c, seat); }),
+    merge: (party) => mutate((c, _g, world) => { merge(world, c, party); }),
+    shadow: (portfolio) => mutate((c, _g, world) => { nameShadow(world, c, portfolio); }),
     invest: (lots) => mutate((c, _g, world) => { invest(world, c, lots); }),
+    trade: (holding, lots) => mutate((c, _g, world) => { trade(world, c, holding, lots); }),
+    activity: (id) => mutate((c, _g, world) => { doActivity(world, c, id); }),
     borrow: () => mutate((c, _g, world) => { borrow(world, c); }),
     setStance: (issue, to) => mutate((c) => { if (setStance(c, issue, to)) syncOpinion(c); }),
     togglePledge: (id) => mutate((c) => { if (togglePledge(c, id)) syncOpinion(c); }),
@@ -400,8 +502,11 @@ export const useStore = create<Store>((set, get) => {
       if (c.phase === 'campaign') return { tab: 'actions', lastReport: null, selectedSeat: null, selectedState: c.parties[c.player]!.location };
       if (c.phase === 'formation') return { showNight: false, offerReply: null };
     }),
-    dissolve: () => mutate((c, _g, world) => {
-      if (dissolve(world, c)) return { tab: 'actions', lastReport: null, selectedSeat: null, selectedState: c.parties[c.player]!.location };
+    aidSector: (id) => mutate((c, _g, world) => { aidSector(world, c, id); }),
+    dissolve: (together) => mutate((c, _g, world) => {
+      if (dissolve(world, c, !!together)) return { tab: 'actions', lastReport: null, selectedSeat: null, selectedState: c.parties[c.player]!.location };
+      // The Palace said no: the answer is shown, and the request can be made again after a while.
+      if (c.career?.palaceNo === c.career?.week) return { lastReport: c.news[c.news.length - 1] ?? null };
     }),
     nextTerm: () => mutate((c, _g, world) => {
       if (!nextTerm(world, c)) return;
@@ -414,14 +519,16 @@ export const useStore = create<Store>((set, get) => {
       if (resumeTerm(c)) return { tab: 'desk', offerReply: null };
     }),
 
-    hideScene: (id) => set({ hiddenScene: id, sceneOpen: false }),
-    openScene: (sceneOpen) => set({ sceneOpen, hiddenScene: null }),
+    hideScene: (id) => set((s) => ({ hiddenScene: [...s.hiddenScene, id] })),
+    openScene: () => set({ hiddenScene: [] }),
     setBudget: (patch) => mutate((c) => { setBudget(c, patch); }),
     reshuffle: (portfolio) => mutate((c) => { reshuffle(c, portfolio); }),
     appoint: (portfolio, option) => mutate((c, _g, world) => { appoint(world, c, portfolio, option); }),
     fieldSeat: (seatId) => mutate((c, _g, world) => { fieldSeat(world, c, seatId); }),
     withdrawSeat: (seatId) => mutate((c, _g, world) => { withdrawSeat(world, c, seatId); }),
     fieldCheapest: (limit) => mutate((c, _g, world) => { fieldCheapest(world, c, limit); }),
+    enterSeat: (seatId) => mutate((c, _g, world) => { enterSeat(world, c, seatId); }),
+    leaveSeat: (seatId) => mutate((c, _g, world) => { leaveSeat(world, c, seatId); }),
     playStates: async (sceneId, choice, wanted) => {
       const before = get().game;
       if (!before || before.aside) return;
@@ -443,7 +550,7 @@ export const useStore = create<Store>((set, get) => {
       g.aside = { parked: c, state: first, queue: states.slice(1) as StateId[] };
       g.campaign = startAside(c, getWorld(`state:${first}`)!, first);
       g.updatedAt = Date.now();
-      set({ game: g, view: 'last', tab: 'actions', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false, hiddenScene: null });
+      set({ game: g, view: 'last', tab: 'actions', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, hiddenScene: [] });
     },
     finishAside: async () => {
       const before = get().game;
@@ -466,7 +573,7 @@ export const useStore = create<Store>((set, get) => {
         delete g.aside;
       }
       g.updatedAt = Date.now();
-      set({ game: g, view: 'last', tab: g.aside ? 'actions' : 'desk', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, sceneOpen: false, hiddenScene: null });
+      set({ game: g, view: 'last', tab: g.aside ? 'actions' : 'desk', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, hiddenScene: [] });
     },
     tableBill: (id) => mutate((c) => { tableBill(c, id); }),
     deliver: (index) => mutate((c) => { if (deliver(c, index)) syncOpinion(c); }),
@@ -493,7 +600,7 @@ export const useStore = create<Store>((set, get) => {
     loadGame: (state) => set((s) => ({
       loads: s.loads + 1,
       game: state,
-      view: 'last', tab: state.campaign.phase === 'term' ? 'desk' : 'actions', lastReport: null, pactReply: null, offerReply: null, selectedSeat: null, sceneOpen: false,
+      view: 'last', tab: state.campaign.phase === 'term' ? 'desk' : 'actions', lastReport: null, pactReply: null, offerReply: null, selectedSeat: null,
       // A saved game reopens on the count only if it was still running, or if there is nothing after it.
       showNight: state.campaign.phase === 'night' || (state.campaign.phase === 'done' && !state.campaign.formation),
       selectedState: state.campaign.phase === 'campaign' && (state.campaign.scenario === 'general' || state.campaign.scenario === 'career')
@@ -503,7 +610,7 @@ export const useStore = create<Store>((set, get) => {
       // Save now: the delayed autosave would find the game already gone.
       const g = get().game;
       if (g) saveStore.save(AUTO_SLOT, g);
-      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null, sceneOpen: false });
+      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null });
     },
     restart: () => {
       const g = get().game;

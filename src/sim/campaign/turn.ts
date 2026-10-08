@@ -5,7 +5,8 @@ import {
   N_BLOCS, N_PARTIES, PARTY_IDS, isMinor,
   type Dynamics, type ElectionOutcome, type RegionId,
 } from '../types';
-import { freshParty, standingPact, weeklyIncome } from './field';
+import { agendaIntro, agendaWeek } from './agenda';
+import { freshParty, isOutsider, standingPact, weeklyIncome } from './field';
 import { record, standing } from './ledger';
 import { makeRecap } from './recap';
 import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, truth } from './actions';
@@ -20,13 +21,14 @@ import { beforeNomination, hasDiplomacy, nominationWeek, pactSeats, rivalDiploma
 import { startFormation } from './formation';
 import { now, pushNews, ref } from './news';
 import { CHIEF_NOISE, RIVAL_NOISE, hasChiefs, planChiefs, playWeek, runChiefs, type ChiefReport } from './ai';
+import { applyWhatIf } from './whatif';
 import { latestNationalPoll, pollCost, takePoll } from './polls';
 import type {
   ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Difficulty,
   BackstoryId, Challenge, NewsItem, Poll, PollQuality, PollScope,
 } from './types';
 
-export { atHome, campaigns, freshParty, lastShares, playable, standingPact, startingFunds, weeklyIncome } from './field';
+export { atHome, campaigns, freshParty, isOutsider, lastShares, playable, standingPact, startingFunds, weeklyIncome } from './field';
 
 /** How far opinion has drifted since the last election (standard deviations, logit units). */
 const DRIFT = { nat: 0.08, state: 0.06, seat: 0.08 };
@@ -63,7 +65,7 @@ const ALLIED = 30;
 
 export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   const rng = new Rng(opts.seed);
-  const parties = PARTY_IDS.map((_, p) => freshParty(world, p));
+  const parties = PARTY_IDS.map((_, p) => freshParty(world, p, p === opts.player && isOutsider(world, p)));
   const opening = standingPact(world);
 
   const bare: Omit<Campaign, 'team'> = {
@@ -99,6 +101,8 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   if (opts.challenge?.fog || opts.challenge?.noisy || opts.challenge?.goal) {
     c.challenge = { fog: !!opts.challenge.fog, noisy: !!opts.challenge.noisy, ...(opts.challenge.goal ? { goal: opts.challenge.goal } : {}) };
   }
+  // The real election, played again with one thing changed.
+  if (opts.challenge?.whatIf && world.rules.kind === 'general' && !world.rules.career) applyWhatIf(world, c, opts.challenge.whatIf);
   // A career sets its own opening terms first, then lets the leader's past have its say.
   if (!world.rules.career) applyBackstory(c);
   for (const pact of opening.pacts) {
@@ -119,6 +123,7 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
     return c;
   }
   openCampaign(world, c);
+  agendaIntro(world, c);
   publishPublicPoll(world, c);
   return c;
 }
@@ -160,6 +165,8 @@ function playerNews(c: Campaign, r: ActionReport): NewsItem {
     case 'debate': return item(`news.me.debate.${quality === 'great' ? 'won' : 'lost'}`, { party: ref.party(target.party!) }, quality === 'great' ? 'good' : 'bad');
     case 'manifesto': return item(`news.me.manifesto.${quality === 'weak' ? 'weak' : 'ok'}`, {}, quality === 'weak' ? 'bad' : 'good');
     case 'radio': return item('news.me.radio', { state: ref.state(target.state!) });
+    case 'troops': return item(`news.me.troops.${quality === 'backfire' ? 'backfire' : 'ok'}`, { party: ref.party(target.party!) }, quality === 'backfire' ? 'bad' : 'neutral');
+    case 'local': return item('news.me.local', { state: ref.state(target.state!) }, 'good');
   }
 }
 
@@ -217,6 +224,7 @@ function aftermath(c: Campaign, r: ActionReport) {
   if (r.id === 'megarally') shiftUnity(c, r.party, r.quality === 'weak' ? 1 : 3);
   // A festival and a party conference are for the party itself; a debate is remembered by the one who lost it.
   if (r.id === 'festival') shiftUnity(c, r.party, EFFECT.festivalUnity);
+  if (r.id === 'local') shiftUnity(c, r.party, EFFECT.localUnity);
   if (r.id === 'conference') shiftUnity(c, r.party, EFFECT.conference);
   if (r.id === 'debate') shiftRelation(c, r.party, r.target.party!, -6);
   if (r.id === 'charity' && r.quality === 'backfire') pressReacts(c, r.party, -1, ['viral']);
@@ -291,6 +299,7 @@ function decay(dyn: Dynamics) {
   for (const row of dyn.support.nat) for (let p = 0; p < N_PARTIES; p++) row[p] *= DECAY.nat;
   for (const rows of Object.values(dyn.support.state)) for (const row of rows!) for (let p = 0; p < N_PARTIES; p++) row[p] *= DECAY.state;
   for (const v of Object.values(dyn.support.seat)) for (let p = 0; p < N_PARTIES; p++) v[p] *= DECAY.seat;
+  for (const rows of Object.values(dyn.support.seatBloc ?? {})) for (const row of rows) for (let p = 0; p < N_PARTIES; p++) row[p] *= DECAY.seat;
   for (let p = 0; p < N_PARTIES; p++) dyn.turnout.party[p] *= DECAY.motivation;
   for (const v of Object.values(dyn.turnout.state)) for (let p = 0; p < N_PARTIES; p++) v![p] *= DECAY.motivation;
   for (const v of Object.values(dyn.turnout.seat)) for (let p = 0; p < N_PARTIES; p++) v[p] *= DECAY.motivation;
@@ -338,6 +347,7 @@ export function endWeek(world: World, c: Campaign): void {
   });
   tycoonExposure(c);
   rivalDiplomacy(world, c);
+  agendaWeek(world, c);
   teamWeek(world, c);
   if (hasDiplomacy(world) && c.week === nominationWeek(c)) {
     push(c, { party: null, key: 'news.nomination', vars: { n: pactSeats(c) }, tone: 'neutral' });

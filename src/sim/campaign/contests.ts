@@ -4,7 +4,7 @@ import { projectSeat } from '../project';
 import { Rng } from '../rng';
 import { N_BLOCS, N_PARTIES, PARTY_IDS, type Dynamics, type StateId } from '../types';
 import { effectiveDynamics, scaled } from './actions';
-import { shiftUnity } from './diplomacy';
+import { addScene, shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
 import type { Campaign, Scene } from './types';
 
@@ -23,6 +23,12 @@ const elected = (world: World, i: number) => lastElection(world).seats[i].winner
 /** Who holds a seat now: whoever won it at the general election, unless a by-election since has changed that. */
 export function holderOf(world: World, c: Campaign, seat: string): number {
   return c.career?.house[seat] ?? elected(world, world.seatIndex.get(seat)!);
+}
+
+/** The ids of the seats a party holds now (looks the last election up once, which holderOf does for every seat). */
+export function seatsHeldBy(world: World, c: Campaign, p: number): string[] {
+  const last = lastElection(world);
+  return world.seats.filter((s, i) => (c.career?.house[s.id] ?? last.seats[i].winner) === p).map((s) => s.id);
 }
 
 /** Seats in the House by party, as it sits today. */
@@ -52,6 +58,39 @@ const BY_NOISE = 0.12;
 export function vacantSeat(world: World, c: Campaign, rng: Rng): string {
   const fought = world.seats.filter((_, i) => world.baseline.contesting[i][c.player]);
   return (fought.length ? fought : world.seats)[rng.int(fought.length || world.seats.length)].id;
+}
+
+/**
+ * A by-election the party calls on itself: one of its members resigns the seat so that it can be fought for. It costs
+ * the party some goodwill with the voters for the trouble; won, it shows the party's strength, and lost, it is a seat
+ * thrown away.
+ */
+export const FORCE = { money: 30_000, credibility: 3, unity: 2, won: 5, lost: 3 };
+
+export type ForceRefusal = 'phase' | 'seat' | 'funds' | 'again';
+
+export function canForce(world: World, c: Campaign, seat: string): { ok: true } | { ok: false; reason: ForceRefusal } {
+  const k = c.career;
+  const pc = c.parties[c.player];
+  if (!k || !pc || c.phase !== 'term' || c.inbox.length > 0 || world.rules.kind === 'state') return { ok: false, reason: 'phase' };
+  if (!world.seatIndex.has(seat) || holderOf(world, c, seat) !== c.player) return { ok: false, reason: 'seat' };
+  if (k.flags.includes(`force${k.term}`)) return { ok: false, reason: 'again' };
+  if (pc.funds < scaled(world, FORCE.money)) return { ok: false, reason: 'funds' };
+  return { ok: true };
+}
+
+/** Has the member for a seat resign, and the by-election called. Once a parliament. */
+export function forceByElection(world: World, c: Campaign, seat: string): boolean {
+  if (!canForce(world, c, seat).ok) return false;
+  const k = c.career!;
+  c.parties[c.player]!.funds -= scaled(world, FORCE.money);
+  k.credibility = clamp(k.credibility - FORCE.credibility, 0, 100);
+  shiftUnity(c, c.player, -FORCE.unity);
+  k.flags.push(`force${k.term}`);
+  k.forced = seat;
+  pushNews(c, { party: c.player, key: 'news.by.forced', vars: { seat: ref.seat(seat) }, tone: 'neutral' });
+  addScene(c, { kind: 'event', from: null, event: 'byElection', seat });
+  return true;
 }
 
 export interface ByResult { seat: string; winner: number; was: number; margin: number }
@@ -96,6 +135,12 @@ export function resolveByElection(world: World, c: Campaign, scene: Scene, choic
   else if (was === me) shiftUnity(c, me, -3);
   else if (choice === 0) shiftUnity(c, me, -1);
 
+  if (k.forced === seat.id) {
+    delete k.forced;
+    if (winner === me) k.credibility = clamp(k.credibility + FORCE.won, 0, 100);
+    else k.credibility = clamp(k.credibility - FORCE.lost, 0, 100);
+  }
+
   const key = winner === me ? (was === me ? 'news.by.held' : 'news.by.won') : was === me ? 'news.by.lost' : 'news.by.other';
   pushNews(c, {
     party: winner, key, tone: winner === me ? 'good' : was === me ? 'bad' : 'neutral',
@@ -118,7 +163,7 @@ const STATE_NOISE = 0.06;
 export const STATE_GOVERNMENT_INCOME = 2_000;
 
 /** The party with the most seats in each state: who would form its government. Ties go to whoever is in office. */
-function leaders(world: World, winners: number[], states: readonly string[], incumbent: Record<string, number>): Record<string, number> {
+export function leaders(world: World, winners: number[], states: readonly string[], incumbent: Record<string, number>): Record<string, number> {
   const out: Record<string, number> = {};
   for (const st of states) {
     const count = new Array<number>(N_PARTIES).fill(0);

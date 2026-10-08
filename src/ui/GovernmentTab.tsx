@@ -6,7 +6,22 @@ import {
 } from '../sim/campaign/govern';
 import { scaled } from '../sim/campaign/actions';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
-import { LEVER_IDS, LINE_IDS, type Dial } from '../sim/campaign/types';
+import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
+import { MAX_MEASURES } from '../sim/campaign/office';
+import { SECTOR, SECTORS, SECTOR_IDS, canAid, sectorsOf } from '../sim/campaign/sectors';
+import { leverStrain } from '../sim/campaign/govern';
+import { Gauge } from './Gauge';
+import { POWERS, POWER_IDS, canUse, inStateCareer, powerWait } from '../sim/campaign/statepowers';
+import { SPEAKER_NAMES, leanWord, rebelShare, speakerOf } from '../sim/campaign/chamber';
+import { GRAND, canUnite } from '../sim/campaign/grand';
+import { ksuOf } from '../sim/campaign/ksu';
+import { canOfferDeputy, isRival } from '../sim/campaign/plots';
+import { COMMITTEE, canInquire, committeeWait, inquiryOdds } from '../sim/campaign/committee';
+import { canExpel } from '../sim/campaign/alliance';
+import { SUPPLY_CASH, canRenew, canSupply, discontent } from '../sim/campaign/supply';
+import { houseTally } from '../sim/campaign/contests';
+import { SHADOW_COST, canShadow, shadowOf } from '../sim/campaign/shadow';
+import { PORTFOLIO_IDS } from '../sim/campaign/types';
 import { majorityLine } from '../sim/election';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
@@ -103,6 +118,22 @@ export function GovernmentTab() {
                 <DialSwitch label={t(`line.${id}`)} value={k.budget.lines[id]} onChange={(value) => setBudget({ line: id, value })} />
               </li>
             ))}
+            <li className="action measures">
+              <div className="grow">
+                <span className="action-title">{t('measures.title')}</span>
+                <span className="action-meta">{t('measures.desc', { n: MAX_MEASURES })}</span>
+                <div className="chips" role="group" aria-label={t('measures.title')}>
+                  {MEASURE_IDS.map((m) => {
+                    const on = k.budget.measures?.includes(m) ?? false;
+                    return (
+                      <button key={m} className={on ? 'chip active' : 'chip'} aria-pressed={on} disabled={!on && (k.budget.measures?.length ?? 0) >= MAX_MEASURES} title={t(`measure.${m}.desc`)} onClick={() => setBudget({ measure: m, on: !on })}>
+                        {t(`measure.${m}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </li>
             <li className="action">
               <div className="grow">
                 <span className="action-title">{t('line.tax')}</span>
@@ -114,6 +145,15 @@ export function GovernmentTab() {
           <p className="note">{t('house.budget.plan', { pct: deficit(k, k.budget).toFixed(1), now: deficit(k).toFixed(1) })}</p>
         </>
       )}
+
+      <HouseFigures />
+      {pm && inStateCareer(campaign) && <StatePowers />}
+      <Sectors />
+      {pm && <SupplyDeals />}
+      {pm && <Unity />}
+      {pm && k.government.partners.length > 0 && <PutOut />}
+      {seat === 'opp' && <ShadowCabinet />}
+      {seat === 'opp' && <CommitteeInquiry />}
 
       {(k.appointments?.length ?? 0) > 0 && (
         <section className="appointments" aria-label={t('appoint.title')}>
@@ -223,6 +263,7 @@ export function GovernmentTab() {
                 <div className="grow">
                   <span className="action-title">{t(`lever.${id}`)}</span>
                   <span className="action-meta">{t(`lever.${id}.desc${fog && id === 'agency' ? '.fog' : ''}` as StringKey)}</span>
+                  {leverStrain(k, id) > 0 && <span className="action-reason">{t('house.lever.strain', { n: k.leverUses?.[id] ?? 0 })}</span>}
                 </div>
                 <ConfirmButton label={t('house.lever.pull')} confirmLabel={t('house.lever.confirm')} disabled={!canPull(campaign, id)} onConfirm={() => pullLever(id)} />
               </li>
@@ -270,5 +311,275 @@ export function GovernmentTab() {
         <ConfirmButton className="btn" label={t('house.retire')} confirmLabel={t('house.retire.confirm')} disabled={campaign.inbox.length > 0} onConfirm={retire} danger />
       </div>
     </section>
+  );
+}
+
+
+/** Parties outside the cabinet that can be asked to keep the government in office, and the deals already made. */
+function SupplyDeals() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const supply = useStore((s) => s.supply);
+  const renew = useStore((s) => s.renewSupply);
+  const k = campaign.career!;
+  const seats = houseTally(world, campaign);
+  const parties = seats.map((n, p) => ({ n, p })).filter(({ n, p }) => n > 0 && !k.government.partners.includes(p) && p !== k.government.pm && p !== campaign.player && !!campaign.parties[p]);
+  const rows = parties.map(({ n, p }) => ({ n, p, cash: canSupply(world, campaign, p, 'cash'), policy: canSupply(world, campaign, p, 'policy') }));
+  const deals = k.supply ?? [];
+  const why = (r: ReturnType<typeof canSupply>) => (r.ok ? null : r.reason === 'none' || r.reason === 'phase' || r.reason === 'already' ? null : t(`supply.reason.${r.reason}` as StringKey));
+  return (
+    <>
+      <h3>{t('supply.title')}</h3>
+      <p className="muted small action-desc">{t('supply.desc')}</p>
+      {deals.length > 0 && (
+        <ul>
+          {deals.map((d) => (
+            <li className="action" key={d.party}>
+              <div className="grow">
+                <span className="action-title">{partyName(t, d.party)}</span>
+                <span className="action-meta num">{t('supply.until', { week: d.until })}</span>
+                {discontent(campaign, d.party) && <span className="action-reason">{t('supply.restless')}</span>}
+              </div>
+              <button className="btn small" disabled={!canRenew(world, campaign, d.party).ok} onClick={() => renew(d.party)}>{t('supply.renew')}</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <ul>
+        {rows.filter((r) => r.cash.ok || r.policy.ok || why(r.cash) || why(r.policy)).map((r) => (
+          <li className="action" key={r.p}>
+            <div className="grow">
+              <span className="action-title">{partyName(t, r.p)} <span className="muted small num">· {r.n}</span></span>
+              {!r.cash.ok && !r.policy.ok && <span className="action-reason">{why(r.cash) ?? why(r.policy)}</span>}
+            </div>
+            <div className="button-row tight">
+              <button className="btn small" disabled={!r.cash.ok} onClick={() => supply(r.p, 'cash')}>{t('supply.cash', { rm: f.rm(scaled(world, SUPPLY_CASH)) })}</button>
+              <button className="btn small" disabled={!r.policy.ok} onClick={() => supply(r.p, 'policy')}>{t('supply.policy')}</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {rows.every((r) => !r.cash.ok && !r.policy.ok && !why(r.cash) && !why(r.policy)) && deals.length === 0 && <p className="muted small">{t('supply.none')}</p>}
+    </>
+  );
+}
+
+
+/** What the state itself has to spend and to give away: the land, the forests, its own development money. */
+function StatePowers() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const use = useStore((s) => s.usePower);
+  return (
+    <>
+      <h3>{t('powers.title')}</h3>
+      <p className="muted small action-desc">{t('powers.desc')}</p>
+      <ul>
+        {POWER_IDS.map((id) => {
+          const check = canUse(world, campaign, id);
+          return (
+            <li className="action" key={id}>
+              <div className="grow">
+                <span className="action-title">{t(`power.${id}`)}</span>
+                <span className="action-meta">{t(`power.${id}.desc`)} {POWERS[id].money > 0 ? `+${f.rm(scaled(world, POWERS[id].money))}` : `−${f.rm(scaled(world, -POWERS[id].money))}`}</span>
+                {!check.ok && check.reason === 'wait' && <span className="action-reason">{t('powers.wait', { n: powerWait(campaign, id) })}</span>}
+                {!check.ok && check.reason === 'funds' && <span className="action-reason">{t('reason.funds')}</span>}
+              </div>
+              <button className="btn small" disabled={!check.ok} onClick={() => use(id)}>{t('powers.use')}</button>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
+
+/** Who sits in the chair, who heads the civil service, and how the party’s own backbenchers feel. */
+function HouseFigures() {
+  const t = useT();
+  const campaign = useStore((s) => s.game!.campaign);
+  const k = campaign.career!;
+  const sp = speakerOf(campaign);
+  const mine = campaign.parties[campaign.player]!.unity;
+  const head = k.government.pm === campaign.player && !k.limited ? ksuOf(campaign) : null;
+  return (
+    <>
+      <h3>{t('chamber.title')}</h3>
+      <ul>
+        <li className="action">
+          <div className="grow">
+            <span className="action-title">{t('chamber.speaker', { name: SPEAKER_NAMES[sp.name] })}</span>
+            <span className="action-meta">{t(`chamber.lean.${leanWord(sp.lean)}` as StringKey)}</span>
+          </div>
+        </li>
+        <li className="action">
+          <div className="grow">
+            <span className="action-title">{t('chamber.backbench')}</span>
+            <span className="action-meta num">{rebelShare(mine) > 0 ? t('chamber.rebels', { pct: Math.round(rebelShare(mine) * 100) }) : t('chamber.calm')}</span>
+          </div>
+        </li>
+        {head && (
+          <li className="action">
+            <div className="grow">
+              <span className="action-title">{t('ksu.title', { name: MINISTER_NAMES[head.name] })}</span>
+              <span className="action-meta">{t(`ksu.outlook.${head.outlook}` as StringKey)} · {t('ksu.trust', { n: Math.round(head.trust) })}</span>
+            </div>
+          </li>
+        )}
+      </ul>
+    </>
+  );
+}
+
+/** A government of national unity, asked for when the government is falling. */
+function Unity() {
+  const t = useT();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const form = useStore((s) => s.formUnity);
+  const k = campaign.career!;
+  const check = canUnite(world, campaign);
+  if (!k.grand && (!check.ok && (check.reason === 'calm' || check.reason === 'once'))) return null;
+  return (
+    <>
+      <h3>{t('grand.title')}</h3>
+      <p className="muted small action-desc">{t('grand.desc', { n: GRAND.weeks })}</p>
+      {k.grand
+        ? <p className="note">{t('grand.running', { n: Math.max(0, k.grand.until - k.week) })}</p>
+        : (
+          <div className="button-row tight">
+            <ConfirmButton label={t('grand.form')} confirmLabel={t('grand.confirm')} disabled={!check.ok} onConfirm={() => form()} />
+            {!check.ok && check.reason === 'none' && <span className="action-reason">{t('grand.none')}</span>}
+          </div>
+        )}
+    </>
+  );
+}
+
+/** The sectors of the economy: how each is doing, who lives by it, and, for the head of government, a hand to lend one. */
+function Sectors() {
+  const t = useT();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const aid = useStore((s) => s.aidSector);
+  const k = campaign.career!;
+  const now = sectorsOf(k);
+  return (
+    <>
+      <h3>{t('sectors.title')}</h3>
+      <p className="muted small action-desc">{t('sectors.desc', { n: SECTOR.every })}</p>
+      <ul>
+        {SECTOR_IDS.map((id) => {
+          const check = canAid(world, campaign, id);
+          return (
+            <li className="action" key={id}>
+              <div className="grow">
+                <span className="action-title">{t(`sector.${id}`)}</span>
+                <span className="action-meta">{t('sectors.lives', { blocs: SECTORS[id].blocs.map((b) => t(`bloc.${b}` as StringKey)).join(', ') })}</span>
+                <Gauge value={now[id]} label={t('sectors.level')} />
+              </div>
+              {check.ok && <button className="btn small" onClick={() => aid(id)}>{t('sectors.aid')}</button>}
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
+
+/** The opposition may call the government before a select committee, and spend its dossier on it. */
+function CommitteeInquiry() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const inquiry = useStore((s) => s.inquiry);
+  const k = campaign.career!;
+  const check = canInquire(world, campaign);
+  return (
+    <>
+      <h3>{t('committee.title')}</h3>
+      <p className="muted small action-desc">{t('committee.desc', { dossier: COMMITTEE.dossier, rm: f.rm(scaled(world, COMMITTEE.money)), n: COMMITTEE.every })}</p>
+      <ul>
+        <li className="action">
+          <div className="grow">
+            <span className="action-meta num">{t('committee.state', { dossier: Math.round(k.dossier), pct: Math.round(inquiryOdds(campaign) * 100) })}</span>
+            {!check.ok && check.reason !== 'seat' && check.reason !== 'phase' && (
+              <span className="action-reason">{t(`committee.no.${check.reason}` as StringKey, { n: committeeWait(campaign) })}</span>
+            )}
+          </div>
+          <button className="btn small" disabled={!check.ok} onClick={() => inquiry()}>{t('committee.open')}</button>
+        </li>
+      </ul>
+    </>
+  );
+}
+
+/** The head of government may put a partner out of the cabinet: it leaves an enemy, and the others look to themselves. */
+function PutOut() {
+  const t = useT();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const expel = useStore((s) => s.expel);
+  const offerDeputy = useStore((s) => s.offerDeputy);
+  const k = campaign.career!;
+  return (
+    <>
+      <h3>{t('expel.title')}</h3>
+      <p className="muted small action-desc">{t('expel.desc')}</p>
+      <ul>
+        {k.government.partners.map((p) => {
+          const check = canExpel(world, campaign, p);
+          return (
+            <li className="action" key={p}>
+              <div className="grow">
+                <span className="action-title">{partyName(t, p)}</span>
+                {!check.ok && check.reason === 'majority' && <span className="action-reason">{t('expel.majority')}</span>}
+              </div>
+              {isRival(campaign, p, houseTally(world, campaign)) && <span className="badge marginal">{t('rival.badge')}</span>}
+              <button className="btn small" disabled={!canOfferDeputy(campaign, p).ok} onClick={() => offerDeputy(p)}>{t('rival.deputy')}</button>
+              <ConfirmButton label={t('expel.do')} confirmLabel={t('expel.confirm')} disabled={!check.ok} onConfirm={() => expel(p)} />
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
+
+/** The opposition's cabinet in waiting: someone to shadow each post. */
+function ShadowCabinet() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const shadow = useStore((s) => s.shadow);
+  const named = shadowOf(campaign);
+  const may = canShadow(world, campaign);
+  return (
+    <>
+      <h3>{t('shadow.title')} <span className="muted small num">{Object.keys(named).length} / {PORTFOLIO_IDS.length}</span></h3>
+      <p className="muted small action-desc">{t('shadow.desc', { rm: f.rm(scaled(world, SHADOW_COST)) })}</p>
+      <ul>
+        {PORTFOLIO_IDS.map((id) => {
+          const who = named[id];
+          return (
+            <li className="action" key={id}>
+              <div className="grow">
+                <span className="action-title">{t(`portfolio.${id}`)}</span>
+                <span className="action-meta">
+                  {who ? <>{MINISTER_NAMES[who.name]} <span aria-label={t('house.skill', { n: who.skill })}>{'★'.repeat(who.skill)}{'☆'.repeat(5 - who.skill)}</span></> : t('shadow.empty')}
+                </span>
+              </div>
+              <button className="btn small" disabled={!may} onClick={() => shadow(id)}>{t(who ? 'shadow.replace' : 'shadow.name')}</button>
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }

@@ -30,7 +30,7 @@ export interface Staffer {
 }
 
 /** The kinds of people who want to be the party's candidate. */
-export const HOPEFUL_KINDS = ['warlord', 'professional', 'celebrity', 'loyalist'] as const;
+export const HOPEFUL_KINDS = ['warlord', 'professional', 'celebrity', 'loyalist', 'graduate'] as const;
 export type HopefulKind = (typeof HOPEFUL_KINDS)[number];
 
 export interface Hopeful {
@@ -38,6 +38,8 @@ export interface Hopeful {
   name: number;
   skeleton: boolean;
   vetted: boolean;
+  /** For the party's own choice of candidate in a seat the leader left alone: their past has come out. */
+  blown?: boolean;
 }
 
 /** A seat close enough that who stands for the party there matters. */
@@ -68,6 +70,10 @@ export interface Team {
   /** [role]: who could be hired for it. */
   pool: Staffer[][];
   keySeats: KeySeat[];
+  /** The party's own choice of candidate in each seat it stands in where the leader has not chosen one. They bring nothing, and some have a past. Absent outside a campaign. */
+  defaults?: Record<string, Hopeful>;
+  /** The seat the leader is standing in themselves, if they are. Absent outside a campaign. */
+  leaderSeat?: string;
   /** [endorser]: the party they have come out for, or null. */
   endorsers: (number | null)[];
   /** [outlet][party]: how kindly the outlet treats each party, -2 to 2. */

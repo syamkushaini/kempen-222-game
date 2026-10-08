@@ -599,3 +599,7 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 .fight-row input { margin-top: 3px; flex: none; width: 18px; height: 18px; }
 .fight-row .grow { display: flex; flex-direction: column; }
 .aside-banner { margin: 8px 0 0; padding: 8px 14px; background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--ink); border-radius: 12px; font-size: 13px; }
+
+/* a pitch's figures keep their own weight, whether or not the chip is the chosen one */
+.pitch .chip .dim { opacity: 0.75; font-weight: 400; }
+.pitch { margin: 8px 0 12px; }

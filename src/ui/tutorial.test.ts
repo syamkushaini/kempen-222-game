@@ -3,7 +3,7 @@ import { getWorld } from '../data/world';
 import { newCampaign, playerPoll } from '../sim/campaign/turn';
 import type { Campaign } from '../sim/campaign/types';
 import type { SidebarTab } from '../state/store';
-import { STEPS, type TutorialContext } from './tutorial';
+import { STEPS, stepFor, type TutorialContext } from './tutorial';
 
 const by = getWorld('byelection')!;
 const start = (): Campaign => newCampaign(by, { player: 0, difficulty: 'easy', seed: 3 });
@@ -46,5 +46,17 @@ describe('the tutorial pointer', () => {
     expect(step('poll').done!({ campaign: c, selectedSeat: null, tab: 'polls' })).toBe(false);
     playerPoll(by, c, 'seat', by.seats[0].id, 'quick');
     expect(step('poll').done!({ campaign: c, selectedSeat: null, tab: 'polls' })).toBe(true);
+  });
+
+  it('does not hold the guide on a step the player has gone past', () => {
+    const c = start();
+    const at = (n: number, over: Partial<TutorialContext> = {}) => stepFor(n, { campaign: c, selectedSeat: null, tab: 'actions', ...over });
+    // the welcome waits for Next, even with a seat already picked
+    expect(at(0, { selectedSeat: by.seats[0].id })).toBe(0);
+    // a week ended without a poll: the guide is over, not stuck on "poll"
+    expect(at(3, { campaign: { ...c, week: 2 } })).toBe(STEPS.length);
+    // a seat picked, nothing else: on to the ceramah
+    expect(at(1, { selectedSeat: by.seats[0].id })).toBe(2);
+    expect(at(1)).toBe(1);
   });
 });

@@ -155,8 +155,13 @@ export function runElection(
 
 /** The outcome of the last real election, straight from the data. */
 export function lastElection(world: World): ElectionOutcome {
-  return world.last ?? projectElection(world, emptyDynamics());
+  if (world.last) return world.last;
+  // Projecting it afresh is costly and it is asked for seat by seat, so it is kept for as long as the world is.
+  let out = projected.get(world);
+  if (!out) projected.set(world, (out = projectElection(world, emptyDynamics())));
+  return out;
 }
+const projected = new WeakMap<World, ElectionOutcome>();
 
 /** The closest contests, tightest first. */
 export function hotSeats(outcome: ElectionOutcome, count: number): SeatOutcome[] {

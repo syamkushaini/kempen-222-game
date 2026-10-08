@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import type { StringKey } from '../i18n/strings';
+import { WHATIF_IDS } from '../sim/campaign/whatif';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { byElectionId, fairSeats, getWorld, HOME_PARTIES, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS } from '../data/world';
 import type { ContestKind } from '../sim/campaign/rules';
@@ -24,6 +26,7 @@ import { Logo } from './Logo';
 import { Icon, type IconName } from './Icon';
 import { canDraw3D } from './map3d';
 import { Portrait } from './Portrait';
+import { SupportDialog } from './Support';
 import { saveLine, SaveSlots } from './SavesTab';
 import { PlatformEditor } from './Platform';
 import { SeatPicker } from './SeatPicker';
@@ -113,12 +116,14 @@ export function Title() {
   // The set-up goes a step at a time: the contest, then who leads and how, then the rules.
   const [step, setStep] = useState(0);
   const [noisy, setNoisy] = useState(false);
+  const [whatIf, setWhatIf] = useState('');
   // The screen opens on a choice of how to play; the one chosen last time is marked. "New game" from the menu lands straight on the set-up.
   const setupWanted = useStore((s) => s.setupWanted);
   const clearSetupWanted = useStore((s) => s.clearSetupWanted);
   const [mode, setMode] = useState<Screen>(() => (setupWanted ? 'custom' : 'menu'));
   const [honours, setHonours] = useState(false);
   const [howTo, setHowTo] = useState(false);
+  const [support, setSupport] = useState(false);
   const profile = useStore((s) => s.profile);
   const want3d = useStore((s) => s.settings.map3d);
   // The country turns behind the menu on a laptop that can draw it, for a player who has not asked for less.
@@ -168,6 +173,7 @@ export function Title() {
       {backdrop && <Suspense fallback={null}><MenuScene /></Suspense>}
       {honours && <HonoursDialog onClose={() => setHonours(false)} />}
       {howTo && <HowToPlay onClose={() => setHowTo(false)} />}
+      {support && <SupportDialog onClose={() => setSupport(false)} />}
       {mode === 'menu' ? (
         <nav className="main-menu" aria-label={t('menu.label')}>
           <div className="menu-brand">
@@ -190,6 +196,7 @@ export function Title() {
             <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.hint')} onClick={() => pick('challenges')} />
             <MenuItem icon="book" tone="learn" title={t('howto.title')} hint={t('howto.hint')} onClick={() => setHowTo(true)} />
             <MenuItem icon="trophy" tone="won" title={t('menu.honours')} hint={t('menu.honours.hint', { n: earnedCount, total: ACHIEVEMENT_IDS.length })} onClick={() => setHonours(true)} />
+            <MenuItem icon="coffee" tone="dare" title={t('menu.support')} hint={t('menu.support.hint')} onClick={() => setSupport(true)} />
           </ul>
           <p className="muted small">{t('title.fiction')}</p>
           <div className="menu-foot"><Credits /><FeedbackLink /></div>
@@ -356,6 +363,16 @@ export function Title() {
             <span>{t('challenge.noisy')}</span>
           </label>
           <p className="muted small">{t('challenge.noisy.desc')}</p>
+          {kind === 'general' && (
+            <label className="field">
+              <span>{t('whatif.title')}</span>
+              <select value={whatIf} onChange={(e) => setWhatIf(e.target.value)}>
+                <option value="">{t('whatif.none')}</option>
+                {WHATIF_IDS.map((id) => <option key={id} value={id}>{t(`whatif.${id}` as StringKey)}</option>)}
+              </select>
+              <span className="muted small">{whatIf ? t(`whatif.${whatIf}.desc` as StringKey) : t('whatif.desc')}</span>
+            </label>
+          )}
           {kind === 'career' && !founding && (
             <>
               <label className="check">
@@ -376,7 +393,7 @@ export function Title() {
             {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>‹ {t('steps.back')}</button>}
             {step < STEPS.length - 1
               ? <button className="btn primary" onClick={() => setStep(step + 1)}>{t('steps.next')} ▸</button>
-              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy }, founded: founding, realStates: kind === 'career' && !founding && realStates, stances: founding && kind === 'career' ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
+              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy, ...(kind === 'general' && whatIf ? { whatIf } : {}) }, founded: founding, realStates: kind === 'career' && !founding && realStates, stances: founding && kind === 'career' ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
             }
           </div>
           </>

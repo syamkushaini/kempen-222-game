@@ -3,6 +3,7 @@ import { clamp } from '../math';
 import { Rng } from '../rng';
 import { scaled } from './actions';
 import { governmentFalls } from './career';
+import { houseTally } from './contests';
 import { addScene, relation, shiftRelation, shiftUnity } from './diplomacy';
 import { ULTIMATUM_MONEY } from './events';
 import { pushNews, ref } from './news';
@@ -16,6 +17,16 @@ import type { Campaign, Scene } from './types';
 
 /** A partner's progress towards walking out runs from 0 to 100. The papers notice at the first mark; the ultimatum comes at the second. */
 export const PLOT = { murmur: 35, ultimatum: 65, walk: 100 };
+
+/** A government steadier than this loses a partner to the door; one less steady loses it to the other side. */
+export const CROSS_BELOW = 35;
+
+/** Where a partner goes when it leaves a government that is falling apart: to the largest party outside it, whose leader takes it in. */
+function crossesTo(world: World, c: Campaign, p: number): number {
+  const g = c.career!.government;
+  const seats = houseTally(world, c);
+  return seats.map((n, q) => ({ n, q })).filter(({ n, q }) => n > 0 && q !== g.pm && q !== p && !g.partners.includes(q) && c.parties[q]).sort((a, b) => b.n - a.n)[0]?.q ?? -1;
+}
 
 /** How far the other partners step back when one of them goes to the leader with an ultimatum. */
 const WAIT = 20;
@@ -35,8 +46,37 @@ function setPlot(c: Campaign, p: number, n: number): void {
   if (Object.keys(plots).length === 0) delete k.plots;
 }
 
+/** How much more a partner pushes when it is big enough to lead and has not been made deputy: it sees itself in the chair. */
+export const RIVAL_PRESSURE = 0.25;
+/** A partner is a rival if it has at least half the head of government’s seats and does not hold the deputy premiership. */
+export function isRival(c: Campaign, p: number, tally: number[]): boolean {
+  const g = c.career!.government;
+  return g.partners.includes(p) && (tally[p] ?? 0) >= 0.5 * (tally[g.pm] ?? 0) && g.deals[p]?.senior !== 'dpm';
+}
+
+export type DeputyRefusal = 'phase' | 'none' | 'already';
+/** The head of government may make a partner deputy, and so calm a rival: it takes the post from whoever had it, who does not forget it. */
+export function canOfferDeputy(c: Campaign, p: number): { ok: true } | { ok: false; reason: DeputyRefusal } {
+  const k = c.career;
+  if (!k || c.phase !== 'term' || k.government.pm !== c.player || k.limited || c.inbox.length > 0) return { ok: false, reason: 'phase' };
+  if (!k.government.partners.includes(p) || !k.government.deals[p]) return { ok: false, reason: 'none' };
+  if (k.government.deals[p]!.senior === 'dpm') return { ok: false, reason: 'already' };
+  return { ok: true };
+}
+export function offerDeputy(c: Campaign, p: number): boolean {
+  if (!canOfferDeputy(c, p).ok) return false;
+  const g = c.career!.government;
+  for (const q of g.partners) if (q !== p && g.deals[q]?.senior === 'dpm') { g.deals[q] = { ...g.deals[q]!, senior: null }; shiftRelation(c, c.player, q, -10); }
+  g.deals[p] = { ...g.deals[p]!, senior: 'dpm' };
+  shiftRelation(c, c.player, p, 10);
+  g.stability = clamp(g.stability + 3, 5, 95);
+  shiftUnity(c, c.player, -2);
+  pushNews(c, { party: p, key: 'news.deputy.offered', vars: { party: ref.party(p) }, tone: 'neutral' });
+  return true;
+}
+
 /** What pushes a partner towards the door this week: nothing, if it has no complaint. */
-export function plotPressure(c: Campaign, p: number): number {
+export function plotPressure(c: Campaign, p: number, tally?: number[]): number {
   const k = c.career!;
   const g = k.government;
   const overdue = k.obligations.filter((o) => o.party === p && !o.done && o.due < k.week).length;
@@ -45,29 +85,39 @@ export function plotPressure(c: Campaign, p: number): number {
     0.7 * clamp((10 - relation(c, g.pm, p)) / 60, 0, 1) + // cold-shouldered
     0.5 * Math.min(2, overdue) +                           // promises left to slide
     0.3 * clamp((50 - g.stability) / 40, 0, 1) +           // a government that looks like falling
-    0.1 * clamp((40 - g.trust) / 40, 0, 1)                 // a government the public dislikes
+    0.1 * clamp((40 - g.trust) / 40, 0, 1) +               // a government the public dislikes
+    (tally && isRival(c, p, tally) ? RIVAL_PRESSURE : 0)    // a leader who could do the job, and has not been offered it
   );
 }
 
 /** A week in the life of the player's government: each partner moves towards the door or back from it. */
 export function plotsWeek(world: World, c: Campaign): void {
   const k = c.career;
-  if (!k || c.phase !== 'term' || k.government.pm !== c.player) { if (k?.plots) delete k.plots; return; }
+  if (!k || c.phase !== 'term' || k.government.pm !== c.player || k.limited) { if (k?.plots) delete k.plots; return; }
   const g = k.government;
+  const tally = houseTally(world, c);
   for (const p of [...g.partners]) {
     if (!g.partners.includes(p)) continue;
     const was = plotOf(c, p);
-    const pressure = plotPressure(c, p);
+    const pressure = plotPressure(c, p, tally);
     const now = clamp(was + (pressure > 0 ? pressure : -0.5), 0, PLOT.walk);
     setPlot(c, p, now);
     if (was < PLOT.murmur && now >= PLOT.murmur) {
       pushNews(c, { party: p, key: 'news.plot.murmur', vars: { party: ref.party(p), leader: ref.leader(p) }, tone: 'bad' });
     } else if (was < PLOT.ultimatum && now >= PLOT.ultimatum) {
       addScene(c, { kind: 'event', from: p, event: 'ultimatum' });
+      // A government that looks like falling is told, in so many words, where the partner will go if it does.
+      if (g.stability < CROSS_BELOW) pushNews(c, { party: p, key: 'news.plot.warning', vars: { party: ref.party(p) }, tone: 'bad' });
       // The others wait to see what this one gets.
       for (const q of g.partners) if (q !== p) setPlot(c, q, plotOf(c, q) - WAIT);
     } else if (now >= PLOT.walk) {
       setPlot(c, p, 0);
+      const to = g.stability < CROSS_BELOW ? crossesTo(world, c, p) : -1;
+      if (to >= 0) {
+        shiftRelation(c, p, to, 20);
+        shiftRelation(c, c.player, p, -15);
+        pushNews(c, { party: p, key: 'news.plot.crossed', vars: { party: ref.party(p), to: ref.party(to) }, tone: 'bad' });
+      }
       governmentFalls(world, c, p);
       if (c.phase !== 'term') return;
     }

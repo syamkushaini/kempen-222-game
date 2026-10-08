@@ -95,7 +95,8 @@ describe('who campaigns', () => {
     // Borneo parties stood in a few peninsular seats for a handful of votes.
     expect(campaigns(perak, P('legasi'))).toBe(false);
     expect(campaigns(perak, P('gbk'))).toBe(false);
-    expect(playable(perak).map((p) => PARTY_IDS[p])).toEqual(['ps', 'bp', 'pt']);
+    // They may be led there, but as outsiders with no campaign of their own until the player starts one.
+    expect(playable(perak).map((p) => PARTY_IDS[p])).toEqual(['ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi']);
     expect(playable(general)).toHaveLength(6); // the three national parties, and the kingmakers of Sabah and Sarawak
     const c = newCampaign(perak, { player: P('ps'), difficulty: 'normal', seed: 3 });
     expect(c.parties.map((p) => p !== null)).toEqual(PARTY_IDS.map((_, i) => i < 3));

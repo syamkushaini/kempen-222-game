@@ -1,5 +1,6 @@
 import type { StandDowns } from '../transfer';
 import type { Dynamics, Region, RegionId } from '../types';
+import type { SegmentId } from './segments';
 
 export type Difficulty = 'easy' | 'normal' | 'hard';
 export type Phase = 'term' | 'campaign' | 'night' | 'formation' | 'done';
@@ -13,10 +14,20 @@ export const ACTION_IDS = [
   'dinner', 'crowdfund', 'tycoon',
   // Added later, each with a catch: a different audience, a risk, or a price paid in something other than money.
   'townhall', 'charity', 'youth', 'festival', 'conference', 'debate', 'manifesto', 'radio',
+  // Paid for in the dark: a hand on the keyboards.
+  'troops',
+  // The thing that is done in one state and no other.
+  'local',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 export type Family = 'ground' | 'machinery' | 'media' | 'funds';
 export type TargetKind = 'seat' | 'state' | 'party' | 'none';
+
+/** What a local manifesto is about, in a state’s election or a by-election. */
+export const LOCAL_THEMES = ['roads', 'water', 'jobs', 'housing'] as const;
+export type LocalTheme = (typeof LOCAL_THEMES)[number];
+export type Posture = 'policy' | 'attack' | 'warm';
+export const POSTURES: readonly Posture[] = ['policy', 'attack', 'warm'];
 
 export interface ActionTarget {
   seat?: string;
@@ -24,6 +35,13 @@ export interface ActionTarget {
   state?: RegionId;
   /** Party index, for attacks. */
   party?: number;
+  /** The voter group a seat event is pitched to; absent for one pitched to everyone. */
+  segment?: SegmentId;
+  /** A debate: the issue the question is about, and how the player answers it. */
+  topic?: IssueId;
+  posture?: Posture;
+  /** A manifesto for a state or a seat: the one thing it is about. */
+  theme?: LocalTheme;
 }
 
 /** How an action turned out; drives the news line and nothing else. */
@@ -84,7 +102,7 @@ export interface PartyCampaign {
 export interface Pact { a: number; b: number; week: number }
 
 /** A moment that needs the player's answer: a phone call, an offer, an audience at the Palace. */
-export type SceneKind = 'pactOffer' | 'poach' | 'summons' | 'unityAdvice' | 'event' | 'vote' | 'houseVote';
+export type SceneKind = 'pactOffer' | 'poach' | 'summons' | 'unityAdvice' | 'event' | 'vote' | 'houseVote' | 'agenda' | 'partyPoll' | 'redraw';
 export interface Scene {
   id: number;
   kind: SceneKind;
@@ -93,6 +111,8 @@ export interface Scene {
   /** Pact offers: seats the player would stand aside in, and seats the other party would. */
   give?: string[];
   get?: string[];
+  /** Pact offers from a partner: of the seats the player would give, those the partner asks for as the price of standing together. */
+  ask?: string[];
   /** Poaching: the seat whose incumbent is being courted. */
   seat?: string;
   /** Events between elections: which one. */
@@ -161,6 +181,8 @@ export interface Formation {
   offers: (Offer | null)[][];
   /** [party]: the player has sounded them out and knows what they want. */
   known: boolean[];
+  /** The leader the Palace invited first to show a majority: the one with most behind them when the talks opened. */
+  invited?: number;
   /** The Palace has advised the leaders to consider a unity government. */
   unityAdvice: boolean;
   outcome: Outcome | null;
@@ -249,6 +271,9 @@ export const N_ISSUES = ISSUE_IDS.length;
 export const PLEDGE_IDS = [
   'cashAid', 'fuelSubsidy', 'minWage', 'taxCut', 'graftCommission', 'termLimit', 'hospitals', 'transitPass',
   'debtWriteOff', 'civilPay', 'borneoFund', 'settlerDebt', 'floorPrices', 'valuesSchools', 'repealLaws', 'homes',
+  // Added with the laws that, once passed, stay on the books (see `law` in policy.ts): promises of an Act, of a programme, and of money for a region.
+  'partyHopBan', 'fixedTerm', 'infoAct', 'localVote', 'gigRights', 'oilRoyalty',
+  'schoolMeals', 'healthCover', 'greenGrid', 'villageRoads', 'smeLoans', 'seniorPension',
 ] as const;
 export type PledgeId = (typeof PLEDGE_IDS)[number];
 
@@ -289,7 +314,12 @@ export const LINE_IDS = ['aid', 'health', 'education', 'rural', 'civil'] as cons
 export type LineId = (typeof LINE_IDS)[number];
 /** Cut, hold or boost. */
 export type Dial = -1 | 0 | 1;
-export interface Budget { lines: Record<LineId, Dial>; tax: Dial }
+/** Concrete things a budget can pay for inside its lines: each notices a few groups of voters and costs a little more than holding the line. */
+export const MEASURE_IDS = [
+  'cashTopUp', 'fuelPrice', 'clinics', 'hospitalBeds', 'scholarships', 'schoolRepairs', 'roads', 'farmInputs', 'civilBonus', 'pensions',
+] as const;
+export type MeasureId = (typeof MEASURE_IDS)[number];
+export interface Budget { lines: Record<LineId, Dial>; tax: Dial; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
 
 export const PORTFOLIO_IDS = ['finance', 'home', 'economy', 'education', 'health', 'rural', 'works', 'defence'] as const;
 export type PortfolioId = (typeof PORTFOLIO_IDS)[number];
@@ -356,7 +386,7 @@ export interface CareerRecord {
 export const LEGACY_IDS = ['statesman', 'reformer', 'survivor', 'promiser', 'plotter', 'premier', 'kingmaker', 'conscience', 'nearly', 'footnote'] as const;
 export type LegacyId = (typeof LEGACY_IDS)[number];
 export type EndingKind = 'retired' | 'ousted' | 'wipedOut';
-export interface Ending { kind: EndingKind; legacy: LegacyId; score: number }
+export interface Ending { kind: EndingKind; legacy: LegacyId; score: number; /** Acts of Parliament still on the books when the career ended. */ laws?: number }
 
 /** A career: the long game across terms. Null in one-off contests. */
 export interface Career {
@@ -376,6 +406,8 @@ export interface Career {
   length: number;
   /** Who governs. */
   government: Outcome;
+  /** The week the Palace last refused a request to dissolve Parliament, or absent if it never has. */
+  palaceNo?: number;
   /** The talks now under way are a change of government between elections. */
   midterm: boolean;
   /** The last election seat by seat, once there has been one in this career. */
@@ -383,12 +415,102 @@ export interface Career {
   orders: Orders;
   /** Money tied up in party businesses. */
   assets: number;
+  /** What each kind of business accounts for; the rest of `assets` is plain property. Absent in a game saved before kinds existed. */
+  holdings?: Partial<Record<'property' | 'hotel' | 'media' | 'plantation' | 'college', number>>;
+  /** Members on the party's rolls. Absent until the first week of a term, when it is set to what the party would ordinarily have. */
+  rolls?: number;
+  /** A recruitment drive's lift to the rolls the party can sustain, fading back to 1. */
+  drive?: number;
+  /** The week each activity was last done. */
+  activity?: Partial<Record<'recruit' | 'assembly' | 'school', number>>;
   /** How far voters believe what the player says, 0-100. */
   credibility: number;
   /** What the party has dug up on its rivals, 0-100. Spent on attacks. */
   dossier: number;
   /** [party][issue]: where each party stands, -2 to 2. */
   stances: number[][];
+  /** What was decided about the boundaries before the next parliament: the party that asked for a map that suits it, or null for the commission left alone. Absent if the question did not arise (see redraw.ts). */
+  redraw?: { by: number | null };
+  /** The party's factions and wings, made the first time they are looked at (see factions.ts). */
+  factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[]; deputy?: { name: number; faction: number; ambition: number } };
+  /** The shadow cabinet the player has named from the opposition benches, by portfolio (see shadow.ts). */
+  shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
+  /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
+  trail?: number;
+  /** The three advisers, what worries each and how many times they have said so (see advisers.ts). */
+  advisers?: Record<'treasurer' | 'strategist' | 'conscience', { name: number; concern: string | null; count: number }>;
+  /** The adviser who has asked for a word and is waiting for the answer. */
+  adviserPending?: 'treasurer' | 'strategist' | 'conscience';
+  /** The week of the last open letter or speech the player wrote (see letters.ts). */
+  letter?: number;
+  /** [power]: the week the state’s government last used it (see statepowers.ts). */
+  powers?: Record<string, number>;
+  /** Stories still to be printed about how past decisions turned out (see echoes.ts). */
+  echoes?: { week: number; event: string; kind: 'good' | 'bad' | 'mixed' }[];
+  /** The Speaker of this parliament (see chamber.ts). */
+  speaker?: { name: number; lean: number };
+  /** The Chief Secretary to the government, who has views of their own (see ksu.ts). */
+  ksu?: { name: number; outlook: 'reformist' | 'cautious' | 'political'; trust: number };
+  /** [party]: seats agreed with a party in the last year of the term, to be signed when the campaign opens (see earlypact.ts). */
+  early?: Record<number, { give: string[]; get: string[] }>;
+  /** The government of national unity the player formed, and the week it ends (see grand.ts). */
+  grand?: { until: number; members: number[] };
+  /** How many times the government has leaned on each institution in this parliament (see govern.ts). */
+  leverUses?: Partial<Record<LeverId, number>>;
+  /** The sectors of the economy, each from 0 to 100 around a middling 50 (see sectors.ts). */
+  sectors?: Record<string, number>;
+  /** [sector]: the week the government last gave it support. */
+  sectorAid?: Record<string, number>;
+  /** The government dissolved the states it governs together with the House (see career.ts). */
+  together?: boolean;
+  /** The post whose holder is at the centre of a scandal the player has yet to answer (see events.ts). */
+  scandal?: PortfolioId;
+  /** The week the opposition last opened a committee inquiry (see committee.ts). */
+  committee?: number;
+  /** The coalition the player has given a name and a mark: who belongs (see alliance.ts). */
+  alliance?: { name: number; mark: number; members: number[] };
+  /** The promises in the player's manifesto that are made in their short form: half the price, half the appeal (see policy.ts). */
+  brief?: PledgeId[];
+  /** [party]: the player's promises that party has copied for its own manifesto (see policy.ts). */
+  copied?: Record<number, PledgeId[]>;
+  /** Acts the voters themselves approved in a referendum; no court strikes them down (see courts.ts). */
+  mandated?: PledgeId[];
+  /** Acts that passed on a thin margin; a constitutional court may strike them down (see courts.ts). */
+  shaky?: PledgeId[];
+  /** [seat]: the party that holds it and for how many terms in a row (see tenure.ts). */
+  tenure?: Record<string, [number, number]>;
+  /** How freely the party draws on the states it governs, 0 to 2 (see patronage.ts). */
+  patronage?: number;
+  /** Members on the rolls on paper only, not yet found out (see party.ts). */
+  padded?: number;
+  /** [seat]: the faction a safe seat was given to as a reward (see safeseat.ts). */
+  safe?: Record<string, number>;
+  /** The seat the party made fall vacant on purpose this term, to be fought for in a by-election (see contests.ts). */
+  forced?: string;
+  /** Foreign money taken, in lots of what a donor gives, and not yet found out (see party.ts). */
+  foreign?: number;
+  /** Parties the player's party has taken in, in this career so far (see merge.ts). */
+  merged?: number[];
+  /** Parties that keep the player's government in office from outside the cabinet, and until when (see supply.ts). */
+  supply?: { party: number; until: number; price: 'cash' | 'policy' }[];
+  /** The week each state's branches were last disciplined, by state. */
+  disciplined?: Record<string, number>;
+  /** States where the party has stood for the first time and its branches are still young, so that they grow slowly (see party.ts). */
+  fresh?: string[];
+  /** What the party's members and branches are worth at this election, in logit units across all groups, fixed when the campaign begins (see party.ts). Absent outside a campaign. */
+  grass?: number;
+  /** Parliaments in a row the player's party has sat in government, as head or as partner, this one included: the longer it has, the more tired the voters are of it (see party.ts). */
+  govRun?: number;
+  /** Money set aside for the next campaign, out of reach of the weeks between (see party.ts). */
+  chest?: number;
+  /** Parliaments in a row the player's party has headed the government, this one included. */
+  pmRun?: number;
+  /** The party's leader may not head the government this term: a term limit passed into law applies (see nextTerm). The party governs, and the player leads it from outside the premiership. */
+  limited?: boolean;
+  /** How the player answered each time their state's question was put in a state career, in order (see agenda.ts). */
+  agendaAnswers?: number[];
+  /** Promises that became law, in this term or one before: an Act of Parliament need not be promised twice. Absent in a game saved before it existed. */
+  laws?: PledgeId[];
   /** Stances as they were at the last election. */
   stances0: number[][];
   /** [issue]: the last week the player changed that stance, or 0. */
@@ -459,7 +581,7 @@ export interface Career {
  * `fog` hides the chances of anything left to luck; `noisy` doubles the error of every poll.
  */
 /** Optional ways to make a campaign harder, and the goal of a set challenge (an id in challenges.ts). */
-export interface Challenge { fog: boolean; noisy: boolean; goal?: string }
+export interface Challenge { fog: boolean; noisy: boolean; goal?: string; /** A change to history, for a replay of the real election with something different (see whatif.ts). */ whatIf?: string }
 
 /** A campaign in progress: everything the rules need, as plain JSON. */
 export interface Campaign {
@@ -503,6 +625,10 @@ export interface Campaign {
   met: number[];
   /** Seats whose incumbent has changed sides this campaign. */
   katak: string[];
+  /** The question of the state being fought for: absent until asked, 'asked' while it waits, then 'answered:<choice>' (see agenda.ts). */
+  agenda?: string;
+  /** Seats where the player's party has put up a candidate it had none in last time, and what each cost (see entry.ts). */
+  entered?: Record<string, number>;
   /** Parties that have already put a pact offer to the player. */
   offered: number[];
   /** Scenes waiting for the player's answer. */

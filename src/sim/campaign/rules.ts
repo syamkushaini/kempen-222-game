@@ -63,7 +63,7 @@ export const BYELECTION_RULES: Rules = {
   weeks: 3,
   // One seat: nothing statewide, no television, no time to build branches.
   // A donor with strings is on offer here too: with the loan, the two ways out of an empty chest.
-  actions: ['ceramah', 'walkabout', 'canvass', 'gotv', 'social', 'attack', 'dinner', 'crowdfund', 'tycoon', 'townhall', 'charity', 'festival', 'conference'],
+  actions: ['ceramah', 'walkabout', 'canvass', 'gotv', 'social', 'attack', 'dinner', 'crowdfund', 'tycoon', 'townhall', 'charity', 'festival', 'conference', 'manifesto'],
   pollScopes: ['seat'],
   zones: null,
   diplomacy: false,

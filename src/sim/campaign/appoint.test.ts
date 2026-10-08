@@ -4,6 +4,7 @@ import { Rng } from '../rng';
 import { PARTY_IDS } from '../types';
 import { scaled } from './actions';
 import { startCareer } from './career';
+import { resolveEvent } from './events';
 import { governWeek, reshuffle, vacate } from './govern';
 import { ACTING_DRAG, appoint, cabinetWeek, TRAIT_EFFECT, waitingForChoice } from './office';
 import { MINISTER_TRAITS, PORTFOLIO_IDS, type Campaign } from './types';
@@ -109,11 +110,15 @@ describe('appointing ministers', () => {
     appoint(base, c, post, 0);
     const cred = k.credibility, trust = k.government.trust;
     const rng = new Rng(7);
-    for (let w = 0; w < 3000 && !k.cabinet.find((m) => m.portfolio === post)!.acting; w++) cabinetWeek(c, rng);
+    for (let w = 0; w < 3000 && !k.scandal; w++) cabinetWeek(c, rng);
+    // The scandal goes to the player to answer; sacking the minister is what leaves the post to fill.
+    const scene = c.inbox.find((s) => s.event === 'ministerScandal')!;
+    expect(scene).toBeDefined();
+    resolveEvent(base, c, scene, 0);
     const m = k.cabinet.find((x) => x.portfolio === post)!;
     expect(m.acting).toBe(true);
-    expect(k.credibility).toBe(cred - 8);
-    expect(k.government.trust).toBe(trust - 5);
+    expect(k.credibility).toBe(cred - 3);
+    expect(k.government.trust).toBe(trust - 2);
     const slot = k.appointments!.find((a) => a.portfolio === post)!;
     expect(slot.options).toHaveLength(3);
     expect(slot.options.some((o) => o.name === 3)).toBe(false);

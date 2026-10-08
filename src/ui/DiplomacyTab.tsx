@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { scaled } from '../sim/campaign/actions';
 import {
-  beforeNomination, canCourt, canJointAttack, canMeet, canPromise, canTalk, COST, courtChance, inPact,
+  beforeNomination, canCourt, STAKES, type Stake, canJointAttack, canMeet, canPromise, canTalk, COST, courtChance, inPact,
   nominationWeek, others, relation, type DiploRefusal,
 } from '../sim/campaign/diplomacy';
 import { useStore } from '../state/store';
@@ -54,6 +54,7 @@ export function DiplomacyTab() {
   const [open, setOpen] = useState<number | null>(null);
   const [talking, setTalking] = useState<number | null>(null);
   const [targets, setTargets] = useState<Record<number, number>>({});
+  const [stake, setStake] = useState<Stake>(1);
 
   const me = campaign.player;
   const pc = campaign.parties[me]!;
@@ -63,7 +64,7 @@ export function DiplomacyTab() {
   if (talking !== null) return <PactTalks party={talking} onClose={() => { clearPactReply(); setTalking(null); }} />;
 
   const seat = selectedSeat ? world.seats[world.seatIndex.get(selectedSeat)!] : null;
-  const courtCheck = canCourt(world, campaign, selectedSeat);
+  const courtCheck = canCourt(world, campaign, selectedSeat, stake);
   const holder = seat ? seat.last.votes.indexOf(Math.max(...seat.last.votes)) : -1;
 
   return (
@@ -157,9 +158,20 @@ export function DiplomacyTab() {
       <ul>
         <Move
           title={seat && courtCheck.ok ? t('deals.court', { seat: seat.name, party: partyShort(t, holder) }) : t('deals.court.none')}
-          meta={`${f.days(COST.court)} · ${f.rm(scaled(world, COST.courtMoney))}${seat && courtCheck.ok && !fog ? ` · ${t('deals.court.chance', { pct: f.pct(courtChance(world, campaign, seat.id), 0) })}` : ''}`}
-          check={courtCheck} onGo={() => court(selectedSeat!)}
+          meta={`${f.days(COST.court)} · ${f.rm(scaled(world, COST.courtMoney) * stake)}${seat && courtCheck.ok && !fog ? ` · ${t('deals.court.chance', { pct: f.pct(courtChance(world, campaign, seat.id, stake), 0) })}` : ''}`}
+          check={courtCheck} onGo={() => court(selectedSeat!, stake)}
         />
+        <li>
+          <span className="muted small">{t('deals.court.offer')}</span>
+          <div className="segmented small" role="group" aria-label={t('deals.court.offer')}>
+            {STAKES.map((n) => (
+              <button key={n} className={stake === n ? 'active' : ''} aria-pressed={stake === n} onClick={() => setStake(n)}>
+                {f.rm(scaled(world, COST.courtMoney) * n)}
+              </button>
+            ))}
+          </div>
+          <p className="muted small">{t('deals.court.offer.note')}</p>
+        </li>
       </ul>
     </section>
   );

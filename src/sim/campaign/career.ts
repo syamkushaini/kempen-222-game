@@ -5,7 +5,7 @@ import { Rng } from '../rng';
 import { N_BLOCS, N_PARTIES, PARTY_IDS, type RegionId } from '../types';
 import { contestsState, scaled } from './actions';
 import { START_UNITY } from './cast';
-import { houseTally, resolveByElection, resolveStatePolls, roundDue, startStates, STATE_GOVERNMENT_INCOME, statesHeld, vacantSeat } from './contests';
+import { applyStateResults, houseTally, leaders, resolveByElection, resolveStatePolls, roundDue, startStates, STATE_GOVERNMENT_INCOME, statesHeld, vacantSeat } from './contests';
 import { relation, shiftRelation } from './diplomacy';
 import { EVENTS, raise, resolveEvent, rollEvent } from './events';
 import {
@@ -14,7 +14,7 @@ import {
 } from './govern';
 import { endCareer, OUSTED_BELOW } from './legacy';
 import { applyBackstory, applyIdeology, type IdeologyId } from './leader';
-import { recordResults } from './results';
+import { petition, recordResults } from './results';
 import { FORMATION_WEEK, pushNews, ref } from './news';
 import { FOUNDING_FUNDS, growFoundedParty } from './founding';
 import { edge, incomeBoost, mediaBoost, neutralLeader, skill } from './perks';
@@ -24,7 +24,27 @@ import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
-import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances } from './policy';
+import { agendaTerm } from './agenda';
+import { foldMerged, standMerged } from './merge';
+import { supplyWeek } from './supply';
+import { shadowWeek } from './shadow';
+import { redraw, redrawWeek, resolveRedraw } from './redraw';
+import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
+import { allianceBonus, allianceWeek, dropMember } from './alliance';
+import { sectorsWeek } from './sectors';
+import { trialWeek } from './trial';
+import { advisersWeek } from './advisers';
+import { echoWeek } from './echoes';
+import { ksuWeek } from './ksu';
+import { grandWeek } from './grand';
+import { signEarlyPacts } from './earlypact';
+import { applyPride } from './pride';
+import { courtWeek } from './courts';
+import { patronageMult, patronageWeek } from './patronage';
+import { applyTenure, recordTenure } from './tenure';
+import { applySafe } from './safeseat';
+import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, crowdIncome, fatigueOf, foreignWeek, paddedWeek, grassrootsLift, holdingsWeek, trailWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
+import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
 import {
   freshParty, makeDrift, newCampaign, publishPublicPoll, startingFunds, weeklyIncome, type CampaignOptions,
 } from './turn';
@@ -51,10 +71,17 @@ const PEACETIME = 0.1;
 const DONOR_INCOME = 8_000;
 const STATE_INCOME = 10_000;
 /** Weekly return on money invested in party businesses. */
-const ASSET_YIELD = 0.0025;
 /** Businesses are bought and sold in lots of this size; selling loses a tenth. */
 export const ASSET_LOT = 100_000;
 const MAX_FOCUS_STATES = 3;
+/** Weeks without leaning on an institution before public trust starts to recover, how much of the gap to the ceiling it makes up each week, and the ceiling. */
+export const TRUST_QUIET = 26;
+/** The parliaments in a row a leader may head the government once a term limit is law. */
+export const TERM_LIMIT = 2;
+/** What losing the seat the leader stood in costs: the leader's word, and the party's heart. */
+export const LEADER_OUT = { credibility: 10, unity: 8 };
+export const TRUST_RECOVERY = 0.004;
+export const TRUST_CEILING = 80;
 const PROFILE_CAP = 0.08;
 
 export const inGovernment = (c: Campaign, p: number) => !!c.career && (c.career.government.pm === p || c.career.government.partners.includes(p));
@@ -70,7 +97,7 @@ export function syncOpinion(c: Campaign): void {
   const k = c.career;
   if (!k) return;
   const policy = policyEffect(c);
-  for (let b = 0; b < N_BLOCS; b++) for (let p = 0; p < N_PARTIES; p++) c.drift.support.nat[b][p] = k.mood[b][p] + k.profile[p] + policy[b][p];
+  for (let b = 0; b < N_BLOCS; b++) for (let p = 0; p < N_PARTIES; p++) c.drift.support.nat[b][p] = k.mood[b][p] + k.profile[p] + policy[b][p] + (p === c.player ? k.grass ?? 0 : 0) + allianceBonus(c, p);
 }
 
 // ---------- starting ----------
@@ -145,7 +172,11 @@ function takeOffice(c: Campaign): void {
   formCabinet(c, rng);
   c.rng = rng.state;
   makeObligations(c);
+  // A shadow cabinet has done its work once the party governs.
+  if (inGovernment(c, c.player)) delete c.career!.shadow;
   c.career!.bills = [];
+  // A deal made with one government does not bind the next.
+  delete c.career!.supply;
 }
 
 /**
@@ -170,6 +201,8 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   // The government was elected on its usual programme, and will be held to it.
   c.career.promises = [...c.career.manifesto[c.player]];
   c.career.record.bestSeats = lastElection(world).tally[c.player];
+  c.career.govRun = inGovernment(c, c.player) ? 1 : 0;
+  c.career.pmRun = c.career.government.pm === c.player ? 1 : 0;
   if (opts.realStates && !opts.founded && world.rules.kind !== 'state') c.career.realStates = true;
   // A party the player made stands where it stood before, and picks and pays for any other seat; a founded party has none to begin with.
   if (opts.own || opts.founded) {
@@ -204,20 +237,34 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
 
 // ---------- money ----------
 
-export interface Income { members: number; donors: number; state: number; assets: number; states: number; total: number }
+export interface Income { members: number; donors: number; crowd: number; state: number; assets: number; states: number; total: number }
 
 /** What comes in each week between elections, by source. */
 export function termIncome(world: World, c: Campaign): Income {
   const k = c.career!;
   const pc = c.parties[c.player]!;
   const drive = k.orders.focus === 'funds';
-  const members = Math.round(weeklyIncome(world, c.player, c) * PEACETIME * (0.6 + 0.4 * pc.unity / 100) * (0.8 + k.credibility / 250) * (drive ? 1.6 : 1) * incomeBoost(c, c.player));
+  const members = Math.round(weeklyIncome(world, c.player, c) * PEACETIME * (0.6 + 0.4 * pc.unity / 100) * (0.8 + k.credibility / 250) * (drive ? 1.6 : 1) * incomeBoost(c, c.player) * rollsFactor(world, c));
   const donors = Math.round(scaled(world, DONOR_INCOME) * k.orders.donors * (drive ? 1.3 : 1));
+  const crowd = crowdIncome(world, c);
   const state = inGovernment(c, c.player) ? scaled(world, STATE_INCOME) * k.orders.state : 0;
-  const assets = Math.round(k.assets * ASSET_YIELD);
+  const assets = holdingsYield(k);
   // A party that governs states has their patronage to draw on.
-  const states = scaled(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player);
-  return { members, donors, state, assets, states, total: members + donors + state + assets + states };
+  const states = Math.round(scaled(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player) * patronageMult(k));
+  return { members, donors, crowd, state, assets, states, total: members + donors + crowd + state + assets + states };
+}
+
+export interface LedgerLine { id: string; amount: number }
+
+/** The party's books for a week in the years between elections: what comes in by source, what goes out by kind, and what is left. */
+export function ledger(world: World, c: Campaign): { income: LedgerLine[]; spending: LedgerLine[]; net: number } {
+  const i = termIncome(world, c);
+  const s = termSpending(world, c);
+  const income = ([['members', i.members], ['donors', i.donors], ['crowd', i.crowd], ['state', i.state], ['assets', i.assets], ['states', i.states]] as const)
+    .filter(([, amount]) => amount !== 0).map(([id, amount]) => ({ id, amount }));
+  const spending = ([['machinery', s.machinery], ['media', s.media], ['research', s.research], ['wages', s.wages]] as const)
+    .filter(([, amount]) => amount > 0).map(([id, amount]) => ({ id, amount }));
+  return { income, spending, net: i.total - s.total };
 }
 
 export interface Spending { machinery: number; media: number; research: number; wages: number; total: number }
@@ -248,20 +295,9 @@ export function setOrders(world: World, c: Campaign, patch: Partial<Orders>): vo
   if (isLevel(patch.state)) o.state = inGovernment(c, c.player) ? patch.state : 0;
 }
 
-/** Buys (positive) or sells (negative) lots of party businesses. Selling in a hurry loses a tenth. */
+/** Buys (positive) or sells (negative) lots of party businesses, as plain property. Selling in a hurry loses a tenth. The Party tab buys and sells each kind. */
 export function invest(world: World, c: Campaign, lots: number): boolean {
-  const k = c.career;
-  const pc = c.parties[c.player];
-  if (!k || !pc || c.phase !== 'term' || !Number.isInteger(lots) || lots === 0) return false;
-  const amount = scaled(world, ASSET_LOT) * Math.abs(lots);
-  if (lots > 0) {
-    if (amount > pc.funds) return false;
-    pc.funds -= amount; k.assets += amount;
-  } else {
-    if (amount > k.assets) return false;
-    k.assets -= amount; pc.funds += Math.round(amount * 0.9);
-  }
-  return true;
+  return trade(world, c, 'property', lots);
 }
 
 // ---------- the weekly turn ----------
@@ -330,12 +366,38 @@ export function termWeek(world: World, c: Campaign): void {
 
   // Branches wither a little every week, and grow where money and the leader's time go.
   const targets = machineryTargets(world, c);
-  const points = ((afford * plan.machinery) / scaled(world, 6_000) * 0.25 + (o.focus === 'tour' ? 0.3 : 0)) * edge(c, me, 'organisation') * (1 + 0.05 * skill(c, me, 'manager'));
+  const points = ((afford * plan.machinery) / scaled(world, 6_000) * 0.25 + (o.focus === 'tour' ? 0.3 : 0)) * edge(c, me, 'organisation') * (1 + 0.05 * skill(c, me, 'manager')) * (0.8 + 0.2 * Math.min(2, rollsFactor(world, c)));
   pc.machinery = pc.machinery.map((m, i) => {
-    if (m <= 0) return 0;
-    const grown = targets.includes(world.states[i]) ? points / targets.length : 0;
-    return clamp(m - 0.04 + grown, 10, 100);
+    const st = world.states[i];
+    if (m <= 0) {
+      // Ground the party stands on for the first time: a foothold, and then years of slow work.
+      if (!contestsState(world, c, me, st)) return 0;
+      (k.fresh ??= []).push(st);
+      return FOOTHOLD;
+    }
+    const young = k.fresh?.includes(st) ?? false;
+    const grown = targets.includes(st) ? (points / targets.length) * (young ? YOUNG_BRANCHES : 1) : 0;
+    const next = clamp(m - 0.04 + grown, young ? FOOTHOLD : 10, 100);
+    if (young && next >= MATURE) k.fresh = k.fresh!.filter((x) => x !== st);
+    return next;
   });
+  if (k.fresh?.length === 0) delete k.fresh;
+
+  const rngWeek = new Rng((c.rng ^ 0x9a17) + k.week);
+  holdingsWeek(world, c, rngWeek);
+  trailWeek(world, c, rngWeek);
+  foreignWeek(world, c, rngWeek);
+  rollsWeek(world, c);
+  paddedWeek(world, c, rngWeek);
+  patronageWeek(c, rngWeek);
+  courtWeek(c, rngWeek);
+  allianceWeek(c);
+  grandWeek(world, c);
+  ksuWeek(c, rngWeek);
+  echoWeek(c);
+  advisersWeek(c);
+  sectorsWeek(c, rngWeek);
+  trialWeek(c);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
   k.profile[me] = Math.min(PROFILE_CAP, k.profile[me] * 0.97 + seen);
@@ -351,7 +413,11 @@ export function termWeek(world: World, c: Campaign): void {
 
   // Easy money has a slow price as well as a sudden one.
   k.credibility = clamp(k.credibility - 0.03 * o.donors, 0, 100);
-  if (inGovernment(c, me)) k.government.trust = clamp(k.government.trust - 0.05 * o.state, 0, 100);
+  if (inGovernment(c, me)) {
+    k.government.trust = clamp(k.government.trust - 0.05 * o.state, 0, 100);
+    // A government that leaves state resources alone and has not leaned on an institution for half a year slowly earns some trust back.
+    if (o.state === 0 && k.levers.every((w) => w === 0 || k.week - w >= TRUST_QUIET)) k.government.trust = clamp(k.government.trust + TRUST_RECOVERY * (TRUST_CEILING - k.government.trust), 0, 100);
+  }
   pc.unity = clamp(pc.unity + Math.sign(65 - pc.unity) * 0.05, 0, 100);
   k.salience = k.salience.map((s) => s + (1 - s) * 0.02);
   k.government.stability = clamp(k.government.stability + rng.normal(0, k.government.pm === me ? 0.15 : 0.4), 5, 95);
@@ -362,6 +428,12 @@ export function termWeek(world: World, c: Campaign): void {
   syncOpinion(c);
   // One thing at a time: nothing new arrives while a vote is waiting. The states' own elections come when they are due.
   if (c.inbox.length === 0 && world.rules.kind !== 'state' && roundDue(c) !== null) raise(c, 'statePolls');
+  agendaTerm(world, c);
+  supplyWeek(c);
+  shadowWeek(c);
+  factionsWeek(c);
+  redrawWeek(c);
+  if (c.inbox.length === 0 && partyPollWeek(c)) partyPoll(c, rng);
   if (c.inbox.length === 0) rollEvent(c, rng);
   // A by-election needs a seat to be fought in.
   for (const scene of c.inbox) if (scene.event === 'byElection' && !scene.seat) scene.seat = vacantSeat(world, c, rng);
@@ -403,7 +475,9 @@ export function skipAhead(world: World, c: Campaign, weeks: number): number {
 export function answerEvent(world: World, c: Campaign, scene: Scene, choice: number): void {
   const k = c.career;
   if (!k) return;
-  if (scene.kind === 'vote') resolveVote(world, c, scene, choice);
+  if (scene.kind === 'partyPoll') resolvePartyPoll(world, c, scene, choice);
+  else if (scene.kind === 'redraw') resolveRedraw(c, scene, choice);
+  else if (scene.kind === 'vote') resolveVote(world, c, scene, choice);
   else if (scene.kind === 'houseVote') resolveHouseVote(world, c, scene, choice);
   else if (scene.event === 'budget') {
     // Budget day: the plan as it stands, or last year's budget again.
@@ -443,6 +517,8 @@ export function governmentFalls(world: World, c: Campaign, who?: number): void {
   pushNews(c, { party: leaver, key: 'news.term.walkout', vars: { party: ref.party(leaver), pm: ref.party(g.pm) }, tone: g.pm === c.player ? 'bad' : 'neutral' });
   g.partners = g.partners.filter((p) => p !== leaver);
   g.deals[leaver] = null;
+  // A partner that walks out of the government walks out of the alliance too, and does not forget what it was called.
+  if (k.alliance?.members.includes(leaver) && leaver !== c.player) { dropMember(c, leaver); shiftRelation(c, g.pm, leaver, -15); }
   g.seats -= tally[leaver];
   if (g.seats >= majorityLine(world)) {
     g.stability = clamp(g.stability - 5, 5, 95);
@@ -473,14 +549,59 @@ export function resumeTerm(c: Campaign): boolean {
 
 export function canDissolve(c: Campaign): boolean {
   const k = c.career;
-  return !!k && c.phase === 'term' && c.inbox.length === 0 && k.government.pm === c.player && k.week >= EARLIEST_DISSOLUTION;
+  return !!k && c.phase === 'term' && c.inbox.length === 0 && k.government.pm === c.player && !k.limited && k.week >= EARLIEST_DISSOLUTION && k.week - (k.palaceNo ?? -PALACE_WAIT) >= PALACE_WAIT;
 }
 
 /** The player, as head of government, asks for a dissolution and goes to the country early. */
-export function dissolve(world: World, c: Campaign): boolean {
+export function dissolve(world: World, c: Campaign, together = false): boolean {
   if (!canDissolve(c)) return false;
+  const k = c.career!;
+  // The Palace need not grant it. A government that has lost its footing, or a majority, is asked to try to govern first.
+  const rng = new Rng((c.rng ^ 0x9a1ace) + k.week);
+  c.rng = rng.state;
+  if (rng.next() < palaceRefusal(c)) {
+    k.palaceNo = k.week;
+    k.government.stability = clamp(k.government.stability - 8, 5, 95);
+    pushNews(c, { party: c.player, key: 'news.palace.refused', vars: { n: PALACE_WAIT }, tone: 'bad' });
+    return false;
+  }
+  // Going to the country early when things are going well is seen for what it is, and the voters say so.
+  const cost = opportunism(c);
+  if (cost > 0) {
+    for (const row of k.mood) row[c.player] -= cost;
+    pushNews(c, { party: c.player, key: 'news.dissolve.opportunist', vars: { pct: Math.round(cost * 25 * 10) / 10 }, tone: 'bad' });
+  }
+  // The states the party governs can be taken to the polls on the same day: one wave of campaign for all of them.
+  if (together && !c.scenario.startsWith('career:') && statesHeld(c, c.player) > 0) {
+    const mine = Object.keys(k.states).filter((st) => k.states[st] === c.player);
+    if (mine.length > 0) {
+      k.together = true;
+      pushNews(c, { party: c.player, key: 'news.dissolve.together', vars: { states: `@states:${mine.join(',')}` }, tone: 'neutral' });
+    }
+  }
   beginCampaign(world, c);
   return true;
+}
+
+/** What the voters take off a government that dissolves early when it is not in trouble: more the earlier, none when it is shaky or the term is nearly out. */
+export const OPPORTUNISM = { perYear: 0.012, max: 0.04, grace: 26 };
+export function opportunism(c: Campaign): number {
+  const k = c.career!;
+  const left = k.length - k.week;
+  if (left <= OPPORTUNISM.grace) return 0;
+  const steady = k.government.stability >= 50 ? 1 : k.government.stability >= 35 ? 0.5 : 0;
+  return Math.min(OPPORTUNISM.max, (left / 52) * OPPORTUNISM.perYear) * steady;
+}
+
+/** Weeks the Palace asks a government to wait before it asks again. */
+export const PALACE_WAIT = 13;
+
+/** The chance the Palace refuses a request to dissolve: nothing for a government with a majority and its footing, rising as either is lost. */
+export function palaceRefusal(c: Campaign): number {
+  const g = c.career!.government;
+  // A state's ruler is slower to oblige than the Palace is to a government of the country.
+  const state = c.scenario.startsWith('career:') ? 0.1 : 0;
+  return clamp((50 - g.stability) / 100 + (g.minority ? 0.2 : 0) + Math.max(0, (40 - g.trust) / 200) + state, 0, 0.6);
 }
 
 /**
@@ -498,6 +619,7 @@ export function beginCampaign(world: World, c: Campaign): void {
   k.delivery = {};
   k.bills = [];
   pushNews(c, { party: null, key: 'news.term.dissolved', vars: { n: world.rules.weeks }, tone: 'neutral' });
+  openChest(c);
 
   c.parties = c.parties.map((pc, p) => {
     if (!pc) return null;
@@ -513,6 +635,18 @@ export function beginCampaign(world: World, c: Campaign): void {
   c.inbox = [];
   openCampaign(world, c);
   openNominations(world, c);
+  // Parties that were taken in do not stand.
+  standMerged(world, c);
+  applySafe(world, c);
+  applyTenure(world, c);
+  applyPride(world, c);
+  signEarlyPacts(world, c);
+  // Members and branches built over the years tell on polling day, in every seat the party stands in.
+  const lift = grassrootsLift(world, c);
+  if (lift > 0) {
+    k.grass = lift;
+    pushNews(c, { party: me, key: 'news.grassroots', vars: { pts: Math.round(lift * 25 * 10) / 10 }, tone: 'good' });
+  }
   syncOpinion(c);
   publishPublicPoll(world, c);
 }
@@ -526,22 +660,64 @@ export function nextTerm(world: World, c: Campaign): boolean {
   const k = c.career;
   const outcome = c.formation?.outcome;
   if (!k || k.midterm || !outcome || c.phase !== 'done' || !c.election) return false;
-  const recorded = recordResults(world, c);
+  const counted = foldMerged(c, recordResults(world, c));
+  // A campaign that broke the spending law is petitioned against: the narrowest wins are overturned.
+  const petitioned = petition(world, c, counted);
+  const recorded = petitioned.results;
+  recordTenure(world, c, recorded);
+  const togetherStates = k.together ? Object.keys(k.states).filter((st) => k.states[st] === c.player && world.states.includes(st)) : [];
   closeSlate(world, c);
   const rng = new Rng(c.rng);
-  const next = freshCareer(k.term + 1, outcome, recorded);
+  // Every third parliament the boundaries are drawn again, and the seats the next term is fitted to are the redrawn ones.
+  const drawn = k.redraw ? redraw(world, recorded, k.redraw.by, new Rng((c.seed ^ (k.term * 977)) >>> 0)) : null;
+  const next = freshCareer(k.term + 1, outcome, drawn ? drawn.results : recorded);
   c.career = {
     ...next,
     ...(k.founded ? { founded: true } : {}),
     ...(k.own ? { own: true, slate: k.slate } : {}),
     ...(k.realStates ? { realStates: true } : {}),
     ...(k.nation ? { nation: { ...k.nation } } : {}),
-    orders: k.orders, assets: k.assets, credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
+    orders: k.orders, assets: k.assets, ...(k.holdings ? { holdings: { ...k.holdings } } : {}), ...(k.rolls !== undefined ? { rolls: k.rolls } : {}), ...(k.activity ? { activity: { ...k.activity } } : {}), credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
     stances: k.stances, stances0: k.stances.map((row) => [...row]),
-    manifesto: next.manifesto.map((m, p) => (p === c.player ? [...k.manifesto[p]] : m)),
+    // Acts already passed are not promised again, by anyone.
+    ...(k.laws?.length ? { laws: [...k.laws] } : {}),
+    ...(k.shadow ? { shadow: { ...k.shadow } } : {}),
+    manifesto: next.manifesto.map((m, p) => withoutLaws(k, p === c.player ? k.manifesto[p] : m)),
     promises: k.promises, flags: k.flags,
     economy: k.economy, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, record: k.record, states: k.states,
   };
+  // Two parliaments at the head of the government is all a term limit allows: in the third the party governs, and its leader does not.
+  const run = outcome.pm === c.player ? (k.pmRun ?? 0) + 1 : 0;
+  c.career.pmRun = run;
+  // Staying in government wears on the voters, and on the party's own conduct: more with each parliament in a row.
+  const govRun = outcome.pm === c.player || outcome.partners.includes(c.player) ? (k.govRun ?? 0) + 1 : 0;
+  c.career.govRun = govRun;
+  c.career.chest = k.chest;
+  if (c.career.chest === undefined) delete c.career.chest;
+  // What the party has built up, and what follows it, goes with it into the next parliament.
+  const carry = {
+    ...(k.factions ? { factions: structuredClone(k.factions) } : {}),
+    ...(k.fresh?.length ? { fresh: [...k.fresh] } : {}),
+    ...(k.tenure ? { tenure: structuredClone(k.tenure) } : {}),
+    ...(k.trail ? { trail: k.trail } : {}),
+    ...(k.foreign ? { foreign: k.foreign } : {}),
+    ...(k.padded ? { padded: k.padded } : {}),
+    ...(k.safe ? { safe: { ...k.safe } } : {}),
+    ...(k.patronage ? { patronage: k.patronage } : {}),
+    ...(k.drive ? { drive: k.drive } : {}),
+    ...(k.advisers ? { advisers: structuredClone(k.advisers) } : {}),
+    ...(k.echoes?.length ? { echoes: k.echoes.map((e) => ({ ...e })) } : {}),
+    ...(k.sectors ? { sectors: { ...k.sectors } } : {}),
+    ...(k.sectorAid ? { sectorAid: { ...k.sectorAid } } : {}),
+    ...(k.alliance ? { alliance: { ...k.alliance, members: [...k.alliance.members] } } : {}),
+    ...(k.mandated?.length ? { mandated: [...k.mandated] } : {}),
+    ...(k.shaky?.length ? { shaky: [...k.shaky] } : {}),
+  };
+  Object.assign(c.career, carry);
+  // A leader who stood in a seat of their own and lost it is out of the House, whatever their party did: they cannot head a government.
+  const own = c.team.leaderSeat ? world.seatIndex.get(c.team.leaderSeat) : undefined;
+  const leaderOut = own !== undefined && recorded.votes[own].indexOf(Math.max(...recorded.votes[own])) !== c.player;
+  if ((run > TERM_LIMIT && isEnacted(k, 'termLimit')) || (leaderOut && outcome.pm === c.player)) c.career.limited = true;
   const seats = recorded.votes.reduce((a, row) => a + (row[c.player] > 0 && row[c.player] === Math.max(...row) ? 1 : 0), 0);
   const r = c.career.record;
   r.elections++;
@@ -564,6 +740,8 @@ export function nextTerm(world: World, c: Campaign): boolean {
   c.pacts = [];
   c.understandings = [];
   c.katak = [];
+  delete c.entered;
+  delete c.agenda;
   c.offered = [];
   c.inbox = [];
   c.polls = [];
@@ -573,7 +751,27 @@ export function nextTerm(world: World, c: Campaign): boolean {
   closeCampaign(c);
   syncOpinion(c);
   takeOffice(c);
+  if (drawn) pushNews(c, { party: k.redraw!.by, key: k.redraw!.by === null ? 'news.redraw.done.fair' : 'news.redraw.done.pushed', vars: { n: drawn.flipped, party: k.redraw!.by === null ? '' : ref.party(k.redraw!.by) }, tone: 'neutral' });
+  if (togetherStates.length > 0) {
+    // The states that went to the polls with the House are decided by how this country voted in them.
+    const winners = recorded.votes.map((row) => row.indexOf(Math.max(...row)));
+    const now = leaders(world, winners, togetherStates, k.states);
+    applyStateResults(c, togetherStates.filter((st) => now[st] !== undefined).map((st) => ({ state: st, winner: now[st], was: k.states[st] })));
+  }
+  if (petitioned.lost.length > 0) pushNews(c, { party: c.player, key: 'news.petition', vars: { n: petitioned.lost.length, seats: `@seats:${petitioned.lost.join(',')}` }, tone: 'bad' });
+  if (leaderOut) {
+    c.career.credibility = clamp(c.career.credibility - LEADER_OUT.credibility, 0, 100);
+    c.parties[c.player]!.unity = clamp(c.parties[c.player]!.unity - LEADER_OUT.unity, 0, 100);
+    pushNews(c, { party: c.player, key: outcome.pm === c.player ? 'news.leader.lost.pm' : 'news.leader.lost', vars: { seat: ref.seat(c.team.leaderSeat!) }, tone: 'bad' });
+  }
+  if (c.career.limited && !leaderOut) pushNews(c, { party: c.player, key: 'news.term.limited', vars: { n: TERM_LIMIT }, tone: 'neutral' });
   pushNews(c, { party: null, key: 'news.term.start', vars: { party: ref.party(outcome.pm), n: outcome.seats }, tone: 'neutral' });
+  if (fatigueOf(govRun) > 0) {
+    for (const row of c.career.mood) row[c.player] -= fatigueOf(govRun);
+    pushNews(c, { party: c.player, key: 'news.fatigue', vars: { n: govRun }, tone: 'bad' });
+  }
+  // A win this large is more than a party can hold together.
+  if (seats >= Math.ceil(LANDSLIDE * world.seats.length)) landslide(c);
   // A leader whose party has no seats left has no party to lead.
   if (seats === 0) endCareer(c, 'wipedOut');
   return true;

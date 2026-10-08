@@ -631,3 +631,8 @@ body { zoom: var(--ui-zoom, 1); }
 .gloss { all: unset; cursor: help; text-decoration: underline dotted; text-underline-offset: 3px; text-decoration-color: var(--muted); }
 .gloss:focus-visible { outline: 2px solid var(--primary-hover); outline-offset: 2px; border-radius: 3px; }
 .term-tip { position: fixed; z-index: 60; width: min(272px, calc(100vw - 16px)); padding: 10px 12px; background: var(--panel-3); color: var(--ink); border: 1px solid var(--line-2); border-radius: var(--radius); box-shadow: 0 8px 24px rgb(0 0 0 / 0.4); font-size: 13px; line-height: 1.5; font-weight: 400; text-decoration: none; pointer-events: none; }
+
+.ledger { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.ledger td, .ledger th { padding: 0.15rem 0; text-align: left; }
+.ledger td:last-child, .ledger th:last-child { text-align: right; }
+.ledger tr:last-child th { border-top: 1px solid var(--line, currentColor); padding-top: 0.3rem; }

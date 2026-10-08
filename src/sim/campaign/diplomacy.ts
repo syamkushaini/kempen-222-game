@@ -2,12 +2,14 @@ import { emptyDynamics } from '../dynamics';
 import { projectElection, type World } from '../election';
 import { clamp, zeros } from '../math';
 import { Rng } from '../rng';
-import { STANDS, type StandDowns } from '../transfer';
+import { MERGED, STANDS, type StandDowns } from '../transfer';
 import { N_PARTIES, PARTY_IDS, type ElectionOutcome } from '../types';
 import { EFFECT, contests, effectiveDynamics, scaled, truth } from './actions';
-import { AFFINITY, TEMPER } from './cast';
+import { AFFINITY, TEMPER, tieBetween } from './cast';
 import { record, standing } from './ledger';
 import { pushNews, ref } from './news';
+import { resolveAgenda } from './agenda';
+import { rivalEntries } from './entry';
 import type { Campaign, NewsItem, Scene } from './types';
 
 // ---------- basics ----------
@@ -18,7 +20,8 @@ export const hasDiplomacy = (world: World) => world.rules.diplomacy;
 export const nominationWeek = (c: Campaign) => Math.max(1, c.totalWeeks - 3);
 export const beforeNomination = (c: Campaign) => c.week <= nominationWeek(c);
 
-export const relation = (c: Campaign, a: number, b: number) => c.relations[a][b];
+/** How two leaders feel about each other: what has passed between them, and the ties that were there before. */
+export const relation = (c: Campaign, a: number, b: number) => clamp(c.relations[a][b] + (tieBetween(a, b)?.n ?? 0), -100, 100);
 
 export function shiftRelation(c: Campaign, a: number, b: number, by: number): void {
   if (a === b) return;
@@ -353,7 +356,12 @@ function defect(c: Campaign, seat: string, from: number, to: number) {
   shiftRelation(c, from, to, -20);
 }
 
-export function canCourt(world: World, c: Campaign, seat: string | null): Check {
+/** How many times the usual sum a member can be offered to cross over. A bigger offer makes it likelier, and louder if it comes out. */
+export const STAKES = [1, 2, 4] as const;
+export type Stake = (typeof STAKES)[number];
+const doublings = (stake: number) => Math.log2(Math.max(1, stake));
+
+export function canCourt(world: World, c: Campaign, seat: string | null, stake: Stake = 1): Check {
   const i = seat === null ? undefined : world.seatIndex.get(seat);
   if (i === undefined) return no('noTarget');
   const h = holder(world, i);
@@ -362,30 +370,34 @@ export function canCourt(world: World, c: Campaign, seat: string | null): Check 
   if (c.katak.includes(seat!)) return no('already');
   const base = open(world, c, h, COST.court, 'court');
   if (!base.ok) return base;
-  if (scaled(world, COST.courtMoney) > c.parties[c.player]!.funds) return no('funds');
+  if (scaled(world, COST.courtMoney) * stake > c.parties[c.player]!.funds) return no('funds');
   return yes;
 }
 
 /** The chance a rival's sitting member can be talked into crossing over. */
-export function courtChance(world: World, c: Campaign, seat: string): number {
+export function courtChance(world: World, c: Campaign, seat: string, stake: Stake = 1): number {
   const i = world.seatIndex.get(seat)!;
   const s = world.seats[i];
   const mine = s.last.votes[c.player] / s.last.votes.reduce((a, b) => a + b, 0);
-  return clamp(0.25 + ((70 - c.parties[holder(world, i)]!.unity) / 100) * 0.5 + (mine - 0.25) * 0.5, 0.1, 0.75);
+  // Money talks: each doubling of the offer adds ten points, up to a ceiling no member is certain at.
+  return clamp(0.25 + ((70 - c.parties[holder(world, i)]!.unity) / 100) * 0.5 + (mine - 0.25) * 0.5 + 0.1 * doublings(stake), 0.1, 0.85);
 }
 
 /** Tries to bring a rival's sitting member across before nomination day. */
-export function courtDefector(world: World, c: Campaign, seat: string): NewsItem | null {
-  if (!canCourt(world, c, seat).ok) return null;
+export function courtDefector(world: World, c: Campaign, seat: string, stake: Stake = 1): NewsItem | null {
+  if (!(STAKES as readonly number[]).includes(stake) || !canCourt(world, c, seat, stake).ok) return null;
   const before = standing(world, c);
   const from = holder(world, world.seatIndex.get(seat)!);
-  const chance = courtChance(world, c, seat);
-  spend(c, COST.court, 'court', scaled(world, COST.courtMoney));
+  const chance = courtChance(world, c, seat, stake);
+  spend(c, COST.court, 'court', scaled(world, COST.courtMoney) * stake);
   const rng = new Rng(c.rng);
   const won = rng.next() < chance;
-  const leaked = !won && rng.next() < 0.3;
+  // A large sum is harder to keep quiet.
+  const leaked = !won && rng.next() < 0.3 * (1 + 0.25 * doublings(stake));
   c.rng = rng.state;
   const vars = { seat: ref.seat(seat), party: ref.party(from) };
+  // Every approach leaves a trail, whether or not it succeeds: more for a large offer, and more for one that worked.
+  if (c.career) c.career.trail = (c.career.trail ?? 0) + (won ? stake : 0.5 * stake);
   const done = (key: string, tone: NewsItem['tone']) => {
     const item = pushNews(c, { party: c.player, key, vars, tone });
     record(world, c, before, item);
@@ -393,7 +405,9 @@ export function courtDefector(world: World, c: Campaign, seat: string): NewsItem
   };
   if (won) {
     defect(c, seat, from, c.player);
-    return done('news.court.won', 'good');
+    // Everyone knows what it took, when it took that much: the party that was left pays for it in standing, the buyer too.
+    if (stake > 1) { shiftUnity(c, from, -2 * doublings(stake)); for (const row of c.dyn.support.nat) row[c.player] -= 0.004 * doublings(stake); }
+    return done(stake > 1 ? 'news.court.bought' : 'news.court.won', 'good');
   }
   if (leaked) {
     for (const row of c.dyn.support.nat) row[c.player] -= 0.01;
@@ -409,6 +423,29 @@ export function addScene(c: Campaign, scene: Omit<Scene, 'id'>): void {
   c.inbox.push({ id: c.nextScene++, ...scene });
 }
 
+/** What a partner asks for as the price of a pact: how often, how many seats, and how strong the player must be in a seat for it to be worth asking. */
+export const ASK = { chance: 0.5, seats: 3, margin: 0.15, theirs: 0.12, refused: -5, accepted: 6, stability: 2 };
+
+/** A party the player is in government with, or in an alliance with: the ones that dare to ask. */
+const isFriend = (c: Campaign, p: number): boolean => {
+  const k = c.career;
+  if (!k) return false;
+  return k.government.partners.includes(p) || k.government.pm === p || (k.alliance?.members.includes(p) ?? false);
+};
+
+/** The seats where the player is clearly ahead and the partner has a following of its own, which it would like a clear run in. */
+function askedSeats(world: World, c: Campaign, p: number, already: string[], now: ElectionOutcome): string[] {
+  const out: { id: string; margin: number }[] = [];
+  for (const i of clashSeats(world, c, c.player, p)) {
+    const id = world.seats[i].id;
+    if (already.includes(id) || holder(world, i) !== c.player) continue;
+    const margin = now.seats[i].margin;
+    const own = world.seats[i].last.votes[p] / Math.max(1, world.seats[i].last.votes.reduce((a, b) => a + b, 0));
+    if (margin >= ASK.margin && own >= ASK.theirs) out.push({ id, margin });
+  }
+  return out.sort((a, b) => a.margin - b.margin).slice(0, ASK.seats).map((x) => x.id);
+}
+
 /**
  * Answers a campaign scene. Pact offers: 0 accept, 1 decline, 2 talk it over
  * (the offer lapses and the player opens talks themselves). Poaching: 0 pay to
@@ -416,10 +453,17 @@ export function addScene(c: Campaign, scene: Omit<Scene, 'id'>): void {
  */
 export function resolveCampaignScene(world: World, c: Campaign, scene: Scene, choice: number): void {
   const me = c.player;
-  if (scene.kind === 'pactOffer' && scene.from !== null) {
+  if (scene.kind === 'agenda') resolveAgenda(world, c, scene, choice);
+  else if (scene.kind === 'pactOffer' && scene.from !== null) {
     const prop = { give: scene.give ?? [], get: scene.get ?? [] };
-    if (choice === 0 && beforeNomination(c) && !inPact(c, me, scene.from)) signPact(world, c, me, scene.from, prop);
-    else if (choice === 1) shiftRelation(c, me, scene.from, -3);
+    if (choice === 0 && beforeNomination(c) && !inPact(c, me, scene.from)) {
+      signPact(world, c, me, scene.from, prop);
+      if (scene.ask?.length) shiftRelation(c, me, scene.from, ASK.accepted);
+    } else if (choice === 1) {
+      shiftRelation(c, me, scene.from, -3 + (scene.ask?.length ? ASK.refused : 0));
+      // A partner turned down on its price takes it to heart.
+      if (scene.ask?.length && c.career && c.career.government.partners.includes(scene.from)) c.career.government.stability = clamp(c.career.government.stability - ASK.stability, 5, 95);
+    }
   } else if (scene.kind === 'poach' && scene.from !== null && scene.seat) {
     const pc = c.parties[me]!;
     const price = scaled(world, COST.keepMoney);
@@ -465,12 +509,17 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
     const prop = draftPact(world, c, me, p, 'targeted', now);
     if (prop.give.length + prop.get.length < 2 || !agree(me, p, prop) || rng.next() > 0.6) continue;
     c.offered.push(p);
-    addScene(c, { kind: 'pactOffer', from: p, give: prop.give, get: prop.get });
+    // A partner, or a friend in the same alliance, may put a price on standing together: the seats where the player is strongest.
+    const ask = rng.next() < ASK.chance && isFriend(c, p) ? askedSeats(world, c, p, prop.give, now) : [];
+    addScene(c, { kind: 'pactOffer', from: p, give: [...prop.give, ...ask], get: prop.get, ...(ask.length ? { ask } : {}) });
   }
 
   // Raids on the player's sitting members; a divided party is easier pickings.
   const mine = c.parties[me]!;
-  if (rng.next() < clamp(0.1 + (60 - mine.unity) / 200, 0.05, 0.4)) {
+  // A rival with a deep purse raids more often: the richest of them adds up to fifteen points.
+  const richest = Math.max(0, ...ai.map((p) => c.parties[p]!.funds));
+  const purse = Math.min(0.15, 0.075 * (richest / scaled(world, 2_000_000)));
+  if (rng.next() < clamp(0.1 + (60 - mine.unity) / 200 + purse, 0.05, 0.5)) {
     // Whoever is closest to taking the seat does the courting.
     const suitor = (i: number) => (now.seats[i].winner !== me ? now.seats[i].winner : now.seats[i].runnerUp);
     const targets = world.seats.map((s, i) => ({ s, i })).filter(({ s, i }) =>
@@ -482,8 +531,12 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
     }
   }
 
-  // Now and then one rival's member crosses to another.
-  if (rng.next() < 0.12) {
+  // Rivals look for new ground of their own.
+  rivalEntries(world, c, rng);
+
+  // Now and then one rival's member crosses to another; the richest suitor makes it likelier, and pays for it.
+  const suitorPurse = Math.min(0.1, 0.05 * (richest / scaled(world, 2_000_000)));
+  if (rng.next() < 0.12 + suitorPurse) {
     const weakest = [...ai].sort((x, y) => c.parties[x]!.unity - c.parties[y]!.unity)[0];
     const seats = world.seats.map((s, i) => ({ s, i })).filter(({ s, i }) => {
       const to = now.seats[i].winner === weakest ? now.seats[i].runnerUp : now.seats[i].winner;
@@ -492,6 +545,10 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
     if (seats.length) {
       const { s, i } = seats[rng.int(seats.length)];
       const to = now.seats[i].winner === weakest ? now.seats[i].runnerUp : now.seats[i].winner;
+      // The suitor pays what the player would: twice the usual sum.
+      const price = scaled(world, COST.courtMoney) * 2;
+      if (c.parties[to]!.funds < price) { c.rng = rng.state; return; }
+      c.parties[to]!.funds -= price;
       defect(c, s.id, weakest, to);
       pushNews(c, { party: to, key: 'news.katak', vars: { seat: ref.seat(s.id), from: ref.party(weakest), to: ref.party(to) }, tone: 'neutral' });
     }
@@ -501,11 +558,11 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
 
 /** Scenes the player left unanswered are settled the cautious way when the week ends. */
 export function settleInbox(world: World, c: Campaign): void {
-  for (const scene of c.inbox) resolveCampaignScene(world, c, scene, scene.kind === 'pactOffer' ? 2 : 1);
+  for (const scene of c.inbox) resolveCampaignScene(world, c, scene, scene.kind === 'pactOffer' || scene.kind === 'agenda' ? 2 : 1);
   c.inbox = [];
 }
 
 /** Seats where the line-up differs from last time because of pacts. */
 /** Seats where a party stands aside for another under a pact; seats a party made by the player has left unfielded are not pacts. */
-export const pactSeats = (c: Campaign) => Object.values(c.standDowns).filter((s) => s.some((v) => v >= 0)).length;
+export const pactSeats = (c: Campaign) => Object.values(c.standDowns).filter((s) => s.some((v) => v >= 0 && v < MERGED)).length;
 

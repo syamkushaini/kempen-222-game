@@ -5,23 +5,33 @@ import { EVENTS as CORE_EVENTS } from './eventList';
 import { MORE_EVENTS } from './eventList2';
 import { GOVERNING_EVENTS } from './eventList3';
 import { STORY_EVENTS } from './eventList4';
+import { SEASON_EVENTS } from './eventList5';
+import { FEDERATION_EVENTS } from './eventList6';
+import { STORY_EVENTS_2 } from './eventList7';
 import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { membersFeel } from './members';
 import { nationOf, shiftNation } from './nation';
+import { answerAdviser } from './advisers';
+import { queueEcho } from './echoes';
+import { KSU, replaceKsu, shiftKsu } from './ksu';
+import { endCareer } from './legacy';
+import { fightOdds } from './trial';
+import { dismiss } from './office';
 import { pushNews } from './news';
+import { scaleHoldings } from './party';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
 /** Everything that can happen between elections. */
-export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS };
+export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2 };
 
 /** Where the player sits: heading the government, a partner in it, or across the floor. */
 export type Seat = 'pm' | 'gov' | 'opp';
 export function seatOf(c: Campaign): Seat {
   const g = c.career!.government;
-  return g.pm === c.player ? 'pm' : g.partners.includes(c.player) ? 'gov' : 'opp';
+  return g.pm === c.player ? (c.career!.limited ? 'gov' : 'pm') : g.partners.includes(c.player) ? 'gov' : 'opp';
 }
 
 export type Who = 'pm' | 'partners' | 'opp' | PartyId;
@@ -37,13 +47,17 @@ export type Effect =
   | { t: 'dividend'; pct: number }
   | { t: 'relation'; who: Who; n: number }
   | { t: 'salience'; issue: IssueId; n: number }
+  | { t: 'minister'; act: 'sack' | 'keep' }
+  | { t: 'end'; kind: 'ousted' | 'retired' }
+  | { t: 'ksu'; act: 'follow' | 'override' | 'replace' }
+  | { t: 'adviser'; act: 'listen' | 'ignore' | 'dismiss' }
   | { t: 'flag'; id: string }
   | { t: 'falls' };
 
 export interface Choice {
   effects: Effect[];
   /** A gamble on top: the chance of it coming off (a number, or the player's unity or credibility as a percentage). */
-  gamble?: { chance: number | 'unity' | 'cred' | 'stability'; win: Effect[]; lose: Effect[] };
+  gamble?: { chance: number | 'unity' | 'cred' | 'stability' | 'case'; win: Effect[]; lose: Effect[] };
   /** A later event this choice sets in motion, and after how many weeks. */
   then?: { event: string; after: number };
 }
@@ -74,9 +88,23 @@ export interface EventDef {
     staff?: boolean;
     /** The player's party governs at least one state. */
     states?: boolean;
+    /** The player governs this state, or the career is in it. */
+    holds?: string;
   };
   choices: Choice[];
 }
+
+/**
+ * Difficulty changes how cruel the years are and not only how well the rivals play: on the hard level what goes wrong goes wrong a
+ * third worse and what goes right a little less well, and trouble comes more often; on the easy level the other way about.
+ */
+export const REALISM: Record<'easy' | 'normal' | 'hard', { bad: number; good: number; chance: number }> = {
+  easy: { bad: 0.8, good: 1.1, chance: 0.85 },
+  normal: { bad: 1, good: 1, chance: 1 },
+  hard: { bad: 1.3, good: 0.95, chance: 1.25 },
+};
+/** A consequence as the level of difficulty has it: a loss scaled one way, a gain the other. */
+export const realistic = (c: Campaign, n: number): number => n * (n < 0 ? REALISM[c.difficulty].bad : REALISM[c.difficulty].good);
 
 /** How many weeks pass, at least, between one random event and the next. */
 const QUIET_WEEKS = 3;
@@ -86,14 +114,21 @@ const EVENT_CHANCE = 0.06;
 /** Things only a country's government deals with: foreign affairs, the federation's own quarrels, national schemes and taxes. A state's does not. */
 export const COUNTRY_ONLY: ReadonlySet<string> = new Set([
   'borneoThird', 'oilRights', 'borneoHighway', 'peninsulaGaffe', 'stateDefiance', 'royaltiesRow', 'summitHost', 'seaIncident',
-  'mediationAward', 'refugeeBoats', 'twoPowers', 'tradeDispute', 'subsidyReform', 'megaProject', 'ratingsWarning', 'pensionCall', 'tolls',
+  'mediationAward', 'refugeeBoats', 'twoPowers', 'tradeDispute', 'borderStandoff', 'sanctionsThreat', 'strandedAbroad', 'haze',
+  'claimsTalks', 'claimsStalled', 'claimsVerdict', 'sovereignFund', 'fundProbe', 'fundTrial', 'cityHousing', 'flashFloods', 'mayorRow', 'subsidyReform', 'megaProject', 'ratingsWarning', 'pensionCall', 'tolls',
 ]);
+/** Things only a state's government deals with: a state's quarrels with the centre. */
+export const STATE_ONLY: ReadonlySet<string> = new Set(['fedGrantCut', 'fedTalks', 'fedSettlement']);
 /** A career in one state is told apart from the country's by its scenario: career:<state>. */
 export const inStateCareer = (c: Pick<Campaign, 'scenario'>) => c.scenario.startsWith('career:');
+
+/** Whether the player is in a state’s own career, or their party governs the state. */
+export const governsState = (c: Campaign, st: string): boolean => c.scenario === `career:${st}` || c.career?.states[st] === c.player;
 
 export function eligible(c: Campaign, id: string): boolean {
   const def = EVENTS[id];
   if (COUNTRY_ONLY.has(id) && inStateCareer(c)) return false;
+  if (STATE_ONLY.has(id) && !inStateCareer(c)) return false;
   const k = c.career!;
   const seat = seatOf(c);
   if (def.role === 'pm' && seat !== 'pm') return false;
@@ -117,6 +152,7 @@ export function eligible(c: Campaign, id: string): boolean {
   if (n.backstory && c.team.leader.backstory !== n.backstory) return false;
   if (n.staff && !c.team.staff.some((s) => s !== null)) return false;
   if (n.states && statesHeld(c, c.player) === 0) return false;
+  if (n.holds && !governsState(c, n.holds)) return false;
   return true;
 }
 
@@ -143,7 +179,7 @@ export function rollEvent(c: Campaign, rng: Rng): boolean {
     const onCalendar = def.at === k.week || (def.yearly === weekOfYear && k.week > 4);
     if (onCalendar && (def.yearly ? eligibleYearly(c, id) : eligible(c, id))) { fire(c, id); return true; }
   }
-  if (k.week < k.quietUntil || rng.next() > EVENT_CHANCE) return false;
+  if (k.week < k.quietUntil || rng.next() > EVENT_CHANCE * REALISM[c.difficulty].chance) return false;
   const pool = Object.keys(EVENTS).filter((id) => EVENTS[id].weight > 0 && eligible(c, id));
   const total = pool.reduce((a, id) => a + EVENTS[id].weight, 0);
   if (total <= 0) return false;
@@ -185,15 +221,15 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
     switch (e.t) {
       case 'mood': {
         const rows = e.blocs === 'all' ? Array.from({ length: N_BLOCS }, (_, b) => b) : e.blocs.map((b) => BLOC_IDS.indexOf(b));
-        for (const b of rows) k.mood[b][me] += e.n;
+        for (const b of rows) k.mood[b][me] += realistic(c, e.n);
         break;
       }
       case 'rival': for (const p of partiesOf(c, e.who)) for (let b = 0; b < N_BLOCS; b++) k.mood[b][p] += e.n; break;
-      case 'unity': shiftUnity(c, me, e.n); break;
-      case 'funds': pc.funds = Math.max(0, pc.funds + Math.sign(e.n) * scaled(world, Math.abs(e.n))); break;
-      case 'cred': k.credibility = clamp(k.credibility + e.n, 0, 100); break;
-      case 'stability': k.government.stability = clamp(k.government.stability + e.n, 5, 95); break;
-      case 'trust': k.government.trust = clamp(k.government.trust + e.n, 0, 100); break;
+      case 'unity': shiftUnity(c, me, realistic(c, e.n)); break;
+      case 'funds': pc.funds = Math.max(0, pc.funds + Math.sign(e.n) * scaled(world, Math.abs(realistic(c, e.n)))); break;
+      case 'cred': k.credibility = clamp(k.credibility + realistic(c, e.n), 0, 100); break;
+      case 'stability': k.government.stability = clamp(k.government.stability + realistic(c, e.n), 5, 95); break;
+      case 'trust': k.government.trust = clamp(k.government.trust + realistic(c, e.n), 0, 100); break;
       case 'machinery': pc.machinery = pc.machinery.map((m) => (m > 0 ? clamp(m + e.n, 0, 100) : 0)); break;
       case 'dossier': k.dossier = clamp(k.dossier + e.n, 0, 100); break;
       case 'donors': k.orders.donors = clamp(k.orders.donors + e.n, 0, 3) as Level; break;
@@ -201,11 +237,19 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
       case 'fiscal': k.fiscal = Math.max(0, k.fiscal + e.n); break;
       case 'economy': k.economy.growth += e.growth ?? 0; k.economy.inflation += e.inflation ?? 0; break;
       case 'nation': shiftNation(k, e); break;
-      case 'assets': k.assets = Math.max(0, Math.round(k.assets * (1 + e.pct))); break;
+      case 'assets': scaleHoldings(k, Math.max(0, 1 + e.pct)); break;
       case 'dividend': pc.funds = Math.max(0, pc.funds + Math.round(k.assets * e.pct)); break;
       case 'relation': for (const p of partiesOf(c, e.who)) shiftRelation(c, me, p, e.n); break;
       case 'salience': { const i = ISSUE_IDS.indexOf(e.issue); k.salience[i] = clamp(k.salience[i] + e.n, 0.5, 2); break; }
       case 'flag': if (!k.flags.includes(e.id)) k.flags.push(e.id); break;
+      case 'minister':
+        // The minister at the centre of a scandal is sacked, or kept; either way it is settled.
+        if (k.scandal && e.act === 'sack') dismiss(c, k.scandal);
+        delete k.scandal;
+        break;
+      case 'end': endCareer(c, e.kind); break;
+      case 'adviser': answerAdviser(c, e.act); break;
+      case 'ksu': if (e.act === 'replace') replaceKsu(c); else shiftKsu(c, e.act === 'follow' ? KSU.follow : KSU.override); break;
       case 'falls': falls = true; break;
     }
   }
@@ -213,7 +257,8 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
 }
 
 /** The chance a gamble comes off, as the player would be told it. */
-export function gambleChance(c: Campaign, chance: number | 'unity' | 'cred' | 'stability'): number {
+export function gambleChance(c: Campaign, chance: number | 'unity' | 'cred' | 'stability' | 'case'): number {
+  if (chance === 'case') return fightOdds(c);
   if (chance === 'unity') return clamp(c.parties[c.player]!.unity / 100, 0.1, 0.9);
   if (chance === 'cred') return clamp(c.career!.credibility / 100, 0.1, 0.9);
   if (chance === 'stability') return clamp(c.career!.government.stability / 100, 0.1, 0.9);
@@ -262,6 +307,8 @@ export function resolveEvent(world: World, c: Campaign, scene: Scene, choice: nu
   membersFeel(c, [...picked.effects, ...(picked.gamble ? (suffix === 'w' ? picked.gamble.win : picked.gamble.lose) : [])]);
   if (picked.then) c.career.queue.push({ event: picked.then.event, week: c.career.week + picked.then.after });
   const bad = picked.gamble ? suffix === 'l' : false;
+  // A month or two on, the papers go back to it.
+  if (scene.event && !['byElection', 'statePolls', 'ultimatum', 'budget', 'motion'].includes(scene.event)) queueEcho(c, scene.event, [...picked.effects, ...(picked.gamble ? (suffix === 'w' ? picked.gamble.win : picked.gamble.lose) : [])]);
   pushNews(c, { party: c.player, key: `event.${scene.event}.r${choice}${suffix}`, tone: bad ? 'bad' : suffix === 'w' ? 'good' : 'neutral' });
   return falls;
 }
