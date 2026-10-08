@@ -2,6 +2,7 @@ import { lastElection, type World } from '../election';
 import { zeros } from '../math';
 import { Rng } from '../rng';
 import { N_PARTIES, type SeatKind } from '../types';
+import { holdingScale } from './party';
 import { contests } from './actions';
 import { shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
@@ -34,6 +35,8 @@ export const HOPEFULS: Record<HopefulKind, HopefulDef> = {
   professional: { lift: { rural: 0.03, semi: 0.07, urban: 0.11 }, turnout: 0, risk: 0.12, unity: 0 },
   // Famous for something else. Draws a crowd; the branch has never met them.
   celebrity: { lift: { rural: 0.07, semi: 0.07, urban: 0.07 }, turnout: 0.06, risk: 0.3, unity: -2 },
+  // Trained at the party's own college: capable, vetted by years of study and by the party, and with little to hide.
+  graduate: { lift: { rural: 0.07, semi: 0.09, urban: 0.09 }, turnout: 0.01, risk: 0.02, unity: 1 },
   // Has waited their turn for fifteen years and offended nobody.
   loyalist: { lift: { rural: 0.03, semi: 0.03, urban: 0.03 }, turnout: 0, risk: 0.04, unity: 1 },
 };
@@ -68,8 +71,11 @@ export function makeKeySeats(world: World, c: Campaign, rng: Rng): KeySeat[] {
     .sort((a, b) => a.gap - b.gap)
     .slice(0, want);
   const names = rng.shuffled(HOPEFUL_NAMES.map((_, n) => n));
+  const graduates = c.career ? holdingScale(world, c.career, 'college') : 0;
   return closest.map(({ id }) => {
-    const kinds = rng.shuffled(HOPEFUL_KINDS).slice(0, OPTIONS);
+    const kinds: HopefulKind[] = rng.shuffled(HOPEFUL_KINDS.filter((k) => k !== 'graduate')).slice(0, OPTIONS);
+    // A party with a college of its own has its graduates on the list, more of them the bigger the college.
+    if (graduates > 0 && rng.next() < Math.min(1, graduates)) kinds[kinds.length - 1] = 'graduate';
     const options: Hopeful[] = kinds.map((kind) => ({ kind, name: names.pop() ?? 0, skeleton: rng.next() < HOPEFULS[kind].risk, vetted: false }));
     return { seat: id, options, pick: null, blown: false };
   });

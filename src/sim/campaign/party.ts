@@ -1,6 +1,7 @@
 import type { World } from '../election';
 import { clamp } from '../math';
 import { Rng } from '../rng';
+import { BLOC_IDS, type BlocId } from '../types';
 import { contestsState, scaled } from './actions';
 import { factionsOf } from './factions';
 import { lastShares } from './field';
@@ -342,4 +343,78 @@ export const PROBE = { perLot: 0.0004, max: 0.02, loss: [0.1, 0.25] as const };
 /** The chance this week that investigators come to the party's businesses: more with more to look at. */
 export function probeChance(world: World, k: Career): number {
   return Math.min(PROBE.max, (k.assets / scaled(world, ASSET_UNIT)) * PROBE.perLot);
+}
+
+// ---------- young branches ----------
+
+/** Branch strength a party starts with in a state it has stood in for the first time. */
+export const FOOTHOLD = 5;
+/** How fast young branches grow, against ordinary ones, and the strength at which they count as established. */
+export const YOUNG_BRANCHES = 0.35;
+export const MATURE = 40;
+
+// ---------- discipline ----------
+
+export const DISCIPLINE = {
+  // A branch that is suspended stops its work for a while: the leadership is heard.
+  suspend: { branches: 20, unity: 3, rolls: 0, wings: 0 },
+  // A branch that is dissolved is closed and its officers sent home: the leadership is feared.
+  dissolve: { branches: 45, unity: 7, rolls: 0.04, wings: 2 },
+} as const;
+export type Discipline = keyof typeof DISCIPLINE;
+/** Weeks before the same state's branches can be disciplined again. */
+export const DISCIPLINE_EVERY = 26;
+
+export function canDiscipline(world: World, c: Campaign, state: string): boolean {
+  const k = c.career;
+  const pc = c.parties[c.player];
+  const i = world.states.indexOf(state);
+  if (!k || !pc || c.phase !== 'term' || i < 0 || pc.machinery[i] <= FOOTHOLD) return false;
+  const last = k.disciplined?.[state];
+  return last === undefined || k.week - last >= DISCIPLINE_EVERY;
+}
+
+/** Suspends or dissolves a state's branches: they are weaker, and the party is more together for it. */
+export function discipline(world: World, c: Campaign, state: string, how: Discipline): boolean {
+  if (!canDiscipline(world, c, state) || !(how in DISCIPLINE)) return false;
+  const k = c.career!;
+  const pc = c.parties[c.player]!;
+  const i = world.states.indexOf(state);
+  const d = DISCIPLINE[how];
+  pc.machinery[i] = Math.max(FOOTHOLD, pc.machinery[i] - d.branches);
+  shiftUnity(c, c.player, d.unity);
+  if (d.rolls) k.rolls = rollsOf(world, c) * (1 - d.rolls);
+  if (d.wings) { const f = factionsOf(c); f.wing = f.wing.map((m) => clamp(m - d.wings, 0, 100)); }
+  (k.disciplined ??= {})[state] = k.week;
+  // Branches that have been closed have to be built again, from nothing.
+  if (how === 'dissolve') (k.fresh ??= []).includes(state) || k.fresh.push(state);
+  pushNews(c, { party: c.player, key: `news.discipline.${how}`, vars: { state: `@state:${state}` }, tone: 'neutral' });
+  return true;
+}
+
+// ---------- a new name ----------
+
+/** What it costs a party to change its name, its colours and its flag, and the credibility it spends. */
+export const REBRAND = { funds: 150_000, credibility: 8, rolls: 0.05, lost: 0.03, won: 0.04 };
+const LOYAL: BlocId[] = ['heartland', 'felda', 'agri', 'seniors', 'civil'];
+const NEW: BlocId[] = ['undi18', 'urban_lib', 'm40', 'gig'];
+
+export function canRebrand(world: World, c: Campaign): boolean {
+  const k = c.career;
+  const pc = c.parties[c.player];
+  return !!k && !!pc && c.phase === 'term' && pc.funds >= scaled(world, REBRAND.funds) && !k.flags.includes(`rebrand${k.term}`);
+}
+
+/** The party changes its face: some of its old voters are lost, some new ones are won, it costs money and credibility, and it can be done once a term. */
+export function rebrand(world: World, c: Campaign): boolean {
+  if (!canRebrand(world, c)) return false;
+  const k = c.career!;
+  c.parties[c.player]!.funds -= scaled(world, REBRAND.funds);
+  k.flags.push(`rebrand${k.term}`);
+  k.credibility = clamp(k.credibility - REBRAND.credibility, 0, 100);
+  k.rolls = rollsOf(world, c) * (1 - REBRAND.rolls);
+  for (const b of LOYAL) k.mood[BLOC_IDS.indexOf(b)][c.player] -= REBRAND.lost;
+  for (const b of NEW) k.mood[BLOC_IDS.indexOf(b)][c.player] += REBRAND.won;
+  pushNews(c, { party: c.player, key: 'news.rebrand', vars: {}, tone: 'neutral' });
+  return true;
 }

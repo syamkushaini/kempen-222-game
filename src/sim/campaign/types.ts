@@ -417,6 +417,10 @@ export interface Career {
   factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[] };
   /** Parties that keep the player's government in office from outside the cabinet, and until when (see supply.ts). */
   supply?: { party: number; until: number; price: 'cash' | 'policy' }[];
+  /** The week each state's branches were last disciplined, by state. */
+  disciplined?: Record<string, number>;
+  /** States where the party has stood for the first time and its branches are still young, so that they grow slowly (see party.ts). */
+  fresh?: string[];
   /** Parliaments in a row the player's party has sat in government, as head or as partner, this one included: the longer it has, the more tired the voters are of it (see party.ts). */
   govRun?: number;
   /** Money set aside for the next campaign, out of reach of the weeks between (see party.ts). */

@@ -123,7 +123,7 @@ export const EFFECT = {
   megarally: 0.06, megarallyMotivation: 0.12,
   canvass: 0.05,
   gotv: 0.2,
-  build: 10,
+  build: 10, buildNew: 0.4,
   tv: 0.03,
   social: 0.018,
   billboards: 0.012,
@@ -139,6 +139,9 @@ export const EFFECT = {
   radio: 0.022,
   tycoon: 900_000, tycoonExposeChance: 0.12, tycoonHit: 0.08, tycoonMotivationHit: 0.1,
 };
+
+/** Branch strength below which a state is new ground for the party, where building is slow. */
+export const NEW_GROUND = 20;
 
 /** How much of each kind of campaign effect survives into the next week. */
 export const DECAY = { seat: 0.85, state: 0.9, nat: 0.92, motivation: 0.9 };
@@ -446,7 +449,8 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
     }
     case 'build': {
       const i = stateIndex(world, st!);
-      pc.machinery[i] = Math.min(100, pc.machinery[i] + Math.round(EFFECT.build * organised));
+      // Where the party has no ground to speak of, branches are slow to take: it is years of work, not a day's.
+      pc.machinery[i] = Math.min(100, pc.machinery[i] + Math.round(EFFECT.build * organised * (pc.machinery[i] < NEW_GROUND ? EFFECT.buildNew : 1)));
       quality = 'ok';
       break;
     }

@@ -39,7 +39,7 @@ import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
 import { signSupply, type SupplyPrice } from '../sim/campaign/supply';
 import { resolveAgenda } from '../sim/campaign/agenda';
-import { doActivity, setAside, trade, type ActivityId, type HoldingId } from '../sim/campaign/party';
+import { discipline, doActivity, rebrand, setAside, trade, type Discipline, type ActivityId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
@@ -204,6 +204,10 @@ interface Store {
   /** Career: changes the standing orders for the weeks between elections. */
   setOrders(patch: Partial<Orders>): void;
   invest(lots: number): void;
+  /** Suspends or dissolves a state's branches. */
+  discipline(state: string, how: Discipline): void;
+  /** Changes the party's name, flag and colours, at a price. */
+  rebrand(identity: Identity): void;
   /** Sets money aside for the next campaign (positive lots), or takes it back at a price (negative). */
   chest(lots: number): void;
   /** Asks a party to keep the government in office from outside the cabinet. */
@@ -417,6 +421,8 @@ export const useStore = create<Store>((set, get) => {
     repeal: (id) => mutate((c) => { repeal(c, id); }),
     supply: (party, price) => mutate((c, _g, world) => { signSupply(world, c, party, price); }),
     chest: (lots) => mutate((c, _g, world) => { setAside(world, c, lots); }),
+    discipline: (state, how) => mutate((c, _g, world) => { discipline(world, c, state, how); }),
+    rebrand: (identity) => mutate((c, g, world) => { if (rebrand(world, c)) g.identity = identity; }),
     invest: (lots) => mutate((c, _g, world) => { invest(world, c, lots); }),
     trade: (holding, lots) => mutate((c, _g, world) => { trade(world, c, holding, lots); }),
     activity: (id) => mutate((c, _g, world) => { doActivity(world, c, id); }),

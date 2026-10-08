@@ -30,7 +30,7 @@ export interface Staffer {
 }
 
 /** The kinds of people who want to be the party's candidate. */
-export const HOPEFUL_KINDS = ['warlord', 'professional', 'celebrity', 'loyalist'] as const;
+export const HOPEFUL_KINDS = ['warlord', 'professional', 'celebrity', 'loyalist', 'graduate'] as const;
 export type HopefulKind = (typeof HOPEFUL_KINDS)[number];
 
 export interface Hopeful {

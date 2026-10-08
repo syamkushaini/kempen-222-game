@@ -1,13 +1,20 @@
 import { termIncome, termSpending } from '../sim/campaign/career';
 import {
-  ACTIVITY_IDS, ACTIVITIES, CHEST_BONUS, CHEST_PENALTY, HOLDINGS, fatigueOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
+  ACTIVITY_IDS, ACTIVITIES, CHEST_BONUS, DISCIPLINE, DISCIPLINE_EVERY, REBRAND, canDiscipline, canRebrand, CHEST_PENALTY, HOLDINGS, fatigueOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
 } from '../sim/campaign/party';
 import { scaled } from '../sim/campaign/actions';
 import { CHIEF_NAMES, FACTION_IDS, WING_IDS, backing, challengeChance, factionsOf, PARTY_POLL_EVERY } from '../sim/campaign/factions';
+import { useState } from 'react';
+import { PARTIES } from '../data/parties';
+import { PARTY_IDS } from '../sim/types';
+import { LEADERS } from '../sim/campaign/cast';
+import { DEFAULT_EMBLEMS, PARTY_COLORS, makeIdentity } from '../state/identity';
+import { PartyCreator, type Draft } from './Setup';
 import { useStore } from '../state/store';
 import { Gauge } from './Gauge';
+import { ConfirmButton } from './SavesTab';
 import { Brief } from './Brief';
-import { useFormat, useT, useWorld } from './hooks';
+import { regionLabel, useFormat, useT, useWorld } from './hooks';
 
 const LOT = 100_000;
 
@@ -23,6 +30,9 @@ export function PartyTab() {
   const trade = useStore((s) => s.trade);
   const activity = useStore((s) => s.activity);
   const chest = useStore((s) => s.chest);
+  const discipline = useStore((s) => s.discipline);
+  const [rebranding, setRebranding] = useState(false);
+  const [pickedState, setPickedState] = useState<string | null>(null);
   const k = campaign.career;
   const pc = campaign.parties[campaign.player]!;
   if (!k) return <p className="muted">{t('party.none')}</p>;
@@ -114,6 +124,30 @@ export function PartyTab() {
         })}
       </ul>
 
+      <h3>{t('party.discipline')}</h3>
+      <p className="muted small action-desc">{t('party.discipline.desc', { n: DISCIPLINE_EVERY })}</p>
+      {(() => {
+        const states = world.states.filter((st) => pc.machinery[world.states.indexOf(st)] > 0);
+        const st = pickedState && states.includes(pickedState) ? pickedState : states[0];
+        if (!st) return <p className="muted small">{t('party.discipline.none')}</p>;
+        return (
+          <div className="button-row">
+            <select value={st} onChange={(e) => setPickedState(e.target.value)} aria-label={t('party.discipline')}>
+              {states.map((x) => <option key={x} value={x}>{regionLabel(t, world, x)} · {Math.round(pc.machinery[world.states.indexOf(x)])}</option>)}
+            </select>
+            <ConfirmButton className="btn small" label={t('party.discipline.suspend', { n: DISCIPLINE.suspend.branches })} confirmLabel={t('party.discipline.confirm')} disabled={!term || !canDiscipline(world, campaign, st)} onConfirm={() => discipline(st, 'suspend')} />
+            <ConfirmButton className="btn small" label={t('party.discipline.dissolve', { n: DISCIPLINE.dissolve.branches })} confirmLabel={t('party.discipline.confirm')} disabled={!term || !canDiscipline(world, campaign, st)} onConfirm={() => discipline(st, 'dissolve')} danger />
+          </div>
+        );
+      })()}
+
+      <h3>{t('party.rebrand')}</h3>
+      <p className="muted small action-desc">{t('party.rebrand.desc', { rm: f.rm(scaled(world, REBRAND.funds)), cred: REBRAND.credibility })}</p>
+      <div className="button-row">
+        <button className="btn small" disabled={!term || !canRebrand(world, campaign)} onClick={() => setRebranding(true)}>{t('party.rebrand.open')}</button>
+      </div>
+      {rebranding && <RebrandDialog onClose={() => setRebranding(false)} />}
+
       <h3>{t('party.chest')}</h3>
       <p className="muted small action-desc">{t('party.chest.desc', { bonus: Math.round(CHEST_BONUS * 100), penalty: Math.round(CHEST_PENALTY * 100) })}</p>
       <ul>
@@ -155,5 +189,32 @@ export function PartyTab() {
         })}
       </ul>
     </section>
+  );
+}
+
+
+/** The party takes a new name, a new flag and new colours: what it says goes on the screens, and what it costs is paid when it is done. */
+function RebrandDialog({ onClose }: { onClose(): void }) {
+  const t = useT();
+  const player = useStore((s) => s.game!.campaign.player);
+  const current = useStore((s) => s.game!.identity);
+  const rebrand = useStore((s) => s.rebrand);
+  const id = PARTY_IDS[player] as keyof typeof DEFAULT_EMBLEMS;
+  const start: Draft = current
+    ? { ...current, ideology: null }
+    : { name: PARTIES[id].name, short: PARTIES[id].short, color: PARTY_COLORS.includes(PARTIES[id].color) ? PARTIES[id].color : PARTY_COLORS[0], emblem: DEFAULT_EMBLEMS[id], leader: LEADERS[id], look: 0, ideology: null };
+  const [draft, setDraft] = useState<Draft>(start);
+  const identity = makeIdentity(draft);
+  return (
+    <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="dialog panel" role="dialog" aria-modal="true" aria-label={t('party.rebrand')}>
+        <div className="dialog-head"><h2>{t('party.rebrand')}</h2></div>
+        <PartyCreator draft={draft} career={false} onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))} />
+        <div className="button-row">
+          <button className="btn primary" disabled={!identity} onClick={() => { if (identity) { rebrand(identity); onClose(); } }}>{t('party.rebrand.do')}</button>
+          <button className="btn" onClick={onClose}>{t('party.rebrand.cancel')}</button>
+        </div>
+      </div>
+    </div>
   );
 }

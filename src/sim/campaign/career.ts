@@ -28,7 +28,7 @@ import { agendaTerm } from './agenda';
 import { supplyWeek } from './supply';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
-import { LANDSLIDE, fatigueOf, grassrootsLift, holdingsWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
+import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, fatigueOf, grassrootsLift, holdingsWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
 import {
   freshParty, makeDrift, newCampaign, publishPublicPoll, startingFunds, weeklyIncome, type CampaignOptions,
@@ -335,10 +335,20 @@ export function termWeek(world: World, c: Campaign): void {
   const targets = machineryTargets(world, c);
   const points = ((afford * plan.machinery) / scaled(world, 6_000) * 0.25 + (o.focus === 'tour' ? 0.3 : 0)) * edge(c, me, 'organisation') * (1 + 0.05 * skill(c, me, 'manager')) * (0.8 + 0.2 * Math.min(2, rollsFactor(world, c)));
   pc.machinery = pc.machinery.map((m, i) => {
-    if (m <= 0) return 0;
-    const grown = targets.includes(world.states[i]) ? points / targets.length : 0;
-    return clamp(m - 0.04 + grown, 10, 100);
+    const st = world.states[i];
+    if (m <= 0) {
+      // Ground the party stands on for the first time: a foothold, and then years of slow work.
+      if (!contestsState(world, c, me, st)) return 0;
+      (k.fresh ??= []).push(st);
+      return FOOTHOLD;
+    }
+    const young = k.fresh?.includes(st) ?? false;
+    const grown = targets.includes(st) ? (points / targets.length) * (young ? YOUNG_BRANCHES : 1) : 0;
+    const next = clamp(m - 0.04 + grown, young ? FOOTHOLD : 10, 100);
+    if (young && next >= MATURE) k.fresh = k.fresh!.filter((x) => x !== st);
+    return next;
   });
+  if (k.fresh?.length === 0) delete k.fresh;
 
   const rngWeek = new Rng((c.rng ^ 0x9a17) + k.week);
   holdingsWeek(world, c, rngWeek);
