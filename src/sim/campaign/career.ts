@@ -31,6 +31,7 @@ import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
 import { allianceBonus, allianceWeek, dropMember } from './alliance';
+import { applyPride } from './pride';
 import { courtWeek } from './courts';
 import { patronageMult, patronageWeek } from './patronage';
 import { applyTenure, recordTenure } from './tenure';
@@ -551,8 +552,24 @@ export function dissolve(world: World, c: Campaign): boolean {
     pushNews(c, { party: c.player, key: 'news.palace.refused', vars: { n: PALACE_WAIT }, tone: 'bad' });
     return false;
   }
+  // Going to the country early when things are going well is seen for what it is, and the voters say so.
+  const cost = opportunism(c);
+  if (cost > 0) {
+    for (const row of k.mood) row[c.player] -= cost;
+    pushNews(c, { party: c.player, key: 'news.dissolve.opportunist', vars: { pct: Math.round(cost * 25 * 10) / 10 }, tone: 'bad' });
+  }
   beginCampaign(world, c);
   return true;
+}
+
+/** What the voters take off a government that dissolves early when it is not in trouble: more the earlier, none when it is shaky or the term is nearly out. */
+export const OPPORTUNISM = { perYear: 0.012, max: 0.04, grace: 26 };
+export function opportunism(c: Campaign): number {
+  const k = c.career!;
+  const left = k.length - k.week;
+  if (left <= OPPORTUNISM.grace) return 0;
+  const steady = k.government.stability >= 50 ? 1 : k.government.stability >= 35 ? 0.5 : 0;
+  return Math.min(OPPORTUNISM.max, (left / 52) * OPPORTUNISM.perYear) * steady;
 }
 
 /** Weeks the Palace asks a government to wait before it asks again. */
@@ -561,7 +578,9 @@ export const PALACE_WAIT = 13;
 /** The chance the Palace refuses a request to dissolve: nothing for a government with a majority and its footing, rising as either is lost. */
 export function palaceRefusal(c: Campaign): number {
   const g = c.career!.government;
-  return clamp((50 - g.stability) / 100 + (g.minority ? 0.2 : 0) + Math.max(0, (40 - g.trust) / 200), 0, 0.6);
+  // A state's ruler is slower to oblige than the Palace is to a government of the country.
+  const state = c.scenario.startsWith('career:') ? 0.1 : 0;
+  return clamp((50 - g.stability) / 100 + (g.minority ? 0.2 : 0) + Math.max(0, (40 - g.trust) / 200) + state, 0, 0.6);
 }
 
 /**
@@ -599,6 +618,7 @@ export function beginCampaign(world: World, c: Campaign): void {
   standMerged(world, c);
   applySafe(world, c);
   applyTenure(world, c);
+  applyPride(world, c);
   // Members and branches built over the years tell on polling day, in every seat the party stands in.
   const lift = grassrootsLift(world, c);
   if (lift > 0) {

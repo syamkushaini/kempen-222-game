@@ -6,6 +6,7 @@ import { MORE_EVENTS } from './eventList2';
 import { GOVERNING_EVENTS } from './eventList3';
 import { STORY_EVENTS } from './eventList4';
 import { SEASON_EVENTS } from './eventList5';
+import { FEDERATION_EVENTS } from './eventList6';
 import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
@@ -18,7 +19,7 @@ import { scaleHoldings } from './party';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
 /** Everything that can happen between elections. */
-export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS };
+export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS };
 
 /** Where the player sits: heading the government, a partner in it, or across the floor. */
 export type Seat = 'pm' | 'gov' | 'opp';
@@ -90,14 +91,18 @@ const EVENT_CHANCE = 0.06;
 /** Things only a country's government deals with: foreign affairs, the federation's own quarrels, national schemes and taxes. A state's does not. */
 export const COUNTRY_ONLY: ReadonlySet<string> = new Set([
   'borneoThird', 'oilRights', 'borneoHighway', 'peninsulaGaffe', 'stateDefiance', 'royaltiesRow', 'summitHost', 'seaIncident',
-  'mediationAward', 'refugeeBoats', 'twoPowers', 'tradeDispute', 'borderStandoff', 'sanctionsThreat', 'strandedAbroad', 'haze', 'subsidyReform', 'megaProject', 'ratingsWarning', 'pensionCall', 'tolls',
+  'mediationAward', 'refugeeBoats', 'twoPowers', 'tradeDispute', 'borderStandoff', 'sanctionsThreat', 'strandedAbroad', 'haze',
+  'claimsTalks', 'claimsStalled', 'claimsVerdict', 'cityHousing', 'flashFloods', 'mayorRow', 'subsidyReform', 'megaProject', 'ratingsWarning', 'pensionCall', 'tolls',
 ]);
+/** Things only a state's government deals with: a state's quarrels with the centre. */
+export const STATE_ONLY: ReadonlySet<string> = new Set(['fedGrantCut', 'fedTalks', 'fedSettlement']);
 /** A career in one state is told apart from the country's by its scenario: career:<state>. */
 export const inStateCareer = (c: Pick<Campaign, 'scenario'>) => c.scenario.startsWith('career:');
 
 export function eligible(c: Campaign, id: string): boolean {
   const def = EVENTS[id];
   if (COUNTRY_ONLY.has(id) && inStateCareer(c)) return false;
+  if (STATE_ONLY.has(id) && !inStateCareer(c)) return false;
   const k = c.career!;
   const seat = seatOf(c);
   if (def.role === 'pm' && seat !== 'pm') return false;

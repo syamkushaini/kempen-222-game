@@ -7,6 +7,7 @@ import { MORE_EVENTS_EN, MORE_EVENTS_MS } from './events2';
 import { GOVERNING_EVENTS_EN, GOVERNING_EVENTS_MS } from './events3';
 import { STORY_EVENTS_EN, STORY_EVENTS_MS } from './events4';
 import { SEASON_EVENTS_EN, SEASON_EVENTS_MS } from './events5';
+import { FEDERATION_EVENTS_EN, FEDERATION_EVENTS_MS } from './events6';
 
 /** A result is one line, or for a gamble a pair: how it reads when it comes off, and when it does not. */
 export interface EventText {
@@ -793,6 +794,8 @@ Object.assign(EVENTS_EN, STORY_EVENTS_EN);
 Object.assign(EVENTS_MS, STORY_EVENTS_MS);
 Object.assign(EVENTS_EN, SEASON_EVENTS_EN);
 Object.assign(EVENTS_MS, SEASON_EVENTS_MS);
+Object.assign(EVENTS_EN, FEDERATION_EVENTS_EN);
+Object.assign(EVENTS_MS, FEDERATION_EVENTS_MS);
 
 /** Spreads the event text into the flat keys the interface looks up. */
 export function flattenEvents(texts: Record<string, EventText>): Record<string, string> {
