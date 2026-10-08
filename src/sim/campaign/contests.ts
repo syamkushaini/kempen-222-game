@@ -43,6 +43,13 @@ export function houseTally(world: World, c: Campaign): number[] {
   return tally;
 }
 
+/** The party leading the opposition: the one with the most seats of those outside the government (-1 if there is none). */
+export function oppositionLeader(world: World, c: Campaign): number {
+  const g = c.career!.government;
+  const other = PARTY_IDS.indexOf('oth');
+  return houseTally(world, c).map((n, p) => ({ n, p })).filter(({ p }) => p !== other && !!c.parties[p] && p !== g.pm && !g.partners.includes(p)).sort((a, b) => b.n - a.n)[0]?.p ?? -1;
+}
+
 /** A copy of what is moving voters now, with room to add to it. */
 function withNoise(c: Campaign): Dynamics {
   return structuredClone(effectiveDynamics(c));

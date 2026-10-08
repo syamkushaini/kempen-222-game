@@ -11,6 +11,11 @@ import { FEDERATION_EVENTS_EN, FEDERATION_EVENTS_MS } from './events6';
 import { STORY_EVENTS_2_EN, STORY_EVENTS_2_MS } from './events7';
 import { NEW_EVENTS_EN, NEW_EVENTS_MS } from './events8';
 import { NEW_EVENTS_2_EN, NEW_EVENTS_2_MS } from './events9';
+import { PM_EVENTS_EN, PM_EVENTS_MS } from './events10';
+import { PARTNER_EVENTS_EN, PARTNER_EVENTS_MS } from './events11';
+import { LEAD_EVENTS_EN, LEAD_EVENTS_MS } from './events12';
+import { LEAD_EVENTS_2_EN, LEAD_EVENTS_2_MS } from './events13';
+import { OPP_EVENTS_EN, OPP_EVENTS_MS } from './events14';
 
 /** A result is one line, or for a gamble a pair: how it reads when it comes off, and when it does not. */
 export interface EventText {
@@ -803,6 +808,8 @@ Object.assign(EVENTS_EN, STORY_EVENTS_2_EN);
 Object.assign(EVENTS_MS, STORY_EVENTS_2_MS);
 Object.assign(EVENTS_EN, NEW_EVENTS_EN, NEW_EVENTS_2_EN);
 Object.assign(EVENTS_MS, NEW_EVENTS_MS, NEW_EVENTS_2_MS);
+Object.assign(EVENTS_EN, PM_EVENTS_EN, PARTNER_EVENTS_EN, LEAD_EVENTS_EN, LEAD_EVENTS_2_EN, OPP_EVENTS_EN);
+Object.assign(EVENTS_MS, PM_EVENTS_MS, PARTNER_EVENTS_MS, LEAD_EVENTS_MS, LEAD_EVENTS_2_MS, OPP_EVENTS_MS);
 
 /** Spreads the event text into the flat keys the interface looks up. */
 export function flattenEvents(texts: Record<string, EventText>): Record<string, string> {

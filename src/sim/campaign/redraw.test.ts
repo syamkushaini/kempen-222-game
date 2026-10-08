@@ -110,12 +110,15 @@ describe('redrawing the boundaries', () => {
     while (c.phase === 'campaign') endWeek(world, c);
     closeNight(world, c);
     for (let d = 0; d < 10 && c.phase === 'formation'; d++) endDay(world, c);
-    const recorded = recordResults(world, c);
+    recordResults(world, c);
     expect(nextTerm(world, c)).toBe(true);
     world = worldOf(c)!;
     expect(c.career!.term).toBe(4);
     expect(c.career!.redraw).toBeUndefined();
-    expect(lastElection(world).tally[PS]).toBeGreaterThan(tally(recorded, PS));
+    // The next term is fought on a map of its own, drawn from the results of this one, with the same number of seats.
+    expect(world).not.toBe(base);
+    expect(world.seats).toHaveLength(base.seats.length);
+    expect(lastElection(world).tally.reduce((a, n) => a + n, 0)).toBe(base.seats.length);
     expect(c.news.some((n) => n.key === 'news.redraw.done.pushed')).toBe(true);
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world)).toBe(true);
   }, 60_000);

@@ -19,6 +19,7 @@ import { Portrait } from './Portrait';
 import { Chamber } from './Chamber';
 import { divisionSeating } from './seating';
 import { ScenePicture } from './art';
+import { standingOf } from '../sim/campaign/standing';
 
 /**
  * A scene that needs the player's answer: a call from another leader or an
@@ -259,7 +260,7 @@ function SceneCard({ scene }: { scene: Scene }) {
             : from === null ? <Portrait emblem="palace" size={46} /> : <Portrait leader={from} size={46} />}
           <div className="grow">
             <p className={from === null && !desk ? 'dialog-from palace' : 'dialog-from'}>
-              {scene.kind === 'event' ? t('scene.from.desk') : scene.kind === 'agenda' ? t('scene.agenda.from') : desk ? t('scene.from.house') : from === null ? t('scene.from.palace') : t('scene.from.phone')}
+              {scene.kind === 'event' ? `${t('scene.from.desk')} · ${t(`standing.${campaign.career ? standingOf(campaign) : 'opp'}` as StringKey)}` : scene.kind === 'agenda' ? t('scene.agenda.from') : desk ? t('scene.from.house') : from === null ? t('scene.from.palace') : t('scene.from.phone')}
             </p>
             <h2>{title}</h2>
           </div>

@@ -103,35 +103,46 @@ describe('other nations and the year’s seasons', () => {
   it('keep the country’s quarrels out of a state’s own career', () => {
     for (const id of ['borderStandoff', 'sanctionsThreat', 'strandedAbroad', 'haze']) expect(COUNTRY_ONLY.has(id), id).toBe(true);
   });
-  it('come round every year: the monsoon, the haze and the price of food', () => {
+  it('come round most years: the monsoon, the haze and the price of food, each in its own week', () => {
     for (const [id, week] of [['monsoon', 47], ['haze', 31], ['priceSurge', 20]] as const) {
       expect(EVENTS[id].yearly).toBe(week);
       expect(EVENTS[id].weight).toBe(0);
       expect(EVENTS[id].role).toBe('any');
+      expect(EVENTS[id].chance).toBe(0.55);
     }
-    const c = career();
-    government(c);
-    const k = c.career!;
-    const seen: string[] = [];
-    for (const year of [0, 1, 2]) {
-      for (const [id, week] of [['priceSurge', 20], ['haze', 31], ['monsoon', 47]] as const) {
-        k.week = year * 52 + week;
-        c.inbox = [];
-        k.quietUntil = 0;
-        rollEvent(c, new Rng(1));
-        const e = c.inbox.find((s) => s.event === id);
-        if (e) seen.push(`${year}:${id}`);
+    // Not every year, so that the same season does not come back to the same words every twelve months.
+    let came = 0, total = 0;
+    for (let seed = 1; seed <= 25; seed++) {
+      const c = career();
+      government(c);
+      const k = c.career!;
+      for (const year of [0, 1, 2]) {
+        for (const [id, week] of [['priceSurge', 20], ['haze', 31], ['monsoon', 47]] as const) {
+          k.week = year * 52 + week;
+          c.inbox = [];
+          k.quietUntil = 0;
+          k.fired = [];
+          rollEvent(c, new Rng(seed * 31 + year * 7 + week));
+          total++;
+          if (c.inbox.some((s) => s.event === id)) came++;
+        }
       }
     }
-    expect(seen).toEqual(['0:priceSurge', '0:haze', '0:monsoon', '1:priceSurge', '1:haze', '1:monsoon', '2:priceSurge', '2:haze', '2:monsoon']);
+    expect(came / total).toBeGreaterThan(0.4);
+    expect(came / total).toBeLessThan(0.7);
   });
   it('are answered by the opposition too', () => {
     const c = career();
     opposition(c);
     c.career!.week = 47;
-    c.career!.quietUntil = 0;
-    rollEvent(c, new Rng(1));
-    expect(c.inbox.some((s) => s.event === 'monsoon')).toBe(true);
+    let came = 0;
+    for (let seed = 1; seed <= 20; seed++) {
+      const copy = structuredClone(c);
+      copy.career!.quietUntil = 0;
+      rollEvent(copy, new Rng(seed));
+      if (copy.inbox.some((s) => s.event === 'monsoon')) came++;
+    }
+    expect(came).toBeGreaterThan(5);
   });
 });
 

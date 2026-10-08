@@ -219,7 +219,7 @@ export const EVENTS: Record<string, EventDef> = {
     ],
   },
   shadowBudget: {
-    role: 'opp', weight: 0, yearly: 42,
+    role: 'opp', seats: ['lead'], weight: 0, chance: 0.8, yearly: 42,
     choices: [
       { effects: [eff('cred', 4), eff('funds', -20_000)] },
       { effects: [mood('all', 0.02), eff('cred', -4)] },

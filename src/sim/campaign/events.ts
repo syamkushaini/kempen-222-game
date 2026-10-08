@@ -9,6 +9,8 @@ import { SEASON_EVENTS } from './eventList5';
 import { FEDERATION_EVENTS } from './eventList6';
 import { STORY_EVENTS_2 } from './eventList7';
 import { NEW_EVENTS } from './eventList8';
+import { GOVERNING_SEATS } from './eventList9';
+import { OPPOSITION_SEATS } from './eventList10';
 import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
@@ -23,10 +25,11 @@ import { fightOdds } from './trial';
 import { dismiss } from './office';
 import { pushNews } from './news';
 import { scaleHoldings } from './party';
+import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEvent, standingOf, topicOf, type Standing } from './standing';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
 /** Everything that can happen between elections. */
-export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS };
+export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS };
 
 /** Where the player sits: heading the government, a partner in it, or across the floor. */
 export type Seat = 'pm' | 'gov' | 'opp';
@@ -64,8 +67,16 @@ export interface Choice {
 }
 
 export interface EventDef {
-  /** 'gov' means anyone in the government, including its head; 'partner' means in it but not leading it. */
+  /**
+   * 'gov' means anyone in the government, including its head; 'partner' means in it but not leading it; 'opp' means anyone
+   * across the floor. `seats` says it more finely, by the four places to stand (see standing.ts), and wins over this.
+   */
   role: 'any' | 'gov' | 'partner' | 'pm' | 'opp';
+  seats?: Standing[];
+  /** A calendar event that comes round only some years: the chance that it does, when its week comes. */
+  chance?: number;
+  /** The kind of trouble it is, so that the same kind does not come twice running (see standing.ts). */
+  topic?: string;
   /** Relative chance among random events. 0: never at random, only when scheduled. */
   weight: number;
   /** Fires in this week of the term. */
@@ -91,6 +102,14 @@ export interface EventDef {
     states?: boolean;
     /** The player governs this state, or the career is in it. */
     holds?: string;
+    /** The economy is growing slowly or not at all: under 3% a year, when 4% is usual. */
+    slump?: boolean;
+    /** Prices are rising fast: above 3.6% a year, when 2.8% is usual. */
+    hot?: boolean;
+    /** The party's unity is below this. */
+    unityBelow?: number;
+    /** The term is more than two-thirds gone, or less than a third gone. */
+    late?: boolean; early?: boolean;
   };
   choices: Choice[];
 }
@@ -118,6 +137,7 @@ export const COUNTRY_ONLY: ReadonlySet<string> = new Set([
   'mediationAward', 'refugeeBoats', 'twoPowers', 'tradeDispute', 'borderStandoff', 'sanctionsThreat', 'strandedAbroad', 'haze',
   'claimsTalks', 'claimsStalled', 'claimsVerdict', 'sovereignFund', 'fundProbe', 'fundTrial', 'cityHousing', 'flashFloods', 'mayorRow', 'subsidyReform', 'megaProject', 'ratingsWarning', 'pensionCall', 'tolls',
   'fakeNewsLaw', 'scamCalls', 'visaFree', 'foreignCampus', 'carbonRule',
+  'stateVisit', 'emergencyPowers', 'judicialPanel', 'foreignInvite', 'railStrike', 'stateSeatSwap',
 ]);
 /** Things only a state's government deals with: a state's quarrels with the centre. */
 export const STATE_ONLY: ReadonlySet<string> = new Set(['fedGrantCut', 'fedTalks', 'fedSettlement']);
@@ -132,11 +152,7 @@ export function eligible(c: Campaign, id: string): boolean {
   if (COUNTRY_ONLY.has(id) && inStateCareer(c)) return false;
   if (STATE_ONLY.has(id) && !inStateCareer(c)) return false;
   const k = c.career!;
-  const seat = seatOf(c);
-  if (def.role === 'pm' && seat !== 'pm') return false;
-  if (def.role === 'gov' && seat === 'opp') return false;
-  if (def.role === 'partner' && seat !== 'gov') return false;
-  if (def.role === 'opp' && seat !== 'opp') return false;
+  if (!forStanding(id, def, standingOf(c))) return false;
   if (k.fired.filter((x) => x === id).length >= (def.times ?? 1)) return false;
   const n = def.needs;
   if (!n) return true;
@@ -155,11 +171,17 @@ export function eligible(c: Campaign, id: string): boolean {
   if (n.staff && !c.team.staff.some((s) => s !== null)) return false;
   if (n.states && statesHeld(c, c.player) === 0) return false;
   if (n.holds && !governsState(c, n.holds)) return false;
+  if (n.slump && k.economy.growth >= 3) return false;
+  if (n.hot && k.economy.inflation < 3.6) return false;
+  if (n.unityBelow !== undefined && c.parties[c.player]!.unity >= n.unityBelow) return false;
+  if (n.late && k.week < (k.length * 2) / 3) return false;
+  if (n.early && k.week > k.length / 3) return false;
   return true;
 }
 
 function fire(c: Campaign, id: string): void {
   c.career!.fired.push(id);
+  (c.career!.topicWeeks ??= {})[topicOf(id, EVENTS[id])] = c.career!.week;
   addScene(c, { kind: 'event', from: null, event: id });
 }
 
@@ -179,15 +201,27 @@ export function rollEvent(c: Campaign, rng: Rng): boolean {
   const weekOfYear = ((k.week - 1) % 52) + 1;
   for (const [id, def] of Object.entries(EVENTS)) {
     const onCalendar = def.at === k.week || (def.yearly === weekOfYear && k.week > 4);
-    if (onCalendar && (def.yearly ? eligibleYearly(c, id) : eligible(c, id))) { fire(c, id); return true; }
+    if (onCalendar && (def.yearly ? eligibleYearly(c, id) : eligible(c, id))) {
+      if (def.chance !== undefined && rng.next() >= def.chance) continue;
+      fire(c, id);
+      return true;
+    }
   }
   if (k.week < k.quietUntil || rng.next() > EVENT_CHANCE * REALISM[c.difficulty].chance) return false;
   const pool = Object.keys(EVENTS).filter((id) => EVENTS[id].weight > 0 && eligible(c, id));
-  const total = pool.reduce((a, id) => a + EVENTS[id].weight, 0);
+  // The kind of trouble that has just been is less likely to be again, so that a run of the same thing does not make a game.
+  const weigh = (id: string) => {
+    const last = k.topicWeeks?.[topicOf(id, EVENTS[id])];
+    // What has come in an earlier term is less likely to come again; what was written for the player's own place is likelier.
+    const before = (k.seen ?? []).filter((x) => x === id).length;
+    const own = seatsOfEvent(id, EVENTS[id]).length <= 2 ? OWN_PLACE : 1;
+    return EVENTS[id].weight * own * Math.max(0.05, SEEN_FACTOR ** before) * (last !== undefined && k.week - last < COOL_WEEKS ? COOL_FACTOR : 1);
+  };
+  const total = pool.reduce((a, id) => a + weigh(id), 0);
   if (total <= 0) return false;
   let pick = rng.next() * total;
   for (const id of pool) {
-    pick -= EVENTS[id].weight;
+    pick -= weigh(id);
     if (pick <= 0) { fire(c, id); k.quietUntil = k.week + QUIET_WEEKS; return true; }
   }
   return false;

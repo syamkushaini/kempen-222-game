@@ -533,6 +533,12 @@ export interface Career {
   flags: string[];
   /** Events already seen this term. */
   fired: string[];
+  /** Events seen in the terms before this one, so that a game does not hand back the same troubles term after term. */
+  seen?: string[];
+  /** [topic]: the week a matter of that kind last came up, so that the same kind of trouble does not come twice running. */
+  topicWeeks?: Record<string, number>;
+  /** The party leading the opposition: the largest outside the government, noted each week of the term. */
+  oppLeader?: number;
   /** Events due later because of earlier choices. */
   queue: { event: string; week: number }[];
   /** No event comes out of the blue before this week. */

@@ -5,7 +5,7 @@ import { Rng } from '../rng';
 import { N_BLOCS, N_PARTIES, PARTY_IDS, type RegionId } from '../types';
 import { contestsState, scaled } from './actions';
 import { START_UNITY } from './cast';
-import { applyStateResults, houseTally, leaders, resolveByElection, resolveStatePolls, roundDue, startStates, stateVoteOf, statesHeld, vacantSeat } from './contests';
+import { applyStateResults, houseTally, leaders, oppositionLeader, resolveByElection, resolveStatePolls, roundDue, startStates, stateVoteOf, statesHeld, vacantSeat } from './contests';
 import { relation, shiftRelation } from './diplomacy';
 import { EVENTS, raise, resolveEvent, rollEvent } from './events';
 import {
@@ -438,6 +438,7 @@ export function termWeek(world: World, c: Campaign): void {
   factionsWeek(c);
   redrawWeek(c);
   if (c.inbox.length === 0 && partyPollWeek(c)) partyPoll(c, rng);
+  k.oppLeader = oppositionLeader(world, c);
   if (c.inbox.length === 0) rollEvent(c, rng);
   // A by-election needs a seat to be fought in.
   for (const scene of c.inbox) if (scene.event === 'byElection' && !scene.seat) scene.seat = vacantSeat(world, c, rng);
@@ -681,6 +682,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.own ? { own: true, slate: k.slate } : {}),
     ...(k.realStates ? { realStates: true } : {}),
     treasury: k.treasury, goodwill: k.goodwill, goodwillApplied: {},
+    seen: [...(k.seen ?? []), ...k.fired].slice(-400),
     ...(k.nation ? { nation: { ...k.nation } } : {}),
     orders: k.orders, assets: k.assets, ...(k.holdings ? { holdings: { ...k.holdings } } : {}), ...(k.rolls !== undefined ? { rolls: k.rolls } : {}), ...(k.activity ? { activity: { ...k.activity } } : {}), credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
     stances: k.stances, stances0: k.stances.map((row) => [...row]),

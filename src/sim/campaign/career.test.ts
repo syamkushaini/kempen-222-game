@@ -226,9 +226,10 @@ describe('events', () => {
     for (const c of [pm, opp]) { c.career!.week = 40; c.career!.quietUntil = 999; rollEvent(c, new Rng(1)); }
     expect(pm.inbox[0]?.event).toBe('budget');
     expect(opp.inbox).toHaveLength(0);
+    // The opposition's answer to the budget comes in most years, and only to the leader of the opposition.
     opp.career!.week = 42;
-    rollEvent(opp, new Rng(1));
-    expect(opp.inbox[0]?.event).toBe('shadowBudget');
+    const came = [1, 2, 3, 4, 5, 6, 7, 8].filter((seed) => { const copy = structuredClone(opp); rollEvent(copy, new Rng(seed)); return copy.inbox[0]?.event === 'shadowBudget'; });
+    expect(came.length).toBeGreaterThan(3);
   });
 
   it('carry out the choice and remember what was set in motion', () => {

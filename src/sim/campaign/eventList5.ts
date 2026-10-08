@@ -91,7 +91,7 @@ export const SEASON_EVENTS: Record<string, EventDef> = {
 
   // ----- the year's own seasons -----
   monsoon: {
-    role: 'any', weight: 0, yearly: 47,
+    role: 'any', weight: 0, chance: 0.55, yearly: 47,
     choices: [
       { effects: [eff('funds', -90_000), mood(['heartland', 'agri', 'felda', 'urban_b40'], 0.03), eff('cred', 2)] },
       { effects: [], gamble: { chance: 'stability', win: [mood('all', 0.01)], lose: [eff('cred', -4), mood(['heartland', 'agri', 'felda'], -0.03)] } },
@@ -99,7 +99,7 @@ export const SEASON_EVENTS: Record<string, EventDef> = {
     ],
   },
   haze: {
-    role: 'any', weight: 0, yearly: 31,
+    role: 'any', weight: 0, chance: 0.55, yearly: 31,
     choices: [
       { effects: [eff('funds', -60_000), econ(-0.2), mood(['m40', 'urban_lib', 'seniors'], 0.02)] },
       { effects: [nat(0, 0, -1), mood(['m40', 'urban_lib'], 0.01), eff('cred', 1)] },
@@ -107,7 +107,7 @@ export const SEASON_EVENTS: Record<string, EventDef> = {
     ],
   },
   priceSurge: {
-    role: 'any', weight: 0, yearly: 20,
+    role: 'any', weight: 0, chance: 0.55, yearly: 20,
     choices: [
       { effects: [eff('fiscal', 1), mood(['urban_b40', 'heartland', 'gig'], 0.03), mood(['smallbiz'], -0.04)] },
       { effects: [eff('funds', -70_000), mood(['urban_b40', 'gig'], 0.03), eff('cred', 1)] },

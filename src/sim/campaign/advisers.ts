@@ -17,7 +17,7 @@ export type Concern = 'debt' | 'purse' | 'unity' | 'partners' | 'promises' | 'na
 /** What each adviser may worry about. */
 export const CONCERNS: Record<AdviserId, readonly Concern[]> = { treasurer: ['debt', 'purse'], strategist: ['unity', 'partners'], conscience: ['promises', 'name'] };
 
-export const ADVISE = { every: 13, ultimatum: 3, debt: 75, deficit: 5.5, purse: 60_000, unity: 45, name: 40, broken: 2, listened: 2, ignored: -3, stability: -2 };
+export const ADVISE = { every: 13, ultimatum: 3, patience: 2, debt: 75, deficit: 5.5, purse: 60_000, unity: 45, name: 40, broken: 2, listened: 2, ignored: -3, stability: -2 };
 
 export interface AdviserState { name: number; concern: Concern | null; count: number }
 export const advisersOf = (c: Campaign): Record<AdviserId, AdviserState> => {
@@ -83,7 +83,8 @@ export function answerAdviser(c: Campaign, act: 'listen' | 'ignore' | 'dismiss')
   const a = advisersOf(c)[id];
   if (act === 'listen') {
     k.credibility = clamp(k.credibility + ADVISE.listened, 0, 100);
-    a.count = 0;
+    // Heard, an adviser gives the leader some time before asking again, even about the same worry.
+    a.count = -ADVISE.patience;
   } else if (act === 'ignore') {
     k.credibility = clamp(k.credibility + ADVISE.ignored, 0, 100);
     k.government.stability = clamp(k.government.stability + ADVISE.stability, 5, 95);
