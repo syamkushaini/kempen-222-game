@@ -1,11 +1,12 @@
 import { lastElection, type World } from '../election';
 import { zeros } from '../math';
 import { Rng } from '../rng';
-import { N_PARTIES, type SeatKind } from '../types';
+import { BLOC_IDS, N_PARTIES, type BlocId, type SeatKind } from '../types';
 import { holdingScale } from './party';
 import { contests } from './actions';
 import { shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
+import { retireIncumbent } from './tenure';
 import { payVet } from './staff';
 import { HOPEFUL_KINDS, type Campaign, type Hopeful, type HopefulKind, type KeySeat } from './types';
 
@@ -16,6 +17,38 @@ export const HOPEFUL_NAMES = [
   'Yap Chee Wai', 'Low Siew Fong', 'Kumar Subramaniam', 'Devi Ramasamy', 'Vijay Pillai', 'Kavitha Rajan',
   'Robert Ugak', 'Juliana Sinsua', 'Henry Luhat', 'Agnes Majalap', 'Awang Tengah Bujang', 'Dayang Norlia Sapawi',
 ];
+
+export type Ethnic = 'malay' | 'chinese' | 'indian' | 'bumi';
+export interface HopefulTraits { woman: boolean; young: boolean; ethnic: Ethnic }
+
+/** Who the names are, in the order of HOPEFUL_NAMES. */
+export const HOPEFUL_TRAITS: readonly HopefulTraits[] = [
+  { woman: false, young: false, ethnic: 'malay' }, { woman: true, young: true, ethnic: 'malay' }, { woman: false, young: false, ethnic: 'malay' },
+  { woman: true, young: false, ethnic: 'malay' }, { woman: false, young: false, ethnic: 'malay' }, { woman: true, young: false, ethnic: 'malay' },
+  { woman: false, young: true, ethnic: 'malay' }, { woman: true, young: false, ethnic: 'malay' }, { woman: false, young: false, ethnic: 'chinese' },
+  { woman: true, young: false, ethnic: 'chinese' }, { woman: false, young: false, ethnic: 'chinese' }, { woman: true, young: true, ethnic: 'chinese' },
+  { woman: false, young: false, ethnic: 'chinese' }, { woman: true, young: false, ethnic: 'chinese' }, { woman: false, young: false, ethnic: 'indian' },
+  { woman: true, young: false, ethnic: 'indian' }, { woman: false, young: true, ethnic: 'indian' }, { woman: true, young: false, ethnic: 'indian' },
+  { woman: false, young: false, ethnic: 'bumi' }, { woman: true, young: true, ethnic: 'bumi' }, { woman: false, young: false, ethnic: 'bumi' },
+  { woman: true, young: false, ethnic: 'bumi' }, { woman: false, young: false, ethnic: 'bumi' }, { woman: true, young: false, ethnic: 'bumi' },
+];
+
+/**
+ * What a candidate's own background adds in a seat that suits it, in logit units: a woman where the seat is of the
+ * salaried and the town, a young candidate where there are many first-time voters and gig workers, a candidate of the
+ * minorities where the seat is a city's, and a Borneo native where the seat is of Borneo. A bonus only; nothing is taken away.
+ */
+export function diversityBonus(seat: { blocs: number[]; urbanity: number }, name: number): number {
+  const t = HOPEFUL_TRAITS[name];
+  if (!t) return 0;
+  const share = (...ids: BlocId[]) => ids.reduce((a, id) => a + (seat.blocs[BLOC_IDS.indexOf(id)] ?? 0), 0);
+  let bonus = 0;
+  if (t.woman) bonus += 0.015 + 0.1 * Math.min(0.6, share('urban_lib', 'm40', 'civil', 'urban_b40'));
+  if (t.young) bonus += 0.01 + 0.5 * Math.min(0.2, share('undi18') + 0.5 * share('gig'));
+  if (t.ethnic === 'chinese' || t.ethnic === 'indian') bonus += 0.07 * seat.urbanity;
+  if (t.ethnic === 'bumi') bonus += 0.1 * Math.min(0.8, share('borneo_native', 'borneo_urban'));
+  return Math.round(bonus * 1000) / 1000;
+}
 
 export interface HopefulDef {
   /** What they add to the party's vote in the seat, by the kind of seat, in logit units. */
@@ -85,7 +118,7 @@ export function makeKeySeats(world: World, c: Campaign, rng: Rng): KeySeat[] {
 export function liftIn(world: World, key: KeySeat, option: number): number {
   const seat = world.seats[world.seatIndex.get(key.seat)!];
   const h = key.options[option];
-  return h ? HOPEFULS[h.kind].lift[seat.kind] : 0;
+  return h ? HOPEFULS[h.kind].lift[seat.kind] + diversityBonus(seat, h.name) : 0;
 }
 
 /** Files nomination papers for a hopeful. It cannot be undone: the ballot is printed. */
@@ -95,8 +128,9 @@ export function choose(world: World, c: Campaign, seat: string, option: number):
   if (!key || !h || key.pick !== null || !canChoose(c)) return false;
   key.pick = option;
   const me = c.player;
-  // The party's own choice makes way for the leader's.
+  // The party's own choice makes way for the leader's. If the seat has a member of long standing, half their personal vote goes with them.
   delete c.team.defaults?.[seat];
+  retireIncumbent(c, seat);
   // A candidate is there for the whole campaign, so what they bring does not fade.
   (c.drift.support.seat[seat] ??= zeros(N_PARTIES))[me] += liftIn(world, key, option);
   (c.drift.turnout.seat[seat] ??= zeros(N_PARTIES))[me] += HOPEFULS[h.kind].turnout;

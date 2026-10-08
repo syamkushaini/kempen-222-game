@@ -9,7 +9,8 @@ import { addEndorsements } from './endorserData';
 import { travelCost } from './geo';
 import { edge, fundsBoost, gaffeCut, mediaBoost, stat } from './perks';
 import { chiefHand } from './chiefs';
-import { MIN_SEGMENT, addPitch } from './segments';
+import { MEDIA_AIMED, MIN_SEGMENT, addPitch, aimReach } from './segments';
+import { stateOf } from './agenda';
 import type {
   ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, PartyCampaign, Quality, TargetKind,
 } from './types';
@@ -47,6 +48,7 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   debate:     { family: 'media',     target: 'party', days: 1,   presence: false, perWeek: 1 },
   manifesto:  { family: 'media',     target: 'none',  days: 1,   presence: false, perWeek: 1 },
   radio:      { family: 'media',     target: 'state', days: 0.5, presence: false, perWeek: 1 },
+  local:      { family: 'ground',    target: 'state', days: 1,   presence: true,  perWeek: 1 },
 };
 
 /**
@@ -117,6 +119,37 @@ export const SOCIAL_REACH = blocTable({
   m40: 0.7, urban_lib: 1, smallbiz: 0.5, seniors: 0.1, borneo_native: 0.2, borneo_urban: 0.8,
 });
 
+/**
+ * What is done in one state and in no other, and who it reaches: Negeri Sembilan's adat, Sabah's Kaamatan, Sarawak's Gawai,
+ * the padi harvest in Kedah. A state that has nothing of its own gets a plain open house.
+ */
+export const LOCAL_IDS = ['nsembilan', 'sabah', 'sarawak', 'kelantan', 'terengganu', 'kedah', 'perlis', 'pahang', 'penang', 'selangor', 'perak', 'melaka', 'johor', 'kl', 'putrajaya', 'labuan'] as const;
+export const LOCAL_REACH: Record<string, number[]> = {
+  nsembilan: blocTable({ undi18: 0.1, heartland: 1, felda: 0.6, agri: 0.6, civil: 0.3, urban_b40: 0.1, gig: 0.1, m40: 0.2, urban_lib: 0.05, smallbiz: 0.3, seniors: 1.3, borneo_native: 0, borneo_urban: 0 }),
+  sabah: blocTable({ undi18: 0.2, heartland: 0.1, felda: 0.1, agri: 0.5, civil: 0.2, urban_b40: 0.2, gig: 0.2, m40: 0.2, urban_lib: 0.1, smallbiz: 0.2, seniors: 0.6, borneo_native: 1.6, borneo_urban: 0.8 }),
+  sarawak: blocTable({ undi18: 0.2, heartland: 0.1, felda: 0.1, agri: 0.5, civil: 0.2, urban_b40: 0.2, gig: 0.2, m40: 0.2, urban_lib: 0.1, smallbiz: 0.2, seniors: 0.6, borneo_native: 1.6, borneo_urban: 0.8 }),
+  kelantan: blocTable({ undi18: 0.2, heartland: 1.2, felda: 0.6, agri: 0.8, civil: 0.4, urban_b40: 0.2, gig: 0.1, m40: 0.2, urban_lib: 0, smallbiz: 0.4, seniors: 1.3, borneo_native: 0, borneo_urban: 0 }),
+  terengganu: blocTable({ undi18: 0.2, heartland: 1.2, felda: 0.7, agri: 0.8, civil: 0.4, urban_b40: 0.2, gig: 0.1, m40: 0.2, urban_lib: 0, smallbiz: 0.4, seniors: 1.3, borneo_native: 0, borneo_urban: 0 }),
+  kedah: blocTable({ undi18: 0.1, heartland: 1, felda: 0.8, agri: 1.6, civil: 0.2, urban_b40: 0.1, gig: 0.1, m40: 0.1, urban_lib: 0, smallbiz: 0.3, seniors: 1, borneo_native: 0, borneo_urban: 0 }),
+  perlis: blocTable({ undi18: 0.1, heartland: 1.2, felda: 0.5, agri: 1.3, civil: 0.3, urban_b40: 0.1, gig: 0.1, m40: 0.1, urban_lib: 0, smallbiz: 0.3, seniors: 1, borneo_native: 0, borneo_urban: 0 }),
+  pahang: blocTable({ undi18: 0.1, heartland: 0.7, felda: 1.7, agri: 0.9, civil: 0.2, urban_b40: 0.1, gig: 0.1, m40: 0.1, urban_lib: 0, smallbiz: 0.3, seniors: 0.9, borneo_native: 0, borneo_urban: 0 }),
+  penang: blocTable({ undi18: 0.5, heartland: 0, felda: 0, agri: 0, civil: 0.6, urban_b40: 1, gig: 0.8, m40: 1, urban_lib: 1, smallbiz: 1.1, seniors: 0.4, borneo_native: 0, borneo_urban: 0 }),
+  selangor: blocTable({ undi18: 0.9, heartland: 0.1, felda: 0.1, agri: 0, civil: 0.7, urban_b40: 0.7, gig: 1.3, m40: 1, urban_lib: 0.8, smallbiz: 0.6, seniors: 0.2, borneo_native: 0, borneo_urban: 0.2 }),
+  perak: blocTable({ undi18: 0.3, heartland: 0.5, felda: 0.2, agri: 0.3, civil: 0.6, urban_b40: 0.8, gig: 0.4, m40: 0.8, urban_lib: 0.4, smallbiz: 1, seniors: 0.8, borneo_native: 0, borneo_urban: 0 }),
+  melaka: blocTable({ undi18: 0.3, heartland: 0.5, felda: 0.2, agri: 0.2, civil: 0.8, urban_b40: 0.5, gig: 0.3, m40: 0.8, urban_lib: 0.3, smallbiz: 0.9, seniors: 0.9, borneo_native: 0, borneo_urban: 0 }),
+  johor: blocTable({ undi18: 0.3, heartland: 0.8, felda: 0.9, agri: 0.4, civil: 0.8, urban_b40: 0.5, gig: 0.4, m40: 0.5, urban_lib: 0.2, smallbiz: 0.8, seniors: 0.8, borneo_native: 0, borneo_urban: 0 }),
+  kl: blocTable({ undi18: 0.8, heartland: 0, felda: 0, agri: 0, civil: 0.5, urban_b40: 0.9, gig: 1.2, m40: 1, urban_lib: 0.9, smallbiz: 0.8, seniors: 0.2, borneo_native: 0, borneo_urban: 0.3 }),
+  putrajaya: blocTable({ undi18: 0.2, heartland: 0.1, felda: 0, agri: 0, civil: 1.7, urban_b40: 0.1, gig: 0.1, m40: 0.8, urban_lib: 0.3, smallbiz: 0.2, seniors: 0.2, borneo_native: 0, borneo_urban: 0 }),
+  labuan: blocTable({ undi18: 0.3, heartland: 0, felda: 0, agri: 0.2, civil: 0.6, urban_b40: 0.6, gig: 0.3, m40: 0.5, urban_lib: 0.2, smallbiz: 0.7, seniors: 0.6, borneo_native: 0.7, borneo_urban: 1 }),
+};
+/** An open house for a state with nothing of its own: a little for everyone, a little more for the villages. */
+export const LOCAL_PLAIN = blocTable({ undi18: 0.3, heartland: 0.7, felda: 0.7, agri: 0.7, civil: 0.4, urban_b40: 0.4, gig: 0.3, m40: 0.4, urban_lib: 0.2, smallbiz: 0.4, seniors: 0.7, borneo_native: 0.5, borneo_urban: 0.3 });
+
+/** The place a local event belongs to: the state itself in a state's election, else the state chosen on the map. */
+export const localPlace = (world: World, st: RegionId | undefined): string => stateOf(world) ?? st ?? '';
+export const localReach = (world: World, st: RegionId | undefined): number[] => LOCAL_REACH[localPlace(world, st)] ?? LOCAL_PLAIN;
+export const hasLocal = (world: World, st: RegionId | undefined): boolean => localPlace(world, st) in LOCAL_REACH;
+
 export const EFFECT = {
   ceramah: 0.18, ceramahMotivation: 0.08,
   walkabout: 0.08,
@@ -137,6 +170,7 @@ export const EFFECT = {
   manifesto: 0.045, manifestoDivided: 0.4,
   conference: 8, conferenceBranches: 3,
   radio: 0.022,
+  local: 0.09, localUnity: 1,
   tycoon: 900_000, tycoonExposeChance: 0.12, tycoonHit: 0.08, tycoonMotivationHit: 0.1,
 };
 
@@ -152,7 +186,7 @@ export const CAP = { seat: 0.6, state: 0.3, nat: 0.3, seatTurnout: 0.4, stateTur
 const MONEY = {
   ceramah: 30_000, walkabout: 8_000, megarally: 150_000, build: 60_000,
   tv: 350_000, social: 50_000,
-  townhall: 12_000, charity: 90_000, youth: 40_000, festival: 70_000, manifesto: 120_000, conference: 40_000,
+  townhall: 12_000, charity: 90_000, youth: 40_000, festival: 70_000, manifesto: 120_000, conference: 40_000, local: 45_000,
 };
 
 /** An amount of money scaled to the size of the contest and rounded to a tidy figure. */
@@ -221,7 +255,7 @@ export function actionCost(world: World, c: Campaign, p: number, id: ActionId, t
   let money = 0;
   switch (id) {
     case 'ceramah': case 'walkabout': case 'megarally': case 'build': case 'tv': case 'social':
-    case 'townhall': case 'charity': case 'youth': case 'festival': case 'manifesto': case 'conference':
+    case 'townhall': case 'charity': case 'youth': case 'festival': case 'manifesto': case 'conference': case 'local':
       money = scaled(world, MONEY[id]);
       break;
     case 'radio':
@@ -266,8 +300,11 @@ export function canDo(world: World, c: Campaign, p: number, id: ActionId, target
     if (target.segment !== undefined && (!PITCHED.includes(id) || chief || !(world.seats[i].blocs[BLOC_IDS.indexOf(target.segment)] >= MIN_SEGMENT))) return no('noTarget');
   } else if (def.target === 'state') {
     if (!target.state) return no('noTarget');
+    if (target.segment !== undefined && !(MEDIA_AIMED as readonly ActionId[]).includes(id)) return no('noTarget');
     // Fundraising dinners work anywhere; everything else needs candidates in the state.
     if (id !== 'dinner' && !contestsState(world, c, p, target.state)) return no('notContesting');
+  } else if (def.target === 'none' && target.segment !== undefined && !(MEDIA_AIMED as readonly ActionId[]).includes(id)) {
+    return no('noTarget');
   } else if (def.target === 'party') {
     if (target.party === undefined || !c.parties[target.party]) return no('noTarget');
     if (target.party === p) return no('self');
@@ -414,6 +451,8 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
   const presence = chief ? 1 : edge(c, p, 'charisma');
   const organised = edge(c, p, 'organisation');
   const onAir = mediaBoost(c, p);
+  // A medium aimed at one voter group reaches it more and the others less.
+  const aimed = (reach: number[]) => (target.segment !== undefined && !chief ? aimReach(reach, target.segment) : reach);
 
   switch (id) {
     case 'ceramah':
@@ -455,7 +494,7 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       break;
     }
     case 'tv':
-      boostBlocs(c.dyn.support.nat, p, EFFECT.tv * presence * onAir * roll, TV_REACH, CAP.nat);
+      boostBlocs(c.dyn.support.nat, p, EFFECT.tv * presence * onAir * roll, aimed(TV_REACH), CAP.nat);
       addLateSwing(c, p, 1);
       break;
     case 'social': {
@@ -465,7 +504,7 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       const flop = 0.1 - gaffeCut(c, p);
       const mult = r < flop ? -0.3 : r < 0.7 ? 1 : r < 0.95 ? 1.8 : 3.5;
       quality = r < flop ? 'flop' : r < 0.7 ? 'ok' : r < 0.95 ? 'great' : 'viral';
-      boostBlocs(c.dyn.support.nat, p, EFFECT.social * mult * (mult > 0 ? onAir : 1), SOCIAL_REACH, CAP.nat);
+      boostBlocs(c.dyn.support.nat, p, EFFECT.social * mult * (mult > 0 ? onAir : 1), aimed(SOCIAL_REACH), CAP.nat);
       if (mult > 1) addLateSwing(c, p, 0.5);
       break;
     }
@@ -530,6 +569,12 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       boostBlocs(stateSupport(c, st!), p, EFFECT.festival * (0.9 + 0.2 * rng.next()), null, CAP.state);
       quality = 'ok';
       break;
+    case 'local': {
+      // The event of the place: the groups that belong to it feel it most, and the party's own people are glad to be there.
+      boostBlocs(stateSupport(c, st!), p, EFFECT.local * presence * roll, localReach(world, st!), CAP.state);
+      quality = 'ok';
+      break;
+    }
     case 'conference': {
       // The leader's days go on the party itself; the branches nearby take heart.
       const home = stateIndex(world, pc.location);
@@ -564,7 +609,7 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       break;
     }
     case 'radio':
-      boostBlocs(stateSupport(c, st!), p, EFFECT.radio * onAir * roll, RADIO_REACH, CAP.state);
+      boostBlocs(stateSupport(c, st!), p, EFFECT.radio * onAir * roll, aimed(RADIO_REACH), CAP.state);
       break;
     case 'dinner':
       raised = tidy(expectedYield(world, c, p, 'dinner', st!) * fundsBoost(c, p) * roll);

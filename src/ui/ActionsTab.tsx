@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
-import { ACTIONS, PITCHED, actionCost, canDo, expectedPitchGain, expectedSeatGain, expectedYield, spendingLimit } from '../sim/campaign/actions';
-import { resentful, segmentsIn } from '../sim/campaign/segments';
+import { ACTIONS, PITCHED, actionCost, canDo, expectedPitchGain, expectedSeatGain, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
+import { MEDIA_AIMED, resentful, segmentsIn } from '../sim/campaign/segments';
 import { probeChance } from '../sim/campaign/spending';
 import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
@@ -15,7 +15,7 @@ import { NominationsPanel } from './Nominations';
 import { EntriesPanel } from './Entries';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
-  { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival'] },
+  { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival', 'local'] },
   { family: 'machinery', actions: ['canvass', 'gotv', 'build', 'conference'] },
   { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack'] },
   { family: 'funds', actions: ['dinner', 'crowdfund', 'tycoon'] },
@@ -25,7 +25,7 @@ const FAMILIES: { family: Family; actions: ActionId[] }[] = [
 const ACTION_ICON: Record<ActionId, IconName> = {
   ceramah: 'megaphone', walkabout: 'walk', megarally: 'flag', canvass: 'home', gotv: 'ballot', build: 'tool',
   tv: 'tv', social: 'phone', billboards: 'board', attack: 'bolt', dinner: 'coins', crowdfund: 'heart', tycoon: 'crown',
-  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic',
+  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic', local: 'flag',
 };
 
 const GROUPS_KEY = 'k222.groups';
@@ -67,6 +67,8 @@ export function ActionsTab() {
 
   // The voter group a seat event is pitched to; a new seat starts with a pitch to everyone.
   const [segment, setSegment] = useState<BlocId | null>(null);
+  // The voter group a television, radio or social media push is aimed at; nobody in particular to begin with.
+  const [mediaSegment, setMediaSegment] = useState<BlocId | null>(null);
   useEffect(() => { setSegment(null); }, [selectedSeat]);
 
   const me = campaign.player;
@@ -89,9 +91,12 @@ export function ActionsTab() {
     return targets.some((target) => { const check = canDo(world, campaign, me, id, target); return check.ok || check.reason === 'noTarget'; });
   };
 
+  /** An action's name: a local event is named for the place it belongs to. */
+  const nameOf = (id: ActionId, st?: RegionId) => (id === 'local' && hasLocal(world, st) ? t(`local.${localPlace(world, st)}` as StringKey) : t(`action.${id}` as StringKey));
+
   /** What an action is called when it is aimed at something. */
   const titleOf = (id: ActionId, target: ActionTarget) => {
-    const name = t(`action.${id}`);
+    const name = nameOf(id, target.state);
     if (target.seat) return `${name} — ${world.seats[world.seatIndex.get(target.seat)!].name}`;
     if (target.state) return `${name} — ${regionLabel(t, world, target.state)}`;
     if (target.party !== undefined) return `${name} — ${partyShort(t, target.party)}`;
@@ -183,7 +188,7 @@ export function ActionsTab() {
   };
 
   const render = (id: ActionId) => {
-    const name = t(`action.${id}`);
+    const name = nameOf(id, state);
     const stateName = regionLabel(t, world, state);
     switch (ACTIONS[id].target) {
       case 'seat': {
@@ -191,12 +196,17 @@ export function ActionsTab() {
         const aimed = target.segment ? ` · ${t(`bloc.${target.segment}`)}` : '';
         return row(id, target, id, `${name} — ${seat ? seat.name : t('actions.noSeat')}${aimed}`);
       }
-      case 'state':
-        return row(id, { state }, id, `${name} — ${stateName}`, extraFor(id, { state }));
+      case 'state': {
+        const target: ActionTarget = { state, ...(mediaSegment && MEDIA_AIMED.includes(id as never) ? { segment: mediaSegment } : {}) };
+        const aimed = target.segment ? ` · ${t(`bloc.${target.segment}`)}` : '';
+        return row(id, target, id, `${name} — ${stateName}${aimed}`, extraFor(id, target));
+      }
       case 'party':
         return rivals.map((r) => row(id, { party: r }, `${id}-${r}`, `${name} — ${partyShort(t, r)}`));
-      default:
-        return row(id, {}, id, name, extraFor(id, {}));
+      default: {
+        const target: ActionTarget = mediaSegment && MEDIA_AIMED.includes(id as never) ? { segment: mediaSegment } : {};
+        return row(id, target, id, target.segment ? `${name} · ${t(`bloc.${target.segment}`)}` : name, extraFor(id, target));
+      }
     }
   };
 
@@ -241,6 +251,9 @@ export function ActionsTab() {
               <span className="muted small">{t('actions.group', { n: actions.length, ready: actions.filter(available).length })}</span>
             </summary>
             <ul className="action-list">
+              {family === 'media' && actions.some((id) => MEDIA_AIMED.includes(id as never)) && (
+                <li className="action-group"><MediaAim segment={mediaSegment} onPick={setMediaSegment} /></li>
+              )}
               {actions.map((id) => (
                 <li key={id} className="action-group">
                   <Brief className="muted small action-desc" jargon text={t(`action.${id}.desc${fog && id === 'attack' ? '.fog' : ''}` as StringKey)} />
@@ -256,6 +269,22 @@ export function ActionsTab() {
   );
 }
 
+
+/** Television, radio and social media can be aimed at one group of voters: it hears them better, the groups unlike it hear them less. */
+function MediaAim({ segment, onPick }: { segment: BlocId | null; onPick(b: BlocId | null): void }) {
+  const t = useT();
+  return (
+    <section className="pitch" aria-label={t('media.aim.title')}>
+      <p className="muted small"><strong>{t('media.aim.title')}</strong> — {t('media.aim.note')}</p>
+      <div className="chips" role="group" aria-label={t('media.aim.title')}>
+        <button className={segment === null ? 'chip active' : 'chip'} aria-pressed={segment === null} onClick={() => onPick(null)}>{t('pitch.all')}</button>
+        {BLOC_IDS.map((b) => (
+          <button key={b} className={segment === b ? 'chip active' : 'chip'} aria-pressed={segment === b} onClick={() => onPick(b)}>{t(`bloc.${b}`)}</button>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 /**
  * A seat is several electorates at once, and a ceramah, walkabout or town hall can be pitched to one of them. The row

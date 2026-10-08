@@ -4,6 +4,7 @@ import { CHOOSE_DAYS, HOPEFUL_NAMES, canOpen, canStand } from '../sim/campaign/c
 import { canForce } from '../sim/campaign/contests';
 import { FACTION_IDS } from '../sim/campaign/factions';
 import { canGrantSafe, safeSeats } from '../sim/campaign/safeseat';
+import { personalVote, termsHeld } from '../sim/campaign/tenure';
 import { enteredSeats } from '../sim/campaign/entry';
 import { STANDS } from '../sim/transfer';
 import { useStore } from '../state/store';
@@ -115,6 +116,7 @@ export function CandidatesTab() {
                 )}
                 {!r.chosen && r.key && <span className="muted small">{t('slate.undecided')}</span>}
                 {campaign.team.leaderSeat === r.seat.id && <span className="muted small">{t('slate.you')}</span>}
+                {r.holder === me && k && personalVote(termsHeld(campaign, r.seat.id)) > 0 && <span className="muted small">{t('slate.tenure', { n: termsHeld(campaign, r.seat.id) })}</span>}
                 {r.seat.id in safeSeats(campaign) && <span className="muted small">{t('slate.safe', { faction: t(`faction.${FACTION_IDS[safeSeats(campaign)[r.seat.id]]}`) })}</span>}
               </span>
               {r.fighting && <span className={`badge ${r.d.cls}`}>{f.pct(r.d.margin)}</span>}

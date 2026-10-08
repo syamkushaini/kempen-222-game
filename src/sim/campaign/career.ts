@@ -31,6 +31,7 @@ import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
 import { patronageMult, patronageWeek } from './patronage';
+import { applyTenure, recordTenure } from './tenure';
 import { applySafe } from './safeseat';
 import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, crowdIncome, fatigueOf, foreignWeek, paddedWeek, grassrootsLift, holdingsWeek, trailWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
@@ -591,6 +592,7 @@ export function beginCampaign(world: World, c: Campaign): void {
   // Parties that were taken in do not stand.
   standMerged(world, c);
   applySafe(world, c);
+  applyTenure(world, c);
   // Members and branches built over the years tell on polling day, in every seat the party stands in.
   const lift = grassrootsLift(world, c);
   if (lift > 0) {
@@ -614,6 +616,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   // A campaign that broke the spending law is petitioned against: the narrowest wins are overturned.
   const petitioned = petition(world, c, counted);
   const recorded = petitioned.results;
+  recordTenure(world, c, recorded);
   closeSlate(world, c);
   const rng = new Rng(c.rng);
   // Every third parliament the boundaries are drawn again, and the seats the next term is fitted to are the redrawn ones.

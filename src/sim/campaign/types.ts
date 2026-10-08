@@ -13,6 +13,8 @@ export const ACTION_IDS = [
   'dinner', 'crowdfund', 'tycoon',
   // Added later, each with a catch: a different audience, a risk, or a price paid in something other than money.
   'townhall', 'charity', 'youth', 'festival', 'conference', 'debate', 'manifesto', 'radio',
+  // The thing that is done in one state and no other.
+  'local',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 export type Family = 'ground' | 'machinery' | 'media' | 'funds';
@@ -419,6 +421,8 @@ export interface Career {
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
+  /** [seat]: the party that holds it and for how many terms in a row (see tenure.ts). */
+  tenure?: Record<string, [number, number]>;
   /** How freely the party draws on the states it governs, 0 to 2 (see patronage.ts). */
   patronage?: number;
   /** Members on the rolls on paper only, not yet found out (see party.ts). */

@@ -1,5 +1,5 @@
 import type { StringKey } from '../i18n/strings';
-import { candidateDeadline, canChoose, HOPEFUL_NAMES, liftIn } from '../sim/campaign/candidates';
+import { candidateDeadline, canChoose, HOPEFUL_NAMES, HOPEFUL_TRAITS, liftIn } from '../sim/campaign/candidates';
 import { canCourtEndorser, courtChance, courtCost, ENDORSERS, hasEndorsers, holder } from '../sim/campaign/endorsers';
 import { scaled } from '../sim/campaign/actions';
 import { canVet, STAFF_NAMES, vetCost, wages } from '../sim/campaign/staff';
@@ -124,6 +124,7 @@ export function TeamTab() {
                       <div className="grow">
                         <span className="action-title">{HOPEFUL_NAMES[h.name]} <span className="muted small">· {t(`hopeful.${h.kind}`)}</span></span>
                         <span className="action-meta">{t(`hopeful.${h.kind}.desc`)}</span>
+                        <span className="action-meta">{[HOPEFUL_TRAITS[h.name].woman ? t('trait.woman') : '', HOPEFUL_TRAITS[h.name].young ? t('trait.young') : '', t(`trait.${HOPEFUL_TRAITS[h.name].ethnic}`)].filter(Boolean).join(' · ')}</span>
                         <span className="action-meta num">
                           {t(`team.lift.${level}`)} · <span className={h.vetted && h.skeleton ? 'neg' : ''}>{pastWord(t, h)}</span>
                           {key.pick !== null && <> · <strong>{t(picked ? 'team.chosen' : 'team.passed')}</strong></>}

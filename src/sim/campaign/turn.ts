@@ -162,6 +162,7 @@ function playerNews(c: Campaign, r: ActionReport): NewsItem {
     case 'debate': return item(`news.me.debate.${quality === 'great' ? 'won' : 'lost'}`, { party: ref.party(target.party!) }, quality === 'great' ? 'good' : 'bad');
     case 'manifesto': return item(`news.me.manifesto.${quality === 'weak' ? 'weak' : 'ok'}`, {}, quality === 'weak' ? 'bad' : 'good');
     case 'radio': return item('news.me.radio', { state: ref.state(target.state!) });
+    case 'local': return item('news.me.local', { state: ref.state(target.state!) }, 'good');
   }
 }
 
@@ -219,6 +220,7 @@ function aftermath(c: Campaign, r: ActionReport) {
   if (r.id === 'megarally') shiftUnity(c, r.party, r.quality === 'weak' ? 1 : 3);
   // A festival and a party conference are for the party itself; a debate is remembered by the one who lost it.
   if (r.id === 'festival') shiftUnity(c, r.party, EFFECT.festivalUnity);
+  if (r.id === 'local') shiftUnity(c, r.party, EFFECT.localUnity);
   if (r.id === 'conference') shiftUnity(c, r.party, EFFECT.conference);
   if (r.id === 'debate') shiftRelation(c, r.party, r.target.party!, -6);
   if (r.id === 'charity' && r.quality === 'backfire') pressReacts(c, r.party, -1, ['viral']);

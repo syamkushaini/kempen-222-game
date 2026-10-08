@@ -101,3 +101,22 @@ export function bestAim(seat: SeatData, outcome: SeatOutcome, p: number): { segm
   }
   return best;
 }
+
+/** How much more of a medium's reach a target group gets when it is aimed at them. */
+export const MEDIA_FOCUS = 2.2;
+/** Media that can be aimed at one voter group (see aimReach). */
+export const MEDIA_AIMED = ['tv', 'social', 'radio'] as const;
+
+/**
+ * A medium's reach, bloc by bloc, once it is aimed at one group: the group hears it more than twice as well, groups like
+ * it hear it as before, and the rest hear less; a group set against it takes it badly.
+ */
+export function aimReach(reach: number[], target: BlocId): number[] {
+  return reach.map((r, i) => {
+    const o = BLOC_IDS[i];
+    if (o === target) return r * MEDIA_FOCUS;
+    const h = heard(target, o);
+    const factor = h < -0.25 ? -0.15 : Math.min(1, Math.max(0.1, 0.9 + 2 * h));
+    return r * factor;
+  });
+}
