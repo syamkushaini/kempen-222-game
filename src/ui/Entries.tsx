@@ -33,7 +33,7 @@ export function EntriesPanel() {
         {entered.length > 0 && <> {t('entry.added', { n: entered.length })}</>}
       </p>
       <div className="button-row">
-        <button className="btn small primary" onClick={() => setOpen(true)}>{t('entry.choose')}</button>
+        <button className="btn small" onClick={() => setOpen(true)}>{t('entry.choose')}</button>
       </div>
       {open && <EntryDialog onClose={() => setOpen(false)} />}
     </section>

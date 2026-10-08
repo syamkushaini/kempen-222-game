@@ -1110,3 +1110,8 @@ Q100 ("what is the one thing you most want career mode to do") was a free answer
 - **It reaches the party only by being diverted**: the old "State resources" order now moves RM10k a level each week from the treasury to the party, no faster than the treasury fills, with the risks it always had (public trust wears down; the anti-graft events).
 - **The party's own income is its own**: members, donors, businesses, and what is diverted. **Cost of the stricter split, seen in play:** a career on default orders now has RM4k to RM10k a week less (Pakatan Sinar's party purse at week 130 is about RM0.5m, not RM1.8m; Perikatan Teguh and Barisan Pusaka run dry in the first term unless they raise money, invest or divert). The treasury, meanwhile, fills faster than grants can spend it, so most of it lapses at the cap: a place to make the grants bigger later if wanted.
 - Saved games load unchanged (all new fields are optional; a game saved before starts with an empty treasury). Nine tests; checked on a desktop and a phone.
+
+## Only one filled button per screen, again
+
+- Two things from the merged work broke "one main button per screen": the entry panel's "Choose new seats" (now an ordinary button) and the chosen chip in a row of chips ("Everyone" when aiming media). A **chosen chip is now tinted and ringed** in the party's colour, not filled; the solid fill belongs to the screen's one main button.
+- The audit script was brought in line with the game: a new decision now opens by itself, and the desk bar appears only once it is set aside; the no-confidence check souring the government's partners (the opening House gives it a seat or two to spare); the long-tab check taps the chip by its name, since a new "Suggested this week" section moved the others along.

@@ -151,7 +151,8 @@ h3 { text-transform: none; }
 .party-card.plain.active, .party-card.active { border-color: var(--primary); }
 .fold, details.fold { border-radius: 14px; }
 .chip { border: 0; background: var(--fill); color: var(--ink-muted); border-radius: 9999px; padding: 6px 14px; }
-.chip.active, .chip[aria-pressed='true'] { background: var(--primary); color: var(--on-primary); }
+/* a chosen chip is tinted and ringed, not filled: the party colour's solid fill is kept for the screen's one main button */
+.chip.active, .chip[aria-pressed='true'] { background: color-mix(in srgb, var(--primary) 22%, var(--fill)); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--primary); }
 .brand-mark { border-radius: 10px; }
 
 /* ---------- buttons: pills, a grey fill for the ordinary, blue for the one that matters ---------- */
