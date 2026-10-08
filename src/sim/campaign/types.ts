@@ -419,6 +419,12 @@ export interface Career {
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
+  /** Members on the rolls on paper only, not yet found out (see party.ts). */
+  padded?: number;
+  /** [seat]: the faction a safe seat was given to as a reward (see safeseat.ts). */
+  safe?: Record<string, number>;
+  /** The seat the party made fall vacant on purpose this term, to be fought for in a by-election (see contests.ts). */
+  forced?: string;
   /** Foreign money taken, in lots of what a donor gives, and not yet found out (see party.ts). */
   foreign?: number;
   /** Parties the player's party has taken in, in this career so far (see merge.ts). */

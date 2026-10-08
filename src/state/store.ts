@@ -41,7 +41,9 @@ import { signSupply, type SupplyPrice } from '../sim/campaign/supply';
 import { merge } from '../sim/campaign/merge';
 import { nameShadow } from '../sim/campaign/shadow';
 import { resolveAgenda } from '../sim/campaign/agenda';
-import { discipline, doActivity, rebrand, setAside, takeForeign, trade, type Discipline, type ActivityId, type FavourId, type HoldingId } from '../sim/campaign/party';
+import { forceByElection } from '../sim/campaign/contests';
+import { grantSafe, revokeSafe } from '../sim/campaign/safeseat';
+import { discipline, doActivity, padRolls, rebrand, setAside, takeForeign, trade, type Discipline, type ActivityId, type FavourId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
@@ -221,6 +223,10 @@ interface Store {
   /** Sets money aside for the next campaign (positive lots), or takes it back at a price (negative). */
   chest(lots: number): void;
   foreign(favour: FavourId): void;
+  padRolls(): void;
+  grantSafe(seat: string, faction: number): void;
+  revokeSafe(seat: string): void;
+  forceByElection(seat: string): void;
   /** Asks a party to keep the government in office from outside the cabinet. */
   supply(party: number, price: SupplyPrice): void;
   /** The head of government repeals an Act. */
@@ -433,6 +439,10 @@ export const useStore = create<Store>((set, get) => {
     supply: (party, price) => mutate((c, _g, world) => { signSupply(world, c, party, price); }),
     chest: (lots) => mutate((c, _g, world) => { setAside(world, c, lots); }),
     foreign: (favour) => mutate((c, _g, world) => { takeForeign(world, c, favour); }),
+    padRolls: () => mutate((c, _g, world) => { padRolls(world, c); }),
+    grantSafe: (seat, faction) => mutate((c, _g, world) => { grantSafe(world, c, seat, faction); }),
+    revokeSafe: (seat) => mutate((c) => { revokeSafe(c, seat); }),
+    forceByElection: (seat) => mutate((c, _g, world) => { forceByElection(world, c, seat); }),
     discipline: (state, how) => mutate((c, _g, world) => { discipline(world, c, state, how); }),
     rebrand: (identity) => mutate((c, g, world) => { if (rebrand(world, c)) g.identity = identity; }),
     openSeat: (seat) => mutate((c, _g, world) => { openSeat(world, c, seat); }),

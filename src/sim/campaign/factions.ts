@@ -20,6 +20,9 @@ export type FactionId = (typeof FACTION_IDS)[number];
 export const WING_IDS = ['youth', 'women', 'elders'] as const;
 export type WingId = (typeof WING_IDS)[number];
 
+/** Points on the target its mood drifts towards, for each safe seat given to a faction's figure (see safeseat.ts). */
+export const SAFE_TARGET = 4;
+
 /** How the party's members divide among the factions, as shares of the roll, by party. */
 const SIZES: Record<string, [number, number, number]> = {
   ps: [0.3, 0.45, 0.25],
@@ -65,6 +68,7 @@ function targets(c: Campaign): { faction: number[]; wing: number[] } {
   const align = (b: (typeof BLOC_IDS)[number]) => alignment(k.stances[c.player], BLOC_IDS.indexOf(b));
   const stance = (id: (typeof ISSUE_IDS)[number]) => k.stances[c.player][ISSUE_IDS.indexOf(id)];
   const trust = governing ? k.government.trust : 60;
+  const gift = FACTION_IDS.map((_, i) => SAFE_TARGET * Object.values(k.safe ?? {}).filter((f) => f === i).length);
   return {
     faction: [
       // The loyalists back whoever holds the party together and holds office.
@@ -73,7 +77,7 @@ function targets(c: Campaign): { faction: number[]; wing: number[] } {
       clamp(10 + 0.45 * k.credibility + 0.25 * trust + 6 * (stance('reform') + stance('graft')) / 2, 0, 100),
       // The veterans want money, a party they recognise, and no nonsense about reform.
       clamp(48 + 8 * k.orders.donors + (k.assets > 0 ? 8 : 0) - 5 * stance('reform') + 0.12 * (pc.unity - 50), 0, 100),
-    ],
+    ].map((m, i) => clamp(m + gift[i], 0, 100)),
     wing: [
       clamp(50 + 28 * align('undi18') + 12 * align('gig'), 0, 100),
       clamp(50 + 26 * align('civil') + 16 * align('urban_b40'), 0, 100),

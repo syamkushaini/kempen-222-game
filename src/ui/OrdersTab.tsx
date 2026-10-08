@@ -200,6 +200,15 @@ export function OrdersTab() {
           </div>
           <LevelSwitch label={t('orders.source.donors')} value={o.donors} onChange={(level) => setOrders({ donors: level })} />
         </li>
+        {income.crowd > 0 && (
+          <li className="action">
+            <div className="grow">
+              <span className="action-title">{t('orders.source.crowd')}</span>
+              <span className="action-meta">{t('orders.source.crowd.desc')}</span>
+            </div>
+            <strong className="num">{f.rm(income.crowd)}</strong>
+          </li>
+        )}
         <li className="action">
           <div className="grow">
             <span className="action-title">{t('orders.source.state')}</span>

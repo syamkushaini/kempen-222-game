@@ -30,7 +30,8 @@ import { supplyWeek } from './supply';
 import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
-import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, fatigueOf, foreignWeek, grassrootsLift, holdingsWeek, trailWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
+import { applySafe } from './safeseat';
+import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, crowdIncome, fatigueOf, foreignWeek, paddedWeek, grassrootsLift, holdingsWeek, trailWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
 import {
   freshParty, makeDrift, newCampaign, publishPublicPoll, startingFunds, weeklyIncome, type CampaignOptions,
@@ -224,7 +225,7 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
 
 // ---------- money ----------
 
-export interface Income { members: number; donors: number; state: number; assets: number; states: number; total: number }
+export interface Income { members: number; donors: number; crowd: number; state: number; assets: number; states: number; total: number }
 
 /** What comes in each week between elections, by source. */
 export function termIncome(world: World, c: Campaign): Income {
@@ -233,11 +234,12 @@ export function termIncome(world: World, c: Campaign): Income {
   const drive = k.orders.focus === 'funds';
   const members = Math.round(weeklyIncome(world, c.player, c) * PEACETIME * (0.6 + 0.4 * pc.unity / 100) * (0.8 + k.credibility / 250) * (drive ? 1.6 : 1) * incomeBoost(c, c.player) * rollsFactor(world, c));
   const donors = Math.round(scaled(world, DONOR_INCOME) * k.orders.donors * (drive ? 1.3 : 1));
+  const crowd = crowdIncome(world, c);
   const state = inGovernment(c, c.player) ? scaled(world, STATE_INCOME) * k.orders.state : 0;
   const assets = holdingsYield(k);
   // A party that governs states has their patronage to draw on.
   const states = scaled(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player);
-  return { members, donors, state, assets, states, total: members + donors + state + assets + states };
+  return { members, donors, crowd, state, assets, states, total: members + donors + crowd + state + assets + states };
 }
 
 export interface Spending { machinery: number; media: number; research: number; wages: number; total: number }
@@ -361,6 +363,7 @@ export function termWeek(world: World, c: Campaign): void {
   trailWeek(world, c, rngWeek);
   foreignWeek(world, c, rngWeek);
   rollsWeek(world, c);
+  paddedWeek(world, c, rngWeek);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
   k.profile[me] = Math.min(PROFILE_CAP, k.profile[me] * 0.97 + seen);
@@ -572,6 +575,7 @@ export function beginCampaign(world: World, c: Campaign): void {
   openNominations(world, c);
   // Parties that were taken in do not stand.
   standMerged(world, c);
+  applySafe(world, c);
   // Members and branches built over the years tell on polling day, in every seat the party stands in.
   const lift = grassrootsLift(world, c);
   if (lift > 0) {

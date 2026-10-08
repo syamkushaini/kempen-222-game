@@ -267,7 +267,7 @@ export function grassrootsLift(world: World, c: Campaign): number {
   if (!c.career || !pc) return 0;
   const built = pc.machinery.filter((m, i) => m > 0 && contestsState(world, c, c.player, world.states[i]));
   const branches = built.length ? built.reduce((a, m) => a + m, 0) / built.length : 0;
-  const members = clamp((rollsFactor(world, c) - 1) / (FULL_ROLLS - 1), 0, 1);
+  const members = clamp((genuineRolls(world, c) / baseRolls(world, c) - 1) / (FULL_ROLLS - 1), 0, 1);
   return GRASSROOTS_MAX * members * clamp((branches - BRANCHES_FROM) / (BRANCHES_TO - BRANCHES_FROM), 0, 1);
 }
 
@@ -491,4 +491,63 @@ export function foreignWeek(world: World, c: Campaign, rng: Rng): void {
   for (const row of k.mood) row[c.player] -= FOREIGN.mood;
   delete k.foreign;
   pushNews(c, { party: c.player, key: 'news.foreign.exposed', vars: { rm: `@rm:${scaled(world, FOREIGN.sum)}` }, tone: 'bad' });
+}
+
+// ---------- small donors ----------
+
+/** What a respected party that is not in government gets each week from many small donors, at general-election scale, before its standing and its need scale it. */
+export const CROWD_INCOME = 6_000;
+
+/** The weekly takings from small donors and crowdfunding: nothing in government, more the better the party's name and the poorer its purse. */
+export function crowdIncome(world: World, c: Campaign): number {
+  const k = c.career;
+  const pc = c.parties[c.player];
+  if (!k || !pc || k.government.pm === c.player || k.government.partners.includes(c.player)) return 0;
+  const respect = clamp((k.credibility - 30) / 40, 0, 1.25);
+  const need = clamp(1.5 - pc.funds / scaled(world, 4_000_000), 0.4, 1.5);
+  return Math.round(scaled(world, CROWD_INCOME) * respect * need);
+}
+
+// ---------- members on paper ----------
+
+/** How much a padded roll adds, the weekly chance per unit of padding that it is found out (at most `max`), and what is lost when it is. */
+export const PADDING = { share: 0.15, risk: 0.1, max: 0.03, credibility: 10, unity: 5, mood: 0.03, desert: 0.1 };
+
+export const paddedOf = (k: Career): number => k.padded ?? 0;
+
+/** The members who really are members, and so the ones who knock on doors. */
+export const genuineRolls = (world: World, c: Campaign): number => Math.max(0, rollsOf(world, c) - paddedOf(c.career!));
+
+export const padChance = (world: World, c: Campaign): number => Math.min(PADDING.max, (paddedOf(c.career!) / Math.max(1, rollsOf(world, c))) * PADDING.risk);
+
+export function canPad(c: Campaign): boolean {
+  return !!c.career && c.phase === 'term' && !c.career.flags.includes(`pad${c.career.term}`);
+}
+
+/** Swells the rolls on paper by 15%: more dues and a bigger show of strength, and a risk of it coming out. Once a parliament. */
+export function padRolls(world: World, c: Campaign): boolean {
+  if (!canPad(c)) return false;
+  const k = c.career!;
+  const added = Math.round(rollsOf(world, c) * PADDING.share);
+  k.rolls = rollsOf(world, c) + added;
+  k.padded = paddedOf(k) + added;
+  k.flags.push(`pad${k.term}`);
+  return true;
+}
+
+/** A week of padded rolls: the false names drop off the books with the rest, and one day someone counts them. */
+export function paddedWeek(world: World, c: Campaign, rng: Rng): void {
+  const k = c.career!;
+  if (!k.padded) return;
+  if (rng.next() < padChance(world, c)) {
+    k.rolls = Math.max(0, rollsOf(world, c) - k.padded) * (1 - PADDING.desert);
+    delete k.padded;
+    k.credibility = clamp(k.credibility - PADDING.credibility, 0, 100);
+    shiftUnity(c, c.player, -PADDING.unity);
+    for (const row of k.mood) row[c.player] -= PADDING.mood;
+    pushNews(c, { party: c.player, key: 'news.padded', vars: {}, tone: 'bad' });
+    return;
+  }
+  k.padded *= 0.98;
+  if (k.padded < 1) delete k.padded;
 }

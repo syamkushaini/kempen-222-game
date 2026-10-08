@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { contests } from '../sim/campaign/actions';
 import { CHOOSE_DAYS, HOPEFUL_NAMES, canOpen, canStand } from '../sim/campaign/candidates';
+import { canForce } from '../sim/campaign/contests';
+import { FACTION_IDS } from '../sim/campaign/factions';
+import { canGrantSafe, safeSeats } from '../sim/campaign/safeseat';
 import { enteredSeats } from '../sim/campaign/entry';
 import { STANDS } from '../sim/transfer';
 import { useStore } from '../state/store';
@@ -23,6 +26,9 @@ export function CandidatesTab() {
   const selectSeat = useStore((s) => s.selectSeat);
   const openSeat = useStore((s) => s.openSeat);
   const standLeader = useStore((s) => s.standLeader);
+  const grantSafe = useStore((s) => s.grantSafe);
+  const revokeSafe = useStore((s) => s.revokeSafe);
+  const forceBy = useStore((s) => s.forceByElection);
   const setTab = useStore((s) => s.setTab);
   const display = useDisplay();
   const [filter, setFilter] = useState<Filter>('hold');
@@ -109,9 +115,20 @@ export function CandidatesTab() {
                 )}
                 {!r.chosen && r.key && <span className="muted small">{t('slate.undecided')}</span>}
                 {campaign.team.leaderSeat === r.seat.id && <span className="muted small">{t('slate.you')}</span>}
+                {r.seat.id in safeSeats(campaign) && <span className="muted small">{t('slate.safe', { faction: t(`faction.${FACTION_IDS[safeSeats(campaign)[r.seat.id]]}`) })}</span>}
               </span>
               {r.fighting && <span className={`badge ${r.d.cls}`}>{f.pct(r.d.margin)}</span>}
             </button>
+            {campaign.phase === 'term' && r.holder === me && (
+              <div className="button-row tight slate-actions">
+                {r.seat.id in safeSeats(campaign)
+                  ? <button className="btn small" onClick={() => revokeSafe(r.seat.id)}>{t('slate.safe.revoke')}</button>
+                  : FACTION_IDS.map((id, n) => (
+                    <button key={id} className="btn small" disabled={!canGrantSafe(world, campaign, r.seat.id, n).ok} onClick={() => grantSafe(r.seat.id, n)}>{t('slate.safe.give', { faction: t(`faction.${id}`) })}</button>
+                  ))}
+                <button className="btn small" disabled={!canForce(world, campaign, r.seat.id).ok} onClick={() => forceBy(r.seat.id)}>{t('slate.force')}</button>
+              </div>
+            )}
             {campaign.phase === 'campaign' && r.fighting && (
               <div className="button-row tight slate-actions">
                 {canOpen(world, campaign, r.seat.id) && <button className="btn small" onClick={() => { openSeat(r.seat.id); setTab('team'); }}>{t('slate.open', { n: CHOOSE_DAYS })}</button>}
