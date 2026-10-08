@@ -2,6 +2,7 @@ import type { World } from '../election';
 import { clamp } from '../math';
 import { Rng } from '../rng';
 import { contestsState, scaled } from './actions';
+import { factionsOf } from './factions';
 import { lastShares } from './field';
 import { pushNews, ref } from './news';
 import { shiftUnity } from './diplomacy';
@@ -151,7 +152,7 @@ export function rollsTarget(world: World, c: Campaign): number {
   const built = pc.machinery.filter((m, i) => m > 0 && contestsState(world, c, c.player, world.states[i]));
   const branches = built.length ? built.reduce((a, m) => a + m, 0) / built.length : 40;
   const governing = k.government.pm === c.player || k.government.partners.includes(c.player);
-  return Math.round(baseRolls(world, c) * clamp(0.5 + branches / 100, 0.6, 1.5) * (0.8 + 0.4 * pc.unity / 100) * (governing ? 1.08 : 1) * (0.9 + 0.2 * k.credibility / 100) * (k.drive ?? 1));
+  return Math.round(baseRolls(world, c) * clamp(0.5 + branches / 100, 0.6, 1.5) * (0.8 + 0.4 * pc.unity / 100) * (governing ? 1.08 : 1) * (0.9 + 0.2 * k.credibility / 100) * (k.drive ?? 1) * (0.92 + 0.16 * factionsOf(c).wing.reduce((a, b) => a + b, 0) / 300 ));
 }
 
 /** A week of the rolls moving towards what the party deserves: slowly, a fiftieth of the gap. */

@@ -25,6 +25,7 @@ import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
 import { agendaTerm } from './agenda';
+import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
 import { grassrootsLift, holdingsWeek, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
 import {
@@ -368,6 +369,8 @@ export function termWeek(world: World, c: Campaign): void {
   // One thing at a time: nothing new arrives while a vote is waiting. The states' own elections come when they are due.
   if (c.inbox.length === 0 && world.rules.kind !== 'state' && roundDue(c) !== null) raise(c, 'statePolls');
   agendaTerm(world, c);
+  factionsWeek(c);
+  if (c.inbox.length === 0 && partyPollWeek(c)) partyPoll(c, rng);
   if (c.inbox.length === 0) rollEvent(c, rng);
   // A by-election needs a seat to be fought in.
   for (const scene of c.inbox) if (scene.event === 'byElection' && !scene.seat) scene.seat = vacantSeat(world, c, rng);
@@ -409,7 +412,8 @@ export function skipAhead(world: World, c: Campaign, weeks: number): number {
 export function answerEvent(world: World, c: Campaign, scene: Scene, choice: number): void {
   const k = c.career;
   if (!k) return;
-  if (scene.kind === 'vote') resolveVote(world, c, scene, choice);
+  if (scene.kind === 'partyPoll') resolvePartyPoll(world, c, scene, choice);
+  else if (scene.kind === 'vote') resolveVote(world, c, scene, choice);
   else if (scene.kind === 'houseVote') resolveHouseVote(world, c, scene, choice);
   else if (scene.event === 'budget') {
     // Budget day: the plan as it stands, or last year's budget again.

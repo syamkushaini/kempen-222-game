@@ -4,6 +4,7 @@ import { scaled } from '../sim/campaign/actions';
 import { BY_EFFORT, holderOf, ROUNDS, STATE_EFFORT } from '../sim/campaign/contests';
 import { COST, pactPreview } from '../sim/campaign/diplomacy';
 import { AGENDA, type AgendaChoice } from '../sim/campaign/agenda';
+import { POLL_ANSWERS, backing, pollOdds, type FactionId } from '../sim/campaign/factions';
 import type { StateId } from '../sim/types';
 import { canChoose, EVENTS, gambleChance, ULTIMATUM_MONEY, type Choice, type Effect } from '../sim/campaign/events';
 import { bluffChance } from '../sim/campaign/plots';
@@ -216,6 +217,15 @@ function SceneCard({ scene }: { scene: Scene }) {
       label: t(`agenda.${st}.o${i}` as StringKey), choice: i, hint: hint(choice),
       disabled: !!choice.funds && choice.funds < 0 && campaign.parties[me]!.funds < scaled(world, Math.abs(choice.funds)),
     }));
+  } else if (scene.kind === 'partyPoll') {
+    const who = scene.event as FactionId;
+    title = t('partyPoll.title');
+    body = <p>{t('partyPoll.body', { faction: t(`faction.${who}` as StringKey), pct: backing(campaign) })}</p>;
+    options = POLL_ANSWERS.map((a, i) => ({
+      label: t(`partyPoll.o${i}` as StringKey), choice: i,
+      hint: [a.money ? `−${f.rm(scaled(world, a.money))}` : '', i === 1 ? t('partyPoll.o1.cost') : '', fog ? '' : t('partyPoll.odds', { pct: f.pct(pollOdds(campaign, i), 0) })].filter(Boolean).join(' · '),
+      disabled: a.money > 0 && campaign.parties[me]!.funds < scaled(world, a.money),
+    }));
   } else if (scene.kind === 'summons') {
     title = t('scene.palace.title');
     body = <p>{t(`scene.summons.body.${kind}`, { n: majorityLine(world), days: campaign.formation?.deadline ?? 0 })}</p>;
@@ -230,12 +240,12 @@ function SceneCard({ scene }: { scene: Scene }) {
   }
 
   // Matters of the term: they can be set aside while the player looks around, but time waits for an answer.
-  const desk = scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'agenda';
+  const desk = scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'agenda' || scene.kind === 'partyPoll';
   return (
     <div className="overlay">
       <div className="dialog panel" role="dialog" aria-modal="true" aria-label={title}>
         <div className="dialog-head">
-          {scene.kind === 'event' || scene.kind === 'agenda' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
+          {scene.kind === 'event' || scene.kind === 'agenda' || scene.kind === 'partyPoll' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
             : from === null ? <Portrait emblem="palace" size={46} /> : <Portrait leader={from} size={46} />}
           <div className="grow">
             <p className={from === null && !desk ? 'dialog-from palace' : 'dialog-from'}>

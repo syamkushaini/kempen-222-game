@@ -385,7 +385,7 @@ export const useStore = create<Store>((set, get) => {
       c.inbox = c.inbox.filter((x) => x.id !== id);
       // The state's question, put again in the years of a state career.
       if (scene.kind === 'agenda' && c.phase === 'term') { resolveAgenda(world, c, scene, choice); return { hiddenScene: null, sceneOpen: c.inbox.length > 0 }; }
-      if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote') {
+      if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'partyPoll') {
         answerEvent(world, c, scene, choice);
         // The answer may have brought the government down: on to the talks.
         if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: null, sceneOpen: false };

@@ -3,6 +3,7 @@ import {
   ACTIVITY_IDS, ACTIVITIES, HOLDINGS, grassrootsLift, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
 } from '../sim/campaign/party';
 import { scaled } from '../sim/campaign/actions';
+import { CHIEF_NAMES, FACTION_IDS, WING_IDS, backing, challengeChance, factionsOf, PARTY_POLL_EVERY } from '../sim/campaign/factions';
 import { useStore } from '../state/store';
 import { Gauge } from './Gauge';
 import { Brief } from './Brief';
@@ -60,6 +61,36 @@ export function PartyTab() {
       </div>
       <p className="muted small">{t('party.members.note', { ordinary: f.int(ordinary) })}</p>
       <p className="note">{t('party.grassroots', { pts: (Math.round(grassrootsLift(world, campaign) * 25 * 10) / 10).toFixed(1) })}</p>
+
+      <h3>{t('party.factions')}</h3>
+      <p className="muted small action-desc">{t('party.factions.desc', { n: PARTY_POLL_EVERY / 52, pct: backing(campaign), chance: f.pct(challengeChance(campaign), 0) })}</p>
+      <ul>
+        {FACTION_IDS.map((id, i) => {
+          const fx = factionsOf(campaign);
+          return (
+            <li className="action" key={id}>
+              <div className="grow">
+                <span className="action-title">{t(`faction.${id}`)} <span className="muted small">· {CHIEF_NAMES[fx.chief[i]]}</span></span>
+                <span className="action-meta">{t(`faction.${id}.desc`)}</span>
+                <span className="action-meta num">{t('party.faction.line', { size: Math.round(fx.size[i] * 100), mood: Math.round(fx.mood[i]) })}</span>
+              </div>
+              <Gauge value={fx.mood[i]} label={t('party.faction.mood')} />
+            </li>
+          );
+        })}
+        {WING_IDS.map((id, i) => {
+          const fx = factionsOf(campaign);
+          return (
+            <li className="action" key={id}>
+              <div className="grow">
+                <span className="action-title">{t(`wing.${id}`)} <span className="muted small">· {CHIEF_NAMES[fx.chief[3 + i]]}</span></span>
+                <span className="action-meta">{t(`wing.${id}.desc`)}</span>
+              </div>
+              <Gauge value={fx.wing[i]} label={t('party.faction.mood')} />
+            </li>
+          );
+        })}
+      </ul>
 
       <h3>{t('party.activities')}</h3>
       <p className="muted small action-desc">{t(term ? 'party.activities.desc' : 'party.activities.campaign')}</p>

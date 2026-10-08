@@ -7,6 +7,7 @@ import { effectiveDynamics } from './actions';
 import { endDay } from './formation';
 import { GRASSROOTS_MAX, baseRolls, grassrootsLift } from './party';
 import { isEnacted } from './policy';
+import { factionsOf } from './factions';
 import { seatOf } from './events';
 import { isPm } from './office';
 import { closeNight, endWeek } from './turn';
@@ -52,6 +53,8 @@ describe('a term limit that has become law', () => {
   const nextParliament = (c: Campaign) => {
     let world = worldOf(c) ?? base;
     for (let g = 0; g < 4000 && c.phase !== 'campaign'; g++) {
+      // The party is behind its leader, so that the meeting every three years is no test of this one.
+      if (c.phase === 'term') { const f = factionsOf(c); f.mood = [95, 95, 95]; f.wing = [95, 95, 95]; c.parties[PS]!.unity = Math.max(c.parties[PS]!.unity, 70); }
       if (c.phase === 'term') { if (c.inbox.length) answerEvent(world, c, c.inbox.shift()!, 0); else skipAhead(world, c, 26); }
       else if (c.phase === 'formation') endDay(world, c);
       else if (c.phase === 'done') resumeTerm(c);
@@ -59,6 +62,7 @@ describe('a term limit that has become law', () => {
     while (c.phase === 'campaign') endWeek(world, c);
     closeNight(world, c);
     for (let d = 0; d < 10 && c.phase === 'formation'; d++) endDay(world, c);
+    if (!c.formation) throw new Error(`no formation: phase=${c.phase} ending=${JSON.stringify(c.career!.ending)} term=${c.career!.term} week=${c.career!.week}`);
     // The player's party is made to come out on top, so that only the law can stop the leader.
     c.formation!.outcome = { ...c.formation!.outcome!, pm: PS };
     expect(nextTerm(world, c)).toBe(true);

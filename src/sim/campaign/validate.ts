@@ -90,7 +90,7 @@ function isValidScene(x: unknown, world: World): boolean {
   if (!isObj(x)) return false;
   return (
     isNum(x.id) && isPartyOrNull(x.from) &&
-    (x.kind === 'pactOffer' || x.kind === 'poach' || x.kind === 'summons' || x.kind === 'unityAdvice' || x.kind === 'event' || x.kind === 'vote' || x.kind === 'houseVote' || x.kind === 'agenda') &&
+    (x.kind === 'pactOffer' || x.kind === 'poach' || x.kind === 'summons' || x.kind === 'unityAdvice' || x.kind === 'event' || x.kind === 'vote' || x.kind === 'houseVote' || x.kind === 'agenda' || x.kind === 'partyPoll') &&
     (x.event === undefined || typeof x.event === 'string') && (x.bill === undefined || typeof x.bill === 'string') &&
     (x.give === undefined || isSeatList(x.give, world)) && (x.get === undefined || isSeatList(x.get, world)) &&
     (x.seat === undefined || (typeof x.seat === 'string' && world.seatIndex.has(x.seat)))
@@ -176,7 +176,7 @@ function isValidCareer(x: unknown, world: World): boolean {
     isList(x.stances0, (row) => isList(row, isNum, N_ISSUES), N_PARTIES) &&
     isList(x.turned, isNum, N_ISSUES) && isList(x.salience, isNum, N_ISSUES) &&
     isList(x.mood, (row) => isList(row, isNum, N_PARTIES), N_BLOCS) && isList(x.profile, isNum, N_PARTIES) &&
-    isList(x.manifesto, (m) => isList(m, isPledge), N_PARTIES) && (x.laws === undefined || isList(x.laws, isPledge)) && (x.pmRun === undefined || isNum(x.pmRun)) && (x.limited === undefined || typeof x.limited === 'boolean') && (x.agendaAnswers === undefined || isList(x.agendaAnswers, (v) => isNum(v) && v >= 0 && v <= 2)) && typeof x.launched === 'boolean' && isList(x.promises, isPledge) &&
+    isList(x.manifesto, (m) => isList(m, isPledge), N_PARTIES) && (x.laws === undefined || isList(x.laws, isPledge)) && (x.factions === undefined || (isObj(x.factions) && isList(x.factions.size, isNum, 3) && isList(x.factions.mood, isNum, 3) && isList(x.factions.wing, isNum, 3) && isList(x.factions.chief, isNum, 6))) && (x.pmRun === undefined || isNum(x.pmRun)) && (x.limited === undefined || typeof x.limited === 'boolean') && (x.agendaAnswers === undefined || isList(x.agendaAnswers, (v) => isNum(v) && v >= 0 && v <= 2)) && typeof x.launched === 'boolean' && isList(x.promises, isPledge) &&
     isList(x.flags, (v) => typeof v === 'string') && isList(x.fired, (v) => typeof v === 'string') &&
     isList(x.queue, (q) => isObj(q) && typeof q.event === 'string' && isNum(q.week)) && isNum(x.quietUntil) &&
     isValidOffice(x)

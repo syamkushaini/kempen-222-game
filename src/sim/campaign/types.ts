@@ -86,7 +86,7 @@ export interface PartyCampaign {
 export interface Pact { a: number; b: number; week: number }
 
 /** A moment that needs the player's answer: a phone call, an offer, an audience at the Palace. */
-export type SceneKind = 'pactOffer' | 'poach' | 'summons' | 'unityAdvice' | 'event' | 'vote' | 'houseVote' | 'agenda';
+export type SceneKind = 'pactOffer' | 'poach' | 'summons' | 'unityAdvice' | 'event' | 'vote' | 'houseVote' | 'agenda' | 'partyPoll';
 export interface Scene {
   id: number;
   kind: SceneKind;
@@ -402,6 +402,8 @@ export interface Career {
   dossier: number;
   /** [party][issue]: where each party stands, -2 to 2. */
   stances: number[][];
+  /** The party's factions and wings, made the first time they are looked at (see factions.ts). */
+  factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[] };
   /** Parliaments in a row the player's party has headed the government, this one included. */
   pmRun?: number;
   /** The party's leader may not head the government this term: a term limit passed into law applies (see nextTerm). The party governs, and the player leads it from outside the premiership. */
