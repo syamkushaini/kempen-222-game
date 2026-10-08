@@ -1,6 +1,6 @@
 import { termIncome, termSpending } from '../sim/campaign/career';
 import {
-  ACTIVITY_IDS, ACTIVITIES, CHEST_BONUS, DISCIPLINE, DISCIPLINE_EVERY, REBRAND, canDiscipline, canRebrand, CHEST_PENALTY, HOLDINGS, fatigueOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
+  ACTIVITY_IDS, ACTIVITIES, FAVOUR_IDS, FOREIGN, canTakeForeign, exposureChance, inquiryChance, CHEST_BONUS, DISCIPLINE, DISCIPLINE_EVERY, REBRAND, canDiscipline, canRebrand, CHEST_PENALTY, HOLDINGS, fatigueOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
 } from '../sim/campaign/party';
 import { scaled } from '../sim/campaign/actions';
 import { CHIEF_NAMES, FACTION_IDS, WING_IDS, backing, challengeChance, factionsOf, PARTY_POLL_EVERY } from '../sim/campaign/factions';
@@ -33,6 +33,7 @@ export function PartyTab() {
   const trade = useStore((s) => s.trade);
   const activity = useStore((s) => s.activity);
   const chest = useStore((s) => s.chest);
+  const foreign = useStore((s) => s.foreign);
   const discipline = useStore((s) => s.discipline);
   const merge = useStore((s) => s.merge);
   const [rebranding, setRebranding] = useState(false);
@@ -194,6 +195,22 @@ export function PartyTab() {
         </li>
       </ul>
       {(k.govRun ?? 0) > 1 && <p className="note bad">{t('party.fatigue', { n: k.govRun!, pts: (Math.round(fatigueOf(k.govRun!) * 25 * 10) / 10).toFixed(1) })}</p>}
+
+      <h3>{t('party.foreign')}</h3>
+      <p className="muted small action-desc">{t('party.foreign.desc', { rm: f.rm(scaled(world, FOREIGN.sum)) })}</p>
+      <ul>
+        <li className="action">
+          <div className="grow">
+            <span className="action-meta">{t('party.foreign.risk', { pct: (exposureChance(k) * 100).toFixed(1), n: k.foreign ?? 0 })}</span>
+            {(k.trail ?? 0) > 0 && <span className="action-meta">{t('party.trail', { pct: (inquiryChance(k) * 100).toFixed(1) })}</span>}
+          </div>
+          <div className="button-row tight">
+            {FAVOUR_IDS.map((id) => (
+              <button key={id} className="btn small" disabled={!canTakeForeign(campaign)} onClick={() => foreign(id)}>{t(`party.foreign.${id}`)}</button>
+            ))}
+          </div>
+        </li>
+      </ul>
 
       <h3>{t('party.holdings')}</h3>
       <p className="muted small action-desc">{t('party.holdings.desc')} {t('party.probe', { pct: (probeChance(world, k) * 100).toFixed(1) })}</p>

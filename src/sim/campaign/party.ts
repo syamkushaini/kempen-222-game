@@ -7,7 +7,7 @@ import { factionsOf } from './factions';
 import { lastShares } from './field';
 import { pushNews, ref } from './news';
 import { shiftUnity } from './diplomacy';
-import type { Campaign, Career } from './types';
+import { ISSUE_IDS, type Campaign, type Career } from './types';
 
 // The party between elections is more than a purse. It has members, who pay their dues and go door to door; it has
 // businesses, which pay a return and carry a risk of their own; and it has things it does with its time and money
@@ -417,4 +417,78 @@ export function rebrand(world: World, c: Campaign): boolean {
   for (const b of NEW) k.mood[BLOC_IDS.indexOf(b)][c.player] += REBRAND.won;
   pushNews(c, { party: c.player, key: 'news.rebrand', vars: {}, tone: 'neutral' });
   return true;
+}
+
+// ---------- what buying members leaves behind ----------
+
+/** The weekly chance of an inquiry for each point of trail, and the most it can be; what is lost when one comes, per point of trail. */
+export const TRAIL = { perPoint: 0.004, max: 0.06, fine: 100_000, credibility: 6, trust: 4, unity: 4, decay: 0.01 };
+
+/** The chance this week that the anti-graft agency follows the trail of defections the party has bought. */
+export const inquiryChance = (k: Career): number => Math.min(TRAIL.max, (k.trail ?? 0) * TRAIL.perPoint);
+
+/** A week of the trail: it fades a little, and now and then investigators follow it to the party's door. */
+export function trailWeek(world: World, c: Campaign, rng: Rng): void {
+  const k = c.career!;
+  if (!k.trail || k.trail <= 0) return;
+  if (rng.next() < inquiryChance(k)) {
+    const pc = c.parties[c.player]!;
+    const fine = Math.min(pc.funds, scaled(world, TRAIL.fine) * k.trail);
+    pc.funds -= Math.round(fine);
+    k.credibility = clamp(k.credibility - TRAIL.credibility, 0, 100);
+    shiftUnity(c, c.player, -TRAIL.unity);
+    if (k.government.pm === c.player || k.government.partners.includes(c.player)) k.government.trust = clamp(k.government.trust - TRAIL.trust, 0, 100);
+    k.trail = k.trail / 2;
+    pushNews(c, { party: c.player, key: 'news.inquiry', vars: { rm: `@rm:${Math.round(fine)}` }, tone: 'bad' });
+  }
+  k.trail = Math.max(0, k.trail * (1 - TRAIL.decay));
+  if (k.trail < 0.05) delete k.trail;
+}
+
+// ---------- money from abroad ----------
+
+/** What a foreign donor gives in one go, at general-election scale, and the favours they may ask for. */
+export const FOREIGN = { sum: 1_500_000, risk: 0.003, max: 0.03, credibility: 15, trust: 10, unity: 10, mood: 0.04, fine: 0.3 };
+export const FAVOUR_IDS = ['trade', 'tax', 'values'] as const;
+export type FavourId = (typeof FAVOUR_IDS)[number];
+/** What each favour moves: an issue, and one step along it that the donor prefers. */
+const FAVOURS: Record<FavourId, { issue: (typeof ISSUE_IDS)[number]; step: -1 | 1 }> = {
+  trade: { issue: 'wages', step: -1 },
+  tax: { issue: 'taxes', step: -1 },
+  values: { issue: 'values', step: 1 },
+};
+
+/** The weekly chance foreign money is found out: more with more taken. */
+export const exposureChance = (k: Career): number => Math.min(FOREIGN.max, (k.foreign ?? 0) * FOREIGN.risk);
+
+export function canTakeForeign(c: Campaign): boolean {
+  return !!c.career && c.phase === 'term' && !c.career.flags.includes(`foreign${c.career.term}`);
+}
+
+/** Takes money from abroad, in return for a favour: the party's line moves a step to suit the donor, at no cost in credibility, and a day may come when it is found out. */
+export function takeForeign(world: World, c: Campaign, favour: FavourId): boolean {
+  if (!canTakeForeign(c) || !(favour in FAVOURS)) return false;
+  const k = c.career!;
+  const f = FAVOURS[favour];
+  const i = ISSUE_IDS.indexOf(f.issue);
+  c.parties[c.player]!.funds += scaled(world, FOREIGN.sum);
+  k.stances[c.player][i] = clamp(k.stances[c.player][i] + f.step, -2, 2);
+  k.foreign = (k.foreign ?? 0) + 1;
+  k.flags.push(`foreign${k.term}`);
+  pushNews(c, { party: c.player, key: 'news.foreign.taken', vars: {}, tone: 'neutral' });
+  return true;
+}
+
+/** A week of foreign money: it may be found out, and then it is a scandal of the first order. */
+export function foreignWeek(world: World, c: Campaign, rng: Rng): void {
+  const k = c.career!;
+  if (!k.foreign || rng.next() >= exposureChance(k)) return;
+  const pc = c.parties[c.player]!;
+  pc.funds -= Math.round(pc.funds * FOREIGN.fine);
+  k.credibility = clamp(k.credibility - FOREIGN.credibility, 0, 100);
+  shiftUnity(c, c.player, -FOREIGN.unity);
+  if (k.government.pm === c.player || k.government.partners.includes(c.player)) k.government.trust = clamp(k.government.trust - FOREIGN.trust, 0, 100);
+  for (const row of k.mood) row[c.player] -= FOREIGN.mood;
+  delete k.foreign;
+  pushNews(c, { party: c.player, key: 'news.foreign.exposed', vars: { rm: `@rm:${scaled(world, FOREIGN.sum)}` }, tone: 'bad' });
 }

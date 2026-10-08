@@ -7,8 +7,13 @@ import type { Campaign } from './types';
 
 /** What the law lets a party spend on a campaign, at general-election scale. */
 const LIMIT = 2_600_000;
-const FINE_SHARE = 0.5;
-const HIT = 0.04;
+/** What the Election Commission fines a party for what it overspent: half as much again. */
+export const FINE_SHARE = 1.5;
+const HIT = 0.05;
+/** How far over the limit a party's campaign must go for the courts to unseat winners on petition, and how many seats a tenth over costs. */
+export const PETITION_FROM = 1.4;
+export const PETITION_PER_TENTH = 1;
+export const PETITION_MAX = 8;
 
 export const spendingLimit = (world: World) => scaled(world, LIMIT);
 
@@ -20,7 +25,7 @@ export function probeChance(world: World, c: Campaign, p: number): number {
   const pc = c.parties[p];
   const limit = spendingLimit(world);
   if (!pc || pc.fined || pc.spent <= limit) return 0;
-  return clamp(0.2 + 2 * (pc.spent / limit - 1), 0.2, 0.8);
+  return clamp(0.3 + 2.5 * (pc.spent / limit - 1), 0.3, 0.9);
 }
 
 /**
@@ -34,7 +39,7 @@ export function spendingWeek(world: World, c: Campaign, rng: Rng): void {
     const fine = Math.min(pc.funds, Math.round(((pc.spent - spendingLimit(world)) * FINE_SHARE) / 500) * 500);
     pc.funds -= fine;
     for (const row of c.dyn.support.nat) row[p] -= HIT;
-    if (c.career && p === c.player) c.career.credibility = Math.max(0, c.career.credibility - 4);
+    if (c.career && p === c.player) c.career.credibility = Math.max(0, c.career.credibility - 6);
     pushNews(c, { party: p, key: p === c.player ? 'news.ec.finedYou' : 'news.ec.fined', vars: { party: ref.party(p), rm: ref.rm(fine) }, tone: p === c.player ? 'bad' : 'neutral' });
   });
 }

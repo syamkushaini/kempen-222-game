@@ -41,7 +41,7 @@ import { signSupply, type SupplyPrice } from '../sim/campaign/supply';
 import { merge } from '../sim/campaign/merge';
 import { nameShadow } from '../sim/campaign/shadow';
 import { resolveAgenda } from '../sim/campaign/agenda';
-import { discipline, doActivity, rebrand, setAside, trade, type Discipline, type ActivityId, type HoldingId } from '../sim/campaign/party';
+import { discipline, doActivity, rebrand, setAside, takeForeign, trade, type Discipline, type ActivityId, type FavourId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
@@ -220,6 +220,7 @@ interface Store {
   rebrand(identity: Identity): void;
   /** Sets money aside for the next campaign (positive lots), or takes it back at a price (negative). */
   chest(lots: number): void;
+  foreign(favour: FavourId): void;
   /** Asks a party to keep the government in office from outside the cabinet. */
   supply(party: number, price: SupplyPrice): void;
   /** The head of government repeals an Act. */
@@ -431,6 +432,7 @@ export const useStore = create<Store>((set, get) => {
     repeal: (id) => mutate((c) => { repeal(c, id); }),
     supply: (party, price) => mutate((c, _g, world) => { signSupply(world, c, party, price); }),
     chest: (lots) => mutate((c, _g, world) => { setAside(world, c, lots); }),
+    foreign: (favour) => mutate((c, _g, world) => { takeForeign(world, c, favour); }),
     discipline: (state, how) => mutate((c, _g, world) => { discipline(world, c, state, how); }),
     rebrand: (identity) => mutate((c, g, world) => { if (rebrand(world, c)) g.identity = identity; }),
     openSeat: (seat) => mutate((c, _g, world) => { openSeat(world, c, seat); }),

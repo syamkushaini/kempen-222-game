@@ -417,6 +417,10 @@ export interface Career {
   factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[] };
   /** The shadow cabinet the player has named from the opposition benches, by portfolio (see shadow.ts). */
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
+  /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
+  trail?: number;
+  /** Foreign money taken, in lots of what a donor gives, and not yet found out (see party.ts). */
+  foreign?: number;
   /** Parties the player's party has taken in, in this career so far (see merge.ts). */
   merged?: number[];
   /** Parties that keep the player's government in office from outside the cabinet, and until when (see supply.ts). */

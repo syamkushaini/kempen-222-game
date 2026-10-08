@@ -14,7 +14,7 @@ import {
 } from './govern';
 import { endCareer, OUSTED_BELOW } from './legacy';
 import { applyBackstory, applyIdeology, type IdeologyId } from './leader';
-import { recordResults } from './results';
+import { petition, recordResults } from './results';
 import { FORMATION_WEEK, pushNews, ref } from './news';
 import { FOUNDING_FUNDS, growFoundedParty } from './founding';
 import { edge, incomeBoost, mediaBoost, neutralLeader, skill } from './perks';
@@ -30,7 +30,7 @@ import { supplyWeek } from './supply';
 import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
-import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, fatigueOf, grassrootsLift, holdingsWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
+import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, fatigueOf, foreignWeek, grassrootsLift, holdingsWeek, trailWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
 import {
   freshParty, makeDrift, newCampaign, publishPublicPoll, startingFunds, weeklyIncome, type CampaignOptions,
@@ -358,6 +358,8 @@ export function termWeek(world: World, c: Campaign): void {
 
   const rngWeek = new Rng((c.rng ^ 0x9a17) + k.week);
   holdingsWeek(world, c, rngWeek);
+  trailWeek(world, c, rngWeek);
+  foreignWeek(world, c, rngWeek);
   rollsWeek(world, c);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
@@ -589,7 +591,10 @@ export function nextTerm(world: World, c: Campaign): boolean {
   const k = c.career;
   const outcome = c.formation?.outcome;
   if (!k || k.midterm || !outcome || c.phase !== 'done' || !c.election) return false;
-  const recorded = foldMerged(c, recordResults(world, c));
+  const counted = foldMerged(c, recordResults(world, c));
+  // A campaign that broke the spending law is petitioned against: the narrowest wins are overturned.
+  const petitioned = petition(world, c, counted);
+  const recorded = petitioned.results;
   closeSlate(world, c);
   const rng = new Rng(c.rng);
   // Every third parliament the boundaries are drawn again, and the seats the next term is fitted to are the redrawn ones.
@@ -656,6 +661,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   syncOpinion(c);
   takeOffice(c);
   if (drawn) pushNews(c, { party: k.redraw!.by, key: k.redraw!.by === null ? 'news.redraw.done.fair' : 'news.redraw.done.pushed', vars: { n: drawn.flipped, party: k.redraw!.by === null ? '' : ref.party(k.redraw!.by) }, tone: 'neutral' });
+  if (petitioned.lost.length > 0) pushNews(c, { party: c.player, key: 'news.petition', vars: { n: petitioned.lost.length, seats: `@seats:${petitioned.lost.join(',')}` }, tone: 'bad' });
   if (leaderOut) {
     c.career.credibility = clamp(c.career.credibility - LEADER_OUT.credibility, 0, 100);
     c.parties[c.player]!.unity = clamp(c.parties[c.player]!.unity - LEADER_OUT.unity, 0, 100);

@@ -395,6 +395,8 @@ export function courtDefector(world: World, c: Campaign, seat: string, stake: St
   const leaked = !won && rng.next() < 0.3 * (1 + 0.25 * doublings(stake));
   c.rng = rng.state;
   const vars = { seat: ref.seat(seat), party: ref.party(from) };
+  // Every approach leaves a trail, whether or not it succeeds: more for a large offer, and more for one that worked.
+  if (c.career) c.career.trail = (c.career.trail ?? 0) + (won ? stake : 0.5 * stake);
   const done = (key: string, tone: NewsItem['tone']) => {
     const item = pushNews(c, { party: c.player, key, vars, tone });
     record(world, c, before, item);

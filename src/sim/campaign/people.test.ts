@@ -396,12 +396,12 @@ describe('the spending limit', () => {
     const pc = c.parties[PS]!;
     pc.spent = 3_120_000;
     pc.funds = 1_000_000;
-    expect(probeChance(general, c, PS)).toBeCloseTo(0.6, 6);
+    expect(probeChance(general, c, PS)).toBeCloseTo(0.8, 6);
     const rng = new Rng(1);
     for (let week = 0; week < 40 && !pc.fined; week++) spendingWeek(general, c, rng);
     expect(pc.fined).toBe(true);
-    expect(pc.funds).toBe(1_000_000 - 260_000);
-    expect(c.dyn.support.nat[0][PS]).toBeCloseTo(-0.04, 6);
+    expect(pc.funds).toBe(1_000_000 - 780_000);
+    expect(c.dyn.support.nat[0][PS]).toBeCloseTo(-0.05, 6);
     expect(c.news.at(-1)).toMatchObject({ key: 'news.ec.finedYou', tone: 'bad' });
     expect(probeChance(general, c, PS)).toBe(0); // fined once
   });
