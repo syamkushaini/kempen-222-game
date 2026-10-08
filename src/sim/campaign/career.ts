@@ -560,6 +560,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   c.understandings = [];
   c.katak = [];
   delete c.entered;
+  delete c.agenda;
   c.offered = [];
   c.inbox = [];
   c.polls = [];

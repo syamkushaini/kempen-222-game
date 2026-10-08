@@ -8,6 +8,7 @@ import { EFFECT, contests, effectiveDynamics, scaled, truth } from './actions';
 import { AFFINITY, TEMPER } from './cast';
 import { record, standing } from './ledger';
 import { pushNews, ref } from './news';
+import { resolveAgenda } from './agenda';
 import type { Campaign, NewsItem, Scene } from './types';
 
 // ---------- basics ----------
@@ -425,7 +426,8 @@ export function addScene(c: Campaign, scene: Omit<Scene, 'id'>): void {
  */
 export function resolveCampaignScene(world: World, c: Campaign, scene: Scene, choice: number): void {
   const me = c.player;
-  if (scene.kind === 'pactOffer' && scene.from !== null) {
+  if (scene.kind === 'agenda') resolveAgenda(world, c, scene, choice);
+  else if (scene.kind === 'pactOffer' && scene.from !== null) {
     const prop = { give: scene.give ?? [], get: scene.get ?? [] };
     if (choice === 0 && beforeNomination(c) && !inPact(c, me, scene.from)) signPact(world, c, me, scene.from, prop);
     else if (choice === 1) shiftRelation(c, me, scene.from, -3);
@@ -513,7 +515,7 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
 
 /** Scenes the player left unanswered are settled the cautious way when the week ends. */
 export function settleInbox(world: World, c: Campaign): void {
-  for (const scene of c.inbox) resolveCampaignScene(world, c, scene, scene.kind === 'pactOffer' ? 2 : 1);
+  for (const scene of c.inbox) resolveCampaignScene(world, c, scene, scene.kind === 'pactOffer' || scene.kind === 'agenda' ? 2 : 1);
   c.inbox = [];
 }
 

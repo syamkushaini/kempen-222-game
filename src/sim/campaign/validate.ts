@@ -90,7 +90,7 @@ function isValidScene(x: unknown, world: World): boolean {
   if (!isObj(x)) return false;
   return (
     isNum(x.id) && isPartyOrNull(x.from) &&
-    (x.kind === 'pactOffer' || x.kind === 'poach' || x.kind === 'summons' || x.kind === 'unityAdvice' || x.kind === 'event' || x.kind === 'vote' || x.kind === 'houseVote') &&
+    (x.kind === 'pactOffer' || x.kind === 'poach' || x.kind === 'summons' || x.kind === 'unityAdvice' || x.kind === 'event' || x.kind === 'vote' || x.kind === 'houseVote' || x.kind === 'agenda') &&
     (x.event === undefined || typeof x.event === 'string') && (x.bill === undefined || typeof x.bill === 'string') &&
     (x.give === undefined || isSeatList(x.give, world)) && (x.get === undefined || isSeatList(x.get, world)) &&
     (x.seat === undefined || (typeof x.seat === 'string' && world.seatIndex.has(x.seat)))
@@ -229,6 +229,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
       world.seatIndex.has(seat) && isList(stood, (v) => v === -1 || v === -2 || v === -3 || isParty(v), N_PARTIES)) &&
     isList(x.pacts, (p) => isObj(p) && isParty(p.a) && isParty(p.b) && isNum(p.week)) &&
     isList(x.understandings, isParty) && isList(x.met, isNum, N_PARTIES) &&
+    (x.agenda === undefined || typeof x.agenda === 'string') &&
     (x.entered === undefined || (isObj(x.entered) && Object.entries(x.entered).every(([seat, cost]) => world.seatIndex.has(seat) && isNum(cost) && cost >= 0))) &&
     isSeatList(x.katak, world) && isList(x.offered, isParty) &&
     isList(x.inbox, (sc) => isValidScene(sc, world)) && isNum(x.nextScene) &&

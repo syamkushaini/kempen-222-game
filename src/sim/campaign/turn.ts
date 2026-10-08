@@ -5,6 +5,7 @@ import {
   N_BLOCS, N_PARTIES, PARTY_IDS, isMinor,
   type Dynamics, type ElectionOutcome, type RegionId,
 } from '../types';
+import { agendaIntro, agendaWeek } from './agenda';
 import { freshParty, isOutsider, standingPact, weeklyIncome } from './field';
 import { record, standing } from './ledger';
 import { makeRecap } from './recap';
@@ -119,6 +120,7 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
     return c;
   }
   openCampaign(world, c);
+  agendaIntro(world, c);
   publishPublicPoll(world, c);
   return c;
 }
@@ -339,6 +341,7 @@ export function endWeek(world: World, c: Campaign): void {
   });
   tycoonExposure(c);
   rivalDiplomacy(world, c);
+  agendaWeek(world, c);
   teamWeek(world, c);
   if (hasDiplomacy(world) && c.week === nominationWeek(c)) {
     push(c, { party: null, key: 'news.nomination', vars: { n: pactSeats(c) }, tone: 'neutral' });

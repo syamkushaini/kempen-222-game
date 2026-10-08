@@ -3,6 +3,8 @@ import { majorityLine } from '../sim/election';
 import { scaled } from '../sim/campaign/actions';
 import { BY_EFFORT, holderOf, ROUNDS, STATE_EFFORT } from '../sim/campaign/contests';
 import { COST, pactPreview } from '../sim/campaign/diplomacy';
+import { AGENDA, type AgendaChoice } from '../sim/campaign/agenda';
+import type { StateId } from '../sim/types';
 import { canChoose, EVENTS, gambleChance, ULTIMATUM_MONEY, type Choice, type Effect } from '../sim/campaign/events';
 import { bluffChance } from '../sim/campaign/plots';
 import { billDef, confidenceCount, deficit, looseness, standstill, whipCount } from '../sim/campaign/govern';
@@ -189,6 +191,26 @@ function SceneCard({ scene }: { scene: Scene }) {
           { label: t('scene.houseVote.o1'), choice: 1, hint: count({ forced: { [me]: 'no' } }) },
           { label: t('scene.houseVote.o2'), choice: 2, hint: count({ forced: { [me]: 'abstain' } }) },
         ];
+  } else if (scene.kind === 'agenda' && scene.event && AGENDA[scene.event as StateId]) {
+    const st = scene.event as StateId;
+    title = t(`agenda.${st}.title` as StringKey);
+    body = <p>{t(`agenda.${st}.body` as StringKey)}</p>;
+    // What an answer does, plainly: who it pleases, who it costs, and what it costs the party.
+    const hint = (choice: AgendaChoice): string => {
+      const lifts = Object.entries(choice.lift) as [string, number][];
+      const up = lifts.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).map(([b]) => t(`bloc.${b}` as StringKey));
+      const down = lifts.filter(([, v]) => v < 0).map(([b]) => t(`bloc.${b}` as StringKey));
+      const parts = [
+        up.length ? `▲ ${up.join(', ')}` : '', down.length ? `▼ ${down.join(', ')}` : '',
+        choice.funds ? `${choice.funds > 0 ? '+' : '−'}${f.rm(scaled(world, Math.abs(choice.funds)))}` : '',
+        choice.unity ? `${t('hint.unity')} ${choice.unity > 0 ? '+' : '−'}${Math.abs(choice.unity)}` : '',
+      ].filter(Boolean);
+      return parts.length ? parts.join(' · ') : t('hint.agenda.silence');
+    };
+    options = AGENDA[st]!.choices.map((choice, i) => ({
+      label: t(`agenda.${st}.o${i}` as StringKey), choice: i, hint: hint(choice),
+      disabled: !!choice.funds && choice.funds < 0 && campaign.parties[me]!.funds < scaled(world, Math.abs(choice.funds)),
+    }));
   } else if (scene.kind === 'summons') {
     title = t('scene.palace.title');
     body = <p>{t(`scene.summons.body.${kind}`, { n: majorityLine(world), days: campaign.formation?.deadline ?? 0 })}</p>;
@@ -203,16 +225,16 @@ function SceneCard({ scene }: { scene: Scene }) {
   }
 
   // Matters of the term: they can be set aside while the player looks around, but time waits for an answer.
-  const desk = scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote';
+  const desk = scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'agenda';
   return (
     <div className="overlay">
       <div className="dialog panel" role="dialog" aria-modal="true" aria-label={title}>
         <div className="dialog-head">
-          {scene.kind === 'event' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
+          {scene.kind === 'event' || scene.kind === 'agenda' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
             : from === null ? <Portrait emblem="palace" size={46} /> : <Portrait leader={from} size={46} />}
           <div className="grow">
             <p className={from === null && !desk ? 'dialog-from palace' : 'dialog-from'}>
-              {scene.kind === 'event' ? t('scene.from.desk') : desk ? t('scene.from.house') : from === null ? t('scene.from.palace') : t('scene.from.phone')}
+              {scene.kind === 'event' ? t('scene.from.desk') : scene.kind === 'agenda' ? t('scene.agenda.from') : desk ? t('scene.from.house') : from === null ? t('scene.from.palace') : t('scene.from.phone')}
             </p>
             <h2>{title}</h2>
           </div>

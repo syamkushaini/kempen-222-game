@@ -86,7 +86,7 @@ export interface PartyCampaign {
 export interface Pact { a: number; b: number; week: number }
 
 /** A moment that needs the player's answer: a phone call, an offer, an audience at the Palace. */
-export type SceneKind = 'pactOffer' | 'poach' | 'summons' | 'unityAdvice' | 'event' | 'vote' | 'houseVote';
+export type SceneKind = 'pactOffer' | 'poach' | 'summons' | 'unityAdvice' | 'event' | 'vote' | 'houseVote' | 'agenda';
 export interface Scene {
   id: number;
   kind: SceneKind;
@@ -518,6 +518,8 @@ export interface Campaign {
   met: number[];
   /** Seats whose incumbent has changed sides this campaign. */
   katak: string[];
+  /** The question of the state being fought for: absent until asked, 'asked' while it waits, then 'answered:<choice>' (see agenda.ts). */
+  agenda?: string;
   /** Seats where the player's party has put up a candidate it had none in last time, and what each cost (see entry.ts). */
   entered?: Record<string, number>;
   /** Parties that have already put a pact offer to the player. */
