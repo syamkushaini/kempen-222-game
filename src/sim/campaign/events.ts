@@ -13,6 +13,7 @@ import { scaled } from './actions';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { membersFeel } from './members';
 import { nationOf, shiftNation } from './nation';
+import { KSU, replaceKsu, shiftKsu } from './ksu';
 import { endCareer } from './legacy';
 import { fightOdds } from './trial';
 import { dismiss } from './office';
@@ -45,6 +46,7 @@ export type Effect =
   | { t: 'salience'; issue: IssueId; n: number }
   | { t: 'minister'; act: 'sack' | 'keep' }
   | { t: 'end'; kind: 'ousted' | 'retired' }
+  | { t: 'ksu'; act: 'follow' | 'override' | 'replace' }
   | { t: 'flag'; id: string }
   | { t: 'falls' };
 
@@ -224,6 +226,7 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
         delete k.scandal;
         break;
       case 'end': endCareer(c, e.kind); break;
+      case 'ksu': if (e.act === 'replace') replaceKsu(c); else shiftKsu(c, e.act === 'follow' ? KSU.follow : KSU.override); break;
       case 'falls': falls = true; break;
     }
   }

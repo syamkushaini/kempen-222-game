@@ -5,7 +5,7 @@ import { Rng } from '../rng';
 import { MERGED, STANDS, type StandDowns } from '../transfer';
 import { N_PARTIES, PARTY_IDS, type ElectionOutcome } from '../types';
 import { EFFECT, contests, effectiveDynamics, scaled, truth } from './actions';
-import { AFFINITY, TEMPER } from './cast';
+import { AFFINITY, TEMPER, tieBetween } from './cast';
 import { record, standing } from './ledger';
 import { pushNews, ref } from './news';
 import { resolveAgenda } from './agenda';
@@ -20,7 +20,8 @@ export const hasDiplomacy = (world: World) => world.rules.diplomacy;
 export const nominationWeek = (c: Campaign) => Math.max(1, c.totalWeeks - 3);
 export const beforeNomination = (c: Campaign) => c.week <= nominationWeek(c);
 
-export const relation = (c: Campaign, a: number, b: number) => c.relations[a][b];
+/** How two leaders feel about each other: what has passed between them, and the ties that were there before. */
+export const relation = (c: Campaign, a: number, b: number) => clamp(c.relations[a][b] + (tieBetween(a, b)?.n ?? 0), -100, 100);
 
 export function shiftRelation(c: Campaign, a: number, b: number, by: number): void {
   if (a === b) return;

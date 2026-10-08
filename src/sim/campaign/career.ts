@@ -33,6 +33,9 @@ import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './fact
 import { allianceBonus, allianceWeek, dropMember } from './alliance';
 import { sectorsWeek } from './sectors';
 import { trialWeek } from './trial';
+import { ksuWeek } from './ksu';
+import { grandWeek } from './grand';
+import { signEarlyPacts } from './earlypact';
 import { applyPride } from './pride';
 import { courtWeek } from './courts';
 import { patronageMult, patronageWeek } from './patronage';
@@ -387,6 +390,8 @@ export function termWeek(world: World, c: Campaign): void {
   patronageWeek(c, rngWeek);
   courtWeek(c, rngWeek);
   allianceWeek(c);
+  grandWeek(world, c);
+  ksuWeek(c, rngWeek);
   sectorsWeek(c, rngWeek);
   trialWeek(c);
 
@@ -631,6 +636,7 @@ export function beginCampaign(world: World, c: Campaign): void {
   applySafe(world, c);
   applyTenure(world, c);
   applyPride(world, c);
+  signEarlyPacts(world, c);
   // Members and branches built over the years tell on polling day, in every seat the party stands in.
   const lift = grassrootsLift(world, c);
   if (lift > 0) {

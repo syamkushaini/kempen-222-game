@@ -3,6 +3,8 @@ import {
   ACTIVITY_IDS, ACTIVITIES, PADDING, canPad, padChance, paddedOf, FAVOUR_IDS, FOREIGN, canTakeForeign, exposureChance, inquiryChance, CHEST_BONUS, DISCIPLINE, DISCIPLINE_EVERY, REBRAND, canDiscipline, canRebrand, CHEST_PENALTY, HOLDINGS, fatigueOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
 } from '../sim/campaign/party';
 import { scaled } from '../sim/campaign/actions';
+import { EARLY, canAgreeEarly, earlyPacts } from '../sim/campaign/earlypact';
+import { tieBetween } from '../sim/campaign/cast';
 import { ALLIANCE, ALLIANCE_MARKS, ALLIANCE_NAMES, allianceBonus, canFound, canInvite } from '../sim/campaign/alliance';
 import { CHIEF_NAMES, deputyChance, deputyOf, FACTION_IDS, WING_IDS, backing, challengeChance, factionsOf, PARTY_POLL_EVERY } from '../sim/campaign/factions';
 import { useState } from 'react';
@@ -35,6 +37,8 @@ export function PartyTab() {
   const activity = useStore((s) => s.activity);
   const chest = useStore((s) => s.chest);
   const foreign = useStore((s) => s.foreign);
+  const agreeEarly = useStore((s) => s.agreeEarly);
+  const dropEarly = useStore((s) => s.dropEarly);
   const foundAlliance = useStore((s) => s.foundAlliance);
   const inviteAlly = useStore((s) => s.inviteAlly);
   const dissolveAlliance = useStore((s) => s.dissolveAlliance);
@@ -203,6 +207,29 @@ export function PartyTab() {
         </li>
       </ul>
       {(k.govRun ?? 0) > 1 && <p className="note bad">{t('party.fatigue', { n: k.govRun!, pts: (Math.round(fatigueOf(k.govRun!) * 25 * 10) / 10).toFixed(1) })}</p>}
+
+      <h3>{t('early.title')}</h3>
+      <p className="muted small action-desc">{t('early.desc', { n: EARLY.max })}</p>
+      <ul>
+        {houseTally(world, campaign).map((n, p) => ({ n, p })).filter(({ n, p }) => n > 0 && p !== campaign.player && !!campaign.parties[p]).map(({ p }) => {
+          const tie = tieBetween(campaign.player, p);
+          const agreed = earlyPacts(campaign)[p];
+          const check = canAgreeEarly(world, campaign, p);
+          return (
+            <li className="action" key={p}>
+              <div className="grow">
+                <span className="action-title">{partyName(t, p)}</span>
+                {tie && <span className="action-meta">{t(`tie.${tie.kind}` as StringKey)}</span>}
+                {agreed && <span className="action-meta num">{t('early.agreed', { n: agreed.give.length + agreed.get.length })}</span>}
+                {!agreed && !check.ok && check.reason !== 'none' && check.reason !== 'phase' && <span className="action-reason">{t(`early.no.${check.reason}` as StringKey)}</span>}
+              </div>
+              {agreed
+                ? <ConfirmButton label={t('early.drop')} confirmLabel={t('early.drop.confirm')} onConfirm={() => dropEarly(p)} />
+                : <button className="btn small" disabled={!check.ok} onClick={() => agreeEarly(p)}>{t('early.agree')}</button>}
+            </li>
+          );
+        })}
+      </ul>
 
       <h3>{t('alliance.title')}</h3>
       <p className="muted small action-desc">{t('alliance.desc', { found: f.rm(scaled(world, ALLIANCE.found)), join: f.rm(scaled(world, ALLIANCE.join)), n: ALLIANCE.max })}</p>

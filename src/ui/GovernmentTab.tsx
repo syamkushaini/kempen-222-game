@@ -11,6 +11,10 @@ import { MAX_MEASURES } from '../sim/campaign/office';
 import { SECTOR, SECTORS, SECTOR_IDS, canAid, sectorsOf } from '../sim/campaign/sectors';
 import { leverStrain } from '../sim/campaign/govern';
 import { Gauge } from './Gauge';
+import { SPEAKER_NAMES, leanWord, rebelShare, speakerOf } from '../sim/campaign/chamber';
+import { GRAND, canUnite } from '../sim/campaign/grand';
+import { ksuOf } from '../sim/campaign/ksu';
+import { canOfferDeputy, isRival } from '../sim/campaign/plots';
 import { COMMITTEE, canInquire, committeeWait, inquiryOdds } from '../sim/campaign/committee';
 import { canExpel } from '../sim/campaign/alliance';
 import { SUPPLY_CASH, canRenew, canSupply, discontent } from '../sim/campaign/supply';
@@ -141,8 +145,10 @@ export function GovernmentTab() {
         </>
       )}
 
+      <HouseFigures />
       <Sectors />
       {pm && <SupplyDeals />}
+      {pm && <Unity />}
       {pm && k.government.partners.length > 0 && <PutOut />}
       {seat === 'opp' && <ShadowCabinet />}
       {seat === 'opp' && <CommitteeInquiry />}
@@ -359,6 +365,68 @@ function SupplyDeals() {
 }
 
 
+/** Who sits in the chair, who heads the civil service, and how the party’s own backbenchers feel. */
+function HouseFigures() {
+  const t = useT();
+  const campaign = useStore((s) => s.game!.campaign);
+  const k = campaign.career!;
+  const sp = speakerOf(campaign);
+  const mine = campaign.parties[campaign.player]!.unity;
+  const head = k.government.pm === campaign.player && !k.limited ? ksuOf(campaign) : null;
+  return (
+    <>
+      <h3>{t('chamber.title')}</h3>
+      <ul>
+        <li className="action">
+          <div className="grow">
+            <span className="action-title">{t('chamber.speaker', { name: SPEAKER_NAMES[sp.name] })}</span>
+            <span className="action-meta">{t(`chamber.lean.${leanWord(sp.lean)}` as StringKey)}</span>
+          </div>
+        </li>
+        <li className="action">
+          <div className="grow">
+            <span className="action-title">{t('chamber.backbench')}</span>
+            <span className="action-meta num">{rebelShare(mine) > 0 ? t('chamber.rebels', { pct: Math.round(rebelShare(mine) * 100) }) : t('chamber.calm')}</span>
+          </div>
+        </li>
+        {head && (
+          <li className="action">
+            <div className="grow">
+              <span className="action-title">{t('ksu.title', { name: MINISTER_NAMES[head.name] })}</span>
+              <span className="action-meta">{t(`ksu.outlook.${head.outlook}` as StringKey)} · {t('ksu.trust', { n: Math.round(head.trust) })}</span>
+            </div>
+          </li>
+        )}
+      </ul>
+    </>
+  );
+}
+
+/** A government of national unity, asked for when the government is falling. */
+function Unity() {
+  const t = useT();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const form = useStore((s) => s.formUnity);
+  const k = campaign.career!;
+  const check = canUnite(world, campaign);
+  if (!k.grand && (!check.ok && (check.reason === 'calm' || check.reason === 'once'))) return null;
+  return (
+    <>
+      <h3>{t('grand.title')}</h3>
+      <p className="muted small action-desc">{t('grand.desc', { n: GRAND.weeks })}</p>
+      {k.grand
+        ? <p className="note">{t('grand.running', { n: Math.max(0, k.grand.until - k.week) })}</p>
+        : (
+          <div className="button-row tight">
+            <ConfirmButton label={t('grand.form')} confirmLabel={t('grand.confirm')} disabled={!check.ok} onConfirm={() => form()} />
+            {!check.ok && check.reason === 'none' && <span className="action-reason">{t('grand.none')}</span>}
+          </div>
+        )}
+    </>
+  );
+}
+
 /** The sectors of the economy: how each is doing, who lives by it, and, for the head of government, a hand to lend one. */
 function Sectors() {
   const t = useT();
@@ -424,6 +492,7 @@ function PutOut() {
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const expel = useStore((s) => s.expel);
+  const offerDeputy = useStore((s) => s.offerDeputy);
   const k = campaign.career!;
   return (
     <>
@@ -438,6 +507,8 @@ function PutOut() {
                 <span className="action-title">{partyName(t, p)}</span>
                 {!check.ok && check.reason === 'majority' && <span className="action-reason">{t('expel.majority')}</span>}
               </div>
+              {isRival(campaign, p, houseTally(world, campaign)) && <span className="badge marginal">{t('rival.badge')}</span>}
+              <button className="btn small" disabled={!canOfferDeputy(campaign, p).ok} onClick={() => offerDeputy(p)}>{t('rival.deputy')}</button>
               <ConfirmButton label={t('expel.do')} confirmLabel={t('expel.confirm')} disabled={!check.ok} onConfirm={() => expel(p)} />
             </li>
           );

@@ -9,6 +9,8 @@ import { startFormation } from './formation';
 import { nationWeek } from './nation';
 import { pushNews, ref } from './news';
 import { cabinetWeek, economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
+import { draftingShift } from './ksu';
+import { rebelShare, speakerOf, speakerTip } from './chamber';
 import { BRIEF, PLEDGES, isBrief, isEnacted } from './policy';
 import { supportersOf, supports } from './supply';
 import {
@@ -63,7 +65,13 @@ export function billDef(id: string): BillDef | null {
 export const MAX_BILLS = 2;
 
 /** Weeks a bill takes to reach its vote. A capable minister drafts faster. */
-export const prepWeeks = (k: Career, id: string) => Math.max(3, 9 - skillOf(k, billDef(id)?.portfolio ?? 'home'));
+export const prepWeeks = (k: Career, id: string) => {
+  const def = billDef(id);
+  const base = 9 - skillOf(k, def?.portfolio ?? 'home');
+  // The head of the civil service drafts it: slowly if cautious and the bill is costly, quickly if reforming and it is reform.
+  const reform = !!def?.issue && (def.issue[0] === 'reform' || def.issue[0] === 'graft');
+  return Math.max(3, base + draftingShift(reform, def?.cost ?? 0, k.ksu?.outlook ?? 'political'));
+};
 
 /** Bills the player, as head of government, could put to the House: promises not yet settled, and what partners are owed. */
 export function agenda(c: Campaign): string[] {
@@ -104,6 +112,14 @@ export function whipCount(world: World, c: Campaign, id: string, proposer: numbe
       out.yes += yes; out.no += n - yes;
       return;
     }
+    // The proposer's own backbenchers, when their party is in uproar, do not all do as they are told.
+    if (p === proposer && !terms.forced) {
+      const rebels = Math.floor(n * rebelShare(c.parties[p]?.unity ?? 100));
+      out.yes += n - rebels; out.no += rebels;
+      out.lean[p] = 1;
+      out.votes[p] = 'yes';
+      return;
+    }
     const align = def?.issue ? (k.stances[p][ISSUE_IDS.indexOf(def.issue[0])] * def.issue[1]) / 2 : 0.2;
     const warmth = relation(c, proposer, p) / 200;
     const margin = p === proposer ? 1
@@ -126,12 +142,14 @@ function divide(world: World, c: Campaign, id: string, proposer: number, terms: 
   let { yes, no } = whip;
   whip.votes.forEach((v, p) => {
     if (v !== 'wavering') return;
-    if (rng.next() < 0.5 + whip.lean[p] / 0.16) yes += seats[p]; else no += seats[p];
+    if (rng.next() < 0.5 + whip.lean[p] / 0.16 + (proposer === k0(c).government.pm ? speakerTip(c) : -speakerTip(c))) yes += seats[p]; else no += seats[p];
   });
   c.rng = rng.state;
-  return { yes, no, passed: yes > no };
+  // A tied House is the Speaker’s: it goes the way they lean.
+  return { yes, no, passed: yes > no || (yes === no && speakerOf(c).lean > 0) };
 }
 
+const k0 = (c: Campaign) => c.career!;
 const billRef = (id: string) => `@bill:${id}`;
 
 /** One Act a government may repeal in a term: it goes back to being something that can be promised, at a price in trust and in the voters who liked it. */

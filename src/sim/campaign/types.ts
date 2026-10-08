@@ -432,6 +432,14 @@ export interface Career {
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
+  /** The Speaker of this parliament (see chamber.ts). */
+  speaker?: { name: number; lean: number };
+  /** The Chief Secretary to the government, who has views of their own (see ksu.ts). */
+  ksu?: { name: number; outlook: 'reformist' | 'cautious' | 'political'; trust: number };
+  /** [party]: seats agreed with a party in the last year of the term, to be signed when the campaign opens (see earlypact.ts). */
+  early?: Record<number, { give: string[]; get: string[] }>;
+  /** The government of national unity the player formed, and the week it ends (see grand.ts). */
+  grand?: { until: number; members: number[] };
   /** How many times the government has leaned on each institution in this parliament (see govern.ts). */
   leverUses?: Partial<Record<LeverId, number>>;
   /** The sectors of the economy, each from 0 to 100 around a middling 50 (see sectors.ts). */

@@ -37,6 +37,9 @@ import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
+import { agreeEarly, dropEarly } from '../sim/campaign/earlypact';
+import { formUnity } from '../sim/campaign/grand';
+import { offerDeputy } from '../sim/campaign/plots';
 import { aidSector, type SectorId } from '../sim/campaign/sectors';
 import { openInquiry } from '../sim/campaign/committee';
 import { dissolveAlliance, expel, foundAlliance, invite } from '../sim/campaign/alliance';
@@ -229,6 +232,10 @@ interface Store {
   chest(lots: number): void;
   foreign(favour: FavourId): void;
   padRolls(): void;
+  agreeEarly(party: number): void;
+  dropEarly(party: number): void;
+  formUnity(): void;
+  offerDeputy(party: number): void;
   inquiry(): void;
   foundAlliance(name: number, mark: number): void;
   inviteAlly(party: number): void;
@@ -463,6 +470,10 @@ export const useStore = create<Store>((set, get) => {
     expel: (party) => mutate((c, _g, world) => { expel(world, c, party); }),
     renewSupply: (party) => mutate((c, _g, world) => { renewSupply(world, c, party); }),
     inquiry: () => mutate((c, _g, world) => { openInquiry(world, c); }),
+    agreeEarly: (party) => mutate((c, _g, world) => { agreeEarly(world, c, party); }),
+    dropEarly: (party) => mutate((c) => { dropEarly(c, party); }),
+    formUnity: () => mutate((c, _g, world) => { formUnity(world, c); }),
+    offerDeputy: (party) => mutate((c) => { offerDeputy(c, party); }),
     padRolls: () => mutate((c, _g, world) => { padRolls(world, c); }),
     grantSafe: (seat, faction) => mutate((c, _g, world) => { grantSafe(world, c, seat, faction); }),
     revokeSafe: (seat) => mutate((c) => { revokeSafe(c, seat); }),

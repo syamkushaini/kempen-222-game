@@ -14,6 +14,26 @@ export const SEASON_EVENTS_EN: Record<string, EventText> = {
       'A stand-in holds the desk. It looks careful and it looks slow, and both are true.',
     ],
   },
+  ksuMemo: {
+    title: 'A memo from the head of the civil service',
+    body: 'The Chief Secretary has sent a note marked personal. It runs to four pages and says, politely, that the government’s plans for the year are either not affordable, not legal, or not what the minister told the Cabinet. He has attached a version of his own.',
+    options: ['Follow his advice', 'Overrule him, and say why', 'Ask the Palace for a new Chief Secretary'],
+    results: [
+      'The plans are trimmed to fit. The civil service remembers who listened.',
+      'It goes ahead as the government wished. The Chief Secretary says he has noted it, which in his service is a threat.',
+      'The Palace obliges, in its own time. The new one has no history with you, and none against.',
+    ],
+  },
+  speakerRuling: {
+    title: 'The Speaker rules',
+    body: 'The Speaker has ruled a motion in order that the government says is not, and the House is in uproar. Members are on their feet, and the rule book is open in three places.',
+    options: ['Accept the ruling, and move on', 'Challenge the ruling, and take the vote', 'Walk out in protest'],
+    results: [
+      'The House moves on. Nobody remembers who gave way, which is how it should be.',
+      ['The challenge failed, and the Speaker was embarrassed. It is a good day for the government.', 'The House voted the ruling stood, and the government looked foolish.'],
+      'The walkout made the evening news. It made nothing else.',
+    ],
+  },
   courtCase: {
     title: 'A summons',
     body: 'The summons arrived at breakfast. It concerns something from before you were a leader, or something that the party has done since, and it has been carefully worded by someone who knows what the newspapers will print. The lawyers are in the hall. Your whole career is on the table.',
@@ -95,6 +115,26 @@ export const SEASON_EVENTS_MS: Record<string, EventText> = {
       'Selesai sebelum tengah hari. Jawatan itu anda yang perlu isi, dan keyakinan parti terhadap pertimbangannya sendiri sedikit lebam.',
       ['Kamera pergi tanpa yakin tetapi tanpa makanan. Tiada siapa menemui apa-apa yang baharu, dan berita itu mati.', 'Lebih banyak terbongkar keesokan harinya, dan sidang akhbar itu diulang di setiap saluran.'],
       'Seorang pemangku memegang meja itu. Ia kelihatan berhati-hati dan kelihatan lambat, dan kedua-duanya benar.',
+    ],
+  },
+  ksuMemo: {
+    title: 'Memo daripada ketua perkhidmatan awam',
+    body: 'Ketua Setiausaha Negara telah menghantar nota bertanda peribadi. Empat halaman panjangnya dan ia berkata, dengan sopan, bahawa rancangan kerajaan tahun ini sama ada tidak mampu dibiayai, tidak sah, atau bukan apa yang menteri katakan kepada Kabinet. Dia melampirkan versinya sendiri.',
+    options: ['Ikut nasihatnya', 'Atasi dia, dan terangkan sebabnya', 'Minta Istana melantik Ketua Setiausaha baharu'],
+    results: [
+      'Rancangan dipotong untuk muat. Perkhidmatan awam ingat siapa yang mendengar.',
+      'Ia diteruskan seperti yang kerajaan mahu. Ketua Setiausaha berkata dia telah mencatatnya, yang dalam perkhidmatannya ialah ugutan.',
+      'Istana menurut, pada masanya sendiri. Yang baharu tiada sejarah dengan anda, dan tiada yang menentang.',
+    ],
+  },
+  speakerRuling: {
+    title: 'Speaker memutuskan',
+    body: 'Speaker telah memutuskan satu usul sebagai teratur yang kerajaan kata tidak, dan Dewan kecoh. Ahli berdiri, dan buku peraturan dibuka di tiga tempat.',
+    options: ['Terima keputusan itu, dan teruskan', 'Cabar keputusan itu, dan ambil undi', 'Keluar sebagai bantahan'],
+    results: [
+      'Dewan meneruskan. Tiada siapa ingat siapa yang mengalah, seperti yang sepatutnya.',
+      ['Cabaran berjaya, dan Speaker malu. Hari yang baik untuk kerajaan.', 'Dewan mengundi keputusan itu kekal, dan kerajaan kelihatan bodoh.'],
+      'Keluar dewan itu masuk berita malam. Tidak masuk apa-apa yang lain.',
     ],
   },
   courtCase: {

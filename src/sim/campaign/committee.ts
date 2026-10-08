@@ -2,6 +2,7 @@ import type { World } from '../election';
 import { clamp } from '../math';
 import { Rng } from '../rng';
 import { scaled } from './actions';
+import { CHAMBER, speakerOf } from './chamber';
 import { pushNews } from './news';
 import { seatOf } from './events';
 import type { Campaign } from './types';
@@ -36,7 +37,7 @@ export function canInquire(world: World, c: Campaign): { ok: true } | { ok: fals
 }
 
 /** The chance a committee brings something out: the dossier is what it works from, and a believed leader gets a hearing. */
-export const inquiryOdds = (c: Campaign): number => clamp(0.3 + c.career!.dossier / 200 + c.career!.credibility / 400, 0.2, 0.85);
+export const inquiryOdds = (c: Campaign): number => clamp(0.3 + c.career!.dossier / 200 + c.career!.credibility / 400 - speakerOf(c).lean * CHAMBER.committee, 0.2, 0.85);
 
 /**
  * The opposition calls the government before a committee. If it finds something, the government's trust and the standing of

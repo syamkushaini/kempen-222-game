@@ -102,6 +102,26 @@ export const startRelations = (): number[][] => pairs<number>([
   ['genba', 'cahaya', 5], ['genba', 'suara', 5], ['cahaya', 'suara', 5],
 ], 0);
 
+/**
+ * Ties of blood and of history between the leaders, which do not wear off with the news: cousins who sit on opposite benches,
+ * friends from the same school, a feud that began before the parties did. What they add to how two leaders feel about each other
+ * is added to the relation the game keeps, and the game's relation moves on top of it.
+ */
+export type TieKind = 'kin' | 'friends' | 'feud';
+export const TIES: readonly { a: PartyId; b: PartyId; n: number; kind: TieKind }[] = [
+  { a: 'bp', b: 'pt', n: 8, kind: 'kin' },
+  { a: 'gbk', b: 'gbs', n: 10, kind: 'friends' },
+  { a: 'bp', b: 'gbk', n: 6, kind: 'friends' },
+  { a: 'ps', b: 'legasi', n: -12, kind: 'feud' },
+  { a: 'pt', b: 'ps', n: -8, kind: 'feud' },
+  { a: 'gbs', b: 'legasi', n: -8, kind: 'feud' },
+];
+/** What the ties between two parties' leaders add to how they feel, and what kind of tie it is, if there is one. */
+export function tieBetween(a: number, b: number): { n: number; kind: TieKind } | null {
+  const t = TIES.find((x) => (PARTY_IDS[a] === x.a && PARTY_IDS[b] === x.b) || (PARTY_IDS[a] === x.b && PARTY_IDS[b] === x.a));
+  return t ? { n: t.n, kind: t.kind } : null;
+}
+
 /** How far apart the parties' supporters and programmes are, -1 to 1. Does not change. */
 export const AFFINITY: number[][] = pairs<number>([
   ['ps', 'bp', -0.2], ['ps', 'pt', -0.6], ['bp', 'pt', 0.1],

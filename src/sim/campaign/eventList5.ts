@@ -35,6 +35,25 @@ export const SEASON_EVENTS: Record<string, EventDef> = {
     ],
   },
 
+  // The head of the civil service writes to the head of government once a year (see ksu.ts).
+  ksuMemo: {
+    role: 'pm', weight: 0, yearly: 35,
+    choices: [
+      { effects: [{ t: 'ksu', act: 'follow' }, eff('cred', 1)] },
+      { effects: [{ t: 'ksu', act: 'override' }, eff('stability', 1)] },
+      { effects: [{ t: 'ksu', act: 'replace' }, eff('cred', -1)] },
+    ],
+  },
+  // The Speaker rules on a motion, and the House waits to see whether the government will accept it.
+  speakerRuling: {
+    role: 'any', weight: 2,
+    choices: [
+      { effects: [eff('stability', 1), eff('cred', 1)] },
+      { effects: [], gamble: { chance: 'stability', win: [eff('cred', 2), mood('all', 0.005)], lose: [eff('cred', -3), eff('stability', -3)] } },
+      { effects: [eff('unity', 1), eff('cred', -1)] },
+    ],
+  },
+
   // ----- other nations -----
   borderStandoff: {
     role: 'gov', weight: 3,
