@@ -328,8 +328,10 @@ function conclude(world: World, c: Campaign, pm: number, minority: boolean): voi
 
   const warmth = partners.length ? partners.reduce((a, p) => a + relation(c, pm, p), 0) / partners.length : 20;
   const unity = c.parties[pm]?.unity ?? 60;
+  // The Palace's first choice has its blessing; a leader who made a majority without it is not left in doubt about that.
+  const palace = f.invited === undefined || f.day === 0 ? 0 : pm === f.invited ? 4 : -3;
   const stability = clamp(Math.round(
-    50 + clamp((seats - majorityLine(world)) * 2, -20, 20) - 4 * Math.max(0, partners.length - 1) +
+    50 + palace + clamp((seats - majorityLine(world)) * 2, -20, 20) - 4 * Math.max(0, partners.length - 1) +
     warmth / 5 + (unity - 60) / 4 + (clamp(trust, 0, 100) - 60) / 4 - 2 * treasury - (minority ? 25 : 0),
   ), 5, 95);
 
@@ -384,6 +386,8 @@ export function startFormation(world: World, c: Campaign, tally: number[]): void
     f.pledge[small] = big;
   }
 
+  // The Palace first invites whoever has most behind them to show that they command the House.
+  f.invited = leading(f);
   const winner = f.claimants.find((k) => pledged(f, k) >= majorityLine(world)) ?? seats.findIndex((n, p) => p !== OTH && n >= majorityLine(world));
   if (winner >= 0) {
     if (!f.claimants.includes(winner)) { f.claimants.push(winner); f.pledge[winner] = winner; }
@@ -393,6 +397,7 @@ export function startFormation(world: World, c: Campaign, tally: number[]): void
   }
 
   pushNews(c, { party: null, key: 'form.start', vars: { n: majorityLine(world), days: f.deadline }, tone: 'neutral' });
+  pushNews(c, { party: f.invited, key: 'form.invited', vars: { party: ref.party(f.invited) }, tone: 'neutral' });
   addScene(c, { kind: 'summons', from: null });
   rivalOffers(world, c, 1);
   everyoneDecides(world, c);

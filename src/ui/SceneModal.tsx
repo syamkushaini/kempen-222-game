@@ -226,6 +226,13 @@ function SceneCard({ scene }: { scene: Scene }) {
       hint: [a.money ? `−${f.rm(scaled(world, a.money))}` : '', i === 1 ? t('partyPoll.o1.cost') : '', fog ? '' : t('partyPoll.odds', { pct: f.pct(pollOdds(campaign, i), 0) })].filter(Boolean).join(' · '),
       disabled: a.money > 0 && campaign.parties[me]!.funds < scaled(world, a.money),
     }));
+  } else if (scene.kind === 'redraw') {
+    title = t('redraw.title');
+    body = <p>{t('redraw.body')}</p>;
+    options = [
+      { label: t('redraw.o0'), choice: 0, hint: t('redraw.o0.hint') },
+      { label: t('redraw.o1'), choice: 1, hint: `${t('hint.trust')} −6 · ${t('hint.cred')} −3 · ${t('redraw.o1.hint')}` },
+    ];
   } else if (scene.kind === 'summons') {
     title = t('scene.palace.title');
     body = <p>{t(`scene.summons.body.${kind}`, { n: majorityLine(world), days: campaign.formation?.deadline ?? 0 })}</p>;
@@ -240,12 +247,12 @@ function SceneCard({ scene }: { scene: Scene }) {
   }
 
   // Matters of the term: they can be set aside while the player looks around, but time waits for an answer.
-  const desk = scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'agenda' || scene.kind === 'partyPoll';
+  const desk = scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'agenda' || scene.kind === 'partyPoll' || scene.kind === 'redraw';
   return (
     <div className="overlay">
       <div className="dialog panel" role="dialog" aria-modal="true" aria-label={title}>
         <div className="dialog-head">
-          {scene.kind === 'event' || scene.kind === 'agenda' || scene.kind === 'partyPoll' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
+          {scene.kind === 'event' || scene.kind === 'agenda' || scene.kind === 'partyPoll' || scene.kind === 'redraw' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
             : from === null ? <Portrait emblem="palace" size={46} /> : <Portrait leader={from} size={46} />}
           <div className="grow">
             <p className={from === null && !desk ? 'dialog-from palace' : 'dialog-from'}>

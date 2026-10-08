@@ -1,5 +1,5 @@
 import {
-  ASSET_LOT, BUDGET, canDissolve, EARLIEST_DISSOLUTION, inGovernment, machineryTargets, termIncome, termSpending,
+  ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, inGovernment, machineryTargets, termIncome, termSpending,
 } from '../sim/campaign/career';
 import { useState } from 'react';
 import { contestsState, scaled } from '../sim/campaign/actions';
@@ -109,6 +109,7 @@ export function OrdersTab() {
       <p className="note">
         {t('orders.due', { n: k.length - k.week + 1 })}{' '}
         {seat === 'pm' && (k.week >= EARLIEST_DISSOLUTION ? t('orders.dissolve.can') : t('orders.dissolve.wait', { n: EARLIEST_DISSOLUTION - k.week }))}
+        {seat === 'pm' && k.palaceNo !== undefined && k.week - k.palaceNo < PALACE_WAIT && <> {t('orders.dissolve.palace', { n: PALACE_WAIT - (k.week - k.palaceNo) })}</>}
       </p>
       {seat === 'pm' && canDissolve(campaign) && (
         <div className="button-row tight">

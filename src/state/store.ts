@@ -385,7 +385,7 @@ export const useStore = create<Store>((set, get) => {
       c.inbox = c.inbox.filter((x) => x.id !== id);
       // The state's question, put again in the years of a state career.
       if (scene.kind === 'agenda' && c.phase === 'term') { resolveAgenda(world, c, scene, choice); return { hiddenScene: null, sceneOpen: c.inbox.length > 0 }; }
-      if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'partyPoll') {
+      if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'partyPoll' || scene.kind === 'redraw') {
         answerEvent(world, c, scene, choice);
         // The answer may have brought the government down: on to the talks.
         if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: null, sceneOpen: false };
@@ -422,6 +422,8 @@ export const useStore = create<Store>((set, get) => {
     }),
     dissolve: () => mutate((c, _g, world) => {
       if (dissolve(world, c)) return { tab: 'actions', lastReport: null, selectedSeat: null, selectedState: c.parties[c.player]!.location };
+      // The Palace said no: the answer is shown, and the request can be made again after a while.
+      if (c.career?.palaceNo === c.career?.week) return { lastReport: c.news[c.news.length - 1] ?? null };
     }),
     nextTerm: () => mutate((c, _g, world) => {
       if (!nextTerm(world, c)) return;

@@ -86,7 +86,7 @@ export interface PartyCampaign {
 export interface Pact { a: number; b: number; week: number }
 
 /** A moment that needs the player's answer: a phone call, an offer, an audience at the Palace. */
-export type SceneKind = 'pactOffer' | 'poach' | 'summons' | 'unityAdvice' | 'event' | 'vote' | 'houseVote' | 'agenda' | 'partyPoll';
+export type SceneKind = 'pactOffer' | 'poach' | 'summons' | 'unityAdvice' | 'event' | 'vote' | 'houseVote' | 'agenda' | 'partyPoll' | 'redraw';
 export interface Scene {
   id: number;
   kind: SceneKind;
@@ -163,6 +163,8 @@ export interface Formation {
   offers: (Offer | null)[][];
   /** [party]: the player has sounded them out and knows what they want. */
   known: boolean[];
+  /** The leader the Palace invited first to show a majority: the one with most behind them when the talks opened. */
+  invited?: number;
   /** The Palace has advised the leaders to consider a unity government. */
   unityAdvice: boolean;
   outcome: Outcome | null;
@@ -381,6 +383,8 @@ export interface Career {
   length: number;
   /** Who governs. */
   government: Outcome;
+  /** The week the Palace last refused a request to dissolve Parliament, or absent if it never has. */
+  palaceNo?: number;
   /** The talks now under way are a change of government between elections. */
   midterm: boolean;
   /** The last election seat by seat, once there has been one in this career. */
@@ -402,6 +406,8 @@ export interface Career {
   dossier: number;
   /** [party][issue]: where each party stands, -2 to 2. */
   stances: number[][];
+  /** What was decided about the boundaries before the next parliament: the party that asked for a map that suits it, or null for the commission left alone. Absent if the question did not arise (see redraw.ts). */
+  redraw?: { by: number | null };
   /** The party's factions and wings, made the first time they are looked at (see factions.ts). */
   factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[] };
   /** Parliaments in a row the player's party has headed the government, this one included. */

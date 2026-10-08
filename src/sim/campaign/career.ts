@@ -25,6 +25,7 @@ import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
 import { agendaTerm } from './agenda';
+import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
 import { grassrootsLift, holdingsWeek, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
@@ -370,6 +371,7 @@ export function termWeek(world: World, c: Campaign): void {
   if (c.inbox.length === 0 && world.rules.kind !== 'state' && roundDue(c) !== null) raise(c, 'statePolls');
   agendaTerm(world, c);
   factionsWeek(c);
+  redrawWeek(c);
   if (c.inbox.length === 0 && partyPollWeek(c)) partyPoll(c, rng);
   if (c.inbox.length === 0) rollEvent(c, rng);
   // A by-election needs a seat to be fought in.
@@ -413,6 +415,7 @@ export function answerEvent(world: World, c: Campaign, scene: Scene, choice: num
   const k = c.career;
   if (!k) return;
   if (scene.kind === 'partyPoll') resolvePartyPoll(world, c, scene, choice);
+  else if (scene.kind === 'redraw') resolveRedraw(c, scene, choice);
   else if (scene.kind === 'vote') resolveVote(world, c, scene, choice);
   else if (scene.kind === 'houseVote') resolveHouseVote(world, c, scene, choice);
   else if (scene.event === 'budget') {
@@ -483,14 +486,33 @@ export function resumeTerm(c: Campaign): boolean {
 
 export function canDissolve(c: Campaign): boolean {
   const k = c.career;
-  return !!k && c.phase === 'term' && c.inbox.length === 0 && k.government.pm === c.player && !k.limited && k.week >= EARLIEST_DISSOLUTION;
+  return !!k && c.phase === 'term' && c.inbox.length === 0 && k.government.pm === c.player && !k.limited && k.week >= EARLIEST_DISSOLUTION && k.week - (k.palaceNo ?? -PALACE_WAIT) >= PALACE_WAIT;
 }
 
 /** The player, as head of government, asks for a dissolution and goes to the country early. */
 export function dissolve(world: World, c: Campaign): boolean {
   if (!canDissolve(c)) return false;
+  const k = c.career!;
+  // The Palace need not grant it. A government that has lost its footing, or a majority, is asked to try to govern first.
+  const rng = new Rng((c.rng ^ 0x9a1ace) + k.week);
+  c.rng = rng.state;
+  if (rng.next() < palaceRefusal(c)) {
+    k.palaceNo = k.week;
+    k.government.stability = clamp(k.government.stability - 8, 5, 95);
+    pushNews(c, { party: c.player, key: 'news.palace.refused', vars: { n: PALACE_WAIT }, tone: 'bad' });
+    return false;
+  }
   beginCampaign(world, c);
   return true;
+}
+
+/** Weeks the Palace asks a government to wait before it asks again. */
+export const PALACE_WAIT = 13;
+
+/** The chance the Palace refuses a request to dissolve: nothing for a government with a majority and its footing, rising as either is lost. */
+export function palaceRefusal(c: Campaign): number {
+  const g = c.career!.government;
+  return clamp((50 - g.stability) / 100 + (g.minority ? 0.2 : 0) + Math.max(0, (40 - g.trust) / 200), 0, 0.6);
 }
 
 /**
@@ -545,7 +567,9 @@ export function nextTerm(world: World, c: Campaign): boolean {
   const recorded = recordResults(world, c);
   closeSlate(world, c);
   const rng = new Rng(c.rng);
-  const next = freshCareer(k.term + 1, outcome, recorded);
+  // Every third parliament the boundaries are drawn again, and the seats the next term is fitted to are the redrawn ones.
+  const drawn = k.redraw ? redraw(world, recorded, k.redraw.by, new Rng((c.seed ^ (k.term * 977)) >>> 0)) : null;
+  const next = freshCareer(k.term + 1, outcome, drawn ? drawn.results : recorded);
   c.career = {
     ...next,
     ...(k.founded ? { founded: true } : {}),
@@ -597,6 +621,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   closeCampaign(c);
   syncOpinion(c);
   takeOffice(c);
+  if (drawn) pushNews(c, { party: k.redraw!.by, key: k.redraw!.by === null ? 'news.redraw.done.fair' : 'news.redraw.done.pushed', vars: { n: drawn.flipped, party: k.redraw!.by === null ? '' : ref.party(k.redraw!.by) }, tone: 'neutral' });
   if (c.career.limited) pushNews(c, { party: c.player, key: 'news.term.limited', vars: { n: TERM_LIMIT }, tone: 'neutral' });
   pushNews(c, { party: null, key: 'news.term.start', vars: { party: ref.party(outcome.pm), n: outcome.seats }, tone: 'neutral' });
   // A leader whose party has no seats left has no party to lead.
