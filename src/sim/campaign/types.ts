@@ -388,6 +388,14 @@ export interface Career {
   orders: Orders;
   /** Money tied up in party businesses. */
   assets: number;
+  /** What each kind of business accounts for; the rest of `assets` is plain property. Absent in a game saved before kinds existed. */
+  holdings?: Partial<Record<'property' | 'hotel' | 'media' | 'plantation' | 'college', number>>;
+  /** Members on the party's rolls. Absent until the first week of a term, when it is set to what the party would ordinarily have. */
+  rolls?: number;
+  /** A recruitment drive's lift to the rolls the party can sustain, fading back to 1. */
+  drive?: number;
+  /** The week each activity was last done. */
+  activity?: Partial<Record<'recruit' | 'assembly' | 'school', number>>;
   /** How far voters believe what the player says, 0-100. */
   credibility: number;
   /** What the party has dug up on its rivals, 0-100. Spent on attacks. */

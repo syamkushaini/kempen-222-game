@@ -12,6 +12,7 @@ import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { membersFeel } from './members';
 import { nationOf, shiftNation } from './nation';
 import { pushNews } from './news';
+import { scaleHoldings } from './party';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
 /** Everything that can happen between elections. */
@@ -201,7 +202,7 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
       case 'fiscal': k.fiscal = Math.max(0, k.fiscal + e.n); break;
       case 'economy': k.economy.growth += e.growth ?? 0; k.economy.inflation += e.inflation ?? 0; break;
       case 'nation': shiftNation(k, e); break;
-      case 'assets': k.assets = Math.max(0, Math.round(k.assets * (1 + e.pct))); break;
+      case 'assets': scaleHoldings(k, Math.max(0, 1 + e.pct)); break;
       case 'dividend': pc.funds = Math.max(0, pc.funds + Math.round(k.assets * e.pct)); break;
       case 'relation': for (const p of partiesOf(c, e.who)) shiftRelation(c, me, p, e.n); break;
       case 'salience': { const i = ISSUE_IDS.indexOf(e.issue); k.salience[i] = clamp(k.salience[i] + e.n, 0.5, 2); break; }

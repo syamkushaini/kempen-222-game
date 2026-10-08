@@ -24,6 +24,7 @@ import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
+import { holdingsWeek, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws } from './policy';
 import {
   freshParty, makeDrift, newCampaign, publishPublicPoll, startingFunds, weeklyIncome, type CampaignOptions,
@@ -51,7 +52,6 @@ const PEACETIME = 0.1;
 const DONOR_INCOME = 8_000;
 const STATE_INCOME = 10_000;
 /** Weekly return on money invested in party businesses. */
-const ASSET_YIELD = 0.0025;
 /** Businesses are bought and sold in lots of this size; selling loses a tenth. */
 export const ASSET_LOT = 100_000;
 const MAX_FOCUS_STATES = 3;
@@ -211,10 +211,10 @@ export function termIncome(world: World, c: Campaign): Income {
   const k = c.career!;
   const pc = c.parties[c.player]!;
   const drive = k.orders.focus === 'funds';
-  const members = Math.round(weeklyIncome(world, c.player, c) * PEACETIME * (0.6 + 0.4 * pc.unity / 100) * (0.8 + k.credibility / 250) * (drive ? 1.6 : 1) * incomeBoost(c, c.player));
+  const members = Math.round(weeklyIncome(world, c.player, c) * PEACETIME * (0.6 + 0.4 * pc.unity / 100) * (0.8 + k.credibility / 250) * (drive ? 1.6 : 1) * incomeBoost(c, c.player) * rollsFactor(world, c));
   const donors = Math.round(scaled(world, DONOR_INCOME) * k.orders.donors * (drive ? 1.3 : 1));
   const state = inGovernment(c, c.player) ? scaled(world, STATE_INCOME) * k.orders.state : 0;
-  const assets = Math.round(k.assets * ASSET_YIELD);
+  const assets = holdingsYield(k);
   // A party that governs states has their patronage to draw on.
   const states = scaled(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player);
   return { members, donors, state, assets, states, total: members + donors + state + assets + states };
@@ -248,20 +248,9 @@ export function setOrders(world: World, c: Campaign, patch: Partial<Orders>): vo
   if (isLevel(patch.state)) o.state = inGovernment(c, c.player) ? patch.state : 0;
 }
 
-/** Buys (positive) or sells (negative) lots of party businesses. Selling in a hurry loses a tenth. */
+/** Buys (positive) or sells (negative) lots of party businesses, as plain property. Selling in a hurry loses a tenth. The Party tab buys and sells each kind. */
 export function invest(world: World, c: Campaign, lots: number): boolean {
-  const k = c.career;
-  const pc = c.parties[c.player];
-  if (!k || !pc || c.phase !== 'term' || !Number.isInteger(lots) || lots === 0) return false;
-  const amount = scaled(world, ASSET_LOT) * Math.abs(lots);
-  if (lots > 0) {
-    if (amount > pc.funds) return false;
-    pc.funds -= amount; k.assets += amount;
-  } else {
-    if (amount > k.assets) return false;
-    k.assets -= amount; pc.funds += Math.round(amount * 0.9);
-  }
-  return true;
+  return trade(world, c, 'property', lots);
 }
 
 // ---------- the weekly turn ----------
@@ -336,6 +325,10 @@ export function termWeek(world: World, c: Campaign): void {
     const grown = targets.includes(world.states[i]) ? points / targets.length : 0;
     return clamp(m - 0.04 + grown, 10, 100);
   });
+
+  const rngWeek = new Rng((c.rng ^ 0x9a17) + k.week);
+  holdingsWeek(world, c, rngWeek);
+  rollsWeek(world, c);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
   k.profile[me] = Math.min(PROFILE_CAP, k.profile[me] * 0.97 + seen);
@@ -536,7 +529,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.own ? { own: true, slate: k.slate } : {}),
     ...(k.realStates ? { realStates: true } : {}),
     ...(k.nation ? { nation: { ...k.nation } } : {}),
-    orders: k.orders, assets: k.assets, credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
+    orders: k.orders, assets: k.assets, ...(k.holdings ? { holdings: { ...k.holdings } } : {}), ...(k.rolls !== undefined ? { rolls: k.rolls } : {}), ...(k.activity ? { activity: { ...k.activity } } : {}), credibility: k.credibility, dossier: Math.round(k.dossier * 0.5),
     stances: k.stances, stances0: k.stances.map((row) => [...row]),
     // Acts already passed are not promised again, by anyone.
     ...(k.laws?.length ? { laws: [...k.laws] } : {}),

@@ -171,7 +171,7 @@ function isValidCareer(x: unknown, world: World): boolean {
     isObj(o) && (FOCUS_IDS as readonly unknown[]).includes(o.focus) && isPartyOrNull(o.courting) &&
     isObj(o.budget) && isLevel(o.budget.machinery) && isLevel(o.budget.media) && isLevel(o.budget.research) &&
     isList(o.focusStates, (st) => world.states.includes(st as string)) && isLevel(o.donors) && isLevel(o.state) &&
-    isNum(x.assets) && x.assets >= 0 && isNum(x.credibility) && isNum(x.dossier) &&
+    isNum(x.assets) && x.assets >= 0 && (x.holdings === undefined || (isObj(x.holdings) && Object.values(x.holdings).every((v) => isNum(v) && v >= 0))) && (x.rolls === undefined || isNum(x.rolls)) && (x.drive === undefined || isNum(x.drive)) && (x.activity === undefined || (isObj(x.activity) && Object.values(x.activity).every(isNum))) && isNum(x.credibility) && isNum(x.dossier) &&
     isList(x.stances, (row) => isList(row, (v) => isNum(v) && v >= -2 && v <= 2, N_ISSUES), N_PARTIES) &&
     isList(x.stances0, (row) => isList(row, isNum, N_ISSUES), N_PARTIES) &&
     isList(x.turned, isNum, N_ISSUES) && isList(x.salience, isNum, N_ISSUES) &&

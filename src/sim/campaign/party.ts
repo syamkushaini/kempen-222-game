@@ -1,0 +1,230 @@
+import type { World } from '../election';
+import { clamp } from '../math';
+import { Rng } from '../rng';
+import { contestsState, scaled } from './actions';
+import { lastShares } from './field';
+import { pushNews, ref } from './news';
+import { shiftUnity } from './diplomacy';
+import type { Campaign, Career } from './types';
+
+// The party between elections is more than a purse. It has members, who pay their dues and go door to door; it has
+// businesses, which pay a return and carry a risk of their own; and it has things it does with its time and money
+// before a campaign begins: a recruitment drive, an assembly, a school for cadres.
+
+// ---------- what the party owns ----------
+
+export const HOLDING_IDS = ['property', 'hotel', 'media', 'plantation', 'college'] as const;
+export type HoldingId = (typeof HOLDING_IDS)[number];
+
+export interface HoldingDef {
+  /** Weekly return on what is held. Negative for what costs money to run. */
+  yield: number;
+  /** Chance each week, with a fair amount held, that something goes wrong. */
+  risk: number;
+  /** The share of the holding lost when it does. */
+  loss: number;
+  /** Credibility lost with it. */
+  stain: number;
+}
+
+/** Weekly return on the money the party had in "businesses" before there were kinds of them. It is what an unnamed holding earns. */
+export const BASE_YIELD = 0.0025;
+
+export const HOLDINGS: Record<HoldingId, HoldingDef> = {
+  // Shop lots and land: the quiet money.
+  property:  { yield: BASE_YIELD, risk: 0.002, loss: 0.04, stain: 0 },
+  // Where deals get done, and where the cameras sometimes are.
+  hotel:     { yield: 0.0034, risk: 0.007, loss: 0.06, stain: 2 },
+  // A newspaper and a website: little money in it, a good deal of reach, and a libel suit now and then.
+  media:     { yield: 0.001, risk: 0.005, loss: 0.1, stain: 1 },
+  // Palm oil and rubber, in the countryside the party depends on. The price goes where it likes.
+  plantation: { yield: 0.0028, risk: 0.008, loss: 0.08, stain: 0 },
+  // A training college: it loses money every week and grows the party.
+  college:   { yield: -0.001, risk: 0.001, loss: 0.02, stain: 0 },
+};
+
+/** How much of a holding has its full effect: the side effects come in at this many lots and grow up to half as much again. */
+const FULL_AT_LOTS = 4;
+
+export const holdingsOf = (k: Career): Record<HoldingId, number> => {
+  const out = Object.fromEntries(HOLDING_IDS.map((id) => [id, k.holdings?.[id] ?? 0])) as Record<HoldingId, number>;
+  // Money put into businesses before they had kinds sits in property.
+  const named = HOLDING_IDS.reduce((a, id) => a + out[id], 0);
+  out.property += Math.max(0, k.assets - named);
+  return out;
+};
+
+/** How strongly a holding's side effect is felt, from nothing to one and a half. */
+export function holdingScale(world: World, k: Career, id: HoldingId): number {
+  return Math.min(1.5, holdingsOf(k)[id] / (scaled(world, ASSET_UNIT) * FULL_AT_LOTS));
+}
+/** One lot, before scaling to the size of the contest. */
+export const ASSET_UNIT = 100_000;
+
+/** What the party's holdings bring in each week. */
+export function holdingsYield(k: Career): number {
+  const held = holdingsOf(k);
+  return Math.round(HOLDING_IDS.reduce((a, id) => a + held[id] * HOLDINGS[id].yield, 0));
+}
+
+/** Scales every holding by the same factor, as when a venture does well or badly across the board, and keeps the total honest. */
+export function scaleHoldings(k: Career, factor: number): void {
+  const held = holdingsOf(k);
+  const next: Partial<Record<HoldingId, number>> = {};
+  for (const id of HOLDING_IDS) if (held[id] > 0) next[id] = Math.max(0, Math.round(held[id] * factor));
+  k.holdings = next;
+  k.assets = HOLDING_IDS.reduce((a, id) => a + (next[id] ?? 0), 0);
+}
+
+/** Buys or sells lots of one kind of holding. Selling in a hurry loses a tenth. */
+export function trade(world: World, c: Campaign, id: HoldingId, lots: number): boolean {
+  const k = c.career;
+  const pc = c.parties[c.player];
+  if (!k || !pc || c.phase !== 'term' || !(HOLDING_IDS as readonly string[]).includes(id) || !Number.isInteger(lots) || lots === 0) return false;
+  const amount = scaled(world, ASSET_UNIT) * Math.abs(lots);
+  const held = holdingsOf(k);
+  if (lots > 0) {
+    if (amount > pc.funds) return false;
+    pc.funds -= amount;
+    held[id] += amount;
+  } else {
+    if (amount > held[id]) return false;
+    held[id] -= amount;
+    pc.funds += Math.round(amount * 0.9);
+  }
+  k.holdings = Object.fromEntries(HOLDING_IDS.filter((x) => held[x] > 0).map((x) => [x, held[x]]));
+  k.assets = HOLDING_IDS.reduce((a, x) => a + held[x], 0);
+  return true;
+}
+
+/** A week of the party's businesses: the hotel's guests, the paper's readers, the college's students, and whatever goes wrong. */
+export function holdingsWeek(world: World, c: Campaign, rng: Rng): void {
+  const k = c.career!;
+  const me = c.player;
+  const held = holdingsOf(k);
+  for (const id of HOLDING_IDS) {
+    if (held[id] <= 0) continue;
+    const scale = holdingScale(world, k, id);
+    const def = HOLDINGS[id];
+    // The paper gets the party seen; the college builds its membership and its unity.
+    if (id === 'media') k.profile[me] = Math.min(0.08, k.profile[me] + 0.0006 * scale);
+    if (id === 'college') {
+      k.rolls = rollsOf(world, c) * (1 + 0.0006 * scale);
+      const pc = c.parties[me];
+      if (pc) pc.unity = clamp(pc.unity + 0.02 * scale, 0, 100);
+    }
+    // Something goes wrong, more often with more at stake.
+    if (rng.next() < def.risk * Math.max(0.3, scale)) {
+      held[id] = Math.round(held[id] * (1 - def.loss));
+      k.credibility = clamp(k.credibility - def.stain, 0, 100);
+      pushNews(c, { party: me, key: `news.holding.${id}`, vars: {}, tone: 'bad' });
+    }
+  }
+  k.holdings = Object.fromEntries(HOLDING_IDS.filter((x) => held[x] > 0).map((x) => [x, held[x]]));
+  k.assets = HOLDING_IDS.reduce((a, x) => a + held[x], 0);
+}
+
+// ---------- who belongs ----------
+
+/** What share of a party's voters carry its card. */
+const MEMBER_RATE = 0.05;
+/** The share of the electorate that turns out, for sizing a party's rolls. */
+const TURNOUT = 0.75;
+
+/** How many members a party of this size would have with ordinary branches, ordinary unity and ordinary standing. */
+export function baseRolls(world: World, c: Campaign): number {
+  const share = lastShares(world).national[c.player] ?? 0;
+  return Math.max(200, Math.round(world.totalElectorate * TURNOUT * share * MEMBER_RATE));
+}
+
+/** The party's members now. A career that has not set them yet has the ordinary number. */
+export const rollsOf = (world: World, c: Campaign): number => Math.round(c.career?.rolls ?? baseRolls(world, c));
+
+/** How the rolls compare with the ordinary number: above one, more dues and more hands for the door-knocking. */
+export const rollsFactor = (world: World, c: Campaign): number => rollsOf(world, c) / baseRolls(world, c);
+
+/** What the party's branches, unity and standing would hold the rolls at. */
+export function rollsTarget(world: World, c: Campaign): number {
+  const pc = c.parties[c.player];
+  if (!pc) return baseRolls(world, c);
+  const k = c.career!;
+  const built = pc.machinery.filter((m, i) => m > 0 && contestsState(world, c, c.player, world.states[i]));
+  const branches = built.length ? built.reduce((a, m) => a + m, 0) / built.length : 40;
+  const governing = k.government.pm === c.player || k.government.partners.includes(c.player);
+  return Math.round(baseRolls(world, c) * clamp(0.5 + branches / 100, 0.6, 1.5) * (0.8 + 0.4 * pc.unity / 100) * (governing ? 1.08 : 1) * (0.9 + 0.2 * k.credibility / 100) * (k.drive ?? 1));
+}
+
+/** A week of the rolls moving towards what the party deserves: slowly, a fiftieth of the gap. */
+export function rollsWeek(world: World, c: Campaign): void {
+  const k = c.career!;
+  const now = k.rolls ?? baseRolls(world, c);
+  k.rolls = now + (rollsTarget(world, c) - now) * 0.02;
+  // A drive's lift fades.
+  if (k.drive && k.drive > 1) k.drive = Math.max(1, k.drive - 0.004);
+}
+
+// ---------- what the party does ----------
+
+export const ACTIVITY_IDS = ['recruit', 'assembly', 'school'] as const;
+export type ActivityId = (typeof ACTIVITY_IDS)[number];
+
+export interface ActivityDef {
+  /** Money, at general-election scale. */
+  cost: number;
+  /** Weeks before it can be done again. */
+  every: number;
+}
+
+export const ACTIVITIES: Record<ActivityId, ActivityDef> = {
+  // A drive for members: a table at every market and mosque, for a month.
+  recruit:  { cost: 40_000, every: 26 },
+  // The annual general assembly: speeches, resolutions, and a dinner at which everyone is reconciled.
+  assembly: { cost: 70_000, every: 52 },
+  // Cadres taught how to run a branch, count a vote and keep a record.
+  school:   { cost: 50_000, every: 26 },
+};
+
+export const activityCost = (world: World, id: ActivityId) => scaled(world, ACTIVITIES[id].cost);
+
+/** Weeks until an activity can be done again; zero if it can be done now. */
+export function activityWait(c: Campaign, id: ActivityId): number {
+  const k = c.career;
+  const last = k?.activity?.[id];
+  return k && last !== undefined ? Math.max(0, last + ACTIVITIES[id].every - k.week) : 0;
+}
+
+export type ActivityRefusal = 'phase' | 'funds' | 'wait';
+export function canDoActivity(world: World, c: Campaign, id: ActivityId): { ok: true } | { ok: false; reason: ActivityRefusal } {
+  const pc = c.parties[c.player];
+  if (!c.career || !pc || c.phase !== 'term') return { ok: false, reason: 'phase' };
+  if (activityWait(c, id) > 0) return { ok: false, reason: 'wait' };
+  if (activityCost(world, id) > pc.funds) return { ok: false, reason: 'funds' };
+  return { ok: true };
+}
+
+/** Does something with the party's time and money: pays for it, and the party is the better for it. */
+export function doActivity(world: World, c: Campaign, id: ActivityId): boolean {
+  if (!canDoActivity(world, c, id).ok) return false;
+  const k = c.career!;
+  const pc = c.parties[c.player]!;
+  pc.funds -= activityCost(world, id);
+  (k.activity ??= {})[id] = k.week;
+  switch (id) {
+    case 'recruit':
+      // The rolls jump, and the lift to the target holds for a while before it fades.
+      k.rolls = rollsOf(world, c) * 1.08;
+      k.drive = 1.25;
+      break;
+    case 'assembly':
+      shiftUnity(c, c.player, 8);
+      k.credibility = clamp(k.credibility + 2, 0, 100);
+      k.rolls = rollsOf(world, c) * 1.02;
+      break;
+    case 'school':
+      pc.machinery = pc.machinery.map((m, i) => (m > 0 && contestsState(world, c, c.player, world.states[i]) ? clamp(m + 4, 0, 100) : m));
+      break;
+  }
+  pushNews(c, { party: c.player, key: `news.activity.${id}`, vars: { n: Math.round(rollsOf(world, c)) }, tone: 'good' });
+  void ref;
+  return true;
+}

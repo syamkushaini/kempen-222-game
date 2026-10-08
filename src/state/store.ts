@@ -37,6 +37,7 @@ import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
+import { doActivity, trade, type ActivityId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
@@ -46,7 +47,7 @@ import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
  * or (developer mode only) how the country would really vote today.
  */
 export type MapView = 'last' | 'estimate' | 'truth';
-export type SidebarTab = 'desk' | 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
+export type SidebarTab = 'desk' | 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'party' | 'slate' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
 export type Theme = 'system' | 'light' | 'dark';
 export type Palette = 'standard' | 'accessible';
 export type TextSize = 'normal' | 'large';
@@ -201,6 +202,10 @@ interface Store {
   /** Career: changes the standing orders for the weeks between elections. */
   setOrders(patch: Partial<Orders>): void;
   invest(lots: number): void;
+  /** Buys (positive lots) or sells (negative) one kind of party business. */
+  trade(holding: HoldingId, lots: number): void;
+  /** Does one of the things a party does between elections. */
+  activity(id: ActivityId): void;
   /** Takes the loan a lender is offering against the party's coming income. */
   borrow(): void;
   setStance(issue: number, to: number): void;
@@ -400,6 +405,8 @@ export const useStore = create<Store>((set, get) => {
 
     setOrders: (patch) => mutate((c, _g, world) => setOrders(world, c, patch)),
     invest: (lots) => mutate((c, _g, world) => { invest(world, c, lots); }),
+    trade: (holding, lots) => mutate((c, _g, world) => { trade(world, c, holding, lots); }),
+    activity: (id) => mutate((c, _g, world) => { doActivity(world, c, id); }),
     borrow: () => mutate((c, _g, world) => { borrow(world, c); }),
     setStance: (issue, to) => mutate((c) => { if (setStance(c, issue, to)) syncOpinion(c); }),
     togglePledge: (id) => mutate((c) => { if (togglePledge(c, id)) syncOpinion(c); }),
