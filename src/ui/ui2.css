@@ -606,3 +606,10 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 /* The government's money, shown beside the party's. */
 .hud-sub { display: block; font-weight: 500; }
 .gov-funds { margin-top: 12px; }
+
+/* State elections held so far, in a career */
+.state-vote-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.state-vote { padding-top: 10px; border-top: 1px solid var(--line); }
+.state-vote .panel-head { margin-bottom: 4px; }
+.state-vote .state-tally { margin-bottom: 4px; }
+.state-votes { margin-bottom: 16px; }

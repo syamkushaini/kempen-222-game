@@ -6,7 +6,7 @@ import { N_BLOCS, N_PARTIES, PARTY_IDS, type Dynamics, type StateId } from '../t
 import { effectiveDynamics, scaled } from './actions';
 import { addScene, shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
-import type { Campaign, Scene } from './types';
+import type { Campaign, Scene, StateVote } from './types';
 
 // Contests fought inside a term: a by-election when a seat falls vacant, and
 // the rounds of state polls. Both are fought with one decision and the
@@ -177,6 +177,19 @@ export function leaders(world: World, winners: number[], states: readonly string
   return out;
 }
 
+/** The seats each party holds in a state, by party, given who won each seat of the country. */
+export function seatsInState(world: World, winners: readonly number[], state: string): number[] {
+  const count = new Array<number>(N_PARTIES).fill(0);
+  for (const i of world.seatsByState[state] ?? []) count[winners[i]]++;
+  return count;
+}
+
+/** What a state election gave the general election's seats in that state: the seats then, and the seats now. */
+export function stateVoteOf(world: World, now: readonly number[], state: string, inPerson = false): Omit<StateVote, 'week'> {
+  const before = seatsInState(world, lastElection(world).seats.map((o) => o.winner), state);
+  return { seats: seatsInState(world, now, state), before, ...(inPerson ? { inPerson } : {}) };
+}
+
 /** Who governs each state as a career opens: whoever carried it at the last general election. */
 export function startStates(world: World): Record<string, number> {
   const all = ROUNDS.flatMap((r) => r.states).filter((st) => world.states.includes(st));
@@ -190,7 +203,7 @@ export function roundDue(c: Campaign): number | null {
   return k.week >= ROUNDS[k.rounds].week ? k.rounds : null;
 }
 
-export interface StateResult { state: string; winner: number; was: number | undefined }
+export interface StateResult { state: string; winner: number; was: number | undefined; vote?: Omit<StateVote, 'week'> }
 
 /**
  * Holds a round of state polls. Each state is decided on its parliamentary
@@ -226,7 +239,7 @@ export function resolveStatePolls(world: World, c: Campaign, choice: number, pla
   c.rng = rng.state;
 
   const now = leaders(world, winners, states, k.states);
-  const results: StateResult[] = states.filter((st) => now[st] !== undefined).map((st) => ({ state: st, winner: now[st], was: k.states[st] }));
+  const results: StateResult[] = states.filter((st) => now[st] !== undefined).map((st) => ({ state: st, winner: now[st], was: k.states[st], vote: stateVoteOf(world, winners, st) }));
   applyStateResults(c, results);
   return results;
 }
@@ -240,6 +253,7 @@ export function applyStateResults(c: Campaign, results: StateResult[]): void {
   const me = c.player;
   for (const r of results) {
     k.states[r.state] = r.winner;
+    if (r.vote) (k.stateVotes ??= {})[r.state] = { week: k.week, ...r.vote };
     if (r.was === r.winner) continue;
     for (let b = 0; b < N_BLOCS; b++) { k.mood[b][r.winner] += 0.006; if (r.was !== undefined) k.mood[b][r.was] -= 0.004; }
     if (r.winner === me) shiftUnity(c, me, 2);

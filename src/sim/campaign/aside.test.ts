@@ -101,7 +101,12 @@ describe('fighting a state election in person, inside a career', () => {
     const winner = stateWinner(selangor, nested);
     const funds = pc.funds;
     const result = settleAside(c, nested, selangor, 'selangor');
-    expect(result).toEqual({ state: 'selangor', winner, was });
+    expect(result).toMatchObject({ state: 'selangor', winner, was });
+    // The seats the state itself gave are kept, as the signal of how it voted.
+    const vote = c.career!.stateVotes!.selangor;
+    expect(vote.inPerson).toBe(true);
+    expect(vote.seats.reduce((a, n) => a + n, 0)).toBe(selangor.seats.length);
+    expect(vote.week).toBe(c.career!.week);
     expect(c.career!.states.selangor).toBe(winner);
     expect(pc.funds).toBe(funds + Math.max(0, left));
     expect(c.news.some((n) => n.key === 'news.states.fought')).toBe(true);

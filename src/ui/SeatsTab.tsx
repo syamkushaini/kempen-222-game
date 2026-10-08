@@ -7,6 +7,7 @@ import {
 } from './hooks';
 import { SeatNomination } from './Nominations';
 import { SeatEntry } from './Entries';
+import { StateVotes } from './StateVotes';
 
 const TARGETS = 8;
 const DEFEND = 5;
@@ -53,6 +54,8 @@ function HotSeats() {
   const targets = rows.filter((r) => r.d.winner !== me).slice(0, TARGETS);
   const defend = rows.filter((r) => r.d.winner === me).slice(0, DEFEND);
   return (
+    <>
+    <StateVotes />
     <section>
       <div className="panel-head">
         <h2>{t('hot.targets')}</h2>
@@ -71,6 +74,7 @@ function HotSeats() {
         </>
       )}
     </section>
+    </>
   );
 }
 
@@ -98,6 +102,7 @@ function StateList() {
           <span key={o.p}><i className="dot" data-party={o.p} style={{ background: partyColor(o.p) }} />{partyShort(t, o.p)} <strong className="num">{o.n}</strong></span>
         ))}
       </p>
+      <StateVotes only={state} />
       <p className="muted small">{t('state.sortHint')}</p>
       <ul className="seat-list">{seats.map(({ d, i }) => <SeatRow key={i} index={i} display={d} showState={false} />)}</ul>
     </section>

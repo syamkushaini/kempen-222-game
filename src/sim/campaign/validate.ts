@@ -173,6 +173,7 @@ function isValidCareer(x: unknown, world: World): boolean {
     isObj(o) && (FOCUS_IDS as readonly unknown[]).includes(o.focus) && isPartyOrNull(o.courting) &&
     isObj(o.budget) && isLevel(o.budget.machinery) && isLevel(o.budget.media) && isLevel(o.budget.research) &&
     isList(o.focusStates, (st) => world.states.includes(st as string)) && isLevel(o.donors) && isLevel(o.state) && (o.grants === undefined || isLevel(o.grants)) &&
+    (x.stateVotes === undefined || (isObj(x.stateVotes) && Object.values(x.stateVotes).every((v) => isObj(v) && isNum(v.week) && isList(v.seats, isNum, N_PARTIES) && isList(v.before, isNum, N_PARTIES) && (v.inPerson === undefined || typeof v.inPerson === 'boolean')))) &&
     (x.treasury === undefined || (isNum(x.treasury) && x.treasury >= 0)) &&
     (x.goodwill === undefined || (isObj(x.goodwill) && Object.values(x.goodwill).every((v) => isNum(v) && v >= 0 && v <= 100))) &&
     (x.goodwillApplied === undefined || (isObj(x.goodwillApplied) && Object.values(x.goodwillApplied).every(isNum))) &&

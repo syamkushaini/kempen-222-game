@@ -1115,3 +1115,9 @@ Q100 ("what is the one thing you most want career mode to do") was a free answer
 
 - Two things from the merged work broke "one main button per screen": the entry panel's "Choose new seats" (now an ordinary button) and the chosen chip in a row of chips ("Everyone" when aiming media). A **chosen chip is now tinted and ringed** in the party's colour, not filled; the solid fill belongs to the screen's one main button.
 - The audit script was brought in line with the game: a new decision now opens by itself, and the desk bar appears only once it is set aside; the no-confidence check souring the government's partners (the opening House gives it a seat or two to spare); the long-tab check taps the chip by its name, since a new "Suggested this week" section moved the others along.
+
+## State elections as a signal in a career
+
+- **What is kept:** each state election held in a career (a round of state polls, a state the player fought in person, or a state that voted with the general election) records the **seats each party took there**, next to the seats each held in that state at the last general election (`stateVotes` on the career, optional, so saved games load unchanged; a new term starts the record afresh). The seats are the model's own count, the parliamentary seats of the state that decide it, labelled just "seats"; where the player fought the state in person they are the state's own assembly seats.
+- **Where it shows:** a "State elections so far" block at the head of Intel > Seats (every state that has voted, with a one-line read for the player's party: voters moving your way, away from you, or steady, and the party that gained most), and the same block for one state on that state's card when it is picked on the map. Nothing is shown until a state has voted. Each state's seats are a bar with every party's count and its swing against the last general election.
+- It is information only: it changes nothing in the sim.

@@ -74,9 +74,10 @@ export function settleAside(parent: Campaign, nested: Campaign, stateWorld: Worl
   const k = parent.career!;
   const me = parent.player;
   const winner = stateWinner(stateWorld, nested);
-  const seats = (electionResult(stateWorld, nested) ?? lastElection(stateWorld)).tally[me] ?? 0;
+  const held = electionResult(stateWorld, nested) ?? lastElection(stateWorld);
+  const seats = held.tally[me] ?? 0;
   parent.parties[me]!.funds += Math.max(0, nested.parties[me]?.funds ?? 0);
-  const result: StateResult = { state, winner, was: k.states[state] };
+  const result: StateResult = { state, winner, was: k.states[state], vote: { seats: [...held.tally], before: [...lastElection(stateWorld).tally], inPerson: true } };
   applyStateResults(parent, [result]);
   pushNews(parent, { party: me, key: 'news.states.fought', vars: { state: `@states:${state}`, seats, party: ref.party(winner) }, tone: winner === me ? 'good' : 'neutral' });
   // A leader whose party has lost faith in them is out, whatever the state election did.

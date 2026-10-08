@@ -581,6 +581,20 @@ export interface Career {
   states: Record<string, number>;
   /** How many rounds of state polls have been held this term. */
   rounds: number;
+  /** [state]: the latest state election this term, as a signal of how the voters there are leaning. */
+  stateVotes?: Record<string, StateVote>;
+}
+
+/** A state election's seats, set against the seats the state gave the general election before it. */
+export interface StateVote {
+  /** The week of the term it was held. */
+  week: number;
+  /** Seats each party took, by party. */
+  seats: number[];
+  /** Seats each party held in the state at the last general election, by party. */
+  before: number[];
+  /** Fought in person, so the seats are the state's own, not the model's count. */
+  inPerson?: boolean;
 }
 
 /**
