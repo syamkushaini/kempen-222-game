@@ -296,7 +296,12 @@ export const LINE_IDS = ['aid', 'health', 'education', 'rural', 'civil'] as cons
 export type LineId = (typeof LINE_IDS)[number];
 /** Cut, hold or boost. */
 export type Dial = -1 | 0 | 1;
-export interface Budget { lines: Record<LineId, Dial>; tax: Dial }
+/** Concrete things a budget can pay for inside its lines: each notices a few groups of voters and costs a little more than holding the line. */
+export const MEASURE_IDS = [
+  'cashTopUp', 'fuelPrice', 'clinics', 'hospitalBeds', 'scholarships', 'schoolRepairs', 'roads', 'farmInputs', 'civilBonus', 'pensions',
+] as const;
+export type MeasureId = (typeof MEASURE_IDS)[number];
+export interface Budget { lines: Record<LineId, Dial>; tax: Dial; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
 
 export const PORTFOLIO_IDS = ['finance', 'home', 'economy', 'education', 'health', 'rural', 'works', 'defence'] as const;
 export type PortfolioId = (typeof PORTFOLIO_IDS)[number];
@@ -410,6 +415,8 @@ export interface Career {
   redraw?: { by: number | null };
   /** The party's factions and wings, made the first time they are looked at (see factions.ts). */
   factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[] };
+  /** Parties that keep the player's government in office from outside the cabinet, and until when (see supply.ts). */
+  supply?: { party: number; until: number; price: 'cash' | 'policy' }[];
   /** Parliaments in a row the player's party has headed the government, this one included. */
   pmRun?: number;
   /** The party's leader may not head the government this term: a term limit passed into law applies (see nextTerm). The party governs, and the player leads it from outside the premiership. */

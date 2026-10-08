@@ -3,6 +3,7 @@ import {
   FISCAL_ROOM, fits, isEnacted, ISSUE_GROUPS, manifestoCost, MAX_PLEDGES, PLEDGES, stanceCost, stanceReaction,
 } from '../sim/campaign/policy';
 import { ISSUE_IDS, PLEDGE_IDS, type PledgeId } from '../sim/campaign/types';
+import { canRepeal } from '../sim/campaign/govern';
 import type { BlocId } from '../sim/types';
 import { useStore } from '../state/store';
 import { Gauge } from './Gauge';
@@ -18,6 +19,7 @@ export function PolicyTab() {
   const campaign = useStore((s) => s.game!.campaign);
   const setStance = useStore((s) => s.setStance);
   const togglePledge = useStore((s) => s.togglePledge);
+  const repeal = useStore((s) => s.repeal);
   const launchManifesto = useStore((s) => s.launchManifesto);
   // A move the player is thinking about: which issue, and where to.
   const [draft, setDraft] = useState<{ issue: number; to: number } | null>(null);
@@ -127,7 +129,9 @@ export function PolicyTab() {
       <h4>{t('manifesto.lawsTitle')}</h4>
       {(k.laws?.length ?? 0) === 0
         ? <p className="muted small">{t('manifesto.lawsNone')}</p>
-        : <ul className="plain-list">{k.laws!.map((id) => <li key={id}>{t(`pledge.${id}`)}</li>)}</ul>}
+        : <ul className="plain-list">{k.laws!.map((id) => (
+          <li key={id}>{t(`pledge.${id}`)}{canRepeal(campaign, id) && <> <ConfirmButton className="btn small" label={t('manifesto.repeal')} confirmLabel={t('manifesto.repeal.confirm')} onConfirm={() => repeal(id)} /></>}</li>
+        ))}</ul>}
       {!k.launched && (
         <div className="button-row">
           <ConfirmButton className="btn" label={t('manifesto.launch')} confirmLabel={t('manifesto.launch.confirm')} onConfirm={launchManifesto} />

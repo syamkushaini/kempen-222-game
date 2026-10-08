@@ -7,7 +7,7 @@ import { shiftRelation, shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
 import {
   LINE_IDS, MINISTER_TRAITS, PORTFOLIO_IDS,
-  type Budget, type Campaign, type Candidate, type Career, type Dial, type Economy, type LineId, type Minister, type MinisterTrait, type PortfolioId,
+  type Budget, type Campaign, type Candidate, type Career, type Dial, type Economy, type LineId, type MeasureId, type Minister, type MinisterTrait, type PortfolioId,
 } from './types';
 
 /** Whether the player is head of government. A leader held to a term limit leads the governing party but not the government. */
@@ -25,6 +25,23 @@ export function lift(k: Career, p: number, blocs: BlocId[] | 'all', n: number) {
 export const startEconomy = (): Economy => ({ growth: 4.2, inflation: 2.8, jobless: 3.6, debt: 63 });
 export const standstill = (): Budget => ({ lines: { aid: 0, health: 0, education: 0, rural: 0, civil: 0 }, tax: 0 });
 
+/** What a budget can pay for in particular: the line it belongs to, what it adds to the cost (in the same units as a dial), and who notices. */
+export interface MeasureDef { line: LineId; cost: number; appeal: Partial<Record<BlocId, number>> }
+export const MEASURES: Record<MeasureId, MeasureDef> = {
+  cashTopUp:    { line: 'aid', cost: 1, appeal: { urban_b40: 0.03, heartland: 0.02, gig: 0.02, felda: 0.02, smallbiz: -0.01 } },
+  fuelPrice:    { line: 'aid', cost: 0.8, appeal: { gig: 0.03, urban_b40: 0.03, heartland: 0.02, undi18: 0.01, urban_lib: -0.01 } },
+  clinics:      { line: 'health', cost: 0.8, appeal: { seniors: 0.03, borneo_native: 0.03, agri: 0.02 } },
+  hospitalBeds: { line: 'health', cost: 1, appeal: { seniors: 0.03, urban_b40: 0.03, m40: 0.02 } },
+  scholarships: { line: 'education', cost: 0.7, appeal: { undi18: 0.04, m40: 0.02 } },
+  schoolRepairs: { line: 'education', cost: 0.7, appeal: { borneo_native: 0.03, felda: 0.02, agri: 0.02, civil: 0.01 } },
+  roads:        { line: 'rural', cost: 1, appeal: { agri: 0.03, felda: 0.03, borneo_native: 0.04, heartland: 0.02 } },
+  farmInputs:   { line: 'rural', cost: 0.8, appeal: { agri: 0.04, felda: 0.03 } },
+  civilBonus:   { line: 'civil', cost: 0.9, appeal: { civil: 0.05, seniors: 0.01 } },
+  pensions:     { line: 'civil', cost: 0.8, appeal: { seniors: 0.04, civil: 0.03 } },
+};
+/** Most things one budget can pay for in particular. */
+export const MAX_MEASURES = 3;
+
 /** Who notices each line of the budget. */
 const LINE_BLOCS: Record<LineId, BlocId[]> = {
   aid: ['urban_b40', 'heartland', 'gig', 'felda'],
@@ -38,7 +55,7 @@ export const skillOf = (k: Career, portfolio: PortfolioId) => k.cabinet.find((m)
 
 /** How far a budget loosens (positive) or tightens the purse: spending lines up, taxes down, plus standing commitments. */
 export function looseness(k: Career, budget: Budget = k.tabled): number {
-  return LINE_IDS.reduce((a, id) => a + budget.lines[id], 0) - 2 * budget.tax + 0.5 * k.fiscal;
+  return LINE_IDS.reduce((a, id) => a + budget.lines[id], 0) - 2 * budget.tax + 0.5 * k.fiscal + (budget.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0);
 }
 
 /** The deficit a budget produces, as a share of national income. A capable finance minister shaves it. */
@@ -71,9 +88,21 @@ export function economyWeek(c: Campaign, rng: Rng) {
 }
 
 /** The head of government changes next year's budget plan. It takes effect when it is tabled. */
-export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; value: Dial }): boolean {
+export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; value: Dial } | { measure: MeasureId; on: boolean }): boolean {
   const k = c.career;
-  if (!k || c.phase !== 'term' || !isPm(c) || ![-1, 0, 1].includes(patch.value)) return false;
+  if (k && c.phase === 'term' && isPm(c) && 'measure' in patch) {
+    if (!(patch.measure in MEASURES)) return false;
+    const have = k.budget.measures ?? [];
+    if (patch.on && !have.includes(patch.measure)) {
+      if (have.length >= MAX_MEASURES) return false;
+      k.budget.measures = [...have, patch.measure];
+    } else if (!patch.on) {
+      if (have.length > 0) k.budget.measures = have.filter((m) => m !== patch.measure);
+      if (k.budget.measures?.length === 0) delete k.budget.measures;
+    }
+    return true;
+  }
+  if (!k || c.phase !== 'term' || !isPm(c) || !('value' in patch) || ![-1, 0, 1].includes(patch.value)) return false;
   if (patch.tax) k.budget.tax = patch.value;
   else if (patch.line && LINE_IDS.includes(patch.line)) k.budget.lines[patch.line] = patch.value;
   else return false;
@@ -84,7 +113,11 @@ export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; va
 export function tableBudget(c: Campaign, plan: Budget): void {
   const k = c.career!;
   const g = k.government;
-  k.tabled = { lines: { ...plan.lines }, tax: plan.tax };
+  k.tabled = { lines: { ...plan.lines }, tax: plan.tax, ...(plan.measures?.length ? { measures: [...plan.measures] } : {}) };
+  // What it pays for in particular is noticed by those it is for.
+  for (const m of plan.measures ?? []) {
+    for (const [bloc, v] of Object.entries(MEASURES[m].appeal)) { lift(k, g.pm, [bloc as BlocId], v); for (const p of g.partners) lift(k, p, [bloc as BlocId], v * 0.4); }
+  }
   for (const id of LINE_IDS) {
     if (plan.lines[id] === 0) continue;
     lift(k, g.pm, LINE_BLOCS[id], 0.02 * plan.lines[id]);

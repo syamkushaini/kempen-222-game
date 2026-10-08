@@ -3,6 +3,7 @@ import { clamp } from '../math';
 import { Rng } from '../rng';
 import { scaled } from './actions';
 import { governmentFalls } from './career';
+import { houseTally } from './contests';
 import { addScene, relation, shiftRelation, shiftUnity } from './diplomacy';
 import { ULTIMATUM_MONEY } from './events';
 import { pushNews, ref } from './news';
@@ -16,6 +17,16 @@ import type { Campaign, Scene } from './types';
 
 /** A partner's progress towards walking out runs from 0 to 100. The papers notice at the first mark; the ultimatum comes at the second. */
 export const PLOT = { murmur: 35, ultimatum: 65, walk: 100 };
+
+/** A government steadier than this loses a partner to the door; one less steady loses it to the other side. */
+export const CROSS_BELOW = 35;
+
+/** Where a partner goes when it leaves a government that is falling apart: to the largest party outside it, whose leader takes it in. */
+function crossesTo(world: World, c: Campaign, p: number): number {
+  const g = c.career!.government;
+  const seats = houseTally(world, c);
+  return seats.map((n, q) => ({ n, q })).filter(({ n, q }) => n > 0 && q !== g.pm && q !== p && !g.partners.includes(q) && c.parties[q]).sort((a, b) => b.n - a.n)[0]?.q ?? -1;
+}
 
 /** How far the other partners step back when one of them goes to the leader with an ultimatum. */
 const WAIT = 20;
@@ -64,10 +75,18 @@ export function plotsWeek(world: World, c: Campaign): void {
       pushNews(c, { party: p, key: 'news.plot.murmur', vars: { party: ref.party(p), leader: ref.leader(p) }, tone: 'bad' });
     } else if (was < PLOT.ultimatum && now >= PLOT.ultimatum) {
       addScene(c, { kind: 'event', from: p, event: 'ultimatum' });
+      // A government that looks like falling is told, in so many words, where the partner will go if it does.
+      if (g.stability < CROSS_BELOW) pushNews(c, { party: p, key: 'news.plot.warning', vars: { party: ref.party(p) }, tone: 'bad' });
       // The others wait to see what this one gets.
       for (const q of g.partners) if (q !== p) setPlot(c, q, plotOf(c, q) - WAIT);
     } else if (now >= PLOT.walk) {
       setPlot(c, p, 0);
+      const to = g.stability < CROSS_BELOW ? crossesTo(world, c, p) : -1;
+      if (to >= 0) {
+        shiftRelation(c, p, to, 20);
+        shiftRelation(c, c.player, p, -15);
+        pushNews(c, { party: p, key: 'news.plot.crossed', vars: { party: ref.party(p), to: ref.party(to) }, tone: 'bad' });
+      }
       governmentFalls(world, c, p);
       if (c.phase !== 'term') return;
     }

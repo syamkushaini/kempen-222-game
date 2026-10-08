@@ -4,7 +4,7 @@ import { N_PARTIES } from '../types';
 import { N_BLOCS } from '../types';
 import {
   BACKSTORY_IDS, DEMAND_IDS, ENDORSER_IDS, FOCUS_IDS, HOPEFUL_KINDS, LEGACY_IDS, LEVER_IDS, LINE_IDS, N_ISSUES, OUTLET_IDS,
-  MINISTER_TRAITS, PLEDGE_IDS, PORTFOLIO_IDS, ROLE_IDS, SENIOR_IDS, STAT_IDS,
+  MEASURE_IDS, MINISTER_TRAITS, PLEDGE_IDS, PORTFOLIO_IDS, ROLE_IDS, SENIOR_IDS, STAT_IDS,
   type Campaign, type PartyCampaign,
 } from './types';
 
@@ -110,7 +110,7 @@ const isPledge = (x: unknown) => (PLEDGE_IDS as readonly unknown[]).includes(x);
 const isVotes = (x: unknown) => isList(x, (v) => isNum(v) && v >= 0, N_PARTIES);
 
 const isDial = (x: unknown) => x === -1 || x === 0 || x === 1;
-const isBudget = (x: unknown) => isObj(x) && isDial(x.tax) && isObj(x.lines) && LINE_IDS.every((id) => isDial((x.lines as Record<string, unknown>)[id]));
+const isBudget = (x: unknown) => isObj(x) && isDial(x.tax) && (x.measures === undefined || (Array.isArray(x.measures) && x.measures.length <= 3 && x.measures.every((m) => (MEASURE_IDS as readonly unknown[]).includes(m)))) && isObj(x.lines) && LINE_IDS.every((id) => isDial((x.lines as Record<string, unknown>)[id]));
 
 const isPerson = (x: unknown) => isObj(x) && isNum(x.name) && x.name >= 0 && typeof x.skeleton === 'boolean' && typeof x.vetted === 'boolean';
 const isStaffer = (x: unknown) => isPerson(x) && isNum((x as Record<string, unknown>).skill);
@@ -176,7 +176,7 @@ function isValidCareer(x: unknown, world: World): boolean {
     isList(x.stances0, (row) => isList(row, isNum, N_ISSUES), N_PARTIES) &&
     isList(x.turned, isNum, N_ISSUES) && isList(x.salience, isNum, N_ISSUES) &&
     isList(x.mood, (row) => isList(row, isNum, N_PARTIES), N_BLOCS) && isList(x.profile, isNum, N_PARTIES) &&
-    isList(x.manifesto, (m) => isList(m, isPledge), N_PARTIES) && (x.laws === undefined || isList(x.laws, isPledge)) && (x.palaceNo === undefined || isNum(x.palaceNo)) && (x.redraw === undefined || (isObj(x.redraw) && (x.redraw.by === null || isParty(x.redraw.by)))) && (x.factions === undefined || (isObj(x.factions) && isList(x.factions.size, isNum, 3) && isList(x.factions.mood, isNum, 3) && isList(x.factions.wing, isNum, 3) && isList(x.factions.chief, isNum, 6))) && (x.pmRun === undefined || isNum(x.pmRun)) && (x.limited === undefined || typeof x.limited === 'boolean') && (x.agendaAnswers === undefined || isList(x.agendaAnswers, (v) => isNum(v) && v >= 0 && v <= 2)) && typeof x.launched === 'boolean' && isList(x.promises, isPledge) &&
+    isList(x.manifesto, (m) => isList(m, isPledge), N_PARTIES) && (x.laws === undefined || isList(x.laws, isPledge)) && (x.palaceNo === undefined || isNum(x.palaceNo)) && (x.redraw === undefined || (isObj(x.redraw) && (x.redraw.by === null || isParty(x.redraw.by)))) && (x.factions === undefined || (isObj(x.factions) && isList(x.factions.size, isNum, 3) && isList(x.factions.mood, isNum, 3) && isList(x.factions.wing, isNum, 3) && isList(x.factions.chief, isNum, 6))) && (x.supply === undefined || isList(x.supply, (s) => isObj(s) && isParty(s.party) && isNum(s.until) && (s.price === 'cash' || s.price === 'policy'))) && (x.pmRun === undefined || isNum(x.pmRun)) && (x.limited === undefined || typeof x.limited === 'boolean') && (x.agendaAnswers === undefined || isList(x.agendaAnswers, (v) => isNum(v) && v >= 0 && v <= 2)) && typeof x.launched === 'boolean' && isList(x.promises, isPledge) &&
     isList(x.flags, (v) => typeof v === 'string') && isList(x.fired, (v) => typeof v === 'string') &&
     isList(x.queue, (q) => isObj(q) && typeof q.event === 'string' && isNum(q.week)) && isNum(x.quietUntil) &&
     isValidOffice(x)

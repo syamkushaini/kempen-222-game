@@ -10,6 +10,7 @@ import { nationWeek } from './nation';
 import { pushNews, ref } from './news';
 import { cabinetWeek, economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
 import { PLEDGES, isEnacted } from './policy';
+import { supportersOf, supports } from './supply';
 import {
   ISSUE_IDS, LEVER_IDS,
   type Campaign, type Career, type DemandId, type IssueId, type LeverId, type Obligation, type PledgeId, type PortfolioId, type Scene,
@@ -106,7 +107,7 @@ export function whipCount(world: World, c: Campaign, id: string, proposer: numbe
     const align = def?.issue ? (k.stances[p][ISSUE_IDS.indexOf(def.issue[0])] * def.issue[1]) / 2 : 0.2;
     const warmth = relation(c, proposer, p) / 200;
     const margin = p === proposer ? 1
-      : inGov(c, p) && inGov(c, proposer)
+      : (inGov(c, p) || supports(c, p)) && inGov(c, proposer)
         ? 0.35 + k.government.stability / 250 + 0.5 * align + warmth + (terms.sweetened ? 0.25 : 0) + (terms.confidence ? 0.4 : 0) - 0.5
         : 0.6 * align + warmth + (terms.sweetened ? 0.15 : 0) - 0.35;
     out.lean[p] = margin;
@@ -132,6 +133,26 @@ function divide(world: World, c: Campaign, id: string, proposer: number, terms: 
 }
 
 const billRef = (id: string) => `@bill:${id}`;
+
+/** One Act a government may repeal in a term: it goes back to being something that can be promised, at a price in trust and in the voters who liked it. */
+export function canRepeal(c: Campaign, id: PledgeId): boolean {
+  const k = c.career;
+  return !!k && c.phase === 'term' && isPm(c) && c.inbox.length === 0 && isEnacted(k, id) && !k.flags.includes(`repeal${k.term}`);
+}
+
+/** The head of government repeals an Act: its friends punish them, its enemies are a little pleased, and the public sees what it is. */
+export function repeal(c: Campaign, id: PledgeId): boolean {
+  if (!canRepeal(c, id)) return false;
+  const k = c.career!;
+  k.laws = (k.laws ?? []).filter((x) => x !== id);
+  if (k.laws.length === 0) delete k.laws;
+  k.flags.push(`repeal${k.term}`);
+  k.government.trust = clamp(k.government.trust - 3, 0, 100);
+  k.credibility = clamp(k.credibility - 3, 0, 100);
+  for (const [bloc, v] of Object.entries(PLEDGES[id].appeal)) lift(k, c.player, [bloc as BlocId], v > 0 ? -v * 0.5 : -v * 0.3);
+  pushNews(c, { party: c.player, key: 'news.gov.repealed', vars: { bill: `@bill:pledge:${id}` }, tone: 'bad' });
+  return true;
+}
 
 /** What a passed bill does for the party that brought it. */
 function enact(c: Campaign, id: string, proposer: number) {
@@ -348,7 +369,8 @@ export const loyalty = (c: Campaign, p: number) => relation(c, c.career!.governm
 export function confidenceCount(world: World, c: Campaign, sway: (p: number) => number = () => 0): number {
   const g = c.career!.government;
   const seats = houseTally(world, c);
-  return seats[g.pm] + g.partners.reduce((a, p) => a + (loyalty(c, p) + sway(p) > 0 ? seats[p] : 0), 0) + Math.floor(seats[OTH] / 2);
+  // Those who keep the government in office from outside count with its partners.
+  return seats[g.pm] + [...g.partners, ...supportersOf(c)].reduce((a, p) => a + (loyalty(c, p) + sway(p) > 0 ? seats[p] : 0), 0) + Math.floor(seats[OTH] / 2);
 }
 
 /** Holds a confidence vote. Returns true if the government survives. */

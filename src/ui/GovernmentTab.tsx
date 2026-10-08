@@ -6,7 +6,10 @@ import {
 } from '../sim/campaign/govern';
 import { scaled } from '../sim/campaign/actions';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
-import { LEVER_IDS, LINE_IDS, type Dial } from '../sim/campaign/types';
+import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
+import { MAX_MEASURES } from '../sim/campaign/office';
+import { SUPPLY_CASH, canSupply } from '../sim/campaign/supply';
+import { houseTally } from '../sim/campaign/contests';
 import { majorityLine } from '../sim/election';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
@@ -103,6 +106,22 @@ export function GovernmentTab() {
                 <DialSwitch label={t(`line.${id}`)} value={k.budget.lines[id]} onChange={(value) => setBudget({ line: id, value })} />
               </li>
             ))}
+            <li className="action measures">
+              <div className="grow">
+                <span className="action-title">{t('measures.title')}</span>
+                <span className="action-meta">{t('measures.desc', { n: MAX_MEASURES })}</span>
+                <div className="chips" role="group" aria-label={t('measures.title')}>
+                  {MEASURE_IDS.map((m) => {
+                    const on = k.budget.measures?.includes(m) ?? false;
+                    return (
+                      <button key={m} className={on ? 'chip active' : 'chip'} aria-pressed={on} disabled={!on && (k.budget.measures?.length ?? 0) >= MAX_MEASURES} title={t(`measure.${m}.desc`)} onClick={() => setBudget({ measure: m, on: !on })}>
+                        {t(`measure.${m}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </li>
             <li className="action">
               <div className="grow">
                 <span className="action-title">{t('line.tax')}</span>
@@ -114,6 +133,8 @@ export function GovernmentTab() {
           <p className="note">{t('house.budget.plan', { pct: deficit(k, k.budget).toFixed(1), now: deficit(k).toFixed(1) })}</p>
         </>
       )}
+
+      {pm && <SupplyDeals />}
 
       {(k.appointments?.length ?? 0) > 0 && (
         <section className="appointments" aria-label={t('appoint.title')}>
@@ -270,5 +291,54 @@ export function GovernmentTab() {
         <ConfirmButton className="btn" label={t('house.retire')} confirmLabel={t('house.retire.confirm')} disabled={campaign.inbox.length > 0} onConfirm={retire} danger />
       </div>
     </section>
+  );
+}
+
+
+/** Parties outside the cabinet that can be asked to keep the government in office, and the deals already made. */
+function SupplyDeals() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const supply = useStore((s) => s.supply);
+  const k = campaign.career!;
+  const seats = houseTally(world, campaign);
+  const parties = seats.map((n, p) => ({ n, p })).filter(({ n, p }) => n > 0 && !k.government.partners.includes(p) && p !== k.government.pm && p !== campaign.player && !!campaign.parties[p]);
+  const rows = parties.map(({ n, p }) => ({ n, p, cash: canSupply(world, campaign, p, 'cash'), policy: canSupply(world, campaign, p, 'policy') }));
+  const deals = k.supply ?? [];
+  const why = (r: ReturnType<typeof canSupply>) => (r.ok ? null : r.reason === 'none' || r.reason === 'phase' || r.reason === 'already' ? null : t(`supply.reason.${r.reason}` as StringKey));
+  return (
+    <>
+      <h3>{t('supply.title')}</h3>
+      <p className="muted small action-desc">{t('supply.desc')}</p>
+      {deals.length > 0 && (
+        <ul>
+          {deals.map((d) => (
+            <li className="action" key={d.party}>
+              <div className="grow">
+                <span className="action-title">{partyName(t, d.party)}</span>
+                <span className="action-meta num">{t('supply.until', { week: d.until })}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <ul>
+        {rows.filter((r) => r.cash.ok || r.policy.ok || why(r.cash) || why(r.policy)).map((r) => (
+          <li className="action" key={r.p}>
+            <div className="grow">
+              <span className="action-title">{partyName(t, r.p)} <span className="muted small num">· {r.n}</span></span>
+              {!r.cash.ok && !r.policy.ok && <span className="action-reason">{why(r.cash) ?? why(r.policy)}</span>}
+            </div>
+            <div className="button-row tight">
+              <button className="btn small" disabled={!r.cash.ok} onClick={() => supply(r.p, 'cash')}>{t('supply.cash', { rm: f.rm(scaled(world, SUPPLY_CASH)) })}</button>
+              <button className="btn small" disabled={!r.policy.ok} onClick={() => supply(r.p, 'policy')}>{t('supply.policy')}</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {rows.every((r) => !r.cash.ok && !r.policy.ok && !why(r.cash) && !why(r.policy)) && deals.length === 0 && <p className="muted small">{t('supply.none')}</p>}
+    </>
   );
 }

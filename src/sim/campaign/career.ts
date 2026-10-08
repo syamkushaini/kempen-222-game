@@ -25,6 +25,7 @@ import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
 import { agendaTerm } from './agenda';
+import { supplyWeek } from './supply';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
 import { grassrootsLift, holdingsWeek, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
@@ -155,6 +156,8 @@ function takeOffice(c: Campaign): void {
   c.rng = rng.state;
   makeObligations(c);
   c.career!.bills = [];
+  // A deal made with one government does not bind the next.
+  delete c.career!.supply;
 }
 
 /**
@@ -370,6 +373,7 @@ export function termWeek(world: World, c: Campaign): void {
   // One thing at a time: nothing new arrives while a vote is waiting. The states' own elections come when they are due.
   if (c.inbox.length === 0 && world.rules.kind !== 'state' && roundDue(c) !== null) raise(c, 'statePolls');
   agendaTerm(world, c);
+  supplyWeek(c);
   factionsWeek(c);
   redrawWeek(c);
   if (c.inbox.length === 0 && partyPollWeek(c)) partyPoll(c, rng);

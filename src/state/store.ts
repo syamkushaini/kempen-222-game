@@ -6,7 +6,7 @@ import {
   answerEvent, dissolve, foundForContest, invest, nextTerm, resumeTerm, setOrders, skipAhead, startCareer, syncOpinion,
 } from '../sim/campaign/career';
 import {
-  appoint, deliver, leaveGovernment, pullLever, reshuffle, setBudget, tableBill, tableMotion,
+  appoint, deliver, leaveGovernment, repeal, pullLever, reshuffle, setBudget, tableBill, tableMotion,
 } from '../sim/campaign/govern';
 import { choose, vetHopeful } from '../sim/campaign/candidates';
 import { canChoose } from '../sim/campaign/events';
@@ -26,7 +26,7 @@ import {
 } from '../sim/campaign/formation';
 import { closeNight, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
-  ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, NewsItem, Offer, Orders,
+  ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
   OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId,
 } from '../sim/campaign/types';
 import { randomSeed } from '../sim/rng';
@@ -37,6 +37,7 @@ import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
 import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
+import { signSupply, type SupplyPrice } from '../sim/campaign/supply';
 import { resolveAgenda } from '../sim/campaign/agenda';
 import { doActivity, trade, type ActivityId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
@@ -203,6 +204,10 @@ interface Store {
   /** Career: changes the standing orders for the weeks between elections. */
   setOrders(patch: Partial<Orders>): void;
   invest(lots: number): void;
+  /** Asks a party to keep the government in office from outside the cabinet. */
+  supply(party: number, price: SupplyPrice): void;
+  /** The head of government repeals an Act. */
+  repeal(id: PledgeId): void;
   /** Buys (positive lots) or sells (negative) one kind of party business. */
   trade(holding: HoldingId, lots: number): void;
   /** Does one of the things a party does between elections. */
@@ -222,7 +227,7 @@ interface Store {
 
   /** Sets a waiting scene aside (or brings it back with null) so the player can look around first. */
   hideScene(id: number | null): void;
-  setBudget(patch: { line?: LineId; tax?: boolean; value: Dial }): void;
+  setBudget(patch: { line?: LineId; tax?: boolean; value: Dial } | { measure: MeasureId; on: boolean }): void;
   reshuffle(portfolio: PortfolioId): void;
   appoint(portfolio: PortfolioId, option: number): void;
   fieldSeat(seatId: string): void;
@@ -407,6 +412,8 @@ export const useStore = create<Store>((set, get) => {
     endDay: () => mutate((c, _g, world) => { endDay(world, c); return { offerReply: null }; }),
 
     setOrders: (patch) => mutate((c, _g, world) => setOrders(world, c, patch)),
+    repeal: (id) => mutate((c) => { repeal(c, id); }),
+    supply: (party, price) => mutate((c, _g, world) => { signSupply(world, c, party, price); }),
     invest: (lots) => mutate((c, _g, world) => { invest(world, c, lots); }),
     trade: (holding, lots) => mutate((c, _g, world) => { trade(world, c, holding, lots); }),
     activity: (id) => mutate((c, _g, world) => { doActivity(world, c, id); }),
