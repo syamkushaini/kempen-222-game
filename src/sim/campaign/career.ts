@@ -319,7 +319,7 @@ export function termWeek(world: World, c: Campaign): void {
 
   // Branches wither a little every week, and grow where money and the leader's time go.
   const targets = machineryTargets(world, c);
-  const points = ((afford * plan.machinery) / scaled(world, 6_000) * 0.25 + (o.focus === 'tour' ? 0.3 : 0)) * edge(c, me, 'organisation') * (1 + 0.05 * skill(c, me, 'manager'));
+  const points = ((afford * plan.machinery) / scaled(world, 6_000) * 0.25 + (o.focus === 'tour' ? 0.3 : 0)) * edge(c, me, 'organisation') * (1 + 0.05 * skill(c, me, 'manager')) * (0.8 + 0.2 * Math.min(2, rollsFactor(world, c)));
   pc.machinery = pc.machinery.map((m, i) => {
     if (m <= 0) return 0;
     const grown = targets.includes(world.states[i]) ? points / targets.length : 0;

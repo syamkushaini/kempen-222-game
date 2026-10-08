@@ -353,7 +353,12 @@ function defect(c: Campaign, seat: string, from: number, to: number) {
   shiftRelation(c, from, to, -20);
 }
 
-export function canCourt(world: World, c: Campaign, seat: string | null): Check {
+/** How many times the usual sum a member can be offered to cross over. A bigger offer makes it likelier, and louder if it comes out. */
+export const STAKES = [1, 2, 4] as const;
+export type Stake = (typeof STAKES)[number];
+const doublings = (stake: number) => Math.log2(Math.max(1, stake));
+
+export function canCourt(world: World, c: Campaign, seat: string | null, stake: Stake = 1): Check {
   const i = seat === null ? undefined : world.seatIndex.get(seat);
   if (i === undefined) return no('noTarget');
   const h = holder(world, i);
@@ -362,28 +367,30 @@ export function canCourt(world: World, c: Campaign, seat: string | null): Check 
   if (c.katak.includes(seat!)) return no('already');
   const base = open(world, c, h, COST.court, 'court');
   if (!base.ok) return base;
-  if (scaled(world, COST.courtMoney) > c.parties[c.player]!.funds) return no('funds');
+  if (scaled(world, COST.courtMoney) * stake > c.parties[c.player]!.funds) return no('funds');
   return yes;
 }
 
 /** The chance a rival's sitting member can be talked into crossing over. */
-export function courtChance(world: World, c: Campaign, seat: string): number {
+export function courtChance(world: World, c: Campaign, seat: string, stake: Stake = 1): number {
   const i = world.seatIndex.get(seat)!;
   const s = world.seats[i];
   const mine = s.last.votes[c.player] / s.last.votes.reduce((a, b) => a + b, 0);
-  return clamp(0.25 + ((70 - c.parties[holder(world, i)]!.unity) / 100) * 0.5 + (mine - 0.25) * 0.5, 0.1, 0.75);
+  // Money talks: each doubling of the offer adds ten points, up to a ceiling no member is certain at.
+  return clamp(0.25 + ((70 - c.parties[holder(world, i)]!.unity) / 100) * 0.5 + (mine - 0.25) * 0.5 + 0.1 * doublings(stake), 0.1, 0.85);
 }
 
 /** Tries to bring a rival's sitting member across before nomination day. */
-export function courtDefector(world: World, c: Campaign, seat: string): NewsItem | null {
-  if (!canCourt(world, c, seat).ok) return null;
+export function courtDefector(world: World, c: Campaign, seat: string, stake: Stake = 1): NewsItem | null {
+  if (!(STAKES as readonly number[]).includes(stake) || !canCourt(world, c, seat, stake).ok) return null;
   const before = standing(world, c);
   const from = holder(world, world.seatIndex.get(seat)!);
-  const chance = courtChance(world, c, seat);
-  spend(c, COST.court, 'court', scaled(world, COST.courtMoney));
+  const chance = courtChance(world, c, seat, stake);
+  spend(c, COST.court, 'court', scaled(world, COST.courtMoney) * stake);
   const rng = new Rng(c.rng);
   const won = rng.next() < chance;
-  const leaked = !won && rng.next() < 0.3;
+  // A large sum is harder to keep quiet.
+  const leaked = !won && rng.next() < 0.3 * (1 + 0.25 * doublings(stake));
   c.rng = rng.state;
   const vars = { seat: ref.seat(seat), party: ref.party(from) };
   const done = (key: string, tone: NewsItem['tone']) => {
@@ -393,7 +400,9 @@ export function courtDefector(world: World, c: Campaign, seat: string): NewsItem
   };
   if (won) {
     defect(c, seat, from, c.player);
-    return done('news.court.won', 'good');
+    // Everyone knows what it took, when it took that much: the party that was left pays for it in standing, the buyer too.
+    if (stake > 1) { shiftUnity(c, from, -2 * doublings(stake)); for (const row of c.dyn.support.nat) row[c.player] -= 0.004 * doublings(stake); }
+    return done(stake > 1 ? 'news.court.bought' : 'news.court.won', 'good');
   }
   if (leaked) {
     for (const row of c.dyn.support.nat) row[c.player] -= 0.01;
@@ -470,7 +479,10 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
 
   // Raids on the player's sitting members; a divided party is easier pickings.
   const mine = c.parties[me]!;
-  if (rng.next() < clamp(0.1 + (60 - mine.unity) / 200, 0.05, 0.4)) {
+  // A rival with a deep purse raids more often: the richest of them adds up to fifteen points.
+  const richest = Math.max(0, ...ai.map((p) => c.parties[p]!.funds));
+  const purse = Math.min(0.15, 0.075 * (richest / scaled(world, 2_000_000)));
+  if (rng.next() < clamp(0.1 + (60 - mine.unity) / 200 + purse, 0.05, 0.5)) {
     // Whoever is closest to taking the seat does the courting.
     const suitor = (i: number) => (now.seats[i].winner !== me ? now.seats[i].winner : now.seats[i].runnerUp);
     const targets = world.seats.map((s, i) => ({ s, i })).filter(({ s, i }) =>

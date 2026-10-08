@@ -18,7 +18,7 @@ import { hireTroopers, interview } from '../sim/campaign/media';
 import { dismiss, hire, vet } from '../sim/campaign/staff';
 import { launchManifesto, setStance, togglePledge } from '../sim/campaign/policy';
 import {
-  breakPact, courtDefector, jointAttack, meetLeader, proposePact, resolveCampaignScene, seekUnderstanding,
+  breakPact, courtDefector, type Stake, jointAttack, meetLeader, proposePact, resolveCampaignScene, seekUnderstanding,
   type PactProposal, type PactVerdict,
 } from '../sim/campaign/diplomacy';
 import {
@@ -190,7 +190,7 @@ interface Store {
   breakPact(party: number): void;
   promise(party: number): void;
   jointAttack(ally: number, target: number): void;
-  court(seat: string): void;
+  court(seat: string, stake?: Stake): void;
   answerScene(id: number, choice: number): void;
 
   offer(party: number, offer: Offer): void;
@@ -376,7 +376,7 @@ export const useStore = create<Store>((set, get) => {
     breakPact: (party) => mutate((c) => { breakPact(c, party); }),
     promise: (party) => mutate((c, _g, world) => ({ lastReport: seekUnderstanding(world, c, party) })),
     jointAttack: (ally, target) => mutate((c, _g, world) => ({ lastReport: jointAttack(world, c, ally, target) })),
-    court: (seat) => mutate((c, _g, world) => ({ lastReport: courtDefector(world, c, seat) })),
+    court: (seat, stake) => mutate((c, _g, world) => ({ lastReport: courtDefector(world, c, seat, stake) })),
     answerScene: (id, choice) => mutate((c, _g, world) => {
       const scene = c.inbox.find((x) => x.id === id);
       if (!scene) return;
