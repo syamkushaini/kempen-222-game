@@ -42,6 +42,7 @@ import { merge } from '../sim/campaign/merge';
 import { nameShadow } from '../sim/campaign/shadow';
 import { resolveAgenda } from '../sim/campaign/agenda';
 import { forceByElection } from '../sim/campaign/contests';
+import { setPatronage } from '../sim/campaign/patronage';
 import { grantSafe, revokeSafe } from '../sim/campaign/safeseat';
 import { discipline, doActivity, padRolls, rebrand, setAside, takeForeign, trade, type Discipline, type ActivityId, type FavourId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
@@ -224,6 +225,7 @@ interface Store {
   chest(lots: number): void;
   foreign(favour: FavourId): void;
   padRolls(): void;
+  patronage(level: number): void;
   grantSafe(seat: string, faction: number): void;
   revokeSafe(seat: string): void;
   forceByElection(seat: string): void;
@@ -439,6 +441,7 @@ export const useStore = create<Store>((set, get) => {
     supply: (party, price) => mutate((c, _g, world) => { signSupply(world, c, party, price); }),
     chest: (lots) => mutate((c, _g, world) => { setAside(world, c, lots); }),
     foreign: (favour) => mutate((c, _g, world) => { takeForeign(world, c, favour); }),
+    patronage: (level) => mutate((c) => { setPatronage(c, level); }),
     padRolls: () => mutate((c, _g, world) => { padRolls(world, c); }),
     grantSafe: (seat, faction) => mutate((c, _g, world) => { grantSafe(world, c, seat, faction); }),
     revokeSafe: (seat) => mutate((c) => { revokeSafe(c, seat); }),

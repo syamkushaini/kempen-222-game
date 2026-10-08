@@ -4,7 +4,7 @@ import { STRINGS, type StringKey } from '../../i18n/strings';
 import { PARTY_IDS } from '../types';
 import { answerEvent, startCareer, termWeek } from './career';
 import {
-  FACTION_IDS, PARTY_POLL_EVERY, POLL_ANSWERS, WING_IDS, backing, challengeChance, factionsOf, factionsWeek, partyPoll, partyPollWeek, pollOdds,
+  FACTION_IDS, PARTY_POLL_EVERY, POLL_ANSWERS, WING_IDS, backing, challengeChance, deputyOf, factionsOf, factionsWeek, partyPoll, partyPollWeek, pollOdds,
 } from './factions';
 import { Rng } from '../rng';
 import type { Campaign } from './types';
@@ -81,7 +81,9 @@ describe('the party’s meeting', () => {
     factionsOf(c).mood[1] = 0;
     expect(challengeChance(c)).toBe(1);
     c.career!.week = PARTY_POLL_EVERY;
-    partyPoll(c, new Rng(3));
+    // A deputy with no ambition leaves the challenge to a faction.
+    deputyOf(c).ambition = 0;
+    partyPoll(c, new Rng(4));
     expect(c.inbox).toHaveLength(1);
     expect(c.inbox[0]).toMatchObject({ kind: 'partyPoll', event: 'reformers' });
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);

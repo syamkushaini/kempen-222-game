@@ -1,5 +1,5 @@
 import {
-  ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, inGovernment, machineryTargets, termIncome, termSpending,
+  ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, inGovernment, machineryTargets, ledger, termIncome, termSpending,
 } from '../sim/campaign/career';
 import { useState } from 'react';
 import { contestsState, scaled } from '../sim/campaign/actions';
@@ -7,6 +7,7 @@ import { ROUNDS, STATE_GOVERNMENT_INCOME } from '../sim/campaign/contests';
 import { others, relation } from '../sim/campaign/diplomacy';
 import { seatOf } from '../sim/campaign/events';
 import { memberMoods, membersOf, moodWord } from '../sim/campaign/members';
+import { PATRONAGE, patronageChance, patronageOf } from '../sim/campaign/patronage';
 import { partnerMood } from '../sim/campaign/plots';
 import { Gauge } from './Gauge';
 import { Loan } from './Loan';
@@ -14,6 +15,7 @@ import { Jargon, Term } from './Term';
 import { stabilityBand } from '../sim/campaign/formation';
 import { FOCUS_IDS, type Level, type Orders } from '../sim/campaign/types';
 import { useStore } from '../state/store';
+import type { StringKey } from '../i18n/strings';
 import { ConfirmButton } from './SavesTab';
 import { leaderName, partyColor, partyName, partyShort, regionLabel, relationWord, useFormat, useT, useWorld } from './hooks';
 import { Brief } from './Brief';
@@ -44,6 +46,7 @@ export function OrdersTab() {
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const setOrders = useStore((s) => s.setOrders);
+  const setPatronage = useStore((s) => s.patronage);
   const invest = useStore((s) => s.invest);
   const dissolve = useStore((s) => s.dissolve);
   const selectState = useStore((s) => s.selectState);
@@ -57,6 +60,7 @@ export function OrdersTab() {
   const seat = seatOf(campaign);
   const income = termIncome(world, campaign);
   const spend = termSpending(world, campaign);
+  const books = ledger(world, campaign);
   const net = income.total - spend.total;
   const regions = world.states.filter((st) => contestsState(world, campaign, me, st));
   const targets = machineryTargets(world, campaign);
@@ -179,6 +183,22 @@ export function OrdersTab() {
             </span>
           ))}
         </div>
+        {Object.keys(k.states).some((st) => k.states[st] === me) && (
+          <div className="action">
+            <div className="grow">
+              <span className="action-title">{t('orders.patronage')}</span>
+              <span className="action-meta">{t('orders.patronage.desc', { x: PATRONAGE.mult[2] })}</span>
+              {patronageOf(k) > 0 && <span className="action-meta num">{t('orders.patronage.risk', { pct: (patronageChance(campaign) * 100).toFixed(1) })}</span>}
+            </div>
+            <div className="segmented small" role="group" aria-label={t('orders.patronage')}>
+              {PATRONAGE.mult.map((_, level) => (
+                <button key={level} className={patronageOf(k) === level ? 'active' : ''} aria-pressed={patronageOf(k) === level} disabled={campaign.phase !== 'term'} onClick={() => setPatronage(level)}>
+                  {t(`orders.patronage.${level}` as StringKey)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         </>
       )}
       {Object.keys(k.house).length > 0 && <p className="note">{t('orders.house.changed', { n: Object.keys(k.house).length })}</p>}
@@ -248,6 +268,14 @@ export function OrdersTab() {
           </li>
         )}
       </ul>
+      <h3>{t('orders.ledger')}</h3>
+      <table className="ledger num">
+        <tbody>
+          {books.income.map((l) => <tr key={`i${l.id}`}><td>{t(`ledger.${l.id}` as StringKey)}</td><td>+{f.rm(l.amount)}</td></tr>)}
+          {books.spending.map((l) => <tr key={`s${l.id}`}><td>{t(`ledger.${l.id}` as StringKey)}</td><td>−{f.rm(l.amount)}</td></tr>)}
+          <tr><th>{t('orders.net')}</th><th className={books.net < 0 ? 'neg' : ''}>{books.net < 0 ? '−' : '+'}{f.rm(Math.abs(books.net))}</th></tr>
+        </tbody>
+      </table>
       <dl className="facts orders-facts">
         <div><dt>{t('orders.in')}</dt><dd className="num">{f.rm(income.total)}</dd></div>
         <div><dt>{t('orders.out')}</dt><dd className="num">{f.rm(spend.total)}</dd></div>

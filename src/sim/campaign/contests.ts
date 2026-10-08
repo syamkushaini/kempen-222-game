@@ -25,6 +25,12 @@ export function holderOf(world: World, c: Campaign, seat: string): number {
   return c.career?.house[seat] ?? elected(world, world.seatIndex.get(seat)!);
 }
 
+/** The ids of the seats a party holds now (looks the last election up once, which holderOf does for every seat). */
+export function seatsHeldBy(world: World, c: Campaign, p: number): string[] {
+  const last = lastElection(world);
+  return world.seats.filter((s, i) => (c.career?.house[s.id] ?? last.seats[i].winner) === p).map((s) => s.id);
+}
+
 /** Seats in the House by party, as it sits today. */
 export function houseTally(world: World, c: Campaign): number[] {
   const tally = [...lastElection(world).tally];

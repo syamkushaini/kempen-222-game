@@ -3,7 +3,7 @@ import {
   ACTIVITY_IDS, ACTIVITIES, PADDING, canPad, padChance, paddedOf, FAVOUR_IDS, FOREIGN, canTakeForeign, exposureChance, inquiryChance, CHEST_BONUS, DISCIPLINE, DISCIPLINE_EVERY, REBRAND, canDiscipline, canRebrand, CHEST_PENALTY, HOLDINGS, fatigueOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
 } from '../sim/campaign/party';
 import { scaled } from '../sim/campaign/actions';
-import { CHIEF_NAMES, FACTION_IDS, WING_IDS, backing, challengeChance, factionsOf, PARTY_POLL_EVERY } from '../sim/campaign/factions';
+import { CHIEF_NAMES, deputyChance, deputyOf, FACTION_IDS, WING_IDS, backing, challengeChance, factionsOf, PARTY_POLL_EVERY } from '../sim/campaign/factions';
 import { useState } from 'react';
 import { PARTIES } from '../data/parties';
 import { PARTY_IDS } from '../sim/types';
@@ -81,6 +81,7 @@ export function PartyTab() {
 
       <h3>{t('party.factions')}</h3>
       <p className="muted small action-desc">{t('party.factions.desc', { n: PARTY_POLL_EVERY / 52, pct: backing(campaign), chance: f.pct(challengeChance(campaign), 0) })}</p>
+      <p className="note">{t('party.deputy', { name: CHIEF_NAMES[deputyOf(campaign).name], faction: t(`faction.${FACTION_IDS[deputyOf(campaign).faction]}`), ambition: Math.round(deputyOf(campaign).ambition), chance: f.pct(deputyChance(campaign), 0) })}</p>
       <ul>
         {FACTION_IDS.map((id, i) => {
           const fx = factionsOf(campaign);

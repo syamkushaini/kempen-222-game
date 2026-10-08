@@ -4,7 +4,7 @@ import { scaled } from '../sim/campaign/actions';
 import { BY_EFFORT, holderOf, ROUNDS, STATE_EFFORT } from '../sim/campaign/contests';
 import { COST, pactPreview } from '../sim/campaign/diplomacy';
 import { AGENDA, type AgendaChoice } from '../sim/campaign/agenda';
-import { POLL_ANSWERS, backing, pollOdds, type FactionId } from '../sim/campaign/factions';
+import { CHIEF_NAMES, FACTION_IDS, POLL_ANSWERS, backing, deputyOf, pollOdds, type FactionId } from '../sim/campaign/factions';
 import type { StateId } from '../sim/types';
 import { canChoose, EVENTS, gambleChance, ULTIMATUM_MONEY, type Choice, type Effect } from '../sim/campaign/events';
 import { bluffChance } from '../sim/campaign/plots';
@@ -218,12 +218,15 @@ function SceneCard({ scene }: { scene: Scene }) {
       disabled: !!choice.funds && choice.funds < 0 && campaign.parties[me]!.funds < scaled(world, Math.abs(choice.funds)),
     }));
   } else if (scene.kind === 'partyPoll') {
+    const isDeputy = scene.event === 'deputy';
     const who = scene.event as FactionId;
     title = t('partyPoll.title');
-    body = <p>{t('partyPoll.body', { faction: t(`faction.${who}` as StringKey), pct: backing(campaign) })}</p>;
+    body = isDeputy
+      ? <p>{t('partyPoll.deputy', { name: CHIEF_NAMES[deputyOf(campaign).name], faction: t(`faction.${FACTION_IDS[deputyOf(campaign).faction]}` as StringKey), pct: backing(campaign) })}</p>
+      : <p>{t('partyPoll.body', { faction: t(`faction.${who}` as StringKey), pct: backing(campaign) })}</p>;
     options = POLL_ANSWERS.map((a, i) => ({
       label: t(`partyPoll.o${i}` as StringKey), choice: i,
-      hint: [a.money ? `−${f.rm(scaled(world, a.money))}` : '', i === 1 ? t('partyPoll.o1.cost') : '', fog ? '' : t('partyPoll.odds', { pct: f.pct(pollOdds(campaign, i), 0) })].filter(Boolean).join(' · '),
+      hint: [a.money ? `−${f.rm(scaled(world, a.money))}` : '', i === 1 ? t('partyPoll.o1.cost') : '', fog ? '' : t('partyPoll.odds', { pct: f.pct(pollOdds(campaign, i, isDeputy), 0) })].filter(Boolean).join(' · '),
       disabled: a.money > 0 && campaign.parties[me]!.funds < scaled(world, a.money),
     }));
   } else if (scene.kind === 'redraw') {

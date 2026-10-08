@@ -6,6 +6,7 @@ import { scaled } from './actions';
 import { shiftUnity, addScene } from './diplomacy';
 import { endCareer } from './legacy';
 import { pushNews } from './news';
+import { houseTally, seatsHeldBy } from './contests';
 import { alignment } from './policy';
 import { ISSUE_IDS, type Campaign, type Career, type Scene } from './types';
 
@@ -37,6 +38,9 @@ export const CHIEF_NAMES = [
   'Dato’ Lim Boon Teck', 'Puan Rohani Samad', 'Tuan Haji Sulaiman', 'Cik Aminah Yusuf', 'Dr. Ravindran Pillai', 'Datuk Awang Jamil',
 ];
 
+/** The party's deputy: a person, with a faction behind them and an ambition that grows when the leader is not loved. */
+export interface Deputy { name: number; faction: number; ambition: number }
+
 export interface Factions {
   /** [faction]: share of the roll. */
   size: number[];
@@ -46,6 +50,7 @@ export interface Factions {
   wing: number[];
   /** Index into CHIEF_NAMES for each of the six, factions first. */
   chief: number[];
+  deputy?: Deputy;
 }
 
 /** The party's factions and wings, made the first time they are looked at. */
@@ -58,6 +63,18 @@ export function factionsOf(c: Campaign): Factions {
     k.factions = { size: [...sizes], mood: [62, 58, 56], wing: [58, 56, 60], chief: names.slice(0, 6) };
   }
   return k.factions;
+}
+
+/** The party's deputy, made the first time they are looked at (and again after one has left). */
+export function deputyOf(c: Campaign): Deputy {
+  const f = factionsOf(c);
+  if (!f.deputy) {
+    const k = c.career!;
+    const rng = new Rng(((c.seed ^ 0xde9a) + k.term * 7919 + k.week) >>> 0);
+    const free = CHIEF_NAMES.map((_, n) => n).filter((n) => !f.chief.includes(n));
+    f.deputy = { name: free[rng.int(free.length)], faction: rng.int(FACTION_IDS.length), ambition: 30 + rng.int(41) };
+  }
+  return f.deputy;
 }
 
 /** Where a faction's or wing's mood is being pulled, from what the leader has done. */
@@ -101,6 +118,9 @@ export function factionsWeek(c: Campaign): void {
   const t = targets(c);
   f.mood = f.mood.map((m, i) => clamp(m + (t.faction[i] - m) * 0.02, 0, 100));
   f.wing = f.wing.map((m, i) => clamp(m + (t.wing[i] - m) * 0.02, 0, 100));
+  // The deputy's ambition grows with the party's doubts about the leader, and slowly.
+  const d = deputyOf(c);
+  d.ambition = clamp(d.ambition + ((100 - backing(c)) * 0.9 - d.ambition) * 0.01, 0, 100);
 }
 
 /** How often the party meets to choose its leader, in weeks of a term. */
@@ -124,11 +144,15 @@ export function partyPoll(c: Campaign, rng: Rng): void {
     pushNews(c, { party: c.player, key: 'news.partyPoll.unopposed', vars: { pct: backing(c) }, tone: 'good' });
     return;
   }
-  // The faction most set against the leader fields the challenger.
+  // The deputy stands if their ambition is up to it; otherwise the faction most set against the leader fields someone.
   const f = factionsOf(c);
   const worst = f.mood.indexOf(Math.min(...f.mood));
-  addScene(c, { kind: 'partyPoll', from: null, event: FACTION_IDS[worst] });
+  const deputy = rng.next() < deputyChance(c);
+  addScene(c, { kind: 'partyPoll', from: null, event: deputy ? 'deputy' : FACTION_IDS[worst] });
 }
+
+/** The chance that it is the deputy who stands against the leader: ambition and doubts about the leader both count. */
+export const deputyChance = (c: Campaign) => clamp(0.15 + (deputyOf(c).ambition - 40) / 100 + (50 - backing(c)) / 250, 0.05, 0.8);
 
 /** What each answer to a challenge does to the leader's chances, in points of backing, and what it costs. */
 export const POLL_ANSWERS = [
@@ -138,9 +162,10 @@ export const POLL_ANSWERS = [
 ] as const;
 
 /** The chance the leader is returned, given how the party feels and what they did about it. */
-export function pollOdds(c: Campaign, choice: number): number {
+export const DEPUTY_EDGE = 0.1;
+export function pollOdds(c: Campaign, choice: number, deputy = false): number {
   const a = POLL_ANSWERS[choice] ?? POLL_ANSWERS[2];
-  return clamp(0.12 + 0.0085 * (backing(c) + a.bonus), 0.05, 0.97);
+  return clamp(0.12 + 0.0085 * (backing(c) + a.bonus) - (deputy ? DEPUTY_EDGE : 0), 0.05, 0.97);
 }
 
 /** The leader answers a challenge at the party's election: delegates are courted, a deal is made, or the record stands. The party decides. */
@@ -149,12 +174,13 @@ export function resolvePartyPoll(world: World, c: Campaign, scene: Scene, choice
   const pc = c.parties[c.player];
   if (!k || !pc || !POLL_ANSWERS[choice]) return;
   const f = factionsOf(c);
-  const challenger = FACTION_IDS.indexOf(scene.event as FactionId);
+  const isDeputy = scene.event === 'deputy';
+  const challenger = isDeputy ? deputyOf(c).faction : FACTION_IDS.indexOf(scene.event as FactionId);
   const answer = POLL_ANSWERS[choice];
   const price = scaled(world, answer.money);
   if (price > pc.funds) choice = 2;
   else pc.funds -= price;
-  const odds = pollOdds(c, choice);
+  const odds = pollOdds(c, choice, isDeputy);
   if (choice === 1 && challenger >= 0) {
     // A deal: the challenger's faction is brought in, and the rest do not like to see it.
     f.mood = f.mood.map((m, i) => clamp(i === challenger ? m + 15 : m - 3, 0, 100));
@@ -167,10 +193,54 @@ export function resolvePartyPoll(world: World, c: Campaign, scene: Scene, choice
     shiftUnity(c, c.player, 5);
     if (challenger >= 0) f.mood[challenger] = clamp(f.mood[challenger] - 10, 0, 100);
     pushNews(c, { party: c.player, key: 'news.partyPoll.won', vars: { faction: `@faction:${FACTION_IDS[Math.max(0, challenger)]}` }, tone: 'good' });
+    challengerLeaves(world, c, isDeputy, Math.max(0, challenger), choice === 1);
   } else {
     pushNews(c, { party: c.player, key: 'news.partyPoll.lost', vars: {}, tone: 'bad' });
     endCareer(c, 'ousted');
   }
+}
+
+// ---------- the one who lost ----------
+
+/** How many seats go with a challenger who walks out. */
+export const WALKOUT = { seats: 1, deputySeats: 2, unity: 4, mood: 8, stability: 2 };
+
+/** The chance that a challenger who has lost leaves the party: likelier for a deputy, unlikelier if a deal was struck with them. */
+export const leaveChance = (c: Campaign, isDeputy: boolean, dealt: boolean) => clamp(0.3 + (isDeputy ? 0.15 : 0) - (dealt ? 0.25 : 0) + (50 - backing(c)) / 300, 0.05, 0.6);
+
+/**
+ * A challenger who has lost the party's election may not stay. If they go, they take a seat or two with them (two for a
+ * deputy), to stand as independents or to join the largest party outside the government, and their faction is sour.
+ */
+export function challengerLeaves(world: World, c: Campaign, isDeputy: boolean, faction: number, dealt: boolean): boolean {
+  const k = c.career!;
+  const rng = new Rng((c.rng ^ 0x1ea5e) + k.week);
+  const leaves = rng.next() < leaveChance(c, isDeputy, dealt);
+  const independent = rng.next() < 0.5;
+  const seats = seatsHeldBy(world, c, c.player);
+  const n = Math.min(seats.length, isDeputy ? WALKOUT.deputySeats : WALKOUT.seats);
+  const taken: string[] = [];
+  for (let i = 0; i < n; i++) taken.push(...seats.splice(rng.int(seats.length), 1));
+  c.rng = rng.state;
+  if (!leaves) return false;
+  const f = factionsOf(c);
+  const tally = houseTally(world, c);
+  const OTH = PARTY_IDS.indexOf('oth');
+  const g = k.government;
+  const rival = tally.map((seatsHeld, q) => ({ q, seatsHeld })).filter(({ q }) => q !== c.player && q !== OTH && c.parties[q] && q !== g.pm && !g.partners.includes(q)).sort((a, b) => b.seatsHeld - a.seatsHeld)[0]?.q ?? OTH;
+  const dest = independent ? OTH : rival;
+  const inGov = (p: number) => p === g.pm || g.partners.includes(p);
+  for (const seat of taken) {
+    k.house[seat] = dest;
+    g.seats += (inGov(dest) ? 1 : 0) - (inGov(c.player) ? 1 : 0);
+  }
+  if (inGov(c.player)) g.stability = clamp(g.stability - WALKOUT.stability, 5, 95);
+  shiftUnity(c, c.player, -WALKOUT.unity);
+  f.mood[faction] = clamp(f.mood[faction] - WALKOUT.mood, 0, 100);
+  const name = isDeputy ? CHIEF_NAMES[deputyOf(c).name] : CHIEF_NAMES[f.chief[faction]];
+  if (isDeputy) delete f.deputy;
+  pushNews(c, { party: c.player, key: dest === OTH ? 'news.partyPoll.leftIndep' : 'news.partyPoll.left', vars: { name, party: `@party:${dest}`, n: taken.length }, tone: 'bad' });
+  return true;
 }
 
 export type { Career };

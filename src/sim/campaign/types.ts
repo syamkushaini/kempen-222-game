@@ -414,11 +414,13 @@ export interface Career {
   /** What was decided about the boundaries before the next parliament: the party that asked for a map that suits it, or null for the commission left alone. Absent if the question did not arise (see redraw.ts). */
   redraw?: { by: number | null };
   /** The party's factions and wings, made the first time they are looked at (see factions.ts). */
-  factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[] };
+  factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[]; deputy?: { name: number; faction: number; ambition: number } };
   /** The shadow cabinet the player has named from the opposition benches, by portfolio (see shadow.ts). */
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
+  /** How freely the party draws on the states it governs, 0 to 2 (see patronage.ts). */
+  patronage?: number;
   /** Members on the rolls on paper only, not yet found out (see party.ts). */
   padded?: number;
   /** [seat]: the faction a safe seat was given to as a reward (see safeseat.ts). */

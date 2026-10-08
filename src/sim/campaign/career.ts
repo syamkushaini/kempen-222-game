@@ -30,6 +30,7 @@ import { supplyWeek } from './supply';
 import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
+import { patronageMult, patronageWeek } from './patronage';
 import { applySafe } from './safeseat';
 import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, crowdIncome, fatigueOf, foreignWeek, paddedWeek, grassrootsLift, holdingsWeek, trailWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
@@ -238,8 +239,21 @@ export function termIncome(world: World, c: Campaign): Income {
   const state = inGovernment(c, c.player) ? scaled(world, STATE_INCOME) * k.orders.state : 0;
   const assets = holdingsYield(k);
   // A party that governs states has their patronage to draw on.
-  const states = scaled(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player);
+  const states = Math.round(scaled(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player) * patronageMult(k));
   return { members, donors, crowd, state, assets, states, total: members + donors + crowd + state + assets + states };
+}
+
+export interface LedgerLine { id: string; amount: number }
+
+/** The party's books for a week in the years between elections: what comes in by source, what goes out by kind, and what is left. */
+export function ledger(world: World, c: Campaign): { income: LedgerLine[]; spending: LedgerLine[]; net: number } {
+  const i = termIncome(world, c);
+  const s = termSpending(world, c);
+  const income = ([['members', i.members], ['donors', i.donors], ['crowd', i.crowd], ['state', i.state], ['assets', i.assets], ['states', i.states]] as const)
+    .filter(([, amount]) => amount !== 0).map(([id, amount]) => ({ id, amount }));
+  const spending = ([['machinery', s.machinery], ['media', s.media], ['research', s.research], ['wages', s.wages]] as const)
+    .filter(([, amount]) => amount > 0).map(([id, amount]) => ({ id, amount }));
+  return { income, spending, net: i.total - s.total };
 }
 
 export interface Spending { machinery: number; media: number; research: number; wages: number; total: number }
@@ -364,6 +378,7 @@ export function termWeek(world: World, c: Campaign): void {
   foreignWeek(world, c, rngWeek);
   rollsWeek(world, c);
   paddedWeek(world, c, rngWeek);
+  patronageWeek(c, rngWeek);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
   k.profile[me] = Math.min(PROFILE_CAP, k.profile[me] * 0.97 + seen);
