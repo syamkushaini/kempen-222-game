@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { WHATIF_IDS } from '../sim/campaign/whatif';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
@@ -24,7 +24,6 @@ import { HonoursDialog } from './Honours';
 import { HowToPlay } from './HowToPlay';
 import { Logo } from './Logo';
 import { Icon, type IconName } from './Icon';
-import { canDraw3D } from './map3d';
 import { Portrait } from './Portrait';
 import { SupportDialog } from './Support';
 import { saveLine, SaveSlots } from './SavesTab';
@@ -64,8 +63,8 @@ function RadioCard({ checked, className, style, onSelect, children }: { checked:
   );
 }
 
-// The country behind the menu, and the 3D library with it, are fetched after the menu is on screen.
-const MenuScene = lazy(() => import('./MenuScene'));
+// The picture behind the menu: a rally at dusk below the seat of government. Its left side is dark, and the menu stands there.
+const MENU_ART = `${import.meta.env.BASE_URL}menu-bg.webp`;
 
 const STEPS = ['steps.contest', 'steps.who', 'steps.rules'] as const;
 
@@ -125,9 +124,7 @@ export function Title() {
   const [howTo, setHowTo] = useState(false);
   const [support, setSupport] = useState(false);
   const profile = useStore((s) => s.profile);
-  const want3d = useStore((s) => s.settings.map3d);
-  // The country turns behind the menu on a laptop that can draw it, for a player who has not asked for less.
-  const [backdrop] = useState(() => want3d && canDraw3D() && typeof matchMedia === 'function' && matchMedia('(min-width: 981px)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [art, setArt] = useState(false);
   const [lastMode] = useState<'quick' | 'custom' | null>(() => { try { const v = localStorage.getItem(MODE_KEY); return v === 'custom' || v === 'quick' ? v : null; } catch { return null; } });
   useEffect(() => { if (setupWanted) clearSetupWanted(); }, [setupWanted, clearSetupWanted]);
   const custom = mode === 'custom';
@@ -170,7 +167,7 @@ export function Title() {
 
   return (
     <main className={mode === 'menu' ? 'title menu-stage' : 'title menu-stage sub'}>
-      {backdrop && <Suspense fallback={null}><MenuScene /></Suspense>}
+      <div className={art ? 'menu-art ready' : 'menu-art'} aria-hidden="true"><img src={MENU_ART} alt="" decoding="async" ref={(el) => { if (el?.complete && el.naturalWidth > 0) setArt(true); }} onLoad={() => setArt(true)} /></div>
       {honours && <HonoursDialog onClose={() => setHonours(false)} />}
       {howTo && <HowToPlay onClose={() => setHowTo(false)} />}
       {support && <SupportDialog onClose={() => setSupport(false)} />}
