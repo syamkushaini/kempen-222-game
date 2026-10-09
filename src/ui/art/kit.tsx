@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react';
-import { chiefs, crowd, leader, pair, person, police, reporter, rider, ruler, student, worker, asker, type Drawing } from './people';
+import { Backdrop, Foreground } from './backdrop';
+import { chiefs, crowd, leader, pair, person, police, reporter, rider, ruler, student, worker, asker, type Drawing, type Tone } from './people';
 import * as places from './places';
 import * as props from './props';
 
@@ -8,7 +9,7 @@ import * as props from './props';
 //   "storm|water: kampung@20, kampung@60*0.8, person@42, rain@50"
 // where each part is `name@position` (0 to 100 across the picture) and may carry `*scale` (1 is life size).
 
-export const W = 800, H = 450, GROUND = 318, FEET = 372;
+export const W = 800, H = 450, GROUND = 312, FEET = 384;
 
 export const SKIES = {
   day: ['#a9c7d4', '#efe6cd'], dusk: ['#9a8aa8', '#e8b98a'], night: ['#4a5878', '#8c8fa0'],
@@ -31,7 +32,7 @@ export interface Item { part: string; x: number; s: number }
 /** People are drawn larger than life size relative to a building so that they read at a glance; the wide parts are not scaled. */
 const PEOPLE = new Set(['person', 'leader', 'pair', 'crowd', 'chiefs', 'police', 'worker', 'student', 'reporter', 'asker', 'rider', 'ruler']);
 const WIDE = new Set(['rain', 'waves', 'road', 'rails', 'hills', 'haze', 'sludge', 'wallroom', 'cloud', 'sun', 'moon', 'bunting', 'lightning']);
-const SIZE = (part: string) => (part === 'rider' ? 1.35 : PEOPLE.has(part) ? 1.9 : WIDE.has(part) ? 1 : 1.4);
+const SIZE = (part: string) => (part === 'rider' ? 1.3 : PEOPLE.has(part) ? 1.62 : WIDE.has(part) ? 1 : 1.4);
 export interface Recipe { sky: Sky; ground: Ground; items: Item[] }
 
 const DEFAULT_GROUND: Record<Sky, Ground> = { day: 'grass', dusk: 'grass', night: 'grass', storm: 'grass', haze: 'sand', room: 'floor', bright: 'tile' };
@@ -54,7 +55,47 @@ export const unknown = (r: Recipe): string[] => r.items.filter((i) => !PARTS[i.p
 /** Parts that are weather, water or wash, not objects: they are not outlined in ink and cast no shadow. */
 const SOFT = new Set(['rain', 'waves', 'haze', 'cloud', 'sun', 'moon', 'smoke', 'sludge', 'hills', 'lightning', 'bunting', 'fire']);
 /** About how wide each kind of part stands on the ground, for the shadow it casts. */
-const SHADOW = (part: string): number => (PEOPLE.has(part) ? (part === 'crowd' || part === 'chiefs' || part === 'pair' ? 70 : 20) : 34);
+const SHADOW = (part: string): number => (PEOPLE.has(part) ? (part === 'crowd' ? 96 : part === 'chiefs' || part === 'pair' ? 66 : 22) : 34);
+
+const TENSE = new Set(['alarm', 'warning', 'chartDown', 'lock', 'fire', 'smoke', 'barrier', 'sludge', 'lightning', 'rain', 'brokenBridge', 'question', 'police']);
+const GLAD = new Set(['trophy', 'handshake', 'chartUp', 'ribbon', 'bunting', 'cash', 'durian', 'ball', 'goal', 'sun']);
+const BIG = new Set(['palace', 'parliament', 'court', 'hotel', 'shophouses', 'stage', 'longhouse', 'port', 'factory', 'school', 'hospital', 'kampung', 'market', 'bridge', 'brokenBridge', 'train', 'ship', 'squatters', 'goal']);
+const TOWN = new Set(['tower', 'hotel', 'shophouses', 'car', 'truck', 'road', 'crane', 'court', 'parliament', 'hospital', 'factory', 'port']);
+
+/** The temper of a scene, from what is in it: trouble, celebration, or neither. Its people's faces follow it. */
+export function toneOf(r: Recipe): Tone {
+  let tense = r.sky === 'storm' ? 1 : 0, glad = 0;
+  for (const i of r.items) { if (TENSE.has(i.part)) tense++; if (GLAD.has(i.part)) glad++; }
+  return tense > 0 && tense >= glad ? 'tense' : glad > 0 ? 'glad' : 'plain';
+}
+
+/**
+ * People standing further back, looking on, where a scene has few people of its own: they give it life and depth. They keep
+ * clear of what the scene itself has placed, and there are none on water.
+ */
+function onlookers(r: Recipe, seed: number): { x: number; s: number }[] {
+  if (r.ground === 'water' || r.items.filter((i) => PEOPLE.has(i.part)).length > 2) return [];
+  // A building takes more room than a person or a thing does.
+  const taken = r.items.filter((i) => !WIDE.has(i.part)).map((i) => ({ x: i.x, room: BIG.has(i.part) ? 21 : PEOPLE.has(i.part) ? 10 : 13 }));
+  const out: { x: number; s: number }[] = [];
+  for (let k = 0; k < 9 && out.length < 3; k++) {
+    const x = 8 + ((seed * 37 + k * 23) % 85);
+    if (taken.some((t) => Math.abs(t.x - x) < t.room) || out.some((o) => Math.abs(o.x / W * 100 - x) < 8)) continue;
+    out.push({ x: (x / 100) * W, s: 1.0 + ((seed + k) % 3) * 0.06 });
+  }
+  return out;
+}
+
+/** Where a part stands across the picture: where it was asked to, but a group of people is kept from running off the edge. */
+const place = (item: Item): number => {
+  const x = (item.x / 100) * W;
+  if (!PEOPLE.has(item.part)) return x;
+  const half = SHADOW(item.part) * item.s + 26;
+  return Math.max(half, Math.min(W - half, x));
+};
+
+/** How far back a part stands, from how small it was asked to be: smaller is further, and so higher up the picture. */
+const depth = (item: Item): number => (WIDE.has(item.part) ? 0 : Math.max(-38, Math.min(14, (1 - item.s / SIZE(item.part)) * -56)));
 
 /**
  * One scene as an SVG, drawn as an editorial cartoon on cream paper: charcoal outlines that wobble and vary in weight, flat
@@ -65,10 +106,22 @@ export function Scene({ recipe, seed = 0, label }: { recipe: Recipe; seed?: numb
   const uid = `k${useId().replace(/:/g, '')}`;
   const [top, bottom] = SKIES[recipe.sky];
   const u = (name: string) => `url(#${uid}${name})`;
+  const tone = toneOf(recipe);
+  const names = new Set(recipe.items.map((i) => i.part));
+  const town = [...names].some((n) => TOWN.has(n));
+  // How many of the scene's first parts are its walls, hills and weather: what everything else stands in front of.
+  const lead = recipe.items.findIndex((i) => !WIDE.has(i.part)) < 0 ? recipe.items.length : recipe.items.findIndex((i) => !WIDE.has(i.part));
+  const watchers = onlookers(recipe, seed).map((o, k) => (
+    <g key={`o${k}`} transform={`translate(${o.x} ${FEET - 30}) scale(${o.s})`} className="part" opacity="0.92">
+      <ellipse className="soft" cx="5" cy="2" rx="20" ry="5" fill={u('hatch')} />
+      {person({ i: seed * 3 + k * 7 + 5, uid, tone })}
+    </g>
+  ));
   return (
     <svg className="scene-svg ink" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice" role={label ? 'img' : 'presentation'} aria-label={label} aria-hidden={label ? undefined : true}>
       <defs>
         <linearGradient id={`${uid}sky`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={top} /><stop offset="1" stopColor={bottom} /></linearGradient>
+        <radialGradient id={`${uid}vig`} cx="0.5" cy="0.46" r="0.75"><stop offset="0.55" stopColor="#5a4630" stopOpacity="0" /><stop offset="1" stopColor="#5a4630" stopOpacity="0.42" /></radialGradient>
         <pattern id={`${uid}hatch`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(48)"><path d="M0 0 V7" stroke="#2a2623" strokeWidth="0.9" /></pattern>
         <pattern id={`${uid}cross`} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-42)"><path d="M0 0 V6" stroke="#2a2623" strokeWidth="0.9" /></pattern>
         <pattern id={`${uid}stipple`} width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2" cy="2.5" r="0.8" fill="#2a2623" /><circle cx="6.5" cy="5.5" r="0.7" fill="#2a2623" /><circle cx="4" cy="8" r="0.6" fill="#2a2623" /></pattern>
@@ -95,22 +148,28 @@ export function Scene({ recipe, seed = 0, label }: { recipe: Recipe; seed?: numb
             <rect className="wash" width={W} height={H} fill={u('sky')} />
             {recipe.ground !== 'none' && <rect className="wash" y={GROUND} width={W} height={H - GROUND} fill={GROUNDS[recipe.ground]} />}
             {recipe.ground === 'road' && <rect className="wash" y={GROUND} width={W} height="8" fill="#2a2623" fillOpacity="0.35" />}
+            <Backdrop sky={recipe.sky} ground={recipe.ground} town={town} hasHills={names.has('hills')} horizon={GROUND} feet={FEET} seed={seed} />
             {recipe.items.map((item, k) => {
               const Part = PARTS[item.part];
               if (!Part) return null;
               const soft = SOFT.has(item.part);
-              return (
-                <g key={k} transform={`translate(${(item.x / 100) * W} ${FEET}) scale(${item.s})`} className={soft ? 'part soft' : 'part'}>
-                  {!soft && !WIDE.has(item.part) && <ellipse className="soft" cx="0" cy="2" rx={SHADOW(item.part)} ry="6" fill={u('hatch')} />}
-                  {Part({ i: seed + k, uid })}
-                </g>
-              );
+              return [
+                // The lookers-on stand behind the scene's own people, but in front of its walls and its far hills.
+                k === lead && watchers,
+                <g key={k} transform={`translate(${place(item)} ${FEET + depth(item)}) scale(${item.s})`} className={soft ? 'part soft' : 'part'}>
+                  {!soft && !WIDE.has(item.part) && <ellipse className="soft" cx="6" cy="2" rx={SHADOW(item.part)} ry="5.5" fill={u('hatch')} />}
+                  {Part({ i: seed + k, uid, tone })}
+                </g>,
+              ];
             })}
+            {lead >= recipe.items.length && watchers}
+            <Foreground sky={recipe.sky} ground={recipe.ground} seed={seed} />
           </g>
           <rect className="soft" width={W} height={H} fill={u('hatch')} mask={u('m1')} />
           <rect className="soft" width={W} height={H} fill={u('cross')} mask={u('m2')} />
           <rect className="soft" width={W} height={H} fill={u('stipple')} mask={u('m3')} opacity="0.75" />
           <rect className="soft" width={W} height={H} filter={u('bloom')} opacity="0.35" style={{ mixBlendMode: 'multiply' }} />
+          <rect className="soft" width={W} height={H} fill={u('vig')} style={{ mixBlendMode: 'multiply' }} />
         </g>
       </g>
     </svg>

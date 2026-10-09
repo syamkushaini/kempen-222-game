@@ -17,6 +17,7 @@
 //   --model NAME    the model (default gemini-2.5-flash-image)
 //   --concurrency N pictures asked for at once (default 2)
 //   --width N       width of the finished JPEG (default 960)
+//   --quality N     JPEG quality, 1 to 100 (default 60: these line drawings run to about 200 KB a picture)
 //   --base URL      another API address, for testing
 //   --out DIR       where the pictures go (default public/scenes)
 //   --prompts FILE  other words than scripts/art/prompts.json, for testing
@@ -36,7 +37,7 @@ export const SPEC = readSpec(join(here, 'art', 'prompts.json'));
 export const compose = (title, body, spec = SPEC) => `${spec.style}\n\n${spec.lead} "${title}": ${body}\n${spec.tail}\n${spec.avoid}`;
 
 export function parseArgs(argv) {
-  const o = { only: null, limit: Infinity, force: false, dry: false, model: 'gemini-2.5-flash-image', concurrency: 2, width: 960, base: 'https://generativelanguage.googleapis.com', out: join(ROOT, 'public', 'scenes'), prompts: null, failed: join(here, 'art', 'failed.json') };
+  const o = { only: null, limit: Infinity, force: false, dry: false, model: 'gemini-2.5-flash-image', concurrency: 2, width: 960, quality: 60, base: 'https://generativelanguage.googleapis.com', out: join(ROOT, 'public', 'scenes'), prompts: null, failed: join(here, 'art', 'failed.json') };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const next = () => argv[++i];
@@ -47,6 +48,7 @@ export function parseArgs(argv) {
     else if (a === '--model') o.model = next();
     else if (a === '--concurrency') o.concurrency = Math.max(1, Number(next()));
     else if (a === '--width') o.width = Number(next());
+    else if (a === '--quality') o.quality = Number(next());
     else if (a === '--base') o.base = next();
     else if (a === '--out') o.out = next();
     else if (a === '--prompts') o.prompts = next();
@@ -96,13 +98,13 @@ export function manifestOf(dir) {
 }
 
 /** Shrinks a picture to a JPEG of the width asked for; without sips the picture is kept as it came. Returns the file name. */
-export function finish(raw, mime, dir, id, width) {
+export function finish(raw, mime, dir, id, width, quality = 60) {
   const ext = mime.includes('jpeg') ? 'jpg' : mime.includes('webp') ? 'webp' : 'png';
   const tmp = join(dir, `.${id}.${ext}`);
   writeFileSync(tmp, raw);
   try {
     const out = join(dir, `${id}.jpg`);
-    execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '72', '--resampleWidth', String(width), tmp, '--out', out], { stdio: 'ignore' });
+    execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', String(quality), '--resampleWidth', String(width), tmp, '--out', out], { stdio: 'ignore' });
     execFileSync('rm', ['-f', tmp]);
     return `${id}.jpg`;
   } catch {
@@ -134,7 +136,7 @@ export async function main(argv, env = process.env, log = console.log) {
       const { title, body } = spec.scenes[id];
       const result = await draw(compose(title, body, spec), opts, key);
       if (result.refused) { failed[id] = result.refused; log(`  ✗ ${id}: ${result.refused}`); continue; }
-      const file = finish(result.data, result.mime, opts.out, id, opts.width);
+      const file = finish(result.data, result.mime, opts.out, id, opts.width, opts.quality);
       delete failed[id];
       drawn++; bytes += result.data.length;
       log(`  ✓ ${id} → ${file} (${Math.round(result.data.length / 1024)} KB as drawn) [${drawn}/${todo.length}]`);

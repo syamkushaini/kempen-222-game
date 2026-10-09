@@ -24,9 +24,14 @@ export const camera: Drawing = () => (
 export const newspaper: Drawing = () => (
   <g transform="rotate(-6)"><rect x="-44" y="-62" width="88" height="62" rx="3" fill="#efece4" stroke="#0002" /><rect x="-38" y="-56" width="76" height="12" fill={INK} /><rect x="-38" y="-38" width="32" height="26" fill="#9aa3b0" />{[0, 1, 2, 3].map((k) => <rect key={k} x="-2" y={-38 + k * 8} width="40" height="3" fill="#8a909c" />)}</g>
 );
-/** A stack of papers. */
+/** Papers: a stack on the ground, held with a clip, and a sheet or two getting away. */
 export const docs: Drawing = () => (
-  <g><Paper x={-26} y={-52} r={-8} /><Paper x={-12} y={-56} r={4} /><Paper x={-4} y={-50} r={-2} w={36} h={46} /></g>
+  <g>
+    {[0, 1, 2, 3, 4].map((k) => <rect key={k} x={-30 + (k % 2) * 3} y={-12 - k * 5} width="56" height="6" rx="1" fill={k % 2 ? '#ece5d2' : '#f6f1e4'} />)}
+    <Paper x={-28} y={-76} r={-7} w={42} h={52} /><Paper x={-8} y={-84} r={5} w={42} h={52} lines={6} />
+    <path d="M22 -86 v16 q0 5 -5 5 q-5 0 -5 -5 v-12" fill="none" stroke="#6f6a64" strokeWidth="2.4" strokeLinecap="round" />
+    <Paper x={34} y={-128} r={24} w={30} h={38} lines={4} />
+  </g>
 );
 /** A sack of money. */
 export const moneybag: Drawing = () => (
@@ -44,9 +49,16 @@ export const gavel: Drawing = () => (
 export const ballot: Drawing = () => (
   <g><rect x="-34" y="-52" width="68" height="52" rx="4" fill="#2b5f9e" /><rect x="-18" y="-56" width="36" height="6" rx="2" fill="#173a63" /><Paper x={-9} y={-90} r={6} w={22} h={30} lines={3} /><path d="M-10 -24 l7 8 l14 -17" fill="none" stroke="#f3ead2" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /></g>
 );
-/** A smartphone with a speech bubble and a heart. */
+/** A phone set up to broadcast: on a tripod, inside a ring light, with a message and a heart on its screen. */
 export const phone: Drawing = () => (
-  <g><rect x="-22" y="-86" width="44" height="82" rx="8" fill="#20242c" /><rect x="-18" y="-80" width="36" height="68" rx="4" fill="#6fb3e0" /><path d="M-12 -70 h24 a4 4 0 0 1 4 4 v10 a4 4 0 0 1 -4 4 h-12 l-6 6 v-6 h-6 a4 4 0 0 1 -4 -4 v-10 a4 4 0 0 1 4 -4z" fill="#fff" /><path d="M0 -28 c-10 -8 -10 -16 0 -10 c10 -6 10 2 0 10z" fill="#e0405a" /></g>
+  <g>
+    <path d="M0 -44 L-20 0 M0 -44 L20 0 M0 -44 V-2" fill="none" stroke="#4a4a4f" strokeWidth="3.4" strokeLinecap="round" />
+    <rect x="-2.5" y="-70" width="5" height="28" fill="#4a4a4f" />
+    <circle cx="0" cy="-92" r="30" fill="none" stroke="#f4efe2" strokeWidth="7" /><circle cx="0" cy="-92" r="30" fill="none" stroke="#2a2623" strokeOpacity="0.5" strokeWidth="1.4" /><circle cx="0" cy="-92" r="23.5" fill="none" stroke="#2a2623" strokeOpacity="0.5" strokeWidth="1.2" />
+    <rect x="-13" y="-116" width="26" height="48" rx="4.5" fill="#26262b" /><rect x="-10.5" y="-112" width="21" height="40" rx="2.5" fill="#7fb1cf" />
+    <path d="M-7 -108 h14 a2.4 2.4 0 0 1 2.4 2.4 v6 a2.4 2.4 0 0 1 -2.4 2.4 h-7 l-4 4 v-4 h-3 a2.4 2.4 0 0 1 -2.4 -2.4 v-6 a2.4 2.4 0 0 1 2.4 -2.4z" fill="#f4efe2" />
+    <path d="M0 -77 c-8 -5.5 -7 -11.5 0 -7 c7 -4.5 8 1.5 0 7z" fill="#b4342d" />
+  </g>
 );
 /** A television set. */
 export const tv: Drawing = () => (
@@ -64,18 +76,35 @@ export const tap: Drawing = () => (
 export const pump: Drawing = () => (
   <g><rect x="-22" y="-82" width="44" height="82" rx="4" fill="#d8504a" /><rect x="-16" y="-74" width="32" height="22" fill="#2a2f3a" /><path d="M-10 -60 h6 M-2 -60 h6 M6 -60 h4" stroke="#8fd9a0" strokeWidth="3" strokeLinecap="round" /><path d="M22 -50 q18 4 14 24 v10" fill="none" stroke="#2a2f3a" strokeWidth="4" /></g>
 );
-/** A party flag on a pole. */
+/** A party flag on a pole, lifting in the wind, with a stripe and a star on it. */
 export const flag: Drawing = () => (
-  <g><rect x="-2" y="-120" width="4" height="120" fill="#888" /><path d="M2 -118 h52 q-8 14 0 28 h-52z" fill="var(--primary, #c0392b)" /></g>
+  <g>
+    <rect x="-2" y="-128" width="4" height="128" fill="#8a8a86" /><circle cx="0" cy="-131" r="4" fill="#c79a3f" />
+    <path d="M2 -126 q14 -7 28 0 t28 0 v32 q-14 -7 -28 0 t-28 0z" fill="var(--primary, #b4342d)" />
+    <path d="M2 -106 q14 -7 28 0 t28 0 v8 q-14 -7 -28 0 t-28 0z" fill="#f1e6c8" />
+    <path d="M18 -120 l2.2 4.6 l5 0.6 l-3.7 3.4 l1 5 l-4.5 -2.5 l-4.5 2.5 l1 -5 l-3.7 -3.4 l5 -0.6z" fill="#f1e6c8" />
+  </g>
 );
 /** Strings of bunting across the top. */
 export const bunting: Drawing = () => (
   <g><path d="M-300 -230 Q0 -190 300 -230" fill="none" stroke="#555" strokeWidth="2" />{Array.from({ length: 16 }, (_, k) => { const x = -280 + k * 37; const y = -226 + Math.sin((k / 15) * Math.PI) * 30; return <path key={k} d={`M${x} ${y} h18 l-9 18z`} fill={['#d8504a', '#e8c56b', '#2f9e6f', '#2b6cb0'][k % 4]} />; })}</g>
 );
-/** A placard on a stick. */
-export const placard: Drawing = ({ i }) => (
-  <g><rect x="-2" y="-90" width="4" height="90" fill="#8a5d33" /><rect x="-28" y="-130" width="56" height="42" rx="3" fill={['#f6f4ee', '#f2c230', '#e0e8f0'][i % 3]} stroke="#0003" />{[0, 1, 2].map((k) => <rect key={k} x="-20" y={-122 + k * 11} width={40 - k * 8} height="5" rx="2" fill={INK} />)}</g>
-);
+/** A placard on a stick, with a drawing on it and nothing written: scales, a sun, a fist, a cross or a heart. */
+export const placard: Drawing = ({ i }) => {
+  const k = Math.abs(i) % 5;
+  const mark = { fill: 'none', stroke: '#2a2623', strokeWidth: 2.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  return (
+    <g transform={`rotate(${(k - 2) * 2.5})`}>
+      <rect x="-2" y="-96" width="4" height="96" fill="#8a6a3a" />
+      <rect x="-31" y="-142" width="62" height="48" rx="3" fill={['#f3ecd8', '#e9d59a', '#dfe6d6'][k % 3]} />
+      {k === 0 && <path d="M0 -134 v26 M-16 -128 h32 M-16 -128 l-6 12 h12z M16 -128 l-6 12 h12z M-8 -106 h16" {...mark} />}
+      {k === 1 && <><circle cx="0" cy="-116" r="9" fill="#e3b93a" stroke="#2a2623" strokeWidth="2" /><path d="M0 -133 v5 M0 -104 v5 M-17 -116 h5 M12 -116 h5 M-12 -128 l3.5 3.5 M8.5 -107.5 l3.5 3.5 M12 -128 l-3.5 3.5 M-8.5 -107.5 l-3.5 3.5" {...mark} strokeWidth="2.2" /></>}
+      {k === 2 && <path d="M-9 -104 v-14 q0 -6 5 -6 h9 q5 0 5 6 v6 q0 8 -8 8z M-9 -118 v-6 q0 -4 4 -4 M-1 -124 v-6 M6 -124 v-5" fill="#b4342d" stroke="#2a2623" strokeWidth="2" strokeLinejoin="round" />}
+      {k === 3 && <path d="M-13 -130 l26 24 M13 -130 l-26 24" {...mark} stroke="#b4342d" strokeWidth="4.5" />}
+      {k === 4 && <path d="M0 -106 c-22 -14 -16 -30 0 -19 c16 -11 22 5 0 19z" fill="#b4342d" stroke="#2a2623" strokeWidth="2" strokeLinejoin="round" />}
+    </g>
+  );
+};
 /** Rain falling across the whole picture. */
 export const rain: Drawing = () => (
   <g stroke="#cfe3f5" strokeWidth="2" strokeLinecap="round" opacity="0.7">{Array.from({ length: 70 }, (_, k) => { const x = -440 + ((k * 137) % 880), y = -300 + ((k * 61) % 260); return <path key={k} d={`M${x} ${y} l-6 18`} />; })}</g>
@@ -153,10 +182,17 @@ export const poster: Drawing = ({ i }) => (
     <path d="M-12 -118 q12 -12 24 0" fill="#2a2623" />
   </g>
 );
-/** A durian. */
-export const durian: Drawing = () => (
-  <g><ellipse cx="0" cy="-30" rx="30" ry="28" fill="#9bb04a" />{Array.from({ length: 14 }, (_, k) => { const a = (k / 14) * Math.PI * 2; return <path key={k} d={`M${Math.cos(a) * 26} ${-30 + Math.sin(a) * 24} l${Math.cos(a) * 8} ${Math.sin(a) * 8} l${-Math.sin(a) * 4} ${Math.cos(a) * 4}z`} fill="#6e8530" />; })}<path d="M-6 -58 q6 -12 12 0" fill="none" stroke="#5a6a28" strokeWidth="3" /></g>
-);
+/** Durians, a few of them, one split open. */
+export const durian: Drawing = () => {
+  const one = (x: number, y: number, r: number, k: number) => (
+    <g key={k} transform={`translate(${x} ${y})`}>
+      <ellipse cx="0" cy={-r} rx={r} ry={r * 0.92} fill="#9aa94a" />
+      {Array.from({ length: 12 }, (_, n) => { const a = (n / 12) * Math.PI * 2; return <path key={n} d={`M${Math.cos(a) * r * 0.86} ${-r + Math.sin(a) * r * 0.8} l${Math.cos(a) * r * 0.3} ${Math.sin(a) * r * 0.3} l${-Math.sin(a) * r * 0.16} ${Math.cos(a) * r * 0.16}z`} fill="#6e8530" />; })}
+      <path d={`M-3 ${-r * 1.9} q3 -7 7 -1`} fill="none" stroke="#5a6a28" strokeWidth="3" strokeLinecap="round" />
+    </g>
+  );
+  return <g>{one(-26, 0, 17, 0)}{one(22, 0, 19, 1)}{one(-2, -4, 15, 2)}<path d="M38 -6 q10 -14 22 -4 q-10 10 -22 4z" fill="#f1dd9a" /></g>;
+};
 /** A football. */
 export const ball: Drawing = () => (
   <g><circle cx="0" cy="-14" r="14" fill="#fff" stroke="#222" strokeWidth="2" /><path d="M0 -22 l7 5 l-3 9 h-8 l-3 -9z" fill="#222" /></g>
@@ -169,13 +205,25 @@ export const shield: Drawing = () => (
 export const lock: Drawing = () => (
   <g><path d="M-16 -50 v-14 a16 16 0 0 1 32 0 v14" fill="none" stroke="#7d8794" strokeWidth="7" /><rect x="-26" y="-50" width="52" height="42" rx="6" fill="#d9a32b" /><circle cx="0" cy="-32" r="5" fill="#5a4210" /></g>
 );
-/** A chart whose line falls. */
+/** A chart on an easel, as at a briefing, whose line falls. */
 export const chartDown: Drawing = () => (
-  <g><rect x="-60" y="-100" width="120" height="86" rx="6" fill="#f4f6f9" stroke="#0002" /><path d="M-48 -82 L-22 -62 L2 -70 L26 -40 L48 -28" fill="none" stroke="#d83a3a" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" /><path d="M48 -28 l-12 -2 l8 -10z" fill="#d83a3a" /></g>
+  <g>
+    <path d="M-34 0 L-22 -112 M34 0 L22 -112 M0 -6 V-30" fill="none" stroke="#7a5a3a" strokeWidth="4.5" strokeLinecap="round" />
+    <rect x="-56" y="-122" width="112" height="82" rx="3" fill="#f4efe2" />
+    <path d="M-44 -52 H46 M-44 -52 V-112" fill="none" stroke="#2a2623" strokeOpacity="0.6" strokeWidth="1.6" />
+    <path d="M-40 -104 L-18 -88 L0 -94 L20 -70 L42 -58" fill="none" stroke="#b4342d" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M44 -56 l-13 -1 l8 -11z" fill="#b4342d" />
+  </g>
 );
-/** A chart whose line climbs. */
+/** A chart on an easel whose line climbs. */
 export const chartUp: Drawing = () => (
-  <g><rect x="-60" y="-100" width="120" height="86" rx="6" fill="#f4f6f9" stroke="#0002" /><path d="M-48 -28 L-22 -44 L2 -38 L26 -64 L48 -84" fill="none" stroke="#2f9e6f" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" /><path d="M48 -84 l-12 2 l8 10z" fill="#2f9e6f" /></g>
+  <g>
+    <path d="M-34 0 L-22 -112 M34 0 L22 -112 M0 -6 V-30" fill="none" stroke="#7a5a3a" strokeWidth="4.5" strokeLinecap="round" />
+    <rect x="-56" y="-122" width="112" height="82" rx="3" fill="#f4efe2" />
+    <path d="M-44 -52 H46 M-44 -52 V-112" fill="none" stroke="#2a2623" strokeOpacity="0.6" strokeWidth="1.6" />
+    <path d="M-40 -60 L-18 -74 L0 -68 L20 -92 L42 -106" fill="none" stroke="#2f7d5b" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M44 -108 l-13 2 l9 10z" fill="#2f7d5b" />
+  </g>
 );
 /** Scales. */
 export const scales: Drawing = () => (
@@ -193,9 +241,11 @@ export const warning: Drawing = () => (
 export const trophy: Drawing = () => (
   <g><path d="M-22 -72 H22 q0 30 -22 36 q-22 -6 -22 -36z" fill="#e8c56b" /><rect x="-4" y="-40" width="8" height="26" fill="#d9a32b" /><rect x="-18" y="-14" width="36" height="14" rx="2" fill="#b5902f" /><path d="M-22 -66 h-10 q0 18 14 20 M22 -66 h10 q0 18 -14 20" fill="none" stroke="#e8c56b" strokeWidth="4" /></g>
 );
-/** A coin. */
+/** A few stacks of coins. */
 export const coin: Drawing = () => (
-  <g><circle cx="0" cy="-22" r="22" fill="#e8c56b" stroke="#b5902f" strokeWidth="4" /><path d="M6 -30 q-10 -6 -12 0 q-1 5 8 6 q10 2 7 8 q-4 5 -14 0 M0 -34 v26" fill="none" stroke="#8a6a1a" strokeWidth="2.6" strokeLinecap="round" /></g>
+  <g>{[[-18, 4], [2, 6], [22, 3]].map(([x, n], c) => (
+    <g key={c}>{Array.from({ length: n }, (_, k) => <g key={k}><ellipse cx={x} cy={-4 - k * 7} rx="13" ry="5" fill="#b5902f" /><ellipse cx={x} cy={-7 - k * 7} rx="13" ry="5" fill="#e3c463" /></g>)}</g>
+  ))}</g>
 );
 /** A megaphone. */
 export const megaphone: Drawing = () => (
@@ -213,13 +263,21 @@ export const clock: Drawing = () => (
 export const bed: Drawing = () => (
   <g><rect x="-50" y="-30" width="100" height="14" rx="4" fill="#dce6ee" /><rect x="-50" y="-44" width="22" height="14" rx="6" fill="#fff" /><rect x="-50" y="-16" width="4" height="16" fill="#777" /><rect x="46" y="-16" width="4" height="16" fill="#777" /><rect x="-50" y="-52" width="4" height="36" fill="#999" /></g>
 );
-/** A question mark. */
+/** A thought, with a question in it, over somebody's head. */
 export const question: Drawing = () => (
-  <g><path d="M-22 -70 q0 -22 22 -22 q22 0 22 18 q0 12 -14 18 q-8 4 -8 14 v4" fill="none" stroke="#f3ead2" strokeWidth="9" strokeLinecap="round" /><circle cx="0" cy="-6" r="6" fill="#f3ead2" /></g>
+  <g>
+    <circle cx="-16" cy="-112" r="4" fill="#f4efe2" /><circle cx="-8" cy="-126" r="6.5" fill="#f4efe2" />
+    <path d="M-30 -168 q-18 -4 -12 -22 q-4 -18 16 -18 q8 -14 26 -6 q20 -6 24 12 q14 8 2 22 q2 16 -18 14 q-10 10 -24 2 q-10 4 -14 -4z" fill="#f4efe2" />
+    <path d="M-8 -190 q0 -12 11 -12 q11 0 11 9 q0 6 -7 9 q-4 2 -4 7 v1" fill="none" stroke="#2a2623" strokeWidth="4.2" strokeLinecap="round" /><circle cx="3" cy="-164" r="2.8" fill="#2a2623" stroke="none" />
+  </g>
 );
-/** An exclamation mark in a circle. */
+/** A burst of alarm in the air, as a cartoon draws a shock: a spiky star with a stroke in it. */
 export const alarm: Drawing = () => (
-  <g><circle cx="0" cy="-44" r="30" fill="#d83a3a" /><rect x="-3.5" y="-66" width="7" height="26" rx="3" fill="#fff" /><circle cx="0" cy="-28" r="4" fill="#fff" /></g>
+  <g transform="translate(0 -150)">
+    <path d="M0 -40 L9 -16 L33 -27 L21 -4 L44 6 L20 12 L28 36 L7 22 L-4 44 L-10 20 L-34 30 L-22 8 L-44 -4 L-20 -11 L-28 -34 L-8 -19z" fill="#e3b93a" />
+    <path d="M0 -26 L6 -11 L21 -17 L14 -3 L28 4 L13 8 L17 23 L4 14 L-3 28 L-7 13 L-22 19 L-14 5 L-28 -2 L-13 -7 L-18 -22 L-5 -12z" fill="#b4342d" />
+    <path d="M0 -12 v12" fill="none" stroke="#f4efe2" strokeWidth="4.6" strokeLinecap="round" /><circle cx="0" cy="8" r="2.8" fill="#f4efe2" stroke="none" />
+  </g>
 );
 /** A dead fish, belly up. */
 export const fish: Drawing = ({ i }) => (

@@ -3,7 +3,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
 import { EVENTS } from '../../sim/campaign/events';
 import { artFor, ScenePicture } from './index';
-import { parse, PARTS, Scene, unknown } from './kit';
+import { Figure, lookOf, type Mood, type Pose } from './figure';
+import { parse, PARTS, Scene, toneOf, unknown } from './kit';
+import { feel } from './people';
 import { EVENT_ART, SCENE_ART } from './recipes';
 import type { SceneKind } from '../../sim/campaign/types';
 
@@ -43,5 +45,32 @@ describe('the pictures of decisions', () => {
     expect(artFor('event', 'noSuchEvent')).toBeNull();
     expect(renderToStaticMarkup(createElement(ScenePicture, { kind: 'event', event: 'flood', seed: 1 }))).toContain('scene-art');
     expect(renderToStaticMarkup(createElement(ScenePicture, { kind: 'nothing', seed: 1 }))).toBe('');
+  });
+
+  it('give every person a face, clothes and a way of standing of their own', () => {
+    const looks = new Set(Array.from({ length: 40 }, (_, i) => JSON.stringify(lookOf(i))));
+    expect(looks.size).toBeGreaterThan(30);
+    expect(JSON.stringify(lookOf(7))).toBe(JSON.stringify(lookOf(7)));
+    const all = Array.from({ length: 60 }, (_, i) => lookOf(i));
+    for (const outfit of ['batik', 'shirt', 'tee', 'melayu', 'kurung']) expect(all.some((l) => l.outfit === outfit), outfit).toBe(true);
+    for (const head of ['hair', 'songkok', 'tudung', 'bald', 'bun']) expect(all.some((l) => l.head === head), head).toBe(true);
+    const poses: Pose[] = ['down', 'up', 'out', 'point', 'hips', 'head', 'hold', 'fold', 'wave'];
+    const moods: Mood[] = ['calm', 'glad', 'cross', 'worried', 'shock'];
+    const drawn = new Set<string>();
+    for (const pose of poses) for (const mood of moods) drawn.add(renderToStaticMarkup(createElement('svg', null, createElement(Figure, { i: 3, uid: 'u', pose, mood }))));
+    expect(drawn.size).toBe(poses.length * moods.length);
+  });
+
+  it('read the temper of a scene from what is in it, and the faces follow', () => {
+    expect(toneOf(parse(EVENT_ART.flood))).toBe('tense');
+    expect(toneOf(parse(EVENT_ART.footballFinal))).toBe('glad');
+    expect(toneOf(parse(EVENT_ART.openHouse))).toBe('plain');
+    expect(new Set([0, 1, 2, 3, 4].map((i) => feel('tense', i))).has('glad')).toBe(false);
+    expect([0, 1, 2, 3].map((i) => feel('glad', i)).filter((m) => m === 'glad').length).toBeGreaterThanOrEqual(3);
+    // The same scene with another seed is the same scene with other people in it.
+    const a = renderToStaticMarkup(createElement(Scene, { recipe: parse(EVENT_ART.budget), seed: 1 }));
+    const b = renderToStaticMarkup(createElement(Scene, { recipe: parse(EVENT_ART.budget), seed: 2 }));
+    expect(a).not.toBe(b);
+    expect(a).not.toContain('<text');
   });
 });
