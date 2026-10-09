@@ -707,3 +707,5 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 .scene-art .scene-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 260ms ease-out; }
 .scene-art .scene-photo.shown { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .scene-art .scene-photo { transition: none; } }
+/* the thirteen states are the choice itself: all of them show at once on a phone, not in a row to be swiped */
+.chips.state-pick { flex-wrap: wrap; overflow-x: visible; }

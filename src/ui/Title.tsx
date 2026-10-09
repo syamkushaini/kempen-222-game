@@ -68,8 +68,8 @@ const MENU_ART = `${import.meta.env.BASE_URL}menu-bg.webp`;
 
 const STEPS = ['steps.contest', 'steps.who', 'steps.rules'] as const;
 
-/** What the title screen is showing: the main menu, the ways to play, one of the two set-ups, the saved games or the challenges. */
-type Screen = 'menu' | 'home' | 'quick' | 'custom' | 'load' | 'challenges';
+/** What the title screen is showing: the main menu, the ways to play, the two kinds of career, one of the two set-ups, the saved games or the challenges. */
+type Screen = 'menu' | 'home' | 'career' | 'quick' | 'custom' | 'load' | 'challenges';
 
 /** One line of the main menu: an icon in its own colour, a name that fits its box, and a word on what is behind it. */
 function MenuItem({ icon, tone, title, hint, primary, onClick }: { icon: IconName; tone: string; title: string; hint: string; primary?: boolean; onClick(): void }) {
@@ -107,6 +107,8 @@ export function Title() {
   const [founded, setFounded] = useState(false);
   // A state election can be one contest, or the first of a career in that state.
   const [stateCareer, setStateCareer] = useState(false);
+  // A career begun from the choice between a country's and a state's: the set-up then asks only which state, not what kind of contest.
+  const [viaCareer, setViaCareer] = useState(false);
   // A country career may fight its state elections in person when they fall due, instead of leaving them to the game.
   const [realStates, setRealStates] = useState(false);
   const [stances, setStances] = useState<number[] | null>(null);
@@ -132,6 +134,7 @@ export function Title() {
   const pick = (value: Screen) => {
     setMode(value);
     setStep(0);
+    if (value !== 'custom') setViaCareer(false);
     if (value === 'quick') setKind('byelection');
     if (value === 'quick' || value === 'custom') { try { localStorage.setItem(MODE_KEY, value); } catch { /* the choice is only for this visit */ } }
   };
@@ -200,8 +203,8 @@ export function Title() {
         </nav>
       ) : (
       <section className="panel title-main">
-        {(mode === 'home' || mode === 'load' || mode === 'challenges') && (
-          <p><button className="link back-link" onClick={() => pick('menu')}><Icon name="back" size={14} /> {t('menu.back')}</button></p>
+        {(mode === 'home' || mode === 'career' || mode === 'load' || mode === 'challenges') && (
+          <p><button className="link back-link" onClick={() => pick(mode === 'career' ? 'home' : 'menu')}><Icon name="back" size={14} /> {t(mode === 'career' ? 'title.modes.back' : 'menu.back')}</button></p>
         )}
         {mode === 'load' ? (
           <>
@@ -210,7 +213,23 @@ export function Title() {
           </>
         ) : mode === 'challenges' ? <ChallengeList /> : null}
 
-        {mode === 'load' || mode === 'challenges' ? null : mode === 'home' ? (
+        {mode === 'load' || mode === 'challenges' ? null : mode === 'career' ? (
+          <div className="modes">
+            <h2>{t('title.career.pick')}</h2>
+            <div className="party-cards">
+              <button className="party-card plain mode-card tone-won" onClick={() => { pick('custom'); setViaCareer(false); setStateCareer(false); pickKind('career'); setStep(1); }}>
+                <span className="mode-icon"><Icon name="landmark" size={22} /></span>
+                <strong><FitText>{t('title.career.federal')}</FitText></strong>
+                <span className="small">{t('title.career.federal.desc')}</span>
+              </button>
+              <button className="party-card plain mode-card tone-new" onClick={() => { pick('custom'); setViaCareer(true); setStateCareer(true); setFounded(false); setDraft(null); pickKind('state'); setStep(0); }}>
+                <span className="mode-icon"><Icon name="flag" size={22} /></span>
+                <strong><FitText>{t('title.career.state')}</FitText></strong>
+                <span className="small">{t('title.career.state.desc')}</span>
+              </button>
+            </div>
+          </div>
+        ) : mode === 'home' ? (
           <div className="modes">
             <h2>{t('title.modes')}</h2>
             <div className="party-cards three">
@@ -221,13 +240,13 @@ export function Title() {
                 {!auto && lastMode === null && <span className="badge leaning start-here">{t('title.startHere')}</span>}
                 {lastMode === 'quick' && <span className="badge plain">{t('title.mode.last')}</span>}
               </button>
-              <button className="party-card plain mode-card tone-new" onClick={() => pick('custom')}>
+              <button className="party-card plain mode-card tone-new" onClick={() => { pick('custom'); setViaCareer(false); }}>
                 <span className="mode-icon"><Icon name="ballot" size={22} /></span>
                 <strong><FitText>{t('title.mode.custom')}</FitText></strong>
                 <span className="small">{t('title.mode.custom.desc')}</span>
                 {lastMode === 'custom' && <span className="badge plain">{t('title.mode.last')}</span>}
               </button>
-              <button className="party-card plain mode-card tone-won" onClick={() => { pick('custom'); pickKind('career'); setStep(1); }}>
+              <button className="party-card plain mode-card tone-won" onClick={() => pick('career')}>
                 <span className="mode-icon"><Icon name="crown" size={22} /></span>
                 <strong><FitText>{t('title.mode.career')}</FitText></strong>
                 <span className="small">{t('title.mode.career.desc')}</span>
@@ -236,7 +255,7 @@ export function Title() {
           </div>
         ) : custom ? (
           <>
-            <p><button className="link" onClick={() => pick('home')}>← {t('title.modes.back')}</button></p>
+            <p><button className="link" onClick={() => pick(viaCareer ? 'career' : 'home')}>← {t(viaCareer ? 'title.career.back' : 'title.modes.back')}</button></p>
           <ol className="steps" aria-label={t('steps.label')}>
             {STEPS.map((key, i) => (
               <li key={key} className={i === step ? 'now' : i < step ? 'done' : ''} aria-current={i === step ? 'step' : undefined}>
@@ -245,8 +264,8 @@ export function Title() {
             ))}
           </ol>
           {step === 0 && <>
-          <h3>{t('title.contest')}</h3>
-          <div className="party-cards four" role="radiogroup" aria-label={t('title.contest')}>
+          {viaCareer ? <h3>{t('title.career.which')}</h3> : <h3>{t('title.contest')}</h3>}
+          {!viaCareer && <div className="party-cards four" role="radiogroup" aria-label={t('title.contest')}>
             {KINDS.map((k) => (
               <RadioCard key={k} checked={kind === k} className="party-card plain" onSelect={() => pickKind(k)}>
                 <strong>{t(`scenario.${k}`)}</strong>
@@ -254,7 +273,7 @@ export function Title() {
                 {k === 'byelection' && <span className="badge leaning start-here">{t('title.startHere')}</span>}
               </RadioCard>
             ))}
-          </div>
+          </div>}
           {kind === 'state' && (
             <div className="chips state-pick" role="radiogroup" aria-label={t('scenario.state')}>
               {STATE_SCENARIOS.map((st) => (
@@ -265,7 +284,7 @@ export function Title() {
             </div>
           )}
 
-          {kind === 'state' && (
+          {kind === 'state' && !viaCareer && (
             <>
               <span className="field-label">{t('title.stateMode')}</span>
               <div className="party-cards" role="radiogroup" aria-label={t('title.stateMode')}>
