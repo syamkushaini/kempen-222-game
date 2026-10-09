@@ -39,14 +39,15 @@ describe('Sabah for the people of Sabah', () => {
     const i = world.seats.findIndex((s, n) => s.state === 'sarawak' && world.baseline.contesting[n][GBK] && world.baseline.contesting[n][PS]);
     expect(i).toBeGreaterThanOrEqual(0);
     const id = world.seats[i].id;
-    const before = [GBK, PS, BP].map((p) => c.drift.support.seat[id]?.[p] ?? 0);
+    const before = [GBK, PS, BP].map((p) => c.held?.support.seat[id]?.[p] ?? 0);
     applyPride(world, c);
-    const after = [GBK, PS, BP].map((p) => c.drift.support.seat[id]![p]);
+    const after = [GBK, PS, BP].map((p) => c.held!.support.seat[id]![p]);
     const pride = prideIn(world, i);
     expect(after[0] - before[0]).toBeCloseTo(pride.local, 9);
     expect(after[1] - before[1]).toBeCloseTo(-pride.away, 9);
     // And not a thing in the Peninsula.
     const p = world.seats.findIndex((s) => s.state === 'perak');
+    expect(c.held!.support.seat[world.seats[p].id]).toBeUndefined();
     expect(c.drift.support.seat[world.seats[p].id]).toEqual(career().drift.support.seat[world.seats[p].id]);
   });
 });

@@ -137,11 +137,11 @@ describe('safe seats', () => {
     grantSafe(base, c, a, 1);
     grantSafe(base, c, b, 1);
     c.career!.house[b] = PARTY_IDS.indexOf('bp');
-    const was = c.drift.support.seat[a]?.[PS] ?? 0;
-    const wasB = c.drift.support.seat[b]?.[PS] ?? 0;
+    const was = c.held?.support.seat[a]?.[PS] ?? 0;
+    const wasB = c.held?.support.seat[b]?.[PS] ?? 0;
     applySafe(base, c);
-    expect(c.drift.support.seat[a]![PS]).toBeCloseTo(was - SAFE.complacent, 9);
-    expect(c.drift.support.seat[b]?.[PS] ?? 0).toBe(wasB);
+    expect(c.held!.support.seat[a]![PS]).toBeCloseTo(was - SAFE.complacent, 9);
+    expect(c.held!.support.seat[b]?.[PS] ?? 0).toBe(wasB);
     expect(c.career!.safe).toEqual({ [a]: 1 });
   });
 });

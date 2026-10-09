@@ -207,10 +207,13 @@ describe('events', () => {
     const c = career();
     const pc = c.parties[c.player]!;
     for (const [id, def] of Object.entries(EVENTS)) {
-      expect(def.choices.some((_, i) => choiceCost(base, id, i) === 0), id).toBe(true);
+      expect(def.choices.some((_, i) => choiceCost(base, c, id, i) === 0), id).toBe(true);
     }
     // Flood relief is paid for; the walkabout and staying away are not.
-    expect(choiceCost(base, 'flood', 0)).toBe(40_000);
+    expect(choiceCost(base, c, 'flood', 0)).toBe(40_000);
+    // On the hard level what is lost is a third dearer, and the price asked is the price charged.
+    expect(choiceCost(base, { ...c, difficulty: 'hard' }, 'flood', 0)).toBe(52_000);
+    expect(choiceCost(base, { ...c, difficulty: 'easy' }, 'flood', 0)).toBe(32_000);
     pc.funds = 39_999;
     expect([0, 1, 2].map((i) => canChoose(base, c, 'flood', i))).toEqual([false, true, true]);
     pc.funds = 40_000;

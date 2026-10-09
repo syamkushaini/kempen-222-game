@@ -1,4 +1,5 @@
 import { useStore } from '../state/store';
+import { shownWeek } from '../sim/campaign/news';
 import { latestNationalPoll } from '../sim/campaign/polls';
 import type { Campaign } from '../sim/campaign/types';
 import { lastOutcome, partyColor, partyName, partyShort, useFormat, useT, useWorld } from './hooks';
@@ -65,7 +66,7 @@ export function Standing({ campaign }: { campaign: Campaign }) {
         <div className="standing-full">
           <div className="panel-head">
             <h2>{t(`standing.poll.${kind}`)}</h2>
-            {poll && <span className="muted">{t(poll.public ? 'standing.public' : 'standing.private', { n: poll.week })}</span>}
+            {poll && <span className="muted">{t(poll.public ? 'standing.public' : 'standing.private', { n: shownWeek(campaign, poll.week).week })}</span>}
           </div>
           <ul className="poll-bars">
             {order.map(({ s, p }) => (

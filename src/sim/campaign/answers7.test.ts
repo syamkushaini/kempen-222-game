@@ -3,10 +3,11 @@ import { getWorld, worldOf } from '../../data/world';
 import { STRINGS, type StringKey } from '../../i18n/strings';
 import { MERGED } from '../transfer';
 import { PARTY_IDS } from '../types';
-import { scaled } from './actions';
+import { contests, scaled, truth } from './actions';
 import { answerEvent, beginCampaign, nextTerm, resumeTerm, skipAhead, startCareer } from './career';
 import { houseTally } from './contests';
 import { factionsOf } from './factions';
+import { canEnter } from './entry';
 import { endDay } from './formation';
 import { MERGER, canMerge, foldMerged, merge, standMerged } from './merge';
 import { pactSeats } from './diplomacy';
@@ -17,7 +18,6 @@ import { PORTFOLIO_IDS, type Campaign } from './types';
 import { isValidCampaign } from './validate';
 
 const [PS, BP, PT, GBK, GBS, LEGASI] = PARTY_IDS.map((_, i) => i);
-void BP;
 const base = getWorld('career')!;
 const career = (player = PS, seed = 5): Campaign => {
   const c = startCareer(base, { player, difficulty: 'normal', seed });
@@ -65,6 +65,25 @@ describe('taking in a small ally', () => {
     expect(pactSeats(c)).toBe(0);
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
     expect(base.baseline.contesting.some((row, i) => row[LEGASI] && !c.standDowns[base.seats[i].id])).toBe(false);
+  });
+
+  it('stands in the seats the ally fought alone, so they are not given up without a vote', () => {
+    const c = career(BP);
+    c.relations[BP][GBS] = c.relations[GBS][BP] = 80;
+    const alone = base.seats.map((_, i) => i).filter((i) => base.baseline.contesting[i][GBS] && !base.baseline.contesting[i][BP]);
+    const held = alone.filter((i) => base.seats[i].last.votes.indexOf(Math.max(...base.seats[i].last.votes)) === GBS);
+    expect(held.length).toBeGreaterThan(0);
+    expect(merge(base, c, GBS)).toBe(true);
+    beginCampaign(base, c);
+    for (const i of alone) {
+      expect(contests(base, c, i, BP), base.seats[i].id).toBe(true);
+      expect(canEnter(base, c, base.seats[i].id), base.seats[i].id).toBe(false);
+    }
+    const now = truth(base, c);
+    // Most of the ally's voters follow: the seats it held are still fought, and mostly still won.
+    for (const i of alone) expect(now.seats[i].votes[BP], base.seats[i].id).toBeGreaterThan(0.6 * base.seats[i].last.votes[GBS]);
+    expect(held.filter((i) => now.seats[i].winner === BP).length).toBeGreaterThanOrEqual(Math.ceil(held.length / 2));
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
   });
 
   it('folds what the ally won into the party’s result, for good', () => {

@@ -69,10 +69,10 @@ describe('the leader standing in a seat of their own', () => {
   it('draws voters there, once, before nomination day', () => {
     const c = campaign();
     const seat = seatsOf(c)[0];
-    const before = c.drift.support.seat[seat]?.[PS] ?? 0;
+    const before = c.held?.support.seat[seat]?.[PS] ?? 0;
     expect(canStand(base, c, seat)).toBe(true);
     expect(standLeader(base, c, seat)).toBe(true);
-    expect((c.drift.support.seat[seat]?.[PS] ?? 0) - before).toBeGreaterThanOrEqual(LEADER_LIFT - 0.07);
+    expect((c.held?.support.seat[seat]?.[PS] ?? 0) - before).toBeGreaterThanOrEqual(LEADER_LIFT - 0.07);
     expect(c.team.leaderSeat).toBe(seat);
     expect(canStand(base, c, seatsOf(c)[1])).toBe(false);
   });

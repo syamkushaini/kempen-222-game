@@ -4,7 +4,7 @@ import { clamp } from '../math';
 import { scaled } from './actions';
 import { seatOf } from './events';
 import { pushNews } from './news';
-import { MINISTER_NAMES } from './office';
+import { aides, freeName } from './office';
 import { PORTFOLIO_IDS, type Campaign, type PortfolioId } from './types';
 
 // The opposition has a cabinet of its own, waiting. Each post can be given to someone, who is good or not so good at it;
@@ -32,9 +32,7 @@ export function nameShadow(world: World, c: Campaign, portfolio: PortfolioId): b
   const k = c.career!;
   const had = k.shadow?.[portfolio];
   const rng = new Rng((c.seed ^ 0x5ad0) + k.term * 131 + PORTFOLIO_IDS.indexOf(portfolio) * 17 + k.week);
-  const used = new Set(Object.values(k.shadow ?? {}).map((s) => s.name));
-  let name = rng.int(MINISTER_NAMES.length);
-  for (let i = 0; i < MINISTER_NAMES.length && used.has(name); i++) name = (name + 1) % MINISTER_NAMES.length;
+  const name = freeName(rng, new Set([...Object.values(k.shadow ?? {}).map((s) => s.name), ...aides(k)]));
   const skill = 2 + rng.int(4);
   c.parties[c.player]!.funds -= scaled(world, SHADOW_COST);
   (k.shadow ??= {})[portfolio] = { name, skill };

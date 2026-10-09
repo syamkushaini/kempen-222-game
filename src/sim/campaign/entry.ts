@@ -24,6 +24,9 @@ export const entriesOpen = (world: World, c: Campaign) => c.phase === 'campaign'
 /** What a candidate in this seat costs a party that has not stood there before. */
 export const entryCost = (world: World, seat: number) => Math.round((nominationCost(world, seat) * ENTRY_PREMIUM) / 100) * 100;
 
+/** Whether the party already has a newcomer on the ballot in the seat: one it paid for, or one that came to it with a party it took in. */
+const isNew = (c: Campaign, seatId: string, p: number) => c.standDowns[seatId]?.[p] === ENTERS;
+
 /** Seats where the party has put up a candidate this campaign that it did not have last time. */
 export const enteredSeats = (c: Campaign): string[] => Object.keys(c.entered ?? {});
 
@@ -32,14 +35,14 @@ export function canEnter(world: World, c: Campaign, seatId: string): boolean {
   const i = world.seatIndex.get(seatId);
   const pc = c.parties[c.player];
   if (i === undefined || !pc || !entriesOpen(world, c)) return false;
-  if (world.baseline.contesting[i][c.player] || seatId in (c.entered ?? {})) return false;
+  if (world.baseline.contesting[i][c.player] || seatId in (c.entered ?? {}) || isNew(c, seatId, c.player)) return false;
   return pc.funds >= entryCost(world, i);
 }
 
 /** Seats the party has never stood in, cheapest first. */
 export function newSeats(world: World, c: Campaign): number[] {
   return world.seats.map((_, i) => i)
-    .filter((i) => !world.baseline.contesting[i][c.player] && !((world.seats[i].id) in (c.entered ?? {})))
+    .filter((i) => !world.baseline.contesting[i][c.player] && !((world.seats[i].id) in (c.entered ?? {})) && !isNew(c, world.seats[i].id, c.player))
     .sort((a, b) => entryCost(world, a) - entryCost(world, b) || a - b);
 }
 
@@ -82,7 +85,7 @@ export function rivalEntries(world: World, c: Campaign, rng: Rng): void {
     const now = lastElection(world);
     const options = world.seats.map((_, i) => i).filter((i) => {
       const o = now.seats[i];
-      return !world.baseline.contesting[i][p] && stands(c.standDowns[world.seats[i].id]?.[p]) && o.margin < RIVAL_ENTRIES.margin
+      return !world.baseline.contesting[i][p] && stands(c.standDowns[world.seats[i].id]?.[p]) && !isNew(c, world.seats[i].id, p) && o.margin < RIVAL_ENTRIES.margin
         && (pc.machinery[world.states.indexOf(world.seats[i].state)] ?? 0) > 0;
     });
     for (let n = 0; n < RIVAL_ENTRIES.perWeek && options.length > 0; n++) {

@@ -1,6 +1,7 @@
 import { lastElection, type World } from '../election';
 import { zeros } from '../math';
 import { N_PARTIES } from '../types';
+import { heldOf } from './actions';
 import { holderOf } from './contests';
 import type { Campaign, SeatResults } from './types';
 
@@ -41,7 +42,7 @@ export function applyTenure(world: World, c: Campaign): void {
   for (const [seat, [party, terms]] of Object.entries(k.tenure)) {
     const bonus = personalVote(terms);
     if (bonus <= 0 || !world.seatIndex.has(seat) || holderOf(world, c, seat) !== party) continue;
-    (c.drift.support.seat[seat] ??= zeros(N_PARTIES))[party] += bonus;
+    (heldOf(c).support.seat[seat] ??= zeros(N_PARTIES))[party] += bonus;
   }
 }
 
@@ -51,6 +52,6 @@ export function retireIncumbent(c: Campaign, seat: string): number {
   if (!t || t[0] !== c.player) return 0;
   const lost = personalVote(t[1]) / 2;
   if (lost <= 0) return 0;
-  (c.drift.support.seat[seat] ??= zeros(N_PARTIES))[c.player] -= lost;
+  (heldOf(c).support.seat[seat] ??= zeros(N_PARTIES))[c.player] -= lost;
   return lost;
 }

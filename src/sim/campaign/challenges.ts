@@ -9,7 +9,8 @@ import type { Summary } from './night';
 // when the rival leaders were given stats of their own: any change to the rules
 // reshuffles what a fixed seed produces, so the seeds were chosen afresh; and again
 // when the rivals were given the player's newer actions and teams of their own,
-// and when the player's chiefs became people of differing ability.
+// and when the player's chiefs became people of differing ability, and (9 Oct 2026) when a turnout drive was made to
+// fade like every other effect of a campaign.
 
 export type Goal =
   | { kind: 'win' }
@@ -32,10 +33,10 @@ export const CHALLENGES: ChallengeDef[] = [
   { id: 'underdog', scenario: byElectionId('P.061'), party: 'bp', seed: 3, goal: { kind: 'win' } },
   { id: 'blind', scenario: byElectionId('P.057'), party: 'pt', seed: 5, fog: true, noisy: true, goal: { kind: 'win' } },
   { id: 'perlis', scenario: 'state:perlis', party: 'ps', seed: 2, goal: { kind: 'seats', atLeast: 2 } },
-  { id: 'perak', scenario: 'state:perak', party: 'ps', seed: 3, goal: { kind: 'seats', atLeast: 30 } },
+  { id: 'perak', scenario: 'state:perak', party: 'ps', seed: 1, goal: { kind: 'seats', atLeast: 30 } },
   { id: 'pahang', scenario: 'state:pahang', party: 'bp', seed: 3, goal: { kind: 'seats', atLeast: 22 } },
   // BP holds 30 and, against rivals who use every tool, loses a good many if it sits still (14 here): to hold 28 is the comeback.
-  { id: 'comeback', scenario: 'general', party: 'bp', seed: 1, goal: { kind: 'seats', atLeast: 28 } },
+  { id: 'comeback', scenario: 'general', party: 'bp', seed: 11, goal: { kind: 'seats', atLeast: 28 } },
 ];
 
 export const challengeById = (id: string | undefined): ChallengeDef | undefined => CHALLENGES.find((c) => c.id === id);

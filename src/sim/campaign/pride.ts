@@ -1,6 +1,7 @@
 import type { World } from '../election';
 import { zeros } from '../math';
 import { BLOC_IDS, N_PARTIES, PARTY_IDS } from '../types';
+import { heldOf } from './actions';
 import type { Campaign } from './types';
 
 // "Sabah for the people of Sabah": in the Borneo states the voters give something extra to a party that is of the place and
@@ -30,7 +31,7 @@ export function applyPride(world: World, c: Campaign): void {
   world.seats.forEach((seat, i) => {
     const pride = prideIn(world, i);
     if (pride.local === 0) return;
-    const row = (c.drift.support.seat[seat.id] ??= zeros(N_PARTIES));
+    const row = (heldOf(c).support.seat[seat.id] ??= zeros(N_PARTIES));
     for (let p = 0; p < N_PARTIES; p++) {
       if (!c.parties[p] || p === OTH || !world.baseline.contesting[i][p]) continue;
       row[p] += isBornean(p) ? pride.local : -pride.away;

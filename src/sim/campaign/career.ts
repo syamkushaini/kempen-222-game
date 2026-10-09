@@ -56,6 +56,8 @@ import {
 } from './types';
 
 const OTH = PARTY_IDS.indexOf('oth');
+/** Who won a seat, from its votes: the first of the parties with the most. */
+const winnerOf = (row: readonly number[]): number => row.indexOf(Math.max(...row));
 
 /** Weeks of a term before the election campaign begins. With the campaign, a term is five years. */
 export const TERM_WEEKS = 252;
@@ -432,6 +434,8 @@ export function termWeek(world: World, c: Campaign): void {
   growFoundedParty(world, c);
   governWeek(c, rng);
   syncOpinion(c);
+  // A government is a minority or not as the House now stands: seats lost one by one at by-elections and crossings count, as do seats found.
+  k.government.minority = k.government.seats < majorityLine(world);
   // One thing at a time: nothing new arrives while a vote is waiting. The states' own elections come when they are due.
   if (c.inbox.length === 0 && world.rules.kind !== 'state' && roundDue(c) !== null) raise(c, 'statePolls');
   agendaTerm(world, c);
@@ -639,6 +643,7 @@ export function beginCampaign(world: World, c: Campaign): void {
   c.week = 1;
   c.totalWeeks = world.rules.weeks;
   c.dyn = emptyDynamics();
+  delete c.held;
   c.inbox = [];
   openCampaign(world, c);
   openNominations(world, c);
@@ -671,15 +676,29 @@ export function nextTerm(world: World, c: Campaign): boolean {
   // A campaign that broke the spending law is petitioned against: the narrowest wins are overturned.
   const petitioned = petition(world, c, counted);
   const recorded = petitioned.results;
+  // The government was formed on the seats as they were declared. Where the courts have since unseated winners, it has the seats the courts left it.
+  if (petitioned.lost.length > 0) {
+    const tally = (votes: number[][]) => { const t = zeros(N_PARTIES); for (const row of votes) t[row.indexOf(Math.max(...row))]++; return t; };
+    const before = tally(counted.votes), after = tally(recorded.votes);
+    const governing = [outcome.pm, ...outcome.partners];
+    outcome.seats += governing.reduce((a, p) => a + after[p] - before[p], 0);
+    if (outcome.seats < majorityLine(world)) outcome.minority = true;
+  }
   recordTenure(world, c, recorded);
+  // Kept before the campaign's people are stood down: the news of a leader who lost their own seat names it.
+  const leaderSeat = c.team.leaderSeat;
   const togetherStates = k.together ? Object.keys(k.states).filter((st) => k.states[st] === c.player && world.states.includes(st)) : [];
   closeSlate(world, c);
   const rng = new Rng(c.rng);
   // Every third parliament the boundaries are drawn again, and the seats the next term is fitted to are the redrawn ones.
   const drawn = k.redraw ? redraw(world, recorded, k.redraw.by, new Rng((c.seed ^ (k.term * 977)) >>> 0)) : null;
   const next = freshCareer(k.term + 1, outcome, drawn ? drawn.results : recorded);
+  // A new map is for the next election and unseats nobody: where it would have given a seat to someone else, whoever was elected still sits.
+  const sitting: Record<string, number> = {};
+  if (drawn) world.seats.forEach((seat, i) => { const won = winnerOf(recorded.votes[i]); if (won !== winnerOf(drawn.results.votes[i])) sitting[seat.id] = won; });
   c.career = {
     ...next,
+    house: sitting,
     ...(k.founded ? { founded: true } : {}),
     ...(k.own ? { own: true, slate: k.slate } : {}),
     ...(k.realStates ? { realStates: true } : {}),
@@ -726,8 +745,8 @@ export function nextTerm(world: World, c: Campaign): boolean {
   // The new parliament counts its weeks from one: what was marked with a week of the old one is moved back by the term and the campaign.
   carryStamps(c.career, k.week + c.totalWeeks);
   // A leader who stood in a seat of their own and lost it is out of the House, whatever their party did: they cannot head a government.
-  const own = c.team.leaderSeat ? world.seatIndex.get(c.team.leaderSeat) : undefined;
-  const leaderOut = own !== undefined && recorded.votes[own].indexOf(Math.max(...recorded.votes[own])) !== c.player;
+  const own = leaderSeat ? world.seatIndex.get(leaderSeat) : undefined;
+  const leaderOut = own !== undefined && winnerOf(recorded.votes[own]) !== c.player;
   if ((run > TERM_LIMIT && isEnacted(k, 'termLimit')) || (leaderOut && outcome.pm === c.player)) c.career.limited = true;
   const seats = recorded.votes.reduce((a, row) => a + (row[c.player] > 0 && row[c.player] === Math.max(...row) ? 1 : 0), 0);
   const r = c.career.record;
@@ -745,6 +764,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   c.election = null;
   c.formation = null;
   c.dyn = emptyDynamics();
+  delete c.held;
   c.drift = makeDrift(world, rng);
   c.rng = rng.state;
   c.standDowns = {};
@@ -773,14 +793,16 @@ export function nextTerm(world: World, c: Campaign): boolean {
   if (leaderOut) {
     c.career.credibility = clamp(c.career.credibility - LEADER_OUT.credibility, 0, 100);
     c.parties[c.player]!.unity = clamp(c.parties[c.player]!.unity - LEADER_OUT.unity, 0, 100);
-    pushNews(c, { party: c.player, key: outcome.pm === c.player ? 'news.leader.lost.pm' : 'news.leader.lost', vars: { seat: ref.seat(c.team.leaderSeat!) }, tone: 'bad' });
+    pushNews(c, { party: c.player, key: outcome.pm === c.player ? 'news.leader.lost.pm' : 'news.leader.lost', vars: { seat: ref.seat(leaderSeat!) }, tone: 'bad' });
   }
   if (c.career.limited && !leaderOut) pushNews(c, { party: c.player, key: 'news.term.limited', vars: { n: TERM_LIMIT }, tone: 'neutral' });
   pushNews(c, { party: null, key: 'news.term.start', vars: { party: ref.party(outcome.pm), n: outcome.seats }, tone: 'neutral' });
-  if (fatigueOf(govRun) > 0) {
-    for (const row of c.career.mood) row[c.player] -= fatigueOf(govRun);
-    pushNews(c, { party: c.player, key: 'news.fatigue', vars: { n: govRun }, tone: 'bad' });
-  }
+  // Weariness with a party long in government is a level, not a debt that is charged again in full each parliament: what is
+  // taken off now is what this parliament adds to it, and a party that has left government is given back what it had lost.
+  const tired = fatigueOf(govRun) - fatigueOf(k.govRun ?? 0);
+  if (tired !== 0) for (const row of c.career.mood) row[c.player] -= tired;
+  if (tired > 0) pushNews(c, { party: c.player, key: 'news.fatigue', vars: { n: govRun }, tone: 'bad' });
+  else if (tired < 0) pushNews(c, { party: c.player, key: 'news.fatigue.over', vars: {}, tone: 'good' });
   // A win this large is more than a party can hold together.
   if (seats >= Math.ceil(LANDSLIDE * world.seats.length)) landslide(c);
   // A leader whose party has no seats left has no party to lead.

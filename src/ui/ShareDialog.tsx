@@ -3,6 +3,7 @@ import type { Summary } from '../sim/campaign/turn';
 import type { Campaign } from '../sim/campaign/types';
 import { majorityLine, type World } from '../sim/election';
 import { challengeById, goalResult } from '../sim/campaign/challenges';
+import { careerYears } from '../sim/campaign/legacy';
 import type { StringKey } from '../i18n/strings';
 import type { ElectionOutcome } from '../sim/types';
 import { voiceOf } from './cardVoice';
@@ -78,7 +79,7 @@ export function electionCard(t: T, f: Format, world: World, c: Campaign, result:
 export function legacyCard(t: T, c: Campaign): CardData {
   const k = c.career!;
   const end = k.ending!;
-  const years = ((k.term - 1) * 260 + k.week) / 52;
+  const years = careerYears(c);
   return {
     ...common(t), accent: partyColor(c.player), kicker: `${t(`ending.${end.kind}`)} · ${partyName(t, c.player)}`,
     headline: t(`legacy.${end.legacy}`), body: t(`legacy.${end.legacy}.text`),

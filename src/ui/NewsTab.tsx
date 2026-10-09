@@ -3,7 +3,7 @@ import type { StringKey } from '../i18n/strings';
 import { canHireTroopers, canInterview, coverage, interviewOdds, OUTLETS, trooperCost, usualCoverage } from '../sim/campaign/media';
 import { OUTLET_IDS, type NewsItem } from '../sim/campaign/types';
 import { useStore } from '../state/store';
-import { partyColor, partyName, renderNews, useFog, useFormat, useT, useWorld } from './hooks';
+import { partyColor, partyName, renderNews, useFog, useFormat, useT, useWorld, weekLabel } from './hooks';
 import { netizenFeed } from './netizens';
 import { ConfirmButton } from './SavesTab';
 
@@ -110,6 +110,7 @@ function Netizens() {
 export function NewsTab() {
   const t = useT();
   const news = useStore((s) => s.game!.campaign.news);
+  const campaign = useStore((s) => s.game!.campaign);
   const [view, setView] = useState<View>('news');
   const weeks = [...new Set(news.map((n) => n.week))].sort((a, b) => b - a);
   return (
@@ -124,7 +125,7 @@ export function NewsTab() {
       {view === 'news' && news.length === 0 && <p className="muted">{t('news.empty')}</p>}
       {view === 'news' && weeks.map((week) => (
         <div key={week}>
-          <h3>{t('news.week', { n: week })}</h3>
+          <h3>{weekLabel(t, campaign, week)}</h3>
           <ul>
             {news.map((item, i) => (item.week === week ? <NewsLine key={i} item={item} /> : null)).reverse()}
           </ul>

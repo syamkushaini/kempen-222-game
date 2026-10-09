@@ -222,7 +222,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
     isNum(x.totalWeeks) && isNum(x.week) && x.week >= 1 && x.week <= x.totalWeeks &&
     (x.phase === 'term' || x.phase === 'campaign' || x.phase === 'night' || x.phase === 'formation' || x.phase === 'done') &&
     isUint32(x.seed) && isUint32(x.rng) &&
-    isValidDynamics(x.drift) && isValidDynamics(x.dyn) &&
+    isValidDynamics(x.drift) && isValidDynamics(x.dyn) && (x.held === undefined || isValidDynamics(x.held)) &&
     Array.isArray(x.parties) && x.parties.length === N_PARTIES &&
     x.parties.every((p) => p === null || isValidParty(p, world)) &&
     x.parties[x.player] !== null &&

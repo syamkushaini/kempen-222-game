@@ -149,8 +149,8 @@ describe('small parties campaigning', () => {
 
   it('win about the seats they hold, give or take what the voters decide', () => {
     let genba = 0, cahaya = 0, suara = 0;
-    // Twenty elections: a party of one seat wins or loses it whole, so ten is too few to take an average from.
-    const seeds = Array.from({ length: 20 }, (_, i) => i + 1);
+    // Forty elections: a party of one seat wins or loses it whole, so even twenty is too few to take an average from.
+    const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
     for (const seed of seeds) {
       const c = newCampaign(world, { player: PS, difficulty: 'normal', seed });
       while (c.phase === 'campaign') endWeek(world, c);

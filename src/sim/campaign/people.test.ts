@@ -226,7 +226,9 @@ describe('candidates', () => {
     const lift = liftIn(general, key, 1);
     expect(lift).toBeGreaterThan(0);
     expect(choose(general, c, key.seat, 1)).toBe(true);
-    expect(c.drift.support.seat[key.seat][PS] - newCampaign(general, { player: PS, difficulty: 'normal', seed: 5 }).drift.support.seat[key.seat][PS]).toBeCloseTo(lift, 6);
+    // What a candidate brings is the campaign's own: it is kept apart from the drift of opinion, and counted with it.
+    expect(c.held!.support.seat[key.seat][PS]).toBeCloseTo(lift, 6);
+    expect(c.drift.support.seat[key.seat]).toEqual(newCampaign(general, { player: PS, difficulty: 'normal', seed: 5 }).drift.support.seat[key.seat]);
     expect(truth(general, c).seats[general.seatIndex.get(key.seat)!].votes[PS]).toBeGreaterThan(before);
     expect(choose(general, c, key.seat, 0)).toBe(false);
     expect(c.news.at(-1)!.key).toBe('news.candidate.named');
@@ -252,11 +254,11 @@ describe('candidates', () => {
 
     key.options[2].skeleton = true;
     choose(general, c, key.seat, 2);
-    const held = c.drift.support.seat[key.seat][PS];
+    const held = c.held!.support.seat[key.seat][PS];
     const rng = new Rng(3);
     for (let week = 0; week < 40 && !key.blown; week++) candidatesWeek(c, rng);
     expect(key.blown).toBe(true);
-    expect(c.drift.support.seat[key.seat][PS]).toBeCloseTo(held - 0.2, 6);
+    expect(c.held!.support.seat[key.seat][PS]).toBeCloseTo(held - 0.2, 6);
     expect(c.news.at(-1)!.key).toBe('news.candidate.scandal');
     // The riskiest are the ones with most to offer in the right seat.
     expect(HOPEFULS.warlord.risk).toBeGreaterThan(HOPEFULS.loyalist.risk);

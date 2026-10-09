@@ -93,11 +93,11 @@ export function projectSeat(
         (shock?.support ? shock.support[p] : 0);
     }
     softmaxMasked(logits, mask, decided);
-    if (stood) redistribute(decided, stood);
+    if (stood) redistribute(decided, stood, mask);
     if (hasLate) {
       for (let p = 0; p < N_PARTIES; p++) logits[p] += dyn.lateSwing[p];
       softmaxMasked(logits, mask, late);
-      if (stood) redistribute(late, stood);
+      if (stood) redistribute(late, stood, mask);
     }
 
     const u = BLOC_UNDECIDED[b];

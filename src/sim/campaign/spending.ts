@@ -1,13 +1,11 @@
 import type { World } from '../election';
 import { clamp } from '../math';
 import { Rng } from '../rng';
-import { scaled } from './actions';
+import { spendingLimit } from './actions';
 import { pushNews, ref } from './news';
 import type { Campaign } from './types';
 
-/** What the law lets a party spend on a campaign, at general-election scale. */
-const LIMIT = 2_600_000;
-/** What the Election Commission fines a party for what it overspent: half as much again. */
+/** What the Election Commission fines a party: what it overspent, and half as much again. */
 export const FINE_SHARE = 1.5;
 const HIT = 0.05;
 /** How far over the limit a party's campaign must go for the courts to unseat winners on petition, and how many seats a tenth over costs. */
@@ -15,7 +13,7 @@ export const PETITION_FROM = 1.4;
 export const PETITION_PER_TENTH = 1;
 export const PETITION_MAX = 8;
 
-export const spendingLimit = (world: World) => scaled(world, LIMIT);
+export { spendingLimit };
 
 /** How much a party can still spend within the law. Rival parties never go past it; the player may, at a risk. */
 export const withinLimit = (world: World, c: Campaign, p: number) => Math.max(0, spendingLimit(world) - (c.parties[p]?.spent ?? 0));
@@ -30,7 +28,7 @@ export function probeChance(world: World, c: Campaign, p: number): number {
 
 /**
  * The Election Commission's week. A party over the limit may be found out:
- * it is fined half of what it overspent, and the story costs it votes.
+ * it is fined one and a half times what it overspent, and the story costs it votes.
  */
 export function spendingWeek(world: World, c: Campaign, rng: Rng): void {
   c.parties.forEach((pc, p) => {

@@ -1,8 +1,9 @@
+import { now, shownWeek } from '../sim/campaign/news';
 import { playerPollCost } from '../sim/campaign/turn';
 import type { Poll, PollQuality, PollScope } from '../sim/campaign/types';
 import type { Region, RegionId } from '../sim/types';
 import { useStore } from '../state/store';
-import { partyColor, partyShort, regionLabel, seatName, useFormat, useIntel, useSpot, useT, useWorld, lastOutcome } from './hooks';
+import { partyColor, partyShort, regionLabel, seatName, useFormat, useIntel, useSpot, useT, useWorld, lastOutcome, weekLabel } from './hooks';
 import { Brief } from './Brief';
 import { useState } from 'react';
 import { Icon } from './Icon';
@@ -64,7 +65,7 @@ export function PollsTab() {
   const worth = scopes.includes('seat') && world.seats.length > 1
     ? last
       .map((o, i) => ({ i, margin: o.margin ?? 1 }))
-      .filter((r) => { const known = intel.get(world.seats[r.i].id); return !known || campaign.week - known.week > 4; })
+      .filter((r) => { const known = intel.get(world.seats[r.i].id); return !known || now(campaign) - known.week > 4; })
       .sort((a, b) => a.margin - b.margin)[0]
     : undefined;
   const national = [...campaign.polls].reverse().find((p) => p.scope === 'national');
@@ -141,7 +142,7 @@ export function PollsTab() {
 
       {national?.regions && (
         <>
-          <h3>{t(`polls.whole.${kind}`)} · {t('news.week', { n: national.week })}</h3>
+          <h3>{t(`polls.whole.${kind}`)} · {weekLabel(t, campaign, national.week)}</h3>
           <table className="bloc-table">
             <tbody>
               {REGIONS.map((r) => {
@@ -170,7 +171,7 @@ export function PollsTab() {
         {[...campaign.polls].reverse().map((p) => (
           <li key={p.id}>
             <button className="seat-row" onClick={() => open(p)} disabled={p.scope === 'national'}>
-              <span className="grow">{t('polls.entry', { n: p.week, what: what(p), moe: Math.round(p.moe * 100) })}</span>
+              <span className="grow">{t('polls.entry', { n: shownWeek(campaign, p.week).week, what: what(p), moe: Math.round(p.moe * 100) })}</span>
               <span className="badge plain">{t(p.public ? 'polls.public' : 'polls.yours')}</span>
             </button>
           </li>

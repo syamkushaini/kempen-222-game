@@ -4,6 +4,7 @@ import { scenarioInfo, world as generalWorld, worldOf } from '../data/world';
 import { LEADERS } from '../sim/campaign/cast';
 import { translate, type StringKey } from '../i18n/strings';
 import { latestSeatIntel, type SeatIntel } from '../sim/campaign/polls';
+import { FORMATION_WEEK, shownWeek } from '../sim/campaign/news';
 import { truth } from '../sim/campaign/turn';
 import type { Campaign, NewsItem } from '../sim/campaign/types';
 import { lastElection, type World } from '../sim/election';
@@ -139,6 +140,13 @@ export function contestName(t: T, world: World): string {
   if (world.rules.kind === 'byelection') return world.seats[0].name;
   const state = scenarioInfo(world.id)?.state;
   return state ? t(`state.${state}`) : t('map.malaysia');
+}
+
+/** A filed week in words: "Week 31", or in a career's campaign "Campaign week 3"; what was filed during talks on a government reads as a day of them. */
+export function weekLabel(t: T, c: Campaign, week: number): string {
+  if (week >= FORMATION_WEEK) return week === FORMATION_WEEK ? t('form.day0') : t('form.day', { n: week - FORMATION_WEEK });
+  const shown = shownWeek(c, week);
+  return t(shown.campaign ? 'news.week.campaign' : 'news.week', { n: shown.week });
 }
 
 /** A chief's week in words: "ceramah=P.001,ceramah=P.002,canvass" reads "Ceramah (A, B), Door-to-door drive". */

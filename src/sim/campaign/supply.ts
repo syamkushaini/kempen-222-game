@@ -112,6 +112,13 @@ export function renewSupply(world: World, c: Campaign, p: number): boolean {
   return true;
 }
 
+/** A deal is over: whatever the party was promised for it and has not had is no longer owed, unless it sits in the government as well. */
+function release(c: Campaign, p: number): void {
+  const k = c.career!;
+  if (k.government.partners.includes(p)) return;
+  k.obligations = k.obligations.filter((o) => o.party !== p || o.done);
+}
+
 /** A week of the deals: a supporter that has lost patience may withdraw, and each deal comes up for review when its year is out and lapses unless it is made again. */
 export function supplyWeek(c: Campaign): void {
   const k = c.career;
@@ -119,6 +126,7 @@ export function supplyWeek(c: Campaign): void {
   for (const s of [...k.supply]) {
     if (discontent(c, s.party) && new Rng((c.seed ^ (k.week * 7919) ^ (s.party * 104729)) >>> 0).next() < WITHDRAW.chance) {
       k.supply = k.supply.filter((x) => x !== s);
+      release(c, s.party);
       k.government.stability = clamp(k.government.stability - WITHDRAW.stability, 5, 95);
       shiftRelation(c, c.player, s.party, WITHDRAW.relation);
       pushNews(c, { party: s.party, key: 'news.supply.withdrew', vars: { party: ref.party(s.party) }, tone: 'bad' });
@@ -126,6 +134,7 @@ export function supplyWeek(c: Campaign): void {
     }
     if (k.week < s.until) continue;
     k.supply = k.supply.filter((x) => x !== s);
+    release(c, s.party);
     k.government.stability = clamp(k.government.stability - 4, 5, 95);
     shiftRelation(c, c.player, s.party, -3);
     pushNews(c, { party: s.party, key: 'news.supply.ended', vars: { party: ref.party(s.party) }, tone: 'bad' });

@@ -78,21 +78,25 @@ export function transferRate(from: number, to: number): Transfer {
  * Moves the support of parties that stand aside: part to the partner they
  * stand aside for, part stays home (and so drops out of `shares`), and the
  * rest scatters to the remaining parties in proportion to their support.
+ * `mask` says which parties are on the ballot at all; a partner that is not,
+ * or that has itself stood aside, is no one to follow.
  */
-export function redistribute(shares: number[], stood: number[]): void {
+export function redistribute(shares: number[], stood: number[], mask?: readonly boolean[]): void {
+  const runs = (r: number) => stands(stood[r]) && (!mask || mask[r]);
   for (let q = 0; q < shares.length; q++) {
     const entry = stood[q];
     if (stands(entry) || shares[q] === 0) continue;
     const merged = entry >= MERGED;
-    const p = merged ? entry - MERGED : entry;
+    const partner = merged ? entry - MERGED : entry;
+    // Where there is no partner to go to, a party's voters stay home as often as they do anywhere, and the rest go to whoever is left.
+    const p = partner >= 0 && runs(partner) ? partner : WITHDRAWN;
     const s = shares[q];
     shares[q] = 0;
-    // Where there is no partner to go to, a party's voters stay home as often as they do anywhere, and the rest go to whoever is left.
     const { to, home } = p === WITHDRAWN ? { to: 0, home: DEFAULT.home } : merged ? MERGED_RATE : transferRate(q, p);
     let others = 0;
-    for (let r = 0; r < shares.length; r++) if (stands(stood[r])) others += shares[r];
+    for (let r = 0; r < shares.length; r++) if (runs(r)) others += shares[r];
     const scatter = (1 - to - home) * s;
-    if (others > 0) for (let r = 0; r < shares.length; r++) if (stands(stood[r])) shares[r] += (scatter * shares[r]) / others;
+    if (others > 0) for (let r = 0; r < shares.length; r++) if (runs(r)) shares[r] += (scatter * shares[r]) / others;
     if (p !== WITHDRAWN) shares[p] += to * s;
   }
 }

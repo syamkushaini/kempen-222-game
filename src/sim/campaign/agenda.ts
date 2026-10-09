@@ -1,6 +1,6 @@
 import type { World } from '../election';
 import { BLOC_IDS, STATE_IDS, type BlocId, type StateId } from '../types';
-import { scaled } from './actions';
+import { heldOf, scaled } from './actions';
 import { addScene, shiftUnity } from './diplomacy';
 import { pushNews } from './news';
 import type { Campaign, Scene } from './types';
@@ -170,7 +170,7 @@ export function resolveAgenda(world: World, c: Campaign, scene: Scene, choice: n
     if (repeat) k!.credibility = Math.min(100, k!.credibility + 2);
     if (flip) k!.credibility = Math.max(0, k!.credibility - 4);
   }
-  if (answer.turnout && !waiting) c.drift.turnout.party[me] += answer.turnout;
+  if (answer.turnout && !waiting) heldOf(c).turnout.party[me] += answer.turnout;
   const pc = c.parties[me];
   if (pc && answer.funds) pc.funds = Math.max(0, pc.funds + Math.sign(answer.funds) * scaled(world, Math.abs(answer.funds)));
   if (answer.unity) shiftUnity(c, me, answer.unity);

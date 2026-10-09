@@ -1,6 +1,7 @@
 import type { World } from '../election';
 import { clamp, zeros } from '../math';
 import { N_PARTIES } from '../types';
+import { heldOf } from './actions';
 import { holderOf } from './contests';
 import { shiftUnity } from './diplomacy';
 import { FACTION_IDS, SAFE_TARGET, factionsOf } from './factions';
@@ -62,7 +63,7 @@ export function applySafe(world: World, c: Campaign): void {
   if (!k?.safe) return;
   for (const seat of Object.keys(k.safe)) {
     if (!world.seatIndex.has(seat) || holderOf(world, c, seat) !== c.player) { delete k.safe[seat]; continue; }
-    (c.drift.support.seat[seat] ??= zeros(N_PARTIES))[c.player] -= SAFE.complacent;
+    (heldOf(c).support.seat[seat] ??= zeros(N_PARTIES))[c.player] -= SAFE.complacent;
   }
   if (Object.keys(k.safe).length === 0) delete k.safe;
 }

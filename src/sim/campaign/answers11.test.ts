@@ -136,17 +136,19 @@ describe('a member of long standing', () => {
     const k = c.career!;
     const seat = career.seats.find((s) => s.last.votes.indexOf(Math.max(...s.last.votes)) === PS)!.id;
     k.tenure = { [seat]: [PS, 4] };
-    const before = c.drift.support.seat[seat]?.[PS] ?? 0;
+    // It is the campaign's, kept apart from what the voters think: it is not carried into the next parliament's reckoning.
+    const drift = c.drift.support.seat[seat]?.[PS] ?? 0;
     applyTenure(career, c);
-    expect(c.drift.support.seat[seat]![PS]).toBeCloseTo(before + TENURE.max, 9);
+    expect(c.held!.support.seat[seat]![PS]).toBeCloseTo(TENURE.max, 9);
     expect(retireIncumbent(c, seat)).toBeCloseTo(TENURE.max / 2, 9);
-    expect(c.drift.support.seat[seat]![PS]).toBeCloseTo(before + TENURE.max / 2, 9);
+    expect(c.held!.support.seat[seat]![PS]).toBeCloseTo(TENURE.max / 2, 9);
+    expect(c.drift.support.seat[seat]?.[PS] ?? 0).toBe(drift);
     // A seat the party has since lost gets nothing.
     k.tenure = { [seat]: [PS, 4] };
     k.house[seat] = PARTY_IDS.indexOf('bp');
-    const now = c.drift.support.seat[seat]![PS];
+    const now = c.held!.support.seat[seat]![PS];
     applyTenure(career, c);
-    expect(c.drift.support.seat[seat]![PS]).toBe(now);
+    expect(c.held!.support.seat[seat]![PS]).toBe(now);
   });
 });
 

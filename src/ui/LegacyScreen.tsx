@@ -1,4 +1,5 @@
 import { seatOf } from '../sim/campaign/events';
+import { careerYears } from '../sim/campaign/legacy';
 import { useStore } from '../state/store';
 import { useMemo, useState } from 'react';
 import { leaderName, partyName, useT } from './hooks';
@@ -14,7 +15,7 @@ export function LegacyScreen() {
   const k = campaign.career!;
   const end = k.ending!;
   const r = k.record;
-  const years = ((k.term - 1) * 260 + k.week) / 52;
+  const years = careerYears(campaign);
   const [sharing, setSharing] = useState(false);
   const card = useMemo(() => legacyCard(t, campaign), [t, campaign]);
   return (

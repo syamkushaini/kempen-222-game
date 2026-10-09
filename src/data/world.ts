@@ -12,10 +12,10 @@ export const world = createWorld(seatFile as SeatFile, GENERAL_RULES, 'general')
 
 /**
  * States whose assembly election can be played, north to south and then across the sea: all thirteen. Perlis,
- * Perak and Pahang voted with the 2022 general election. Six voted in August 2023, when two of the national
- * parties were allies and stood aside for each other in every seat. Melaka (2021) and Johor (2022) were
- * three-way fights. Sarawak (2021) and Sabah (2020) are led by their own parties, which can be played there;
- * Sabah was fought by two allies who never stood against each other.
+ * Perak and Pahang voted with the 2022 general election. Kedah, Kelantan, Terengganu, Penang and Selangor are played
+ * on their August 2023 results, when two of the national parties were allies and stood aside for each other in every
+ * seat. Melaka (2021), Johor and Negeri Sembilan (2026) were fought by every coalition for itself. Sarawak (2021) and
+ * Sabah (2025) are led by their own parties, which can be played there. (See DUN_SOURCES in scripts/build-data.mjs.)
  */
 export const STATE_SCENARIOS: StateId[] = [
   'perlis', 'kedah', 'penang', 'perak', 'kelantan', 'terengganu', 'pahang', 'selangor', 'nsembilan', 'melaka', 'johor', 'sabah', 'sarawak',

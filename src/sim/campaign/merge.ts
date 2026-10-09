@@ -1,11 +1,13 @@
 import type { World } from '../election';
 import { clamp } from '../math';
-import { MERGED, STANDS } from '../transfer';
+import { ENTERS, MERGED, STANDS, WITHDRAWN } from '../transfer';
 import { BLOC_IDS, N_PARTIES, PARTY_IDS } from '../types';
 import { AFFINITY } from './cast';
 import { holderOf, houseTally } from './contests';
 import { relation, shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
+import { vacate } from './office';
+import { rollsOf } from './party';
 import { ISSUE_IDS, type Campaign, type SeatResults } from './types';
 
 // A party can swallow an ally. The small party stops existing: its seats in the House become the player's, its members
@@ -25,7 +27,8 @@ export type MergerRefusal = 'phase' | 'none' | 'warmth' | 'size' | 'full' | 'alr
 export function canMerge(world: World, c: Campaign, p: number): { ok: true } | { ok: false; reason: MergerRefusal } {
   const k = c.career;
   if (!k || c.phase !== 'term' || c.inbox.length > 0) return { ok: false, reason: 'phase' };
-  if (p === c.player || !c.parties[p] || PARTY_IDS[p] === 'oth') return { ok: false, reason: 'none' };
+  // The party that heads the government is not one to be swallowed while it does.
+  if (p === c.player || !c.parties[p] || PARTY_IDS[p] === 'oth' || p === k.government.pm) return { ok: false, reason: 'none' };
   if (mergedOf(c).includes(p)) return { ok: false, reason: 'already' };
   if (mergedOf(c).length >= MAX_MERGERS) return { ok: false, reason: 'full' };
   if (relation(c, c.player, p) < MERGER.warmth) return { ok: false, reason: 'warmth' };
@@ -52,9 +55,21 @@ export function merge(world: World, c: Campaign, p: number): boolean {
   if (!canMerge(world, c, p).ok) return false;
   const k = c.career!;
   const me = c.player;
-  // Its seats in the House are the player's now.
+  const g = k.government;
+  // Its seats in the House are the player's now: they sit where the player's party sits, in the government or across from it.
+  const taken = houseTally(world, c)[p] ?? 0;
+  const inGov = (q: number) => q === g.pm || g.partners.includes(q);
+  g.seats += (inGov(me) ? taken : 0) - (inGov(p) ? taken : 0);
   world.seats.forEach((seat) => { if (holderOf(world, c, seat.id) === p) k.house[seat.id] = me; });
-  k.government.partners = k.government.partners.filter((x) => x !== p);
+  // A partner that no longer exists holds no posts, is owed nothing and plots nothing.
+  if (g.partners.includes(p)) {
+    g.partners = g.partners.filter((x) => x !== p);
+    g.deals[p] = null;
+    vacate(c, p);
+  }
+  k.obligations = k.obligations.filter((o) => o.party !== p);
+  if (k.supply) { k.supply = k.supply.filter((s) => s.party !== p); if (k.supply.length === 0) delete k.supply; }
+  if (k.alliance?.members.includes(p)) { k.alliance.members = k.alliance.members.filter((m) => m !== p); if (k.alliance.members.length <= 1) delete k.alliance; }
   // Its voters and its standing go with it.
   for (let b = 0; b < BLOC_IDS.length; b++) k.mood[b][me] += Math.max(0, k.mood[b][p]) * MERGER.mood;
   k.profile[me] = Math.max(k.profile[me], k.profile[p]);
@@ -63,7 +78,7 @@ export function merge(world: World, c: Campaign, p: number): boolean {
   if (step) { k.stances[me][step.issue] = step.to; k.stances0[me][step.issue] = step.to; }
   // Its members join the roll: in proportion to its seats against the player's.
   const seats = houseTally(world, c);
-  k.rolls = (k.rolls ?? 0) * (1 + 0.5 * (seats[p] / Math.max(1, seats[me])));
+  k.rolls = rollsOf(world, c) * (1 + 0.5 * (taken / Math.max(1, seats[me] - taken)));
   shiftUnity(c, me, -MERGER.unity - 20 * Math.max(0, -AFFINITY[me][p]));
   k.credibility = clamp(k.credibility - MERGER.credibility, 0, 100);
   (k.merged ??= []).push(p);
@@ -71,13 +86,20 @@ export function merge(world: World, c: Campaign, p: number): boolean {
   return true;
 }
 
-/** The campaign begins: the parties that were taken in do not stand, and their voters follow the one that took them. */
+/**
+ * The campaign begins: the parties that were taken in do not stand, and their voters follow the one that took them.
+ * Where that party had no candidate of its own, the merged party's candidate is now its candidate: otherwise the seats
+ * the merged party held would be given up without a vote, and its voters would have no one to follow.
+ */
 export function standMerged(world: World, c: Campaign): void {
+  const me = c.player;
   for (const p of mergedOf(c)) {
     world.seats.forEach((seat, i) => {
       if (!world.baseline.contesting[i][p]) return;
       const row = c.standDowns[seat.id] ?? (c.standDowns[seat.id] = new Array<number>(N_PARTIES).fill(STANDS));
-      row[p] = MERGED + c.player;
+      row[p] = MERGED + me;
+      if (row[me] === WITHDRAWN) row[me] = STANDS;
+      else if (row[me] === STANDS && !world.baseline.contesting[i][me]) row[me] = ENTERS;
     });
   }
 }

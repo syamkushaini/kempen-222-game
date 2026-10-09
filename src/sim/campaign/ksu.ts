@@ -1,7 +1,7 @@
 import { Rng } from '../rng';
 import { clamp } from '../math';
 import { pushNews } from './news';
-import { MINISTER_NAMES, isPm } from './office';
+import { aides, freeName, isPm } from './office';
 import type { Campaign, Career } from './types';
 
 // The head of the civil service has views, and a career longer than the government’s. They draft the bills, advise on the
@@ -27,7 +27,7 @@ export function ksuOf(c: Campaign): NonNullable<Career['ksu']> {
   const k = c.career!;
   if (!k.ksu) {
     const rng = new Rng(((c.seed ^ 0x45b1) + k.term * 8191) >>> 0);
-    k.ksu = { name: rng.int(MINISTER_NAMES.length), outlook: KSU_OUTLOOKS[rng.int(KSU_OUTLOOKS.length)], trust: 50 };
+    k.ksu = { name: freeName(rng, new Set([...k.cabinet.map((m) => m.name), ...aides(k)])), outlook: KSU_OUTLOOKS[rng.int(KSU_OUTLOOKS.length)], trust: 50 };
   }
   return k.ksu;
 }
@@ -64,6 +64,6 @@ export function replaceKsu(c: Campaign): void {
   const old = ksuOf(c);
   const rng = new Rng(((c.seed ^ 0x77e3) + k.week * 131 + old.name) >>> 0);
   const outlooks = KSU_OUTLOOKS.filter((o) => o !== old.outlook);
-  k.ksu = { name: (old.name + 1 + rng.int(MINISTER_NAMES.length - 1)) % MINISTER_NAMES.length, outlook: outlooks[rng.int(outlooks.length)], trust: KSU.replaced };
+  k.ksu = { name: freeName(rng, new Set([...k.cabinet.map((m) => m.name), ...aides(k)])), outlook: outlooks[rng.int(outlooks.length)], trust: KSU.replaced };
   k.government.stability = clamp(k.government.stability + KSU.replaceStability, 5, 95);
 }

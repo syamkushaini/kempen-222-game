@@ -38,7 +38,7 @@ export function saveLine(t: T, meta: SaveMeta): string {
   return [
     world ? contestName(t, world) : meta.scenario,
     PARTIES[PARTY_IDS[meta.player]].short,
-    meta.talks ? t('saves.talks') : meta.term ? t('saves.term', { term: meta.term.term, week: meta.term.week }) : t('saves.week', { n: meta.week, total: meta.totalWeeks }),
+    meta.talks ? t('saves.talks') : meta.term ? t(meta.scenario.startsWith('career:') ? 'saves.termState' : 'saves.term', { term: meta.term.term, week: meta.term.week }) : t('saves.week', { n: meta.week, total: meta.totalWeeks }),
   ].join(' · ');
 }
 

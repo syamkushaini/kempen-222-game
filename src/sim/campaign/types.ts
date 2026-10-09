@@ -632,6 +632,12 @@ export interface Campaign {
   drift: Dynamics;
   /** Campaign effects so far. These fade week by week. */
   dyn: Dynamics;
+  /**
+   * What belongs to this campaign and lasts all of it without fading: the candidates chosen, the leader's own seat, members
+   * of long standing, pride of place, a seat given away. It ends with the campaign: none of it is carried into the next
+   * parliament's reckoning of where the voters stand (see `recordResults`). Absent until something of the kind is done.
+   */
+  held?: Dynamics;
   /** Indexed by party; null for the pooled independents, who do not campaign. */
   parties: (PartyCampaign | null)[];
   polls: Poll[];

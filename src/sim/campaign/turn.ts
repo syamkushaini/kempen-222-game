@@ -246,6 +246,10 @@ export function playerAct(world: World, c: Campaign, id: ActionId, target: Actio
 
 export function playerPoll(world: World, c: Campaign, scope: PollScope, target: string | null, quality: PollQuality): Poll | null {
   const pc = c.parties[c.player]!;
+  // Only what this contest offers, of a place that is in it.
+  if (!world.rules.pollScopes.includes(scope)) return null;
+  if (scope === 'state' && !(target !== null && target in world.seatsByState)) return null;
+  if (scope === 'seat' && !(target !== null && world.seatIndex.has(target))) return null;
   const cost = playerPollCost(world, c, scope, target, quality);
   if ((c.phase !== 'campaign' && c.phase !== 'term') || cost > pc.funds) return null;
   pc.funds -= cost;
@@ -300,6 +304,8 @@ function decay(dyn: Dynamics) {
   for (const rows of Object.values(dyn.support.state)) for (const row of rows!) for (let p = 0; p < N_PARTIES; p++) row[p] *= DECAY.state;
   for (const v of Object.values(dyn.support.seat)) for (let p = 0; p < N_PARTIES; p++) v[p] *= DECAY.seat;
   for (const rows of Object.values(dyn.support.seatBloc ?? {})) for (const row of rows) for (let p = 0; p < N_PARTIES; p++) row[p] *= DECAY.seat;
+  // A group stirred to vote settles again, like everything else a campaign does.
+  for (let b = 0; b < dyn.turnout.nat.length; b++) dyn.turnout.nat[b] *= DECAY.motivation;
   for (let p = 0; p < N_PARTIES; p++) dyn.turnout.party[p] *= DECAY.motivation;
   for (const v of Object.values(dyn.turnout.state)) for (let p = 0; p < N_PARTIES; p++) v![p] *= DECAY.motivation;
   for (const v of Object.values(dyn.turnout.seat)) for (let p = 0; p < N_PARTIES; p++) v[p] *= DECAY.motivation;
@@ -365,14 +371,21 @@ export function endWeek(world: World, c: Campaign): void {
   c.recap = makeRecap(world, c);
   decay(c.dyn);
   c.week++;
+  // What came in for the player, and what of it a lender took before it reached the party.
+  let income = 0, lent = 0;
   c.parties.forEach((pc, p) => {
     if (!pc) return;
-    pc.funds += afterLender(c, pc, Math.round(weeklyIncome(world, p, c) * incomeBoost(c, p)));
+    const due = Math.round(weeklyIncome(world, p, c) * incomeBoost(c, p));
+    const kept = afterLender(c, pc, due);
+    if (p === c.player) { income = due; lent = due - kept; }
+    pc.funds += kept;
     pc.days = pc.capacity + managerDays(c, p);
     pc.used = {};
     pc.visits = [];
   });
-  push(c, { party: c.player, key: 'news.income', vars: { rm: ref.rm(Math.round(weeklyIncome(world, c.player, c) * incomeBoost(c, c.player))) }, tone: 'neutral' });
+  push(c, lent > 0
+    ? { party: c.player, key: 'news.income.lender', vars: { rm: ref.rm(income), paid: ref.rm(lent) }, tone: 'neutral' }
+    : { party: c.player, key: 'news.income', vars: { rm: ref.rm(income) }, tone: 'neutral' });
   publishPublicPoll(world, c);
 }
 

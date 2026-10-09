@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { shownWeek } from '../sim/campaign/news';
 import { GROUP_NOISE, latestNationalPoll } from '../sim/campaign/polls';
 import { BLOC_IDS } from '../sim/types';
 import { useStore } from '../state/store';
@@ -30,7 +31,7 @@ export function VotersTab() {
     <section className="voters">
       <div className="panel-head">
         <h2>{t('standing.groups')}</h2>
-        <span className="muted">{t(poll.public ? 'standing.public' : 'standing.private', { n: poll.week })}</span>
+        <span className="muted">{t(poll.public ? 'standing.public' : 'standing.private', { n: shownWeek(campaign, poll.week).week })}</span>
       </div>
       <ul className="poll-bars group-bars">
         {groups.map(({ bloc, share, weight }) => (

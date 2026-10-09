@@ -446,8 +446,8 @@ describe('partners who plot', () => {
     expect(paid.career!.credibility).toBe(cred - 1);
     expect(paid.career!.plots).toBeUndefined();
     expect(paid.news.at(-1)!.key).toBe('event.ultimatum.r0');
-    expect(choiceCost(base, 'ultimatum', 0)).toBe(scaled(base, ULTIMATUM_MONEY));
-    expect(choiceCost(base, 'ultimatum', 1)).toBe(0);
+    expect(choiceCost(base, paid, 'ultimatum', 0)).toBe(scaled(base, ULTIMATUM_MONEY));
+    expect(choiceCost(base, paid, 'ultimatum', 1)).toBe(0);
 
     const gave = settled();
     gave.career!.plots = { [BP]: 70 };

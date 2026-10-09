@@ -3,7 +3,7 @@ import { zeros } from '../math';
 import { Rng } from '../rng';
 import { BLOC_IDS, N_PARTIES, type BlocId, type SeatKind } from '../types';
 import { holdingScale } from './party';
-import { contests } from './actions';
+import { contests, heldOf } from './actions';
 import { shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
 import { retireIncumbent } from './tenure';
@@ -131,9 +131,9 @@ export function choose(world: World, c: Campaign, seat: string, option: number):
   // The party's own choice makes way for the leader's. If the seat has a member of long standing, half their personal vote goes with them.
   delete c.team.defaults?.[seat];
   retireIncumbent(c, seat);
-  // A candidate is there for the whole campaign, so what they bring does not fade.
-  (c.drift.support.seat[seat] ??= zeros(N_PARTIES))[me] += liftIn(world, key, option);
-  (c.drift.turnout.seat[seat] ??= zeros(N_PARTIES))[me] += HOPEFULS[h.kind].turnout;
+  // A candidate is there for the whole campaign, so what they bring does not fade; it is theirs, and goes with them.
+  (heldOf(c).support.seat[seat] ??= zeros(N_PARTIES))[me] += liftIn(world, key, option);
+  (heldOf(c).turnout.seat[seat] ??= zeros(N_PARTIES))[me] += HOPEFULS[h.kind].turnout;
   shiftUnity(c, me, HOPEFULS[h.kind].unity);
   pushNews(c, { party: me, key: 'news.candidate.named', vars: { seat: ref.seat(seat), name: HOPEFUL_NAMES[h.name], kind: `@hopeful:${h.kind}` }, tone: 'neutral' });
   return true;
@@ -198,7 +198,7 @@ export function standLeader(world: World, c: Campaign, seat: string): boolean {
   if (!canStand(world, c, seat)) return false;
   c.team.leaderSeat = seat;
   const me = c.player;
-  (c.drift.support.seat[seat] ??= zeros(N_PARTIES))[me] += LEADER_LIFT + LEADER_CHARM * (c.team.leader.stats[0] - 3);
+  (heldOf(c).support.seat[seat] ??= zeros(N_PARTIES))[me] += LEADER_LIFT + LEADER_CHARM * (c.team.leader.stats[0] - 3);
   pushNews(c, { party: me, key: 'news.leader.stands', vars: { seat: ref.seat(seat) }, tone: 'neutral' });
   return true;
 }
@@ -220,14 +220,14 @@ export function candidatesWeek(c: Campaign, rng: Rng): void {
   for (const [seat, h] of Object.entries(c.team.defaults ?? {})) {
     if (!h.skeleton || h.blown || seat === c.team.leaderSeat || rng.next() >= EXPOSURE) continue;
     h.blown = true;
-    (c.drift.support.seat[seat] ??= zeros(N_PARTIES))[me] -= SCANDAL_HIT;
+    (heldOf(c).support.seat[seat] ??= zeros(N_PARTIES))[me] -= SCANDAL_HIT;
     outed.push(seat);
   }
   if (outed.length) { shiftUnity(c, me, -Math.min(4, outed.length)); pushNews(c, { party: me, key: 'news.candidate.scandals', vars: { n: outed.length, seats: `@seats:${outed.join(',')}` }, tone: 'bad' }); }
   for (const key of c.team.keySeats) {
     if (key.pick === null || key.blown || !key.options[key.pick].skeleton || rng.next() >= EXPOSURE) continue;
     key.blown = true;
-    (c.drift.support.seat[key.seat] ??= zeros(N_PARTIES))[me] -= SCANDAL_HIT;
+    (heldOf(c).support.seat[key.seat] ??= zeros(N_PARTIES))[me] -= SCANDAL_HIT;
     shiftUnity(c, me, -2);
     pushNews(c, { party: me, key: 'news.candidate.scandal', vars: { seat: ref.seat(key.seat), name: HOPEFUL_NAMES[key.options[key.pick].name] }, tone: 'bad' });
   }

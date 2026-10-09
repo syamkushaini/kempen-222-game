@@ -6,7 +6,7 @@ import { COST, pactPreview } from '../sim/campaign/diplomacy';
 import { AGENDA, type AgendaChoice } from '../sim/campaign/agenda';
 import { CHIEF_NAMES, FACTION_IDS, POLL_ANSWERS, backing, deputyOf, pollOdds, type FactionId } from '../sim/campaign/factions';
 import type { StateId } from '../sim/types';
-import { canChoose, EVENTS, gambleChance, ULTIMATUM_MONEY, type Choice, type Effect } from '../sim/campaign/events';
+import { canChoose, EVENTS, gambleChance, realistic, ULTIMATUM_MONEY, type Choice, type Effect } from '../sim/campaign/events';
 import { bluffChance } from '../sim/campaign/plots';
 import { billDef, confidenceCount, deficit, looseness, standstill, voteNeed, whipCount } from '../sim/campaign/govern';
 import { billName } from './GovernmentTab';
@@ -56,17 +56,20 @@ function SceneCard({ scene }: { scene: Scene }) {
   );
 
   // What a choice will plainly do, so the player is choosing and not guessing. What is left to chance is flagged as such.
+  // The figures are the ones that will be applied: the level of difficulty makes a loss larger or smaller, and a gain too.
   const describe = (e: Effect): string | null => {
+    const real = (n: number) => Math.round(realistic(campaign, n) * 10) / 10;
     const sign = (n: number, label: string) => `${label} ${n > 0 ? '+' : '−'}${Math.abs(n)}`;
     const arrow = (n: number, label: string) => `${n > 0 ? '▲' : '▼'} ${label}`;
     switch (e.t) {
-      case 'funds': return `${e.n > 0 ? '+' : '−'}${f.rm(scaled(world, Math.abs(e.n)))}`;
+      case 'funds': return `${e.n > 0 ? '+' : '−'}${f.rm(scaled(world, Math.abs(realistic(campaign, e.n))))}`;
       case 'dividend': return `${e.pct > 0 ? '+' : '−'}${f.rm(Math.abs(Math.round((campaign.career?.assets ?? 0) * e.pct)))}`;
       case 'assets': return arrow(e.pct, t('hint.assets'));
-      case 'unity': return sign(e.n, t('hint.unity'));
-      case 'cred': return sign(e.n, t('hint.cred'));
-      case 'stability': return sign(e.n, t('hint.stability'));
-      case 'trust': return sign(e.n, t('hint.trust'));
+      // Unity is kept in whole points.
+      case 'unity': return sign(Math.round(realistic(campaign, e.n)) || Math.sign(e.n), t('hint.unity'));
+      case 'cred': return sign(real(e.n), t('hint.cred'));
+      case 'stability': return sign(real(e.n), t('hint.stability'));
+      case 'trust': return sign(real(e.n), t('hint.trust'));
       case 'fiscal': return arrow(e.n, t('hint.fiscal'));
       case 'economy': return e.growth ? arrow(e.growth, t('house.growth')) : e.inflation ? arrow(e.inflation, t('house.inflation')) : null;
       case 'machinery': return arrow(e.n, t('hint.branches'));

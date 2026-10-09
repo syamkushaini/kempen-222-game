@@ -107,15 +107,22 @@ export function redraw(world: World, results: SeatResults, by: number | null, rn
 
   // The seats are mixed both ways, from the votes as they stood before any of the mixing.
   const before = votes.map((r) => [...r]);
+  // Where the voters stand once the campaign is over moves with them, in the same seats and by the same shares.
+  const settledBefore = results.basis.map((b) => (b ? [...b.votes] : null));
+  const basis = results.basis.map((b) => (b ? { votes: [...b.votes], turnout: b.turnout } : null));
   let flipped = 0;
   for (const [a, b, f] of done) {
     const snapshot = before;
     votes[a] = mixInto(snapshot, a, b, f);
     // The seat that lends voters takes a few of its neighbour's in return when the map is left to the commission; when it is asked for, it keeps its own.
     votes[b] = by === null ? mixInto(snapshot, b, a, f) : before[b];
+    if (settledBefore[a] && settledBefore[b]) {
+      const settled = settledBefore as number[][];
+      basis[a] = { votes: mixInto(settled, a, b, f), turnout: results.basis[a]!.turnout };
+      if (by === null) basis[b] = { votes: mixInto(settled, b, a, f), turnout: results.basis[b]!.turnout };
+    } else { basis[a] = null; basis[b] = null; }
   }
   for (let i = 0; i < n; i++) if (winnerOf(votes[i]) !== winnerOf(before[i])) flipped++;
-  const basis = results.basis.map((b, i) => (b && used.has(i) ? null : b));
   return { results: { votes, turnout: [...results.turnout], basis }, flipped };
 }
 

@@ -207,25 +207,37 @@ export function alignment(stances: number[], b: number): number {
 const belief = (c: Campaign, p: number) => (p === c.player ? 0.5 + c.career!.credibility / 200 : 0.8);
 
 /**
+ * [bloc][party]: what each party's moves on the issues since the last election have done with each bloc. Where a party
+ * stands is where it stands: unlike a promise, this part of what a platform does is still there when the campaign is over.
+ */
+export function stanceEffect(c: Campaign): number[][] {
+  const career = c.career!;
+  const out = zeros2(N_BLOCS, N_PARTIES);
+  for (let p = 0; p < N_PARTIES; p++) {
+    if (!c.parties[p]) continue;
+    for (let b = 0; b < N_BLOCS; b++) out[b][p] = (stanceAppeal(career, career.stances[p], b) - stanceAppeal(career, career.stances0[p], b)) * belief(c, p);
+  }
+  return out;
+}
+
+/**
  * [bloc][party]: how each party's positions and promises have moved each bloc
  * since the last election. Zero for a party that stands where it stood and
  * promises what it always promised.
  */
 export function policyEffect(c: Campaign): number[][] {
   const career = c.career!;
-  const out = zeros2(N_BLOCS, N_PARTIES);
+  const out = stanceEffect(c);
   for (let p = 0; p < N_PARTIES; p++) {
     if (!c.parties[p]) continue;
     const mine = p === c.player;
     // Rivals publish when the election is called; the player when they choose to.
     const published = mine ? career.launched : c.phase !== 'term';
-    const promised = published ? pledgeAppeal(career, p, career.manifesto[p], mine) : null;
+    if (!published) continue;
+    const promised = pledgeAppeal(career, p, career.manifesto[p], mine);
     // What is already law is in neither: it is not a promise any more, and dropping it from the manifesto is not a broken one.
-    const usual = published ? pledgeAppeal(career, p, withoutLaws(career, DEFAULT_MANIFESTO[PARTY_IDS[p]])) : null;
-    for (let b = 0; b < N_BLOCS; b++) {
-      const shift = stanceAppeal(career, career.stances[p], b) - stanceAppeal(career, career.stances0[p], b);
-      out[b][p] = (shift + (promised ? promised[b] - usual![b] : 0)) * belief(c, p);
-    }
+    const usual = pledgeAppeal(career, p, withoutLaws(career, DEFAULT_MANIFESTO[PARTY_IDS[p]]));
+    for (let b = 0; b < N_BLOCS; b++) out[b][p] += (promised[b] - usual[b]) * belief(c, p);
   }
   return out;
 }

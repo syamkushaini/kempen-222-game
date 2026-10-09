@@ -195,6 +195,24 @@ describe('a party that stands aside for nobody', () => {
     expect(pact[1]).toBeGreaterThan(shares[1] + 0.3 * 0.3);
   });
 
+  it('does not hand votes to a partner with no candidate of its own', () => {
+    const shares = [0.3, 0.2, 0.4, 0.1];
+    const total = (a: number[]) => a.reduce((x, y) => x + y, 0);
+    // The partner has itself stood aside, whichever of the two is counted first.
+    for (const stood of [[1, 2, STANDS, STANDS], [STANDS, 0, 1, STANDS]]) {
+      const out = [...shares];
+      redistribute(out, stood);
+      stood.forEach((v, p) => { if (v !== STANDS) expect(out[p], String(stood)).toBe(0); });
+      expect(total(out)).toBeGreaterThan(0.75 * total(shares));
+    }
+    // The partner is not on the ballot at all.
+    const off = [...shares];
+    redistribute(off, [1, STANDS, STANDS, STANDS], [true, false, true, true]);
+    expect(off[0]).toBe(0);
+    expect(off[1]).toBe(shares[1]);
+    expect(off[2] + off[3]).toBeCloseTo(shares[2] + shares[3] + 0.3 * 0.8, 10);
+  });
+
   it('closes a slate that carries on across terms', () => {
     const { c, world } = founded(100_000);
     fieldCheapest(world, c, 5);

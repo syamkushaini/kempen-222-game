@@ -325,6 +325,7 @@ const en = {
 
   'news.empty': 'Nothing yet.',
   'news.week': 'Week {n}',
+  'news.week.campaign': 'Campaign week {n}',
   'news.more': 'and {n} more',
   'news.me.ceramah.weak': 'Ceramah in {seat}: a thin crowd. The nasi lemak stall did better business than you.',
   'news.me.ceramah.ok': 'Ceramah in {seat}: a decent crowd that stayed to the end.',
@@ -361,6 +362,7 @@ const en = {
   'news.tycoon.exposedYou': 'Leaked documents show you took money from a tycoon. Voters are unimpressed.',
   'news.poll.public': 'Public poll: {first} {firstPct}%, {second} {secondPct}%.',
   'news.income': 'Members’ donations brought in {rm} this week.',
+  'news.income.lender': 'Members’ donations brought in {rm} this week. {paid} of it went straight to the lender.',
   'news.loan.taken': 'You borrowed {rm} against your next {n} weeks of income.',
   'news.loan.cleared': 'Your loan is paid off. Your income is your own again.',
   'loan.title': 'Borrow against your income',
@@ -875,7 +877,7 @@ const en = {
   'credits.link.tindak': 'GE15 dataset',
   'credits.tindak2': 'Tindak Malaysia: results of the state elections of Melaka and Sarawak (2021), five states in August 2023, Sabah (2025), and Johor and Negeri Sembilan (2026). Its sources: the Election Commission of Malaysia, Tindak Malaysia, the Attorney General’s Chambers, Bernama, RTM, Berita Harian, Sinar Harian, Harian Metro, Kosmo, Utusan Malaysia, Malaysiakini, Free Malaysia Today, Malaysia Gazette, Harakahdaily, The Edge, New Straits Times, The Star, Utusan TV, Astro Awani, Akhbar Rakyat, Sinar Project, and the parties’ own pages and publications (listed in full in the project’s data notes). Under',
   'credits.link.tindak2': 'historical election results',
-  'credits.changes': 'Changes made: real coalitions are replaced by fictional parties; small parties and independents are pooled; boundaries are simplified; and each seat’s mix of voter blocs is an estimate from census figures, not a published statistic. In the six states that voted in 2023, and in Sabah, two allied parties stood aside for each other in every seat; what each would poll with everyone standing is an estimate too. In Sabah, the parties that later governed together stood under two banners, which are counted as one party.',
+  'credits.changes': 'Changes made: real coalitions are replaced by fictional parties; small parties and independents are pooled; boundaries are simplified; and each seat’s mix of voter blocs is an estimate from census figures, not a published statistic. In the five states whose August 2023 results are used (Kedah, Kelantan, Terengganu, Penang and Selangor), two allied parties stood aside for each other in every seat; what each would poll with everyone standing is an estimate too.',
   'error.title': 'Something went wrong',
   'error.body': 'The game hit an unexpected error. It saves automatically on this device, so reloading should bring you back. If you want to be safe, export the current game to a file first.',
   'error.reload': 'Reload the game',
@@ -1286,6 +1288,7 @@ const en = {
   'scenario.career': 'Career',
   'scenario.career.blurb': 'Five years between elections: build the party, set your platform, survive what happens, then fight the election. Then do it again.',
   'saves.term': 'Parliament {term}, week {week}',
+  'saves.termState': 'Assembly {term}, week {week}',
   'career.next': 'Begin the next term',
   'career.resume': 'Back to the term',
   'form.outcome.career': 'These promises are on record. Partners will call them in during the term.',
@@ -1871,12 +1874,18 @@ const en = {
   'adviser.treasurer': 'treasurer',
   'adviser.strategist': 'strategist',
   'adviser.conscience': 'conscience',
-  'news.adviser.debt': 'Your treasurer, {name}, says again that the debt is too high. This is the {n}th quarter they have said it.',
-  'news.adviser.purse': 'Your treasurer, {name}, warns that the party’s purse is nearly empty. The {n}th time this year.',
-  'news.adviser.unity': 'Your strategist, {name}, says the party is not at peace and will not win like this. The {n}th quarter in a row.',
-  'news.adviser.partners': 'Your strategist, {name}, says an ally is restless and the cabinet is not as secure as it looks. The {n}th time.',
-  'news.adviser.promises': 'Your conscience, {name}, reminds you of the promises that were broken. It is the {n}th time they have said so.',
-  'news.adviser.name': 'Your conscience, {name}, says your name is not what it was. The {n}th quarter they have said it.',
+  'news.adviser.debt': 'Your treasurer, {name}, says the debt is too high.',
+  'news.adviser.debt.again': 'Your treasurer, {name}, says again that the debt is too high: {n} quarters running now.',
+  'news.adviser.purse': 'Your treasurer, {name}, warns that the party’s purse is nearly empty.',
+  'news.adviser.purse.again': 'Your treasurer, {name}, warns again that the party’s purse is nearly empty: {n} quarters running now.',
+  'news.adviser.unity': 'Your strategist, {name}, says the party is not at peace and will not win like this.',
+  'news.adviser.unity.again': 'Your strategist, {name}, says again that the party is not at peace: {n} quarters running now.',
+  'news.adviser.partners': 'Your strategist, {name}, says an ally is restless and the cabinet is not as secure as it looks.',
+  'news.adviser.partners.again': 'Your strategist, {name}, says again that an ally is restless: {n} quarters running now.',
+  'news.adviser.promises': 'Your conscience, {name}, reminds you of the promises that were broken.',
+  'news.adviser.promises.again': 'Your conscience, {name}, reminds you again of the promises that were broken: {n} quarters running now.',
+  'news.adviser.name': 'Your conscience, {name}, says your name is not what it was.',
+  'news.adviser.name.again': 'Your conscience, {name}, says again that your name is not what it was: {n} quarters running now.',
   'news.adviser.thanks': 'Your {role}, {name}, notes that the worry they had has been dealt with. They remember who listened.',
   'letter.title': 'An open letter',
   'letter.desc': 'Write about a question, in a voice. The people who care about it and stand where your party stands are pleased; those who care and do not, are not. Once in {n} weeks.',
@@ -1959,7 +1968,7 @@ const en = {
   'party.chest.held': 'Set aside: {rm}',
   'party.chest.add': 'Set aside {rm}',
   'party.chest.take': 'Take back a lot',
-  'party.fatigue': 'This is the {n}th parliament in a row in government. Voters have tired of the party: it costs about {pts} points of the vote, everywhere.',
+  'party.fatigue': 'The party has now sat in government for {n} parliaments in a row. Voters have tired of it: it costs about {pts} points of the vote, everywhere.',
   'party.foreign': 'Money from abroad',
   'party.foreign.desc': 'A donor overseas will give {rm} at once, once in a parliament, for a favour: the party’s line moves one step to suit them. If it is ever found out it is a scandal of the first order.',
   'party.foreign.risk': 'Taken so far: {n}. This week the chance of it coming out: {pct}%.',
@@ -1973,6 +1982,7 @@ const en = {
   'news.petition': 'The courts unseat {n} of the party’s winners for the overspending: {seats}.',
   'party.probe': 'This week the chance of investigators coming to what the party owns: {pct}%.',
   'news.fatigue': 'Voters are tired of a party that has been in government for {n} parliaments in a row. It shows in the polls.',
+  'news.fatigue.over': 'Out of government, the party is no longer the one the voters are tired of. A spell on the other side has made it new again.',
   'news.landslide': 'The party has won more seats than it can hold together. The factions grow bold and the party grows careless: unity and goodwill fall.',
   'news.chest.opened': 'The war chest is opened for the campaign, with the donors’ share added: {rm}.',
   'news.probe': 'Investigators come to the party’s businesses and leave with {rm} of {what}. The papers have a week of it.',
@@ -2321,6 +2331,7 @@ const en = {
   'legacy.left': 'You leave {party} with this standing: {seat}.',
   'legacy.statesman': 'The Statesman',
   'legacy.statesman.text': 'You governed for years, kept most of your word, and left the country no angrier than you found it. Schools will be named after you, eventually.',
+  'legacy.statesman.text.assembly': 'You governed for years, kept most of your word, and left the state no angrier than you found it. Schools will be named after you, eventually.',
   'legacy.laws': 'Acts that passed on your watch and are still law: {n}. They count for your name, and for the score.',
   'legacy.reformer': 'The Reformer',
   'legacy.reformer.text': 'You came promising to clean things up and, against every precedent, did some of it. The institutions you rebuilt will outlast the people who hated you for it.',
@@ -2336,8 +2347,10 @@ const en = {
   'legacy.premier.text.assembly': 'You held the highest office in the state for a time, and handed it on. Most never get that far, and most who do leave less tidily.',
   'legacy.kingmaker': 'The Kingmaker',
   'legacy.kingmaker.text': 'You never held the top job, and never needed to. Prime ministers came and went; your ministries stayed.',
+  'legacy.kingmaker.text.assembly': 'You never held the top job, and never needed to. Chief ministers came and went; your portfolios stayed.',
   'legacy.conscience': 'The Conscience',
   'legacy.conscience.text': 'You never governed, and never sold out to do so. The country is not sure it deserved you, or that it would have voted for you either.',
+  'legacy.conscience.text.assembly': 'You never governed, and never sold out to do so. The state is not sure it deserved you, or that it would have voted for you either.',
   'legacy.nearly': 'The Almost Prime Minister',
   'legacy.nearly.assembly': 'The Almost Chief Minister',
   'legacy.nearly.text': 'You led a great party to the very edge of power. The edge is where it stayed.',
@@ -2671,6 +2684,7 @@ const ms: Record<CoreKey, string> = {
 
   'news.empty': 'Belum ada apa-apa.',
   'news.week': 'Minggu {n}',
+  'news.week.campaign': 'Minggu kempen {n}',
   'news.more': 'dan {n} lagi',
   'news.me.ceramah.weak': 'Ceramah di {seat}: hadirin lengang. Gerai nasi lemak lebih laris daripada anda.',
   'news.me.ceramah.ok': 'Ceramah di {seat}: hadirin memuaskan dan kekal hingga tamat.',
@@ -2707,6 +2721,7 @@ const ms: Record<CoreKey, string> = {
   'news.tycoon.exposedYou': 'Dokumen bocor menunjukkan anda menerima wang daripada taikun. Pengundi kurang senang.',
   'news.poll.public': 'Tinjauan awam: {first} {firstPct}%, {second} {secondPct}%.',
   'news.income': 'Sumbangan ahli membawa masuk {rm} minggu ini.',
+  'news.income.lender': 'Sumbangan ahli membawa masuk {rm} minggu ini. {paid} daripadanya terus kepada pemberi pinjaman.',
   'news.loan.taken': 'Anda meminjam {rm} bersandarkan pendapatan {n} minggu akan datang.',
   'news.loan.cleared': 'Pinjaman anda sudah langsai. Pendapatan anda kembali milik anda.',
   'loan.title': 'Pinjam bersandarkan pendapatan',
@@ -3221,7 +3236,7 @@ const ms: Record<CoreKey, string> = {
   'credits.link.tindak': 'set data PRU15',
   'credits.tindak2': 'Tindak Malaysia: keputusan pilihan raya negeri Melaka dan Sarawak (2021), lima negeri pada Ogos 2023, Sabah (2025), serta Johor dan Negeri Sembilan (2026). Sumbernya: Suruhanjaya Pilihan Raya Malaysia, Tindak Malaysia, Jabatan Peguam Negara, Bernama, RTM, Berita Harian, Sinar Harian, Harian Metro, Kosmo, Utusan Malaysia, Malaysiakini, Free Malaysia Today, Malaysia Gazette, Harakahdaily, The Edge, New Straits Times, The Star, Utusan TV, Astro Awani, Akhbar Rakyat, Sinar Project, serta laman dan penerbitan parti-parti sendiri (disenaraikan penuh dalam nota data projek). Di bawah',
   'credits.link.tindak2': 'keputusan pilihan raya terdahulu',
-  'credits.changes': 'Perubahan yang dibuat: gabungan sebenar diganti dengan parti rekaan; parti kecil dan calon bebas digabungkan; sempadan dipermudah; dan campuran kelompok pengundi setiap kerusi ialah anggaran daripada angka banci, bukan statistik yang diterbitkan. Di enam negeri yang mengundi pada 2023, dan di Sabah, dua parti sekutu saling memberi laluan di setiap kerusi; undi setiap satu jika semua bertanding juga satu anggaran. Di Sabah, parti-parti yang kemudiannya memerintah bersama bertanding di bawah dua panji, dan dikira sebagai satu parti.',
+  'credits.changes': 'Perubahan yang dibuat: gabungan sebenar diganti dengan parti rekaan; parti kecil dan calon bebas digabungkan; sempadan dipermudah; dan campuran kelompok pengundi setiap kerusi ialah anggaran daripada angka banci, bukan statistik yang diterbitkan. Di lima negeri yang keputusan Ogos 2023-nya digunakan (Kedah, Kelantan, Terengganu, Pulau Pinang dan Selangor), dua parti sekutu saling memberi laluan di setiap kerusi; undi setiap satu jika semua bertanding juga satu anggaran.',
   'error.title': 'Ada sesuatu yang tidak kena',
   'error.body': 'Permainan menemui ralat yang tidak dijangka. Ia disimpan secara automatik pada peranti ini, jadi memuat semula patut membawa anda kembali. Untuk lebih selamat, eksport permainan semasa ke fail dahulu.',
   'error.reload': 'Muat semula permainan',
@@ -3632,6 +3647,7 @@ const ms: Record<CoreKey, string> = {
   'scenario.career': 'Kerjaya',
   'scenario.career.blurb': 'Lima tahun antara pilihan raya: bina parti, tetapkan dasar, harungi apa yang berlaku, kemudian bertarung dalam pilihan raya. Kemudian ulang semula.',
   'saves.term': 'Parlimen {term}, minggu {week}',
+  'saves.termState': 'Dewan {term}, minggu {week}',
   'career.next': 'Mulakan penggal seterusnya',
   'career.resume': 'Kembali ke penggal',
   'form.outcome.career': 'Janji-janji ini direkodkan. Rakan gabungan akan menuntutnya sepanjang penggal.',
@@ -4217,12 +4233,18 @@ const ms: Record<CoreKey, string> = {
   'adviser.treasurer': 'bendahari',
   'adviser.strategist': 'ahli strategi',
   'adviser.conscience': 'hati nurani',
-  'news.adviser.debt': 'Bendahari anda, {name}, berkata lagi bahawa hutang terlalu tinggi. Ini suku tahun ke-{n} mereka mengatakannya.',
-  'news.adviser.purse': 'Bendahari anda, {name}, memberi amaran bahawa dompet parti hampir kosong. Kali ke-{n} tahun ini.',
-  'news.adviser.unity': 'Ahli strategi anda, {name}, berkata parti tidak aman dan tidak akan menang begini. Suku tahun ke-{n} berturut-turut.',
-  'news.adviser.partners': 'Ahli strategi anda, {name}, berkata seorang sekutu gelisah dan kabinet tidak setenang kelihatannya. Kali ke-{n}.',
-  'news.adviser.promises': 'Hati nurani anda, {name}, mengingatkan anda tentang janji yang dimungkiri. Ini kali ke-{n} mereka berkata begitu.',
-  'news.adviser.name': 'Hati nurani anda, {name}, berkata nama anda tidak seperti dahulu. Suku tahun ke-{n} mereka mengatakannya.',
+  'news.adviser.debt': 'Bendahari anda, {name}, berkata hutang terlalu tinggi.',
+  'news.adviser.debt.again': 'Bendahari anda, {name}, berkata lagi bahawa hutang terlalu tinggi: sudah {n} suku tahun berturut-turut.',
+  'news.adviser.purse': 'Bendahari anda, {name}, memberi amaran bahawa dompet parti hampir kosong.',
+  'news.adviser.purse.again': 'Bendahari anda, {name}, memberi amaran lagi bahawa dompet parti hampir kosong: sudah {n} suku tahun berturut-turut.',
+  'news.adviser.unity': 'Ahli strategi anda, {name}, berkata parti tidak aman dan tidak akan menang begini.',
+  'news.adviser.unity.again': 'Ahli strategi anda, {name}, berkata lagi bahawa parti tidak aman: sudah {n} suku tahun berturut-turut.',
+  'news.adviser.partners': 'Ahli strategi anda, {name}, berkata seorang sekutu gelisah dan kabinet tidak setenang kelihatannya.',
+  'news.adviser.partners.again': 'Ahli strategi anda, {name}, berkata lagi bahawa seorang sekutu gelisah: sudah {n} suku tahun berturut-turut.',
+  'news.adviser.promises': 'Hati nurani anda, {name}, mengingatkan anda tentang janji yang dimungkiri.',
+  'news.adviser.promises.again': 'Hati nurani anda, {name}, mengingatkan anda lagi tentang janji yang dimungkiri: sudah {n} suku tahun berturut-turut.',
+  'news.adviser.name': 'Hati nurani anda, {name}, berkata nama anda tidak seperti dahulu.',
+  'news.adviser.name.again': 'Hati nurani anda, {name}, berkata lagi bahawa nama anda tidak seperti dahulu: sudah {n} suku tahun berturut-turut.',
   'news.adviser.thanks': '{name}, {role} anda, mencatat bahawa kebimbangan mereka telah diselesaikan. Mereka ingat siapa yang mendengar.',
   'letter.title': 'Surat terbuka',
   'letter.desc': 'Tulis tentang satu soalan, dalam satu suara. Mereka yang mementingkannya dan berdiri di tempat parti anda berdiri, gembira; mereka yang mementingkannya dan tidak, tidak. Sekali dalam {n} minggu.',
@@ -4319,6 +4341,7 @@ const ms: Record<CoreKey, string> = {
   'news.petition': 'Mahkamah menyingkirkan {n} wakil rakyat parti kerana perbelanjaan melampau: {seats}.',
   'party.probe': 'Minggu ini peluang penyiasat datang ke perniagaan parti: {pct}%.',
   'news.fatigue': 'Pengundi jemu dengan parti yang telah memerintah selama {n} parlimen berturut-turut. Ia kelihatan dalam tinjauan.',
+  'news.fatigue.over': 'Di luar kerajaan, parti ini bukan lagi yang dijemui pengundi. Tempoh di seberang menjadikannya segar semula.',
   'news.landslide': 'Parti telah menang lebih banyak kerusi daripada yang mampu dipegangnya bersama. Kumpulan-kumpulan jadi berani dan parti jadi cuai: perpaduan dan muhibah menurun.',
   'news.chest.opened': 'Dana perang dibuka untuk kempen, dengan bahagian penderma ditambah: {rm}.',
   'news.probe': 'Penyiasat datang ke perniagaan parti dan pergi dengan {rm} daripada {what}. Akhbar menulis tentangnya seminggu.',
@@ -4667,6 +4690,7 @@ const ms: Record<CoreKey, string> = {
   'legacy.left': 'Anda meninggalkan {party} dalam kedudukan ini: {seat}.',
   'legacy.statesman': 'Negarawan',
   'legacy.statesman.text': 'Anda memerintah bertahun-tahun, menunaikan kebanyakan janji, dan meninggalkan negara tidak lebih marah daripada sewaktu anda mula. Lambat-laun, sekolah akan dinamakan sempena anda.',
+  'legacy.statesman.text.assembly': 'Anda memerintah bertahun-tahun, menunaikan kebanyakan janji, dan meninggalkan negeri tidak lebih marah daripada sewaktu anda mula. Lambat-laun, sekolah akan dinamakan sempena anda.',
   'legacy.laws': 'Akta yang diluluskan pada zaman anda dan masih berkuat kuasa: {n}. Ia dikira untuk nama anda, dan untuk skor.',
   'legacy.reformer': 'Reformis',
   'legacy.reformer.text': 'Anda datang dengan janji membersihkan keadaan dan, bertentangan dengan segala duluan, berjaya melakukan sebahagiannya. Institusi yang anda bina semula akan bertahan lebih lama daripada mereka yang membenci anda kerananya.',
@@ -4682,8 +4706,10 @@ const ms: Record<CoreKey, string> = {
   'legacy.premier.text.assembly': 'Anda pernah memegang jawatan tertinggi negeri untuk seketika, lalu menyerahkannya. Kebanyakan orang tidak sampai ke situ, dan kebanyakan yang sampai pergi dengan lebih kucar-kacir.',
   'legacy.kingmaker': 'Penentu Raja',
   'legacy.kingmaker.text': 'Anda tidak pernah memegang jawatan tertinggi, dan tidak pernah perlu. Perdana menteri datang dan pergi; kementerian anda kekal.',
+  'legacy.kingmaker.text.assembly': 'Anda tidak pernah memegang jawatan tertinggi, dan tidak pernah perlu. Menteri besar datang dan pergi; portfolio anda kekal.',
   'legacy.conscience': 'Suara Hati',
   'legacy.conscience.text': 'Anda tidak pernah memerintah, dan tidak pernah menggadai prinsip untuk memerintah. Negara tidak pasti ia layak mendapat anda, atau sanggup mengundi anda.',
+  'legacy.conscience.text.assembly': 'Anda tidak pernah memerintah, dan tidak pernah menggadai prinsip untuk memerintah. Negeri tidak pasti ia layak mendapat anda, atau sanggup mengundi anda.',
   'legacy.nearly': 'Hampir Perdana Menteri',
   'legacy.nearly.assembly': 'Hampir Menteri Besar',
   'legacy.nearly.text': 'Anda memimpin parti besar ke ambang kuasa. Di ambang itulah ia kekal.',
@@ -4703,9 +4729,49 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
  * Looks a string up. In a state's assembly, a string may have a version of its own under `<key>.assembly`; one is used
  * where there is one, in the player's language first, and the usual string where there is not.
  */
+// English counts are written for the many ("{n} weeks"); where the count turns out to be one, the noun is put right here
+// ("1 week"), and the verb after it with it. Bahasa Malaysia has no plural to get wrong.
+const ONE: Record<string, string> = {
+  seats: 'seat', weeks: 'week', members: 'member', points: 'point', days: 'day', quarters: 'quarter', actions: 'action', votes: 'vote',
+  parliaments: 'parliament', states: 'state', years: 'year', times: 'time', decisions: 'decision', boxes: 'box', voters: 'voter',
+  independents: 'independent', meetings: 'meeting', MPs: 'MP', terms: 'term', promises: 'promise', parties: 'party', ministers: 'minister',
+  pledges: 'pledge', branches: 'branch', months: 'month', posts: 'post', bills: 'bill', candidates: 'candidate', rounds: 'round',
+};
+const ONE_VERB: Record<string, string> = { ' are': ' is', ' were': ' was', ' have': ' has' };
+const ONE_OF = new RegExp(`(^|[^\\d.,])1 ((?:more |extra |new |assembly )?)(${Object.keys(ONE).join('|')})\\b( are| were| have)?`, 'g');
+const singular = (text: string): string =>
+  text.includes('1 ') ? text.replace(ONE_OF, (_m, before: string, word: string, noun: string, verb?: string) => `${before}1 ${word}${ONE[noun]}${verb ? ONE_VERB[verb] : ''}`) : text;
+
+// A state has a Menteri Besar or Chief Minister, an assembly and its members, where the country has a Prime Minister,
+// a Parliament and MPs. Most of what is written here was written for the country; a text with no wording of its own for
+// a state (a key ending ".assembly") has the offices in it renamed, so that a career in one state does not speak of the
+// country's. What is about the country whichever contest is being played (the title screen, the guide, the honours) is left alone.
+const COUNTRYWIDE = /^(title|howto|scenario|ach|adviser|credits|challenges|saves)\./;
+const OFFICES = /arliament|\bMPs?\b|rime [Mm]inister|arlimen|erdana [Mm]enteri/;
+const STATE_WORDS: Record<Lang, [RegExp, string][]> = {
+  en: [
+    [/\bHung parliament\b/g, 'Hung assembly'], [/\bhung parliament\b/g, 'hung assembly'], [/\bFixed-term parliaments\b/g, 'Fixed-term assemblies'],
+    [/\b(M|m)(embers?) of Parliament\b/g, '$1$2 of the Assembly'], [/\bMPs\b/g, 'assembly members'], [/\bMP\b/g, 'assembly member'],
+    [/\bthe Parliament\b/g, 'the Assembly'], [/(^|[.!?][”’"]? )Parliament\b/g, '$1The Assembly'], [/\bParliament\b/g, 'the Assembly'],
+    [/\bparliaments\b/g, 'terms'], [/\bparliament\b/g, 'term'],
+    [/\bPrime Minister/g, 'Chief Minister'], [/\bPrime minister/g, 'Chief minister'], [/\bprime minister/g, 'chief minister'],
+  ],
+  ms: [
+    [/\bParlimen tergantung\b/g, 'Dewan tergantung'], [/\bparlimen tergantung\b/g, 'dewan tergantung'],
+    [/\b[Aa]hli Parlimennya\b/g, 'ADUN-nya'], [/\b[Aa]hli Parlimen\b/g, 'ADUN'], [/\b(K|k)erusi Parlimen\b/g, '$1erusi DUN'],
+    [/\bParlimen\b/g, 'Dewan Undangan Negeri'], [/\bparlimen\b/g, 'penggal'],
+    [/\bPerdana Menteri/g, 'Menteri Besar'], [/\bPerdana menteri/g, 'Menteri besar'], [/\bperdana menteri/g, 'menteri besar'],
+  ],
+};
+const stateWording = (lang: Lang, text: string): string => (OFFICES.test(text) ? STATE_WORDS[lang].reduce((out, [from, to]) => out.replace(from, to), text) : text);
+
 export function translate(lang: Lang, key: StringKey, vars?: Record<string, string | number>, assembly = false): string {
   const own = `${key}.assembly` as StringKey;
-  let text = (assembly ? STRINGS[lang][own] : undefined) ?? STRINGS[lang][key] ?? (assembly ? STRINGS.en[own] : undefined) ?? STRINGS.en[key] ?? key;
-  if (vars) for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, String(v));
-  return text;
+  const written = assembly ? STRINGS[lang][own] ?? (STRINGS[lang][key] === undefined ? STRINGS.en[own] : undefined) : undefined;
+  const from: Lang = STRINGS[lang][key] === undefined ? 'en' : lang;
+  let text = written ?? STRINGS[lang][key] ?? STRINGS.en[key] ?? key;
+  if (assembly && written === undefined && !COUNTRYWIDE.test(key)) text = stateWording(from, text);
+  if (!vars) return text;
+  for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, String(v));
+  return lang === 'en' ? singular(text) : text;
 }

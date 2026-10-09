@@ -5,6 +5,7 @@ import { BLOC_IDS, N_BLOCS, PARTY_IDS, type BlocId, type PartyId } from '../type
 import { scaled } from './actions';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
+import { GENERAL_RULES, STATE_RULES } from './rules';
 import {
   LINE_IDS, MINISTER_TRAITS, PORTFOLIO_IDS,
   type Budget, type Campaign, type Candidate, type Career, type Dial, type Economy, type LineId, type MeasureId, type Minister, type MinisterTrait, type PortfolioId,
@@ -162,12 +163,34 @@ export const MINISTER_NAMES = [
   'Jimmy Laing', 'Patricia Unggang', 'Douglas Nyipa', 'Felicia Jainal', 'Maxwell Gimbang', 'Rosalind Sipin',
 ];
 
+/** Names borne by those around the leader who are not ministers: the three advisers and the head of the civil service. Nobody else is given one of them. */
+export function aides(k: Career): Set<number> {
+  const out = new Set<number>(Object.values(k.advisers ?? {}).map((a) => a.name));
+  if (k.ksu) out.add(k.ksu.name);
+  return out;
+}
+
+/** A name from the list that nobody in `used` has, starting from one drawn at random; the one drawn, if every name is taken. */
+export function freeName(rng: Rng, used: ReadonlySet<number>): number {
+  const start = rng.int(MINISTER_NAMES.length);
+  for (let i = 0; i < MINISTER_NAMES.length; i++) { const n = (start + i) % MINISTER_NAMES.length; if (!used.has(n)) return n; }
+  return start;
+}
+
 function newMinister(k: Career, portfolio: PortfolioId, party: number, rng: Rng): Minister {
-  const taken = new Set(k.cabinet.map((m) => m.name));
-  let name = rng.int(MINISTER_NAMES.length);
-  for (let i = 0; i < MINISTER_NAMES.length && taken.has(name); i++) name = (name + 1) % MINISTER_NAMES.length;
+  const taken = new Set([...k.cabinet.map((m) => m.name), ...aides(k)]);
+  // People on offer for a post the player has yet to fill are spoken for too, where there are names enough to go round.
+  const offered = new Set((k.appointments ?? []).flatMap((a) => a.options.map((o) => o.name)));
+  const start = rng.int(MINISTER_NAMES.length);
+  const free = (avoid: (n: number) => boolean) => { for (let i = 0; i < MINISTER_NAMES.length; i++) { const n = (start + i) % MINISTER_NAMES.length; if (!avoid(n)) return n; } return -1; };
+  let name = free((n) => taken.has(n) || offered.has(n));
+  if (name < 0) name = free((n) => taken.has(n));
+  if (name < 0) name = start;
   return { portfolio, party, name, skill: 1 + Math.min(4, Math.floor(rng.next() * 5)) };
 }
+
+/** The share of the cabinet's portfolios a partner holds: its posts out of the whole cabinet, a federal one of 28 or a state's of 10. */
+const cabinetSize = (c: Campaign) => (c.scenario.startsWith('career:') ? STATE_RULES : GENERAL_RULES).formation!.cabinet;
 
 /**
  * Appoints a cabinet for the government in office. Partners get the senior
@@ -184,7 +207,7 @@ export function formCabinet(c: Campaign, rng: Rng): void {
   }
   const free = PORTFOLIO_IDS.filter((id) => !holder.has(id) && id !== 'finance' && id !== 'home').reverse();
   for (const p of [...g.partners].sort((a, b) => (g.deals[b]?.posts ?? 0) - (g.deals[a]?.posts ?? 0))) {
-    let share = Math.floor(((g.deals[p]?.posts ?? 0) * PORTFOLIO_IDS.length) / 28) - (holder.has('finance') && holder.get('finance') === p ? 1 : 0) - (holder.get('home') === p ? 1 : 0);
+    let share = Math.floor(((g.deals[p]?.posts ?? 0) * PORTFOLIO_IDS.length) / cabinetSize(c)) - (holder.has('finance') && holder.get('finance') === p ? 1 : 0) - (holder.get('home') === p ? 1 : 0);
     while (share-- > 0 && free.length > 0) holder.set(free.pop()!, p);
   }
   k.cabinet = [];
@@ -223,7 +246,7 @@ export function candidatesFor(c: Campaign, portfolio: PortfolioId): Candidate[] 
   const k = c.career!;
   const rng = new Rng((c.rng ^ 0x4d1e11) + k.week * 31 + PORTFOLIO_IDS.indexOf(portfolio) * 7919 + k.cabinet.length);
   // Only one person can be chosen for each post, so different posts may offer the same name; the one chosen is taken off the others (see appoint).
-  const used = new Set<number>(k.cabinet.filter((m) => m.portfolio !== portfolio).map((m) => m.name));
+  const used = new Set<number>([...k.cabinet.filter((m) => m.portfolio !== portfolio).map((m) => m.name), ...aides(k)]);
   const kinds = [...MINISTER_TRAITS];
   for (let i = kinds.length - 1; i > 0; i--) { const j = rng.int(i + 1); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; }
   const options = kinds.slice(0, 3).map((trait) => {
@@ -241,7 +264,7 @@ export function candidatesFor(c: Campaign, portfolio: PortfolioId): Candidate[] 
 /** Gives a candidate whose name has just been taken (by a minister, or an option elsewhere that was chosen) another one. */
 function renameTaken(k: Career, rng: Rng): void {
   for (const a of k.appointments ?? []) {
-    const used = new Set<number>([...k.cabinet.filter((m) => m.portfolio !== a.portfolio).map((m) => m.name)]);
+    const used = new Set<number>([...k.cabinet.filter((m) => m.portfolio !== a.portfolio).map((m) => m.name), ...aides(k)]);
     for (const o of a.options) {
       if (used.has(o.name)) {
         let name = rng.int(MINISTER_NAMES.length);
@@ -287,7 +310,16 @@ export function appoint(world: World, c: Campaign, portfolio: PortfolioId, index
   if (!slot || !pick || i < 0 || k.cabinet[i].party !== c.player) return false;
   k.cabinet[i] = { portfolio, party: c.player, name: pick.name, skill: pick.skill, trait: pick.trait };
   k.appointments = k.appointments!.filter((a) => a !== slot);
-  renameTaken(k, new Rng((c.rng ^ 0x7a4e) + k.week));
+  const rng = new Rng((c.rng ^ 0x7a4e) + k.week);
+  // A stand-in elsewhere who happens to share the name gives way: the cabinet has one of each person.
+  for (const m of k.cabinet) {
+    if (m.portfolio === portfolio || m.name !== pick.name) continue;
+    const used = new Set(k.cabinet.map((x) => x.name));
+    let name = rng.int(MINISTER_NAMES.length);
+    for (let n = 0; n < MINISTER_NAMES.length && used.has(name); n++) name = (name + 1) % MINISTER_NAMES.length;
+    m.name = name;
+  }
+  renameTaken(k, rng);
   const me = c.player;
   if (pick.trait === 'expert') { k.credibility = clamp(k.credibility + TRAIT_EFFECT.expert.credibility, 0, 100); shiftUnity(c, me, TRAIT_EFFECT.expert.unity); }
   else if (pick.trait === 'loyalist') shiftUnity(c, me, TRAIT_EFFECT.loyalist.unity);

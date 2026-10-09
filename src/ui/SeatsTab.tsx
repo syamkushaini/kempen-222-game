@@ -1,5 +1,7 @@
 import { actionCost, canDo } from '../sim/campaign/actions';
+import { shownWeek } from '../sim/campaign/news';
 import { playerPollCost } from '../sim/campaign/turn';
+import { MERGED } from '../sim/transfer';
 import { BLOC_IDS, N_PARTIES } from '../sim/types';
 import { useStore } from '../state/store';
 import {
@@ -184,13 +186,14 @@ export function SeatDetail({ seatId, onClose }: { seatId: string; onClose?: () =
         {visited && <span className="badge leaning">{t('seat.visitedThisWeek')}</span>}
       </p>
       {(campaign.standDowns[seatId] ?? []).map((to, from) => to >= 0 && (
-        <p key={from} className="note">{t('seat.aside', { from: partyName(t, from), to: partyName(t, to) })}</p>
+        // A party that has merged into another is filed as that party's number and a large one: it stands aside for it all the same.
+        <p key={from} className="note">{t('seat.aside', { from: partyName(t, from), to: partyName(t, to >= MERGED ? to - MERGED : to) })}</p>
       ))}
       <SeatNomination seatId={seatId} />
       <SeatEntry seatId={seatId} />
       <div className="button-row tight">{quick('ceramah')}{quick('walkabout')}</div>
 
-      <h3>{t('seat.poll')}{intel && <span className="h3-note"> · {t('seat.pollMeta', { n: intel.week, moe: Math.round(intel.moe * 100) })}</span>}</h3>
+      <h3>{t('seat.poll')}{intel && <span className="h3-note"> · {t('seat.pollMeta', { n: shownWeek(campaign, intel.week).week, moe: Math.round(intel.moe * 100) })}</span>}</h3>
       {intel ? <ShareBars shares={intel.shares} /> : <p className="muted small">{t('seat.noPoll')}</p>}
       <div className="button-row tight">{pollButton('quick')}{pollButton('full')}</div>
 

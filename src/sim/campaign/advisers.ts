@@ -2,7 +2,7 @@ import { clamp } from '../math';
 import { Rng } from '../rng';
 import { addScene, shiftUnity } from './diplomacy';
 import { pushNews } from './news';
-import { MINISTER_NAMES, deficit } from './office';
+import { MINISTER_NAMES, aides, deficit, freeName, isPm } from './office';
 import { partnerMood } from './plots';
 import type { Campaign } from './types';
 
@@ -24,7 +24,10 @@ export const advisersOf = (c: Campaign): Record<AdviserId, AdviserState> => {
   const k = c.career! as { advisers?: Record<AdviserId, AdviserState> };
   if (!k.advisers) {
     const rng = new Rng(((c.seed ^ 0xad41) + 7) >>> 0);
-    const names = [...MINISTER_NAMES.keys()];
+    // Not a name a minister or the head of the service already bears, while there are names enough to go round.
+    const borne = new Set([...c.career!.cabinet.map((m) => m.name), ...aides(c.career!)]);
+    const spare = [...MINISTER_NAMES.keys()].filter((n) => !borne.has(n));
+    const names = spare.length >= ADVISER_IDS.length ? spare : [...MINISTER_NAMES.keys()];
     k.advisers = Object.fromEntries(ADVISER_IDS.map((id) => [id, { name: names.splice(rng.int(names.length), 1)[0], concern: null, count: 0 }])) as Record<AdviserId, AdviserState>;
   }
   return k.advisers;
@@ -36,13 +39,15 @@ export function concernOf(c: Campaign, id: AdviserId): Concern | null {
   const pc = c.parties[c.player]!;
   switch (id) {
     case 'treasurer':
-      if (k.economy.debt > ADVISE.debt || deficit(k) > ADVISE.deficit) return 'debt';
+      // The country's books are the worry of whoever writes its budget: across the floor there is nothing the leader could do about them.
+      if (isPm(c) && (k.economy.debt > ADVISE.debt || deficit(k) > ADVISE.deficit)) return 'debt';
       return pc.funds < ADVISE.purse && k.week > 26 ? 'purse' : null;
     case 'strategist':
       if (pc.unity < ADVISE.unity) return 'unity';
       return k.government.partners.some((p) => partnerMood(c, p) !== 'content') ? 'partners' : null;
     case 'conscience':
-      if (k.record.broken >= ADVISE.broken && k.record.broken > k.record.kept.length) return 'promises';
+      // A record of broken promises is raised with a leader who is in a position to keep some: the head of the government.
+      if (isPm(c) && k.record.broken >= ADVISE.broken && k.record.broken > k.record.kept.length) return 'promises';
       return k.credibility < ADVISE.name ? 'name' : null;
   }
 }
@@ -66,7 +71,9 @@ export function advisersWeek(c: Campaign): void {
     }
     a.count = a.concern === now ? a.count + 1 : 1;
     a.concern = now;
-    pushNews(c, { party: c.player, key: `news.adviser.${now}`, vars: { name: MINISTER_NAMES[a.name], role: `@adviser:${id}`, n: a.count }, tone: a.count >= 2 ? 'bad' : 'neutral' });
+    // Heard not long ago, they hold their tongue for a while, though the worry is still there.
+    if (a.count <= 0) continue;
+    pushNews(c, { party: c.player, key: a.count >= 2 ? `news.adviser.${now}.again` : `news.adviser.${now}`, vars: { name: MINISTER_NAMES[a.name], role: `@adviser:${id}`, n: a.count }, tone: a.count >= 2 ? 'bad' : 'neutral' });
     if (a.count >= ADVISE.ultimatum && c.inbox.length === 0 && !k.adviserPending) {
       k.adviserPending = id;
       addScene(c, { kind: 'event', from: null, event: 'adviserUltimatum' });
@@ -92,9 +99,7 @@ export function answerAdviser(c: Campaign, act: 'listen' | 'ignore' | 'dismiss')
   } else {
     // A new face, with no memory of the leader, and some talk about why the old one went.
     const rng = new Rng(((c.seed ^ 0xad42) + k.week * 31 + id.length) >>> 0);
-    const used = new Set(Object.values(advisersOf(c)).map((x) => x.name));
-    let name = rng.int(MINISTER_NAMES.length);
-    for (let i = 0; i < MINISTER_NAMES.length && used.has(name); i++) name = (name + 1) % MINISTER_NAMES.length;
+    const name = freeName(rng, new Set([...aides(k), ...k.cabinet.map((m) => m.name), ...Object.values(k.shadow ?? {}).map((s) => s.name)]));
     k.advisers![id] = { name, concern: null, count: 0 };
     shiftUnity(c, c.player, -2);
     k.credibility = clamp(k.credibility - 1, 0, 100);

@@ -11,6 +11,8 @@ import type { Campaign, Career, Nation } from './types';
 // detail: nobody counts hospital beds here.
 
 export const START_NATION: Nation = { health: 55, education: 55, standing: 55 };
+/** How far a head of government the player does not play is believed. */
+const ORDINARY = 60;
 /** Below this a thing is in trouble; above the second it is doing well. */
 export const WEAK = 40, STRONG = 70;
 
@@ -25,8 +27,12 @@ export function shiftNation(k: Career, patch: Partial<Nation>): void {
 
 const portfolioSkill = (k: Career, portfolio: 'health' | 'education') => k.cabinet.find((m) => m.portfolio === portfolio)?.skill ?? 3;
 
-/** Where each figure is heading, given the budget in force, the ministers, and the state of the books and the government. */
-export function nationTargets(k: Career): Nation {
+/**
+ * Where each figure is heading, given the budget in force, the ministers, and the state of the books and the government.
+ * `believed` is how far the head of the government is believed: the player's own credibility when they hold the post, and an
+ * ordinary leader's when someone else does (the player's name is their own, not the government's).
+ */
+export function nationTargets(k: Career, believed: number = k.credibility): Nation {
   const lines = k.tabled.lines;
   const e = k.economy;
   const g = k.government;
@@ -36,7 +42,7 @@ export function nationTargets(k: Career): Nation {
     health: clamp(55 + 14 * lines.health + 2 * (portfolioSkill(k, 'health') - 3) - squeeze, 15, 90),
     education: clamp(55 + 14 * lines.education + 2 * (portfolioSkill(k, 'education') - 3) - squeeze, 15, 90),
     // Others look at a government that is steady, believed, solvent and growing.
-    standing: clamp(55 + 0.25 * (g.stability - 50) + 0.2 * (k.credibility - 60) - 0.3 * Math.max(0, e.debt - 70) + 0.5 * (e.growth - 4), 15, 90),
+    standing: clamp(55 + 0.25 * (g.stability - 50) + 0.2 * (believed - 60) - 0.3 * Math.max(0, e.debt - 70) + 0.5 * (e.growth - 4), 15, 90),
   };
 }
 
@@ -53,7 +59,7 @@ const FEEL = 0.000012;
 export function nationWeek(c: Campaign, rng: Rng): void {
   const k = c.career!;
   const n = nationOf(k);
-  const target = nationTargets(k);
+  const target = nationTargets(k, isPm(c) ? k.credibility : ORDINARY);
   for (const key of ['health', 'education', 'standing'] as const) {
     n[key] = clamp(n[key] + (target[key] - n[key]) * 0.015 + rng.normal(0, 0.05), 0, 100);
     const feel = (n[key] - START_NATION[key]) * FEEL;

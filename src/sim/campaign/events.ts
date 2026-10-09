@@ -267,7 +267,8 @@ function apply(world: World, c: Campaign, effects: Effect[]): boolean {
       case 'cred': k.credibility = clamp(k.credibility + realistic(c, e.n), 0, 100); break;
       case 'stability': k.government.stability = clamp(k.government.stability + realistic(c, e.n), 5, 95); break;
       case 'trust': k.government.trust = clamp(k.government.trust + realistic(c, e.n), 0, 100); break;
-      case 'machinery': pc.machinery = pc.machinery.map((m) => (m > 0 ? clamp(m + e.n, 0, 100) : 0)); break;
+      // A blow to the machinery weakens a branch; it does not shut one that is open.
+      case 'machinery': pc.machinery = pc.machinery.map((m) => (m > 0 ? clamp(m + e.n, 1, 100) : 0)); break;
       case 'dossier': k.dossier = clamp(k.dossier + e.n, 0, 100); break;
       case 'donors': k.orders.donors = clamp(k.orders.donors + e.n, 0, 3) as Level; break;
       case 'state': k.orders.state = clamp(k.orders.state + e.n, 0, 3) as Level; break;
@@ -309,18 +310,19 @@ export const ULTIMATUM_MONEY = 150_000;
  * What a choice costs on the spot. A by-election and a round of state polls are priced by the effort chosen.
  * What a gamble may lose is not counted: a loss takes what is there.
  */
-export function choiceCost(world: World, event: string, choice: number): number {
+export function choiceCost(world: World, c: Campaign, event: string, choice: number): number {
   // `scaled` rounds up to its smallest step, so an effort priced at nothing is kept at nothing here.
   const effort = event === 'byElection' ? BY_EFFORT[choice] : event === 'statePolls' ? STATE_EFFORT[choice] : undefined;
   if (effort) return effort.money > 0 ? scaled(world, effort.money) : 0;
   if (event === 'ultimatum') return choice === 0 ? scaled(world, ULTIMATUM_MONEY) : 0;
-  const net = (EVENTS[event]?.choices[choice]?.effects ?? []).reduce((a, e) => a + (e.t === 'funds' ? Math.sign(e.n) * scaled(world, Math.abs(e.n)) : 0), 0);
+  // Priced as it will be charged: the level of difficulty makes what is lost dearer or cheaper (see `realistic`).
+  const net = (EVENTS[event]?.choices[choice]?.effects ?? []).reduce((a, e) => a + (e.t === 'funds' ? Math.sign(e.n) * scaled(world, Math.abs(realistic(c, e.n))) : 0), 0);
   return Math.max(0, -net);
 }
 
 /** A choice the party cannot pay for is not on offer: without this, an empty chest bought everything for nothing. */
 export function canChoose(world: World, c: Campaign, event: string, choice: number): boolean {
-  return choiceCost(world, event, choice) <= (c.parties[c.player]?.funds ?? 0);
+  return choiceCost(world, c, event, choice) <= (c.parties[c.player]?.funds ?? 0);
 }
 
 /**

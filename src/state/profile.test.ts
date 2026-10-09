@@ -35,7 +35,7 @@ describe('the profile', () => {
     const a = endedGame('First', 1000), b = endedGame('Second', 2000);
     expect(legacyEntry(newGame('Going', startCareer(getWorld('career')!, { player: 0, difficulty: 'normal', seed: 1 }), 5), 9)).toBeNull();
     const entry = legacyEntry(a, 5000)!;
-    expect(entry).toMatchObject({ game: a.id, name: 'First', party: 'ps', kind: 'retired', legacy: 'premier', years: 2.5, yearsPm: 129 / 52, elections: 0 });
+    expect(entry).toMatchObject({ game: a.id, name: 'First', party: 'ps', kind: 'retired', legacy: 'premier', years: 129 / 52, yearsPm: 129 / 52, elections: 0 });
     let p = hang(emptyProfile(), entry);
     expect(hang(p, legacyEntry(a, 9999)!)).toBe(p);
     p = hang(p, legacyEntry(b, 6000)!);

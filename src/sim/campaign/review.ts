@@ -1,6 +1,7 @@
 import { emptyDynamics } from '../dynamics';
 import { projectElection, type World } from '../election';
 import { N_BLOCS, type ElectionOutcome, type RegionId } from '../types';
+import { campaignFrom } from './news';
 import type { Campaign, Decision } from './types';
 
 // The look back after polling day: which seats turned on a few hundred votes,
@@ -149,7 +150,7 @@ function moves(c: Campaign): Review['moves'] {
 /** The player's last look at the national race before polling day, public or commissioned. */
 function lastPoll(c: Campaign): Review['lastPoll'] {
   // In a career the polls of the years before the campaign are older news.
-  const from = c.career ? c.career.length : 0;
+  const from = campaignFrom(c);
   for (let i = c.polls.length - 1; i >= 0; i--) {
     const poll = c.polls[i];
     if (poll.scope === 'national' && poll.national && poll.week > from) return { week: poll.week - from, share: poll.national[c.player], ownPoll: !poll.public };

@@ -1,4 +1,5 @@
 import { ACHIEVEMENT_IDS, type AchievementId } from '../sim/campaign/achievements';
+import { careerYears } from '../sim/campaign/legacy';
 import { LEGACY_IDS, type Campaign, type EndingKind, type LegacyId } from '../sim/campaign/types';
 import { PARTY_IDS, type PartyId } from '../sim/types';
 import type { GameState } from './game';
@@ -38,8 +39,6 @@ export interface Profile {
 
 const KEY = 'k222.profile';
 const MAX_LEGACIES = 40;
-/** Weeks from one election to the next: the term and the campaign after it. */
-const WEEKS_PER_PARLIAMENT = 260;
 
 export const emptyProfile = (): Profile => ({ version: 1, achievements: {}, legacies: [] });
 
@@ -79,7 +78,7 @@ export function legacyEntry(game: GameState, now: number): LegacyEntry | null {
   return {
     game: game.id, at: now, name: game.name, party: PARTY_IDS[c.player],
     kind: k.ending.kind, legacy: k.ending.legacy, score: k.ending.score,
-    years: ((k.term - 1) * WEEKS_PER_PARLIAMENT + k.week) / 52, yearsPm: r.weeksPm / 52,
+    years: careerYears(c), yearsPm: r.weeksPm / 52,
     elections: r.elections, victories: r.victories, kept: r.kept.length, broken: r.broken,
   };
 }

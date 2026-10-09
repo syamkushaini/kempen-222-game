@@ -1,5 +1,5 @@
 import { BLOC_IDS, N_BLOCS, N_PARTIES, isMinor, type BlocId, type Dynamics, type ElectionOutcome, type RegionId, type SeatKind } from '../types';
-import { combineDynamics } from '../dynamics';
+import { combineDynamics, emptyDynamics } from '../dynamics';
 import { projectElection, type World } from '../election';
 import { projectSeat } from '../project';
 import { zeros, zeros2 } from '../math';
@@ -240,12 +240,15 @@ const MONEY = {
 
 /** An amount of money scaled to the size of the contest and rounded to a tidy figure. */
 export function scaled(world: World, amount: number): number {
+  // What costs nothing costs nothing: only a real sum is kept from rounding down to none.
+  if (amount === 0) return 0;
   const step = world.rules.econ >= 1 ? 1000 : 500;
   return Math.max(step, Math.round((amount * world.rules.econ) / step) * step);
 }
 
-/** What the law lets a party spend on a campaign. */
-export const spendingLimit = (world: World) => scaled(world, 2_600_000);
+/** What the law lets a party spend on a campaign, at general-election scale, and scaled to the contest. */
+export const SPENDING_LIMIT = 2_600_000;
+export const spendingLimit = (world: World) => scaled(world, SPENDING_LIMIT);
 
 // ---------- helpers ----------
 
@@ -281,9 +284,14 @@ export function contestsState(world: World, c: Campaign, p: number, st: RegionId
 
 /** Everything moving voters right now: the hidden drift plus the campaign so far. */
 export function effectiveDynamics(c: Campaign): Dynamics {
-  const dyn = combineDynamics(c.drift, c.dyn);
+  const dyn = c.held ? combineDynamics(combineDynamics(c.drift, c.dyn), c.held) : combineDynamics(c.drift, c.dyn);
   addEndorsements(c, dyn);
   return dyn;
+}
+
+/** Where what lasts a whole campaign, and no longer, is kept (see `held` on the campaign): made the first time it is written to. */
+export function heldOf(c: Campaign): Dynamics {
+  return (c.held ??= emptyDynamics());
 }
 
 /** How the contest would be decided today. Hidden from the player. */
