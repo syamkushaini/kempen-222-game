@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getWorld } from '../../data/world';
+import { fightWorld, foundedWorld, getWorld, newPartyWorld, worldOf } from '../../data/world';
 import { newGame, parseSave, serializeSave } from '../../state/game';
 import { PARTY_IDS } from '../types';
 import { canFight, playRound, roundStates, settleAside, stakeFor, startAside, stateWinner } from './aside';
@@ -7,6 +7,7 @@ import { startCareer } from './career';
 import { scaled } from './actions';
 import { ROUNDS, STATE_EFFORT } from './contests';
 import { endDay } from './formation';
+import { neutralLeader } from './perks';
 import { FOUNDING_SLOT } from './founding';
 import { autoPlayWeek, closeNight, endWeek } from './turn';
 import type { Campaign } from './types';
@@ -26,15 +27,13 @@ const due = (player = PS, realStates = true): Campaign => {
 const stakes = (c: Campaign) => ({ selangor: stakeFor(selangor, c.player), kedah: stakeFor(kedah, c.player) });
 
 describe('fighting a state election in person, inside a career', () => {
-  it('is an option, for the country’s career, and not for a party founded from nothing', () => {
+  it('is an option, for the country’s career', () => {
     expect(startCareer(base, { player: PS, difficulty: 'normal', seed: 5 }).career!.realStates).toBeUndefined();
     expect(due().career!.realStates).toBe(true);
     expect(roundStates(due())).toEqual(ROUNDS[1].states);
     expect(roundStates(due(PS, false))).toEqual([]);
-    const c = due();
-    c.career!.founded = true;
-    expect(canFight(selangor, c)).toBe(false);
     expect(canFight(selangor, due())).toBe(true);
+    expect(canFight(selangor, due(PS, false))).toBe(false);
     // A party that does not stand in the state cannot fight it.
     expect(canFight(getWorld('state:sabah')!, due(PS))).toBe(PARTY_IDS.length > 0 && canFight(getWorld('state:sabah')!, due(PS)));
     // The state's purse is a state contest's, far less than the country's.
@@ -128,5 +127,73 @@ describe('fighting a state election in person, inside a career', () => {
     const plain = newGame('Plain', c, 1000);
     expect(parseSave(serializeSave(plain))).toEqual({ ok: true, state: plain });
     void BP; void PT; void FOUNDING_SLOT;
+  });
+});
+
+describe('fighting a state election in person with a party founded from nothing', () => {
+  const GENBA = PARTY_IDS.indexOf(FOUNDING_SLOT);
+  const world = foundedWorld();
+  const founded = (realStates = true): Campaign => {
+    const c = startCareer(world, { player: GENBA, difficulty: 'normal', seed: 5, founded: true, realStates });
+    c.career!.rounds = 1;
+    c.career!.week = ROUNDS[1].week;
+    return c;
+  };
+
+  it('is the same option as for any party: the checkbox on the set-up reaches a founded party too', () => {
+    expect(founded().career!.realStates).toBe(true);
+    expect(founded(false).career!.realStates).toBeUndefined();
+    expect(roundStates(founded())).toEqual(ROUNDS[1].states);
+    expect(roundStates(founded(false))).toEqual([]);
+  });
+
+  it('fights in the state with the new party on every ballot, for the purse a new party starts with', () => {
+    const c = founded();
+    const sw = fightWorld(c, 'selangor')!;
+    expect(sw).toBe(newPartyWorld('state:selangor'));
+    expect(sw).not.toBe(selangor);
+    expect(sw.seats.every((seat) => seat.last.votes[GENBA] > 0)).toBe(true);
+    expect(canFight(sw, c)).toBe(true);
+    expect(canFight(sw, founded(false))).toBe(false);
+    expect(fightWorld(due(), 'selangor')).toBe(selangor);
+    expect(stakeFor(sw, GENBA, true)).toBe(scaled(sw, 150_000));
+  });
+
+  it('is played as a new party’s own contest, and settles the career with its result', () => {
+    const c = founded();
+    const pc = c.parties[GENBA]!;
+    pc.funds = 900_000;
+    const sw = fightWorld(c, 'selangor')!;
+    const s = { selangor: stakeFor(sw, GENBA, true), kedah: stakeFor(fightWorld(c, 'kedah')!, GENBA, true) };
+    expect(playRound(world, c, 2, ['selangor'], s)).toEqual(['selangor']);
+    expect(pc.funds).toBe(900_000 - s.selangor - scaled(world, STATE_EFFORT[2].money));
+    const was = c.career!.states.selangor;
+    const nested = startAside(c, sw, 'selangor');
+    expect(nested.newParty).toBe(true);
+    expect(nested.player).toBe(GENBA);
+    expect(nested.parties[GENBA]!.funds).toBe(s.selangor);
+    expect(nested.team.leader).toEqual(neutralLeader());
+    expect(worldOf(nested)).toBe(sw);
+    expect(isValidCampaign(JSON.parse(JSON.stringify(nested)), sw)).toBe(true);
+    while (nested.phase === 'campaign') { autoPlayWeek(sw, nested); endWeek(sw, nested); }
+    closeNight(sw, nested);
+    for (let d = 0; d < 10 && nested.phase === 'formation'; d++) endDay(sw, nested);
+    expect(nested.phase).toBe('done');
+    const left = nested.parties[GENBA]!.funds;
+    const funds = pc.funds;
+    const result = settleAside(c, nested, sw, 'selangor');
+    expect(result).toMatchObject({ state: 'selangor', was });
+    expect(result.vote?.inPerson).toBe(true);
+    expect(pc.funds).toBe(funds + Math.max(0, left));
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world)).toBe(true);
+  }, 60_000);
+
+  it('is kept in a saved game, with the founded career waiting in it', () => {
+    const c = founded();
+    c.parties[GENBA]!.funds = 900_000;
+    const nested = startAside(c, fightWorld(c, 'selangor')!, 'selangor');
+    const g = newGame('Test', nested, 1000);
+    g.aside = { parked: c, state: 'selangor', queue: ['kedah'] };
+    expect(parseSave(serializeSave(g))).toEqual({ ok: true, state: g });
   });
 });

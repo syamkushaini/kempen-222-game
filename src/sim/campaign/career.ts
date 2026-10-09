@@ -205,7 +205,7 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   c.career.record.bestSeats = lastElection(world).tally[c.player];
   c.career.govRun = inGovernment(c, c.player) ? 1 : 0;
   c.career.pmRun = c.career.government.pm === c.player ? 1 : 0;
-  if (opts.realStates && !opts.founded && world.rules.kind !== 'state') c.career.realStates = true;
+  if (opts.realStates && world.rules.kind !== 'state') c.career.realStates = true;
   // A party the player made stands where it stood before, and picks and pays for any other seat; a founded party has none to begin with.
   if (opts.own || opts.founded) {
     c.career.own = true;

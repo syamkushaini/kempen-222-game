@@ -1,9 +1,12 @@
+import { scaled } from './actions';
 import { lastElection, type World } from '../election';
 import { PARTY_IDS, type StateId } from '../types';
 import { applyStateResults, ROUNDS, resolveStatePolls, type StateResult } from './contests';
+import { FOUNDING_FUNDS } from './founding';
 import { playable, startingFunds } from './field';
 import { endCareer, OUSTED_BELOW } from './legacy';
 import { pushNews, ref } from './news';
+import { neutralLeader } from './perks';
 import { electionResult, newCampaign } from './turn';
 import type { Campaign } from './types';
 
@@ -14,12 +17,16 @@ import type { Campaign } from './types';
 
 const OTH = PARTY_IDS.indexOf('oth');
 
-/** The money a party puts into a state election it fights in person: what a party of its standing starts such a contest with. */
-export const stakeFor = (stateWorld: World, party: number): number => startingFunds(stateWorld, party);
+/** The money a party puts into a state election it fights in person: what a party of its standing starts such a contest with, or for a party founded from nothing, what a new party starts with. */
+export const stakeFor = (stateWorld: World, party: number, founded = false): number => (founded ? scaled(stateWorld, FOUNDING_FUNDS) : startingFunds(stateWorld, party));
 
-/** Whether the player's party can fight a state's election in person: it is a party that stands there, and not one founded from nothing. */
+/**
+ * Whether the player's party can fight a state's election in person: it is a party that stands there, or one founded from nothing,
+ * which stands wherever the state's world (with the new party on every ballot) is given to it.
+ */
 export function canFight(stateWorld: World, c: Campaign): boolean {
-  return !!c.career?.realStates && !c.career.founded && playable(stateWorld).includes(c.player);
+  if (!c.career?.realStates) return false;
+  return c.career.founded ? stateWorld.rules.kind === 'state' : playable(stateWorld).includes(c.player);
 }
 
 /** The states of the round now due, if the player may fight them in person. */
@@ -53,7 +60,15 @@ export function startAside(parent: Campaign, stateWorld: World, state: StateId):
   let h = 0x811c9dc5;
   for (const ch of state) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
   const seed = ((parent.rng ^ h) >>> 0) || 1;
-  return newCampaign(stateWorld, { player: parent.player, difficulty: parent.difficulty, seed, backstory: parent.team.leader.backstory ?? null });
+  const backstory = parent.team.leader.backstory ?? null;
+  const nested = newCampaign(stateWorld, { player: parent.player, difficulty: parent.difficulty, seed, backstory });
+  // A party founded from nothing fights as a new party does in any single contest: an ordinary leader unless the player chose a past, and a purse of its own.
+  if (parent.career?.founded) {
+    nested.newParty = true;
+    if (!backstory) nested.team.leader = neutralLeader();
+    nested.parties[parent.player]!.funds = stakeFor(stateWorld, parent.player, true);
+  }
+  return nested;
 }
 
 /** Who governs the state after the election: whoever formed its government, or if no one did, the largest party. */

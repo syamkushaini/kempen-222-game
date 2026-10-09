@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getWorld, loadState, stateLoaded } from '../data/world';
+import { fightWorld, loadState, stateLoaded } from '../data/world';
 import { canFight, stakeFor } from '../sim/campaign/aside';
 import { useStore } from '../state/store';
 import { partyShort, regionLabel, useFormat, useT, useWorld } from './hooks';
@@ -26,8 +26,8 @@ export function StateFight({ states, selected, onChange }: { states: string[]; s
   const funds = campaign.parties[me]!.funds;
   const holders = campaign.career!.states;
   const rows = states.map((st) => {
-    const sw = stateLoaded(st as never) ? getWorld(`state:${st}`) : null;
-    return { st, sw, can: !!sw && canFight(sw, campaign), stake: sw ? stakeFor(sw, me) : 0 };
+    const sw = stateLoaded(st as never) ? fightWorld(campaign, st) : null;
+    return { st, sw, can: !!sw && canFight(sw, campaign), stake: sw ? stakeFor(sw, me, !!campaign.career!.founded) : 0 };
   });
   const put = rows.filter((r) => selected.includes(r.st)).reduce((a, r) => a + r.stake, 0);
   const toggle = (st: string) => onChange(selected.includes(st) ? selected.filter((x) => x !== st) : [...selected, st]);

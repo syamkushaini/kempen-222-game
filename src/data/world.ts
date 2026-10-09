@@ -219,6 +219,14 @@ export function newPartyWorld(id: string): World | null {
   return built;
 }
 
+/**
+ * The world a state election is fought in when a career fights it in person: the state's own, or for a party founded from nothing,
+ * the state with that party already on every ballot, as in a state election played alone by a new party.
+ */
+export function fightWorld(parent: Pick<Campaign, 'career'>, state: string): World | null {
+  return parent.career?.founded ? newPartyWorld(`state:${state}`) : getWorld(`state:${state}`);
+}
+
 export const scenarioInfo = (id: string) => SCENARIOS.find((s) => s.id === id) ?? null;
 
 // A career's world changes at every election: the model is refitted to the
