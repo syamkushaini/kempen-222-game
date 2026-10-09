@@ -7,6 +7,7 @@ import { factionsOf } from './factions';
 import { lastShares } from './field';
 import { pushNews, ref } from './news';
 import { shiftUnity } from './diplomacy';
+import { stampOf } from './stamps';
 import { ISSUE_IDS, type Campaign, type Career } from './types';
 
 // The party between elections is more than a purse. It has members, who pay their dues and go door to door; it has
@@ -207,7 +208,7 @@ export const activityCost = (world: World, id: ActivityId) => scaled(world, ACTI
 /** Weeks until an activity can be done again; zero if it can be done now. */
 export function activityWait(c: Campaign, id: ActivityId): number {
   const k = c.career;
-  const last = k?.activity?.[id];
+  const last = k ? stampOf(k, k.activity, id) : undefined;
   return k && last !== undefined ? Math.max(0, last + ACTIVITIES[id].every - k.week) : 0;
 }
 

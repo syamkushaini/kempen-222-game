@@ -5,6 +5,7 @@ import { type BlocId } from '../types';
 import { shiftRelation } from './diplomacy';
 import { pushNews } from './news';
 import { isPm, lift } from './office';
+import { stampOf } from './stamps';
 import type { Campaign, Career } from './types';
 
 // The economy is not one number. Four sectors of it have their own seasons, and each is felt by the people who live by
@@ -67,7 +68,7 @@ export function canAid(_world: World, c: Campaign, id: SectorId): { ok: true } |
   const k = c.career;
   if (!k || c.phase !== 'term' || c.inbox.length > 0 || !isPm(c)) return { ok: false, reason: 'phase' };
   if (!(SECTOR_IDS as readonly string[]).includes(id)) return { ok: false, reason: 'sector' };
-  const last = k.sectorAid?.[id];
+  const last = stampOf(k, k.sectorAid, id);
   if (last !== undefined && k.week - last < SECTOR.every) return { ok: false, reason: 'wait' };
   return { ok: true };
 }

@@ -36,6 +36,7 @@ import { sectorsWeek } from './sectors';
 import { trialWeek } from './trial';
 import { advisersWeek } from './advisers';
 import { echoWeek } from './echoes';
+import { carryStamps, dropStale } from './stamps';
 import { ksuWeek } from './ksu';
 import { grandWeek } from './grand';
 import { signEarlyPacts } from './earlypact';
@@ -354,6 +355,7 @@ export function termWeek(world: World, c: Campaign): void {
   const me = c.player;
   const pc = c.parties[me];
   if (!k || !pc || c.phase !== 'term' || c.inbox.length > 0 || k.ending) return;
+  dropStale(k);
   const rng = new Rng(c.rng);
   const o = k.orders;
 
@@ -721,6 +723,8 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.shaky?.length ? { shaky: [...k.shaky] } : {}),
   };
   Object.assign(c.career, carry);
+  // The new parliament counts its weeks from one: what was marked with a week of the old one is moved back by the term and the campaign.
+  carryStamps(c.career, k.week + c.totalWeeks);
   // A leader who stood in a seat of their own and lost it is out of the House, whatever their party did: they cannot head a government.
   const own = c.team.leaderSeat ? world.seatIndex.get(c.team.leaderSeat) : undefined;
   const leaderOut = own !== undefined && recorded.votes[own].indexOf(Math.max(...recorded.votes[own])) !== c.player;
