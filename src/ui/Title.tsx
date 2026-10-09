@@ -26,6 +26,7 @@ import { Logo } from './Logo';
 import { Icon, type IconName } from './Icon';
 import { Portrait } from './Portrait';
 import { SupportDialog } from './Support';
+import { hasLeaderboard, LeaderboardDialog } from './Leaderboard';
 import { saveLine, SaveSlots } from './SavesTab';
 import { PlatformEditor } from './Platform';
 import { SeatPicker } from './SeatPicker';
@@ -125,6 +126,7 @@ export function Title() {
   const [honours, setHonours] = useState(false);
   const [howTo, setHowTo] = useState(false);
   const [support, setSupport] = useState(false);
+  const [board, setBoard] = useState(false);
   const profile = useStore((s) => s.profile);
   const [art, setArt] = useState(false);
   const [lastMode] = useState<'quick' | 'custom' | null>(() => { try { const v = localStorage.getItem(MODE_KEY); return v === 'custom' || v === 'quick' ? v : null; } catch { return null; } });
@@ -174,6 +176,7 @@ export function Title() {
       {honours && <HonoursDialog onClose={() => setHonours(false)} />}
       {howTo && <HowToPlay onClose={() => setHowTo(false)} />}
       {support && <SupportDialog onClose={() => setSupport(false)} />}
+      {board && <LeaderboardDialog onClose={() => setBoard(false)} />}
       {mode === 'menu' ? (
         <nav className="main-menu" aria-label={t('menu.label')}>
           <div className="menu-brand">
@@ -196,6 +199,7 @@ export function Title() {
             <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.hint')} onClick={() => pick('challenges')} />
             <MenuItem icon="book" tone="learn" title={t('howto.title')} hint={t('howto.hint')} onClick={() => setHowTo(true)} />
             <MenuItem icon="trophy" tone="won" title={t('menu.honours')} hint={t('menu.honours.hint', { n: earnedCount, total: ACHIEVEMENT_IDS.length })} onClick={() => setHonours(true)} />
+            {hasLeaderboard && <MenuItem icon="star" tone="won" title={t('lb.title')} hint={t('lb.menu.hint')} onClick={() => setBoard(true)} />}
             <MenuItem icon="coffee" tone="dare" title={t('menu.support')} hint={t('menu.support.hint')} onClick={() => setSupport(true)} />
           </ul>
           <p className="muted small">{t('title.fiction')}</p>

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { leaderName, partyName, useT } from './hooks';
 import { Portrait } from './Portrait';
 import { legacyCard, ShareDialog } from './ShareDialog';
+import { PostCareer } from './Leaderboard';
 
 /** The end of a career: how the leader will be remembered, and the record behind it. */
 export function LegacyScreen() {
@@ -45,6 +46,7 @@ export function LegacyScreen() {
         </dl>
         <p className="note">{t('legacy.left', { party: partyName(t, campaign.player), seat: t(`orders.seat.${seatOf(campaign)}`) })}</p>
         <p className="muted small">{t('legacy.hung')}</p>
+        <PostCareer />
         <div className="button-row">
           <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>
           <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>

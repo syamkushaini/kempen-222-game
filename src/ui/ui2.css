@@ -709,3 +709,14 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 @media (prefers-reduced-motion: reduce) { .scene-art .scene-photo { transition: none; } }
 /* the thirteen states are the choice itself: all of them show at once on a phone, not in a row to be swiped */
 .chips.state-pick { flex-wrap: wrap; overflow-x: visible; }
+
+/* ---------- the leaderboard ---------- */
+.board-list { list-style: none; padding: 0; margin: 6px 0 0; }
+.board-list .rank { flex: none; width: 2.2ch; text-align: right; font-weight: 600; color: var(--muted); }
+.board-list li:nth-child(-n+3) .rank { color: var(--ink); }
+.post-career { margin: 14px 0 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+.post-career h3 { margin: 0 0 4px; }
+.post-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.post-row .field-label { flex: 1 0 100%; margin: 0; }
+.post-row .text-input { flex: 1 1 180px; min-width: 0; }
+.text-input { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-height: 44px; }

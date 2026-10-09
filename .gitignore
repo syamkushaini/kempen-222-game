@@ -5,3 +5,4 @@ graphify-out
 .claude-flow
 tsconfig.tsbuildinfo
 scripts/art/failed.json
+*.local
