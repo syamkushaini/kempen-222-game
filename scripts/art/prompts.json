@@ -1104,6 +1104,22 @@
    "title": "A win in the local council",
    "body": "Your party has won a surprise seat in a local council by-election, in a place where you have never done well. It is a small thing, and the papers have called it “an early sign”. Your members want to do something with it."
   },
+  "donorStrings": {
+   "title": "The Donor With Strings Attached",
+   "body": "A wealthy supporter offers RM100,000 for your campaign. He is charming about it, and he does not say what he wants in return. He does not need to: he expects favourable treatment if you win."
+  },
+  "missingVolunteers": {
+   "title": "The Missing Volunteers",
+   "body": "On the busiest campaign day, half your volunteers fail to show up. The leaflets are in boxes, the hall is booked, and the people who were to carry them are, according to the group chat, “in traffic”."
+  },
+  "manifestoMistake": {
+   "title": "The Manifesto Mistake",
+   "body": "A journalist has discovered that one of the major promises in your manifesto rests on an unrealistic financial assumption. The sum does not add up, and she has done the sum twice. She has called for your comment."
+  },
+  "manaPeruntukan": {
+   "title": "“Mana Peruntukan?”",
+   "body": "Residents ask why their area has not received funding for drainage, roads and community facilities. They ask in front of a camera. Your team suggests blaming the current government, and has already drafted the sentence."
+  },
   "kind-pactOffer": {
    "title": "An offer from another party",
    "body": "The leader of another party calls with an offer of a pact: seats to stand aside in, seats in return. Two leaders at a table with glasses of teh tarik, a handshake half offered."

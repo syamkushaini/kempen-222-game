@@ -452,5 +452,15 @@ export function playerRole(c: Campaign, o: Outcome): Role {
   return o.pm === c.player ? 'pm' : o.partners.includes(c.player) ? 'partner' : 'opposition';
 }
 
+/**
+ * Whether a player outside the government leads the opposition: their party has the most seats of those outside it (the
+ * independents and the small parties pooled as "other" do not count). A party in opposition that is smaller than another there is only in opposition.
+ */
+export function leadsOpposition(c: Campaign, o: Outcome, tally: readonly number[]): boolean {
+  const other = PARTY_IDS.indexOf('oth');
+  const outside = tally.map((n, p) => ({ n, p })).filter(({ p }) => p !== other && !!c.parties[p] && p !== o.pm && !o.partners.includes(p)).sort((a, b) => b.n - a.n);
+  return outside[0]?.p === c.player;
+}
+
 /** How solid a government looks, in words. */
 export const stabilityBand = (s: number) => (s >= 70 ? 'solid' : s >= 50 ? 'steady' : s >= 30 ? 'shaky' : 'doomed');

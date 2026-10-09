@@ -4,13 +4,14 @@ import { scaled } from '../sim/campaign/actions';
 import { DEMANDS, SENIOR_COST, WANTS, clashWith, demandUnityCost } from '../sim/campaign/cast';
 import { relation } from '../sim/campaign/diplomacy';
 import {
-  blocs, cashRef, demandsBarred, demandsOpen, emptyOffer, fairPosts, MEETINGS, mood, offerProblem, playerClaims, playerRole, pledged,
+  blocs, cashRef, demandsBarred, demandsOpen, emptyOffer, fairPosts, MEETINGS, mood, offerProblem, leadsOpposition, playerClaims, playerRole, pledged,
   postsKept, postsLeft, seniorsFree, stabilityBand, stillRunning, unityBill,
 } from '../sim/campaign/formation';
 import { OUSTED_BELOW } from '../sim/campaign/legacy';
 import { FORMATION_WEEK } from '../sim/campaign/news';
 import type { Campaign, DemandId, Formation, Offer, SeniorId } from '../sim/campaign/types';
-import { majorityLine, type World } from '../sim/election';
+import { electionResult } from '../sim/campaign/turn';
+import { lastElection, majorityLine, type World } from '../sim/election';
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from '../state/store';
 import { ConfirmButton, GamePanel } from './SavesTab';
@@ -281,12 +282,14 @@ function OutcomePanel() {
   const career = campaign.career;
   const f = campaign.formation!, o = f.outcome!;
   const role = playerRole(campaign, o);
+  // In opposition, "lead" is for the largest party outside the government; any other is simply in opposition.
+  const sentence = role === 'opposition' && !leadsOpposition(campaign, o, (electionResult(world, campaign) ?? lastElection(world)).tally) ? 'oppositionBack' : role;
   const band = stabilityBand(o.stability);
   const head = t(`form.head.${headKind(world)}`);
   return (
     <section className="panel summary t-parties">
       <h2>{t('form.outcome.title')}</h2>
-      <p className={`verdict ${role === 'pm' ? 'majority' : role === 'opposition' ? 'lost' : ''}`}>{t(`form.outcome.${role}`, { head })}</p>
+      <p className={`verdict ${role === 'pm' ? 'majority' : role === 'opposition' ? 'lost' : ''}`}>{t(`form.outcome.${sentence}`, { head })}</p>
       <p>
         {t(o.minority ? 'form.outcome.minority' : o.day === 0 ? 'form.outcome.outright' : 'form.outcome.line', {
           party: partyName(t, o.pm), n: o.seats, need: majorityLine(world),

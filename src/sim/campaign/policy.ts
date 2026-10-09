@@ -113,6 +113,10 @@ export const PLEDGES: Record<PledgeId, PledgeDef> = {
   villageRoads:    { cost: 3, appeal: { agri: .08, felda: .06, borneo_native: .1, heartland: .05, urban_lib: -.02 }, needs: ['rural', 1] },
   smeLoans:        { cost: 2, appeal: { smallbiz: .1, gig: .04, m40: .03, borneo_urban: .02 } },
   seniorPension:   { cost: 3, appeal: { seniors: .1, heartland: .03, felda: .03, agri: .03, undi18: -.02 } },
+  // Three Acts more. Tolls come down 20% on some highways and the concessionaires are paid back over the years; the retirement fund may be drawn on early, in a declared emergency; the civil service is given targets, and its unions do not like it.
+  tollCut:         { cost: 2, appeal: { m40: .06, urban_b40: .05, gig: .06, smallbiz: .05, undi18: .03, heartland: .02, urban_lib: -.01 }, needs: ['subsidies', 1], law: true },
+  epfWithdrawal:   { cost: 0, appeal: { gig: .08, urban_b40: .07, smallbiz: .04, undi18: .04, m40: .02, seniors: -.06, civil: -.01 }, law: true },
+  civilReform:     { cost: 0, appeal: { urban_lib: .06, m40: .05, smallbiz: .04, borneo_urban: .03, civil: -.12 }, needs: ['reform', 1], law: true },
 };
 // Acts that change the constitution itself need two thirds of the House.
 for (const id of ['termLimit', 'fixedTerm', 'partyHopBan', 'oilRoyalty', 'localVote'] as const) PLEDGES[id].amend = true;

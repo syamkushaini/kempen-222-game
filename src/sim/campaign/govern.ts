@@ -43,6 +43,7 @@ const PLEDGE_PORTFOLIO: Record<PledgeId, PortfolioId> = {
   settlerDebt: 'rural', floorPrices: 'rural', valuesSchools: 'education', repealLaws: 'home', homes: 'works',
   partyHopBan: 'home', fixedTerm: 'home', infoAct: 'home', localVote: 'home', gigRights: 'economy', oilRoyalty: 'finance',
   schoolMeals: 'education', healthCover: 'health', greenGrid: 'works', villageRoads: 'rural', smeLoans: 'economy', seniorPension: 'finance',
+  tollCut: 'works', epfWithdrawal: 'finance', civilReform: 'home',
 };
 
 /** Promises to partners that need an Act of Parliament rather than a signature. */

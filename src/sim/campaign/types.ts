@@ -274,6 +274,8 @@ export const PLEDGE_IDS = [
   // Added with the laws that, once passed, stay on the books (see `law` in policy.ts): promises of an Act, of a programme, and of money for a region.
   'partyHopBan', 'fixedTerm', 'infoAct', 'localVote', 'gigRights', 'oilRoyalty',
   'schoolMeals', 'healthCover', 'greenGrid', 'villageRoads', 'smeLoans', 'seniorPension',
+  // Three Acts more: the tolls, the retirement fund and the civil service.
+  'tollCut', 'epfWithdrawal', 'civilReform',
 ] as const;
 export type PledgeId = (typeof PLEDGE_IDS)[number];
 
