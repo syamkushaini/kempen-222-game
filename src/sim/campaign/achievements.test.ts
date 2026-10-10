@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { getWorld, SCENARIOS } from '../../data/world';
 import { N_BLOCS, PARTY_IDS } from '../types';
-import { ACHIEVEMENT_IDS, COLLECTOR_LEGACIES, earned } from './achievements';
+import { ABSURD_EVENTS, ACHIEVEMENT_GROUPS, ACHIEVEMENT_IDS, COLLECTOR_LEGACIES, earned, WIDE_REACH } from './achievements';
+import { STRINGS } from '../../i18n/strings';
 import { startCareer } from './career';
 import { retire } from './legacy';
 import { pushNews } from './news';
-import { closeNight, endWeek, newCampaign, playable } from './turn';
-import type { Campaign, Difficulty, Outcome } from './types';
+import { closeNight, electionResult, endWeek, newCampaign, playable } from './turn';
+import type { Campaign, Difficulty, Missions, Outcome } from './types';
 
 const [PS, BP, PT, GBK] = PARTY_IDS.map((_, i) => i);
 const general = getWorld('general')!, by = getWorld('byelection')!, perak = getWorld('state:perak')!, hung = getWorld('hung')!, careerWorld = getWorld('career')!;
@@ -76,9 +77,9 @@ describe('achievements', () => {
   it('tell the ways a government can be put together apart', () => {
     const c = newCampaign(hung, { player: PS, difficulty: 'normal', seed: 3 });
     c.formation!.outcome = outcome(PS, [BP, GBK]);
-    expect(earned(hung, c)).toEqual(['premier']);
+    expect(earned(hung, c)).toEqual(['hungRule', 'premier']);
     c.formation!.outcome = outcome(PS, [], { minority: true });
-    expect(earned(hung, c)).toEqual(['premier', 'minority']);
+    expect(earned(hung, c)).toEqual(['hungRule', 'premier', 'minority']);
     c.formation!.outcome = outcome(PT, [PS]);
     expect(earned(hung, c)).toEqual(['partner', 'bedfellows']);
     c.formation!.outcome = outcome(PT, [BP]);
@@ -135,6 +136,144 @@ describe('achievements', () => {
 
   it('are listed in the order they are shown', () => {
     expect(new Set(ACHIEVEMENT_IDS).size).toBe(ACHIEVEMENT_IDS.length);
-    expect(ACHIEVEMENT_IDS).toHaveLength(32);
+    expect(ACHIEVEMENT_IDS).toHaveLength(53);
+    // Every one is in a group, and shown in the group's own order.
+    expect(Object.values(ACHIEVEMENT_GROUPS).flat()).toEqual([...ACHIEVEMENT_IDS]);
   });
 });
+
+describe('the newer achievements', () => {
+  const won = (world: typeof general, push = 4, player = PS) => { const c = fought(world, push, 'normal', player); closeNight(world, c); return c; };
+
+  it('name a way of winning: a shoestring, no poll of your own, an empty purse, a poll that was wrong', () => {
+    const c = won(general);
+    expect(earned(general, c)).toEqual(expect.arrayContaining(['shoestring', 'blindfolded']));
+    expect(earned(general, c)).not.toContain('brokeVictor');
+    c.parties[PS]!.funds = 100;
+    expect(earned(general, c)).toContain('brokeVictor');
+    c.parties[PS]!.spent = 10_000_000;
+    expect(earned(general, c)).not.toContain('shoestring');
+    c.polls.push({ id: 1, week: 2, scope: 'national', target: null, quality: 'quick', public: false, moe: 0.04, national: PARTY_IDS.map((_, p) => (p === PS ? 0.3 : 0.05)) });
+    expect(earned(general, c)).not.toContain('blindfolded');
+    // A public poll that had somebody ahead; the votes said otherwise.
+    expect(earned(general, c)).not.toContain('pollsWrong');
+    c.polls.push({ id: 2, week: 3, scope: 'national', target: null, quality: 'quick', public: true, moe: 0.04, national: PARTY_IDS.map((_, p) => (p === PS ? 0.2 : p === BP ? 0.4 : 0.01)) });
+    expect(earned(general, c)).toContain('pollsWrong');
+    // None of this for a by-election, which has no such limit to speak of, nor for a loss.
+    const by1 = won(by);
+    expect(earned(by, by1)).not.toEqual(expect.arrayContaining(['shoestring']));
+    const lost = fought(general, -4);
+    closeNight(general, lost);
+    expect(earned(general, lost)).toEqual([]);
+  });
+
+  it('count exactly the seats to govern, and not one more or one fewer', () => {
+    const perlis = getWorld('state:perlis')!;
+    const line = Math.floor(perlis.seats.length / 2) + 1;
+    const seen = new Map<number, boolean>();
+    for (let push = -0.5; push <= 3 && !seen.has(line); push += 0.05) {
+      const c = fought(perlis, push);
+      closeNight(perlis, c);
+      seen.set(electionResult(perlis, c)!.tally[PS], earned(perlis, c).includes('exactMajority'));
+    }
+    expect(seen.get(line), `a night with exactly ${line} seats turned up`).toBe(true);
+    for (const [seats, flagged] of seen) if (seats !== line) expect(flagged, `${seats} seats`).toBe(false);
+  }, 60_000);
+
+  it('count a seat won where the party had never stood', () => {
+    const c = won(general);
+    const result = earned(general, c);
+    expect(result).not.toContain('newGround');
+        // Whether it was won depends on the night; what matters is that one entered and lost is not counted, and one won is.
+    const winner = (id: string) => { c.entered = { [id]: 1000 }; return earned(general, c).includes('newGround'); };
+    const wonSeat = general.seats.map((s) => s.id).find((id) => winner(id));
+    expect(wonSeat).toBeDefined();
+    expect(earned(general, c)).toContain('newGround');
+    const lostSeat = general.seats.map((s) => s.id).find((id) => !winner(id));
+    expect(lostSeat).toBeDefined();
+  });
+
+  it('are the firsts: Borneo at the top, a government made from a hung parliament, a founded party in the top job', () => {
+    const h = newCampaign(hung, { player: GBK, difficulty: 'normal', seed: 3 });
+    h.formation!.outcome = outcome(GBK, [PS, BP]);
+    expect(earned(hung, h)).toEqual(expect.arrayContaining(['borneoTop', 'hungRule']));
+    h.formation!.outcome = outcome(PS, [GBK]);
+    expect(earned(hung, h)).not.toContain('borneoTop');
+    const c = career(PS);
+    c.career!.founded = true;
+    c.career!.government = outcome(BP, [PS], { day: 0 });
+    expect(earned(careerWorld, c)).not.toContain('fromNothing');
+    c.career!.government = outcome(PS, [], { day: 0 });
+    expect(earned(careerWorld, c)).toContain('fromNothing');
+    // States held at once: not from the first day.
+    const states = Object.fromEntries(careerWorld.states.slice(0, WIDE_REACH).map((st) => [st, PS]));
+    const w = career(PS);
+    w.career!.states = states;
+    expect(earned(careerWorld, w)).not.toContain('wideReach');
+    w.career!.week = 60;
+    expect(earned(careerWorld, w)).toContain('wideReach');
+    w.career!.states = Object.fromEntries(Object.entries(states).slice(0, WIDE_REACH - 1));
+    expect(earned(careerWorld, w)).not.toContain('wideReach');
+  });
+
+  it('laugh at the country: three of its sillier stories in one career', () => {
+    const c = career(PS);
+    const k = c.career!;
+    k.fired = [ABSURD_EVENTS[0], ABSURD_EVENTS[1], 'budget'];
+    expect(earned(careerWorld, c)).not.toContain('absurd');
+    k.seen = [ABSURD_EVENTS[2], 'flood'];
+    expect(earned(careerWorld, c)).toContain('absurd');
+    k.fired = []; k.seen = [ABSURD_EVENTS[0], ABSURD_EVENTS[0], ABSURD_EVENTS[1]];
+    expect(earned(careerWorld, c)).not.toContain('absurd');
+  });
+
+  it('are the ways of working together: a big tent, five parties at a table, a merger, national unity, an alliance', () => {
+    const c = newCampaign(general, { player: PS, difficulty: 'normal', seed: 3 });
+    c.pacts.push({ a: PS, b: GBK, week: 1 }, { a: BP, b: PS, week: 2 });
+    expect(earned(general, c)).not.toContain('bigTent');
+    c.pacts.push({ a: PS, b: PT, week: 3 });
+    expect(earned(general, c)).toEqual(expect.arrayContaining(['pactMaker', 'bigTent']));
+    const g = newCampaign(hung, { player: PS, difficulty: 'normal', seed: 3 });
+    g.formation!.outcome = outcome(PS, [BP, PT, GBK]);
+    expect(earned(hung, g)).not.toContain('rainbow');
+    g.formation!.outcome = outcome(PS, [BP, PT, GBK, PARTY_IDS.indexOf('gbs')]);
+    expect(earned(hung, g)).toContain('rainbow');
+    const k = career(PS);
+    expect(earned(careerWorld, k)).toEqual([]);
+    k.career!.merged = [GBK];
+    k.career!.grand = { until: 100, members: [PS, BP] };
+    k.career!.alliance = { name: 0, mark: 0, members: [PS, BP] };
+    expect(earned(careerWorld, k)).toEqual(expect.arrayContaining(['merged', 'unityGov']));
+    expect(earned(careerWorld, k)).not.toContain('alliance');
+    k.career!.alliance.members = [PS, BP, PT];
+    expect(earned(careerWorld, k)).toContain('alliance');
+  });
+
+  it('are the missions: the first, ten, one of each kind, and a hard one', () => {
+    const c = career(PS);
+    const m: Missions = { active: [], offers: [], seq: 0, done: [], unseen: [] };
+    c.career!.missions = m;
+    const record = (won: boolean) => ({ kind: 'seize' as const, main: true, tier: 1 as const, won, term: 1, need: 1 });
+    m.done = [record(false)];
+    expect(earned(careerWorld, c)).toEqual([]);
+    m.done.push(record(true));
+    expect(earned(careerWorld, c)).toEqual(['firstMission']);
+    m.done = Array.from({ length: 10 }, () => record(true));
+    expect(earned(careerWorld, c)).toContain('tenMissions');
+    m.firsts = ['seize', 'hold', 'bloc'];
+    expect(earned(careerWorld, c)).not.toContain('fullHouse');
+    m.firsts.push('majority');
+    m.hard = true;
+    expect(earned(careerWorld, c)).toEqual(expect.arrayContaining(['fullHouse', 'hardMission']));
+  });
+
+  it('are described in both languages, with a heading for each group, so that none shows its key', () => {
+    for (const lang of ['en', 'ms'] as const) {
+      for (const id of ACHIEVEMENT_IDS) { expect(STRINGS[lang][`ach.${id}`], `${lang} ${id}`).toBeTruthy(); expect(STRINGS[lang][`ach.${id}.desc`], `${lang} ${id} desc`).toBeTruthy(); }
+      for (const group of Object.keys(ACHIEVEMENT_GROUPS)) expect(STRINGS[lang][`ach.group.${group}`], `${lang} ${group}`).toBeTruthy();
+    }
+    // Nothing is hidden: every one is listed from the first day.
+    expect(ACHIEVEMENT_IDS.length).toBeGreaterThan(50);
+  });
+});
+

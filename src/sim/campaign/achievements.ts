@@ -1,6 +1,9 @@
 import { majorityLine, type World } from '../election';
 import { PARTY_IDS, type ElectionOutcome } from '../types';
-import { scaled } from './actions';
+import { scaled, spendingLimit } from './actions';
+import { challengeById, goalResult } from './challenges';
+import { statesHeld } from './contests';
+import { summarise } from './night';
 import { weekOfCode } from './weekly';
 import { electionResult } from './turn';
 import type { Campaign, LegacyId } from './types';
@@ -9,18 +12,37 @@ import type { Campaign, LegacyId } from './types';
  * Things worth remembering a game for. Nothing is unlocked by them; they are
  * a record, kept with the player's profile rather than with any one save.
  */
-export const ACHIEVEMENT_IDS = [
-  // single contests
-  'firstWin', 'photoFinish', 'stateWon', 'majority', 'landslide', 'sweep', 'ruthless', 'cleanHands',
-  // dealings
-  'pactMaker', 'katak', 'premier', 'partner', 'minority', 'bedfellows',
-  // a career
-  'fullTerm', 'mandate', 'secondMandate', 'outsider', 'promiseKeeper', 'hawk', 'toppler', 'survivor', 'decade',
-  'machine', 'magnate', 'longArm', 'finalMission', 'weekly',
-  // endings
-  'bowOut', 'statesman', 'knives', 'collector',
-] as const;
-export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
+export const ACHIEVEMENT_GROUPS = {
+  // what a night can bring
+  wins: ['firstWin', 'photoFinish', 'stateWon', 'majority', 'landslide', 'sweep', 'ruthless', 'cleanHands'],
+  // winning in a way of your own
+  style: ['shoestring', 'blindfolded', 'brokeVictor', 'challenger', 'weekly'],
+  // firsts: what no party in the game has done before
+  history: ['borneoTop', 'hungRule', 'fromNothing', 'wideReach', 'newGround'],
+  // the game's sense of humour: what a joke the country is
+  satire: ['pollsWrong', 'exactMajority', 'absurd'],
+  // pacts, coalitions, mergers
+  together: ['pactMaker', 'katak', 'partner', 'bedfellows', 'premier', 'minority', 'bigTent', 'rainbow', 'merged', 'unityGov', 'alliance'],
+  // errands taken on and finished
+  missions: ['firstMission', 'fullHouse', 'tenMissions', 'hardMission', 'finalMission'],
+  // a career, and how it ends
+  career: [
+    'fullTerm', 'mandate', 'secondMandate', 'outsider', 'promiseKeeper', 'hawk', 'toppler', 'survivor', 'decade', 'machine', 'magnate', 'longArm',
+    'bowOut', 'statesman', 'knives', 'collector',
+  ],
+} as const;
+export type AchievementGroup = keyof typeof ACHIEVEMENT_GROUPS;
+export type AchievementId = (typeof ACHIEVEMENT_GROUPS)[AchievementGroup][number];
+export const ACHIEVEMENT_IDS: readonly AchievementId[] = Object.values(ACHIEVEMENT_GROUPS).flat();
+/** The events that are the country laughing at itself: three of them in one career earn "Lawak Politik". */
+export const ABSURD_EVENTS = ['durianFeast', 'nasiLemakPrice', 'danceTrend', 'memeWar', 'footballFinal', 'tongueSlip', 'deepfake', 'goldMedal'] as const;
+export const ABSURD_NEEDED = 3;
+/** The Borneo parties: heading the government as one of them is a first. */
+const BORNEO = ['gbk', 'gbs', 'legasi'].map((id) => PARTY_IDS.indexOf(id as (typeof PARTY_IDS)[number]));
+/** States governed at once before the party is called a wide reach. */
+export const WIDE_REACH = 5;
+/** How much of the spending limit a winning campaign may use and still be called a shoestring. */
+export const SHOESTRING = 0.25;
 
 const PS = PARTY_IDS.indexOf('ps'), PT = PARTY_IDS.indexOf('pt');
 /** A state has to be this big before winning all of it counts as a sweep. */
@@ -87,10 +109,27 @@ export function earned(world: World, c: Campaign, legacies: LegacyId[] = []): Ac
     if (c.challenge?.code && weekOfCode(c.challenge.code) !== null) out.add('weekly');
     // No tycoon's cheque in the campaign, and in a career no leaning on donors or the state when the votes were cast.
     if (first && kind !== 'byelection' && pc?.tycoon === 0 && (!k || (k.orders.donors === 0 && k.orders.state === 0))) out.add('cleanHands');
+
+    // Winning in a way of your own.
+    if (first && kind !== 'byelection' && pc) {
+      if (pc.spent <= SHOESTRING * spendingLimit(world)) out.add('shoestring');
+      if (!c.polls.some((p) => !p.public)) out.add('blindfolded');
+      if (pc.funds < scaled(world, 10_000)) out.add('brokeVictor');
+      // The last public poll had somebody ahead of the party, and the votes did not agree.
+      const last = [...c.polls].reverse().find((p) => p.public && p.national);
+      if (last?.national && last.national.some((v, p) => p !== me && v > last.national![me])) out.add('pollsWrong');
+    }
+    const def = challengeById(c.challenge?.goal);
+    if (def && goalResult(def.goal, summarise(world, c, result)).met) out.add('challenger');
+    // Exactly the seats to govern: one fewer and it is a hung parliament.
+    if ((kind === 'general' || kind === 'state') && seats === majorityLine(world)) out.add('exactMajority');
+    // A seat won where the party had never stood.
+    if (c.entered && Object.keys(c.entered).some((id) => result.seats[world.seatIndex.get(id) ?? -1]?.winner === me)) out.add('newGround');
   }
 
   const partners = new Set(c.pacts.filter((p) => p.a === me || p.b === me).map((p) => (p.a === me ? p.b : p.a)));
   if (partners.size >= 2) out.add('pactMaker');
+  if (partners.size >= 3) out.add('bigTent');
   if (c.news.some((n) => n.party === me && n.key === 'news.court.won')) out.add('katak');
 
   // A government put together at the Palace, after an election or between two.
@@ -102,6 +141,11 @@ export function earned(world: World, c: Campaign, legacies: LegacyId[] = []): Ac
     if (made.partners.includes(me)) out.add('partner');
     const members = [made.pm, ...made.partners];
     if (inIt && members.includes(PS) && members.includes(PT)) out.add('bedfellows');
+    // Five parties round one cabinet table.
+    if (inIt && members.length >= 5) out.add('rainbow');
+    // Firsts: a party of Sabah or Sarawak at the head of the country, and a government made from a hung parliament.
+    if (made.pm === me && BORNEO.includes(me) && kind !== 'state') out.add('borneoTop');
+    if (made.pm === me && kind === 'hung') out.add('hungRule');
   }
 
   if (k && pc) {
@@ -117,6 +161,22 @@ export function earned(world: World, c: Campaign, legacies: LegacyId[] = []): Ac
     if (r.toppled >= 1) out.add('toppler');
     if (c.news.some((n) => n.key === 'news.motion.survived')) out.add('survivor');
     if (r.weeksPm >= 520) out.add('decade');
+    if (k.founded && pm) out.add('fromNothing');
+    // A party that starts a career in several states governs them from the first day: it counts once a year has passed.
+    if (statesHeld(c, me) >= WIDE_REACH && (k.week >= 52 || k.term >= 2)) out.add('wideReach');
+    if ((k.merged?.length ?? 0) >= 1) out.add('merged');
+    if (k.grand) out.add('unityGov');
+    if ((k.alliance?.members.length ?? 0) >= 3) out.add('alliance');
+    const seen = new Set([...(k.seen ?? []), ...k.fired]);
+    if (ABSURD_EVENTS.filter((e) => seen.has(e)).length >= ABSURD_NEEDED) out.add('absurd');
+    const ms = k.missions;
+    if (ms) {
+      const won = ms.done.filter((x) => x.won).length;
+      if (won >= 1) out.add('firstMission');
+      if (won >= 10) out.add('tenMissions');
+      if (['seize', 'hold', 'bloc', 'majority'].every((kind) => ms.firsts?.includes(kind as never))) out.add('fullHouse');
+      if (ms.hard) out.add('hardMission');
+    }
     // A party at home in its own state starts a state career with branches that strong: it counts once a year has passed.
     if (pc.machinery.some((m) => m >= 90) && (world.rules.kind !== 'state' || k.week >= 52 || k.term >= 2)) out.add('machine');
     if (k.assets >= scaled(world, 1_000_000)) out.add('magnate');

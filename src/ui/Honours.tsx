@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PARTIES } from '../data/parties';
 import type { StringKey } from '../i18n/strings';
-import { ACHIEVEMENT_IDS, type AchievementId } from '../sim/campaign/achievements';
+import { ACHIEVEMENT_GROUPS, ACHIEVEMENT_IDS, type AchievementGroup, type AchievementId } from '../sim/campaign/achievements';
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from '../state/store';
 import { useFormat, useT } from './hooks';
@@ -61,21 +61,29 @@ export function HonoursDialog({ onClose }: { onClose(): void }) {
         {tab === 'achievements' && (
           <>
             <p className="muted small">{t('honours.count', { n, total: ACHIEVEMENT_IDS.length })} · {t('honours.note')}</p>
-            <ul className="badges">
-              {ACHIEVEMENT_IDS.map((id) => {
-                const at = have(id);
-                return (
-                  <li key={id} className={at !== undefined ? 'badge-card earned' : 'badge-card'}>
-                    <span className="medal" aria-hidden="true">{at !== undefined ? '★' : '☆'}</span>
-                    <div className="grow">
-                      <span className="action-title">{t(`ach.${id}` as StringKey)}</span>
-                      <span className="action-meta">{t(`ach.${id}.desc` as StringKey)}</span>
-                      <span className="action-meta num">{at !== undefined ? t('honours.earned', { date: f.dateTime(at) }) : t('honours.notYet')}</span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            {(Object.keys(ACHIEVEMENT_GROUPS) as AchievementGroup[]).map((group) => {
+              const ids = ACHIEVEMENT_GROUPS[group] as readonly AchievementId[];
+              return (
+                <section key={group} className="badge-group" aria-label={t(`ach.group.${group}` as StringKey)}>
+                  <h3>{t(`ach.group.${group}` as StringKey)} <span className="muted small num">{ids.filter((id) => have(id) !== undefined).length}/{ids.length}</span></h3>
+                  <ul className="badges">
+                    {ids.map((id) => {
+                      const at = have(id);
+                      return (
+                        <li key={id} className={at !== undefined ? 'badge-card earned' : 'badge-card'}>
+                          <span className="medal" aria-hidden="true">{at !== undefined ? '★' : '☆'}</span>
+                          <div className="grow">
+                            <span className="action-title">{t(`ach.${id}` as StringKey)}</span>
+                            <span className="action-meta">{t(`ach.${id}.desc` as StringKey)}</span>
+                            <span className="action-meta num">{at !== undefined ? t('honours.earned', { date: f.dateTime(at) }) : t('honours.notYet')}</span>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              );
+            })}
           </>
         )}
 
