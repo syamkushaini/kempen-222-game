@@ -377,7 +377,7 @@ export function termWeek(world: World, c: Campaign): void {
 
   // Branches wither a little every week, and grow where money and the leader's time go.
   const targets = machineryTargets(world, c);
-  const points = ((afford * plan.machinery) / scaled(world, 6_000) * 0.25 + (o.focus === 'tour' ? 0.3 : 0)) * edge(c, me, 'organisation') * (1 + 0.05 * skill(c, me, 'manager')) * (0.8 + 0.2 * Math.min(2, rollsFactor(world, c)));
+  const points = ((afford * plan.machinery) / scaled(world, 6_000) * 0.25 + (o.focus === 'tour' ? 0.3 : 0)) * edge(c, me, 'organisation') * (1 + 0.08 * skill(c, me, 'manager')) * (0.8 + 0.2 * Math.min(2, rollsFactor(world, c)));
   pc.machinery = pc.machinery.map((m, i) => {
     const st = world.states[i];
     if (m <= 0) {
@@ -413,7 +413,7 @@ export function termWeek(world: World, c: Campaign): void {
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
   k.profile[me] = Math.min(PROFILE_CAP, k.profile[me] * 0.97 + seen);
-  const dug = ((afford * plan.research) / scaled(world, 3_000) * 0.15 + (o.focus === 'dirt' ? 0.5 : 0)) * edge(c, me, 'cunning') * (1 + 0.06 * skill(c, me, 'strategist'));
+  const dug = ((afford * plan.research) / scaled(world, 3_000) * 0.15 + (o.focus === 'dirt' ? 0.5 : 0)) * edge(c, me, 'cunning') * (1 + 0.1 * skill(c, me, 'strategist'));
   k.dossier = clamp(k.dossier + dug, 0, 100);
   if (o.focus === 'policy') k.credibility = Math.min(Math.max(k.credibility, 85), k.credibility + 0.2 * edge(c, me, 'integrity'));
   // The team is on the payroll already; what is left is whether anyone's past comes out this week.

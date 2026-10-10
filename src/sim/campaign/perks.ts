@@ -52,14 +52,14 @@ export function skill(c: Campaign, p: number, id: RoleId): number {
 }
 
 /** Extra days in the leader's week from a campaign manager who keeps the diary. */
-export const managerDays = (c: Campaign, p: number) => { const s = skill(c, p, 'manager'); return s >= 4 ? 1 : s >= 2 ? 0.5 : 0; };
+export const managerDays = (c: Campaign, p: number) => [0, 0.25, 0.5, 0.75, 1, 1.5][skill(c, p, 'manager')] ?? 0;
 /** What a strategist does to the cost of a poll, and to its error. */
-export const pollDiscount = (c: Campaign) => 1 - 0.08 * skill(c, c.player, 'strategist');
-export const pollPrecision = (c: Campaign) => 1 - 0.06 * skill(c, c.player, 'strategist');
+export const pollDiscount = (c: Campaign) => 1 - 0.12 * skill(c, c.player, 'strategist');
+export const pollPrecision = (c: Campaign) => 1 - 0.1 * skill(c, c.player, 'strategist');
 /** What a media chief adds to anything said through a screen or a hoarding. */
-export const mediaBoost = (c: Campaign, p: number) => 1 + 0.05 * skill(c, p, 'media');
+export const mediaBoost = (c: Campaign, p: number) => 1 + 0.1 * skill(c, p, 'media');
 /** How much less likely a message is to land badly with one. */
-export const gaffeCut = (c: Campaign, p: number) => 0.015 * skill(c, p, 'media');
+export const gaffeCut = (c: Campaign, p: number) => 0.025 * skill(c, p, 'media');
 /** What a treasurer adds to money raised and money coming in. */
-export const fundsBoost = (c: Campaign, p: number) => 1 + 0.06 * skill(c, p, 'treasurer');
-export const incomeBoost = (c: Campaign, p: number) => (1 + 0.04 * skill(c, p, 'treasurer')) * (c.challenge?.lean && p === c.player ? LEAN : 1);
+export const fundsBoost = (c: Campaign, p: number) => 1 + 0.1 * skill(c, p, 'treasurer');
+export const incomeBoost = (c: Campaign, p: number) => (1 + 0.07 * skill(c, p, 'treasurer')) * (c.challenge?.lean && p === c.player ? LEAN : 1);

@@ -12,7 +12,7 @@ import { Portrait } from './Portrait';
 import { ConfirmButton } from './SavesTab';
 import { Gauge } from './Gauge';
 import { Term } from './Term';
-import { TeamAdvice } from './TeamAdvice';
+import { TeamAdvice, TeamEffects } from './TeamAdvice';
 
 /** Five pips, some of them filled. */
 export function Pips({ n, label }: { n: number; label: string }) {
@@ -68,6 +68,7 @@ export function TeamTab() {
         ))}
       </dl>
 
+      <TeamEffects />
       <TeamAdvice />
 
       <h3>{t('team.staff')}</h3>

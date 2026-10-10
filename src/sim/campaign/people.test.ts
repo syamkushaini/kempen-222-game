@@ -109,8 +109,8 @@ describe('staff', () => {
     expect(hire(c, 'manager', best(role('manager')))).toBe(true);
     expect(hire(c, 'manager', best(role('manager')))).toBe(false); // already in the job
     expect(wages(general, c)).toBe(20_000);
-    expect(managerDays(c, PS)).toBe(1);
-    expect(managerDays(c, BP)).toBe(0.5); // a rival has people of its own: BP's manager finds it half a day
+    expect(managerDays(c, PS)).toBe(1.5);
+    expect(managerDays(c, BP)).toBe(0.5); // a rival has people of its own: BP's manager (a middling one) finds it half a day
     expect(managerDays(c, GBK)).toBe(0); // and GBK has none
     const unity = c.parties[PS]!.unity;
     expect(hire(c, 'manager', (best(role('manager')) + 1) % 3)).toBe(true);
@@ -128,13 +128,13 @@ describe('staff', () => {
     const c = game();
     for (const id of ROLE_IDS) hire(c, id, c.team.pool[role(id)].findIndex((s) => s.skill === 5));
     for (const s of c.team.staff) s!.skeleton = false;
-    expect(playerPollCost(general, c, 'national', null, 'full')).toBe(90_000);
+    expect(playerPollCost(general, c, 'national', null, 'full')).toBe(60_000);
     expect(playerPollCost(general, game(), 'national', null, 'full')).toBe(150_000);
-    expect(playerPoll(general, c, 'national', null, 'full')!.moe).toBeCloseTo(0.02 * 0.7, 6);
+    expect(playerPoll(general, c, 'national', null, 'full')!.moe).toBeCloseTo(0.02 * 0.5, 6);
     const funds = c.parties[PS]!.funds;
     endWeek(general, c);
-    expect(c.parties[PS]!.days).toBe(8);
-    expect(c.parties[PS]!.funds).toBe(funds - 80_000 + Math.round(weeklyIncome(general, PS) * 1.2));
+    expect(c.parties[PS]!.days).toBe(8.5);
+    expect(c.parties[PS]!.funds).toBe(funds - 80_000 + Math.round(weeklyIncome(general, PS) * 1.35));
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), general)).toBe(true);
   });
 
@@ -158,7 +158,7 @@ describe('staff', () => {
     staffWeek(general, c, new Rng(3));
     expect(pc.funds).toBe(0);
     expect(c.team.unpaid).toBeUndefined();
-    expect(managerDays(c, PS)).toBe(1);
+    expect(managerDays(c, PS)).toBe(1.5);
     expect(c.news.at(-1)).toMatchObject({ key: 'news.staff.paid' });
   });
 

@@ -171,7 +171,7 @@ describe('the newer achievements', () => {
     const perlis = getWorld('state:perlis')!;
     const line = Math.floor(perlis.seats.length / 2) + 1;
     const seen = new Map<number, boolean>();
-    for (let push = -0.5; push <= 3 && !seen.has(line); push += 0.05) {
+    for (let push = -0.5; push <= 3 && !seen.has(line); push += 0.02) {
       const c = fought(perlis, push);
       closeNight(perlis, c);
       seen.set(electionResult(perlis, c)!.tally[PS], earned(perlis, c).includes('exactMajority'));

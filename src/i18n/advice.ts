@@ -22,6 +22,13 @@ export const ADVICE_EN = {
   'advice.steady': 'The partners are restless. A word on the books and a promise kept would steady the government.',
   'news.advice.followed': 'The leader took the advice of the {role}, and it helped.',
   'adviser.manager.says': 'Your campaign manager, {name}, is worried.',
+  'teamfx.title': 'What your team gives you',
+  'teamfx.none': 'Nobody is hired yet. What each person gives you shows here.',
+  'teamfx.unpaid': 'The team went unpaid, so none of this is working now.',
+  'teamfx.manager': '+{days} days a week · branches grow {pct}% faster',
+  'teamfx.strategist': 'Polls cost {cost}% less and miss by {err}% less · the dossier grows {dos}% faster',
+  'teamfx.media': 'Media actions {pct}% stronger · {gaffe} points less chance of a gaffe',
+  'teamfx.treasurer': 'Money raised {pct}% more · income {inc}% more',
 } as const;
 
 export const ADVICE_MS: Record<keyof typeof ADVICE_EN, string> = {
@@ -46,6 +53,13 @@ export const ADVICE_MS: Record<keyof typeof ADVICE_EN, string> = {
   'advice.steady': 'Rakan resah. Sepatah kata tentang akaun dan satu janji ditunaikan akan menstabilkan kerajaan.',
   'news.advice.followed': 'Pemimpin menurut nasihat {role}, dan ia membantu.',
   'adviser.manager.says': 'Pengurus kempen anda, {name}, bimbang.',
+  'teamfx.title': 'Apa yang pasukan beri kepada anda',
+  'teamfx.none': 'Belum ada sesiapa diambil. Apa yang setiap orang beri ditunjukkan di sini.',
+  'teamfx.unpaid': 'Pasukan tak dibayar, jadi semua ini tak berfungsi sekarang.',
+  'teamfx.manager': '+{days} hari seminggu · cawangan membesar {pct}% lebih pantas',
+  'teamfx.strategist': 'Tinjauan {cost}% lebih murah dan tersasar {err}% kurang · dosier membesar {dos}% lebih pantas',
+  'teamfx.media': 'Tindakan media {pct}% lebih kuat · {gaffe} mata kurang peluang tersasul',
+  'teamfx.treasurer': 'Wang dikutip {pct}% lebih banyak · pendapatan {inc}% lebih banyak',
 };
 
 export type AdviceKey = keyof typeof ADVICE_EN;
