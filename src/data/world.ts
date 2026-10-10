@@ -243,11 +243,13 @@ function fingerprint(results: SeatResults): number {
 }
 
 /**
- * The world a founded party's first term is played in: the country as it was, with the new party already
- * on the ballot in every seat with a few votes. Without them it could never win a seat it did not already hold.
+ * The world a founded party's first term is played in: the country as it was (or a state's assembly, for a career in one
+ * state), with the new party already on the ballot in every seat with a few votes. Without them it could never win a seat
+ * it did not already hold.
  */
-export function foundedWorld(): World {
-  const hit = cache.get(FOUNDED);
+export function foundedWorld(scenario = 'career'): World {
+  const key = scenario === 'career' ? FOUNDED : `${FOUNDED}:${scenario}`;
+  const hit = cache.get(key);
   if (hit) return hit;
   const p = PARTY_IDS.indexOf(FOUNDING_SLOT);
   const seed = (votes: number[]) => {
@@ -256,13 +258,15 @@ export function foundedWorld(): World {
     out[p] = Math.max(out[p], Math.round(total * FOUNDING_SEED_SHARE));
     return out;
   };
-  const seats = (seatFile as SeatFile).seats.map((s) => ({
+  const plan = blueprint(scenario);
+  if (!plan || !plan.rules.career) throw new Error(`no career world for ${scenario}`);
+  const seats = plan.file.seats.map((s) => ({
     ...s,
     last: { ...s.last, votes: seed(s.last.votes) },
     ...(s.basis ? { basis: { ...s.basis, votes: seed(s.basis.votes) } } : {}),
   }));
-  const built = createWorld({ ...(seatFile as SeatFile), seats }, CAREER_RULES, 'career');
-  cache.set(FOUNDED, built);
+  const built = createWorld({ ...plan.file, seats }, plan.rules, scenario);
+  cache.set(key, built);
   return built;
 }
 
@@ -298,7 +302,7 @@ export function ownWorld(scenario: string, p: number): World | null {
 export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean; player?: number }): World | null {
   const results = campaign.career?.results;
   if (!results) {
-    if (campaign.career?.founded) return foundedWorld();
+    if (campaign.career?.founded) return foundedWorld(campaign.scenario);
     if (campaign.career?.own && campaign.player !== undefined) return ownWorld(campaign.scenario, campaign.player) ?? getWorld(campaign.scenario);
     return campaign.newParty ? newPartyWorld(campaign.scenario) ?? getWorld(campaign.scenario) : getWorld(campaign.scenario);
   }

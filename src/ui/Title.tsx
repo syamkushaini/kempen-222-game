@@ -152,7 +152,7 @@ export function Title() {
   const player = chosen !== null && parties.includes(chosen) ? chosen : parties[0];
   const level = difficulty ?? (kind === 'byelection' ? 'easy' : 'normal');
   const inCareer = kind === 'career' || (kind === 'state' && stateCareer);
-  const founding = own && founded && kind !== 'hung' && !(kind === 'state' && stateCareer);
+  const founding = own && founded && kind !== 'hung';
   const playerId = (founding ? FOUNDING_SLOT : PARTY_IDS[player]) as FieldedId;
   const newPlatform = startStances()[PARTY_IDS.indexOf(FOUNDING_SLOT)];
   // The creator starts from the party being taken over, and follows it until the player types something of their own.
@@ -295,7 +295,7 @@ export function Title() {
               <span className="field-label">{t('title.stateMode')}</span>
               <div className="party-cards" role="radiogroup" aria-label={t('title.stateMode')}>
                 {[false, true].map((v) => (
-                  <RadioCard key={String(v)} checked={stateCareer === v} className="party-card plain" onSelect={() => { setStateCareer(v); setDraft(null); if (v) setFounded(false); }}>
+                  <RadioCard key={String(v)} checked={stateCareer === v} className="party-card plain" onSelect={() => { setStateCareer(v); setDraft(null); }}>
                     <strong>{t(v ? 'title.stateMode.career' : 'title.stateMode.single')}</strong>
                     <span className="small">{t(v ? 'title.stateMode.career.desc' : 'title.stateMode.single.desc')}</span>
                   </RadioCard>
@@ -311,13 +311,13 @@ export function Title() {
           </>}
 
           {step === 1 && <>
-          {kind !== 'hung' && !(kind === 'state' && stateCareer) && (
+          {kind !== 'hung' && (
             <div className="founding" role="radiogroup" aria-label={t('platform.how')}>
               <h3>{t('platform.how')}</h3>
               {[false, true].map((v) => (
                 <button key={String(v)} role="radio" aria-checked={founding === v} className={founding === v ? 'party-card plain active' : 'party-card plain'} onClick={() => { setFounded(v); setDraft(null); if (v) setOwn(true); }}>
                   <strong>{t(v ? 'platform.new' : 'platform.takeover')}</strong>
-                  <span className="small">{t(v ? (kind === 'career' ? 'platform.new.desc' : 'platform.new.desc.single') : 'platform.takeover.desc')}</span>
+                  <span className="small">{t(v ? (inCareer ? (kind === 'state' ? 'platform.new.desc.state' : 'platform.new.desc') : 'platform.new.desc.single') : 'platform.takeover.desc')}</span>
                 </button>
               ))}
             </div>
@@ -360,7 +360,7 @@ export function Title() {
             </label>
           )}
           {own && <PartyCreator draft={shown} career={inCareer && !founding} slate={inCareer} onChange={(patch) => setDraft((d) => ({ ...(d ?? base), ...patch }))} />}
-          {founding && kind === 'career' && <PlatformEditor stances={stances ?? newPlatform} base={newPlatform} onChange={setStances} />}
+          {founding && inCareer && <PlatformEditor stances={stances ?? newPlatform} base={newPlatform} onChange={setStances} />}
           </>}
 
           {step === 2 && <>
@@ -415,7 +415,7 @@ export function Title() {
             {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>‹ {t('steps.back')}</button>}
             {step < STEPS.length - 1
               ? <button className="btn primary" onClick={() => setStep(step + 1)}>{t('steps.next')} ▸</button>
-              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy, ...(kind === 'general' && whatIf ? { whatIf } : {}) }, founded: founding, realStates: kind === 'career' && realStates, stances: founding && kind === 'career' ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
+              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy, ...(kind === 'general' && whatIf ? { whatIf } : {}) }, founded: founding, realStates: kind === 'career' && realStates, stances: founding && inCareer ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
             }
           </div>
           </>

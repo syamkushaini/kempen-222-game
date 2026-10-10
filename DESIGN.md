@@ -888,7 +888,7 @@ Sixty questions, one at a time. The designer's own words on the worst clutter: *
 - Saved games load unchanged (all new fields are optional). Ten tests; checked on a desktop and a phone, in both languages.
 
 **A career in one state (7 Oct 2026).** The designer asked that a state election can be played as a career, and that the country's career can include real state elections (the second half is queued, see below). Decided: **a full career in one state**: five-year terms, governing or opposing the state, assembly elections each term.
-- It is a new scenario family `career:<state>` (all thirteen states), built on the state's own seats with the career switched on (`STATE_CAREER_RULES`). A state election gets a choice on the set-up screen: **one election, or a career in the state**. A party founded from nothing is not offered there yet.
+- It is a new scenario family `career:<state>` (all thirteen states), built on the state's own seats with the career switched on (`STATE_CAREER_RULES`). A state election gets a choice on the set-up screen: **one election, or a career in the state**. A party founded from nothing was not offered there at first; it is now (see "A party founded in a state career", 10 Oct 2026).
 - The first government is drawn from the state's last assembly election: the largest party heads it, with the parties it governs with in Putrajaya where they won seats, and then the next largest until the numbers are there. The country's state-poll rounds, and events that only a country's government deals with (foreign affairs, Borneo's claims, tolls, national schemes), do not come up. Words change in a state (`<key>.assembly` strings): Assembly, Chief Minister, executive council, target areas.
 - Found along the way: the map for a state career was wrongly the country's (the file was chosen by scenario id). It now follows `stateNeeded`.
 
@@ -1260,4 +1260,14 @@ The designer asked for a due date on the missions, so that the player must decid
 - The Missions tab shows the time left on every offer ("Decide within N weeks, or the offer lapses"), in a red badge for the last four.
 - Taking an offer on drops its `ttl`; a mission under way keeps its own clock (weeks for a side one, elections for a main one) and still costs its price if it is given up or runs out.
 - Offers saved before this have no `ttl` for a main mission and keep the old rule (until the next parliament's offers), so saved games load as they were.
+
+## A party founded in a state career (10 Oct 2026)
+
+The designer asked that a state career, like the country's, can be led by a party the player founds with an identity of their own.
+
+- The set-up offers "Found a new party from nothing" in a state career too, with the same name, colour, emblem, leader's past and platform editor as the country's. The description says "no seat yet", since GENBA holds none in a state's assembly (in the country it holds one).
+- `foundedWorld(scenario)` is now per scenario: the state's own seats with the new party seeded at `FOUNDING_SEED_SHARE` (0.5%) on every ballot, kept under `career:founded:career:<state>`. `worldOf` picks it by the career's scenario while no election has been counted; after that the career's world is built from the results, as before.
+- **A bug that this uncovered:** a party only counts as campaigning if it holds a seat or has 5% of the vote, and a founded party in a state has neither, so the career had no party for the player. `campaigns` now also accepts the founding slot in a career world where it is on every ballot.
+- It grows as in the country, by the voters its platform suits. Measured with the autoplayer (one seed, three terms): Perlis 1.9%, 8.8%, 16.0%; Perak 1.7%, 4.4%, 10.1%; Selangor 5.0%, 8.6%, 17.8% (10 of 56 seats in the third); Sarawak 1.6%, 4.3%, 11.2%; Sabah 1.6%, 4.1%, 10.4%; Kelantan 3.1%, 4.6%, 13.2%. Seats come late (first-past-the-post), and a party with none after its first election is not ended (see the note above on a party with no seats).
+- Saved games load unchanged. A test plays a founded Sarawak and Selangor career for three terms and checks each save.
 

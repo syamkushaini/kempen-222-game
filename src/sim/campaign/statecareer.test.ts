@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { getWorld, STATE_SCENARIOS, worldOf } from '../../data/world';
+import { foundedWorld, getWorld, STATE_SCENARIOS, worldOf } from '../../data/world';
 import { lastElection, majorityLine } from '../election';
 import { N_BLOCS, PARTY_IDS } from '../types';
+import { FOUNDING_SEED_SHARE } from './founding';
 import { answerEvent, inGovernment, nextTerm, resumeTerm, skipAhead, startCareer, syncOpinion } from './career';
 import { endDay } from './formation';
-import { closeNight, endWeek, playable } from './turn';
+import { autoPlayWeek, closeNight, electionResult, endWeek, playable } from './turn';
 import type { Campaign } from './types';
 import { isValidCampaign } from './validate';
 
@@ -102,6 +103,44 @@ describe('a career in one state', () => {
         expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world), st).toBe(true);
       }
       expect(c.career!.term, st).toBe(4);
+    }
+  });
+
+  it('can be led by a party founded from nothing, which stands on every ballot and grows over the terms', () => {
+    const GENBA = PARTY_IDS.indexOf('genba');
+    for (const st of ['sarawak', 'selangor'] as const) {
+      let w = foundedWorld(`career:${st}`);
+      expect(foundedWorld(`career:${st}`), st).toBe(w);
+      expect(w.id, st).toBe(`career:${st}`);
+      expect(w.rules.career, st).toBe(true);
+      for (const seat of w.seats) expect(seat.last.votes[GENBA] / seat.last.votes.reduce((a, b) => a + b, 0), st).toBeGreaterThanOrEqual(FOUNDING_SEED_SHARE * 0.9);
+      // The ordinary state career is left alone.
+      expect(careerOf(st).seats.some((s) => s.last.votes[GENBA] > 0 && s.last.votes[GENBA] === Math.max(...s.last.votes)), st).toBe(false);
+      const c = startCareer(w, { player: GENBA, difficulty: 'normal', seed: 3, founded: true });
+      expect(c.career!.founded, st).toBe(true);
+      expect(c.parties[GENBA], st).toBeTruthy();
+      expect(worldOf(c), st).toBe(w);
+      expect(worldOf(JSON.parse(JSON.stringify(c))), st).toBe(w);
+      expect(isValidCampaign(JSON.parse(JSON.stringify(c)), w), st).toBe(true);
+      const shares: number[] = [];
+      for (const term of [1, 2, 3]) {
+        playTerm(c, w);
+        expect(c.career!.ending ?? null, `${st} term ${term}`).toBeNull();
+        while (c.phase === 'campaign') { autoPlayWeek(w, c); endWeek(w, c); }
+        const r = electionResult(w, c)!;
+        shares.push(r.votes[GENBA] / r.votes.reduce((a, b) => a + b, 0));
+        closeNight(w, c);
+        for (let day = 0; day < 10 && c.phase === 'formation'; day++) endDay(w, c);
+        expect(nextTerm(w, c), st).toBe(true);
+        w = worldOf(c)!;
+        expect(w.id, st).toBe(`career:${st}`);
+        expect(c.career!.founded, st).toBe(true);
+        expect(isValidCampaign(JSON.parse(JSON.stringify(c)), w), st).toBe(true);
+      }
+      // It gets a following over three terms, as a party founded in the country does.
+      expect(shares[0], st).toBeGreaterThan(0.01);
+      expect(shares[2], st).toBeGreaterThan(shares[0]);
+      expect(shares[2], st).toBeGreaterThan(0.08);
     }
   });
 

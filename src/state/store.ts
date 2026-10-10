@@ -397,7 +397,7 @@ export const useStore = create<Store>((set, get) => {
       const base = getWorld(scenario);
       // A party the player has made their own may stand in any seat of a career, at a price; it needs a world in which it is on every ballot.
       const own = !!(base?.rules.career && identity && !founded);
-      const world = founded ? (scenario === 'career' ? foundedWorld() : newPartyWorld(scenario)) : own ? ownWorld(scenario, player) ?? base : base;
+      const world = founded ? (base?.rules.career ? foundedWorld(scenario) : newPartyWorld(scenario)) : own ? ownWorld(scenario, player) ?? base : base;
       if (!world) return;
       const opts = { player, difficulty, seed: seed ?? randomSeed(), backstory, challenge, ...(weeks !== undefined ? { totalWeeks: weeks } : {}) };
       // Kept with the game so that it can be started again exactly as it was set up.

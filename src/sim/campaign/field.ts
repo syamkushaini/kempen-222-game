@@ -3,6 +3,7 @@ import { clamp } from '../math';
 import type { StandDowns } from '../transfer';
 import { N_PARTIES, PARTY_IDS, isFielded, isMinor, type FieldedId, type PartyId, type RegionId } from '../types';
 import { purseOf, scaled } from './actions';
+import { FOUNDING_SLOT } from './founding';
 import { START_UNITY } from './cast';
 import { DAYS_PER_WEEK, type Campaign, type Pact, type PartyCampaign } from './types';
 
@@ -62,6 +63,8 @@ export function campaigns(world: World, p: number): boolean {
   if (!isFielded(PARTY_IDS[p])) return false;
   const holdsSeat = world.seats.some((s) => s.last.votes[p] > 0 && s.last.votes[p] === Math.max(...s.last.votes));
   if (holdsSeat) return true;
+  // A party the player founded in a career is on every ballot from the first day, with too few votes yet to count as a following.
+  if (PARTY_IDS[p] === FOUNDING_SLOT && world.rules.career && world.seats.every((s) => s.last.votes[p] > 0)) return true;
   // A party's following is what it would poll with everyone standing: a pact that kept it off most ballots did not make its voters vanish.
   let mine = 0, all = 0;
   for (const s of world.seats) for (const [q, v] of (s.basis?.votes ?? s.last.votes).entries()) { all += v; if (q === p) mine += v; }
