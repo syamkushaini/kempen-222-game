@@ -39,7 +39,7 @@ export const STORY_EVENTS_EN: Record<string, EventText> = {
   bridge: {
     title: 'The bridge is gone',
     body: 'The only bridge to four kampung went in last night’s flood. Children are crossing to school by sampan, and the clinic is on the wrong side of the river. Everyone agrees something must be done. Nobody has said by whom.',
-    options: ['Pay for a temporary crossing from party funds', 'Make it a national scandal', 'Promise them a proper bridge, in good time'],
+    options: ['Pay for a temporary crossing from public money', 'Make it a national scandal', 'Promise them a proper bridge, in good time'],
     results: [
       'A steel footbridge was up in nine days, with your party’s flag at both ends.',
       'It led the news for a week. The people responsible have not forgiven you for it.',
@@ -134,7 +134,7 @@ export const STORY_EVENTS_MS: Record<string, EventText> = {
   bridge: {
     title: 'Jambatan hanyut',
     body: 'Satu-satunya jambatan ke empat buah kampung hanyut dalam banjir malam tadi. Kanak-kanak menyeberang ke sekolah dengan sampan, dan klinik terletak di seberang yang salah. Semua bersetuju sesuatu mesti dilakukan. Tiada siapa menyebut oleh siapa.',
-    options: ['Biayai lintasan sementara dengan wang parti', 'Jadikannya skandal nasional', 'Janjikan jambatan yang sempurna, pada waktunya'],
+    options: ['Biayai lintasan sementara dengan wang awam', 'Jadikannya skandal nasional', 'Janjikan jambatan yang sempurna, pada waktunya'],
     results: [
       'Jambatan besi pejalan kaki siap dalam sembilan hari, dengan bendera parti anda di kedua-dua hujung.',
       'Ia menjadi berita utama seminggu. Pihak yang bertanggungjawab belum memaafkan anda.',
