@@ -13,6 +13,7 @@ import {
 import { earned } from './achievements';
 import { translate } from '../../i18n/strings';
 import { missionGoal } from '../../ui/missionText';
+import { missionCard } from '../../ui/ShareDialog';
 import type { Format, T } from '../../ui/hooks';
 import { closeNight, endWeek } from './turn';
 import { MISSION_KINDS, type Campaign, type Mission } from './types';
@@ -346,6 +347,44 @@ describe('what a mission says', () => {
     expect(missionGoal(t, f, { ...bloc, elections: 1 })).toBe('Govern with 5 parties or more, yours included, at the next election.');
     expect(missionGoal(t, f, { kind: 'credibility', need: 70, weeks: 1 })).toBe('Raise the party’s credibility to 70 within 1 week.');
     expect(missionGoal(t, f, { kind: 'funds', need: 900_000, weeks: 26 })).toBe('Build the party’s funds up to RM900000 within 26 weeks.');
+  });
+});
+
+describe('the card for a mission won', () => {
+  const t: T = (key, vars) => translate('en', key, vars);
+  const f = { rm: (n: number) => `RM${(n / 1000).toFixed(0)}k`, int: (n: number) => String(n), pct: (n: number) => `${Math.round(n * 100)}%` } as Format;
+  const wonCard = (kind: Mission['kind'], extra: Partial<Mission> = {}) => {
+    const c = career(BP);
+    const m = missionsOf(c);
+    m.offers = [];
+    m.active = [{ id: 1, kind, main: true, tier: 2, need: 0, elections: 1, ...extra }];
+    missionsElection(base, c, { ...c.career!.government, pm: BP, partners: [PS, PT], minority: false }, base.seats.map(() => BP));
+    return { c, record: m.done.at(-1)! };
+  };
+
+  it('has the figure the mission asked for, what it was, and the record, for any kind', () => {
+    const seize = wonCard('seize', { need: 3, seats: base.seats.slice(0, 4).map((s) => s.id) });
+    const card = missionCard(t, f, seize.c, seize.record);
+    expect(card.headline).toBe('Mission accomplished');
+    expect(card.hero).toMatchObject({ value: '3', label: 'seats won', sub: 'Take seats from rivals' });
+    expect(card.stats).toHaveLength(4);
+    expect(card.stats.map((x) => x.label)).toEqual(expect.arrayContaining(['Missions won', 'Missions failed']));
+    expect(card.body).toContain('Win 3 of these 4 seats');
+    expect(card.portrait).toBeDefined();
+    expect(missionCard(t, f, ...Object.values(wonCard('majority', { alone: false })) as [Campaign, never]).hero.value).toBe('✓');
+    const bloc = wonCard('bloc', { need: 3 });
+    expect(missionCard(t, f, bloc.c, bloc.record).hero).toMatchObject({ value: '3', label: 'parties in government' });
+  });
+
+  it('shows the parts of the final mission', () => {
+    const c = career(BP);
+    const record = { kind: 'final' as const, main: true, tier: 3 as const, won: true, term: 2, need: 4, parts: [
+      { kind: 'seize' as const, need: 2, done: true }, { kind: 'hold' as const, need: 2, done: true }, { kind: 'bloc' as const, need: 3, done: true }, { kind: 'majority' as const, need: 112, alone: true, done: true },
+    ] };
+    const card = missionCard(t, f, c, record);
+    expect(card.headline).toBe('The final mission is done');
+    expect(card.hero.value).toBe('4/4');
+    expect(card.badges).toContain('Final mission');
   });
 });
 

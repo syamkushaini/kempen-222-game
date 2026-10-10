@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Summary } from '../sim/campaign/turn';
-import type { Campaign } from '../sim/campaign/types';
+import type { Campaign, MissionRecord } from '../sim/campaign/types';
 import { majorityLine, type World } from '../sim/election';
 import { challengeById, goalResult } from '../sim/campaign/challenges';
 import { careerYears } from '../sim/campaign/legacy';
@@ -11,6 +11,7 @@ import { leaderPortrait } from './faces';
 import { paintedLeader } from './painted';
 import { contestName, leaderName, partyColor, partyName, useT, type Format, type T } from './hooks';
 import { mapPicture } from './map3d';
+import { missionGoal, recordAsk } from './missionText';
 import { drawCard, type CardData } from './shareCard';
 
 const common = (t: T) => ({ tagline: t('share.tagline'), fiction: t('share.fiction') });
@@ -91,6 +92,30 @@ export function legacyCard(t: T, c: Campaign): CardData {
       { label: t('house.record.kept'), value: String(k.record.kept.length) },
     ],
     badges: c.difficulty === 'hard' ? [t('card.badge.hard')] : [],
+    portrait: face(t, c.player),
+  };
+}
+
+/** The card for a mission won: what it was, the figure it asked for and the record so far. */
+export function missionCard(t: T, f: Format, c: Campaign, r: MissionRecord): CardData {
+  const k = c.career!;
+  const kinds = r.kind === 'majority' ? (r.alone ? 'majority.alone' : 'majority.lead') : r.kind;
+  const done = r.parts?.filter((p) => p.done).length ?? 0;
+  const value = r.kind === 'final' ? `${done}/${r.parts?.length ?? 4}` : r.kind === 'funds' ? f.rm(r.need) : r.kind === 'majority' && !r.alone ? '✓' : String(r.need);
+  const history = k.missions?.done ?? [];
+  const won = history.filter((x) => x.won).length;
+  const years = careerYears(c);
+  return {
+    ...common(t), accent: partyColor(c.player), kicker: `${t('scenario.career')} · ${t('share.term', { n: r.term })}`,
+    headline: t(r.kind === 'final' ? 'mission.final.won' : 'mission.won'), body: r.kind === 'final' ? t('card.mission.finalBody') : `${t(`mission.kind.${r.kind}` as StringKey)}. ${missionGoal(t, f, recordAsk(r), '')}`,
+    hero: { value, label: t(`card.mission.unit.${kinds}` as StringKey), sub: t(`mission.kind.${r.kind}` as StringKey) },
+    stats: [
+      { label: t('legacy.years'), value: years.toFixed(1) },
+      { label: t('house.record.elections'), value: String(k.record.elections) },
+      { label: t('card.mission.won'), value: String(won) },
+      { label: t('card.mission.lost'), value: String(history.length - won) },
+    ],
+    badges: [...(r.kind === 'final' ? [t('card.badge.final')] : []), ...(c.difficulty === 'hard' ? [t('card.badge.hard')] : [])],
     portrait: face(t, c.player),
   };
 }

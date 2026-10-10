@@ -1,7 +1,9 @@
 import type { StringKey } from '../i18n/strings';
 import { dearToLose, FINAL_KINDS, missionsOf, penaltyOf, progressOf, rewardOf } from '../sim/campaign/missions';
 import type { Campaign, Mission, MissionRecord } from '../sim/campaign/types';
+import { useState } from 'react';
 import { useStore } from '../state/store';
+import { missionCard, ShareDialog } from './ShareDialog';
 import { describeEffect } from './effectText';
 import { seatName, useFormat, useT, useWorld, type Format, type T } from './hooks';
 import { Icon } from './Icon';
@@ -170,6 +172,7 @@ export function MissionCard() {
   const seen = useStore((s) => s.seenMission);
   const newGame = useStore((s) => s.newGameSetup);
   const effects = useEffectsText();
+  const [sharing, setSharing] = useState(false);
   const r = campaign.career?.missions?.unseen[0];
   if (!r || campaign.phase !== 'term' || campaign.inbox.length > 0) return null;
   const ask = recordAsk(r);
@@ -189,9 +192,16 @@ export function MissionCard() {
         {finale ? (
           <div className="mission-buttons">
             <button className="btn primary" autoFocus onClick={() => seen()}>{t('mission.final.carryOn')}</button>
+            <button className="btn" onClick={() => setSharing(true)}>{t('mission.share')}</button>
             <button className="btn" onClick={() => { seen(); newGame(); }}>{t('mission.final.new')}</button>
           </div>
-        ) : <button className="btn primary" autoFocus onClick={() => seen()}>{t('mission.card.close')}</button>}
+        ) : (
+          <div className="mission-buttons">
+            <button className="btn primary" autoFocus onClick={() => seen()}>{t('mission.card.close')}</button>
+            {r.won && <button className="btn" onClick={() => setSharing(true)}>{t('mission.share')}</button>}
+          </div>
+        )}
+        {sharing && <ShareDialog data={missionCard(t, f, campaign, r)} onClose={() => setSharing(false)} />}
       </div>
     </div>
   );
