@@ -237,6 +237,61 @@ export function backRival(c: Campaign, k: number): boolean {
   return true;
 }
 
+export type Ask = 'posts' | 'senior' | 'cash' | 'demand';
+export type AskReply = 'granted' | 'partly' | 'refused' | 'nothing';
+
+/** How hard a claimant needs the player's seats: the share of its shortfall to a majority they would fill. */
+export function leverage(world: World, c: Campaign, k: number): number {
+  const f = c.formation!;
+  const short = Math.max(1, majorityLine(world) - pledged(f, k));
+  return clamp(f.seats[c.player] / short, 0, 1);
+}
+
+/**
+ * A small party asks a claimant for more than its standing offer.
+ * Costs a meeting. The more the claimant needs the player's seats, the likelier
+ * it gives; a claimant who cannot deliver the ask offers nothing, and one who is
+ * pushed too far thinks less of the player.
+ */
+export function requestTerms(world: World, c: Campaign, k: number, ask: Ask): AskReply | null {
+  const f = c.formation;
+  const me = c.player;
+  if (!f || f.outcome || c.phase !== 'formation' || f.meetings < 1) return null;
+  const held = f.offers[k]?.[me];
+  if (k === me || !f.claimants.includes(k) || !held) return null;
+  const want: Offer = { ...held, demands: [...held.demands] };
+  if (ask === 'posts') want.posts = held.posts + 1;
+  else if (ask === 'cash') {
+    want.cash = held.cash + cashRef(world, f, me);
+    if (want.cash > (c.parties[k]?.funds ?? 0) * 0.5) { f.meetings--; return 'nothing'; }
+  }
+  else if (ask === 'senior') {
+    const free = seniorsFree(world, f, k, me);
+    const pick = WANTS[PARTY_IDS[me]]?.senior ?? free[0] ?? null;
+    if (held.senior || !free.length) { f.meetings--; return 'nothing'; }
+    want.senior = pick && free.includes(pick) ? pick : free[0];
+  } else {
+    const open = demandsOpen(world, f, k, me).filter((d) => !held.demands.includes(d));
+    if (!open.length) { f.meetings--; return 'nothing'; }
+    want.demands.push(open[0]);
+  }
+  f.meetings--;
+  const odds = clamp(0.25 + 0.6 * leverage(world, c, k) + relation(c, k, me) / 400, 0.1, 0.9);
+  const roll = new Rng(1000 + f.day * 997 + k * 131 + ['posts', 'senior', 'cash', 'demand'].indexOf(ask) * 17 + f.meetings * 7 + f.seats[me]).next();
+  const fit = deliverable(world, f, k, me, want);
+  const same = fit.posts === want.posts && fit.senior === want.senior && fit.cash === want.cash && fit.demands.length === want.demands.length;
+  if (roll < odds && same) { f.offers[k][me] = want; shiftRelation(c, me, k, 1); return 'granted'; }
+  if (roll < odds * 1.4) {
+    // Half way: an extra post or the envelope, if that is what was asked for; otherwise just goodwill.
+    if (ask === 'cash') { f.offers[k][me] = { ...held, cash: held.cash + Math.round(cashRef(world, f, me) / 2) }; return 'partly'; }
+    if (ask === 'posts' && fit.posts > held.posts) { f.offers[k][me] = { ...held, posts: fit.posts }; return 'partly'; }
+    shiftRelation(c, me, k, 1);
+    return 'partly';
+  }
+  shiftRelation(c, me, k, -3);
+  return 'refused';
+}
+
 /** The player, backing nobody, puts their own name forward again. */
 export function claimAgain(c: Campaign): boolean {
   const f = c.formation;

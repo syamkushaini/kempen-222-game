@@ -332,6 +332,8 @@ export function FormationScreen() {
   const campaign = useStore((s) => s.game!.campaign);
   const endDay = useStore((s) => s.endDay);
   const backRival = useStore((s) => s.backRival);
+  const askTerms = useStore((s) => s.askTerms);
+  const askReply = useStore((s) => s.askReply);
   const claimAgain = useStore((s) => s.claimAgain);
   const [selected, setSelected] = useState<number | null>(null);
 
@@ -438,6 +440,15 @@ export function FormationScreen() {
                       <span className="action-meta">{describeOffer(t, fmt, f.offers[k][me]!)}</span>
                     </div>
                     {f.pledge[me] !== k && <ConfirmButton label={t('form.back')} confirmLabel={t('form.backConfirm')} onConfirm={() => backRival(k)} />}
+                    {f.outcome === undefined && (
+                      <div className="ask-row" title={t('form.ask.title', { party: partyShort(t, k) })}>
+                        <span className="muted small">{t('form.ask')}:</span>
+                        {(['posts', 'senior', 'cash', 'demand'] as const).map((a) => (
+                          <button key={a} type="button" className="btn small" disabled={f.meetings < 1} onClick={() => askTerms(k, a)}>{t(`form.ask.${a}`)}</button>
+                        ))}
+                        {askReply?.party === k && <span className="small">{t(`form.ask.${askReply.reply}`, { party: partyShort(t, k) })}</span>}
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

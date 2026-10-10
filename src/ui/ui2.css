@@ -811,3 +811,7 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .map-options summary { width: 100%; justify-content: center; }
   .map-options-panel { left: 0; right: 0; width: auto; }
 }
+
+/* Asking a claimant for better terms, under their offer. */
+.t-offers .action { flex-wrap: wrap; }
+.ask-row { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }

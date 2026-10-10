@@ -24,7 +24,7 @@ import {
   type PactProposal, type PactVerdict,
 } from '../sim/campaign/diplomacy';
 import {
-  backRival, claimAgain, endDay, makeOffer, resolveFormationScene, soundOut, type OfferResult,
+  backRival, claimAgain, endDay, makeOffer, requestTerms, resolveFormationScene, soundOut, type Ask, type AskReply, type OfferResult,
 } from '../sim/campaign/formation';
 import { closeNight, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
@@ -143,6 +143,8 @@ interface Store {
   view: MapView;
   tab: SidebarTab;
   selectedState: RegionId | null;
+  /** Where the player was looking (the whole country, or a state) before a seat was opened: closing the seat goes back to it. Absent when no seat is open. */
+  seatReturn?: RegionId | null;
   selectedSeat: string | null;
   /** The outcome of the player's most recent action, shown above the action list. */
   lastReport: NewsItem | null;
@@ -160,6 +162,8 @@ interface Store {
   pactReply: { party: number; verdict: PactVerdict } | null;
   /** The answer to the player's latest offer in the talks after the election. */
   offerReply: { party: number; result: OfferResult } | null;
+  /** The last answer to a request for better terms. */
+  askReply: { party: number; ask: Ask; reply: AskReply } | null;
   /** Election night stays on screen after the count until the player moves on. */
   showNight: boolean;
   /** A scene the player has set aside to look around before answering. */
@@ -229,6 +233,7 @@ interface Store {
   offer(party: number, offer: Offer): void;
   soundOut(party: number): void;
   backRival(party: number): void;
+  askTerms(party: number, ask: Ask): void;
   claimAgain(): void;
   endDay(): void;
 
@@ -379,6 +384,7 @@ export const useStore = create<Store>((set, get) => {
     setPollOpen: (pollOpen) => set({ pollOpen }),
     pactReply: null,
     offerReply: null,
+    askReply: null,
     showNight: false,
     hiddenScene: [],
     autosavedAt: null,
@@ -395,8 +401,13 @@ export const useStore = create<Store>((set, get) => {
     dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((x) => x !== id) })),
     setView: (view) => set({ view }),
     setTab: (tab) => set({ tab }),
-    selectState: (state) => set({ selectedState: state, selectedSeat: null }),
-    selectSeat: (seatId, state) => set((s) => ({ selectedSeat: seatId, selectedState: state ?? s.selectedState })),
+    selectState: (state) => set({ selectedState: state, selectedSeat: null, seatReturn: undefined }),
+    selectSeat: (seatId, state) => set((s) => {
+      // Closing a seat goes back to where it was opened from: the list of the whole country, or of the state that was being looked at.
+      if (seatId === null) return { selectedSeat: null, ...(s.seatReturn !== undefined ? { selectedState: s.seatReturn } : {}), seatReturn: undefined };
+      // The first seat opened remembers where the player was looking; going from seat to seat keeps that.
+      return { selectedSeat: seatId, selectedState: state ?? s.selectedState, seatReturn: s.selectedSeat === null ? s.selectedState : s.seatReturn };
+    }),
 
     startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge, realStates = false, weeks }) => {
       // A founded party's first term is played in a country with its name already on every ballot.
@@ -497,6 +508,10 @@ export const useStore = create<Store>((set, get) => {
       return result ? { offerReply: { party, result } } : {};
     }),
     soundOut: (party) => mutate((c) => { soundOut(c, party); }),
+    askTerms: (party, ask) => mutate((c, _g, world) => {
+      const reply = requestTerms(world, c, party, ask);
+      return { askReply: reply ? { party, ask, reply } : null };
+    }),
     backRival: (party) => mutate((c) => { backRival(c, party); return { offerReply: null }; }),
     claimAgain: () => mutate((c) => { claimAgain(c); }),
     endDay: () => mutate((c, _g, world) => { endDay(world, c); return { offerReply: null }; }),
