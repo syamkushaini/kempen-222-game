@@ -42,7 +42,7 @@ describe('every seat has a candidate', () => {
     expect(openSeat(base, c, seat)).toBe(true);
     expect(c.parties[PS]!.days).toBe(days - CHOOSE_DAYS);
     const key = c.team.keySeats.find((k) => k.seat === seat)!;
-    expect(key.options).toHaveLength(3);
+    expect(key.options).toHaveLength(4);
     expect(canOpen(base, c, seat)).toBe(true); // the party’s choice stays until the leader picks
     expect(choose(base, c, seat, 0)).toBe(true);
     expect(c.team.defaults![seat]).toBeUndefined();

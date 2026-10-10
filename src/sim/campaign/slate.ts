@@ -1,4 +1,4 @@
-import type { World } from '../election';
+import { lastElection, type World } from '../election';
 import { N_PARTIES } from '../types';
 import { STANDS, stands, WITHDRAWN } from '../transfer';
 import { contests } from './actions';
@@ -109,6 +109,32 @@ export function fieldWithin(world: World, c: Campaign, budget: number): number {
   }
   return n;
 }
+
+/** How near the party came to winning a seat last time, from 0 (nowhere) to 1 (it won): its share of the vote against the leader's. */
+export function winChance(world: World, c: Campaign, seat: number): number {
+  const o = lastElection(world).seats[seat];
+  const best = Math.max(...o.votes);
+  return best > 0 ? (o.votes[c.player] ?? 0) / best : 0;
+}
+
+/** The seats left to field, the likeliest to be won first (the cheaper of two equal chances before the dearer). */
+export function openSeatsByChance(world: World, c: Campaign): number[] {
+  return openSeats(world, c).sort((a, b) => winChance(world, c, b) - winChance(world, c, a) || nominationCost(world, a) - nominationCost(world, b) || a - b);
+}
+
+/** Fields the seats the party has the best chance in, best first, until `budget` is spent (a seat too dear for what is left is passed over for a cheaper one). Returns how many were added. */
+export function fieldBest(world: World, c: Campaign, budget: number): number {
+  let n = 0, spent = 0;
+  for (const i of openSeatsByChance(world, c)) {
+    const cost = nominationCost(world, i);
+    if (spent + cost > budget) continue;
+    if (fieldSeat(world, c, world.seats[i].id)) { n++; spent += cost; }
+  }
+  return n;
+}
+
+/** The share of its money a party puts into candidates when the game fills the slate for it: the rest is left for the campaign. */
+export const AUTO_SLATE = 0.4;
 
 /** The election is over: the seats the party stood in are the ones it has candidates in next time. */
 export function closeSlate(world: World, c: Campaign): void {

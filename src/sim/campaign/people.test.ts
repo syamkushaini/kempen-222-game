@@ -205,15 +205,15 @@ describe('staff', () => {
 
 describe('candidates', () => {
   it('are chosen by the leader only where it could decide the seat', () => {
-    expect(game().team.keySeats).toHaveLength(8);
-    expect(game(null, 5, perak).team.keySeats).toHaveLength(5);
+    expect(game().team.keySeats).toHaveLength(12);
+    expect(game(null, 5, perak).team.keySeats).toHaveLength(7);
     expect(game(null, 5, by).team.keySeats).toHaveLength(1);
     expect(newCampaign(hung, { player: PS, difficulty: 'normal', seed: 5 }).team.keySeats).toHaveLength(0);
     expect(startCareer(careerWorld, { player: PS, difficulty: 'normal', seed: 5 }).team.keySeats).toHaveLength(0);
     const c = game();
     for (const key of c.team.keySeats) {
-      expect(key.options).toHaveLength(3);
-      expect(new Set(key.options.map((h) => h.kind)).size).toBe(3);
+      expect(key.options).toHaveLength(4);
+      expect(new Set(key.options.map((h) => h.kind)).size).toBe(4);
       expect(key.pick).toBeNull();
     }
     expect(new Set(c.team.keySeats.flatMap((k) => k.options.map((h) => h.name))).size).toBe(24);

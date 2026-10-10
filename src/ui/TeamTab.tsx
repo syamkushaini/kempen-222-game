@@ -13,6 +13,7 @@ import { ConfirmButton } from './SavesTab';
 import { Gauge } from './Gauge';
 import { Term } from './Term';
 import { TeamAdvice, TeamEffects } from './TeamAdvice';
+import { AutoFill, ChiefPicks } from './CandidateAuto';
 
 /** Five pips, some of them filled. */
 export function Pips({ n, label }: { n: number; label: string }) {
@@ -112,6 +113,8 @@ export function TeamTab() {
       {inCampaign && (
         <>
           <h3>{t('team.candidates')}</h3>
+          <AutoFill />
+          <ChiefPicks />
           <p className="muted small action-desc">
             {team.keySeats.length === 0 ? t('team.candidates.none') : choosing ? t('team.candidates.desc', { n: candidateDeadline(campaign) }) : t('team.candidates.closed')}
           </p>

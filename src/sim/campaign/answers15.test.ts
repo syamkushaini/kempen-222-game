@@ -47,7 +47,8 @@ describe('Sabah for the people of Sabah', () => {
     expect(after[1] - before[1]).toBeCloseTo(-pride.away, 9);
     // And not a thing in the Peninsula.
     const p = world.seats.findIndex((s) => s.state === 'perak');
-    expect(c.held!.support.seat[world.seats[p].id]).toBeUndefined();
+    // (the state chiefs' own picks bring the party's seats a little, but not the Sarawak and Sabah parties a thing)
+    expect(c.held!.support.seat[world.seats[p].id]?.[GBK] ?? 0).toBe(0);
     expect(c.drift.support.seat[world.seats[p].id]).toEqual(career().drift.support.seat[world.seats[p].id]);
   });
 });

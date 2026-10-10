@@ -4,6 +4,7 @@ import { beforeNomination, nominationWeek } from '../sim/campaign/diplomacy';
 import { canField, fieldedSeats, isOwn, nominationCost, openSeats, slateSpent } from '../sim/campaign/slate';
 import { STANDS } from '../sim/transfer';
 import { useStore } from '../state/store';
+import { AutoFill } from './CandidateAuto';
 import { Icon } from './Icon';
 import { regionLabel, useFormat, useT, useWorld } from './hooks';
 
@@ -52,6 +53,7 @@ export function NominationsPanel() {
         {open && <button className="btn small" disabled={affordable === 0} onClick={() => fieldCheapest(QUICK)}>{t('nom.cheapest', { n: Math.min(QUICK, affordable || QUICK) })}</button>}
         {open && <button className="btn small" disabled={affordable === 0} onClick={() => fieldCheapest(world.seats.length)}>{t('nom.afford', { n: affordable })}</button>}
       </div>
+      <AutoFill />
       {list && <SlateDialog onClose={() => setList(false)} />}
     </section>
   );

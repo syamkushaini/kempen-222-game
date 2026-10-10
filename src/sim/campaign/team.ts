@@ -1,6 +1,6 @@
 import type { World } from '../election';
 import { Rng } from '../rng';
-import { candidatesWeek, makeDefaults, makeKeySeats } from './candidates';
+import { applyDefaultLifts, candidatesWeek, makeDefaults, makeKeySeats } from './candidates';
 import { endorsersWeek } from './endorsers';
 import { mediaWeek, usualCoverage } from './media';
 import { makeLeader } from './perks';
@@ -46,6 +46,7 @@ export function teamFor(world: World, c: Omit<Campaign, 'team'>): Team {
 export function openCampaign(world: World, c: Campaign): void {
   c.team.keySeats = keySeatsFor(world, c);
   c.team.defaults = defaultsFor(world, c);
+  applyDefaultLifts(world, c);
   delete c.team.leaderSeat;
   c.team.endorsers = ENDORSER_IDS.map(() => null);
   c.team.troopers = 0;

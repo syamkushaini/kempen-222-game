@@ -14,8 +14,8 @@ const general = getWorld('general')!, by = getWorld('byelection')!, perak = getW
 const career = (player = PS): Campaign => startCareer(careerWorld, { player, difficulty: 'normal', seed: 5 });
 
 /** Plays a contest to the end of the count with the player's support pushed up or down everywhere. */
-function fought(world: typeof general, push: number, difficulty: Difficulty = 'normal', player = PS): Campaign {
-  const c = newCampaign(world, { player, difficulty, seed: 7 });
+function fought(world: typeof general, push: number, difficulty: Difficulty = 'normal', player = PS, seed = 7): Campaign {
+  const c = newCampaign(world, { player, difficulty, seed });
   for (let b = 0; b < N_BLOCS; b++) c.dyn.support.nat[b][player] = push;
   // Fix the push in place: campaign effects fade week by week, the drift does not.
   for (let b = 0; b < N_BLOCS; b++) c.drift.support.nat[b][player] += push;
@@ -171,10 +171,13 @@ describe('the newer achievements', () => {
     const perlis = getWorld('state:perlis')!;
     const line = Math.floor(perlis.seats.length / 2) + 1;
     const seen = new Map<number, boolean>();
-    for (let push = -0.5; push <= 3 && !seen.has(line); push += 0.02) {
-      const c = fought(perlis, push);
-      closeNight(perlis, c);
-      seen.set(electionResult(perlis, c)!.tally[PS], earned(perlis, c).includes('exactMajority'));
+    // A night with exactly the line is found by turning the push up on a few different campaigns, since where the seats fall changes with what the rivals and the team do.
+    for (let seed = 7; seed < 13 && !seen.has(line); seed++) {
+      for (let push = -0.5; push <= 3 && !seen.has(line); push += 0.02) {
+        const c = fought(perlis, push, 'normal', PS, seed);
+        closeNight(perlis, c);
+        seen.set(electionResult(perlis, c)!.tally[PS], earned(perlis, c).includes('exactMajority'));
+      }
     }
     expect(seen.get(line), `a night with exactly ${line} seats turned up`).toBe(true);
     for (const [seats, flagged] of seen) if (seats !== line) expect(flagged, `${seats} seats`).toBe(false);

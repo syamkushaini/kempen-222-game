@@ -8,7 +8,9 @@ import { shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
 import { retireIncumbent } from './tenure';
 import { payVet } from './staff';
+import { chiefView } from './chiefs';
 import { HOPEFUL_KINDS, type Campaign, type Hopeful, type HopefulKind, type KeySeat } from './types';
+import type { RegionId } from '../types';
 
 /** Invented names for would-be candidates. Proper nouns; the same in every language. */
 export const HOPEFUL_NAMES = [
@@ -75,8 +77,10 @@ export const HOPEFULS: Record<HopefulKind, HopefulDef> = {
 };
 
 /** How many seats the leader picks a candidate for personally. The rest are filled by the party in the usual way. */
-const KEY_SEATS: Record<string, number> = { general: 8, state: 5, byelection: 1, hung: 0 };
-const OPTIONS = 3;
+const KEY_SEATS: Record<string, number> = { general: 12, state: 7, byelection: 1, hung: 0 };
+const OPTIONS = 4;
+/** The chance that one of a seat's hopefuls is a graduate (capable, with little to hide) even in a party with no college of its own. */
+const GRADUATE_CHANCE = 0.4;
 /** Weekly chance that a candidate's past comes out once they are on the ballot. */
 const EXPOSURE = 0.18;
 const SCANDAL_HIT = 0.2;
@@ -104,11 +108,11 @@ export function makeKeySeats(world: World, c: Campaign, rng: Rng): KeySeat[] {
     .sort((a, b) => a.gap - b.gap)
     .slice(0, want);
   const names = rng.shuffled(HOPEFUL_NAMES.map((_, n) => n));
-  const graduates = c.career ? holdingScale(world, c.career, 'college') : 0;
+  const graduates = Math.max(GRADUATE_CHANCE, c.career ? holdingScale(world, c.career, 'college') : 0);
   return closest.map(({ id }) => {
     const kinds: HopefulKind[] = rng.shuffled(HOPEFUL_KINDS.filter((k) => k !== 'graduate')).slice(0, OPTIONS);
-    // A party with a college of its own has its graduates on the list, more of them the bigger the college.
-    if (graduates > 0 && rng.next() < Math.min(1, graduates)) kinds[kinds.length - 1] = 'graduate';
+    // A party with a college of its own has more of its graduates on the list, the bigger the college; any party has some.
+    if (rng.next() < Math.min(1, graduates)) kinds[kinds.length - 1] = 'graduate';
     const options: Hopeful[] = kinds.map((kind) => ({ kind, name: names.pop() ?? 0, skeleton: rng.next() < HOPEFULS[kind].risk, vetted: false }));
     return { seat: id, options, pick: null, blown: false };
   });
@@ -128,7 +132,11 @@ export function choose(world: World, c: Campaign, seat: string, option: number):
   if (!key || !h || key.pick !== null || !canChoose(c)) return false;
   key.pick = option;
   const me = c.player;
-  // The party's own choice makes way for the leader's. If the seat has a member of long standing, half their personal vote goes with them.
+  // The party's own choice makes way for the leader's, and with it what the state chief's pick had brought. If the seat has a member of long standing, half their personal vote goes with them.
+  if (c.team.defaults?.[seat]) {
+    const at = world.seats[world.seatIndex.get(seat) ?? -1];
+    if (at) (heldOf(c).support.seat[seat] ??= zeros(N_PARTIES))[me] -= DEFAULT_LIFT * pickQuality(world, c, at.state);
+  }
   delete c.team.defaults?.[seat];
   retireIncumbent(c, seat);
   // A candidate is there for the whole campaign, so what they bring does not fade; it is theirs, and goes with them.
@@ -146,17 +154,92 @@ const DEFAULT_RISK = 0.15;
 /** What it costs the leader's week to look at the hopefuls for a seat of their own choosing, in days. */
 export const CHOOSE_DAYS = 0.5;
 
-/** The party's own choice of candidate in every seat it stands in that the leader has not been asked to choose for. */
+/** What a state chief's pick brings to a seat at best, in logit units (a good pick adds about a point of vote). */
+export const DEFAULT_LIFT = 0.05;
+
+/**
+ * How well the party's choice in a seat is made, from 0 to 1: it is the state chief who makes it, and a capable chief with strong
+ * branches knows who in the division is worth putting up. Half the chief's skill and half the party's branches in the state.
+ */
+export function pickQuality(world: World, c: Campaign, st: RegionId): number {
+  const person = chiefView(world, c, st);
+  const at = world.states.indexOf(st);
+  const branches = at >= 0 ? c.parties[c.player]?.machinery[at] ?? 0 : 0;
+  return Math.max(0, Math.min(1, 0.5 * ((person.skill - 1) / 4) + 0.5 * (branches / 100)));
+}
+
+/** A kind of hopeful drawn by weight, where a better pick leans to the capable and away from the risky. */
+function drawKind(rng: Rng, q: number): HopefulKind {
+  const weights: Record<HopefulKind, number> = { warlord: 1 - 0.5 * q, professional: 1 + 2 * q, celebrity: 1 - 0.6 * q, loyalist: 1 + q, graduate: 1.2 * q };
+  const kinds = HOPEFUL_KINDS;
+  const total = kinds.reduce((a, k) => a + weights[k], 0);
+  let x = rng.next() * total;
+  for (const k of kinds) { x -= weights[k]; if (x <= 0) return k; }
+  return kinds[0];
+}
+
+/** The party's own choice of candidate in every seat it stands in that the leader has not been asked to choose for: made by the seat's state chief. */
 export function makeDefaults(world: World, c: Campaign, rng: Rng): Record<string, Hopeful> {
   const me = c.player;
   const out: Record<string, Hopeful> = {};
-  const kinds = HOPEFUL_KINDS.filter((k) => k !== 'graduate');
   world.seats.forEach((seat, i) => {
     if (!contests(world, c, i, me) || c.team.keySeats.some((k) => k.seat === seat.id)) return;
-    const kind = kinds[rng.int(kinds.length)];
-    out[seat.id] = { kind, name: rng.int(HOPEFUL_NAMES.length), skeleton: rng.next() < HOPEFULS[kind].risk * DEFAULT_RISK, vetted: false };
+    const q = pickQuality(world, c, seat.state);
+    const kind = drawKind(rng, q);
+    out[seat.id] = { kind, name: rng.int(HOPEFUL_NAMES.length), skeleton: rng.next() < HOPEFULS[kind].risk * DEFAULT_RISK * (1.4 - q), vetted: false };
   });
   return out;
+}
+
+/** What each state's chief has made of the party's own choices: how well they pick, and how many of the seats are in the hands of the capable. */
+export interface ChiefPicks { state: RegionId; quality: number; seats: number; able: number; risky: number }
+export function chiefPicks(world: World, c: Campaign): ChiefPicks[] {
+  const by = new Map<RegionId, ChiefPicks>();
+  for (const [seatId, h] of Object.entries(c.team.defaults ?? {})) {
+    const seat = world.seats[world.seatIndex.get(seatId) ?? -1];
+    if (!seat) continue;
+    const row = by.get(seat.state) ?? { state: seat.state, quality: pickQuality(world, c, seat.state), seats: 0, able: 0, risky: 0 };
+    row.seats++;
+    if (h.kind === 'graduate' || h.kind === 'professional' || h.kind === 'loyalist') row.able++;
+    if (h.skeleton) row.risky++;
+    by.set(seat.state, row);
+  }
+  return [...by.values()].sort((a, b) => b.seats - a.seats);
+}
+
+/** The pick of the state's chief brings a little to the seat for the whole campaign, more from a better chief. Done once, as the campaign opens. */
+export function applyDefaultLifts(world: World, c: Campaign): void {
+  const me = c.player;
+  for (const seatId of Object.keys(c.team.defaults ?? {})) {
+    const seat = world.seats[world.seatIndex.get(seatId) ?? -1];
+    if (!seat) continue;
+    const lift = DEFAULT_LIFT * pickQuality(world, c, seat.state);
+    if (lift > 0) (heldOf(c).support.seat[seatId] ??= zeros(N_PARTIES))[me] += lift;
+  }
+}
+
+// ---------- the best candidate, chosen for the leader ----------
+
+/** How much a hopeful is worth in a seat to the leader who must choose: what they add, less what a past may cost. A past looked into is known. */
+export function hopefulScore(world: World, key: KeySeat, option: number): number {
+  const h = key.options[option];
+  if (!h) return -Infinity;
+  const def = HOPEFULS[h.kind];
+  const risk = h.vetted ? (h.skeleton ? 1 : 0) : def.risk;
+  return liftIn(world, key, option) + 0.5 * def.turnout + 0.004 * def.unity - 0.12 * risk;
+}
+
+/** Chooses the best hopeful in every seat the leader has not yet chosen for. Returns how many were chosen. */
+export function autoChoose(world: World, c: Campaign): number {
+  if (!canChoose(c)) return 0;
+  let n = 0;
+  for (const key of c.team.keySeats) {
+    if (key.pick !== null) continue;
+    let best = 0;
+    key.options.forEach((_, i) => { if (hopefulScore(world, key, i) > hopefulScore(world, key, best)) best = i; });
+    if (choose(world, c, key.seat, best)) n++;
+  }
+  return n;
 }
 
 /** Whether the leader can look at the hopefuls for a seat, and choose: before nomination day, in a seat that has only the party's own choice, with half a day to spare. */
@@ -172,9 +255,9 @@ export function openSeat(world: World, c: Campaign, seat: string): boolean {
   const pc = c.parties[c.player]!;
   pc.days -= CHOOSE_DAYS;
   const rng = new Rng((c.seed ^ 0x0c4e1) + world.seatIndex.get(seat)! * 31 + (c.career?.term ?? 0));
-  const graduates = c.career ? holdingScale(world, c.career, 'college') : 0;
+  const graduates = Math.max(GRADUATE_CHANCE, c.career ? holdingScale(world, c.career, 'college') : 0);
   const kinds: HopefulKind[] = rng.shuffled(HOPEFUL_KINDS.filter((k) => k !== 'graduate')).slice(0, OPTIONS);
-  if (graduates > 0 && rng.next() < Math.min(1, graduates)) kinds[kinds.length - 1] = 'graduate';
+  if (rng.next() < Math.min(1, graduates)) kinds[kinds.length - 1] = 'graduate';
   const options: Hopeful[] = kinds.map((kind) => ({ kind, name: rng.int(HOPEFUL_NAMES.length), skeleton: rng.next() < HOPEFULS[kind].risk, vetted: false }));
   c.team.keySeats.push({ seat, options, pick: null, blown: false });
   return true;

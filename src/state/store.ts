@@ -37,7 +37,8 @@ import { PARTY_IDS, type RegionId, type StateId } from '../sim/types';
 import { newGame, startOf, type GameState, type StartOptions } from './game';
 import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
-import { fieldCheapest, fieldSeat, withdrawSeat } from '../sim/campaign/slate';
+import { AUTO_SLATE, fieldBest, fieldCheapest, fieldSeat, nominationsOpen, withdrawSeat } from '../sim/campaign/slate';
+import { autoChoose } from '../sim/campaign/candidates';
 import { enterSeat, leaveSeat } from '../sim/campaign/entry';
 import { usePower, type PowerId } from '../sim/campaign/statepowers';
 import { writeLetter, type Tone } from '../sim/campaign/letters';
@@ -304,6 +305,8 @@ interface Store {
   fieldSeat(seatId: string): void;
   withdrawSeat(seatId: string): void;
   fieldCheapest(limit: number): void;
+  /** Fills the party's candidates for it: the seats it is likeliest to win (for a party of the player's own making, within what it can spend), and the best hopeful in each seat the leader chooses for. */
+  autoFill(): void;
   /** Puts a candidate in a seat the party has never stood in, or takes one back. */
   enterSeat(seatId: string): void;
   leaveSeat(seatId: string): void;
@@ -571,6 +574,10 @@ export const useStore = create<Store>((set, get) => {
     fieldSeat: (seatId) => mutate((c, _g, world) => { fieldSeat(world, c, seatId); }),
     withdrawSeat: (seatId) => mutate((c, _g, world) => { withdrawSeat(world, c, seatId); }),
     fieldCheapest: (limit) => mutate((c, _g, world) => { fieldCheapest(world, c, limit); }),
+    autoFill: () => mutate((c, _g, world) => {
+      if (nominationsOpen(c)) fieldBest(world, c, Math.round((c.parties[c.player]?.funds ?? 0) * AUTO_SLATE));
+      autoChoose(world, c);
+    }),
     enterSeat: (seatId) => mutate((c, _g, world) => { enterSeat(world, c, seatId); }),
     leaveSeat: (seatId) => mutate((c, _g, world) => { leaveSeat(world, c, seatId); }),
     playStates: async (sceneId, choice, wanted) => {

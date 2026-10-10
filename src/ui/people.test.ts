@@ -64,7 +64,7 @@ describe('a party of one’s own', () => {
     const { identity, ...rest } = g;
     const parties = campaign.parties.map((p: any) => { if (!p) return p; const { spent, fined, ...old } = p; return old; });
     expect(identity).toBeNull();
-    expect(team.keySeats).toHaveLength(8);
+    expect(team.keySeats).toHaveLength(12);
     expect(parseSave(JSON.stringify({ ...rest, version: 7, campaign: { ...campaign, parties } }))).toEqual({ ok: true, state: g });
     const broken = JSON.parse(serializeSave(g));
     broken.campaign.team.leader.stats = [9, 3, 3, 3];
