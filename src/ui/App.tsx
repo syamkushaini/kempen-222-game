@@ -24,6 +24,7 @@ import { NewsTab } from './NewsTab';
 import { PollsTab } from './PollsTab';
 import { SectionJump } from './SectionJump';
 import { SeatDetail, SeatsTab } from './SeatsTab';
+import { DecisionResult } from './DecisionResult';
 import { WeekRecap } from './WeekRecap';
 import { Standing } from './Standing';
 import { TeamTab } from './TeamTab';
@@ -236,6 +237,7 @@ function CampaignScreen() {
       </main>
       {narrow && seatCard}
       <WeekRecap />
+      <DecisionResult />
       {campaign.career?.missions?.unseen.length ? <Suspense fallback={null}><MissionCard /></Suspense> : null}
       <CampaignBar />
       <TermBar />

@@ -168,6 +168,8 @@ interface Store {
   showNight: boolean;
   /** A scene the player has set aside to look around before answering. */
   hiddenScene: number[];
+  /** What a decision just made brought into the news, shown once as a popup. */
+  decisionNews: NewsItem[] | null;
   /** The inbox is open: the decision at its head is on screen. A new decision opens it by itself (see Inbox in App.tsx); one set aside waits in a bar until the player opens it. */
   /** When the autosave last succeeded, or null if it has not or cannot. */
   autosavedAt: number | null;
@@ -331,6 +333,7 @@ interface Store {
   vetStaff(role: RoleId, index: number): void;
   /** The leader follows a hired person's suggestion (see advice.ts). */
   followAdvice(role: RoleId): void;
+  closeDecisionNews(): void;
   chooseCandidate(seat: string, option: number): void;
   vetHopeful(seat: string, option: number): void;
   courtEndorser(id: EndorserId): void;
@@ -387,6 +390,7 @@ export const useStore = create<Store>((set, get) => {
     askReply: null,
     showNight: false,
     hiddenScene: [],
+    decisionNews: null,
     autosavedAt: null,
     autosaveFailed: false,
     profile: profileStore.load(),
@@ -493,11 +497,13 @@ export const useStore = create<Store>((set, get) => {
       // The state's question, put again in the years of a state career.
       if (scene.kind === 'agenda' && c.phase === 'term') { resolveAgenda(world, c, scene, choice); return { hiddenScene: [] }; }
       if (scene.kind === 'event' || scene.kind === 'vote' || scene.kind === 'houseVote' || scene.kind === 'partyPoll' || scene.kind === 'redraw') {
+        const seen = c.news.length;
         answerEvent(world, c, scene, choice);
+        const fresh = c.news.slice(seen);
         // The answer may have brought the government down: on to the talks.
-        if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: [] };
+        if (c.phase === 'formation') return { showNight: false, offerReply: null, hiddenScene: [], decisionNews: null };
         // The inbox stays open while there is more in it, and closes itself when it is empty.
-        return { hiddenScene: [] };
+        return { hiddenScene: [], decisionNews: c.phase === 'term' && fresh.length ? fresh : null };
       }
       if (c.phase === 'campaign') resolveCampaignScene(world, c, scene, choice);
       else resolveFormationScene(c, scene, choice);
@@ -581,6 +587,7 @@ export const useStore = create<Store>((set, get) => {
       if (resumeTerm(c)) return { tab: 'desk', offerReply: null };
     }),
 
+    closeDecisionNews: () => set({ decisionNews: null }),
     hideScene: (id) => set((s) => ({ hiddenScene: [...s.hiddenScene, id] })),
     openScene: () => set({ hiddenScene: [] }),
     setBudget: (patch) => mutate((c) => { setBudget(c, patch); }),
