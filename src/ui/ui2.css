@@ -760,3 +760,23 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 .weekly h3 { margin: 0 0 6px; }
 .weekly p { margin: 4px 0; }
 .badge-group h3 { margin: 18px 0 6px; display: flex; gap: 8px; align-items: baseline; }
+
+/* A tablet held upright: the map above the panel and the page scrolling, with no bar at the bottom to change screens with. */
+:root[data-form="tablet"] .campaign-bar { bottom: 0; }
+:root[data-form="tablet"] .layout > .map-column { position: static; }
+:root[data-form="tablet"] .action-toast { bottom: 120px; }
+:root[data-form="tablet"] .app { padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+
+/* The full-width rules of the header reach past the page: kept in the page, so that nothing can be dragged sideways. */
+.app { overflow-x: clip; }
+/* Whatever is touched should not wait for a double tap, nor be zoomed by one: pinching still zooms the page. */
+html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+/* Four tabs in a column not much wider than a phone: the pictures give way to the words. */
+.sidebar { container-type: inline-size; container-name: side; }
+@container side (max-width: 520px) { .tabs > .tab > .icon { display: none; } }
+/* A finger needs more than a pointer does. */
+@media (pointer: coarse) {
+  .btn, .btn.small, .btn.primary.small, .btn.small.primary, .tab, .subtabs button, .segmented button, .icon-btn { min-height: 44px; }
+  .icon-btn { min-width: 44px; }
+  select, .state-select, .seat-search input, .text-input, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) { min-height: 44px; }
+}

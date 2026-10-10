@@ -15,7 +15,7 @@ import { CampaignBar, Header, TermBar } from './Header';
 import { GoalLine } from './Challenges';
 import { GameMenu } from './GameMenu';
 import { NextStep } from './NextStep';
-import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useWorld, useNarrow } from './hooks';
+import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useTablet, useWorld, useNarrow } from './hooks';
 import { AsideBanner } from './Aside';
 import { MapView } from './MapView';
 import { now } from '../sim/campaign/news';
@@ -138,6 +138,9 @@ function CampaignScreen() {
   const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : id === 'desk' ? (shown === 'desk' ? 0 : campaign.inbox.length) : id === 'house' ? (shown === 'house' ? 0 : campaign.career?.appointments?.length ?? 0) : id === 'missions' ? (shown === 'missions' ? 0 : campaign.career?.missions?.offers.length ?? 0) : 0);
   // On a phone the map and the panel are separate screens, changed from a bar at the bottom.
   const narrow = useNarrow();
+  // A tablet held upright has room for the map above the panel, so it needs no bar to change screens with.
+  const tablet = useTablet();
+  const phone = narrow && !tablet;
   const [screen, setScreen] = useState<'map' | 'panel'>('panel');
   const mapWanted = spot('map');
   useEffect(() => { if (mapWanted) setScreen('map'); }, [mapWanted]);
@@ -173,7 +176,7 @@ function CampaignScreen() {
 
   return (
     <DisplayContext.Provider value={display}>
-      <main className={narrow ? `layout phone-${screen}` : 'layout'}>
+      <main className={phone ? `layout phone-${screen}` : 'layout'}>
         <NextStep />
         <GoalLine />
         <section className="map-column">
@@ -208,7 +211,7 @@ function CampaignScreen() {
             </div>
           )}
           <div className="tab-body" role="tabpanel">
-            {narrow && <SectionJump watch={shown} />}
+            {phone && <SectionJump watch={shown} />}
             <Suspense fallback={<p className="muted small">{t('app.loading')}</p>}>
             {shown === 'desk' && <TermDesk />}
             {shown === 'orders' && <OrdersTab />}
@@ -235,7 +238,7 @@ function CampaignScreen() {
       {campaign.career?.missions?.unseen.length ? <Suspense fallback={null}><MissionCard /></Suspense> : null}
       <CampaignBar />
       <TermBar />
-      {narrow && (
+      {phone && (
         <nav className="phone-nav" aria-label={t('nav.label')}>
           <button className={screen === 'map' ? 'active' : ''} aria-pressed={screen === 'map'} onClick={() => setScreen('map')}>
             <Icon name="compass" size={22} /><span>{t('nav.map')}</span>
@@ -268,6 +271,9 @@ export function App() {
   const ended = useStore((s) => !!s.game?.campaign.career?.ending);
   const loads = useStore((s) => s.loads);
   const setPendingChallenge = useStore((s) => s.setPendingChallenge);
+  const upright = useTablet();
+  // The stylesheet knows a tablet held upright by this mark (see ui2.css).
+  useEffect(() => { const root = document.documentElement; if (upright) root.dataset.form = 'tablet'; else delete root.dataset.form; }, [upright]);
 
   // A challenge sent as a link (`#c=...`) waits on the title screen for the player to say whether to play it.
   useEffect(() => {

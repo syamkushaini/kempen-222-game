@@ -1223,3 +1223,13 @@ From the interview (questions 46–49): the achievements the game had were thin,
 - **Together:** the old dealings, and *Big Tent* (pacts with three parties at once), *Rainbow Cabinet* (a government of five parties), *Two Become One* (take a party in), *National Unity*, *Founding Partner* (an alliance of three).
 - **Missions:** *First Errand*, *Full House* (a main mission of each kind), *Ten Down*, *The Hard Way*, and the one for the final mission.
 - Each is judged from the state alone, so it gives the same answer after a reload, and none is given for turning up (a test starts every contest as every party and expects nothing). The cosmetic rewards the interview mentioned (themes and colours for some of them) are not built: the game has no cosmetics to give.
+
+## For the iPad and other tablets (10 Oct 2026)
+
+Checked at six sizes (iPad mini, Air, Pro 11 and 13 inches, upright and on its side) with touch emulation. What was found and changed:
+
+- **A tablet held upright was treated as a big phone:** the map was hidden behind a bottom bar, and the panel had a screen of empty space. Between 640 and 980 points wide and at least 760 tall (`useTablet`, which marks the page `data-form="tablet"`), the map now sits above the panel on one scrolling page, with the group tabs along the top and no bottom bar to change screens with. The map keeps the country's shape (a phone's is squared up). On its side, or on a 13-inch iPad upright, the two-column page was already right.
+- **Four tabs did not fit** in the side column at an iPad's width (the last, Intel, was cut off): where the column is under 520 points the tabs lose their pictures and keep their words (a container query on the sidebar).
+- **The page could be dragged sideways** on screens wider than 980 points: the header's full-width rules reached beyond the page. They are now clipped to it, and a test at every size finds no overflow in the title, the set-up, the game, each group of tabs, the campaign and the count.
+- **Touch:** buttons, tabs, selects and fields are at least 44 points tall where the pointer is coarse (they were 36 to 40); double-tap no longer zooms (pinching still does); no grey flash on tap.
+- **Left as it was:** the 3D map is off by default on a touch screen (an iPad can turn it on in Map options); it was not tried on a real iPad, only on emulation of one, so how it runs there is not known. Hover-only styling is unchanged (a hovered tab stays lit after a tap on iOS, which is harmless).

@@ -12,7 +12,7 @@ import type { RegionId, SeatClass } from '../sim/types';
 import { useStore } from '../state/store';
 import { canDraw3D, PATTERNS } from './map3d';
 import { FIT, holdPoint, viewTransform, zoomBy, type View } from './mapGesture';
-import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay, useNarrow } from './hooks';
+import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay, useNarrow, useTablet } from './hooks';
 import { Icon } from './Icon';
 import { SeatSearch } from './SeatSearch';
 import { Term } from './Term';
@@ -152,7 +152,7 @@ export function MapView(props: {
   const preview = useStore((s) => s.preview);
 
   const [map, setMap] = useState<MapData | null>(null);
-  const narrow = useNarrow();
+  const narrow = useNarrow() && !useTablet();
   const viewH = props.tall && narrow && map ? Math.round(map.width * PHONE_SHAPE) : VIEW_HEIGHT;
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
   const frame = useRef<HTMLDivElement>(null);

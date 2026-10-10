@@ -110,6 +110,24 @@ export function useNarrow(): boolean {
   return narrow;
 }
 
+/**
+ * A tablet held upright: wide enough (640 to 980 points) and tall enough (760 or more) to show the map and the panel one above the
+ * other, where a phone shows one at a time. It is still `narrow` (one column), but it has no bottom bar to change screens with.
+ */
+export const TABLET_QUERY = '(min-width: 640px) and (max-width: 980px) and (min-height: 760px)';
+export function useTablet(): boolean {
+  const [tablet, setTablet] = useState(() => typeof matchMedia === 'function' && matchMedia(TABLET_QUERY).matches);
+  useEffect(() => {
+    if (typeof matchMedia !== 'function') return;
+    const watch = matchMedia(TABLET_QUERY);
+    const update = () => setTablet(watch.matches);
+    update();
+    watch.addEventListener('change', update);
+    return () => watch.removeEventListener('change', update);
+  }, []);
+  return tablet;
+}
+
 export function useWorld(): World {
   const scenario = useStore((s) => s.game?.campaign.scenario);
   const results = useStore((s) => s.game?.campaign.career?.results ?? null);
