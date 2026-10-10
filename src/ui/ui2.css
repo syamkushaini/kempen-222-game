@@ -755,3 +755,4 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 .maker-form .field-label { margin-top: 6px; }
 .maker-form select.text-input { min-height: 44px; }
 .challenge-code { display: block; padding: 8px 12px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line); overflow-wrap: anywhere; font-size: 13px; }
+.challenge-buttons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }

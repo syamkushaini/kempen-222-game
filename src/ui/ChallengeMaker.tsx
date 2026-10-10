@@ -8,6 +8,7 @@ import type { Difficulty } from '../sim/campaign/types';
 import { PARTY_IDS } from '../sim/types';
 import { randomSeed } from '../sim/rng';
 import { useStore } from '../state/store';
+import { BoardButton } from './ChallengeBoard';
 import { contestName, partyName, useT, type T } from './hooks';
 
 const LEVELS: Difficulty[] = ['easy', 'normal', 'hard'];
@@ -129,6 +130,7 @@ export function ChallengeMaker() {
         <div className="mission-buttons">
           <button className="btn primary" disabled={!can} onClick={() => startChallenge(spec)}>{t('challenge.make.play')} ▸</button>
           <CopyLink code={code} />
+          <BoardButton challenge={code} label={t('challenge.board.see')} />
         </div>
       </div>
     </details>
@@ -171,6 +173,7 @@ export function ChallengeInvite() {
         )}
         <div className="mission-buttons">
           {state === 'ok' && <button className="btn primary" autoFocus onClick={() => start(spec)}>{t('challenge.invite.play')} ▸</button>}
+          {state === 'ok' && <BoardButton challenge={encodeChallenge(spec)} label={t('challenge.board.see')} />}
           <button className="btn" onClick={() => set(null)}>{t('challenge.invite.later')}</button>
         </div>
       </div>

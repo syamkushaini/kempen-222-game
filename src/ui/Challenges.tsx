@@ -7,6 +7,7 @@ import { outlook, par } from '../sim/campaign/outlook';
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from '../state/store';
 import { useFormat, useT, useWorld, type T } from './hooks';
+import { BoardButton, PostChallenge } from './ChallengeBoard';
 import { ChallengeMaker, CopyLink } from './ChallengeMaker';
 
 const goalText = (t: T, goal: Goal) =>
@@ -43,7 +44,10 @@ export function ChallengeList() {
                 {(def.fog || def.noisy) && ` · ${t('challenges.blind')}`}
               </span>
             </div>
-            <button className="btn small" onClick={() => play(def)}>{t('challenges.play')} ▸</button>
+            <div className="challenge-buttons">
+              <button className="btn small" onClick={() => play(def)}>{t('challenges.play')} ▸</button>
+              <BoardButton challenge={`set:${def.id}`} />
+            </div>
           </li>
         ))}
       </ul>
@@ -101,15 +105,18 @@ export function GoalResult({ summary }: { summary: Pick<Summary, 'seats' | 'befo
   const def = challengeById(useStore((s) => s.game?.campaign.challenge?.goal));
   const code = useStore((s) => s.game?.campaign.challenge?.code);
   // A challenge somebody made: the result can be sent on, as the same election for the next person.
-  if (!def && code) return <p className="goal-result" role="status">{t('challenge.sendOn')} <CopyLink code={code} /></p>;
+  if (!def && code) return <><p className="goal-result" role="status">{t('challenge.sendOn')} <CopyLink code={code} /></p><PostChallenge summary={summary} /></>;
   if (!def) return <OutlookResult summary={summary} />;
   const { met, got, need } = goalResult(def.goal, summary);
   const title = t(`challenges.c.${def.id}` as StringKey);
   return (
-    <p className={`goal-result ${met ? 'met' : 'missed'}`} role="status">
-      {met ? t('challenges.met', { title })
-        : def.goal.kind === 'win' ? t('challenges.missedWin', { title })
-        : t('challenges.missed', { title, goal: goalText(t, def.goal), got: def.goal.kind === 'gain' ? `${got > 0 ? '+' : got < 0 ? '−' : ''}${Math.abs(got)}` : got, need })}
-    </p>
+    <>
+      <p className={`goal-result ${met ? 'met' : 'missed'}`} role="status">
+        {met ? t('challenges.met', { title })
+          : def.goal.kind === 'win' ? t('challenges.missedWin', { title })
+          : t('challenges.missed', { title, goal: goalText(t, def.goal), got: def.goal.kind === 'gain' ? `${got > 0 ? '+' : got < 0 ? '−' : ''}${Math.abs(got)}` : got, need })}
+      </p>
+      <PostChallenge summary={summary} />
+    </>
   );
 }

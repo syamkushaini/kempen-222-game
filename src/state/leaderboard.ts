@@ -91,10 +91,10 @@ export function submissionOf(entry: LegacyEntry, campaign: Pick<Campaign, 'scena
   };
 }
 
-type Fetch = typeof fetch;
-const headers = (cfg: Config) => ({ apikey: cfg.key, Authorization: `Bearer ${cfg.key}` });
+export type Fetch = typeof fetch;
+export const headers = (cfg: Config) => ({ apikey: cfg.key, Authorization: `Bearer ${cfg.key}` });
 
-async function call(fetchFn: Fetch, url: string, init: RequestInit): Promise<Response | null> {
+export async function call(fetchFn: Fetch, url: string, init: RequestInit): Promise<Response | null> {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), WAIT_MS);
   try { return await fetchFn(url, { ...init, signal: ctl.signal }); } catch { return null; } finally { clearTimeout(timer); }
