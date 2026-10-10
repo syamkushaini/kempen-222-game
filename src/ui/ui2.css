@@ -793,3 +793,11 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .action.wrapped { flex-direction: column; align-items: stretch; flex-shrink: 0; }
 .action.wrapped > * { flex: none; }
 .action.wrapped .button-row { justify-content: flex-start; flex-wrap: wrap; }
+
+/* the two buttons at the head of the page, the menu and the settings, are one size and one row: 40px with a mouse, 44px under a finger or on a narrow screen */
+:root { --head-btn: 40px; }
+@media (max-width: 980px), (pointer: coarse) { :root { --head-btn: 44px; } }
+.menu-button, .settings-button { box-sizing: border-box; height: var(--head-btn); min-height: var(--head-btn); align-self: center; }
+.settings-button { width: var(--head-btn); min-width: var(--head-btn); }
+.menu-button { gap: 6px; padding: 0 16px; border-radius: 9999px; justify-content: center; }
+@media (max-width: 980px) { .menu-button { width: var(--head-btn); min-width: var(--head-btn); padding: 0; } }
