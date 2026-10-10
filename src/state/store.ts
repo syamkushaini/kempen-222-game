@@ -56,6 +56,7 @@ import { callReferendum } from '../sim/campaign/courts';
 import { setPatronage } from '../sim/campaign/patronage';
 import { grantSafe, revokeSafe } from '../sim/campaign/safeseat';
 import { discipline, doActivity, padRolls, rebrand, setAside, takeForeign, trade, type Discipline, type ActivityId, type FavourId, type HoldingId } from '../sim/campaign/party';
+import { followAdvice } from '../sim/campaign/advice';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, recordPoints, type Profile } from './profile';
 import { finishedChallenge } from '../sim/campaign/challengePoints';
@@ -320,6 +321,8 @@ interface Store {
   hire(role: RoleId, index: number): void;
   dismiss(role: RoleId): void;
   vetStaff(role: RoleId, index: number): void;
+  /** The leader follows a hired person's suggestion (see advice.ts). */
+  followAdvice(role: RoleId): void;
   chooseCandidate(seat: string, option: number): void;
   vetHopeful(seat: string, option: number): void;
   courtEndorser(id: EndorserId): void;
@@ -632,6 +635,7 @@ export const useStore = create<Store>((set, get) => {
     hire: (role, index) => mutate((c) => { hire(c, role, index); }),
     dismiss: (role) => mutate((c) => { dismiss(c, role); }),
     vetStaff: (role, index) => mutate((c, _g, world) => { vet(world, c, role, index); }),
+    followAdvice: (role) => mutate((c, _g, world) => { followAdvice(world, c, role); }),
     chooseCandidate: (seat, option) => mutate((c, _g, world) => { choose(world, c, seat, option); }),
     vetHopeful: (seat, option) => mutate((c, _g, world) => { vetHopeful(world, c, seat, option); }),
     courtEndorser: (id) => mutate((c, _g, world) => ({ lastReport: courtEndorser(world, c, id) })),

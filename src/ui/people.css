@@ -58,3 +58,6 @@
 .conduct-list li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); }
 .conduct-list li.ok > span:first-child { color: var(--good); font-weight: 700; }
 .conduct-list li.no > span:first-child { color: var(--bad); font-weight: 700; }
+/* the hired people's suggestions in the team tab */
+.advice-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.staff-avatar { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--primary); color: var(--on-primary, #fff); font-weight: 700; letter-spacing: 0.5px; }

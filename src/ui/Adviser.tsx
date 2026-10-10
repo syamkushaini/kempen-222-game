@@ -6,6 +6,8 @@ import { lastOutcome, useSpot, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
 import { Jargon } from './Term';
 import { atHome } from '../sim/campaign/turn';
+import { STAFF_NAMES } from '../sim/campaign/staff';
+import { ROLE_IDS } from '../sim/campaign/types';
 import { STEPS, stepFor } from './tutorial';
 
 /** The steps at which the adviser has something of its own to say to a party on its home ground. */
@@ -75,6 +77,8 @@ function Warning() {
   const k = useStore((s) => s.game!.campaign.career);
   const me = useStore((s) => s.game!.campaign.parties[s.game!.campaign.player]);
   const setTab = useStore((s) => s.setTab);
+  // The campaign manager the player hired is the one who speaks, once there is one and they are being paid; before that it is Kak Ros.
+  const hired = useStore((s) => (s.game!.campaign.team.unpaid ? null : s.game!.campaign.team.staff[ROLE_IDS.indexOf('manager')]));
   const [away, setAway] = useState<string | null>(null);
   if (!k || !me || k.ending) return null;
   const figures = [
@@ -89,9 +93,9 @@ function Warning() {
   if (away === key) return null;
   return (
     <section className="adviser adviser-strip danger" aria-live="polite">
-      <Portrait adviser size={46} />
+      {hired ? <span className="staff-avatar" aria-hidden="true">{STAFF_NAMES[hired.name].split(' ').map((w) => w[0]).slice(0, 2).join('')}</span> : <Portrait adviser size={46} />}
       <div className="grow">
-        <p className="adviser-name">{t('adviser.name')} <span className="muted">· {t('adviser.role')}</span></p>
+        <p className="adviser-name">{hired ? STAFF_NAMES[hired.name] : t('adviser.name')} <span className="muted">· {hired ? t('role.manager') : t('adviser.role')}</span></p>
         <p className="adviser-text"><Jargon>{t(`adviser.danger.${worst.id}` as StringKey, { n: Math.round(worst.value) })}</Jargon></p>
         <div className="button-row tight">
           <button className="btn small primary" onClick={() => setTab(worst.tab)}>{t('adviser.danger.go')}</button>

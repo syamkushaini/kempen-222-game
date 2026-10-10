@@ -1,0 +1,51 @@
+// Text for the suggestions the leader's hired people make, in English and Bahasa Malaysia.
+
+export const ADVICE_EN = {
+  'advice.title': 'What your people suggest',
+  'advice.desc': 'Each person you have hired says what needs mending in their own field. Follow it and it costs a little and does a good deal, more from a better person. Each can be followed once a quarter.',
+  'advice.follow': 'Follow',
+  'advice.cost': 'costs {rm}',
+  'advice.free': 'costs nothing',
+  'advice.wait': 'Again in {n} weeks.',
+  'advice.none': 'Nothing in their field needs mending now.',
+  'advice.nobody': 'Nobody hired for this.',
+  'advice.unpaid': 'Not working: wages unpaid.',
+  'advice.funds': 'The party cannot afford it now.',
+  'advice.phase': 'Not while something waits on the desk, or in a campaign.',
+  'advice.says': '{name} says',
+  'advice.meeting': 'The branches are drifting apart. Call the divisions to a meeting and listen before the party splits.',
+  'advice.tour': 'The branches are thin. Send the leader out to the weak ones for a week.',
+  'advice.paper': 'Voters are losing the thread of what you stand for. A position paper that sets it out plainly will restore some of their belief.',
+  'advice.honest': 'People think the government is hiding things. A press conference that answers the hard questions would win some trust back.',
+  'advice.profile': 'Your name has slipped. A few weeks of steady, plain appearances will mend it.',
+  'advice.clean': 'The party is leaning on easy money, and it will cost you the name. Turn the donors down and say so.',
+  'advice.steady': 'The partners are restless. A word on the books and a promise kept would steady the government.',
+  'news.advice.followed': 'The leader took the advice of the {role}, and it helped.',
+  'adviser.manager.says': 'Your campaign manager, {name}, is worried.',
+} as const;
+
+export const ADVICE_MS: Record<keyof typeof ADVICE_EN, string> = {
+  'advice.title': 'Apa yang dicadangkan orang anda',
+  'advice.desc': 'Setiap orang yang anda ambil menyebut apa yang perlu dipulihkan dalam bidangnya sendiri. Ikutnya, dan ia memakan sedikit kos dan berkesan banyak, lebih lagi daripada orang yang lebih baik. Setiap satu boleh diikut sekali sesukuan tahun.',
+  'advice.follow': 'Ikut',
+  'advice.cost': 'kos {rm}',
+  'advice.free': 'tiada kos',
+  'advice.wait': 'Lagi {n} minggu.',
+  'advice.none': 'Tiada apa dalam bidang mereka yang perlu dipulihkan sekarang.',
+  'advice.nobody': 'Tiada sesiapa diambil untuk ini.',
+  'advice.unpaid': 'Tidak bekerja: gaji tak dibayar.',
+  'advice.funds': 'Parti tak mampu sekarang.',
+  'advice.phase': 'Tidak semasa ada sesuatu menunggu di meja, atau dalam kempen.',
+  'advice.says': '{name} berkata',
+  'advice.meeting': 'Cawangan mula berpecah. Panggil bahagian ke mesyuarat dan dengar sebelum parti berpecah.',
+  'advice.tour': 'Cawangan nipis. Hantar pemimpin ke yang lemah selama seminggu.',
+  'advice.paper': 'Pengundi kehilangan hala apa yang anda perjuangkan. Kertas pendirian yang menyatakannya dengan jelas akan memulihkan sedikit kepercayaan mereka.',
+  'advice.honest': 'Orang ramai fikir kerajaan menyembunyikan sesuatu. Sidang akhbar yang menjawab soalan sukar akan memenangi semula sedikit kepercayaan.',
+  'advice.profile': 'Nama anda merosot. Beberapa minggu penampilan yang tetap dan jelas akan memulihkannya.',
+  'advice.clean': 'Parti bersandar pada wang mudah, dan ia akan merugikan nama anda. Tolak penderma dan nyatakannya.',
+  'advice.steady': 'Rakan resah. Sepatah kata tentang akaun dan satu janji ditunaikan akan menstabilkan kerajaan.',
+  'news.advice.followed': 'Pemimpin menurut nasihat {role}, dan ia membantu.',
+  'adviser.manager.says': 'Pengurus kempen anda, {name}, bimbang.',
+};
+
+export type AdviceKey = keyof typeof ADVICE_EN;

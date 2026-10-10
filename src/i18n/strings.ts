@@ -11,6 +11,7 @@ import { MONEY_EN, MONEY_MS, type MoneyKey } from './money';
 import { THANKS_EN, THANKS_MS, type ThanksKey } from './thanks';
 import { MAPSHARE_EN, MAPSHARE_MS, type MapShareKey } from './mapshare';
 import { CONDUCT_EN, CONDUCT_MS, type ConductKey } from './conduct';
+import { ADVICE_EN, ADVICE_MS, type AdviceKey } from './advice';
 import { LOOK_EN, LOOK_MS, type LookKey } from './look';
 
 const en = {
@@ -2371,7 +2372,7 @@ const en = {
 type CoreKey = keyof typeof en;
 /** The keys defined in this file, so that text kept elsewhere can be checked not to reuse one. */
 export const CORE_KEYS: readonly string[] = Object.keys(en);
-export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey | ThanksKey | MapShareKey | ConductKey;
+export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey | ThanksKey | MapShareKey | ConductKey | AdviceKey;
 
 const ms: Record<CoreKey, string> = {
   'app.title': 'Kempen 222',
@@ -4731,8 +4732,8 @@ const ms: Record<CoreKey, string> = {
 export type Lang = 'en' | 'ms';
 // Event text is kept in its own file and looked up by keys built from event ids.
 export const STRINGS: Record<Lang, Record<string, string>> = {
-  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...CONDUCT_EN, ...flattenEvents(EVENTS_EN) },
-  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...CONDUCT_MS, ...flattenEvents(EVENTS_MS) },
+  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...CONDUCT_EN, ...ADVICE_EN, ...flattenEvents(EVENTS_EN) },
+  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...CONDUCT_MS, ...ADVICE_MS, ...flattenEvents(EVENTS_MS) },
 };
 
 /**
