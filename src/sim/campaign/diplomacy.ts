@@ -446,9 +446,44 @@ function askedSeats(world: World, c: Campaign, p: number, already: string[], now
   return out.sort((a, b) => a.margin - b.margin).slice(0, ASK.seats).map((x) => x.id);
 }
 
+/** The price the player's party can put on a pact offer: the seats it holds the stronger claim to, where the proposer would stand aside as well. */
+export function counterSeats(world: World, c: Campaign, scene: Scene): string[] {
+  if (scene.kind !== 'pactOffer' || scene.from === null) return [];
+  const me = c.player, from = scene.from;
+  const now = truth(world, c);
+  const have = new Set([...(scene.give ?? []), ...(scene.get ?? [])]);
+  return clashSeats(world, c, me, from)
+    .filter((i) => !have.has(world.seats[i].id) && shareOf(now, i, me) > shareOf(now, i, from) + 0.02)
+    .sort((x, y) => (shareOf(now, y, me) - shareOf(now, y, from)) - (shareOf(now, x, me) - shareOf(now, x, from)))
+    .slice(0, 3)
+    .map((i) => world.seats[i].id);
+}
+
+/**
+ * The player's party, asked to join a pact, answers with a price: the proposer is to stand aside in more seats, and the seats it
+ * asked of the player are dropped. If the proposer can live with that, the pact is signed on those terms; if not, the offer lapses
+ * and the proposer is a little colder.
+ */
+function counterOffer(world: World, c: Campaign, scene: Scene): void {
+  const me = c.player, from = scene.from!;
+  const extra = counterSeats(world, c, scene);
+  const give = (scene.give ?? []).filter((id) => !scene.ask?.includes(id));
+  const get = [...(scene.get ?? []), ...extra];
+  const verdict = extra.length ? assessPact(world, c, from, me, { give: get, get: give }) : null;
+  const vars = { party: ref.party(from), n: extra.length };
+  if (verdict?.reply === 'ok') {
+    signPact(world, c, me, from, { give, get });
+    shiftRelation(c, me, from, 2);
+    pushNews(c, { party: me, key: 'news.pact.counter.won', vars, tone: 'good' });
+  } else {
+    shiftRelation(c, me, from, -3);
+    pushNews(c, { party: me, key: 'news.pact.counter.lost', vars, tone: 'bad' });
+  }
+}
+
 /**
  * Answers a campaign scene. Pact offers: 0 accept, 1 decline, 2 talk it over
- * (the offer lapses and the player opens talks themselves). Poaching: 0 pay to
+ * (the offer lapses and the player opens talks themselves), 3 name a price (the proposer stands aside in more seats). Poaching: 0 pay to
  * keep them, 1 appeal to loyalty, 2 let them go.
  */
 export function resolveCampaignScene(world: World, c: Campaign, scene: Scene, choice: number): void {
@@ -459,6 +494,8 @@ export function resolveCampaignScene(world: World, c: Campaign, scene: Scene, ch
     if (choice === 0 && beforeNomination(c) && !inPact(c, me, scene.from)) {
       signPact(world, c, me, scene.from, prop);
       if (scene.ask?.length) shiftRelation(c, me, scene.from, ASK.accepted);
+    } else if (choice === 3 && beforeNomination(c) && !inPact(c, me, scene.from)) {
+      counterOffer(world, c, scene);
     } else if (choice === 1) {
       shiftRelation(c, me, scene.from, -3 + (scene.ask?.length ? ASK.refused : 0));
       // A partner turned down on its price takes it to heart.

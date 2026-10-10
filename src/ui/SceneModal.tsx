@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { majorityLine } from '../sim/election';
 import { scaled } from '../sim/campaign/actions';
 import { BY_EFFORT, holderOf, ROUNDS, STATE_EFFORT } from '../sim/campaign/contests';
-import { COST, pactPreview } from '../sim/campaign/diplomacy';
+import { COST, counterSeats, pactPreview } from '../sim/campaign/diplomacy';
 import { AGENDA, type AgendaChoice } from '../sim/campaign/agenda';
 import { CHIEF_NAMES, FACTION_IDS, POLL_ANSWERS, backing, deputyOf, pollOdds, type FactionId } from '../sim/campaign/factions';
 import type { StateId } from '../sim/types';
@@ -56,6 +56,8 @@ function SceneCard({ scene }: { scene: Scene }) {
     [scene, world, campaign, me, from],
   );
 
+  const counter = useMemo(() => counterSeats(world, campaign, scene), [world, campaign, scene]);
+
   // What a choice will plainly do, so the player is choosing and not guessing. What is left to chance is flagged as such.
   // The figures are the ones that will be applied: the level of difficulty makes a loss larger or smaller, and a gain too.
   const describe = (e: Effect): string | null => describeEffect(t, f, world, campaign, e);
@@ -84,6 +86,7 @@ function SceneCard({ scene }: { scene: Scene }) {
     );
     options = [
       { label: t('scene.pact.accept'), choice: 0, primary: true },
+      { label: t('scene.pact.counter', { n: counter.length }), choice: 3, disabled: counter.length === 0, hint: counter.length === 0 ? t('scene.pact.counter.none') : t('scene.pact.counter.hint') },
       { label: t('scene.pact.talk'), choice: 2, after: () => setTab('deals') },
       { label: t('scene.pact.decline'), choice: 1 },
     ];
