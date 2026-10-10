@@ -1,13 +1,13 @@
-// Text for the thank-you list in the Buy me a coffee dialog, in English and Bahasa Malaysia.
+// Text for the list of donors in the Buy me a coffee dialog, in English and Bahasa Malaysia. No amounts are shown.
 
 export const THANKS_EN = {
-  'support.thanks.title': 'Thank you to the people who helped build this game',
-  'support.thanks.body': 'Their work, time and ideas are in every seat, every mission and every chart. Thank you for your contribution.',
+  'support.thanks.title': 'Thank you to our donors',
+  'support.thanks.body': 'Your contribution is greatly appreciated.',
 } as const;
 
 export const THANKS_MS: Record<keyof typeof THANKS_EN, string> = {
-  'support.thanks.title': 'Terima kasih kepada semua yang membantu membina permainan ini',
-  'support.thanks.body': 'Kerja, masa dan idea anda ada dalam setiap kerusi, setiap misi dan setiap carta. Terima kasih atas sumbangan anda.',
+  'support.thanks.title': 'Terima kasih kepada penderma kami',
+  'support.thanks.body': 'Sumbangan anda amat dihargai.',
 };
 
 export type ThanksKey = keyof typeof THANKS_EN;

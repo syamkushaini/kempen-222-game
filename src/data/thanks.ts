@@ -1,4 +1,4 @@
-// The people who helped build the game, in the order they were given. Shown in the Buy me a coffee dialog.
+// The donors, in the order they were given. Shown in the Buy me a coffee dialog. Amounts are not kept or shown.
 // Names are printed as they were given, with no titles added.
 export const THANKS = [
   'Muhammad Syafiq bin Sabtu',
