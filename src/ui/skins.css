@@ -1,0 +1,65 @@
+/*
+ * Skins: the surfaces the screens are drawn on, earned by achievements (see cosmetics.ts). Each sits on top of the light or the dark
+ * theme (the skin sets which) and changes only the surfaces, the lines and the ink: the accent, the party colours and the map's
+ * colours are not touched, so that a skin never changes what a colour means.
+ */
+
+/* Kertas: warm paper, for the light theme. */
+:root[data-theme='light'][data-skin='paper'] {
+  --bg: #f1e7cf;
+  --panel: #fbf5e4;
+  --panel-2: #f4ead1;
+  --panel-3: #eadfc2;
+  --panel-4: #ddd0ae;
+  --line: rgb(96 72 32 / 18%);
+  --line-2: rgb(96 72 32 / 28%);
+  --line-3: rgb(96 72 32 / 40%);
+  --ink: #2a2214;
+  --ink-muted: #4b3f28;
+  --muted: #6e6040;
+  --faint: #93856a;
+  --sea: #eadfc2;
+  --map-stroke: #fbf5e4;
+  --state-stroke: #2a2214;
+  --undeclared: #ddd0ae;
+  --fill: rgb(110 84 36 / 12%);
+  --fill-2: rgb(110 84 36 / 20%);
+  --glass: rgb(251 245 228 / 72%);
+  --glass-strong: rgb(251 245 228 / 84%);
+  --glass-edge: rgb(255 252 240 / 80%);
+  --glass-shine: inset 0 1px 0 rgb(255 252 240 / 90%);
+  --glass-shadow: 0 10px 40px rgb(96 72 32 / 18%);
+}
+:root[data-theme='light'][data-skin='paper'] .tab.active,
+:root[data-theme='light'][data-skin='paper'] .segmented button.active { background: #fffaf0; }
+
+/* Tengah Malam: black for the dark theme, which on an OLED screen is a light switched off. */
+:root[data-theme='dark'][data-skin='midnight'] {
+  --bg: #000000;
+  --panel: #060607;
+  --panel-2: #0b0b0d;
+  --panel-3: #111114;
+  --panel-4: #17171a;
+  --line: rgb(255 255 255 / 9%);
+  --line-2: rgb(255 255 255 / 16%);
+  --line-3: rgb(255 255 255 / 24%);
+  --sea: #000000;
+  --map-stroke: #000000;
+  --undeclared: #121215;
+  --fill: rgb(255 255 255 / 8%);
+  --fill-2: rgb(255 255 255 / 14%);
+  --glass: rgb(4 4 6 / 72%);
+  --glass-strong: rgb(8 8 10 / 84%);
+  --glass-edge: rgb(255 255 255 / 12%);
+  --glass-shadow: 0 10px 40px rgb(0 0 0 / 70%);
+}
+
+/* The accent swatches in the settings, and the list of what earns the rest. */
+.accent-swatches { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; max-width: 260px; }
+.accent-swatch { width: 32px; height: 32px; min-height: 32px; border-radius: 50%; border: 2px solid var(--line-3); padding: 0; display: grid; place-items: center; font-size: 12px; cursor: pointer; background: var(--primary); }
+.accent-swatch.party { background: conic-gradient(#d4453b, #2d9c63, #3d5fc4, #8a63d2, #d4453b); }
+.accent-swatch.on { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--ink); }
+.accent-swatch:disabled { opacity: 0.45; cursor: not-allowed; }
+@media (pointer: coarse) { .accent-swatch { width: 44px; height: 44px; min-height: 44px; } }
+.cosmetic-list { margin: 4px 0 8px; padding-left: 18px; display: grid; gap: 2px; }
+.badge-card .reward { color: var(--link); }

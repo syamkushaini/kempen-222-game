@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import type { StringKey } from '../i18n/strings';
 import { useStore, type Theme } from '../state/store';
+import { ACCENTS, SKINS, unlocked, wearing } from './cosmetics';
 import { useT } from './hooks';
 import { Icon } from './Icon';
 import { canDraw3D } from './map3d';
@@ -34,6 +36,43 @@ function Switch({ label, on, onFlip }: { label: string; on: boolean; onFlip(): v
   return <button className={on ? 'switch on' : 'switch'} role="switch" aria-checked={on} aria-label={label} onClick={onFlip}><i /></button>;
 }
 
+/** The skins and accent colours: those earned can be worn, the rest say what earns them. */
+function Look() {
+  const t = useT();
+  const s = useStore((x) => x.settings);
+  const set = useStore((x) => x.setSettings);
+  const profile = useStore((x) => x.profile);
+  const locked = [...SKINS, ...ACCENTS].filter((c) => !unlocked(profile, c));
+  const nameOf = (c: { id: string }) => t((SKINS.some((k) => k.id === c.id) && c.id !== 'party' ? `skin.${c.id}` : `accent.${c.id}`) as StringKey);
+  return (
+    <>
+      <Row label={t('look.skin')}>
+        <Choice label={t('look.skin')} value={s.skin} options={SKINS.map((k) => ({ id: k.id, name: `${t(`skin.${k.id}` as StringKey)}${unlocked(profile, k) ? '' : ' 🔒'}` }))} disabled={(id) => !unlocked(profile, SKINS.find((k) => k.id === id)!)} onPick={(skin) => set({ skin })} />
+      </Row>
+      <Row label={t('look.accent')}>
+        <div className="accent-swatches" role="group" aria-label={t('look.accent')}>
+          {ACCENTS.map((a) => {
+            const open = unlocked(profile, a);
+            const name = t(`accent.${a.id}` as StringKey);
+            return (
+              <button
+                key={a.id} className={`accent-swatch${s.accent === a.id ? ' on' : ''}${a.id === 'party' ? ' party' : ''}`} style={a.color ? { background: a.color } : undefined}
+                aria-pressed={s.accent === a.id} aria-label={open ? name : `${name} 🔒`} title={name} disabled={!open} onClick={() => set({ accent: a.id })}
+              >{!open && <span aria-hidden="true">🔒</span>}</button>
+            );
+          })}
+        </div>
+      </Row>
+      {locked.length > 0 && (
+        <ul className="cosmetic-list muted small">
+          {locked.map((c) => <li key={c.id}>{t('look.locked', { ach: t(`ach.${c.unlock!}` as StringKey), name: nameOf(c) })}</li>)}
+        </ul>
+      )}
+      <p className="muted small">{t('look.hint')}</p>
+    </>
+  );
+}
+
 /** Every setting in one place, each with its name beside it: language, look, the map, sound and hints. */
 function SettingsDialog({ onClose }: { onClose(): void }) {
   const t = useT();
@@ -45,6 +84,9 @@ function SettingsDialog({ onClose }: { onClose(): void }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
   const themes: Theme[] = ['system', 'light', 'dark'];
+  // A skin that is worn sets the colour scheme itself.
+  const profile = useStore((x) => x.profile);
+  const forced = wearing(profile, s.skin, s.accent).skin.scheme !== null;
   return (
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dialog panel settings-dialog" role="dialog" aria-modal="true" aria-label={t('settings.title')}>
@@ -55,9 +97,10 @@ function SettingsDialog({ onClose }: { onClose(): void }) {
         <Row label={t('lang.label')}>
           <Choice label={t('lang.label')} value={s.lang} options={[{ id: 'en', name: 'English' }, { id: 'ms', name: 'Bahasa Malaysia' }]} onPick={(lang) => set({ lang })} />
         </Row>
-        <Row label={t('theme.label')}>
-          <Choice label={t('theme.label')} value={s.theme} options={themes.map((id) => ({ id, name: t(`theme.${id}`) }))} onPick={(theme) => set({ theme })} />
+        <Row label={t('theme.label')} note={forced ? t('look.themeSet') : undefined}>
+          <Choice label={t('theme.label')} value={s.theme} options={themes.map((id) => ({ id, name: t(`theme.${id}`) }))} onPick={(theme) => set({ theme })} disabled={() => forced} />
         </Row>
+        <Look />
         <Row label={t('display.palette')}>
           <Choice label={t('display.palette')} value={s.palette} options={(['standard', 'accessible'] as const).map((id) => ({ id, name: t(`display.palette.${id}`) }))} onPick={(palette) => set({ palette })} />
         </Row>

@@ -59,6 +59,7 @@ import { discipline, doActivity, padRolls, rebrand, setAside, takeForeign, trade
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, recordPoints, type Profile } from './profile';
 import { finishedChallenge } from '../sim/campaign/challengePoints';
+import { isAccent, isSkin, type AccentId, type SkinId } from '../ui/cosmetics';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
 
 /**
@@ -80,6 +81,9 @@ export interface Settings {
   music: boolean;
   /** Party colours that colour-blind players can tell apart. */
   palette: Palette;
+  /** The surface the screens are drawn on, and the colour of the buttons: earned by achievements (see cosmetics.ts). */
+  skin: SkinId;
+  accent: AccentId;
   textSize: TextSize;
   /** How tightly the screens are packed. */
   density: 'comfortable' | 'compact';
@@ -103,7 +107,7 @@ function prefers3d(): boolean {
 }
 
 function loadSettings(): Settings {
-  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d(), layers: DEFAULT_LAYERS };
+  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', skin: 'standard', accent: 'party', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d(), layers: DEFAULT_LAYERS };
   try {
     const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
     if (!raw) return fallback;
@@ -113,6 +117,8 @@ function loadSettings(): Settings {
       sound: raw.sound !== false,
       music: raw.music !== false,
       palette: raw.palette === 'accessible' ? 'accessible' : 'standard',
+      skin: isSkin(raw.skin) ? raw.skin : 'standard',
+      accent: isAccent(raw.accent) ? raw.accent : 'party',
       textSize: raw.textSize === 'large' ? 'large' : 'normal',
       density: raw.density === 'compact' ? 'compact' : 'comfortable',
       hints: raw.hints !== false,

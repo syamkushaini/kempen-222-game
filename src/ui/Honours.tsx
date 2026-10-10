@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PARTIES } from '../data/parties';
 import type { StringKey } from '../i18n/strings';
+import { rewardOf } from './cosmetics';
 import { ACHIEVEMENT_GROUPS, ACHIEVEMENT_IDS, type AchievementGroup, type AchievementId } from '../sim/campaign/achievements';
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from '../state/store';
@@ -75,6 +76,7 @@ export function HonoursDialog({ onClose }: { onClose(): void }) {
                           <div className="grow">
                             <span className="action-title">{t(`ach.${id}` as StringKey)}</span>
                             <span className="action-meta">{t(`ach.${id}.desc` as StringKey)}</span>
+                            {rewardOf(id).length > 0 && <span className="action-meta reward">🎨 {t('look.reward', { name: rewardOf(id).map((r) => t(`${r.kind}.${r.id}` as StringKey)).join(', ') })}</span>}
                             <span className="action-meta num">{at !== undefined ? t('honours.earned', { date: f.dateTime(at) }) : t('honours.notYet')}</span>
                           </div>
                         </li>

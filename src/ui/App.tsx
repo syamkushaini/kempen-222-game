@@ -3,6 +3,7 @@ import type { StringKey } from '../i18n/strings';
 import { useStore, type MapView as MapViewId, type SidebarTab } from '../state/store';
 import { hasChiefs } from '../sim/campaign/ai';
 import { codeInAddress, decodeChallenge } from '../sim/campaign/challengeCode';
+import { wearing } from './cosmetics';
 import { ActionsTab } from './ActionsTab';
 import { Adviser } from './Adviser';
 import { ChiefsTab } from './ChiefsTab';
@@ -263,7 +264,7 @@ function CampaignScreen() {
 
 export function App() {
   const t = useT();
-  const { theme, lang, palette, textSize, density } = useStore((s) => s.settings);
+  const { theme, lang, palette, textSize, density, skin, accent } = useStore((s) => s.settings);
   const player = useStore((s) => s.game?.campaign.player);
   const phase = useStore((s) => s.game?.campaign.phase);
   const talks = useStore((s) => !!s.game?.campaign.formation);
@@ -289,10 +290,16 @@ export function App() {
     return () => window.removeEventListener('hashchange', read);
   }, [setPendingChallenge]);
 
+  // What has been earned to wear: a skin sets the colour scheme itself, and an accent replaces the party's colour on the buttons.
+  const achievements = useStore((s) => s.profile.achievements);
+  const worn = wearing({ achievements }, skin, accent);
+  const scheme = worn.skin.scheme ?? (theme === 'system' ? null : theme);
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'system') delete root.dataset.theme;
-    else root.dataset.theme = theme;
+    if (scheme === null) delete root.dataset.theme;
+    else root.dataset.theme = scheme;
+    if (worn.skin.id === 'standard') delete root.dataset.skin;
+    else root.dataset.skin = worn.skin.id;
     root.lang = lang;
     if (textSize === 'large') root.dataset.text = 'large';
     else delete root.dataset.text;
@@ -301,21 +308,23 @@ export function App() {
     // Text follows the size the browser has been told to use: a root size of 20 px, not 16, scales everything by a quarter.
     const px = parseFloat(getComputedStyle(root).fontSize) || 16;
     root.style.setProperty('--ui-zoom', String(Math.round((px / 16) * 100) / 100));
-  }, [theme, lang, textSize, density, palette]);
+  }, [scheme, worn.skin.id, lang, textSize, density, palette]);
 
   // The player's party colour tints the buttons, the active tab, the focus ring and the mark; the title screen keeps the lavender.
+  // An accent that has been earned and chosen is worn in its place, on the title screen too; the party's colour stays where it is data.
+  const accentColor = worn.accent.color;
   useEffect(() => {
     const root = document.documentElement;
     const names = ['--primary', '--primary-hover', '--primary-focus', '--ring', '--party'];
-    if (player === undefined) { for (const n of names) root.style.removeProperty(n); return; }
-    const color = partyColor(player);
-    const [base] = ground(color);
+    if (player === undefined && !accentColor) { for (const n of names) root.style.removeProperty(n); return; }
+    const party = player === undefined ? null : partyColor(player);
+    const [base] = ground(accentColor ?? party!);
     root.style.setProperty('--primary', base);
     root.style.setProperty('--primary-hover', mix(base, '#ffffff', 0.35));
     root.style.setProperty('--primary-focus', mix(base, '#000000', 0.15));
     root.style.setProperty('--ring', `color-mix(in srgb, ${mix(base, '#ffffff', 0.3)} 55%, transparent)`);
-    root.style.setProperty('--party', color);
-  }, [player, palette]);
+    if (party) root.style.setProperty('--party', party); else root.style.removeProperty('--party');
+  }, [player, palette, accentColor]);
 
   useEffect(() => installFeedback(), []);
 
