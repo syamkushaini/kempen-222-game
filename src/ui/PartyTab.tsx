@@ -296,10 +296,10 @@ export function PartyTab() {
       )}
 
       <h3>{t('party.pad')}</h3>
-      <p className="muted small action-desc">{t('party.pad.desc', { pct: Math.round(PADDING.share * 100) })}</p>
       <ul>
-        <li className="action">
+        <li className="action wrapped">
           <div className="grow">
+            <span className="action-meta">{t('party.pad.desc', { pct: Math.round(PADDING.share * 100) })}</span>
             {paddedOf(k) > 0 && <span className="action-meta">{t('party.pad.risk', { n: Math.round(paddedOf(k)).toLocaleString(), pct: (padChance(world, campaign) * 100).toFixed(1) })}</span>}
           </div>
           <div className="button-row tight">
@@ -309,10 +309,10 @@ export function PartyTab() {
       </ul>
 
       <h3>{t('party.foreign')}</h3>
-      <p className="muted small action-desc">{t('party.foreign.desc', { rm: f.rm(scaled(world, FOREIGN.sum)) })}</p>
       <ul>
-        <li className="action">
+        <li className="action wrapped">
           <div className="grow">
+            <span className="action-meta">{t('party.foreign.desc', { rm: f.rm(scaled(world, FOREIGN.sum)) })}</span>
             <span className="action-meta">{t('party.foreign.risk', { pct: (exposureChance(k) * 100).toFixed(1), n: k.foreign ?? 0 })}</span>
             {(k.trail ?? 0) > 0 && <span className="action-meta">{t('party.trail', { pct: (inquiryChance(k) * 100).toFixed(1) })}</span>}
           </div>

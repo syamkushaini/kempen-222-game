@@ -788,3 +788,8 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .icon-btn { min-width: 44px; }
   select, .state-select, .seat-search input, .text-input, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) { min-height: 44px; }
 }
+
+/* an action whose text is long and whose buttons are several: the text takes the full width and the buttons sit under it */
+.action.wrapped { flex-direction: column; align-items: stretch; flex-shrink: 0; }
+.action.wrapped > * { flex: none; }
+.action.wrapped .button-row { justify-content: flex-start; flex-wrap: wrap; }
