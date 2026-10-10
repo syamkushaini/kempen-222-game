@@ -102,7 +102,7 @@ function Running({ m, campaign, world, effects }: { m: Mission; campaign: Campai
   return (
     <li className={m.kind === 'final' ? 'action mission final' : 'action mission'}>
       <div className="grow">
-        <span className="action-title">{t(`mission.kind.${m.kind}` as StringKey)} <span className="muted small">· {left}</span></span>
+        <span className="action-title">{t(`mission.kind.${m.kind}` as StringKey)} <span className="muted small">· {left}{m.extended ? ` · ${t('mission.extended')}` : ''}</span></span>
         <span className="action-meta">{missionGoal(t, f, m, '')}</span>
         <div className="gauge">
           <div className="bar gauge-bar mission-bar" role="img" aria-label={figure}><span style={{ width: `${pct}%`, background: colour(pct) }} /></div>

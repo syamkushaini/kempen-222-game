@@ -26,6 +26,8 @@ export const SIDE_WEEKS = [26, 39, 52] as const;
 export const SIDE_OFFER_WAIT = 26;
 /** How long an offer of a main mission waits to be taken: after this the offer lapses, and the leader is told when it is close. */
 export const MAIN_OFFER_WAIT = 26;
+/** A side mission that runs out of time without being met is given this share of its first length again, once. */
+export const EXTENSION = 0.5;
 /** An offer with this many weeks or fewer left is flagged as running out. */
 export const OFFER_WARN = 4;
 /** The chance each fourth week that a side mission is offered, while fewer than this many are running or on offer. */
@@ -349,7 +351,14 @@ export function missionsWeek(world: World, c: Campaign, rng: Rng): void {
       a.weeks = (a.weeks ?? 0) - 1;
       const { have, need } = progressOf(world, c, a);
       if (have >= need) settle(world, c, a, true);
-      else if ((a.weeks ?? 0) <= 0) settle(world, c, a, false);
+      else if ((a.weeks ?? 0) <= 0) {
+        // The decisions that would help may not have come up in the time: a mission out of time is given a second wind, once, before it is lost.
+        if (!a.extended) {
+          a.extended = true;
+          a.weeks = Math.round(SIDE_WEEKS[a.tier - 1] * EXTENSION);
+          pushNews(c, { party: c.player, key: 'news.mission.extended', vars: { mission: ref.mission(a.kind), n: a.weeks }, tone: 'neutral' });
+        } else settle(world, c, a, false);
+      }
     }
   }
   offerSide(world, c, rng);

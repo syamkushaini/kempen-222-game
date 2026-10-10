@@ -8,7 +8,7 @@ import { holderOf, seatsHeldBy } from './contests';
 import { endDay } from './formation';
 import {
   abandonMission, acceptMission, declineMission, dearToLose, ELECTIONS_FOR, isMain, missionsElection, missionsOf, missionsWeek, offerMain,
-  finalOpen, FINAL_ELECTIONS, MAIN_OFFER_WAIT, OFFER_WARN, penaltyOf, progressOf, rewardOf, seenMissions, SIDE_OFFER_WAIT,
+  finalOpen, FINAL_ELECTIONS, EXTENSION, MAIN_OFFER_WAIT, OFFER_WARN, SIDE_WEEKS, penaltyOf, progressOf, rewardOf, seenMissions, SIDE_OFFER_WAIT,
 } from './missions';
 import { earned } from './achievements';
 import { translate } from '../../i18n/strings';
@@ -168,6 +168,14 @@ describe('side missions', () => {
     const rng = new Rng(1);
     missionsWeek(base, c, rng);
     expect(m.active).toHaveLength(1);
+    // Out of time, it is given a second wind once, and the leader is told.
+    missionsWeek(base, c, rng);
+    expect(m.active).toHaveLength(1);
+    expect(m.active[0].extended).toBe(true);
+    expect(m.active[0].weeks).toBe(Math.round(SIDE_WEEKS[mine.tier - 1] * EXTENSION));
+    expect(c.news.some((n) => n.key === 'news.mission.extended')).toBe(true);
+    // Then it is lost when that runs out too.
+    m.active[0].weeks = 1;
     missionsWeek(base, c, rng);
     expect(m.active).toEqual([]);
     expect(m.done.at(-1)).toMatchObject({ kind: mine.kind, won: false });

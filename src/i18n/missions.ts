@@ -94,6 +94,8 @@ export const MISSIONS_EN = {
 
   'news.mission.offers': '{n} missions are on offer for this parliament.',
   'news.mission.side': 'A new errand is on offer: {mission}.',
+  'news.mission.extended': 'The time for a mission ran out before it was met, and has been given {n} more weeks, once: {mission}.',
+  'mission.extended': 'extended',
   'news.mission.closing': 'The offer of a mission, {mission}, closes in {n} weeks. Take it or leave it.',
   'news.mission.lapsed': 'The offer lapsed without an answer: {mission}.',
   'news.mission.won': 'Mission accomplished: {mission}.',
@@ -194,6 +196,8 @@ export const MISSIONS_MS: Record<keyof typeof MISSIONS_EN, string> = {
 
   'news.mission.offers': '{n} misi ditawarkan untuk parlimen ini.',
   'news.mission.side': 'Satu tugas baharu ditawarkan: {mission}.',
+  'news.mission.extended': 'Masa bagi satu misi habis sebelum ia tercapai, dan diberi {n} minggu lagi, sekali sahaja: {mission}.',
+  'mission.extended': 'dilanjutkan',
   'news.mission.closing': 'Tawaran misi, {mission}, ditutup dalam {n} minggu. Ambil atau lepaskan.',
   'news.mission.lapsed': 'Tawaran luput tanpa jawapan: {mission}.',
   'news.mission.won': 'Misi berjaya: {mission}.',

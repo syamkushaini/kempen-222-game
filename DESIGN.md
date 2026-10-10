@@ -1295,3 +1295,5 @@ The designer said that decisions about the country and the government should use
 - **Not changed:** a bill's cost and concessions' costs are still in the abstract "fiscal" units (the budget's looseness); the costs of the by-election and state-poll efforts are the party's own campaign money.
 - Saved games load unchanged. A game saved before this has its old treasury in the old scale, which the new allocation fills within a week.
 
+**A second wind for a side mission (10 Oct 2026).** The designer said the time on a mission is sometimes not enough, because the decisions that bear on it do not come up for weeks. A side mission that runs out of weeks without being met is now **extended once** by half its first length (13, 20 or 26 weeks by tier, `EXTENSION`), with a line in the news (`news.mission.extended`) and "extended" on the Missions tab; if it runs out again it is lost as before. Main missions run by elections and are not touched. Saved missions load unchanged (`extended` is optional).
+
