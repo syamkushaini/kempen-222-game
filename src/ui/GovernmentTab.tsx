@@ -5,7 +5,7 @@ import {
   agenda, canMotion, canPull, confidenceCount, deficit, economicMood, MAX_BILLS, MINISTER_NAMES, needsBill, prepWeeks, whipCount,
 } from '../sim/campaign/govern';
 import { scaled } from '../sim/campaign/actions';
-import { publicFinance } from '../sim/campaign/gdp';
+import { MONTH, commitmentWeekly, lineWeekly, measureWeekly, takingsWeekly } from '../sim/campaign/treasury';
 import { EconomyBook } from './EconomyBook';
 import { TreasuryCard } from './TreasuryCard';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
@@ -87,7 +87,6 @@ export function GovernmentTab() {
   const toBudget = weekOfYear <= 40 ? 40 - weekOfYear : 92 - weekOfYear;
   const available = pm ? agenda(campaign) : [];
   const r = k.record;
-  const finance = publicFinance(world, k);
 
   return (
     <section className="orders house">
@@ -120,7 +119,7 @@ export function GovernmentTab() {
                 <div className="grow">
                   <span className="action-title">{t(`line.${id}`)}</span>
                   <span className="action-meta">{t(`line.${id}.desc`)}</span>
-                  <span className="action-meta num">{t('house.line.rm', { rm: f.rm(finance.lines[id]) })}</span>
+                  <span className="action-meta num">{t('cost.line', { cut: f.rm(lineWeekly(world, id, -1) * MONTH), hold: f.rm(lineWeekly(world, id, 0) * MONTH), boost: f.rm(lineWeekly(world, id, 1) * MONTH) })}</span>
                 </div>
                 <DialSwitch label={t(`line.${id}`)} value={k.budget.lines[id]} onChange={(value) => setBudget({ line: id, value })} />
               </li>
@@ -134,7 +133,7 @@ export function GovernmentTab() {
                     const on = k.budget.measures?.includes(m) ?? false;
                     return (
                       <button key={m} className={on ? 'chip active' : 'chip'} aria-pressed={on} disabled={!on && (k.budget.measures?.length ?? 0) >= MAX_MEASURES} title={t(`measure.${m}.desc`)} onClick={() => setBudget({ measure: m, on: !on })}>
-                        {t(`measure.${m}`)}
+                        {t(`measure.${m}`)} <span className="muted small">+{f.rm(measureWeekly(world, m) * MONTH)}{t('cost.perMonth')}</span>
                       </button>
                     );
                   })}
@@ -143,8 +142,16 @@ export function GovernmentTab() {
             </li>
             <li className="action">
               <div className="grow">
+                <span className="action-title">{t('measures.commit')}</span>
+                <span className="action-meta">{t('measures.commit.desc')}</span>
+                <span className="action-meta num">{t('cost.commit.now', { rm: f.rm(commitmentWeekly(world, Math.max(0, k.fiscal)) * MONTH) })}</span>
+              </div>
+            </li>
+            <li className="action">
+              <div className="grow">
                 <span className="action-title">{t('line.tax')}</span>
                 <span className="action-meta">{t('line.tax.desc')}</span>
+                <span className="action-meta num">{t('cost.tax', { cut: f.rm(takingsWeekly(world, campaign, -1) * MONTH), hold: f.rm(takingsWeekly(world, campaign, 0) * MONTH), raise: f.rm(takingsWeekly(world, campaign, 1) * MONTH) })}</span>
               </div>
               <DialSwitch tax label={t('line.tax')} value={k.budget.tax} onChange={(value) => setBudget({ tax: true, value })} />
             </li>

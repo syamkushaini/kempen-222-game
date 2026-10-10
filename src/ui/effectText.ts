@@ -1,6 +1,6 @@
 import { scaled } from '../sim/campaign/actions';
 import { publicAmount, realistic, type Effect } from '../sim/campaign/events';
-import { hasPublicMoney } from '../sim/campaign/treasury';
+import { MONTH, commitmentWeekly, hasPublicMoney } from '../sim/campaign/treasury';
 import type { Campaign } from '../sim/campaign/types';
 import type { World } from '../sim/election';
 import type { StringKey } from '../i18n/strings';
@@ -25,7 +25,7 @@ export function describeEffect(t: T, f: Format, world: World, campaign: Campaign
     case 'cred': return sign(real(e.n), t('hint.cred'));
     case 'stability': return sign(real(e.n), t('hint.stability'));
     case 'trust': return sign(real(e.n), t('hint.trust'));
-    case 'fiscal': return arrow(e.n, t('hint.fiscal'));
+    case 'fiscal': return `${arrow(e.n, t('hint.fiscal'))} (${e.n > 0 ? '+' : '−'}${f.rm(Math.abs(commitmentWeekly(world, e.n)) * MONTH)}${t('cost.perMonth')})`;
     case 'economy': {
       const parts = [e.growth ? sign(Math.round(e.growth * 10) / 10, t('house.growth')) : '', e.inflation ? sign(Math.round(e.inflation * 10) / 10, t('house.inflation')) : ''].filter(Boolean);
       return parts.length ? parts.join(' · ') : null;

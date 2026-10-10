@@ -84,6 +84,15 @@ const COMMITMENT_UNIT = 0.06;
 /** Where the takings come from: taxes, and the sectors by what each makes. */
 const TAX_SHARE = 0.4;
 
+/** Weeks to a month: the books are shown by the month. */
+export const MONTH = 52 / 12;
+/** What a line of the budget costs a week at a setting of its dial (-1 cut, 0 hold, 1 boost). */
+export const lineWeekly = (world: World, id: LineId, dial: number): number => govMoney(world, ALLOCATION.pm) * LINES_SPEND * LINE_WEIGHT[id] * (1 + LINE_STEP * dial);
+/** What one particular measure costs a week. */
+export const measureWeekly = (world: World, m: keyof typeof MEASURES): number => govMoney(world, ALLOCATION.pm) * MEASURE_UNIT * MEASURES[m].cost;
+/** What a number of units of standing commitment cost a week: a policy, a programme or a deal adds some. */
+export const commitmentWeekly = (world: World, units: number): number => govMoney(world, ALLOCATION.pm) * COMMITMENT_UNIT * units;
+
 export interface BookFlow { id: 'tax' | 'states' | SectorId | LineId | 'measures' | 'commitments' | 'interest'; amount: number }
 export interface Books {
   income: BookFlow[];
@@ -114,6 +123,13 @@ export function govBooks(world: World, c: Campaign, budget?: Budget): Books | nu
   ];
   const sum = (xs: BookFlow[]) => xs.reduce((a, x) => a + x.amount, 0);
   return { income, spend, net: sum(income) - sum(spend) };
+}
+
+/** What the economy takes in each week with taxes at a setting of their dial (-1 cut, 0 hold, 1 raise); the head of government's books, else zero. */
+export function takingsWeekly(world: World, c: Campaign, tax: -1 | 0 | 1): number {
+  const k = c.career;
+  const books = k ? govBooks(world, c, { ...k.tabled, tax }) : null;
+  return books ? books.income.filter((x) => x.id !== 'states').reduce((a, x) => a + x.amount, 0) : 0;
 }
 
 /**

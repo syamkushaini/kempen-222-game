@@ -13,6 +13,7 @@ import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { Gauge } from './Gauge';
 import { ConfirmButton } from './SavesTab';
+import { MONTH, commitmentWeekly } from '../sim/campaign/treasury';
 import { partyColor, partyShort, useFormat, useT, useWorld } from './hooks';
 import { Brief } from './Brief';
 
@@ -139,7 +140,7 @@ export function PolicyTab() {
                 <input type="checkbox" checked={on} disabled={k.launched || enacted || (!on && mine.length >= MAX_PLEDGES)} onChange={() => togglePledge(id)} />
                 <span className="grow">
                   <span className="action-title">{t(`pledge.${id}`)}{def.law && <span className="badge plain" title={t('manifesto.lawNote')}>{t('manifesto.law')}</span>}{def.amend && <span className="badge plain" title={t('manifesto.amendNote')}>{t('manifesto.amend')}</span>}</span>
-                  <span className="action-meta">{t('manifesto.line', { cost: def.cost, blocs: blocNames(likes) })}</span>
+                  <span className="action-meta">{t('manifesto.line', { cost: def.cost, blocs: blocNames(likes) })}{def.cost > 0 && ` · ${t('cost.bill', { rm: f.rm(commitmentWeekly(world, def.cost * 0.5) * MONTH) })}`}</span>
                   {hates.length > 0 && <span className="action-meta">{t('policy.dislikes', { blocs: blocNames(hates) })}</span>}
                   {enacted && <span className="action-meta">{t('manifesto.enacted')}</span>}
                   {Object.entries(k.copied ?? {}).some(([, l]) => l.includes(id)) && <span className="action-meta">{t('manifesto.copied', { parties: Object.entries(k.copied ?? {}).filter(([, l]) => l.includes(id)).map(([p]) => partyShort(t, Number(p))).join(', ') })}</span>}

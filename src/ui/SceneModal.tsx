@@ -3,6 +3,7 @@ import { majorityLine } from '../sim/election';
 import { scaled } from '../sim/campaign/actions';
 import { BY_EFFORT, holderOf, ROUNDS, STATE_EFFORT } from '../sim/campaign/contests';
 import { COST, counterSeats, pactPreview } from '../sim/campaign/diplomacy';
+import { MONTH, commitmentWeekly } from '../sim/campaign/treasury';
 import { AGENDA, type AgendaChoice } from '../sim/campaign/agenda';
 import { CHIEF_NAMES, FACTION_IDS, POLL_ANSWERS, backing, deputyOf, pollOdds, type FactionId } from '../sim/campaign/factions';
 import type { StateId } from '../sim/types';
@@ -165,8 +166,8 @@ function SceneCard({ scene }: { scene: Scene }) {
     );
     options = mine
       ? [
-          { label: t('scene.vote.o0'), choice: 0, hint: count() },
-          { label: t('scene.vote.o1'), choice: 1, hint: `▲ ${t('hint.fiscal')} · ${count({ sweetened: true })}` },
+          { label: t('scene.vote.o0'), choice: 0, hint: `${count()} · ${t('cost.bill', { rm: f.rm(commitmentWeekly(world, billDef(id)!.cost) * MONTH) })}` },
+          { label: t('scene.vote.o1'), choice: 1, hint: `▲ ${t('hint.fiscal')} (+${f.rm(commitmentWeekly(world, 0.5) * MONTH)}${t('cost.perMonth')}) · ${count({ sweetened: true })}` },
           { label: t('scene.vote.o2'), choice: 2, hint: `${count({ confidence: true })} · ${t('scene.vote.o2.risk')}` },
           { label: t('scene.vote.o3'), choice: 3, hint: `${t('hint.cred')} −2` },
         ]
