@@ -5,7 +5,7 @@ import { Rng } from '../rng';
 import { PARTY_IDS } from '../types';
 import { scaled } from './actions';
 import { ledger, startCareer, termIncome, termSpending } from './career';
-import { ALLOCATION, allocation, govMoney } from './treasury';
+import { govBooks, govMoney } from './treasury';
 import { STATE_GOVERNMENT_INCOME, seatsHeldBy, statesHeld } from './contests';
 import {
   CHIEF_NAMES, DEPUTY_EDGE, WALKOUT, challengerLeaves, deputyChance, deputyOf, factionsOf, factionsWeek, leaveChance, partyPoll, pollOdds, resolvePartyPoll,
@@ -35,7 +35,7 @@ describe('the states as a purse', () => {
     withStates(c);
     expect(statesHeld(c, PS)).toBeGreaterThan(0);
     // What the states bring in goes to the government's treasury, on top of the head of government's share.
-    const income = (level: number) => { setPatronage(c, level); return allocation(base, c) - govMoney(base, ALLOCATION.pm); };
+    const income = (level: number) => { setPatronage(c, level); return Math.round(govBooks(base, c)!.income.find((x) => x.id === 'states')?.amount ?? 0); };
     const [a, b, d] = [income(0), income(1), income(2)];
     expect(a).toBe(Math.round(govMoney(base, STATE_GOVERNMENT_INCOME) * statesHeld(c, PS)));
     expect(b).toBeGreaterThan(a);

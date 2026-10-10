@@ -7,6 +7,7 @@ import {
 import { scaled } from '../sim/campaign/actions';
 import { publicFinance } from '../sim/campaign/gdp';
 import { EconomyBook } from './EconomyBook';
+import { TreasuryCard } from './TreasuryCard';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
 import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
 import { MAX_MEASURES } from '../sim/campaign/office';
@@ -105,6 +106,7 @@ export function GovernmentTab() {
       </dl>
       <p className="muted small">{t(feel > 0.5 ? 'house.feel.good' : feel < -0.5 ? 'house.feel.bad' : 'house.feel.flat')} {t('house.deficit', { pct: deficit(k).toFixed(1) })}</p>
 
+      <TreasuryCard />
       <EconomyBook />
       <NationCard />
 

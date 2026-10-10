@@ -3,9 +3,12 @@ import { clamp, zeros2 } from '../math';
 import { N_BLOCS, N_PARTIES, type RegionId } from '../types';
 import { contestsState, scaled } from './actions';
 import { STATE_GOVERNMENT_INCOME, statesHeld } from './contests';
-import { inGov, isPm } from './office';
+import { figuresOf, sectorShares, STATE_PUBLIC } from './gdp';
+import { MEASURES, inGov, isPm } from './office';
 import { patronageMult } from './patronage';
-import type { Campaign } from './types';
+import { pushNews, ref } from './news';
+import { SECTOR_IDS, type SectorId } from './sectors';
+import { LINE_IDS, type Budget, type Campaign, type LineId } from './types';
 
 // The government's money is not the party's. Governing brings a weekly allocation into a treasury of its own: large for the
 // head of government, smaller for a partner, and a little for every state the party governs, at the centre or not. It
@@ -48,24 +51,91 @@ export const treasuryOf = (c: Campaign): number => c.career?.treasury ?? 0;
 export const hasPublicMoney = (c: Campaign): boolean => !!c.career && (inGov(c, c.player) || statesHeld(c, c.player) > 0);
 
 /**
- * What comes into the player's party's treasury each week of a term: the head of government's share, or a partner's, and the
- * patronage of each state the party governs, whether or not it is in government at the centre. Nothing for a party with neither.
+ * What the government would take in each week with a plain budget, in the head of government's case; a partner's share, and what
+ * the states the party governs bring in, are fixed. The treasury keeps at most `TREASURY_WEEKS` of it.
  */
-export function allocation(world: World, c: Campaign): number {
+export function baseAllocation(world: World, c: Campaign): number {
   if (!c.career || c.phase !== 'term') return 0;
   const centre = inGov(c, c.player) ? govMoney(world, isPm(c) ? ALLOCATION.pm : ALLOCATION.partner) : 0;
   return centre + Math.round(govMoney(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player) * patronageMult(c.career!));
 }
 
+// ---------- the head of government's books ----------
+// A government that the player heads takes in money from the economy (taxes, and each of the four sectors) and spends it on the
+// lines of the budget, on what it has paid for in particular, on its standing commitments (the programmes and policies it has
+// taken on, and the deals it has made) and on the interest on the debt. With a plain budget and a middling economy, what is left
+// is the allocation the treasury has always had; a looser budget leaves less, a stronger economy more. What the treasury cannot
+// cover is borrowed, and the debt grows by it.
+
+/** What each line of a plain budget is of the spending, and how far a notch of the dial moves it. */
+const LINE_WEIGHT: Record<LineId, number> = { aid: 0.3, health: 0.2, education: 0.25, rural: 0.1, civil: 0.15 };
+const LINE_STEP = 0.2;
+/** A plain budget takes in three times the allocation, and spends two: lines 1.85, interest 0.15. */
+const TAKINGS = 3;
+const LINES_SPEND = 1.85;
+const INTEREST = 0.15;
+/** What a notch of taxes moves the takings; what a point of growth, and of joblessness, does. */
+const TAX_STEP = 0.1;
+const GROWTH_PULL = 0.06;
+const JOBS_PULL = 0.02;
+/** What a unit of a particular measure, and of standing commitment, costs a week, as a share of the allocation. */
+const MEASURE_UNIT = 0.08;
+const COMMITMENT_UNIT = 0.06;
+/** Where the takings come from: taxes, and the sectors by what each makes. */
+const TAX_SHARE = 0.4;
+
+export interface BookFlow { id: 'tax' | 'states' | SectorId | LineId | 'measures' | 'commitments' | 'interest'; amount: number }
+export interface Books {
+  income: BookFlow[];
+  spend: BookFlow[];
+  /** What is left each week before grants and what the standing orders divert: negative when the books do not balance. */
+  net: number;
+}
+
+/** The books of a government the player heads, for a budget (the one in force, unless another is given), a week at a time. Null for anyone else. */
+export function govBooks(world: World, c: Campaign, budget?: Budget): Books | null {
+  const k = c.career;
+  if (!k || c.phase !== 'term' || !isPm(c)) return null;
+  const b = budget ?? k.tabled;
+  const unit = govMoney(world, ALLOCATION.pm);
+  const e = k.economy;
+  const econ = clamp(1 + GROWTH_PULL * (e.growth - 4) - JOBS_PULL * (e.jobless - 3.5), 0.7, 1.3);
+  const takings = unit * TAKINGS * econ * (1 + TAX_STEP * b.tax);
+  const shares = sectorShares(world, k);
+  const income: BookFlow[] = [{ id: 'tax', amount: takings * TAX_SHARE }, ...SECTOR_IDS.map((id) => ({ id, amount: takings * (1 - TAX_SHARE) * shares[id] }))];
+  // The patronage of the states the party governs also goes into the government's treasury.
+  const patronage = Math.round(govMoney(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player) * patronageMult(k));
+  if (patronage > 0) income.push({ id: 'states', amount: patronage });
+  const spend: BookFlow[] = [
+    ...LINE_IDS.map((id) => ({ id, amount: unit * LINES_SPEND * LINE_WEIGHT[id] * (1 + LINE_STEP * b.lines[id]) })),
+    { id: 'measures', amount: unit * MEASURE_UNIT * (b.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0) },
+    { id: 'commitments', amount: unit * COMMITMENT_UNIT * Math.max(0, k.fiscal) },
+    { id: 'interest', amount: unit * INTEREST * (e.debt / 63) },
+  ];
+  const sum = (xs: BookFlow[]) => xs.reduce((a, x) => a + x.amount, 0);
+  return { income, spend, net: sum(income) - sum(spend) };
+}
+
+/**
+ * What comes into the player's party's treasury each week of a term: for the head of government, what the books leave; for a
+ * partner, its share; and the patronage of each state the party governs. It can be negative: more goes out than comes in.
+ */
+export function allocation(world: World, c: Campaign): number {
+  if (!c.career || c.phase !== 'term') return 0;
+  const books = govBooks(world, c);
+  if (!books) return baseAllocation(world, c);
+  return Math.round(books.net);
+}
+
 /** The most the treasury keeps. */
-export const treasuryCap = (world: World, c: Campaign) => allocation(world, c) * TREASURY_WEEKS;
+export const treasuryCap = (world: World, c: Campaign) => baseAllocation(world, c) * TREASURY_WEEKS;
 
 /** What the standing orders would divert to the party this week: no more than the treasury will have. */
 export function diverted(world: World, c: Campaign): number {
   const k = c.career;
   if (!k || c.phase !== 'term' || !hasPublicMoney(c)) return 0;
   const planned = scaled(world, DIVERT_STEP) * k.orders.state;
-  return Math.min(planned, Math.min(treasuryCap(world, c), treasuryOf(c) + allocation(world, c)));
+  return Math.min(planned, Math.min(treasuryCap(world, c), Math.max(0, treasuryOf(c) + allocation(world, c))));
 }
 
 /** What the grants would cost this week at the level chosen. */
@@ -115,7 +185,14 @@ export function treasuryWeek(world: World, c: Campaign): number {
   }
   if (!hasPublicMoney(c)) { k.treasury = 0; return 0; }
 
-  k.treasury = clamp(treasuryOf(c) + allocation(world, c), 0, treasuryCap(world, c));
+  const flow = treasuryOf(c) + allocation(world, c);
+  // What the treasury cannot cover is borrowed: the debt grows by its share of national income.
+  if (flow < 0) {
+    if (treasuryOf(c) > 0) pushNews(c, { party: c.player, key: 'news.treasury.dry', tone: 'bad' });
+    const base = figuresOf(world, k).gdp * (world.rules.kind === 'state' ? STATE_PUBLIC : 1);
+    k.economy.debt = clamp(k.economy.debt + (-flow / base) * 100, DEBT_FLOOR, 120);
+  }
+  k.treasury = clamp(flow, 0, treasuryCap(world, c));
   const toParty = Math.min(diverted(world, c), k.treasury);
   k.treasury -= toParty;
 
@@ -127,4 +204,34 @@ export function treasuryWeek(world: World, c: Campaign): number {
     for (const st of targets) goodwill[st] = clamp((goodwill[st] ?? 0) + spent / targets.length / govMoney(world, GRANT_PER_POINT), 0, GOODWILL_MAX);
   }
   return toParty;
+}
+
+/** The lowest the national debt can be brought down to by repaying it. */
+export const DEBT_FLOOR = 30;
+
+/** The most of the treasury that can go to the debt now: what it holds, and no more than takes the debt to its floor. Zero unless the player heads the government. */
+export function repayLimit(world: World, c: Campaign): number {
+  const k = c.career;
+  if (!k || c.phase !== 'term' || !isPm(c) || c.career!.ending) return 0;
+  const base = figuresOf(world, k).gdp * (world.rules.kind === 'state' ? STATE_PUBLIC : 1);
+  const room = Math.max(0, ((k.economy.debt - DEBT_FLOOR) / 100) * base);
+  return Math.floor(Math.min(treasuryOf(c), room) / GOV_ROUND) * GOV_ROUND;
+}
+
+/** How far the debt falls (in points of national income) for an amount repaid out of the treasury. */
+export function debtEased(world: World, c: Campaign, amount: number): number {
+  const base = figuresOf(world, c.career!).gdp * (world.rules.kind === 'state' ? STATE_PUBLIC : 1);
+  return (amount / base) * 100;
+}
+
+/** The head of government pays some of the treasury towards the national debt. What is paid is gone from the treasury, and the debt falls by its share of national income. */
+export function repayDebt(world: World, c: Campaign, amount: number): boolean {
+  const k = c.career;
+  const pay = Math.floor(amount / GOV_ROUND) * GOV_ROUND;
+  if (!k || pay <= 0 || pay > repayLimit(world, c)) return false;
+  const eased = debtEased(world, c, pay);
+  k.treasury = Math.max(0, treasuryOf(c) - pay);
+  k.economy.debt = Math.max(DEBT_FLOOR, k.economy.debt - eased);
+  pushNews(c, { party: c.player, key: 'news.debt.repaid', vars: { rm: ref.rm(pay), pct: eased.toFixed(2) }, tone: 'good' });
+  return true;
 }

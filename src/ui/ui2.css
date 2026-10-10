@@ -815,3 +815,8 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 /* Asking a claimant for better terms, under their offer. */
 .t-offers .action { flex-wrap: wrap; }
 .ask-row { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+/* The treasury and the debt, under the economy. */
+.treasury-card .progress { height: 8px; }
+.treasury-card .repay { display: grid; gap: 6px; margin-top: 8px; }
+.treasury-card .repay input[type=range] { width: 100%; }
