@@ -220,7 +220,7 @@ export const EVENTS_EN: Record<string, EventText> = {
   },
   budget: {
     title: 'Budget day',
-    body: 'The budget is tabled today. The plan is the one set out under “Next year’s budget” in the House tab; look it over first if you have not.',
+    body: 'The budget is tabled today. The plan is the one set out under “Next year’s budget” in the Parliament tab; look it over first if you have not.',
     options: ['Table the budget as planned', 'Table last year’s budget again'],
     results: ['The budget is before the House.', 'A standstill budget is before the House.'],
   },
@@ -604,7 +604,7 @@ export const EVENTS_MS: Record<string, EventText> = {
   },
   budget: {
     title: 'Hari belanjawan',
-    body: 'Belanjawan dibentang hari ini. Pelannya seperti yang ditetapkan di bawah “Belanjawan tahun depan” dalam tab Dewan; semak dahulu jika belum.',
+    body: 'Belanjawan dibentang hari ini. Pelannya seperti yang ditetapkan di bawah “Belanjawan tahun depan” dalam tab Parlimen; semak dahulu jika belum.',
     options: ['Bentang belanjawan seperti dirancang', 'Bentang semula belanjawan tahun lalu'],
     results: ['Belanjawan kini di hadapan Dewan.', 'Belanjawan tanpa perubahan kini di hadapan Dewan.'],
   },

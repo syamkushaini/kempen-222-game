@@ -178,7 +178,7 @@ const en = {
   'tab.voters': 'Voters',
   'group.run.campaign': 'Campaign',
   'group.run.term': 'Government',
-  'group.people': 'People',
+  'group.people': 'Organisation',
   'group.intel': 'Intel',
   'inbox.one': 'A decision is waiting for you',
   'inbox.many': '{n} decisions are waiting for you',
@@ -958,7 +958,7 @@ const en = {
   'adviser.role': 'campaign manager',
   'adviser.next': 'Next',
   'adviser.skip': 'Skip the tutorial',
-  'adviser.danger.unity': 'Unity is down to {n}. Below this, people start to walk out. The Deals tab is where to mend it.',
+  'adviser.danger.unity': 'Unity is down to {n}. Below this, people start to walk out. The Pacts tab is where to mend it.',
   'adviser.danger.credibility': 'Credibility is down to {n}. Voters stop believing a party that keeps changing its mind. Hold your stances for a while.',
   'adviser.danger.stability': 'Stability is down to {n}. A government this shaky can fall to a single vote. Look at the Orders tab.',
   'adviser.danger.trust': 'Public trust is down to {n}. The next election will be hard unless it recovers. Look at the Orders tab.',
@@ -978,7 +978,7 @@ const en = {
   'adviser.gotv': 'Final week. Persuading is nearly over; now we get our own people to the polling station. Run Get out the vote from the Actions tab.',
   'adviser.pollingDay': 'That is all we can do. Spend your remaining days, then press Go to the polls. Whatever happens, you ran a proper campaign.',
 
-  'tab.chiefs': 'Chiefs',
+  'tab.chiefs': 'State chiefs',
   'chiefs.title.general': 'State chiefs',
   'chiefs.title.state': 'Division chiefs',
   'chiefs.count': '{n} of {total} in charge',
@@ -1008,7 +1008,7 @@ const en = {
   'news.chief.work': 'The {state} chief’s week: {actions}. Cost: {rm}.',
 
   // ---------- stage 4: coalitions ----------
-  'tab.deals': 'Deals',
+  'tab.deals': 'Pacts',
   'seat.aside': '{from} is standing aside here for {to}.',
   'saves.talks': 'Government talks',
   'scenario.hung': 'Hung parliament',
@@ -1118,7 +1118,7 @@ const en = {
   'news.pact.mine': 'You and {party} sign an electoral pact covering {n} seats.',
   'news.pact.signed': '{a} and {b} sign an electoral pact covering {n} seats.',
   'news.pact.broken': 'You tear up the pact with {party}. Every seat is a fight again, and they will remember.',
-  'news.pact.standing.mine': 'You and {party} go into this election as allies, as last time: one of you stands aside for the other in each of {n} seats. You can end the pact in the Deals tab before nomination day.',
+  'news.pact.standing.mine': 'You and {party} go into this election as allies, as last time: one of you stands aside for the other in each of {n} seats. You can end the pact in the Pacts tab before nomination day.',
   'news.pact.standing': '{a} and {b} go into this election as allies, as last time: one stands aside for the other in each of {n} seats.',
   'news.joint.ok': 'You and {ally} went after {target} together. It landed.',
   'news.joint.backfire': 'Your joint attack with {ally} on {target} backfired on you both.',
@@ -1630,7 +1630,7 @@ const en = {
   'news.term.shift': '{party} shifts its line on {issue}.',
 
   // ---------- stage 6: governing and legacy ----------
-  'tab.house': 'House',
+  'tab.house': 'Parliament',
   'house.title.pm': 'Your government',
   'house.title.gov': 'The government you sit in',
   'house.title.opp': 'The House',
@@ -2566,7 +2566,7 @@ const ms: Record<CoreKey, string> = {
   'tab.voters': 'Pengundi',
   'group.run.campaign': 'Kempen',
   'group.run.term': 'Kerajaan',
-  'group.people': 'Orang',
+  'group.people': 'Organisasi',
   'group.intel': 'Risikan',
   'inbox.one': 'Satu keputusan menunggu anda',
   'inbox.many': '{n} keputusan menunggu anda',
@@ -3346,7 +3346,7 @@ const ms: Record<CoreKey, string> = {
   'adviser.role': 'pengurus kempen',
   'adviser.next': 'Seterusnya',
   'adviser.skip': 'Langkau tutorial',
-  'adviser.danger.unity': 'Perpaduan jatuh ke {n}. Di bawah paras ini, orang mula keluar. Tab Rundingan ialah tempat memulihkannya.',
+  'adviser.danger.unity': 'Perpaduan jatuh ke {n}. Di bawah paras ini, orang mula keluar. Tab Pakatan ialah tempat memulihkannya.',
   'adviser.danger.credibility': 'Kebolehpercayaan jatuh ke {n}. Pengundi tidak lagi percaya parti yang kerap berubah fikiran. Tetapkan pendirian anda seketika.',
   'adviser.danger.stability': 'Kestabilan jatuh ke {n}. Kerajaan serapuh ini boleh tumbang dengan satu undi. Lihat tab Arahan.',
   'adviser.danger.trust': 'Kepercayaan rakyat jatuh ke {n}. Pilihan raya akan datang akan sukar melainkan ia pulih. Lihat tab Arahan.',
@@ -3366,7 +3366,7 @@ const ms: Record<CoreKey, string> = {
   'adviser.gotv': 'Minggu terakhir. Memujuk hampir selesai; sekarang kita bawa orang kita ke pusat mengundi. Jalankan Gerak keluar mengundi dari tab Tindakan.',
   'adviser.pollingDay': 'Itu sahaja yang kita mampu. Habiskan hari yang berbaki, kemudian tekan Ke hari mengundi. Apa pun keputusannya, anda telah berkempen dengan betul.',
 
-  'tab.chiefs': 'Ketua',
+  'tab.chiefs': 'Ketua negeri',
   'chiefs.title.general': 'Pengerusi negeri',
   'chiefs.title.state': 'Ketua bahagian',
   'chiefs.count': '{n} daripada {total} dilantik',
@@ -3396,7 +3396,7 @@ const ms: Record<CoreKey, string> = {
   'news.chief.work': 'Minggu ketua {state}: {actions}. Kos: {rm}.',
 
   // ---------- stage 4: coalitions ----------
-  'tab.deals': 'Rundingan',
+  'tab.deals': 'Pakatan',
   'seat.aside': '{from} memberi laluan kepada {to} di sini.',
   'saves.talks': 'Rundingan kerajaan',
   'scenario.hung': 'Parlimen tergantung',
@@ -3506,7 +3506,7 @@ const ms: Record<CoreKey, string> = {
   'news.pact.mine': 'Anda dan {party} menandatangani pakatan pilihan raya meliputi {n} kerusi.',
   'news.pact.signed': '{a} dan {b} menandatangani pakatan pilihan raya meliputi {n} kerusi.',
   'news.pact.broken': 'Anda membatalkan pakatan dengan {party}. Setiap kerusi kembali direbut, dan mereka tidak akan lupa.',
-  'news.pact.standing.mine': 'Anda dan {party} masuk pilihan raya ini sebagai sekutu, seperti kali lalu: salah satu beri laluan kepada yang lain di setiap {n} kerusi. Anda boleh tamatkan pakatan di tab Rundingan sebelum hari penamaan calon.',
+  'news.pact.standing.mine': 'Anda dan {party} masuk pilihan raya ini sebagai sekutu, seperti kali lalu: salah satu beri laluan kepada yang lain di setiap {n} kerusi. Anda boleh tamatkan pakatan di tab Pakatan sebelum hari penamaan calon.',
   'news.pact.standing': '{a} dan {b} masuk pilihan raya ini sebagai sekutu, seperti kali lalu: salah satu beri laluan kepada yang lain di setiap {n} kerusi.',
   'news.joint.ok': 'Anda dan {ally} menyerang {target} bersama-sama. Ia mengena.',
   'news.joint.backfire': 'Serangan bersama anda dan {ally} terhadap {target} memakan diri kedua-dua pihak.',
@@ -4018,7 +4018,7 @@ const ms: Record<CoreKey, string> = {
   'news.term.shift': '{party} mengubah pendirian tentang {issue}.',
 
   // ---------- stage 6: governing and legacy ----------
-  'tab.house': 'Dewan',
+  'tab.house': 'Parlimen',
   'house.title.pm': 'Kerajaan anda',
   'house.title.gov': 'Kerajaan yang anda sertai',
   'house.title.opp': 'Dewan',

@@ -51,15 +51,16 @@ const TermDesk = lazy(() => import('./TermDesk').then((m) => ({ default: m.TermD
 installIdentity();
 
 /**
- * The tabs come in groups so that the row holds a few things, not a dozen: what you run (the campaign, or the
- * government between elections), the people around you, and what you know. Saves is in the Menu.
+ * The tabs come in groups so that the row holds a few things, not a dozen, each answering one question: what am I doing
+ * (the campaign, or running the country between elections), how is my party doing (its weekly routine, money, team,
+ * candidates and dealings), what missions am I on, and what do I know. Saves is in the Menu.
  */
 type GroupId = 'run' | 'missions' | 'people' | 'intel';
 const GROUPS: { id: GroupId; icon: IconName; tabs: SidebarTab[] }[] = [
-  { id: 'run', icon: 'flag', tabs: ['desk', 'orders', 'house', 'actions', 'chiefs', 'policy'] },
+  { id: 'run', icon: 'flag', tabs: ['desk', 'house', 'actions', 'policy'] },
   // Missions have a place of their own on the row, so that the player cannot miss that there are any (a badge counts the offers waiting).
   { id: 'missions', icon: 'trophy', tabs: ['missions'] },
-  { id: 'people', icon: 'people', tabs: ['team', 'party', 'slate', 'deals'] },
+  { id: 'people', icon: 'people', tabs: ['orders', 'party', 'team', 'slate', 'chiefs', 'deals'] },
   { id: 'intel', icon: 'intel', tabs: ['seats', 'polls', 'voters', 'news'] },
 ];
 /** Tabs that belong only to the years between elections, and only to the campaign. */
