@@ -36,6 +36,7 @@ const SECTIONS: Partial<Record<TabId, string[]>> = {
   money: ['money.funds', 'money.limit', 'money.team', 'money.candidates'],
 };
 const TIPS = 10;
+const KEEP = ['credibility', 'unity', 'stability', 'trust'];
 
 /** The Help page: how to play, a career, missions, challenges, money, tips and the words. Reached from the main menu and the game's own. */
 export function Help({ onClose }: { onClose(): void }) {
@@ -88,9 +89,22 @@ export function Help({ onClose }: { onClose(): void }) {
             </section>
           ))}
           {tab === 'tips' && (
-            <ul className="help-tips">
-              {Array.from({ length: TIPS }, (_, i) => <li key={i}>{t(`help.tips.${i + 1}` as StringKey)}</li>)}
-            </ul>
+            <>
+              <section className="help-section">
+                <h3>{t('help.keep.t')}</h3>
+                <p>{t('help.keep.x')}</p>
+              </section>
+              {KEEP.map((id) => (
+                <section key={id} className="help-section">
+                  <h3>{t(`help.keep.${id}.t` as StringKey)}</h3>
+                  <p>{t(`help.keep.${id}.x` as StringKey)}</p>
+                </section>
+              ))}
+              <h3>{t('help.tab.tips')}</h3>
+              <ul className="help-tips">
+                {Array.from({ length: TIPS }, (_, i) => <li key={i}>{t(`help.tips.${i + 1}` as StringKey)}</li>)}
+              </ul>
+            </>
           )}
           {tab === 'words' && (
             <>
