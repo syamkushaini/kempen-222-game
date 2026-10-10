@@ -76,9 +76,13 @@ export function penaltyOf(m: Pick<Mission, 'kind' | 'tier'>): Effect[] {
   return [{ t: 'cred', n: -(1 + t) }, { t: 'unity', n: -(1 + t) }];
 }
 
-/** What an offer left unanswered costs when its time is up: half of what failing it would have cost. Turning it down is an answer and costs nothing. */
+/**
+ * What an offer left unanswered costs when its time is up: a quarter of the credibility that failing it would have cost (at least a
+ * point), and nothing else. Turning it down is an answer and costs nothing. It was half, with unity and mood too; measured, that
+ * took about 19 credibility from a leader who never opened the tab in three years, against the complaint that credibility falls too easily.
+ */
 export function lapsePenaltyOf(m: Pick<Mission, 'kind' | 'tier'>): Effect[] {
-  return penaltyOf(m).map((e) => (e.t === 'mood' ? { ...e, n: e.n / 2 } : e.t === 'cred' || e.t === 'unity' ? { ...e, n: -Math.max(1, Math.round(-e.n / 2)) } : e));
+  return penaltyOf(m).flatMap((e) => (e.t === 'cred' ? [{ t: 'cred' as const, n: -Math.max(1, Math.round(-e.n / 4)) }] : []));
 }
 
 // ---------- where a mission stands ----------

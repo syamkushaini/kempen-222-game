@@ -240,7 +240,8 @@ describe('the record and the ending', () => {
     answerEvent(base, c, event('budget'), 1);
     expect(c.career!.ending?.kind).toBe('ousted');
     const slow = career();
-    slow.parties[PS]!.unity = 5;
+    // A week of sound conduct would add a point; the party is low enough that it is gone before that can save it.
+    slow.parties[PS]!.unity = 3;
     termWeek(base, slow);
     expect(slow.career!.ending?.kind).toBe('ousted');
   });

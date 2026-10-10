@@ -801,3 +801,13 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .settings-button { width: var(--head-btn); min-width: var(--head-btn); }
 .menu-button { gap: 6px; padding: 0 16px; border-radius: 9999px; justify-content: center; }
 @media (max-width: 980px) { .menu-button { width: var(--head-btn); min-width: var(--head-btn); padding: 0; } }
+
+/* on a narrow screen the map's bar is two rows: the place on the first, the buttons on the second; the options open across the whole bar, not from the button */
+@media (max-width: 520px) {
+  .map-top { position: relative; }
+  .map-top .state-select, .map-top .map-place { flex: 1 1 100%; max-width: none; }
+  .map-top .map-share { flex: 1 1 0; }
+  .map-options { position: static; flex: 1 1 0; }
+  .map-options summary { width: 100%; justify-content: center; }
+  .map-options-panel { left: 0; right: 0; width: auto; }
+}

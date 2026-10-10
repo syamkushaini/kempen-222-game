@@ -53,3 +53,8 @@
 }
 .field-error { color: var(--bad); margin: 4px 0 0; }
 .swatches .btn { align-self: center; }
+/* the week's conduct in the party tab: five checks, each ticked or crossed, with what to do about the ones that failed */
+.conduct-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.conduct-list li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; padding: 8px 10px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); }
+.conduct-list li.ok > span:first-child { color: var(--good); font-weight: 700; }
+.conduct-list li.no > span:first-child { color: var(--bad); font-weight: 700; }

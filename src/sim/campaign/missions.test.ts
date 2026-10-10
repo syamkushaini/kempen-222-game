@@ -223,23 +223,26 @@ describe('the time to decide', () => {
     const cred = c.career!.credibility, unity = c.parties[c.player]!.unity;
     for (let w = 0; w < OFFER_WARN; w++) missionsWeek(base, c, rng);
     expect(m.offers.filter((o) => o.main)).toEqual([]);
-    // An offer left unanswered costs the party: half of what failing would have.
+    // An offer left unanswered costs the party a little credibility, and nothing else.
     expect(c.career!.credibility).toBeLessThan(cred);
-    expect(c.parties[c.player]!.unity).toBeLessThan(unity);
+    expect(c.parties[c.player]!.unity).toBe(unity);
     expect(c.news.filter((n) => n.key === 'news.mission.lapsed')).toHaveLength(left.length);
     // The one that was taken is still running.
     expect(m.active.some((a) => a.id === taken.id)).toBe(true);
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
   });
 
-  it('costs half of failing for an offer left to lapse, and nothing for one turned down', () => {
+  it('costs a quarter of the credibility of failing for an offer left to lapse, and nothing for one turned down', () => {
     const c = career(PS, 7);
     const m = missionsOf(c);
     const [a, b] = m.offers;
     for (const o of [a, b]) {
-      const fail = penaltyOf(o), lapse = lapsePenaltyOf(o);
-      expect(lapse).toHaveLength(fail.length);
-      fail.forEach((e, i) => { if (e.t === 'cred' || e.t === 'unity') expect(-(lapse[i] as { n: number }).n, o.kind).toBeLessThanOrEqual(-(e as { n: number }).n); });
+      const failed = penaltyOf(o).find((e) => e.t === 'cred') as { n: number };
+      const lapse = lapsePenaltyOf(o);
+      expect(lapse, o.kind).toHaveLength(1);
+      expect(lapse[0].t).toBe('cred');
+      expect(-(lapse[0] as { n: number }).n, o.kind).toBeLessThanOrEqual(-failed.n);
+      expect(-(lapse[0] as { n: number }).n, o.kind).toBeGreaterThanOrEqual(1);
     }
     const cred = c.career!.credibility, unity = c.parties[c.player]!.unity;
     expect(declineMission(c, a.id)).toBe(true);

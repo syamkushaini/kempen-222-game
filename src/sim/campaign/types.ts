@@ -549,6 +549,8 @@ export interface Career {
   grand?: { until: number; members: number[] };
   /** How many times the government has leaned on each institution in this parliament (see govern.ts). */
   leverUses?: Partial<Record<LeverId, number>>;
+  /** How the last week's conduct was judged (see conduct.ts): the five checks and the point it earned or cost. */
+  conduct?: { week: number; ok: boolean[]; delta: -1 | 0 | 1 };
   /** The yearly announcements of the economy's size and the public finances, the last few (see gdp.ts). */
   reports?: { year: number; gdp: number; perCapita: number; growth: number; inflation: number; debt: number; debtRm: number; deficitRm: number }[];
   /** The sectors of the economy, each from 0 to 100 around a middling 50 (see sectors.ts). */

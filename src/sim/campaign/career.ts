@@ -33,6 +33,7 @@ import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
 import { allianceBonus, allianceWeek, dropMember } from './alliance';
+import { conductWeek } from './conduct';
 import { gdpWeek } from './gdp';
 import { sectorsWeek } from './sectors';
 import { trialWeek } from './trial';
@@ -417,6 +418,7 @@ export function termWeek(world: World, c: Campaign): void {
   if (o.focus === 'policy') k.credibility = Math.min(Math.max(k.credibility, 85), k.credibility + 0.2 * edge(c, me, 'integrity'));
   // The team is on the payroll already; what is left is whether anyone's past comes out this week.
   staffWeek(world, c, new Rng((c.rng ^ 0x57aff) + k.week), false);
+  conductWeek(world, c, afford);
   plotsWeek(world, c);
   if (c.phase !== 'term') return;
   membersWeek(world, c, new Rng((c.rng ^ 0x3e3be5) + k.week));

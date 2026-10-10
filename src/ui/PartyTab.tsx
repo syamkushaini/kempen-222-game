@@ -19,6 +19,7 @@ import type { StringKey } from '../i18n/strings';
 import { MERGER, canMerge } from '../sim/campaign/merge';
 import { houseTally } from '../sim/campaign/contests';
 import { useStore } from '../state/store';
+import { ConductCard } from './ConductCard';
 import { Gauge } from './Gauge';
 import { ConfirmButton } from './SavesTab';
 import { Brief } from './Brief';
@@ -88,6 +89,7 @@ export function PartyTab() {
         <Gauge value={pc.unity} label={t('hint.unity')} />
         <Gauge value={k.credibility} label={t('hint.cred')} />
       </div>
+      <ConductCard />
       <p className="muted small">{t('party.members.note', { ordinary: f.int(ordinary) })}</p>
       <p className="note">{t('party.grassroots', { pts: (Math.round(grassrootsLift(world, campaign) * 25 * 10) / 10).toFixed(1) })}</p>
 
