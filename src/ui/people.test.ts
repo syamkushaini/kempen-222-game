@@ -22,7 +22,7 @@ describe('a party of one’s own', () => {
   it('is tidied up, and refused if there is nothing to it', () => {
     expect(makeIdentity(mine)).toEqual({ name: 'Parti Harapan Rakyat', short: 'PHR', color: PARTY_COLORS[6], emblem: 'bridge', leader: 'Puan Sri Aminah Zain', look: 5 });
     expect(makeIdentity({ ...mine, name: '   ' })).toBeNull();
-    expect(makeIdentity({ ...mine, color: '#123456' })).toBeNull();
+    expect(makeIdentity({ ...mine, color: '#ffffff' })).toBeNull();
     expect(makeIdentity({ ...mine, emblem: 'rocket' })).toBeNull();
     expect(makeIdentity({ ...mine, look: LOOK_COUNT })).toBeNull();
     expect(makeIdentity({ ...mine, name: 'x'.repeat(200) })!.name).toHaveLength(40);

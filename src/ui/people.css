@@ -26,6 +26,9 @@
 .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
 .swatch-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--panel); cursor: pointer; padding: 0; box-shadow: 0 0 0 1px var(--line); }
 .swatch-btn.active { box-shadow: 0 0 0 3px var(--ink); }
+.swatch-btn.custom { position: relative; display: grid; place-items: center; background: conic-gradient(#d9483f, #eab308, #16a34a, #06b6d4, #4f46e5, #c026d3, #d9483f); color: #fff; font-weight: 700; overflow: hidden; }
+.swatch-btn.custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; padding: 0; border: 0; }
+@media (pointer: coarse) { .swatch-btn { width: 40px; height: 40px; } }
 .mark-btn { border: 0; background: none; padding: 3px; border-radius: 10px; cursor: pointer; line-height: 0; }
 .mark-btn.active { box-shadow: 0 0 0 3px var(--ink); }
 

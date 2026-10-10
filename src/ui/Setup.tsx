@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { BACKSTORIES, partyLeaderStats } from '../sim/campaign/perks';
 import { IDEOLOGY_IDS, type IdeologyId } from '../sim/campaign/leader';
 import { BACKSTORY_IDS, STAT_IDS, type BackstoryId } from '../sim/campaign/types';
-import { EMBLEM_IDS, PARTY_COLORS, type EmblemId } from '../state/identity';
+import { EMBLEM_IDS, fitColor, PARTY_COLORS, type EmblemId } from '../state/identity';
 import { PLAYER_LOOKS, portraitSvg } from './faces';
 import { useT } from './hooks';
 import { PartyMark } from './identity';
@@ -100,6 +100,10 @@ export function PartyCreator({ draft, career, slate = false, onChange }: { draft
         {PARTY_COLORS.map((c) => (
           <button key={c} role="radio" aria-checked={draft.color === c} aria-label={c} className={draft.color === c ? 'swatch-btn active' : 'swatch-btn'} style={{ background: c }} onClick={() => onChange({ color: c })} />
         ))}
+        <label className={PARTY_COLORS.includes(draft.color) ? 'swatch-btn custom' : 'swatch-btn custom active'} title={t('creator.color.custom')} style={{ background: PARTY_COLORS.includes(draft.color) ? undefined : draft.color }}>
+          <span aria-hidden="true">{PARTY_COLORS.includes(draft.color) ? '+' : ''}</span>
+          <input type="color" aria-label={t('creator.color.custom')} value={draft.color} onChange={(e) => onChange({ color: fitColor(e.target.value) })} />
+        </label>
       </div>
 
       <span className="field-label">{t('creator.emblem')}</span>
