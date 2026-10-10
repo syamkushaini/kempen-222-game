@@ -25,8 +25,8 @@ function SmallChamber() {
   );
 }
 
-type TabId = 'start' | 'career' | 'missions' | 'challenges' | 'money' | 'tips' | 'words';
-const TABS: TabId[] = ['start', 'career', 'missions', 'challenges', 'money', 'tips', 'words'];
+type TabId = 'start' | 'career' | 'missions' | 'challenges' | 'money' | 'economy' | 'tips' | 'words';
+const TABS: TabId[] = ['start', 'career', 'missions', 'challenges', 'money', 'economy', 'tips', 'words'];
 /** The titled paragraphs of each tab, by the stem of their strings (`help.<stem>.t` and `.x`). */
 const SECTIONS: Partial<Record<TabId, string[]>> = {
   start: ['start.pick', 'start.map', 'start.save'],
@@ -34,6 +34,7 @@ const SECTIONS: Partial<Record<TabId, string[]>> = {
   missions: ['missions.what', 'missions.decide', 'missions.risk', 'missions.final'],
   challenges: ['challenges.weekly', 'challenges.own', 'challenges.points'],
   money: ['money.funds', 'money.limit', 'money.team', 'money.candidates'],
+  economy: ['economy.figures', 'economy.mood', 'economy.budget', 'economy.debt', 'economy.nation', 'economy.notice', 'economy.keep'],
 };
 const TIPS = 10;
 const KEEP = ['credibility', 'unity', 'stability', 'trust'];
