@@ -748,3 +748,10 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 .mission-parts .tick { width: 1.2em; flex: none; text-align: center; color: var(--ink-muted); }
 .mission-parts li.done .tick { color: var(--good); font-weight: 700; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Challenges made by players: the form, the code, and the link that is sent. */
+.maker { margin-top: 12px; }
+.maker-form { display: grid; gap: 6px; max-width: 460px; }
+.maker-form .field-label { margin-top: 6px; }
+.maker-form select.text-input { min-height: 44px; }
+.challenge-code { display: block; padding: 8px 12px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line); overflow-wrap: anywhere; font-size: 13px; }

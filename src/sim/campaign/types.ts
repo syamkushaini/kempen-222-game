@@ -692,7 +692,7 @@ export interface StateVote {
  * `fog` hides the chances of anything left to luck; `noisy` doubles the error of every poll.
  */
 /** Optional ways to make a campaign harder, and the goal of a set challenge (an id in challenges.ts). */
-export interface Challenge { fog: boolean; noisy: boolean; goal?: string; /** A change to history, for a replay of the real election with something different (see whatif.ts). */ whatIf?: string }
+export interface Challenge { fog: boolean; noisy: boolean; /** A lean purse: less money to begin with and less coming in (see challengeCode.ts). */ lean?: boolean; /** The code of a challenge made or taken from a link, so that the result can be sent on. */ code?: string; goal?: string; /** A change to history, for a replay of the real election with something different (see whatif.ts). */ whatIf?: string }
 
 /** A campaign in progress: everything the rules need, as plain JSON. */
 export interface Campaign {

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { fightWorld, foundedWorld, getWorld, loadState, newPartyWorld, ownWorld, worldOf } from '../data/world';
+import { fightWorld, foundedWorld, getWorld, loadScenario, loadState, newPartyWorld, ownWorld, worldOf } from '../data/world';
+import { encodeChallenge, type ChallengeSpec } from '../sim/campaign/challengeCode';
 import { translate, type Lang } from '../i18n/strings';
 import { earned, type AchievementId } from '../sim/campaign/achievements';
 import {
@@ -32,7 +33,7 @@ import type {
 } from '../sim/campaign/types';
 import { randomSeed } from '../sim/rng';
 import type { World } from '../sim/election';
-import type { RegionId, StateId } from '../sim/types';
+import { PARTY_IDS, type RegionId, type StateId } from '../sim/types';
 import { newGame, startOf, type GameState, type StartOptions } from './game';
 import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
@@ -181,7 +182,14 @@ interface Store {
     founded?: boolean;
     stances?: number[];
     backstory?: BackstoryId | null; ideology?: IdeologyId | null; identity?: Identity | null; challenge?: Partial<Challenge>; realStates?: boolean;
+    /** Weeks of campaign, where a challenge made by a player does not want the contest's usual. */
+    weeks?: number;
   }): void;
+  /** A challenge sent as a link, waiting for the player to say whether to play it. */
+  pendingChallenge: ChallengeSpec | null;
+  setPendingChallenge(spec: ChallengeSpec | null): void;
+  /** Starts a challenge made by a player or taken from a link: the same contest, party, seed and rules every time. */
+  startChallenge(spec: ChallengeSpec): void;
   /** Moves the adviser to the next step, or ends the tutorial after the last one. */
   advanceTutorial(steps: number): void;
   /** Moves the adviser straight to a later step, or ends the tutorial if that is past the last. */
@@ -377,16 +385,16 @@ export const useStore = create<Store>((set, get) => {
     selectState: (state) => set({ selectedState: state, selectedSeat: null }),
     selectSeat: (seatId, state) => set((s) => ({ selectedSeat: seatId, selectedState: state ?? s.selectedState })),
 
-    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge, realStates = false }) => {
+    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge, realStates = false, weeks }) => {
       // A founded party's first term is played in a country with its name already on every ballot.
       const base = getWorld(scenario);
       // A party the player has made their own may stand in any seat of a career, at a price; it needs a world in which it is on every ballot.
       const own = !!(base?.rules.career && identity && !founded);
       const world = founded ? (scenario === 'career' ? foundedWorld() : newPartyWorld(scenario)) : own ? ownWorld(scenario, player) ?? base : base;
       if (!world) return;
-      const opts = { player, difficulty, seed: seed ?? randomSeed(), backstory, challenge };
+      const opts = { player, difficulty, seed: seed ?? randomSeed(), backstory, challenge, ...(weeks !== undefined ? { totalWeeks: weeks } : {}) };
       // Kept with the game so that it can be started again exactly as it was set up.
-      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}) };
+      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}), ...(weeks !== undefined ? { weeks } : {}) };
       // A platform of its own belongs to a party of the player's own making.
       const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, realStates, own, held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
       if (founded && !world.rules.career) foundForContest(world, campaign, backstory);
@@ -399,6 +407,18 @@ export const useStore = create<Store>((set, get) => {
         view: 'last', tab: campaign.phase === 'term' ? 'desk' : 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false,
         // A general election opens on the leader's home state; smaller contests open on the whole map.
         selectedState: world.rules.kind === 'general' && campaign.phase === 'campaign' ? campaign.parties[player]!.location : null,
+      });
+    },
+    pendingChallenge: null,
+    setPendingChallenge: (pendingChallenge) => set({ pendingChallenge }),
+    startChallenge: (spec) => {
+      const lang = get().settings.lang;
+      void loadScenario(spec.scenario).then(() => {
+        set({ pendingChallenge: null });
+        get().startCampaign({
+          name: translate(lang, 'challenge.made.name'), scenario: spec.scenario, player: PARTY_IDS.indexOf(spec.party), difficulty: spec.difficulty, seed: spec.seed,
+          challenge: { fog: spec.fog, noisy: spec.noisy, ...(spec.lean ? { lean: true } : {}), code: encodeChallenge(spec) }, ...(spec.weeks !== undefined ? { weeks: spec.weeks } : {}),
+        });
       });
     },
     advanceTutorial: (steps) => mutate((_c, g) => {

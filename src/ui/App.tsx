@@ -2,6 +2,7 @@ import { Fragment, lazy, Suspense, useEffect, useState } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { useStore, type MapView as MapViewId, type SidebarTab } from '../state/store';
 import { hasChiefs } from '../sim/campaign/ai';
+import { codeInAddress, decodeChallenge } from '../sim/campaign/challengeCode';
 import { ActionsTab } from './ActionsTab';
 import { Adviser } from './Adviser';
 import { ChiefsTab } from './ChiefsTab';
@@ -264,6 +265,21 @@ export function App() {
   const showNight = useStore((s) => s.showNight);
   const ended = useStore((s) => !!s.game?.campaign.career?.ending);
   const loads = useStore((s) => s.loads);
+  const setPendingChallenge = useStore((s) => s.setPendingChallenge);
+
+  // A challenge sent as a link (`#c=...`) waits on the title screen for the player to say whether to play it.
+  useEffect(() => {
+    const read = () => {
+      const code = codeInAddress(location.hash);
+      if (!code) return;
+      const spec = decodeChallenge(code);
+      if (spec) setPendingChallenge(spec);
+      history.replaceState(null, '', location.pathname + location.search);
+    };
+    read();
+    window.addEventListener('hashchange', read);
+    return () => window.removeEventListener('hashchange', read);
+  }, [setPendingChallenge]);
 
   useEffect(() => {
     const root = document.documentElement;

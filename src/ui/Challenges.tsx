@@ -7,6 +7,7 @@ import { outlook, par } from '../sim/campaign/outlook';
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from '../state/store';
 import { useFormat, useT, useWorld, type T } from './hooks';
+import { ChallengeMaker, CopyLink } from './ChallengeMaker';
 
 const goalText = (t: T, goal: Goal) =>
   goal.kind === 'win' ? t('challenges.goal.win') : t(`challenges.goal.${goal.kind}` as StringKey, { n: goal.atLeast });
@@ -27,6 +28,7 @@ export function ChallengeList() {
     difficulty: 'hard', seed: def.seed, challenge: { fog: !!def.fog, noisy: !!def.noisy, goal: def.id },
   }));
   return (
+    <>
     <details className="challenges">
       <summary><h3>{t('challenges.title')}</h3></summary>
       <p className="muted small">{t('challenges.intro')}</p>
@@ -46,6 +48,8 @@ export function ChallengeList() {
         ))}
       </ul>
     </details>
+    <ChallengeMaker />
+    </>
   );
 }
 
@@ -95,6 +99,9 @@ function OutlookResult({ summary }: { summary: Pick<Summary, 'seats' | 'voteShar
 export function GoalResult({ summary }: { summary: Pick<Summary, 'seats' | 'before' | 'voteShare'> }) {
   const t = useT();
   const def = challengeById(useStore((s) => s.game?.campaign.challenge?.goal));
+  const code = useStore((s) => s.game?.campaign.challenge?.code);
+  // A challenge somebody made: the result can be sent on, as the same election for the next person.
+  if (!def && code) return <p className="goal-result" role="status">{t('challenge.sendOn')} <CopyLink code={code} /></p>;
   if (!def) return <OutlookResult summary={summary} />;
   const { met, got, need } = goalResult(def.goal, summary);
   const title = t(`challenges.c.${def.id}` as StringKey);

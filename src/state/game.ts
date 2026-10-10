@@ -60,6 +60,8 @@ export interface StartOptions {
   /** A career that fights its state elections in person. */
   realStates?: boolean;
   challenge?: Partial<Challenge>;
+  /** Weeks of campaign, where a challenge made by a player shortens or lengthens the contest's usual. */
+  weeks?: number;
 }
 
 /**

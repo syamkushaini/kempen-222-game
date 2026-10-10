@@ -243,7 +243,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
     x.scenario === world.id && (x.newParty === undefined || typeof x.newParty === 'boolean') &&
     isNum(x.player) && Number.isInteger(x.player) && x.player >= 0 && x.player < N_PARTIES &&
     (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
-    (x.challenge === undefined || (isObj(x.challenge) && typeof x.challenge.fog === 'boolean' && typeof x.challenge.noisy === 'boolean' && (x.challenge.goal === undefined || typeof x.challenge.goal === 'string') && (x.challenge.whatIf === undefined || typeof x.challenge.whatIf === 'string'))) &&
+    (x.challenge === undefined || (isObj(x.challenge) && typeof x.challenge.fog === 'boolean' && typeof x.challenge.noisy === 'boolean' && (x.challenge.lean === undefined || typeof x.challenge.lean === 'boolean') && (x.challenge.code === undefined || typeof x.challenge.code === 'string') && (x.challenge.goal === undefined || typeof x.challenge.goal === 'string') && (x.challenge.whatIf === undefined || typeof x.challenge.whatIf === 'string'))) &&
     isNum(x.totalWeeks) && isNum(x.week) && x.week >= 1 && x.week <= x.totalWeeks &&
     (x.phase === 'term' || x.phase === 'campaign' || x.phase === 'night' || x.phase === 'formation' || x.phase === 'done') &&
     isUint32(x.seed) && isUint32(x.rng) &&

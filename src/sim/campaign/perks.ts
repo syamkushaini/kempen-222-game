@@ -1,4 +1,5 @@
 import { PARTY_IDS } from '../types';
+import { LEAN } from './challengeCode';
 import { LEADER_STATS, RIVAL_STAFF } from './cast';
 import { ROLE_IDS, STAT_IDS, type BackstoryId, type Campaign, type Leader, type RoleId, type StatId } from './types';
 
@@ -61,4 +62,4 @@ export const mediaBoost = (c: Campaign, p: number) => 1 + 0.05 * skill(c, p, 'me
 export const gaffeCut = (c: Campaign, p: number) => 0.015 * skill(c, p, 'media');
 /** What a treasurer adds to money raised and money coming in. */
 export const fundsBoost = (c: Campaign, p: number) => 1 + 0.06 * skill(c, p, 'treasurer');
-export const incomeBoost = (c: Campaign, p: number) => 1 + 0.04 * skill(c, p, 'treasurer');
+export const incomeBoost = (c: Campaign, p: number) => (1 + 0.04 * skill(c, p, 'treasurer')) * (c.challenge?.lean && p === c.player ? LEAN : 1);

@@ -16,6 +16,7 @@ import { saveStore, useStore } from '../state/store';
 import { LEADERS } from '../sim/campaign/cast';
 import { lastOutcome, useFormat, useT } from './hooks';
 import { ChallengeList } from './Challenges';
+import { ChallengeInvite } from './ChallengeMaker';
 import { Credits } from './Credits';
 import { FeedbackLink } from './FeedbackLink';
 import { ACHIEVEMENT_IDS } from '../sim/campaign/achievements';
@@ -177,6 +178,7 @@ export function Title() {
       {howTo && <HowToPlay onClose={() => setHowTo(false)} />}
       {support && <SupportDialog onClose={() => setSupport(false)} />}
       {board && <LeaderboardDialog onClose={() => setBoard(false)} />}
+      <ChallengeInvite />
       {mode === 'menu' ? (
         <nav className="main-menu" aria-label={t('menu.label')}>
           <div className="menu-brand">

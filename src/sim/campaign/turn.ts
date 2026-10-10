@@ -1,6 +1,7 @@
 import { emptyDynamics } from '../dynamics';
 import { lastElection, runElection, type World } from '../election';
 import { Rng } from '../rng';
+import { LEAN } from './challengeCode';
 import {
   N_BLOCS, N_PARTIES, PARTY_IDS, isMinor,
   type Dynamics, type ElectionOutcome, type RegionId,
@@ -98,13 +99,18 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   };
   const c: Campaign = { ...bare, team: emptyTeam(bare, opts.backstory ?? null) };
   c.rng = rng.state;
-  if (opts.challenge?.fog || opts.challenge?.noisy || opts.challenge?.goal) {
-    c.challenge = { fog: !!opts.challenge.fog, noisy: !!opts.challenge.noisy, ...(opts.challenge.goal ? { goal: opts.challenge.goal } : {}) };
-  }
+  if (opts.challenge?.fog || opts.challenge?.noisy || opts.challenge?.lean || opts.challenge?.goal) {
+    c.challenge = {
+      fog: !!opts.challenge.fog, noisy: !!opts.challenge.noisy, ...(opts.challenge.lean ? { lean: true } : {}),
+      ...(opts.challenge.code ? { code: opts.challenge.code } : {}), ...(opts.challenge.goal ? { goal: opts.challenge.goal } : {}),
+    };
+  } else if (opts.challenge?.code) c.challenge = { fog: false, noisy: false, code: opts.challenge.code };
   // The real election, played again with one thing changed.
   if (opts.challenge?.whatIf && world.rules.kind === 'general' && !world.rules.career) applyWhatIf(world, c, opts.challenge.whatIf);
   // A career sets its own opening terms first, then lets the leader's past have its say.
   if (!world.rules.career) applyBackstory(c);
+  // A lean purse: the party starts with less (and less comes in: see `incomeBoost`).
+  if (c.challenge?.lean) c.parties[c.player]!.funds = Math.round(c.parties[c.player]!.funds * LEAN);
   for (const pact of opening.pacts) {
     c.relations[pact.a][pact.b] = c.relations[pact.b][pact.a] = Math.max(c.relations[pact.a][pact.b], ALLIED);
     // Said on the first day, so nobody wonders why a party is missing from most of the ballots.
