@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { PARTIES } from '../data/parties';
+import { shownAlliance } from '../state/allianceLook';
 import { scenarioInfo, world as generalWorld, worldOf } from '../data/world';
 import { LEADERS } from '../sim/campaign/cast';
 import { translate, type StringKey } from '../i18n/strings';
@@ -76,7 +77,23 @@ export function relationWord(value: number): 'hostile' | 'cold' | 'neutral' | 'w
 }
 
 export function partyColor(index: number): string {
+  const look = shownAlliance();
+  if (look && look.members.includes(index)) return look.color;
   return PARTIES[PARTY_IDS[index]].color;
+}
+
+/** The alliance's name: the one the player gave it, else the ready-made one. Empty when there is no alliance. */
+export function allianceTitle(t: T): string {
+  const look = shownAlliance();
+  return look ? look.title ?? t(`alliance.name.${look.name}` as StringKey) : '';
+}
+
+/** Whether a party stands under the player's alliance's name on the map. */
+export const inShownAlliance = (index: number): boolean => !!shownAlliance()?.members.includes(index);
+
+/** What the map calls a party: the alliance's name for each of its members, otherwise the party's own short name. */
+export function mapName(t: T, index: number): string {
+  return inShownAlliance(index) ? allianceTitle(t) : partyShort(t, index);
 }
 
 /** The contest the open game is played in. Falls back to the general election on the title screen. */
@@ -204,7 +221,7 @@ export function renderNews(t: T, f: Format, world: World, item: NewsItem): strin
       kind === 'holding' ? t(`holding.${value}` as StringKey) :
       kind === 'event' ? t(`event.${value}.title` as StringKey) :
       kind === 'adviser' ? t(`adviser.${value}` as StringKey) :
-      kind === 'alliance' ? t(`alliance.name.${value}` as StringKey) :
+      kind === 'alliance' ? (shownAlliance()?.title ?? t(`alliance.name.${value}` as StringKey)) :
       kind === 'faction' ? t(`faction.${value}` as StringKey) :
       kind === 'hopeful' ? t(`hopeful.${value}` as StringKey) :
       kind === 'endorser' ? t(`endorser.${value}` as StringKey) :

@@ -23,7 +23,8 @@ import { ConductCard } from './ConductCard';
 import { Gauge } from './Gauge';
 import { ConfirmButton } from './SavesTab';
 import { Brief } from './Brief';
-import { partyName, partyShort, regionLabel, useFormat, useT, useWorld } from './hooks';
+import { allianceTitle as allianceTitleOf, partyColor, partyName, partyShort, regionLabel, useFormat, useT, useWorld } from './hooks';
+import { AllianceForm } from './AllianceForm';
 
 const LOT = 100_000;
 
@@ -47,6 +48,11 @@ export function PartyTab() {
   const dissolveAlliance = useStore((s) => s.dissolveAlliance);
   const [allianceName, setAllianceName] = useState(0);
   const [allianceMark, setAllianceMark] = useState(0);
+  const [allianceTitle, setAllianceTitle] = useState('');
+  const [allianceColor, setAllianceColor] = useState('');
+  const setLook = useStore((s) => s.setAllianceLook);
+  const [editTitle, setEditTitle] = useState<string | null>(null);
+  const [editColor, setEditColor] = useState<string | null>(null);
   const padRolls = useStore((s) => s.padRolls);
   const discipline = useStore((s) => s.discipline);
   const merge = useStore((s) => s.merge);
@@ -259,28 +265,35 @@ export function PartyTab() {
         <ul>
           <li className="action">
             <div className="grow">
-              <div className="chips" role="group" aria-label={t('alliance.name')}>
-                {Array.from({ length: ALLIANCE_NAMES }, (_, n) => (
-                  <button key={n} className={allianceName === n ? 'chip active' : 'chip'} aria-pressed={allianceName === n} onClick={() => setAllianceName(n)}>{t(`alliance.name.${n}` as StringKey)}</button>
-                ))}
-              </div>
+              <AllianceForm
+                title={allianceTitle} color={allianceColor || partyColor(campaign.player)}
+                onTitle={(v) => { setAllianceTitle(v); const n = Array.from({ length: ALLIANCE_NAMES }, (_, i) => i).find((i) => t(`alliance.name.${i}` as StringKey) === v); if (n !== undefined) setAllianceName(n); }}
+                onColor={setAllianceColor}
+              />
               <div className="chips" role="group" aria-label={t('alliance.mark')}>
                 {ALLIANCE_MARKS.map((m, n) => (
                   <button key={m} className={allianceMark === n ? 'chip active' : 'chip'} aria-pressed={allianceMark === n} aria-label={`${t('alliance.mark')} ${m}`} onClick={() => setAllianceMark(n)}>{m}</button>
                 ))}
               </div>
             </div>
-            <button className="btn small" disabled={!canFound(world, campaign, allianceName, allianceMark).ok} onClick={() => foundAlliance(allianceName, allianceMark)}>{t('alliance.found')}</button>
+            <button className="btn small" disabled={!canFound(world, campaign, allianceName, allianceMark).ok} onClick={() => foundAlliance(allianceName, allianceMark, allianceTitle, allianceColor || undefined)}>{t('alliance.found')}</button>
           </li>
         </ul>
       ) : (
         <ul>
           <li className="action">
             <div className="grow">
-              <span className="action-title">{ALLIANCE_MARKS[k.alliance.mark]} {t(`alliance.name.${k.alliance.name}` as StringKey)}</span>
+              <span className="action-title">{ALLIANCE_MARKS[k.alliance.mark]} {allianceTitleOf(t)}</span>
               <span className="action-meta">{k.alliance.members.map((p) => partyShort(t, p)).join(' · ')} — {t('alliance.lift', { pts: (allianceBonus(campaign, campaign.player) * 25).toFixed(1) })}</span>
             </div>
             <ConfirmButton label={t('alliance.dissolve')} confirmLabel={t('alliance.dissolve.confirm')} onConfirm={() => dissolveAlliance()} />
+          </li>
+          <li className="action wrapped">
+            <AllianceForm
+              title={editTitle ?? allianceTitleOf(t)} color={editColor ?? partyColor(k.alliance.members[0])}
+              onTitle={setEditTitle} onColor={setEditColor}
+            />
+            <button className="btn small" disabled={editTitle === null && editColor === null} onClick={() => { setLook(editTitle ?? allianceTitleOf(t), editColor ?? partyColor(k.alliance!.members[0])); setEditTitle(null); setEditColor(null); }}>{t('alliance.look.save')}</button>
           </li>
           {houseTally(world, campaign).map((n, p) => ({ n, p })).filter(({ n, p }) => n > 0 && !k.alliance!.members.includes(p) && p !== campaign.player && !!campaign.parties[p]).map(({ p }) => {
             const check = canInvite(world, campaign, p);

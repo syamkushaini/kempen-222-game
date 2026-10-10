@@ -38,11 +38,30 @@ export function canFound(world: World, c: Campaign, name: number, mark: number):
   return { ok: true };
 }
 
-export function foundAlliance(world: World, c: Campaign, name: number, mark: number): boolean {
+/** The longest name an alliance can be given. */
+export const TITLE_MAX = 24;
+/** A name as typed: trimmed, on one line, no longer than the most allowed. Empty means the ready-made name stands. */
+export const cleanTitle = (raw: string | undefined): string | undefined => {
+  const t = (raw ?? '').replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, TITLE_MAX).trim();
+  return t || undefined;
+};
+const cleanColor = (raw: string | undefined): string | undefined => (raw && /^#[0-9a-f]{6}$/i.test(raw) ? raw.toLowerCase() : undefined);
+
+export function foundAlliance(world: World, c: Campaign, name: number, mark: number, title?: string, color?: string): boolean {
   if (!canFound(world, c, name, mark).ok) return false;
   c.parties[c.player]!.funds -= scaled(world, ALLIANCE.found);
-  c.career!.alliance = { name, mark, members: [c.player] };
+  c.career!.alliance = { name, mark, members: [c.player], ...(cleanTitle(title) ? { title: cleanTitle(title) } : {}), ...(cleanColor(color) ? { color: cleanColor(color) } : {}) };
   pushNews(c, { party: c.player, key: 'news.alliance.founded', vars: { name: `@alliance:${name}` }, tone: 'good' });
+  return true;
+}
+
+/** Gives the alliance a name of the player's own and a colour its members share on the map. Free, and can be changed at any time. */
+export function setAllianceLook(c: Campaign, title: string | undefined, color: string | undefined): boolean {
+  const a = c.career?.alliance;
+  if (!a) return false;
+  const t = cleanTitle(title), col = cleanColor(color);
+  if (t) a.title = t; else delete a.title;
+  if (col) a.color = col; else delete a.color;
   return true;
 }
 

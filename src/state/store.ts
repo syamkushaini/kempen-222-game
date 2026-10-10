@@ -34,6 +34,8 @@ import type {
 import { randomSeed } from '../sim/rng';
 import type { World } from '../sim/election';
 import { PARTY_IDS, type RegionId, type StateId } from '../sim/types';
+import { PARTIES } from '../data/parties';
+import { showAlliance, type AllianceLook } from './allianceLook';
 import { newGame, startOf, type GameState, type StartOptions } from './game';
 import type { Identity } from './identity';
 import { cleanLayers, DEFAULT_LAYERS, type LayerId } from '../sim/campaign/layers';
@@ -47,7 +49,7 @@ import { formUnity } from '../sim/campaign/grand';
 import { offerDeputy } from '../sim/campaign/plots';
 import { aidSector, type SectorId } from '../sim/campaign/sectors';
 import { openInquiry } from '../sim/campaign/committee';
-import { dissolveAlliance, expel, foundAlliance, invite } from '../sim/campaign/alliance';
+import { dissolveAlliance, expel, foundAlliance, invite, setAllianceLook as setAlliance } from '../sim/campaign/alliance';
 import { renewSupply, signSupply, type SupplyPrice } from '../sim/campaign/supply';
 import { merge } from '../sim/campaign/merge';
 import { nameShadow } from '../sim/campaign/shadow';
@@ -266,7 +268,8 @@ interface Store {
   formUnity(): void;
   offerDeputy(party: number): void;
   inquiry(): void;
-  foundAlliance(name: number, mark: number): void;
+  foundAlliance(name: number, mark: number, title?: string, color?: string): void;
+  setAllianceLook(title: string | undefined, color: string | undefined): void;
   inviteAlly(party: number): void;
   dissolveAlliance(): void;
   expel(party: number): void;
@@ -357,6 +360,13 @@ interface Store {
 }
 
 const settings = loadSettings();
+
+/** The colour and name the map gives an alliance's members, taken from the game: the player's own party's colour if none was chosen. */
+export const allianceLookOf = (game: GameState | null): AllianceLook | null => {
+  const a = game?.campaign.career?.alliance;
+  if (!game || !a) return null;
+  return { members: a.members, color: a.color ?? PARTIES[PARTY_IDS[game.campaign.player]].color, title: a.title ?? null, name: a.name };
+};
 
 export const useStore = create<Store>((set, get) => {
   /** Applies a change to the campaign on a copy, so the UI sees a new object. */
@@ -532,7 +542,8 @@ export const useStore = create<Store>((set, get) => {
     patronage: (level) => mutate((c) => { setPatronage(c, level); }),
     setBrief: (id, brief) => mutate((c) => { if (setBrief(c, id, brief)) syncOpinion(c); }),
     referendum: (id) => mutate((c, _g, world) => { callReferendum(world, c, id); }),
-    foundAlliance: (name, mark) => mutate((c, _g, world) => { foundAlliance(world, c, name, mark); }),
+    foundAlliance: (name, mark, title, color) => mutate((c, _g, world) => { foundAlliance(world, c, name, mark, title, color); }),
+    setAllianceLook: (title, color) => mutate((c) => { setAlliance(c, title, color); }),
     inviteAlly: (party) => mutate((c, _g, world) => { invite(world, c, party); }),
     dissolveAlliance: () => mutate((c) => { dissolveAlliance(c); }),
     expel: (party) => mutate((c, _g, world) => { expel(world, c, party); }),
@@ -731,4 +742,9 @@ useStore.subscribe((state, prev) => {
   if (profile === state.profile) return;
   profileStore.save(profile);
   useStore.setState({ profile, toasts: [...state.toasts, ...fresh] });
+});
+
+// Everything that draws a party in colour asks for it by index; the alliance's one colour and name are handed over here, ahead of the screens.
+useStore.subscribe((state, prev) => {
+  if (state.game?.campaign !== prev.game?.campaign || state.game?.id !== prev.game?.id) showAlliance(allianceLookOf(state.game));
 });

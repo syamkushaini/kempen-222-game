@@ -566,7 +566,7 @@ export interface Career {
   /** The week the opposition last opened a committee inquiry (see committee.ts). */
   committee?: number;
   /** The coalition the player has given a name and a mark: who belongs (see alliance.ts). */
-  alliance?: { name: number; mark: number; members: number[] };
+  alliance?: { name: number; mark: number; members: number[]; /** A name of the player's own, in place of the ready-made one. */ title?: string; /** The one colour its members share on the map; the player's own party's if none was chosen. */ color?: string };
   /** The promises in the player's manifesto that are made in their short form: half the price, half the appeal (see policy.ts). */
   brief?: PledgeId[];
   /** [party]: the player's promises that party has copied for its own manifesto (see policy.ts). */

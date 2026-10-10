@@ -13,7 +13,7 @@ import type { RegionId, SeatClass } from '../sim/types';
 import { useStore } from '../state/store';
 import { canDraw3D, PATTERNS } from './map3d';
 import { FIT, holdPoint, viewTransform, zoomBy, type View } from './mapGesture';
-import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay, useNarrow, useTablet } from './hooks';
+import { contestName, inShownAlliance, mapName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay, useNarrow, useTablet } from './hooks';
 import { Icon } from './Icon';
 import { SeatSearch } from './SeatSearch';
 import { Term } from './Term';
@@ -395,8 +395,8 @@ export function MapView(props: {
             )}
             <span className="hud-label">{t('map.legend')}</span>
           <div className="legend">
-            {[...seen].sort((a, b) => a - b).map((p) => (
-              <span key={p}><i className="dot" data-party={p} style={{ background: partyColor(p) }} />{partyShort(t, p)}</span>
+            {[...seen].sort((a, b) => a - b).filter((p, i, all) => !inShownAlliance(p) || all.findIndex((q) => inShownAlliance(q)) === i).map((p) => (
+              <span key={p}><i className="dot" data-party={p} style={{ background: partyColor(p) }} />{mapName(t, p)}</span>
             ))}
             <span className="legend-gap" />
             {(['safe', 'leaning', 'marginal'] as const).map((c) => (
@@ -515,7 +515,7 @@ export function MapView(props: {
             {hovered.winner >= 0 ? (
               <span>
                 <i className="dot" data-party={hovered.winner} style={{ background: partyColor(hovered.winner) }} />
-                {partyShort(t, hovered.winner)} · {t('map.margin', { pct: f.pct(hovered.margin) })}
+                {mapName(t, hovered.winner)}{inShownAlliance(hovered.winner) ? ` (${partyShort(t, hovered.winner)})` : ''} · {t('map.margin', { pct: f.pct(hovered.margin) })}
               </span>
             ) : <span className="muted">{t('legend.undeclared')}</span>}
             {hovered.stale && <span className="muted">{t('map.fog')}</span>}
