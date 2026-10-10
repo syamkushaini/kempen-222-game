@@ -166,7 +166,7 @@ function playerNews(c: Campaign, r: ActionReport): NewsItem {
     case 'townhall': return item(`news.me.townhall.${quality === 'flop' ? 'flop' : 'ok'}`, { seat: ref.seat(target.seat!) }, quality === 'flop' ? 'bad' : 'good');
     case 'charity': return item(`news.me.charity.${quality === 'backfire' ? 'backfire' : 'ok'}`, { state: ref.state(target.state!) }, quality === 'backfire' ? 'bad' : 'good');
     case 'youth': return item('news.me.youth', { state: ref.state(target.state!) });
-    case 'festival': return item('news.me.festival', { state: ref.state(target.state!) }, 'good');
+    case 'festival': return item(`news.me.festival.${quality === 'flop' ? 'flop' : quality === 'viral' ? 'viral' : 'great'}`, { state: ref.state(target.state!) }, quality === 'flop' ? 'bad' : 'good');
     case 'conference': return item('news.me.conference', {}, 'good');
     case 'debate': return item(`news.me.debate.${quality === 'great' ? 'won' : 'lost'}`, { party: ref.party(target.party!) }, quality === 'great' ? 'good' : 'bad');
     case 'manifesto': return item(`news.me.manifesto.${quality === 'weak' ? 'weak' : 'ok'}`, {}, quality === 'weak' ? 'bad' : 'good');
@@ -229,7 +229,7 @@ function aftermath(c: Campaign, r: ActionReport) {
   }
   if (r.id === 'megarally') shiftUnity(c, r.party, r.quality === 'weak' ? 1 : 3);
   // A festival and a party conference are for the party itself; a debate is remembered by the one who lost it.
-  if (r.id === 'festival') shiftUnity(c, r.party, EFFECT.festivalUnity);
+  if (r.id === 'festival' && r.quality !== 'flop') shiftUnity(c, r.party, EFFECT.festivalUnity);
   if (r.id === 'local') shiftUnity(c, r.party, EFFECT.localUnity);
   if (r.id === 'conference') shiftUnity(c, r.party, EFFECT.conference);
   if (r.id === 'debate') shiftRelation(c, r.party, r.target.party!, -6);

@@ -179,7 +179,7 @@ export const EFFECT = {
   townhall: 0.14, townhallFlopChance: 0.2, townhallFlop: 0.04, townhallFlopNat: 0.008,
   charity: 0.07, charityMotivation: 0.05, charityScandalChance: 0.15, charityScandalOverLimit: 0.2, charityScandal: 0.015,
   youth: 0.07, youthTurnout: 0.06,
-  festival: 0.035, festivalUnity: 2,
+  festival: 0.035, festivalUnity: 2, festivalOdds: 0.5, festivalViral: 0.2,
   debate: 0.05, debateRival: 0.02, debateLoss: 0.035, debateBase: 0.5, debatePerPoint: 0.08, debateRepeat: 0.6,
   manifesto: 0.045, manifestoDivided: 0.4,
   conference: 8, conferenceBranches: 3,
@@ -643,11 +643,15 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       c.dyn.turnout.nat[bloc] += EFFECT.youthTurnout * roll * room(c.dyn.turnout.nat[bloc], CAP.stateTurnout);
       break;
     }
-    case 'festival':
-      // A little for everyone, every time; the lasting gain is a party that feels itself a movement.
-      boostBlocs(stateSupport(c, st!), p, EFFECT.festival * (0.9 + 0.2 * rng.next()), null, CAP.state);
-      quality = 'ok';
+    case 'festival': {
+      // A carnival and a feast for the people is a gamble: half the time it takes off and lifts the state twice as much as it once did
+      // (one in five of those, three times), and half the time it rains out, the food goes cold and the money is spent for nothing.
+      const r = rng.next();
+      const mult = r < EFFECT.festivalOdds ? (rng.next() < EFFECT.festivalViral ? 3 : 2) : 0;
+      quality = mult === 0 ? 'flop' : mult === 3 ? 'viral' : 'great';
+      if (mult > 0) boostBlocs(stateSupport(c, st!), p, EFFECT.festival * mult * (0.9 + 0.2 * rng.next()), null, CAP.state);
       break;
+    }
     case 'local': {
       // The event of the place: the groups that belong to it feel it most, and the party's own people are glad to be there.
       boostBlocs(stateSupport(c, st!), p, EFFECT.local * presence * roll, localReach(world, st!), CAP.state);

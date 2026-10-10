@@ -46,8 +46,40 @@ export const PUBLIC_MONEY: ReadonlySet<string> = new Set([
   'showcaseState', 'ministryOffer', 'cityHousing',
 ]);
 const asPublic = (effects: Effect[]): Effect[] => effects.map((e) => (e.t === 'funds' ? { t: 'public', n: e.n } : e));
+
+/**
+ * The decisions that had no way to raise credibility, unity, public trust or stability, each given one: the choice that is the sound one
+ * (own up, listen, keep the promise, answer the hard questions) now earns something for it. By event, then by the choice's number.
+ * Added to what the choice already did, so the price it had is still there.
+ */
+export const SOUND_CHOICE: Record<string, Record<number, Effect[]>> = {
+  forum: { 0: [{ t: 'cred', n: 2 }] }, riders: { 0: [{ t: 'unity', n: 2 }] }, settlers: { 1: [{ t: 'cred', n: 2 }] },
+  podcast: { 0: [{ t: 'cred', n: 2 }] }, donorLeak: { 1: [{ t: 'cred', n: 3 }, { t: 'unity', n: 1 }] },
+  probe: { 0: [{ t: 'trust', n: 4 }, { t: 'cred', n: 2 }] }, firmWindfall: { 1: [{ t: 'cred', n: 1 }] }, firmBust: { 0: [{ t: 'unity', n: 2 }] },
+  pricesGov: { 0: [{ t: 'stability', n: 2 }, { t: 'cred', n: 1 }] }, budget: { 0: [{ t: 'stability', n: 3 }] }, motion: { 1: [{ t: 'stability', n: 4 }] },
+  ultimatum: { 0: [{ t: 'stability', n: 3 }] }, budgetAsk: { 0: [{ t: 'unity', n: 2 }] }, hotelNumbers: { 1: [{ t: 'cred', n: 3 }] },
+  technocratLecture: { 0: [{ t: 'cred', n: 2 }] }, internRevolt: { 0: [{ t: 'unity', n: 2 }, { t: 'cred', n: 1 }] }, speechwriter: { 0: [{ t: 'cred', n: 2 }] },
+  talkShow: { 1: [{ t: 'cred', n: 1 }] }, filmBan: { 1: [{ t: 'trust', n: 3 }, { t: 'cred', n: 1 }] }, riceShortage: { 0: [{ t: 'stability', n: 2 }, { t: 'trust', n: 2 }] },
+  gigStrike: { 0: [{ t: 'unity', n: 2 }] }, dryTaps: { 0: [{ t: 'unity', n: 2 }] }, foreignWorkers: { 0: [{ t: 'stability', n: 2 }] },
+  borneoThird: { 0: [{ t: 'cred', n: 2 }] }, oilRights: { 0: [{ t: 'stability', n: 3 }, { t: 'cred', n: 1 }] }, borneoHighway: { 0: [{ t: 'cred', n: 2 }] },
+  peninsulaGaffe: { 0: [{ t: 'cred', n: 2 }] }, durianFeast: { 0: [{ t: 'unity', n: 2 }] }, footballFinal: { 1: [{ t: 'cred', n: 2 }] },
+  openHouse: { 1: [{ t: 'unity', n: 2 }] }, shophouses: { 0: [{ t: 'cred', n: 2 }] }, examResults: { 0: [{ t: 'trust', n: 2 }, { t: 'cred', n: 1 }] },
+  seaIncident: { 1: [{ t: 'cred', n: 2 }] }, mediationAward: { 0: [{ t: 'trust', n: 3 }] }, summitHost: { 1: [{ t: 'trust', n: 2 }] },
+  royaltiesRow: { 1: [{ t: 'stability', n: 3 }] }, bridge: { 0: [{ t: 'cred', n: 2 }] }, ricePrice: { 1: [{ t: 'stability', n: 2 }] },
+  adviserUltimatum: { 0: [{ t: 'cred', n: 2 }, { t: 'unity', n: 1 }] }, sanctionsThreat: { 1: [{ t: 'cred', n: 2 }] },
+  claimsTalks: { 0: [{ t: 'stability', n: 3 }, { t: 'trust', n: 1 }] }, cityHousing: { 0: [{ t: 'trust', n: 2 }, { t: 'cred', n: 1 }] },
+  weekendChange: { 2: [{ t: 'unity', n: 2 }] }, riverFactory: { 0: [{ t: 'trust', n: 3 }, { t: 'cred', n: 1 }] }, fishKill: { 0: [{ t: 'trust', n: 3 }] },
+  memberApp: { 0: [{ t: 'unity', n: 2 }] }, carbonRule: { 0: [{ t: 'trust', n: 2 }, { t: 'cred', n: 1 }] }, mediaBlackout: { 2: [{ t: 'cred', n: 2 }] },
+  volunteerShortage: { 0: [{ t: 'unity', n: 2 }] },
+};
+const sound = (id: string, choices: Choice[]): Choice[] => {
+  const more = SOUND_CHOICE[id];
+  return more ? choices.map((ch, i) => (more[i] ? { ...ch, effects: [...ch.effects, ...more[i]] } : ch)) : choices;
+};
 /** Everything that can happen between elections. */
-export const EVENTS: Record<string, EventDef> = Object.fromEntries(Object.entries(ALL_EVENTS).map(([id, def]) => [
+export const EVENTS: Record<string, EventDef> = Object.fromEntries(Object.entries(ALL_EVENTS).map(([id, raw]) => {
+  const def: EventDef = SOUND_CHOICE[id] ? { ...raw, choices: sound(id, raw.choices) } : raw;
+  return [
   id,
   !PUBLIC_MONEY.has(id) ? def : {
     ...def,
@@ -56,7 +88,8 @@ export const EVENTS: Record<string, EventDef> = Object.fromEntries(Object.entrie
       ...(ch.gamble ? { gamble: { ...ch.gamble, win: asPublic(ch.gamble.win), lose: asPublic(ch.gamble.lose) } } : {}),
     })),
   },
-]));
+  ];
+}));
 
 /** Where the player sits: heading the government, a partner in it, or across the floor. */
 export type Seat = 'pm' | 'gov' | 'opp';
@@ -155,8 +188,9 @@ export const REALISM: Record<'easy' | 'normal' | 'hard', { bad: number; good: nu
 export const realistic = (c: Campaign, n: number): number => n * (n < 0 ? REALISM[c.difficulty].bad : REALISM[c.difficulty].good);
 
 /** How many weeks pass, at least, between one random event and the next. */
-const QUIET_WEEKS = 3;
-const EVENT_CHANCE = 0.06;
+const QUIET_WEEKS = 1;
+/** The weekly chance of a decision on the desk, before the level of difficulty. It was 0.06; players asked for more decisions. */
+const EVENT_CHANCE = 0.14;
 
 /** Whether an event could happen to the player now, by their place in government and by the state of things. */
 /** Things only a country's government deals with: foreign affairs, the federation's own quarrels, national schemes and taxes. A state's does not. */

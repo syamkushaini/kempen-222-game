@@ -6,6 +6,7 @@ import { emptyDynamics } from '../dynamics';
 import { PARTY_IDS } from '../types';
 import { heldOf, scaled, truth } from './actions';
 import { advisersOf } from './advisers';
+import { soundest } from './soundest';
 import { answerEvent, beginCampaign, nextTerm, resumeTerm, skipAhead, startCareer, termWeek } from './career';
 import { COUNTRY_ONLY, EVENTS } from './events';
 import { endDay } from './formation';
@@ -28,7 +29,7 @@ const career = (player = PS, seed = 5): Campaign => startCareer(base, { player, 
 function toCampaign(c: Campaign): void {
   for (let g = 0; g < 4000 && c.phase !== 'campaign' && !c.career!.ending; g++) {
     const world = worldOf(c)!;
-    if (c.phase === 'term') { if (c.inbox.length) answerEvent(world, c, c.inbox.shift()!, 2); else skipAhead(world, c, 13); }
+    if (c.phase === 'term') { if (c.inbox.length) { const scene = c.inbox.shift()!; answerEvent(world, c, scene, soundest(scene)); } else skipAhead(world, c, 13); }
     else if (c.phase === 'formation') endDay(world, c);
     else if (c.phase === 'done') resumeTerm(c);
   }

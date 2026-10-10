@@ -34,7 +34,7 @@ describe('the added actions', () => {
 
   it('are explained and reported in both languages', () => {
     const keys = NEW.flatMap((id) => [`action.${id}`, `action.${id}.desc`]).concat([
-      'news.me.townhall.ok', 'news.me.townhall.flop', 'news.me.charity.ok', 'news.me.charity.backfire', 'news.me.youth', 'news.me.festival',
+      'news.me.townhall.ok', 'news.me.townhall.flop', 'news.me.charity.ok', 'news.me.charity.backfire', 'news.me.youth', 'news.me.festival.great', 'news.me.festival.viral', 'news.me.festival.flop',
       'news.me.conference', 'news.me.debate.won', 'news.me.debate.lost', 'news.me.manifesto.ok', 'news.me.manifesto.weak', 'news.me.radio',
     ]);
     for (const key of keys) for (const lang of ['en', 'ms'] as const) expect(translate(lang, key as never), `${lang} ${key}`).not.toBe(key);
@@ -98,16 +98,34 @@ describe('what each one is good and bad at', { timeout: 60_000 }, () => {
     expect(c.dyn.support.state[st][b18][PS]).toBeGreaterThan(c.dyn.support.state[st][bloc('heartland')][PS] * 10);
   });
 
-  it('a carnival gives a little everywhere and lifts the party’s unity; a conference lifts it far more but wins no votes', () => {
+  it('a carnival is a gamble: about half the time it takes off at two or three times what it once did and lifts unity, and otherwise the money is spent for nothing', () => {
+    let lifted = 0, flops = 0, big = 0;
+    const base = (() => { const c = rich(game(1)); const before = c.parties[PS]!.funds; playerAct(general, c, 'festival', { state: state(rural.id) }); return before - c.parties[PS]!.funds; })();
+    expect(base).toBeGreaterThan(0);
+    for (let seed = 1; seed <= 60; seed++) {
+      const c = rich(game(seed));
+      c.parties[PS]!.unity = 50;
+      const funds = c.parties[PS]!.funds;
+      playerAct(general, c, 'festival', { state: state(rural.id) });
+      const rows = c.dyn.support.state[state(rural.id)];
+      const gain = rows ? Math.max(...rows.map((row) => row[PS])) : 0;
+      // The money is spent whether or not it comes off.
+      expect(c.parties[PS]!.funds).toBeLessThan(funds);
+      if (gain > 0) { lifted++; expect(c.parties[PS]!.unity).toBe(52); if (gain > 0.085) big++; } else { flops++; expect(c.parties[PS]!.unity).toBe(50); }
+    }
+    expect(lifted).toBeGreaterThan(18);
+    expect(flops).toBeGreaterThan(18);
+    expect(big).toBeGreaterThan(0);
+    expect(big).toBeLessThan(lifted / 2);
+  });
+
+  it('a conference lifts unity far more than a carnival but wins no votes', () => {
     const c = rich(game());
     c.parties[PS]!.unity = 50;
-    playerAct(general, c, 'festival', { state: state(rural.id) });
-    expect(c.parties[PS]!.unity).toBe(52);
-    expect(c.dyn.support.state[state(rural.id)].every((row) => row[PS] > 0)).toBe(true);
     const nat = JSON.stringify(c.dyn.support.nat);
     const seat = JSON.stringify(c.dyn.support.state);
     playerAct(general, c, 'conference', {});
-    expect(c.parties[PS]!.unity).toBe(60);
+    expect(c.parties[PS]!.unity).toBe(58);
     expect(JSON.stringify(c.dyn.support.nat)).toBe(nat);
     expect(JSON.stringify(c.dyn.support.state)).toBe(seat);
     c.parties[PS]!.unity = 98;

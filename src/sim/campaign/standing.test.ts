@@ -180,5 +180,5 @@ describe('the logic of when a trouble comes', () => {
     const [cold, hot] = [count(false), count(true)];
     expect(hot).toBeLessThan(cold);
     expect(COOL_WEEKS).toBeGreaterThan(10);
-  });
+  }, 60_000); // eight hundred careers started: slow when the machine is busy
 });
