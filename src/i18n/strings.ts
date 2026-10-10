@@ -7,6 +7,7 @@ import { PEOPLE_EN, PEOPLE_MS, type PeopleKey } from './people';
 import { MISSIONS_EN, MISSIONS_MS, type MissionKey } from './missions';
 import { MAKER_EN, MAKER_MS, type MakerKey } from './maker';
 import { HELP_EN, HELP_MS, type HelpKey } from './help';
+import { MONEY_EN, MONEY_MS, type MoneyKey } from './money';
 import { LOOK_EN, LOOK_MS, type LookKey } from './look';
 
 const en = {
@@ -2367,7 +2368,7 @@ const en = {
 type CoreKey = keyof typeof en;
 /** The keys defined in this file, so that text kept elsewhere can be checked not to reuse one. */
 export const CORE_KEYS: readonly string[] = Object.keys(en);
-export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey;
+export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey;
 
 const ms: Record<CoreKey, string> = {
   'app.title': 'Kempen 222',
@@ -4727,8 +4728,8 @@ const ms: Record<CoreKey, string> = {
 export type Lang = 'en' | 'ms';
 // Event text is kept in its own file and looked up by keys built from event ids.
 export const STRINGS: Record<Lang, Record<string, string>> = {
-  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...flattenEvents(EVENTS_EN) },
-  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...flattenEvents(EVENTS_MS) },
+  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...flattenEvents(EVENTS_EN) },
+  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...flattenEvents(EVENTS_MS) },
 };
 
 /**

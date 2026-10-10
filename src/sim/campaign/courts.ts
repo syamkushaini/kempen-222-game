@@ -2,7 +2,7 @@ import type { World } from '../election';
 import { clamp } from '../math';
 import { Rng } from '../rng';
 import { BLOC_IDS, type BlocId } from '../types';
-import { scaled } from './actions';
+import { govMoney, treasuryOf } from './treasury';
 import { forgetAct, agenda, enact } from './govern';
 import { isPm, lift } from './office';
 import { pushNews } from './news';
@@ -29,7 +29,7 @@ export function canReferendum(world: World, c: Campaign, id: PledgeId): { ok: tr
   if (!agenda(c).includes(`pledge:${id}`)) return { ok: false, reason: 'bill' };
   if (!isContested(id)) return { ok: false, reason: 'tame' };
   if (k.flags.includes(`referendum${k.term}`)) return { ok: false, reason: 'again' };
-  if (pc.funds < scaled(world, REFERENDUM.money)) return { ok: false, reason: 'funds' };
+  if (treasuryOf(c) < govMoney(world, REFERENDUM.money)) return { ok: false, reason: 'funds' };
   return { ok: true };
 }
 
@@ -53,7 +53,7 @@ export function callReferendum(world: World, c: Campaign, id: PledgeId): boolean
   const rng = new Rng((c.rng ^ 0x4efe) + k.week);
   const passed = rng.next() < odds;
   c.rng = rng.state;
-  c.parties[me]!.funds -= scaled(world, REFERENDUM.money);
+  k.treasury = treasuryOf(c) - govMoney(world, REFERENDUM.money);
   k.flags.push(`referendum${k.term}`);
   k.bills = k.bills.filter((b) => b.id !== `pledge:${id}`);
   const bill = `@bill:pledge:${id}`;

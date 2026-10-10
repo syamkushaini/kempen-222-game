@@ -8,6 +8,7 @@ import { answerEvent, nextTerm, resumeTerm, skipAhead, startCareer } from './car
 import { factionsOf, deputyOf } from './factions';
 import { endDay } from './formation';
 import { closeNight, endWeek } from './turn';
+import { govMoney } from './treasury';
 import { COURT, REFERENDUM, callReferendum, canReferendum, courtWeek, isContested, referendumOdds, strikeChance } from './courts';
 import { agenda, enact, forgetAct, resolveVote } from './govern';
 import {
@@ -127,6 +128,8 @@ describe('a referendum', () => {
     k.promises = [id];
     k.delivery = {};
     k.bills = [];
+    // The government pays for a referendum from its own treasury.
+    k.treasury = 10 * govMoney(world, REFERENDUM.money);
   };
   it('is for contested promises only, once a parliament, and costs money', () => {
     expect(contested.length).toBeGreaterThanOrEqual(3);
@@ -139,12 +142,15 @@ describe('a referendum', () => {
     asPm(c, tame);
     expect(canReferendum(world, c, tame)).toEqual({ ok: false, reason: 'tame' });
     asPm(c, id);
-    c.parties[PS]!.funds = 0;
+    // The government pays, from its treasury, and the party's own purse is not touched.
+    c.career!.treasury = 0;
     expect(canReferendum(world, c, id)).toEqual({ ok: false, reason: 'funds' });
-    c.parties[PS]!.funds = scaled(world, 5_000_000);
+    c.career!.treasury = govMoney(world, 5_000_000);
+    const treasury = c.career!.treasury;
     const funds = c.parties[PS]!.funds;
     expect(callReferendum(world, c, id)).toBe(true);
-    expect(c.parties[PS]!.funds).toBe(funds - scaled(world, REFERENDUM.money));
+    expect(c.career!.treasury).toBe(treasury - govMoney(world, REFERENDUM.money));
+    expect(c.parties[PS]!.funds).toBe(funds);
     expect(canReferendum(world, c, id).ok).toBe(false);
     expect(callReferendum(world, c, id)).toBe(false);
   });

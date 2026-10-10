@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getWorld, worldOf } from '../../data/world';
 import { lastElection } from '../election';
+import { govMoney } from './treasury';
 import { N_BLOCS, PARTY_IDS } from '../types';
 import { answerEvent, nextTerm, skipAhead, startCareer, syncOpinion, termIncome, termWeek } from './career';
 import { BY_EFFORT, holderOf, houseTally, resolveByElection, resolveStatePolls, roundDue, ROUNDS, startStates, statesHeld, vacantSeat } from './contests';
@@ -114,7 +115,7 @@ describe('state polls', () => {
     const c = career();
     expect(c.career!.states).toEqual(states);
     // The patronage of the states a party governs goes to the government's treasury, on top of its allocation as head of government.
-    expect(termIncome(base, c).allocation).toBe(36_000 + 2_000 * statesHeld(c, PS));
+    expect(termIncome(base, c).allocation).toBe(govMoney(base, 36_000) + govMoney(base, 2_000) * statesHeld(c, PS));
     expect(statesHeld(c, PS)).toBeGreaterThan(1);
   });
 

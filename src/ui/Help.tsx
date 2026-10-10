@@ -34,7 +34,7 @@ const SECTIONS: Partial<Record<TabId, string[]>> = {
   missions: ['missions.what', 'missions.decide', 'missions.risk', 'missions.final'],
   challenges: ['challenges.weekly', 'challenges.own', 'challenges.points'],
   money: ['money.funds', 'money.limit', 'money.team', 'money.candidates'],
-  economy: ['economy.figures', 'economy.mood', 'economy.budget', 'economy.debt', 'economy.nation', 'economy.notice', 'economy.keep'],
+  economy: ['economy.figures', 'economy.size', 'economy.treasury', 'economy.mood', 'economy.budget', 'economy.debt', 'economy.nation', 'economy.notice', 'economy.keep'],
 };
 const TIPS = 10;
 const KEEP = ['credibility', 'unity', 'stability', 'trust'];

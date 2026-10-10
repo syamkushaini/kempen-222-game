@@ -5,6 +5,8 @@ import {
   agenda, canMotion, canPull, confidenceCount, deficit, economicMood, MAX_BILLS, MINISTER_NAMES, needsBill, prepWeeks, whipCount,
 } from '../sim/campaign/govern';
 import { scaled } from '../sim/campaign/actions';
+import { publicFinance } from '../sim/campaign/gdp';
+import { EconomyBook } from './EconomyBook';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
 import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
 import { MAX_MEASURES } from '../sim/campaign/office';
@@ -84,6 +86,7 @@ export function GovernmentTab() {
   const toBudget = weekOfYear <= 40 ? 40 - weekOfYear : 92 - weekOfYear;
   const available = pm ? agenda(campaign) : [];
   const r = k.record;
+  const finance = publicFinance(world, k);
 
   return (
     <section className="orders house">
@@ -102,6 +105,7 @@ export function GovernmentTab() {
       </dl>
       <p className="muted small">{t(feel > 0.5 ? 'house.feel.good' : feel < -0.5 ? 'house.feel.bad' : 'house.feel.flat')} {t('house.deficit', { pct: deficit(k).toFixed(1) })}</p>
 
+      <EconomyBook />
       <NationCard />
 
       {pm && (
@@ -114,6 +118,7 @@ export function GovernmentTab() {
                 <div className="grow">
                   <span className="action-title">{t(`line.${id}`)}</span>
                   <span className="action-meta">{t(`line.${id}.desc`)}</span>
+                  <span className="action-meta num">{t('house.line.rm', { rm: f.rm(finance.lines[id]) })}</span>
                 </div>
                 <DialSwitch label={t(`line.${id}`)} value={k.budget.lines[id]} onChange={(value) => setBudget({ line: id, value })} />
               </li>

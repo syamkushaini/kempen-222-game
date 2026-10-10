@@ -33,6 +33,7 @@ import { shadowWeek } from './shadow';
 import { redraw, redrawWeek, resolveRedraw } from './redraw';
 import { factionsWeek, partyPoll, partyPollWeek, resolvePartyPoll } from './factions';
 import { allianceBonus, allianceWeek, dropMember } from './alliance';
+import { gdpWeek } from './gdp';
 import { sectorsWeek } from './sectors';
 import { trialWeek } from './trial';
 import { advisersWeek } from './advisers';
@@ -406,6 +407,7 @@ export function termWeek(world: World, c: Campaign): void {
   echoWeek(c);
   advisersWeek(c);
   sectorsWeek(c, rngWeek);
+  gdpWeek(world, c);
   trialWeek(c);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
@@ -714,7 +716,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.shadow ? { shadow: { ...k.shadow } } : {}),
     manifesto: next.manifesto.map((m, p) => withoutLaws(k, p === c.player ? k.manifesto[p] : m)),
     promises: k.promises, flags: k.flags,
-    economy: k.economy, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, record: k.record, states: k.states,
+    economy: k.economy, reports: k.reports, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, record: k.record, states: k.states,
   };
   // Two parliaments at the head of the government is all a term limit allows: in the third the party governs, and its leader does not.
   const run = outcome.pm === c.player ? (k.pmRun ?? 0) + 1 : 0;

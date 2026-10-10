@@ -22,7 +22,7 @@ export function scoreOf(effects: readonly Effect[]): number {
       case 'stability': n += e.n * 0.3; break;
       case 'unity': n += e.n * 0.2; break;
       case 'mood': n += e.n * 30 * (e.blocs === 'all' ? 3 : Math.min(3, e.blocs.length)); break;
-      case 'funds': n += Math.sign(e.n) * Math.min(1, Math.abs(e.n) / 100_000) * 0.2; break;
+      case 'funds': case 'public': n += Math.sign(e.n) * Math.min(1, Math.abs(e.n) / 100_000) * 0.2; break;
       case 'end': case 'falls': n -= 3; break;
       default: break;
     }

@@ -1,7 +1,7 @@
 import {
   ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, machineryTargets, ledger, termIncome, termSpending,
 } from '../sim/campaign/career';
-import { grantsCost, hasPublicMoney, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
+import { govMoney, grantsCost, hasPublicMoney, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
 import { useState } from 'react';
 import { contestsState, scaled } from '../sim/campaign/actions';
 import { ROUNDS, STATE_GOVERNMENT_INCOME, statesHeld } from '../sim/campaign/contests';
@@ -177,7 +177,7 @@ export function OrdersTab() {
         <>
         <h3>{t('orders.statesGov')}</h3>
         <p className="muted small action-desc">
-          {t('orders.statesGov.desc', { a: ROUNDS[0].week, b: ROUNDS[1].week, c: ROUNDS[2].week, rm: f.rm(scaled(world, STATE_GOVERNMENT_INCOME)) })}{' '}
+          {t('orders.statesGov.desc', { a: ROUNDS[0].week, b: ROUNDS[1].week, c: ROUNDS[2].week, rm: f.rm(govMoney(world, STATE_GOVERNMENT_INCOME)) })}{' '}
           {k.rounds < ROUNDS.length
             ? t('orders.statesGov.next', { n: Math.max(0, ROUNDS[k.rounds].week - k.week), states: ROUNDS[k.rounds].states.map((st) => regionLabel(t, world, st)).join(', ') })
             : t('orders.statesGov.done')}

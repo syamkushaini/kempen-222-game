@@ -14,10 +14,25 @@ import type { Campaign } from './types';
 // The treasury is the government's, so a party that governs nowhere leaves it behind, and in an election campaign it is
 // frozen: nothing is received, granted or diverted until the new term.
 
-/** What each level of development grants costs a week, and what a level of diversion moves, at general-election scale. */
+/**
+ * The government's money is counted in millions and billions, not in the party's tens of thousands: an amount written at the party's
+ * scale (the way the game's figures have always been written) is multiplied by this to be what the government spends. In a state it is
+ * a fortieth of that, so that a state's treasury is a state's and not the country's.
+ */
+export const GOV_SCALE = 30_000;
+export const STATE_SHARE = 0.025;
+const GOV_ROUND = 100_000;
+/** What an amount written at the party's general-election scale is, as the government's own money, in this contest. */
+export const govMoney = (world: World, n: number): number => {
+  if (n === 0) return 0;
+  const sign = Math.sign(n);
+  return sign * Math.max(GOV_ROUND, Math.round((Math.abs(n) * GOV_SCALE * (world.rules.kind === 'state' ? STATE_SHARE : 1)) / GOV_ROUND) * GOV_ROUND);
+};
+
+/** What each level of development grants costs a week, at the party's scale (the government's is `govMoney` of it); and what a level of diversion moves, which is the party's. */
 export const GRANT_STEP = 10_000;
 export const DIVERT_STEP = 10_000;
-/** The weekly allocation of a head of government, and of a partner in government, at general-election scale. */
+/** The weekly allocation of a head of government, and of a partner in government, at the party's general-election scale. */
 export const ALLOCATION = { pm: 36_000, partner: 14_000 } as const;
 /** The treasury holds at most this many weeks of its allocation: what is not spent is not saved up for ever. */
 export const TREASURY_WEEKS = 26;
@@ -38,8 +53,8 @@ export const hasPublicMoney = (c: Campaign): boolean => !!c.career && (inGov(c, 
  */
 export function allocation(world: World, c: Campaign): number {
   if (!c.career || c.phase !== 'term') return 0;
-  const centre = inGov(c, c.player) ? scaled(world, isPm(c) ? ALLOCATION.pm : ALLOCATION.partner) : 0;
-  return centre + Math.round(scaled(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player) * patronageMult(c.career!));
+  const centre = inGov(c, c.player) ? govMoney(world, isPm(c) ? ALLOCATION.pm : ALLOCATION.partner) : 0;
+  return centre + Math.round(govMoney(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player) * patronageMult(c.career!));
 }
 
 /** The most the treasury keeps. */
@@ -57,7 +72,7 @@ export function diverted(world: World, c: Campaign): number {
 export function grantsCost(world: World, c: Campaign): number {
   const k = c.career;
   if (!k || c.phase !== 'term' || !hasPublicMoney(c)) return 0;
-  return scaled(world, GRANT_STEP) * (k.orders.grants ?? 0);
+  return govMoney(world, GRANT_STEP) * (k.orders.grants ?? 0);
 }
 
 /** Where grants go: the regions chosen as targets, or everywhere the party stands. */
@@ -109,7 +124,7 @@ export function treasuryWeek(world: World, c: Campaign): number {
   if (spent > 0) {
     k.treasury -= spent;
     const targets = grantTargets(world, c);
-    for (const st of targets) goodwill[st] = clamp((goodwill[st] ?? 0) + spent / targets.length / scaled(world, GRANT_PER_POINT), 0, GOODWILL_MAX);
+    for (const st of targets) goodwill[st] = clamp((goodwill[st] ?? 0) + spent / targets.length / govMoney(world, GRANT_PER_POINT), 0, GOODWILL_MAX);
   }
   return toParty;
 }

@@ -4,7 +4,7 @@ import { PARTY_IDS } from '../types';
 import { scaled } from './actions';
 import { setOrders, startCareer, termIncome, termSpending, termWeek } from './career';
 import { statesHeld } from './contests';
-import { ALLOCATION, allocation, GOODWILL_EFFECT, GRANT_STEP, grantsCost, grantTargets, syncGoodwill, TREASURY_WEEKS, treasuryCap, treasuryOf, treasuryWeek } from './treasury';
+import { ALLOCATION, allocation, GOODWILL_EFFECT, govMoney, GRANT_STEP, grantsCost, grantTargets, syncGoodwill, TREASURY_WEEKS, treasuryCap, treasuryOf, treasuryWeek } from './treasury';
 import { isValidCampaign } from './validate';
 import type { Campaign } from './types';
 
@@ -16,11 +16,11 @@ const weeks = (c: Campaign, n: number) => { for (let w = 0; w < n; w++) { c.inbo
 describe('the government’s money', () => {
   it('comes to a government, more to its head than to a partner, and to an opposition not at all', () => {
     const pm = career(PS), partner = career(BP), opposition = career(PT);
-    expect(allocation(base, pm)).toBe(scaled(base, ALLOCATION.pm) + 2_000 * statesHeld(pm, PS));
-    expect(allocation(base, partner)).toBe(scaled(base, ALLOCATION.partner) + 2_000 * statesHeld(partner, BP));
+    expect(allocation(base, pm)).toBe(govMoney(base, ALLOCATION.pm) + govMoney(base, 2_000) * statesHeld(pm, PS));
+    expect(allocation(base, partner)).toBe(govMoney(base, ALLOCATION.partner) + govMoney(base, 2_000) * statesHeld(partner, BP));
     expect(allocation(base, pm)).toBeGreaterThan(allocation(base, partner));
     // A party in opposition at the centre that governs states has only their patronage; one that governs nowhere has nothing.
-    expect(allocation(base, opposition)).toBe(2_000 * statesHeld(opposition, PT));
+    expect(allocation(base, opposition)).toBe(govMoney(base, 2_000) * statesHeld(opposition, PT));
     expect(allocation(base, opposition)).toBeGreaterThan(0);
     const nowhere = career(PT);
     nowhere.career!.states = {};
@@ -75,7 +75,7 @@ describe('the government’s money', () => {
   it('is granted to the places chosen, and wins goodwill there, which shows in the drift of opinion', () => {
     const c = career();
     setOrders(base, c, { grants: 2, focusStates: ['johor'] });
-    expect(grantsCost(base, c)).toBe(2 * scaled(base, GRANT_STEP));
+    expect(grantsCost(base, c)).toBe(2 * govMoney(base, GRANT_STEP));
     expect(grantTargets(base, c)).toEqual(['johor']);
     const drift = c.drift.support.state.johor?.[0][PS] ?? 0;
     const others = c.drift.support.state.johor?.[0][BP] ?? 0;

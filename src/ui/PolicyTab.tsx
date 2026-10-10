@@ -5,8 +5,9 @@ import {
 import { ISSUE_IDS, PLEDGE_IDS, type IssueId, type PledgeId } from '../sim/campaign/types';
 import { LETTER, TONES, canWrite, letterWait } from '../sim/campaign/letters';
 import { agenda, canRepeal } from '../sim/campaign/govern';
+import { govMoney } from '../sim/campaign/treasury';
 import { REFERENDUM, canReferendum, isContested, referendumOdds } from '../sim/campaign/courts';
-import { scaled } from '../sim/campaign/actions';
+
 import type { BlocId } from '../sim/types';
 import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
@@ -160,7 +161,7 @@ export function PolicyTab() {
       {campaign.phase === 'term' && agenda(campaign).some((b) => b.startsWith('pledge:') && isContested(b.slice(7) as PledgeId)) && (
         <>
           <h4>{t('referendum.title')}</h4>
-          <p className="muted small action-desc">{t('referendum.desc', { rm: f.rm(scaled(world, REFERENDUM.money)) })}</p>
+          <p className="muted small action-desc">{t('referendum.desc', { rm: f.rm(govMoney(world, REFERENDUM.money)) })}</p>
           <ul className="plain-list">
             {agenda(campaign).filter((b) => b.startsWith('pledge:') && isContested(b.slice(7) as PledgeId)).map((b) => {
               const id = b.slice(7) as PledgeId;

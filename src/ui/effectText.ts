@@ -1,5 +1,6 @@
 import { scaled } from '../sim/campaign/actions';
-import { realistic, type Effect } from '../sim/campaign/events';
+import { publicAmount, realistic, type Effect } from '../sim/campaign/events';
+import { hasPublicMoney } from '../sim/campaign/treasury';
 import type { Campaign } from '../sim/campaign/types';
 import type { World } from '../sim/election';
 import type { Format, T } from './hooks';
@@ -14,6 +15,8 @@ export function describeEffect(t: T, f: Format, world: World, campaign: Campaign
   const arrow = (n: number, label: string) => `${n > 0 ? '▲' : '▼'} ${label}`;
   switch (e.t) {
     case 'funds': return `${e.n > 0 ? '+' : '−'}${f.rm(scaled(world, Math.abs(realistic(campaign, e.n))))}`;
+    // The public's money: the treasury's, in the government's amounts, where the party governs; the party's own, as written, where it does not.
+    case 'public': return hasPublicMoney(campaign) ? `${t('hint.treasury')} ${e.n > 0 ? '+' : '−'}${f.rm(Math.abs(publicAmount(world, campaign, e.n)))}` : `${e.n > 0 ? '+' : '−'}${f.rm(scaled(world, Math.abs(realistic(campaign, e.n))))}`;
     case 'dividend': return `${e.pct > 0 ? '+' : '−'}${f.rm(Math.abs(Math.round((campaign.career?.assets ?? 0) * e.pct)))}`;
     case 'assets': return arrow(e.pct, t('hint.assets'));
     // Unity is kept in whole points.

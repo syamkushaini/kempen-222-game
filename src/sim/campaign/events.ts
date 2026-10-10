@@ -15,6 +15,7 @@ import { DESK_EVENTS } from './eventList11';
 import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
+import { govMoney, hasPublicMoney, treasuryCap, treasuryOf } from './treasury';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { membersFeel } from './members';
 import { nationOf, shiftNation } from './nation';
@@ -29,8 +30,33 @@ import { scaleHoldings } from './party';
 import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEvent, standingOf, topicOf, type Standing } from './standing';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
+const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS };
+
+/**
+ * Events whose money is the public's: relief for a flood, a bridge, a subsidy, a port. Where the player's party governs they are paid
+ * for from the government's treasury, in the government's amounts (millions and billions); where it does not, the same amount is the
+ * party's own, as it was written. The rest of the money in events (donors, the party's hall, its volunteers) is always the party's.
+ */
+export const PUBLIC_MONEY: ReadonlySet<string> = new Set([
+  'flood', 'dryTaps', 'haze', 'borneoHighway', 'monsoon', 'priceSurge', 'sanctionsThreat', 'strandedAbroad', 'claimsStalled', 'fedTalks',
+  'fedSettlement', 'cityHousing', 'flashFloods', 'longhouseRoad', 'portBid', 'portProtest', 'riverFactory', 'fishKill', 'nasiLemakPrice',
+  'gigInsurance', 'cropGlut', 'trawlers', 'heritageHouse', 'stateBanquet', 'ferryStops', 'trafficJam', 'scamCalls', 'tuitionCentres',
+  'strayCats', 'bridge', 'bridgeContract', 'riceInquiry', 'shophouses', 'lakeResort', 'hawkerLicence', 'nightMarket', 'goldMedal',
+  'footballFinal', 'processionRoute', 'gigStrike', 'allocationFight', 'fundProbe', 'youthFundProbe', 'constituencyFlood', 'constituencyClinic',
+  'showcaseState', 'ministryOffer', 'cityHousing',
+]);
+const asPublic = (effects: Effect[]): Effect[] => effects.map((e) => (e.t === 'funds' ? { t: 'public', n: e.n } : e));
 /** Everything that can happen between elections. */
-export const EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS };
+export const EVENTS: Record<string, EventDef> = Object.fromEntries(Object.entries(ALL_EVENTS).map(([id, def]) => [
+  id,
+  !PUBLIC_MONEY.has(id) ? def : {
+    ...def,
+    choices: def.choices.map((ch) => ({
+      ...ch, effects: asPublic(ch.effects),
+      ...(ch.gamble ? { gamble: { ...ch.gamble, win: asPublic(ch.gamble.win), lose: asPublic(ch.gamble.lose) } } : {}),
+    })),
+  },
+]));
 
 /** Where the player sits: heading the government, a partner in it, or across the floor. */
 export type Seat = 'pm' | 'gov' | 'opp';
@@ -45,6 +71,7 @@ export type Who = 'pm' | 'partners' | 'opp' | PartyId;
 export type Effect =
   | { t: 'mood'; blocs: BlocId[] | 'all'; n: number }
   | { t: 'rival'; who: Who; n: number }
+  | { t: 'public'; n: number }
   | { t: 'unity' | 'funds' | 'cred' | 'stability' | 'trust' | 'machinery' | 'dossier' | 'donors' | 'state' | 'fiscal'; n: number }
   | { t: 'economy'; growth?: number; inflation?: number }
   | { t: 'nation'; health?: number; education?: number; standing?: number }
@@ -264,6 +291,11 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
       case 'rival': for (const p of partiesOf(c, e.who)) for (let b = 0; b < N_BLOCS; b++) k.mood[b][p] += e.n; break;
       case 'unity': shiftUnity(c, me, realistic(c, e.n)); break;
       case 'funds': pc.funds = Math.max(0, pc.funds + Math.sign(e.n) * scaled(world, Math.abs(realistic(c, e.n)))); break;
+      case 'public':
+        // The public's money: the government's treasury where the party governs, and otherwise the party's own purse, as written.
+        if (hasPublicMoney(c)) k.treasury = clamp(treasuryOf(c) + publicAmount(world, c, e.n), 0, Math.max(treasuryCap(world, c), treasuryOf(c)));
+        else pc.funds = Math.max(0, pc.funds + Math.sign(e.n) * scaled(world, Math.abs(realistic(c, e.n))));
+        break;
       case 'cred': k.credibility = clamp(k.credibility + realistic(c, e.n), 0, 100); break;
       case 'stability': k.government.stability = clamp(k.government.stability + realistic(c, e.n), 5, 95); break;
       case 'trust': k.government.trust = clamp(k.government.trust + realistic(c, e.n), 0, 100); break;
@@ -303,6 +335,9 @@ export function gambleChance(c: Campaign, chance: number | 'unity' | 'cred' | 's
   return chance;
 }
 
+/** What a public sum is, in the government's own money, with the level of difficulty making a loss larger or smaller. */
+export const publicAmount = (world: World, c: Campaign, n: number): number => Math.sign(n) * govMoney(world, Math.abs(realistic(c, n)));
+
 /** What buying off a partner who has come with an ultimatum costs, at general-election scale. */
 export const ULTIMATUM_MONEY = 150_000;
 
@@ -316,13 +351,21 @@ export function choiceCost(world: World, c: Campaign, event: string, choice: num
   if (effort) return effort.money > 0 ? scaled(world, effort.money) : 0;
   if (event === 'ultimatum') return choice === 0 ? scaled(world, ULTIMATUM_MONEY) : 0;
   // Priced as it will be charged: the level of difficulty makes what is lost dearer or cheaper (see `realistic`).
-  const net = (EVENTS[event]?.choices[choice]?.effects ?? []).reduce((a, e) => a + (e.t === 'funds' ? Math.sign(e.n) * scaled(world, Math.abs(realistic(c, e.n))) : 0), 0);
+  const governing = hasPublicMoney(c);
+  const net = (EVENTS[event]?.choices[choice]?.effects ?? []).reduce((a, e) => a + (e.t === 'funds' || (e.t === 'public' && !governing) ? Math.sign(e.n) * scaled(world, Math.abs(realistic(c, e.n))) : 0), 0);
+  return Math.max(0, -net);
+}
+
+/** What a choice costs the government's treasury: the public's money in the choice, when the party governs. */
+export function publicCost(world: World, c: Campaign, event: string, choice: number): number {
+  if (!hasPublicMoney(c)) return 0;
+  const net = (EVENTS[event]?.choices[choice]?.effects ?? []).reduce((a, e) => a + (e.t === 'public' ? publicAmount(world, c, e.n) : 0), 0);
   return Math.max(0, -net);
 }
 
 /** A choice the party cannot pay for is not on offer: without this, an empty chest bought everything for nothing. */
 export function canChoose(world: World, c: Campaign, event: string, choice: number): boolean {
-  return choiceCost(world, c, event, choice) <= (c.parties[c.player]?.funds ?? 0);
+  return choiceCost(world, c, event, choice) <= (c.parties[c.player]?.funds ?? 0) && publicCost(world, c, event, choice) <= treasuryOf(c);
 }
 
 /**

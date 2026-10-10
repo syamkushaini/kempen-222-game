@@ -11,7 +11,8 @@ import {
   setOrders, skipAhead, startCareer, syncOpinion, termIncome, termSpending, termWeek, TERM_WEEKS,
 } from './career';
 import { draftPact, signPact } from './diplomacy';
-import { canChoose, choiceCost, EVENTS, resolveEvent, rollEvent, seatOf } from './events';
+import { canChoose, choiceCost, EVENTS, publicCost, resolveEvent, rollEvent, seatOf } from './events';
+import { govMoney } from './treasury';
 import { endDay } from './formation';
 import { FISCAL_ROOM, launchManifesto, manifestoCost, MAX_PLEDGES, policyEffect, setStance, stanceCost, togglePledge } from './policy';
 import { autoPlayWeek, closeNight, electionResult, endWeek, playable } from './turn';
@@ -209,15 +210,27 @@ describe('events', () => {
     for (const [id, def] of Object.entries(EVENTS)) {
       expect(def.choices.some((_, i) => choiceCost(base, c, id, i) === 0), id).toBe(true);
     }
-    // Flood relief is paid for; the walkabout and staying away are not.
-    expect(choiceCost(base, c, 'flood', 0)).toBe(40_000);
+    // Flood relief is the public's money: where the party governs it is the treasury's, in millions; where it does not, the party's own.
+    expect(choiceCost(base, c, 'flood', 0)).toBe(0);
+    expect(publicCost(base, c, 'flood', 0)).toBe(govMoney(base, 40_000));
+    expect(govMoney(base, 40_000)).toBeGreaterThanOrEqual(1_000_000_000);
     // On the hard level what is lost is a third dearer, and the price asked is the price charged.
-    expect(choiceCost(base, { ...c, difficulty: 'hard' }, 'flood', 0)).toBe(52_000);
-    expect(choiceCost(base, { ...c, difficulty: 'easy' }, 'flood', 0)).toBe(32_000);
-    pc.funds = 39_999;
+    expect(publicCost(base, { ...c, difficulty: 'hard' }, 'flood', 0)).toBe(govMoney(base, 52_000));
+    expect(publicCost(base, { ...c, difficulty: 'easy' }, 'flood', 0)).toBe(govMoney(base, 32_000));
+    c.career!.treasury = govMoney(base, 40_000) - 1;
     expect([0, 1, 2].map((i) => canChoose(base, c, 'flood', i))).toEqual([false, true, true]);
-    pc.funds = 40_000;
+    c.career!.treasury = govMoney(base, 40_000);
     expect(canChoose(base, c, 'flood', 0)).toBe(true);
+    // A party that governs nothing pays as it always did, from its own purse.
+    const outside = structuredClone(c);
+    outside.career!.government = { ...outside.career!.government, pm: 2, partners: [] };
+    outside.career!.states = {};
+    expect(choiceCost(base, outside, 'flood', 0)).toBe(40_000);
+    expect(publicCost(base, outside, 'flood', 0)).toBe(0);
+    expect(choiceCost(base, { ...outside, difficulty: 'hard' }, 'flood', 0)).toBe(52_000);
+    outside.parties[outside.player]!.funds = 39_999;
+    expect(canChoose(base, outside, 'flood', 0)).toBe(false);
+    pc.funds = 40_000;
     // A by-election and the state polls are priced by the effort chosen.
     pc.funds = 0;
     expect([0, 1, 2].map((i) => canChoose(base, c, 'byElection', i))).toEqual([false, false, true]);

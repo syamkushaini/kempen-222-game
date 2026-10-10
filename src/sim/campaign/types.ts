@@ -356,7 +356,11 @@ export interface Appointment { portfolio: PortfolioId; options: Candidate[] }
 export interface Nation { health: number; education: number; standing: number }
 
 /** The figures everyone watches. All in per cent; debt is per cent of national income. */
-export interface Economy { growth: number; inflation: number; jobless: number; debt: number }
+export interface Economy {
+  growth: number; inflation: number; jobless: number; debt: number;
+  /** What the country or state produces in a year, in ringgit, and the people who share it (see gdp.ts). Absent in a game saved before they existed. */
+  gdp?: number; population?: number;
+}
 
 /** A bill on its way to a vote: `pledge:<id>` for a manifesto promise, `demand:<id>` for something owed to a partner. */
 export interface Bill { id: string; weeks: number }
@@ -543,6 +547,8 @@ export interface Career {
   grand?: { until: number; members: number[] };
   /** How many times the government has leaned on each institution in this parliament (see govern.ts). */
   leverUses?: Partial<Record<LeverId, number>>;
+  /** The yearly announcements of the economy's size and the public finances, the last few (see gdp.ts). */
+  reports?: { year: number; gdp: number; perCapita: number; growth: number; inflation: number; debt: number; debtRm: number; deficitRm: number }[];
   /** The sectors of the economy, each from 0 to 100 around a middling 50 (see sectors.ts). */
   sectors?: Record<string, number>;
   /** [sector]: the week the government last gave it support. */
