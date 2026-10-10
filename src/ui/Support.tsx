@@ -23,7 +23,7 @@ export function SupportDialog({ onClose }: { onClose(): void }) {
         <p className="muted small">{t('support.scan')}</p>
         <section className="thanks" aria-labelledby="thanks-title">
           <h3 id="thanks-title">{t('support.thanks.title' as StringKey)}</h3>
-          <p className="muted small">{t('support.thanks.body' as StringKey)}</p>
+          <p className="muted small">{t('support.thanks.note' as StringKey)} {t('support.thanks.body' as StringKey)}</p>
           <ol className="thanks-list">
             {THANKS.map((name) => <li key={name}>{name}</li>)}
           </ol>
