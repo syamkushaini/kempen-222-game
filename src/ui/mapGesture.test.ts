@@ -47,4 +47,16 @@ describe('zooming and dragging the map', () => {
     expect(onScreen(v, [W / 2, H / 2])).toEqual([W / 2, H / 2]);
     expect(viewTransform(FIT, W, H)).toBe('translate(0 0) translate(500 235) scale(1) translate(-500 -235)');
   });
+
+  it('can be dragged further when the map is already drawn larger, as on a state the map has zoomed to', () => {
+    const plain = keepInside({ k: 1, x: 99999, y: 0 }, W, H);
+    const framed = keepInside({ k: 1, x: 99999, y: 0 }, W, H, 4);
+    expect(framed.x).toBe(plain.x * 4);
+    // A drag at the whole map's scale still moves it by the distance dragged, as long as it stays in reach.
+    const moved = holdPoint(FIT, [300, 200], [380, 230], 1, W, H, 4);
+    expect(moved.k).toBe(1);
+    expect(moved.x).toBeCloseTo(80, 6);
+    expect(moved.y).toBeCloseTo(30, 6);
+    expect(zoomBy(FIT, 2, W, H, 4).k).toBe(2);
+  });
 });

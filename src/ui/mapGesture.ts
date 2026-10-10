@@ -8,10 +8,13 @@ export const MIN_VIEW = 1;
 export const MAX_VIEW = 10;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-/** Keeps the map from being dragged out of sight: some of it always stays on screen. */
-export function keepInside(v: View, w: number, h: number): View {
+/**
+ * Keeps the map from being dragged out of sight: some of it always stays on screen. `framed` is how much larger the map is already drawn than the
+ * view says (a state the map has been zoomed to): the more of the country is out of the frame, the further it may be dragged to bring it in.
+ */
+export function keepInside(v: View, w: number, h: number, framed = 1): View {
   const k = clamp(v.k, MIN_VIEW, MAX_VIEW);
-  const reachX = (w * k) / 2, reachY = (h * k) / 2;
+  const reachX = (w * k * framed) / 2, reachY = (h * k * framed) / 2;
   return { k, x: clamp(v.x, -reachX, reachX), y: clamp(v.y, -reachY, reachY) };
 }
 
@@ -20,19 +23,19 @@ export function keepInside(v: View, w: number, h: number): View {
  * at `to`, with the scale changed to `k`. A drag is `k` unchanged; a pinch
  * moves the midpoint and changes `k`; both keep the same spot of map under the fingers.
  */
-export function holdPoint(start: View, from: [number, number], to: [number, number], k: number, w: number, h: number): View {
+export function holdPoint(start: View, from: [number, number], to: [number, number], k: number, w: number, h: number, framed = 1): View {
   const cx = w / 2, cy = h / 2;
   // The map point that was under `from`.
   const qx = (from[0] - cx - start.x) / start.k + cx;
   const qy = (from[1] - cy - start.y) / start.k + cy;
-  return keepInside({ k, x: to[0] - cx - k * (qx - cx), y: to[1] - cy - k * (qy - cy) }, w, h);
+  return keepInside({ k, x: to[0] - cx - k * (qx - cx), y: to[1] - cy - k * (qy - cy) }, w, h, framed);
 }
 
 /** A zoom button: change the scale about the middle of the map. */
-export function zoomBy(v: View, factor: number, w: number, h: number): View {
+export function zoomBy(v: View, factor: number, w: number, h: number, framed = 1): View {
   const k = clamp(v.k * factor, MIN_VIEW, MAX_VIEW);
   const r = k / v.k;
-  return keepInside({ k, x: v.x * r, y: v.y * r }, w, h);
+  return keepInside({ k, x: v.x * r, y: v.y * r }, w, h, framed);
 }
 
 /** The SVG transform that draws a view. */

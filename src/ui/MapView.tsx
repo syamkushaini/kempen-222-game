@@ -210,6 +210,8 @@ export function MapView(props: {
     const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
     return { k, transform: `translate(${W / 2 - k * cx}px, ${H / 2 - k * cy}px) scale(${k})` };
   }, [map, home, single, selectedState, viewH]);
+  /** How much larger than the whole map the map is drawn when the player has picked a state: 1 where nothing is picked, and the map is dragged only once zoomed. */
+  const framed = !single && selectedState && zoom ? zoom.k : 1;
 
   // What the 3D camera frames: the open state, or the whole contest.
   const focusBox = useMemo((): [number, number, number, number] | null => {
@@ -253,24 +255,28 @@ export function MapView(props: {
     grip.current = { start: view, a, spread: f.length === 2 ? Math.hypot(f[0].x - f[1].x, f[0].y - f[1].y) : 0 };
   };
   const onPointerDown = (e: PointerEvent) => {
+    // There is one mouse. A press that was let go outside the map never said so, and would stay as a second finger and turn the next drag into a pinch.
+    if (e.pointerType === 'mouse') touches.current.clear();
     touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     dragged.current = false;
     startGrip();
   };
   const onPointerMove = (e: PointerEvent) => {
+    // A mouse moving with no button down has let go somewhere we were not told of.
+    if (e.pointerType === 'mouse' && e.buttons === 0 && touches.current.size > 0) { touches.current.clear(); grip.current = null; return; }
     if (!touches.current.has(e.pointerId) || !grip.current || !map) return;
     touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const f = fingers(), g = grip.current;
     if (f.length >= 2) {
       const spread = Math.hypot(f[0].x - f[1].x, f[0].y - f[1].y);
       const mid = inMap({ x: (f[0].x + f[1].x) / 2, y: (f[0].y + f[1].y) / 2 });
-      setView(holdPoint(g.start, g.a, mid, g.start.k * (g.spread > 0 ? spread / g.spread : 1), map.width, viewH));
+      setView(holdPoint(g.start, g.a, mid, g.start.k * (g.spread > 0 ? spread / g.spread : 1), map.width, viewH, framed));
       dragged.current = true;
-    } else if (g.start.k > 1) {
-      // One finger only moves a map that has been zoomed; on the whole map it leaves the page free to scroll.
+    } else if (g.start.k > 1 || framed > 1) {
+      // One finger only moves a map that has been zoomed, whether by the player or to a state; on the whole map it leaves the page free to scroll.
       const to = inMap(f[0]);
       if (!dragged.current && Math.hypot(to[0] - g.a[0], to[1] - g.a[1]) < 4) return;
-      setView(holdPoint(g.start, g.a, to, g.start.k, map.width, viewH));
+      setView(holdPoint(g.start, g.a, to, g.start.k, map.width, viewH, framed));
       dragged.current = true;
       if (!svgRef.current?.hasPointerCapture(e.pointerId)) svgRef.current?.setPointerCapture(e.pointerId);
     }
@@ -285,7 +291,7 @@ export function MapView(props: {
     // A plain scroll stays the page's; holding Ctrl or Cmd (or pinching a trackpad) zooms the map.
     if (!map || !(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
-    setView((v) => zoomBy(v, e.deltaY < 0 ? 1.2 : 1 / 1.2, map.width, viewH));
+    setView((v) => zoomBy(v, e.deltaY < 0 ? 1.2 : 1 / 1.2, map.width, viewH, framed));
   };
   useEffect(() => {
     const el = svgRef.current;
@@ -293,7 +299,7 @@ export function MapView(props: {
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   });
-  const zoomButton = (factor: number) => map && setView((v) => zoomBy(v, factor, map.width, viewH));
+  const zoomButton = (factor: number) => map && setView((v) => zoomBy(v, factor, map.width, viewH, framed));
 
   const seatFromEvent = (e: MouseEvent) => (e.target as Element).getAttribute?.('data-seat') ?? null;
 
@@ -422,7 +428,7 @@ export function MapView(props: {
         {!use3d && map && zoom && (
           <svg
             ref={svgRef} viewBox={`0 0 ${map.width} ${viewH}`} role="img" aria-label={contestName(t, world)} onMouseLeave={() => setHover(null)}
-            className={view.k > 1 ? 'zoomed' : undefined} style={{ touchAction: view.k > 1 ? 'none' : 'pan-y' }}
+            className={view.k > 1 || framed > 1 ? 'zoomed' : undefined} style={{ touchAction: view.k > 1 || framed > 1 ? 'none' : 'pan-y' }}
             onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd}
             onClickCapture={(e) => { if (dragged.current) e.stopPropagation(); }}
           >
@@ -499,7 +505,7 @@ export function MapView(props: {
           <div className="map-zoom-buttons" role="group" aria-label={t('map.zoom')}>
             <button className="btn small" onClick={() => zoomButton(1.6)} aria-label={t('map.zoomIn')} disabled={view.k >= 10}>+</button>
             <button className="btn small" onClick={() => zoomButton(1 / 1.6)} aria-label={t('map.zoomOut')} disabled={view.k <= 1}>−</button>
-            {view.k > 1 && <button className="btn small" onClick={() => setView(FIT)} aria-label={t('map.zoomFit')}>⤢</button>}
+            {(view.k > 1 || view.x !== 0 || view.y !== 0) && <button className="btn small" onClick={() => setView(FIT)} aria-label={t('map.zoomFit')}>⤢</button>}
           </div>
         )}
         {hover && hovered && hoveredSeat && (
