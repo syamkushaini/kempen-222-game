@@ -7,7 +7,7 @@ import { BOARD_SIZE, type Config } from './leaderboard';
 const cfg: Config = { url: 'https://abc.supabase.co', key: 'public-key' };
 const reply = (status: number, body: unknown = null) => vi.fn(async () => new Response(body === null ? null : JSON.stringify(body), { status })) as unknown as typeof fetch;
 const made = { challenge: { fog: false, noisy: false, code: '1~state:perlis~ps~4242~h~~4' }, difficulty: 'hard' as const, party: 'ps' };
-const posted = (over: Partial<ChallengeResult> = {}): ChallengeResult => ({ ...resultOf('game-123456', made, 'Ali', '0.1.0', 9, 15, 0.4123456, null)!, ...over });
+const posted = (over: Partial<ChallengeResult> = {}): ChallengeResult => ({ ...resultOf('game-123456', made, 'Ali', '0.1.0', 9, 15, 0.4123456, null, 80)!, ...over });
 
 describe('which board a game belongs to', () => {
   it('is the code of a challenge a player made, or the name of one of the game’s own, and none for any other game', () => {
@@ -19,19 +19,20 @@ describe('which board a game belongs to', () => {
 });
 
 describe('what is posted', () => {
-  it('is one election: the seats and share of the vote, to the tenth of a point, with the name cleaned', () => {
-    const r = resultOf('game-123456', made, '  Ali  Abu ', '0.1.0+abc', 9, 15, 0.4123456, true)!;
-    expect(r).toEqual({ game: 'game-123456', challenge: made.challenge.code, name: 'Ali Abu', party: 'ps', difficulty: 'hard', seats: 9, total_seats: 15, vote_share: 0.4123, met: true, version: '0.1.0+abc' });
-    expect(Object.keys(r).sort()).toEqual(['challenge', 'difficulty', 'game', 'met', 'name', 'party', 'seats', 'total_seats', 'version', 'vote_share']);
+  it('is one election: the seats, share of the vote and points, to the tenth of a point, with the name cleaned', () => {
+    const r = resultOf('game-123456', made, '  Ali  Abu ', '0.1.0+abc', 9, 15, 0.4123456, true, 80)!;
+    expect(r).toEqual({ game: 'game-123456', challenge: made.challenge.code, name: 'Ali Abu', party: 'ps', difficulty: 'hard', seats: 9, total_seats: 15, vote_share: 0.4123, points: 80, met: true, version: '0.1.0+abc' });
+    expect(Object.keys(r).sort()).toEqual(['challenge', 'difficulty', 'game', 'met', 'name', 'party', 'points', 'seats', 'total_seats', 'version', 'vote_share']);
   });
   it('is nothing where the figures are not an election’s, the name will not do, or the game is no challenge', () => {
     for (const bad of [
-      resultOf('g-123456', made, 'A', 'v', 9, 15, 0.4, null), resultOf('g-123456', made, 'Ali', 'v', 16, 15, 0.4, null), resultOf('g-123456', made, 'Ali', 'v', -1, 15, 0.4, null),
-      resultOf('g-123456', made, 'Ali', 'v', 1, 0, 0.4, null), resultOf('g-123456', made, 'Ali', 'v', 1, 223, 0.4, null), resultOf('g-123456', made, 'Ali', 'v', 1, 15, 1.2, null),
-      resultOf('g-123456', { ...made, challenge: { fog: false, noisy: false } }, 'Ali', 'v', 1, 15, 0.4, null),
-      resultOf('g-123456', { ...made, challenge: { fog: false, noisy: false, code: 'x'.repeat(81) } }, 'Ali', 'v', 1, 15, 0.4, null),
+      resultOf('g-123456', made, 'A', 'v', 9, 15, 0.4, null, 50), resultOf('g-123456', made, 'Ali', 'v', 16, 15, 0.4, null, 50), resultOf('g-123456', made, 'Ali', 'v', -1, 15, 0.4, null, 50),
+      resultOf('g-123456', made, 'Ali', 'v', 1, 0, 0.4, null, 50), resultOf('g-123456', made, 'Ali', 'v', 1, 223, 0.4, null, 50), resultOf('g-123456', made, 'Ali', 'v', 1, 15, 1.2, null, 50),
+      resultOf('g-123456', { ...made, challenge: { fog: false, noisy: false } }, 'Ali', 'v', 1, 15, 0.4, null, 50),
+      resultOf('g-123456', { ...made, challenge: { fog: false, noisy: false, code: 'x'.repeat(81) } }, 'Ali', 'v', 1, 15, 0.4, null, 50),
+      resultOf('g-123456', made, 'Ali', 'v', 1, 15, 0.4, null, 301), resultOf('g-123456', made, 'Ali', 'v', 1, 15, 0.4, null, -1),
     ]) expect(bad).toBeNull();
-    expect(resultOf('g-123456', made, 'Ali', 'v'.repeat(80), 0, 1, 0, null)!.version).toHaveLength(32);
+    expect(resultOf('g-123456', made, 'Ali', 'v'.repeat(80), 0, 1, 0, null, 50)!.version).toHaveLength(32);
   });
 });
 
@@ -51,15 +52,15 @@ describe('talking to the challenge boards', () => {
   });
 
   it('reads one challenge’s board, most seats first, then the biggest share, and drops what is not a result', async () => {
-    const row = { id: 1, created_at: '2026-10-10T00:00:00Z', name: 'Ali', party: 'ps', difficulty: 'hard', seats: 9, total_seats: 15, vote_share: '0.4123', met: null };
+    const row = { id: 1, created_at: '2026-10-10T00:00:00Z', name: 'Ali', party: 'ps', difficulty: 'hard', seats: 9, total_seats: 15, vote_share: '0.4123', points: '80', met: null };
     const f = reply(200, [row, { nonsense: true }, { ...row, id: 2, seats: '7' }]);
     const rows = await topResults('1~state:perlis~ps~4242~h~~4', cfg, f);
     expect(rows).toHaveLength(2);
-    expect(rows![0]).toMatchObject({ seats: 9, vote_share: 0.4123 });
+    expect(rows![0]).toMatchObject({ seats: 9, vote_share: 0.4123, points: 80 });
     expect(rows![1].seats).toBe(7);
     const url = (f as unknown as { mock: { calls: [string][] } }).mock.calls[0][0];
     expect(url).toContain(`challenge=eq.${encodeURIComponent('1~state:perlis~ps~4242~h~~4')}`);
-    expect(url).toContain('order=seats.desc,vote_share.desc,created_at.asc');
+    expect(url).toContain('order=points.desc,seats.desc,vote_share.desc,created_at.asc');
     expect(url).toContain(`limit=${BOARD_SIZE}`);
     expect(await topResults('set:perlis', cfg, reply(500))).toBeNull();
     expect(await topResults('set:perlis', cfg, reply(200, { not: 'a list' }))).toBeNull();
@@ -79,5 +80,8 @@ describe('the table', () => {
     expect(sql).toContain('grant select, insert on public.challenge_scores to anon');
     expect(sql).not.toMatch(/for (update|delete)/);
     expect(sql).toContain('game        text not null unique');
+    // Points are in the table, and a table made before them is given the column.
+    expect(sql).toContain('points      int not null default 0 check (points between 0 and 300)');
+    expect(sql).toContain('add column if not exists points');
   });
 });

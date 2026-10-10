@@ -18,12 +18,16 @@ create table if not exists public.challenge_scores (
   seats       int not null check (seats between 0 and 222),
   total_seats int not null check (total_seats between 1 and 222),
   vote_share  numeric(5, 4) not null check (vote_share between 0 and 1),
+  points      int not null default 0 check (points between 0 and 300),
   met         boolean,
   version     text check (version is null or char_length(version) <= 32),
   check (seats <= total_seats)
 );
 
-create index if not exists challenge_scores_rank on public.challenge_scores (challenge, seats desc, vote_share desc, created_at asc);
+-- A table made before there were points gets the column here; running this file again is safe.
+alter table public.challenge_scores add column if not exists points int not null default 0 check (points between 0 and 300);
+
+create index if not exists challenge_scores_points_rank on public.challenge_scores (challenge, points desc, seats desc, vote_share desc, created_at asc);
 
 alter table public.challenge_scores enable row level security;
 

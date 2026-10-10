@@ -57,7 +57,8 @@ import { setPatronage } from '../sim/campaign/patronage';
 import { grantSafe, revokeSafe } from '../sim/campaign/safeseat';
 import { discipline, doActivity, padRolls, rebrand, setAside, takeForeign, trade, type Discipline, type ActivityId, type FavourId, type HoldingId } from '../sim/campaign/party';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
-import { award, hang, legacyEntry, ProfileStore, type Profile } from './profile';
+import { award, hang, legacyEntry, ProfileStore, recordPoints, type Profile } from './profile';
+import { finishedChallenge } from '../sim/campaign/challengePoints';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
 
 /**
@@ -681,7 +682,10 @@ useStore.subscribe((state, prev) => {
   const now = Date.now();
   const entry = legacyEntry(game, now);
   const hung = entry ? hang(state.profile, entry) : state.profile;
-  const { profile, fresh } = award(hung, earned(world, game.campaign, hung.legacies.map((e) => e.legacy)), now);
+  const { profile: awarded, fresh } = award(hung, earned(world, game.campaign, hung.legacies.map((e) => e.legacy)), now);
+  // A challenge finished leaves its points, at their best.
+  const done = finishedChallenge(world, game.campaign);
+  const profile = done ? recordPoints(awarded, done.key, done.points) : awarded;
   if (profile === state.profile) return;
   profileStore.save(profile);
   useStore.setState({ profile, toasts: [...state.toasts, ...fresh] });

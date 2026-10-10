@@ -7,7 +7,7 @@ import { outlook, par } from '../sim/campaign/outlook';
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from '../state/store';
 import { useFormat, useT, useWorld, type T } from './hooks';
-import { BoardButton, PostChallenge } from './ChallengeBoard';
+import { BoardButton, ChallengeTotal, PointsLine, PostChallenge } from './ChallengeBoard';
 import { ChallengeMaker, CopyLink } from './ChallengeMaker';
 import { WeeklyChallenge } from './WeeklyChallenge';
 
@@ -31,6 +31,7 @@ export function ChallengeList() {
   }));
   return (
     <>
+    <ChallengeTotal />
     <WeeklyChallenge />
     <details className="challenges">
       <summary><h3>{t('challenges.title')}</h3></summary>
@@ -107,7 +108,7 @@ export function GoalResult({ summary }: { summary: Pick<Summary, 'seats' | 'befo
   const def = challengeById(useStore((s) => s.game?.campaign.challenge?.goal));
   const code = useStore((s) => s.game?.campaign.challenge?.code);
   // A challenge somebody made: the result can be sent on, as the same election for the next person.
-  if (!def && code) return <><p className="goal-result" role="status">{t('challenge.sendOn')} <CopyLink code={code} /></p><PostChallenge summary={summary} /></>;
+  if (!def && code) return <><p className="goal-result" role="status">{t('challenge.sendOn')} <CopyLink code={code} /></p><PointsLine summary={summary} /><PostChallenge summary={summary} /></>;
   if (!def) return <OutlookResult summary={summary} />;
   const { met, got, need } = goalResult(def.goal, summary);
   const title = t(`challenges.c.${def.id}` as StringKey);
@@ -118,6 +119,7 @@ export function GoalResult({ summary }: { summary: Pick<Summary, 'seats' | 'befo
           : def.goal.kind === 'win' ? t('challenges.missedWin', { title })
           : t('challenges.missed', { title, goal: goalText(t, def.goal), got: def.goal.kind === 'gain' ? `${got > 0 ? '+' : got < 0 ? '−' : ''}${Math.abs(got)}` : got, need })}
       </p>
+      <PointsLine summary={summary} />
       <PostChallenge summary={summary} />
     </>
   );

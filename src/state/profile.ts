@@ -1,4 +1,5 @@
 import { ACHIEVEMENT_IDS, type AchievementId } from '../sim/campaign/achievements';
+import { POINTS_MAX } from '../sim/campaign/challengePoints';
 import { careerYears } from '../sim/campaign/legacy';
 import { LEGACY_IDS, type Campaign, type EndingKind, type LegacyId } from '../sim/campaign/types';
 import { PARTY_IDS, type PartyId } from '../sim/types';
@@ -35,10 +36,13 @@ export interface Profile {
   achievements: Partial<Record<AchievementId, number>>;
   /** Newest first. */
   legacies: LegacyEntry[];
+  /** The best points won in each challenge, by its key (see challengePoints.ts). */
+  challengePoints?: Record<string, number>;
 }
 
 const KEY = 'k222.profile';
 const MAX_LEGACIES = 40;
+const MAX_CHALLENGES = 200;
 
 export const emptyProfile = (): Profile => ({ version: 1, achievements: {}, legacies: [] });
 
@@ -66,6 +70,10 @@ export function parseProfile(text: string | null): Profile {
     }
   }
   if (Array.isArray(raw.legacies)) out.legacies = raw.legacies.filter(isEntry).slice(0, MAX_LEGACIES);
+  if (isObj(raw.challengePoints)) {
+    const kept = Object.entries(raw.challengePoints).filter(([key, n]) => key.length >= 4 && key.length <= 80 && isNum(n) && n >= 0 && n <= POINTS_MAX).slice(0, MAX_CHALLENGES);
+    if (kept.length > 0) out.challengePoints = Object.fromEntries(kept) as Record<string, number>;
+  }
   return out;
 }
 
@@ -91,6 +99,19 @@ export function award(profile: Profile, ids: AchievementId[], now: number): { pr
   for (const id of fresh) achievements[id] = now;
   return { profile: { ...profile, achievements }, fresh };
 }
+
+/** Keeps the best points a challenge has brought. Returns the same profile if these are not better than what is held. */
+export function recordPoints(profile: Profile, key: string, points: number): Profile {
+  if ((profile.challengePoints?.[key] ?? -1) >= points) return profile;
+  const held = { ...(profile.challengePoints ?? {}), [key]: points };
+  // The oldest keys give way where the list is full (the one just won is always kept).
+  const keys = Object.keys(held);
+  for (const old of keys.slice(0, Math.max(0, keys.length - MAX_CHALLENGES))) if (old !== key) delete held[old];
+  return { ...profile, challengePoints: held };
+}
+
+/** The points a player has won in all the challenges, each counted at its best. */
+export const totalPoints = (profile: Profile): number => Object.values(profile.challengePoints ?? {}).reduce((a, n) => a + n, 0);
 
 /** Hangs a finished career in the gallery, once. Returns the same profile if it is already there. */
 export function hang(profile: Profile, entry: LegacyEntry): Profile {

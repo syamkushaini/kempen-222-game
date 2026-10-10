@@ -33,7 +33,7 @@ export const MAKER_EN = {
   'challenge.board.open': 'Board',
   'challenge.board.see': 'See this challenge’s board',
   'challenge.board.of': 'Challenge: {name}',
-  'challenge.board.note': 'Best first: the most seats, then the biggest share of the vote.',
+  'challenge.board.note': 'Best first: the most points (seats and votes, more for tougher rivals and extra rules), then the most seats.',
   'challenge.board.empty': 'Nobody has posted this challenge yet. Be the first.',
   'challenge.board.row': '{seats} of {total} seats · {share} of the vote',
   'challenge.board.met': 'goal met',
@@ -47,6 +47,11 @@ export const MAKER_EN = {
   'challenge.weekly.endsMinutes': 'Ends in {m} minutes.',
   'challenge.weekly.last': 'Last week’s board',
   'challenge.weekly.ended': 'That week’s challenge has ended, so results can no longer be posted. The board can still be read.',
+  'challenge.points.line': 'This challenge came to {n} points.',
+  'challenge.points.best': 'your best: {n}',
+  'challenge.points.total': 'Your challenge points: {n}, from {count} challenges.',
+  'challenge.points.none': 'Finish a challenge to win points: seats and votes, more for tougher rivals and for each extra rule.',
+  'challenge.board.points': '{n} points',
   'challenge.sendOn': 'Send this challenge on: whoever plays the link faces this very election.',
 } as const;
 
@@ -82,7 +87,7 @@ export const MAKER_MS: Record<keyof typeof MAKER_EN, string> = {
   'challenge.board.open': 'Papan',
   'challenge.board.see': 'Lihat papan cabaran ini',
   'challenge.board.of': 'Cabaran: {name}',
-  'challenge.board.note': 'Terbaik dahulu: kerusi terbanyak, kemudian peratusan undi terbesar.',
+  'challenge.board.note': 'Terbaik dahulu: mata terbanyak (kerusi dan undi, lebih banyak untuk lawan yang lebih sukar dan peraturan tambahan), kemudian kerusi terbanyak.',
   'challenge.board.empty': 'Belum ada yang menghantar cabaran ini. Jadilah yang pertama.',
   'challenge.board.row': '{seats} daripada {total} kerusi · {share} undi',
   'challenge.board.met': 'matlamat tercapai',
@@ -96,6 +101,11 @@ export const MAKER_MS: Record<keyof typeof MAKER_EN, string> = {
   'challenge.weekly.endsMinutes': 'Tamat dalam {m} minit.',
   'challenge.weekly.last': 'Papan minggu lepas',
   'challenge.weekly.ended': 'Cabaran minggu itu sudah tamat, jadi keputusan tidak boleh dihantar lagi. Papan masih boleh dibaca.',
+  'challenge.points.line': 'Cabaran ini bernilai {n} mata.',
+  'challenge.points.best': 'terbaik anda: {n}',
+  'challenge.points.total': 'Mata cabaran anda: {n}, daripada {count} cabaran.',
+  'challenge.points.none': 'Habiskan satu cabaran untuk dapat mata: kerusi dan undi, lebih banyak untuk lawan yang lebih sukar dan setiap peraturan tambahan.',
+  'challenge.board.points': '{n} mata',
   'challenge.sendOn': 'Hantar cabaran ini kepada orang lain: sesiapa yang memainkan pautan ini menghadapi pilihan raya yang sama.',
 };
 

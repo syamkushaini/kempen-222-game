@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PARTIES } from '../data/parties';
 import type { StringKey } from '../i18n/strings';
 import { challengeById, goalResult } from '../sim/campaign/challenges';
+import { challengePoints } from '../sim/campaign/challengePoints';
 import { weekEnded } from '../sim/campaign/weekly';
 import type { Summary } from '../sim/campaign/night';
 import { PARTY_IDS, type PartyId } from '../sim/types';
@@ -10,6 +11,7 @@ import { CONFIG, lastName, nameOk, NAME_MAX, postedGames, rememberPosted } from 
 import { useStore } from '../state/store';
 import { useFormat, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
+import { totalPoints } from '../state/profile';
 
 /** Whether this build has challenge boards at all: they need the same address and key as the career leaderboard. */
 export const hasBoards = CONFIG !== null;
@@ -56,7 +58,7 @@ export function ChallengeBoardDialog({ challenge, onClose }: { challenge: string
                   <span className="action-meta num">{PARTIES[r.party as PartyId]?.name ?? r.party} · {t(`difficulty.${r.difficulty}` as StringKey)}</span>
                   <span className="action-meta num">{t('challenge.board.row', { seats: r.seats, total: r.total_seats, share: f.pct(r.vote_share, 1) })}{r.met ? ` · ${t('challenge.board.met')}` : ''}</span>
                 </div>
-                <span className="score num" aria-label={t('lb.row.score', { n: r.seats })}>{r.seats}</span>
+                <span className="score num" aria-label={t('challenge.board.points', { n: r.points })}>{r.points}</span>
               </li>
             ))}
           </ol>
@@ -64,6 +66,28 @@ export function ChallengeBoardDialog({ challenge, onClose }: { challenge: string
       </div>
     </div>
   );
+}
+
+/** What a challenge came to in points, and the best it has brought this player: shown on its result, board or no board. */
+export function PointsLine({ summary }: { summary: Pick<Summary, 'seats' | 'voteShare'> }) {
+  const t = useT();
+  const world = useWorld();
+  const c = useStore((s) => s.game!.campaign);
+  const held = useStore((s) => s.profile.challengePoints);
+  const key = challengeKey(c);
+  if (!key) return null;
+  const points = challengePoints(world, c, summary.seats, summary.voteShare);
+  const best = Math.max(points, held?.[key] ?? 0);
+  return <p className="goal-result points" role="status">{t('challenge.points.line', { n: points })}{best > points ? ` · ${t('challenge.points.best', { n: best })}` : ''}</p>;
+}
+
+/** The player's challenge points in all, for the Challenges screen. */
+export function ChallengeTotal() {
+  const t = useT();
+  const profile = useStore((s) => s.profile);
+  const n = Object.keys(profile.challengePoints ?? {}).length;
+  if (n === 0) return <p className="muted small">{t('challenge.points.none')}</p>;
+  return <p className="muted small">{t('challenge.points.total', { n: totalPoints(profile), count: n })}</p>;
 }
 
 /** A button that opens the board of one challenge. */
@@ -94,7 +118,8 @@ export function PostChallenge({ summary }: { summary: Pick<Summary, 'seats' | 'b
   const def = challengeById(c.challenge?.goal);
   const send = async () => {
     const met = def ? goalResult(def.goal, summary).met : null;
-    const r = resultOf(game.id, { challenge: c.challenge, difficulty: c.difficulty, party: PARTY_IDS[c.player] }, name, __APP_VERSION__, summary.seats, world.seats.length, summary.voteShare, met);
+    const points = challengePoints(world, c, summary.seats, summary.voteShare);
+    const r = resultOf(game.id, { challenge: c.challenge, difficulty: c.difficulty, party: PARTY_IDS[c.player] }, name, __APP_VERSION__, summary.seats, world.seats.length, summary.voteShare, met, points);
     if (!r || !nameOk(name)) { setBad(true); return; }
     setBad(false); setState('busy');
     const result = await postResult(r);

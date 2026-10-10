@@ -1,5 +1,5 @@
 import { PARTY_IDS, type PartyId } from '../types';
-import type { Difficulty } from './types';
+import type { Campaign, Difficulty } from './types';
 
 // A challenge you make yourself is a contest, a party, a seed and some rules, written as a short code that can be sent to
 // a friend as a link: the same seed gives the same hidden swing, so everyone who plays it faces the same election and can
@@ -50,6 +50,12 @@ export function decodeChallenge(code: string): ChallengeSpec | null {
     fog: rules.includes('f'), noisy: rules.includes('n'), lean: rules.includes('l'),
     ...(n !== undefined ? { weeks: n } : {}),
   };
+}
+
+/** What tells one challenge from another: the code of one a player made, or `set:<name>` for one of the game's own; null for a game that is no challenge. */
+export function challengeKey(c: Pick<Campaign, 'challenge'>): string | null {
+  const ch = c.challenge;
+  return ch?.code ?? (ch?.goal ? `set:${ch.goal}` : null);
 }
 
 /** The link to a challenge on the page the game is served from. */
