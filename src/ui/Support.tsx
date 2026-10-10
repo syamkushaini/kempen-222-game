@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { THANKS } from '../data/thanks';
+import type { StringKey } from '../i18n/strings';
 import { useT } from './hooks';
 
 /** A way to say thank you: the maker's Touch 'n Go QR, opened from the main menu. */
@@ -19,6 +21,13 @@ export function SupportDialog({ onClose }: { onClose(): void }) {
         <p>{t('support.body')}</p>
         <img className="support-qr" src={`${import.meta.env.BASE_URL}support-qr.jpg`} alt={t('support.alt')} width={400} height={566} />
         <p className="muted small">{t('support.scan')}</p>
+        <section className="thanks" aria-labelledby="thanks-title">
+          <h3 id="thanks-title">{t('support.thanks.title' as StringKey)}</h3>
+          <p className="muted small">{t('support.thanks.body' as StringKey)}</p>
+          <ol className="thanks-list">
+            {THANKS.map((name) => <li key={name}>{name}</li>)}
+          </ol>
+        </section>
       </div>
     </div>
   );

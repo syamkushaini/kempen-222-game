@@ -82,3 +82,7 @@
 .dialog.support { max-width: 420px; text-align: center; }
 .dialog.support .panel-head { text-align: left; }
 .support-qr { display: block; width: 100%; max-width: 320px; height: auto; margin: 8px auto; border-radius: 14px; }
+/* the thank-you list in the Buy me a coffee dialog: the names as given, in order */
+.thanks { margin-top: 16px; text-align: left; }
+.thanks h3 { margin: 0 0 4px; font-size: 15px; }
+.thanks-list { margin: 8px 0 0; padding-left: 1.6em; line-height: 1.7; }
