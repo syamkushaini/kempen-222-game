@@ -1303,3 +1303,5 @@ The designer said that decisions about the country and the government should use
 
 
 **A top sponsors list (10 Oct 2026).** The designer gave nine names, in order, of donors. They are listed in the Buy me a coffee dialog under a line of thanks ("Your contribution is greatly appreciated"), with no amounts, which are kept secret (`src/data/thanks.ts`, text in `src/i18n/thanks.ts`), printed as given with no titles added. The list is a fixed order in code, so changing it needs a publish.
+
+**Share the map (10 Oct 2026).** A "Share map" button sits on the map's top bar. It makes a card (the same card as the other results) with a picture of the seats the party holds, drawn from the map's own outlines (`src/ui/mapShare.ts`): held seats in white over the party's colour, the rest a faint shadow, with the seats held, the majority line and the party's share of the House. Sharing a card keeps its colours (`backdropColours`), where a result's map is only a faint wash. Works for a country, a state and a single contest.
