@@ -27,8 +27,6 @@ export interface CardData {
   portrait?: { src: string; caption: string; sub: string };
   /** A picture to lay behind everything, washed into the party's colour: the 3D map as it stood at the end. */
   backdrop?: string;
-  /** Draw the backdrop in its own colours, not as a wash: for a map of who holds what. */
-  backdropColours?: boolean;
   tagline: string;
   fiction: string;
 }
@@ -194,9 +192,8 @@ export async function drawCard(canvas: HTMLCanvasElement, data: CardData): Promi
       const scale = Math.max(CARD_W / img.width, CARD_H / img.height);
       const w = img.width * scale, h = img.height * scale;
       g.save();
-      // A map of who holds what keeps its colours; the 3D map behind a result is only a faint wash of light and dark.
-      g.globalAlpha = data.backdropColours ? 0.92 : 0.55;
-      if (!data.backdropColours) g.globalCompositeOperation = 'luminosity';
+      g.globalAlpha = 0.55;
+      g.globalCompositeOperation = 'luminosity';
       g.drawImage(img, (CARD_W - w) / 2, (CARD_H - h) / 2, w, h);
       g.restore();
     } catch { /* the card is whole without it */ }

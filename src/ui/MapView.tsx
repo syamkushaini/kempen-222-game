@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { stateNeeded } from '../data/world';
 import { campaignMarks } from '../sim/campaign/marks';
@@ -16,9 +17,8 @@ import { contestName, partyColor, partyShort, regionLabel, useFormat, useSpot, u
 import { Icon } from './Icon';
 import { SeatSearch } from './SeatSearch';
 import { Term } from './Term';
-import { ShareDialog } from './ShareDialog';
-import { controlPicture, mapCard } from './mapShare';
-import type { CardData } from './shareCard';
+import { MapShareDialog } from './MapShareDialog';
+import { controlPicture, mapCaption } from './mapShare';
 
 // The 3D map and the library behind it are fetched only for a player who turns 3D on.
 const MapScene3D = lazy(() => import('./MapScene3D'));
@@ -145,11 +145,11 @@ export function MapView(props: {
   // A one-seat contest has nothing to zoom between; the map stays on the seat.
   const single = world.seats.length === 1;
   const selectedState = useStore((s) => s.selectedState);
-  const [shared, setShared] = useState<CardData | null>(null);
+  const [shared, setShared] = useState<{ picture: string; caption: string } | null>(null);
   const shareMap = () => {
     const c = useStore.getState().game?.campaign;
     if (!c) return;
-    void controlPicture(world, c).then((picture) => setShared(mapCard(t, f, world, c, picture)));
+    void controlPicture(world, c).then((picture) => { if (picture) setShared({ picture, caption: mapCaption(t, f, world, c) }); });
   };
   const accessible = useStore((s) => s.settings.palette === 'accessible');
   const want3d = useStore((s) => s.settings.map3d);
@@ -352,7 +352,7 @@ export function MapView(props: {
         )}
         {!single && <SeatSearch />}
         <button className="btn small map-share" onClick={shareMap}>{t('mapshare.button')}</button>
-        {shared && <ShareDialog data={shared} onClose={() => setShared(null)} />}
+        {shared && createPortal(<MapShareDialog picture={shared.picture} caption={shared.caption} onClose={() => setShared(null)} />, document.body)}
         {/* everything else about the map is one press away, so that the map has the room */}
         <details className="map-options">
           <summary className="btn small"><Icon name="sliders" size={16} /> {t('map.options')}</summary>
