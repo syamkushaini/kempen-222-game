@@ -589,7 +589,7 @@ export const useStore = create<Store>((set, get) => {
       c.inbox = c.inbox.filter((x) => x.id !== sceneId);
       const first = states[0] as StateId;
       g.aside = { parked: c, state: first, queue: states.slice(1) as StateId[] };
-      g.campaign = startAside(c, fightWorld(c, first)!, first);
+      g.campaign = startAside(c, fightWorld(c, first)!, first, world);
       g.updatedAt = Date.now();
       set({ game: g, view: 'last', tab: 'actions', selectedSeat: null, selectedState: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, hiddenScene: [] });
     },
@@ -608,7 +608,7 @@ export const useStore = create<Store>((set, get) => {
       if (aside.queue.length > 0) {
         const st = aside.queue[0];
         g.aside = { parked: aside.parked, state: st, queue: aside.queue.slice(1) };
-        g.campaign = startAside(aside.parked, fightWorld(aside.parked, st)!, st);
+        g.campaign = startAside(aside.parked, fightWorld(aside.parked, st)!, st, worldOf(aside.parked) ?? undefined);
       } else {
         g.campaign = aside.parked;
         delete g.aside;

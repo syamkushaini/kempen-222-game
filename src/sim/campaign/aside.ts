@@ -55,13 +55,21 @@ export function playRound(world: World, c: Campaign, choice: number, wanted: rea
   return states;
 }
 
-/** The campaign for a state election fought in person: a state election of its own, led by the same party and the same kind of leader. */
-export function startAside(parent: Campaign, stateWorld: World, state: StateId): Campaign {
+/**
+ * The campaign for a state election fought in person: a state election of its own, led by the same party and the same kind of leader,
+ * with the branches the career built there. `parentWorld` is the career's own world, where the state is one region.
+ */
+export function startAside(parent: Campaign, stateWorld: World, state: StateId, parentWorld?: World): Campaign {
   let h = 0x811c9dc5;
   for (const ch of state) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
   const seed = ((parent.rng ^ h) >>> 0) || 1;
   const backstory = parent.team.leader.backstory ?? null;
   const nested = newCampaign(stateWorld, { player: parent.player, difficulty: parent.difficulty, seed, backstory });
+  // The branches the leader built in the state are the ones that fight its election, in every seat of it: a campaign begun afresh gave
+  // them back the little that last year's votes would suggest (a hundred in the career, forty-one in the contest).
+  const built = parentWorld ? parent.parties[parent.player]?.machinery[parentWorld.states.indexOf(state)] ?? 0 : 0;
+  const mine = nested.parties[parent.player];
+  if (mine && built > 0) mine.machinery = mine.machinery.map((m) => Math.max(m, Math.round(built)));
   // A party founded from nothing fights as a new party does in any single contest: an ordinary leader unless the player chose a past, and a purse of its own.
   if (parent.career?.founded) {
     nested.newParty = true;

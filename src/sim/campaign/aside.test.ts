@@ -79,6 +79,23 @@ describe('fighting a state election in person, inside a career', () => {
     expect(before - everything.parties[PS]!.funds).toBe(ROUNDS[1].states.length * 1_000);
   });
 
+  it('carries the branches the career built in the state into its election, in every seat of it', () => {
+    const c = due();
+    const at = base.states.indexOf('selangor');
+    expect(at).toBeGreaterThanOrEqual(0);
+    c.parties[PS]!.machinery[at] = 100;
+    const without = startAside(c, selangor, 'selangor');
+    const carried = startAside(c, selangor, 'selangor', base);
+    // As it was written, the contest began again from last year's votes: well under a hundred.
+    expect(Math.max(...without.parties[PS]!.machinery)).toBeLessThan(100);
+    expect(carried.parties[PS]!.machinery.every((m) => m >= 100)).toBe(true);
+    // A state where the career had built little does not lose what the contest would have given.
+    c.parties[PS]!.machinery[at] = 10;
+    const small = startAside(c, selangor, 'selangor', base);
+    expect(small.parties[PS]!.machinery).toEqual(without.parties[PS]!.machinery.map((m) => Math.max(m, 10)));
+    expect(isValidCampaign(JSON.parse(JSON.stringify(carried)), selangor)).toBe(true);
+  });
+
   it('starts the state’s election as a campaign of its own, and settles the career with its result', () => {
     const c = due();
     const pc = c.parties[PS]!;
