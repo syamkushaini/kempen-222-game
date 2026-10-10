@@ -16,6 +16,7 @@ import type { IdeologyId } from '../sim/campaign/leader';
 import { retire } from '../sim/campaign/legacy';
 import { hireTroopers, interview } from '../sim/campaign/media';
 import { dismiss, hire, vet } from '../sim/campaign/staff';
+import { abandonMission, acceptMission, declineMission, offerMain, seenMission, seenMissions } from '../sim/campaign/missions';
 import { launchManifesto, setBrief, setStance, togglePledge } from '../sim/campaign/policy';
 import {
   breakPact, courtDefector, type Stake, jointAttack, meetLeader, proposePact, resolveCampaignScene, seekUnderstanding,
@@ -63,7 +64,7 @@ import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
  * or (developer mode only) how the country would really vote today.
  */
 export type MapView = 'last' | 'estimate' | 'truth';
-export type SidebarTab = 'desk' | 'orders' | 'house' | 'policy' | 'actions' | 'team' | 'party' | 'slate' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
+export type SidebarTab = 'desk' | 'orders' | 'house' | 'policy' | 'missions' | 'actions' | 'team' | 'party' | 'slate' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
 export type Theme = 'system' | 'light' | 'dark';
 export type Palette = 'standard' | 'accessible';
 export type TextSize = 'normal' | 'large';
@@ -261,6 +262,12 @@ interface Store {
   activity(id: ActivityId): void;
   /** Takes the loan a lender is offering against the party's coming income. */
   borrow(): void;
+  /** Takes a mission on offer, turns it down, gives up one taken, or says the player has seen how the last ones ended. */
+  acceptMission(id: number): void;
+  declineMission(id: number): void;
+  abandonMission(id: number): void;
+  seenMissions(): void;
+  seenMission(): void;
   setStance(issue: number, to: number): void;
   togglePledge(id: PledgeId): void;
   launchManifesto(): void;
@@ -383,6 +390,8 @@ export const useStore = create<Store>((set, get) => {
       // A platform of its own belongs to a party of the player's own making.
       const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, realStates, own, held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
       if (founded && !world.rules.career) foundForContest(world, campaign, backstory);
+      // A career opens with its first missions on offer (the game draws them once for each parliament).
+      if (campaign.career) offerMain(world, campaign);
       // A set challenge is for someone who has played before: no adviser walking them through it.
       const tutorial = world.rules.kind === 'byelection' && !challenge?.goal;
       set({
@@ -493,6 +502,11 @@ export const useStore = create<Store>((set, get) => {
     trade: (holding, lots) => mutate((c, _g, world) => { trade(world, c, holding, lots); }),
     activity: (id) => mutate((c, _g, world) => { doActivity(world, c, id); }),
     borrow: () => mutate((c, _g, world) => { borrow(world, c); }),
+    acceptMission: (id) => mutate((c) => { acceptMission(c, id); }),
+    declineMission: (id) => mutate((c) => { declineMission(c, id); }),
+    abandonMission: (id) => mutate((c, _g, world) => { abandonMission(world, c, id); }),
+    seenMissions: () => mutate((c) => { seenMissions(c); }),
+    seenMission: () => mutate((c) => { seenMission(c); }),
     setStance: (issue, to) => mutate((c) => { if (setStance(c, issue, to)) syncOpinion(c); }),
     togglePledge: (id) => mutate((c) => { if (togglePledge(c, id)) syncOpinion(c); }),
     launchManifesto: () => mutate((c) => { if (launchManifesto(c)) syncOpinion(c); }),
@@ -512,7 +526,7 @@ export const useStore = create<Store>((set, get) => {
       if (!nextTerm(world, c)) return;
       // The new term is played on a map refitted to the result just declared.
       const next = worldOf(c);
-      if (next) publishPublicPoll(next, c);
+      if (next) { publishPublicPoll(next, c); offerMain(next, c); }
       return { tab: 'desk', view: 'last', showNight: false, offerReply: null, pactReply: null, lastReport: null, selectedSeat: null, selectedState: null };
     }),
     resumeTerm: () => mutate((c) => {

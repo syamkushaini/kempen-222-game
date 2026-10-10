@@ -393,7 +393,69 @@ export type EndingKind = 'retired' | 'ousted' | 'wipedOut';
 export interface Ending { kind: EndingKind; legacy: LegacyId; score: number; /** Acts of Parliament still on the books when the career ended. */ laws?: number }
 
 /** A career: the long game across terms. Null in one-off contests. */
+// ---------- missions ----------
+
+/** What a mission asks. The first four are the main ones, judged at an election; the last three are side ones, judged week by week (see missions.ts). */
+export const MISSION_KINDS = ['seize', 'hold', 'bloc', 'majority', 'credibility', 'funds', 'unity'] as const;
+export type MissionKind = (typeof MISSION_KINDS)[number];
+
+export interface Mission {
+  /** Unique within a career. */
+  id: number;
+  kind: MissionKind;
+  /** A main mission is offered when a parliament begins and runs by elections; a side one comes during the term and runs by weeks. */
+  main: boolean;
+  /** 1 to 3, set by the game from how hard it looks; it sets the reward and the price of failing. */
+  tier: 1 | 2 | 3;
+  /** seize: the seats to take. hold: the seats to keep. */
+  seats?: string[];
+  /** How many of the seats; how many parties govern together; the party's own seats needed; or the level to reach (credibility, unity, funds). */
+  need: number;
+  /** bloc: a party that must be in the government. */
+  party?: number;
+  /** majority: the party's own seats are a majority (true), or it heads a government with a majority (false). */
+  alone?: boolean;
+  /** Elections left to judge it at (main). */
+  elections?: number;
+  /** Weeks of the term left (side). */
+  weeks?: number;
+  /** An offer not yet taken: weeks left before it is withdrawn (side). A main offer stays until the next election. */
+  ttl?: number;
+}
+
+/** How a mission ended, kept for the record and shown once. */
+export interface MissionRecord {
+  kind: MissionKind;
+  main: boolean;
+  tier: 1 | 2 | 3;
+  won: boolean;
+  term: number;
+  seats?: string[];
+  need: number;
+  party?: number;
+  alone?: boolean;
+}
+
+export interface Missions {
+  /** Taken, and running. */
+  active: Mission[];
+  /** On offer, not yet taken or turned down. */
+  offers: Mission[];
+  /** The next id to give. */
+  seq: number;
+  /** How each one ended, newest last (the last forty). */
+  done: MissionRecord[];
+  /** Endings the player has not yet been shown. */
+  unseen: MissionRecord[];
+  /** The parliament the main missions on offer were drawn for: they are drawn once for each. */
+  offered?: number;
+  /** Who was in government when the missions were last looked at, as "pm:partner,partner": a change of government between elections is judged when it shows. */
+  gov?: string;
+}
+
 export interface Career {
+  /** Missions the leader has taken on, and those on offer (see missions.ts). Absent until the first are offered. */
+  missions?: Missions;
   /** The player founded this party: it began as a one-seat party and grows by winning over the groups its platform suits. */
   founded?: boolean;
   /** The state of the country beyond the budget's figures; absent in a game saved before it existed. */

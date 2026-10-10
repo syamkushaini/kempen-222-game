@@ -8,6 +8,7 @@ export const ref = {
   party: (p: number) => `@party:${p}`,
   leader: (p: number) => `@leader:${p}`,
   rm: (n: number) => `@rm:${n}`,
+  mission: (kind: string) => `@mission:${kind}`,
 };
 
 /** News from the talks after the election is filed under days rather than weeks. */

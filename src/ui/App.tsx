@@ -41,6 +41,8 @@ const GovernmentTab = lazy(() => import('./GovernmentTab').then((m) => ({ defaul
 const OrdersTab = lazy(() => import('./OrdersTab').then((m) => ({ default: m.OrdersTab })));
 const PartyTab = lazy(() => import('./PartyTab').then((m) => ({ default: m.PartyTab })));
 const PolicyTab = lazy(() => import('./PolicyTab').then((m) => ({ default: m.PolicyTab })));
+const MissionsTab = lazy(() => import('./MissionsTab').then((m) => ({ default: m.MissionsTab })));
+const MissionCard = lazy(() => import('./MissionsTab').then((m) => ({ default: m.MissionCard })));
 const TermDesk = lazy(() => import('./TermDesk').then((m) => ({ default: m.TermDesk })));
 
 installIdentity();
@@ -51,7 +53,7 @@ installIdentity();
  */
 type GroupId = 'run' | 'people' | 'intel';
 const GROUPS: { id: GroupId; icon: IconName; tabs: SidebarTab[] }[] = [
-  { id: 'run', icon: 'flag', tabs: ['desk', 'orders', 'house', 'actions', 'chiefs', 'policy'] },
+  { id: 'run', icon: 'flag', tabs: ['desk', 'orders', 'house', 'actions', 'chiefs', 'policy', 'missions'] },
   { id: 'people', icon: 'people', tabs: ['team', 'party', 'slate', 'deals'] },
   { id: 'intel', icon: 'intel', tabs: ['seats', 'polls', 'voters', 'news'] },
 ];
@@ -60,7 +62,7 @@ const TERM_ONLY: SidebarTab[] = ['desk', 'orders', 'house'];
 const CAMPAIGN_ONLY: SidebarTab[] = ['actions', 'chiefs', 'deals'];
 /** The picture that goes with each tab, beside its name. */
 const TAB_ICON: Record<SidebarTab, IconName> = {
-  desk: 'inbox', orders: 'doc', house: 'landmark', policy: 'sliders', actions: 'megaphone', team: 'crown', party: 'coins', slate: 'ballot', chiefs: 'flag', deals: 'chat',
+  desk: 'inbox', missions: 'trophy', orders: 'doc', house: 'landmark', policy: 'sliders', actions: 'megaphone', team: 'crown', party: 'coins', slate: 'ballot', chiefs: 'flag', deals: 'chat',
   seats: 'target', polls: 'intel', voters: 'people', news: 'book', saves: 'folder',
 };
 const groupLabel = (id: GroupId, term: boolean): StringKey => (id === 'run' ? (term ? 'group.run.term' : 'group.run.campaign') : `group.${id}`) as StringKey;
@@ -114,7 +116,7 @@ function CampaignScreen() {
   const term = campaign.phase === 'term';
   const available = (id: SidebarTab) =>
     (id !== 'chiefs' || hasChiefs(world)) && (id !== 'deals' || hasDiplomacy(world)) &&
-    (id !== 'policy' || !!campaign.career) && (id !== 'party' || !!campaign.career) && !(term ? CAMPAIGN_ONLY : TERM_ONLY).includes(id);
+    (id !== 'policy' || !!campaign.career) && (id !== 'missions' || !!campaign.career) && (id !== 'party' || !!campaign.career) && !(term ? CAMPAIGN_ONLY : TERM_ONLY).includes(id);
   const groups = GROUPS.map((g) => ({ ...g, tabs: g.tabs.filter(available) })).filter((g) => g.tabs.length > 0);
   const every = groups.flatMap((g) => g.tabs);
   const shown = every.includes(tab) ? tab : every[0];
@@ -130,7 +132,7 @@ function CampaignScreen() {
   // A decision waiting in the inbox is a bar, not a screen: it does not stop a seat being looked at.
   useEffect(() => { setCard(selectedSeat && world.seats.length > 1 ? selectedSeat : null); }, [selectedSeat]); // eslint-disable-line react-hooks/exhaustive-deps
   // What each tab has waiting: decisions for whoever runs things, bad news not yet read.
-  const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : id === 'desk' ? (shown === 'desk' ? 0 : campaign.inbox.length) : id === 'house' ? (shown === 'house' ? 0 : campaign.career?.appointments?.length ?? 0) : 0);
+  const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : id === 'desk' ? (shown === 'desk' ? 0 : campaign.inbox.length) : id === 'house' ? (shown === 'house' ? 0 : campaign.career?.appointments?.length ?? 0) : id === 'missions' ? (shown === 'missions' ? 0 : campaign.career?.missions?.offers.length ?? 0) : 0);
   // On a phone the map and the panel are separate screens, changed from a bar at the bottom.
   const narrow = useNarrow();
   const [screen, setScreen] = useState<'map' | 'panel'>('panel');
@@ -209,6 +211,7 @@ function CampaignScreen() {
             {shown === 'orders' && <OrdersTab />}
             {shown === 'house' && <GovernmentTab />}
             {shown === 'policy' && <PolicyTab />}
+            {shown === 'missions' && <MissionsTab />}
             {shown === 'actions' && <ActionsTab />}
             {shown === 'team' && <TeamTab />}
             {shown === 'party' && <PartyTab />}
@@ -226,6 +229,7 @@ function CampaignScreen() {
       </main>
       {narrow && seatCard}
       <WeekRecap />
+      {campaign.career?.missions?.unseen.length ? <Suspense fallback={null}><MissionCard /></Suspense> : null}
       <CampaignBar />
       <TermBar />
       {narrow && (

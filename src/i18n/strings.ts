@@ -4,6 +4,7 @@
 import { EVENTS_EN, EVENTS_MS, flattenEvents } from './events';
 import { HONOURS_EN, HONOURS_MS, type HonoursKey } from './honours';
 import { PEOPLE_EN, PEOPLE_MS, type PeopleKey } from './people';
+import { MISSIONS_EN, MISSIONS_MS, type MissionKey } from './missions';
 
 const en = {
   'app.title': 'Kempen 222',
@@ -2363,7 +2364,7 @@ const en = {
 type CoreKey = keyof typeof en;
 /** The keys defined in this file, so that text kept elsewhere can be checked not to reuse one. */
 export const CORE_KEYS: readonly string[] = Object.keys(en);
-export type StringKey = CoreKey | HonoursKey | PeopleKey;
+export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey;
 
 const ms: Record<CoreKey, string> = {
   'app.title': 'Kempen 222',
@@ -4723,8 +4724,8 @@ const ms: Record<CoreKey, string> = {
 export type Lang = 'en' | 'ms';
 // Event text is kept in its own file and looked up by keys built from event ids.
 export const STRINGS: Record<Lang, Record<string, string>> = {
-  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...flattenEvents(EVENTS_EN) },
-  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...flattenEvents(EVENTS_MS) },
+  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...flattenEvents(EVENTS_EN) },
+  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...flattenEvents(EVENTS_MS) },
 };
 
 /**
@@ -4737,7 +4738,7 @@ const ONE: Record<string, string> = {
   seats: 'seat', weeks: 'week', members: 'member', points: 'point', days: 'day', quarters: 'quarter', actions: 'action', votes: 'vote',
   parliaments: 'parliament', states: 'state', years: 'year', times: 'time', decisions: 'decision', boxes: 'box', voters: 'voter',
   independents: 'independent', meetings: 'meeting', MPs: 'MP', terms: 'term', promises: 'promise', parties: 'party', ministers: 'minister',
-  pledges: 'pledge', branches: 'branch', months: 'month', posts: 'post', bills: 'bill', candidates: 'candidate', rounds: 'round',
+  pledges: 'pledge', branches: 'branch', months: 'month', posts: 'post', bills: 'bill', candidates: 'candidate', rounds: 'round', elections: 'election',
 };
 const ONE_VERB: Record<string, string> = { ' are': ' is', ' were': ' was', ' have': ' has' };
 const ONE_OF = new RegExp(`(^|[^\\d.,])1 ((?:more |extra |new |assembly )?)(${Object.keys(ONE).join('|')})\\b( are| were| have)?`, 'g');

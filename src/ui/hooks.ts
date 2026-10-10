@@ -192,6 +192,7 @@ export function renderNews(t: T, f: Format, world: World, item: NewsItem): strin
       kind === 'endorser' ? t(`endorser.${value}` as StringKey) :
       kind === 'outlet' ? t(`outlet.${value}` as StringKey) :
       kind === 'actions' ? actionList(t, world, value) :
+      kind === 'mission' ? t(`mission.kind.${value}` as StringKey) :
       kind === 'rm' ? f.rm(Number(value)) : v;
   }
   return t(item.key as StringKey, vars);

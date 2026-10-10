@@ -249,7 +249,7 @@ function partiesOf(c: Campaign, who: Who): number[] {
 }
 
 /** Applies consequences. Returns true if the government has fallen as a result. */
-function apply(world: World, c: Campaign, effects: Effect[]): boolean {
+export function applyEffects(world: World, c: Campaign, effects: Effect[]): boolean {
   const k = c.career!;
   const me = c.player;
   const pc = c.parties[me]!;
@@ -333,13 +333,13 @@ export function resolveEvent(world: World, c: Campaign, scene: Scene, choice: nu
   const def = scene.event ? EVENTS[scene.event] : undefined;
   const picked = def?.choices[choice];
   if (!c.career || !def || !picked) return false;
-  let falls = apply(world, c, picked.effects);
+  let falls = applyEffects(world, c, picked.effects);
   let suffix = '';
   if (picked.gamble) {
     const rng = new Rng(c.rng);
     const won = rng.next() < gambleChance(c, picked.gamble.chance);
     c.rng = rng.state;
-    falls = apply(world, c, won ? picked.gamble.win : picked.gamble.lose) || falls;
+    falls = applyEffects(world, c, won ? picked.gamble.win : picked.gamble.lose) || falls;
     suffix = won ? 'w' : 'l';
   }
   // The members of the player's coalition each make what they will of it.

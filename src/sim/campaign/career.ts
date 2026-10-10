@@ -19,6 +19,7 @@ import { FORMATION_WEEK, pushNews, ref } from './news';
 import { FOUNDING_FUNDS, growFoundedParty } from './founding';
 import { edge, incomeBoost, mediaBoost, neutralLeader, skill } from './perks';
 import { afterLender } from './loan';
+import { missionsElection, missionsWeek } from './missions';
 import { membersWeek } from './members';
 import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
@@ -434,6 +435,7 @@ export function termWeek(world: World, c: Campaign): void {
   growFoundedParty(world, c);
   governWeek(c, rng);
   syncOpinion(c);
+  missionsWeek(world, c, new Rng((c.rng ^ 0x4115) + k.week * 31 + k.term));
   // A government is a minority or not as the House now stands: seats lost one by one at by-elections and crossings count, as do seats found.
   k.government.minority = k.government.seats < majorityLine(world);
   // One thing at a time: nothing new arrives while a vote is waiting. The states' own elections come when they are due.
@@ -740,6 +742,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.alliance ? { alliance: { ...k.alliance, members: [...k.alliance.members] } } : {}),
     ...(k.mandated?.length ? { mandated: [...k.mandated] } : {}),
     ...(k.shaky?.length ? { shaky: [...k.shaky] } : {}),
+    ...(k.missions ? { missions: structuredClone(k.missions) } : {}),
   };
   Object.assign(c.career, carry);
   // The new parliament counts its weeks from one: what was marked with a week of the old one is moved back by the term and the campaign.
@@ -803,6 +806,8 @@ export function nextTerm(world: World, c: Campaign): boolean {
   if (tired !== 0) for (const row of c.career.mood) row[c.player] -= tired;
   if (tired > 0) pushNews(c, { party: c.player, key: 'news.fatigue', vars: { n: govRun }, tone: 'bad' });
   else if (tired < 0) pushNews(c, { party: c.player, key: 'news.fatigue.over', vars: {}, tone: 'good' });
+  // The votes are counted and the government made: what the leader took on is judged by it.
+  missionsElection(world, c, outcome, recorded.votes.map((row) => row.indexOf(Math.max(...row))));
   // A win this large is more than a party can hold together.
   if (seats >= Math.ceil(LANDSLIDE * world.seats.length)) landslide(c);
   // A leader whose party has no seats left has no party to lead.

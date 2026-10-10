@@ -720,3 +720,23 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 .post-row .field-label { flex: 1 0 100%; margin: 0; }
 .post-row .text-input { flex: 1 1 180px; min-width: 0; }
 .text-input { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-height: 44px; }
+
+/* Missions: what is asked, the seats it names, what winning brings and failing costs, and the card shown when one ends. */
+.missions h3 { margin: 16px 0 6px; }
+.mission { align-items: flex-start; }
+.mission .action-meta { display: block; margin-top: 2px; }
+.mission-seats { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 0; }
+.mission-seats .chip { padding: 3px 10px; font-size: 12px; }
+.mission-terms { display: grid; gap: 4px; margin: 10px 0 0; font-size: 13px; }
+.mission-terms div { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; }
+.mission-terms dt { color: var(--ink-muted); }
+.mission-terms dd { margin: 0; font-variant-numeric: tabular-nums; }
+.mission-bar { width: 120px; }
+.mission-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.mission .gauge { margin-top: 8px; }
+.mission-card { width: min(440px, 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; animation: fade-up 240ms ease-out; }
+.mission-card h2, .mission-card p { margin: 0; }
+.mission-card .verdict { width: 48px; height: 48px; border-radius: 9999px; display: grid; place-items: center; }
+.mission-card .verdict.won { background: color-mix(in srgb, var(--good) 20%, var(--panel)); color: var(--good); }
+.mission-card .verdict.lost { background: color-mix(in srgb, var(--bad) 20%, var(--panel)); color: var(--bad); }
+.mission-card .btn { margin-top: 8px; }
