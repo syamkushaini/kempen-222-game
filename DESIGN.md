@@ -1271,3 +1271,11 @@ The designer asked that a state career, like the country's, can be led by a part
 - It grows as in the country, by the voters its platform suits. Measured with the autoplayer (one seed, three terms): Perlis 1.9%, 8.8%, 16.0%; Perak 1.7%, 4.4%, 10.1%; Selangor 5.0%, 8.6%, 17.8% (10 of 56 seats in the third); Sarawak 1.6%, 4.3%, 11.2%; Sabah 1.6%, 4.1%, 10.4%; Kelantan 3.1%, 4.6%, 13.2%. Seats come late (first-past-the-post), and a party with none after its first election is not ended (see the note above on a party with no seats).
 - Saved games load unchanged. A test plays a founded Sarawak and Selangor career for three terms and checks each save.
 
+## Help (10 Oct 2026)
+
+The designer asked for a help button with how to play, tips and so on. "How to play" already existed in the main menu and the game menu, but held only the goal, a week, the glossary and the keys. It is now **Help** in both places (`Help.tsx`, formerly `HowToPlay.tsx`; the strings keep their `howto.*` names), a dialog with seven tabs: **Basics** (goal, a week, ways to play, reading the map, saving), **Career** (a term, where things are, promises, how it ends, a party of one's own), **Missions** (what they are, the time to decide, reward and risk, the final mission), **Challenges** (of the week, make your own, points and boards), **Money** (funds, the spending limit, the team, candidates), **Tips** (ten) and **Words and keys** (the glossary and the keyboard).
+
+- The text is in `i18n/help.ts`, English and Bahasa Malaysia, merged into the lookup table like the other sets. The tabs and their sections are listed at the head of `Help.tsx`; a new section is a pair of strings, `help.<stem>.t` and `.x`.
+- The old key help said 1, 2 and 3 open "the three groups of tabs"; there are four now (with Missions), so the text says the number keys open the groups in order.
+- It does not change any rule. Checked on a desktop and a phone, in both languages, from both menus.
+

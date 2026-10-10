@@ -22,7 +22,7 @@ import { FeedbackLink } from './FeedbackLink';
 import { ACHIEVEMENT_IDS } from '../sim/campaign/achievements';
 import { FitText } from './FitText';
 import { HonoursDialog } from './Honours';
-import { HowToPlay } from './HowToPlay';
+import { Help } from './Help';
 import { Logo } from './Logo';
 import { Icon, type IconName } from './Icon';
 import { Portrait } from './Portrait';
@@ -175,7 +175,7 @@ export function Title() {
     <main className={mode === 'menu' ? 'title menu-stage' : 'title menu-stage sub'}>
       <div className={art ? 'menu-art ready' : 'menu-art'} aria-hidden="true"><img src={MENU_ART} alt="" decoding="async" ref={(el) => { if (el?.complete && el.naturalWidth > 0) setArt(true); }} onLoad={() => setArt(true)} /></div>
       {honours && <HonoursDialog onClose={() => setHonours(false)} />}
-      {howTo && <HowToPlay onClose={() => setHowTo(false)} />}
+      {howTo && <Help onClose={() => setHowTo(false)} />}
       {support && <SupportDialog onClose={() => setSupport(false)} />}
       {board && <LeaderboardDialog onClose={() => setBoard(false)} />}
       <ChallengeInvite />

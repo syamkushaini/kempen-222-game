@@ -385,6 +385,14 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 .howto-words { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 16px; }
 .howto-words dt { font-weight: 600; text-transform: capitalize; }
 .howto-words dd { margin: 0; }
+.help-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.help-panel { display: flex; flex-direction: column; gap: 10px; min-height: 280px; }
+.help-section { padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); }
+.help-section h3 { margin: 0 0 4px; }
+.help-section p { margin: 0; }
+.help-tips { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; counter-reset: tip; }
+.help-tips li { counter-increment: tip; padding: 10px 12px 10px 44px; position: relative; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); }
+.help-tips li::before { content: counter(tip); position: absolute; left: 12px; top: 10px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--primary); color: var(--on-primary, #fff); }
 @media (max-width: 520px) { .howto-goal { flex-direction: column; text-align: center; } }
 /* ---------- every control can be reached and seen: a clear ring wherever the keyboard is ---------- */
 :focus-visible { outline: 2px solid var(--ring, var(--primary)); outline-offset: 2px; border-radius: 6px; }

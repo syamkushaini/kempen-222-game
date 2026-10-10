@@ -6,6 +6,7 @@ import { HONOURS_EN, HONOURS_MS, type HonoursKey } from './honours';
 import { PEOPLE_EN, PEOPLE_MS, type PeopleKey } from './people';
 import { MISSIONS_EN, MISSIONS_MS, type MissionKey } from './missions';
 import { MAKER_EN, MAKER_MS, type MakerKey } from './maker';
+import { HELP_EN, HELP_MS, type HelpKey } from './help';
 import { LOOK_EN, LOOK_MS, type LookKey } from './look';
 
 const en = {
@@ -610,8 +611,8 @@ const en = {
   'chamber.rest': 'The rest',
   'verdict.seats': '{n} of {total} seats',
   'verdict.go': 'See the result',
-  'howto.title': 'How to play',
-  'howto.hint': 'The goal, a week, and what the words mean',
+  'howto.title': 'Help',
+  'howto.hint': 'How to play, tips and what the words mean',
   'howto.goal': 'The goal',
   'howto.goal.text': 'Win seats. A seat goes to whoever takes the most votes in it, and more than half the seats is a majority: 112 of the 222 in Parliament. A by-election is one seat; a state election is a whole assembly; a career is election after election, with governing in between.',
   'howto.week': 'A week',
@@ -624,8 +625,6 @@ const en = {
   'howto.end': 'End the week',
   'howto.end.text': 'Your rivals move, the news comes in, and a short recap tells you what changed.',
   'howto.words': 'What the words mean',
-  'howto.keys': 'Keys',
-  'howto.keys.text': 'Space ends the week. 1, 2 and 3 open the three groups of tabs. Escape opens the menu or closes whatever is open.',
   'term.skip.short': 'To decision',
   'jump.label': 'Jump to a section',
   'app.loading': 'Loading…',
@@ -2368,7 +2367,7 @@ const en = {
 type CoreKey = keyof typeof en;
 /** The keys defined in this file, so that text kept elsewhere can be checked not to reuse one. */
 export const CORE_KEYS: readonly string[] = Object.keys(en);
-export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey;
+export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey;
 
 const ms: Record<CoreKey, string> = {
   'app.title': 'Kempen 222',
@@ -2972,8 +2971,8 @@ const ms: Record<CoreKey, string> = {
   'chamber.rest': 'Yang lain',
   'verdict.seats': '{n} daripada {total} kerusi',
   'verdict.go': 'Lihat keputusan',
-  'howto.title': 'Cara bermain',
-  'howto.hint': 'Matlamat, seminggu, dan maksud istilah',
+  'howto.title': 'Bantuan',
+  'howto.hint': 'Cara bermain, tip dan maksud istilah',
   'howto.goal': 'Matlamat',
   'howto.goal.text': 'Menangi kerusi. Sesebuah kerusi dimenangi oleh pihak yang mendapat undi terbanyak di situ, dan lebih separuh kerusi ialah majoriti: 112 daripada 222 kerusi Parlimen. Pilihan raya kecil ialah satu kerusi; pilihan raya negeri ialah seluruh dewan; kerjaya pula ialah pilihan raya demi pilihan raya, dengan tugas memerintah di antaranya.',
   'howto.week': 'Seminggu',
@@ -2986,8 +2985,6 @@ const ms: Record<CoreKey, string> = {
   'howto.end': 'Tamatkan minggu',
   'howto.end.text': 'Pihak lawan bergerak, berita masuk, dan ringkasan pendek memberitahu apa yang berubah.',
   'howto.words': 'Maksud istilah',
-  'howto.keys': 'Kekunci',
-  'howto.keys.text': 'Space menamatkan minggu. 1, 2 dan 3 membuka tiga kumpulan tab. Escape membuka menu atau menutup apa-apa yang terbuka.',
   'term.skip.short': 'Ke keputusan',
   'jump.label': 'Lompat ke bahagian',
   'app.loading': 'Memuatkan…',
@@ -4730,8 +4727,8 @@ const ms: Record<CoreKey, string> = {
 export type Lang = 'en' | 'ms';
 // Event text is kept in its own file and looked up by keys built from event ids.
 export const STRINGS: Record<Lang, Record<string, string>> = {
-  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...flattenEvents(EVENTS_EN) },
-  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...flattenEvents(EVENTS_MS) },
+  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...flattenEvents(EVENTS_EN) },
+  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...flattenEvents(EVENTS_MS) },
 };
 
 /**

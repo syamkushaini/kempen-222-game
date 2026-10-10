@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../state/store';
 import { useT } from './hooks';
-import { HowToPlay } from './HowToPlay';
+import { Help } from './Help';
 import { ConfirmButton, SavesPanel } from './SavesTab';
 
 /**
@@ -29,7 +29,7 @@ export function GameMenu() {
   }, [open, setOpen]);
 
   if (!open) return null;
-  if (howTo) return <HowToPlay onClose={() => setHowTo(false)} />;
+  if (howTo) return <Help onClose={() => setHowTo(false)} />;
   const leave = (go: () => void) => () => { setOpen(false); go(); };
   return (
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
