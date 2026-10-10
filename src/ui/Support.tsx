@@ -1,11 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { THANKS } from '../data/thanks';
+import { sponsorNames } from '../state/sponsors';
 import type { StringKey } from '../i18n/strings';
 import { useT } from './hooks';
 
 /** A way to say thank you: the maker's Touch 'n Go QR, opened from the main menu. */
 export function SupportDialog({ onClose }: { onClose(): void }) {
   const t = useT();
+  // The list built into the game is shown at once; the table in Supabase, where there is one, replaces it when it arrives.
+  const [names, setNames] = useState<readonly string[]>(THANKS);
+  useEffect(() => {
+    let live = true;
+    void sponsorNames().then((list) => { if (live) setNames(list); });
+    return () => { live = false; };
+  }, []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -25,7 +33,7 @@ export function SupportDialog({ onClose }: { onClose(): void }) {
           <h3 id="thanks-title">{t('support.thanks.title' as StringKey)}</h3>
           <p className="muted small">{t('support.thanks.note' as StringKey)} {t('support.thanks.body' as StringKey)}</p>
           <ol className="thanks-list">
-            {THANKS.map((name) => <li key={name}>{name}</li>)}
+            {names.map((name, i) => <li key={`${i}-${name}`}>{name}</li>)}
           </ol>
         </section>
       </div>
