@@ -740,3 +740,11 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 .mission-card .verdict.won { background: color-mix(in srgb, var(--good) 20%, var(--panel)); color: var(--good); }
 .mission-card .verdict.lost { background: color-mix(in srgb, var(--bad) 20%, var(--panel)); color: var(--bad); }
 .mission-card .btn { margin-top: 8px; }
+.mission-card.finale { width: min(520px, 100%); border: 2px solid var(--good); }
+.mission.final { border-color: var(--line-3); }
+.mission.final .action-title { font-size: 16px; }
+.mission-parts { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+.mission-parts li { display: flex; gap: 8px; align-items: flex-start; }
+.mission-parts .tick { width: 1.2em; flex: none; text-align: center; color: var(--ink-muted); }
+.mission-parts li.done .tick { color: var(--good); font-weight: 700; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

@@ -156,6 +156,7 @@ function isValidOffice(x: Record<string, unknown>): boolean {
   );
 }
 
+const FINAL_PARTS = ['seize', 'hold', 'bloc', 'majority'] as const;
 const isTier = (x: unknown) => x === 1 || x === 2 || x === 3;
 function isValidMission(x: unknown, world: World): boolean {
   if (!isObj(x)) return false;
@@ -163,16 +164,20 @@ function isValidMission(x: unknown, world: World): boolean {
     isNum(x.id) && (MISSION_KINDS as readonly unknown[]).includes(x.kind) && typeof x.main === 'boolean' && isTier(x.tier) && isNum(x.need) &&
     (x.seats === undefined || (Array.isArray(x.seats) && x.seats.every((s) => typeof s === 'string' && world.seatIndex.has(s)))) &&
     (x.party === undefined || isParty(x.party)) && (x.alone === undefined || typeof x.alone === 'boolean') &&
-    (x.elections === undefined || isNum(x.elections)) && (x.weeks === undefined || isNum(x.weeks)) && (x.ttl === undefined || isNum(x.ttl))
+    (x.elections === undefined || isNum(x.elections)) && (x.weeks === undefined || isNum(x.weeks)) && (x.ttl === undefined || isNum(x.ttl)) &&
+    (x.parts === undefined || isList(x.parts, (p) => isObj(p) && (FINAL_PARTS as readonly unknown[]).includes(p.kind) && isNum(p.need) && typeof p.done === 'boolean' &&
+      (p.seats === undefined || (Array.isArray(p.seats) && p.seats.every((s) => typeof s === 'string' && world.seatIndex.has(s)))) && (p.party === undefined || isParty(p.party)) && (p.alone === undefined || typeof p.alone === 'boolean')))
   );
 }
 function isValidMissionRecord(x: unknown, world: World): boolean {
   return isObj(x) && (MISSION_KINDS as readonly unknown[]).includes(x.kind) && typeof x.main === 'boolean' && isTier(x.tier) && typeof x.won === 'boolean' && isNum(x.term) && isNum(x.need) &&
+    (x.parts === undefined || isList(x.parts, (p) => isObj(p) && (FINAL_PARTS as readonly unknown[]).includes(p.kind) && isNum(p.need) && typeof p.done === 'boolean')) &&
     (x.seats === undefined || (Array.isArray(x.seats) && x.seats.every((s) => typeof s === 'string' && world.seatIndex.has(s)))) &&
     (x.party === undefined || isParty(x.party)) && (x.alone === undefined || typeof x.alone === 'boolean');
 }
 function isValidMissions(x: unknown, world: World): boolean {
-  return isObj(x) && isNum(x.seq) && (x.offered === undefined || isNum(x.offered)) && (x.gov === undefined || typeof x.gov === 'string') && isList(x.active, (m) => isValidMission(m, world)) && isList(x.offers, (m) => isValidMission(m, world)) &&
+  return isObj(x) && isNum(x.seq) && (x.offered === undefined || isNum(x.offered)) && (x.gov === undefined || typeof x.gov === 'string') &&
+    (x.firsts === undefined || isList(x.firsts, (k) => (MISSION_KINDS as readonly unknown[]).includes(k))) && (x.hard === undefined || typeof x.hard === 'boolean') && (x.free === undefined || typeof x.free === 'boolean') && isList(x.active, (m) => isValidMission(m, world)) && isList(x.offers, (m) => isValidMission(m, world)) &&
     isList(x.done, (m) => isValidMissionRecord(m, world)) && isList(x.unseen, (m) => isValidMissionRecord(m, world));
 }
 

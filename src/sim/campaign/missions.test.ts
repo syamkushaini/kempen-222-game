@@ -8,8 +8,12 @@ import { holderOf, seatsHeldBy } from './contests';
 import { endDay } from './formation';
 import {
   abandonMission, acceptMission, declineMission, dearToLose, ELECTIONS_FOR, isMain, missionsElection, missionsOf, missionsWeek, offerMain,
-  penaltyOf, progressOf, rewardOf, seenMissions, SIDE_OFFER_WAIT,
+  finalOpen, FINAL_ELECTIONS, penaltyOf, progressOf, rewardOf, seenMissions, SIDE_OFFER_WAIT,
 } from './missions';
+import { earned } from './achievements';
+import { translate } from '../../i18n/strings';
+import { missionGoal } from '../../ui/missionText';
+import type { Format, T } from '../../ui/hooks';
 import { closeNight, endWeek } from './turn';
 import { MISSION_KINDS, type Campaign, type Mission } from './types';
 import { isValidCampaign } from './validate';
@@ -129,7 +133,8 @@ describe('taking a mission on', () => {
   });
 
   it('cost more to lose the more they asked, and the dear kinds cost most', () => {
-    for (const kind of MISSION_KINDS) {
+    // The final mission has the one tier, the highest.
+    for (const kind of MISSION_KINDS.filter((k) => k !== 'final')) {
       const cost = (tier: 1 | 2 | 3) => penaltyOf({ kind, tier }).reduce((a, e) => a + (e.t === 'cred' ? -(e as { n: number }).n : 0), 0);
       expect(cost(3), kind).toBeGreaterThan(cost(1));
     }
@@ -329,4 +334,141 @@ describe('through a whole career', () => {
       void beginCampaign;
     }
   }, 300_000);
+});
+
+describe('what a mission says', () => {
+  const t: T = (key, vars) => translate('en', key, vars);
+  const f = { rm: (n: number) => `RM${n}` } as Format;
+  it('closes a sentence cleanly where no time is given, and says when where it is', () => {
+    const bloc = { kind: 'bloc' as const, need: 5 };
+    expect(missionGoal(t, f, bloc, '')).toBe('Govern with 5 parties or more, yours included.');
+    expect(missionGoal(t, f, { kind: 'majority', need: 112, alone: true }, '')).toBe('Win 112 seats of your own, a majority of the House.');
+    expect(missionGoal(t, f, { ...bloc, elections: 1 })).toBe('Govern with 5 parties or more, yours included, at the next election.');
+    expect(missionGoal(t, f, { kind: 'credibility', need: 70, weeks: 1 })).toBe('Raise the party’s credibility to 70 within 1 week.');
+    expect(missionGoal(t, f, { kind: 'funds', need: 900_000, weeks: 26 })).toBe('Build the party’s funds up to RM900000 within 26 weeks.');
+  });
+});
+
+describe('the final mission', () => {
+  const wonKinds = (c: Campaign, kinds: Mission['kind'][], hard = true) => {
+    const m = missionsOf(c);
+    m.firsts = [...kinds];
+    m.hard = hard;
+  };
+  const openFinal = (c: Campaign) => { const m = missionsOf(c); m.offered = undefined; offerMain(base, c); return m.offers.find((o) => o.kind === 'final'); };
+
+  it('opens only for a leader who has won each of the four kinds, one of them a hard one', () => {
+    const c = career(BP);
+    expect(finalOpen(missionsOf(c))).toBe(false);
+    wonKinds(c, ['seize', 'hold', 'bloc'], true);
+    expect(finalOpen(missionsOf(c))).toBe(false);
+    wonKinds(c, ['seize', 'hold', 'bloc', 'majority'], false);
+    expect(finalOpen(missionsOf(c))).toBe(false);
+    expect(openFinal(c)).toBeUndefined();
+    wonKinds(c, ['seize', 'hold', 'bloc', 'majority'], true);
+    expect(finalOpen(missionsOf(c))).toBe(true);
+    const f = openFinal(c)!;
+    expect(f).toBeDefined();
+    expect(f.main && f.tier === 3 && f.elections === FINAL_ELECTIONS).toBe(true);
+    expect(f.parts!.length).toBeGreaterThanOrEqual(3);
+    expect(f.parts!.map((p) => p.kind)).toEqual(expect.arrayContaining(['bloc', 'majority']));
+    expect(f.parts!.every((p) => !p.done)).toBe(true);
+    expect(c.news.some((n) => n.key === 'news.mission.final')).toBe(true);
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
+  });
+
+  it('is the dearest to lose and the best paid, and is offered again at each parliament until it is won', () => {
+    expect(dearToLose('final')).toBe(true);
+    const cred = (e: ReturnType<typeof rewardOf>) => (e.find((x) => x.t === 'cred') as { n: number }).n;
+    expect(cred(rewardOf({ kind: 'final', tier: 3, main: true }))).toBeGreaterThan(cred(rewardOf({ kind: 'seize', tier: 3, main: true })));
+    const lose = (k: Mission['kind']) => penaltyOf({ kind: k, tier: 3 }).reduce((a, e) => a + (e.t === 'cred' ? (e as { n: number }).n : 0), 0);
+    expect(lose('final')).toBeLessThan(lose('hold'));
+    const c = career(BP);
+    wonKinds(c, ['seize', 'hold', 'bloc', 'majority']);
+    const f = openFinal(c)!;
+    // Turned down, it comes round again.
+    declineMission(c, f.id);
+    expect(missionsOf(c).offers.some((o) => o.kind === 'final')).toBe(false);
+    expect(openFinal(c)).toBeDefined();
+  });
+
+  it('is won when every part is done, with the seats to keep kept at the election that finishes it, and puts the career into free play', () => {
+    const c = career(BP);
+    wonKinds(c, ['seize', 'hold', 'bloc', 'majority']);
+    const f = openFinal(c)!;
+    acceptMission(c, f.id);
+    const m = missionsOf(c);
+    const mine = seatsHeldBy(base, c, BP);
+    const rival = base.seats.filter((s) => holderOf(base, c, s.id) !== BP).slice(0, 4).map((s) => s.id);
+    m.active[0].parts = [
+      { kind: 'seize', seats: rival, need: 2, done: false },
+      { kind: 'hold', seats: mine.slice(0, 3), need: 3, done: false },
+      { kind: 'bloc', need: 3, done: false },
+      { kind: 'majority', need: majorityLine(base), alone: true, done: false },
+    ];
+    const line = majorityLine(base);
+    const all = base.seats.map((s) => s.id);
+    const winners = (ids: string[], who: number, rest = BP) => base.seats.map((s) => (ids.includes(s.id) ? who : rest));
+    const gov = (partners: number[], pm = BP) => ({ ...c.career!.government, pm, partners });
+    // The first election: some parts are done (a coalition of three, some seats taken), not all.
+    missionsElection(base, c, gov([PS, PT]), winners(rival.slice(0, 2), BP, PS));
+    const after1 = m.active[0];
+    expect(after1.parts!.find((p) => p.kind === 'seize')!.done).toBe(true);
+    expect(after1.parts!.find((p) => p.kind === 'bloc')!.done).toBe(true);
+    expect(after1.parts!.find((p) => p.kind === 'majority')!.done).toBe(false);
+    expect(m.active).toHaveLength(1);
+    // The second: a majority of its own, and the seats kept.
+    missionsElection(base, c, gov([]), winners(all.slice(0, line), BP, PS).map((w, i) => (mine.slice(0, 3).includes(base.seats[i].id) ? BP : w)));
+    expect(m.active).toEqual([]);
+    expect(m.done.at(-1)).toMatchObject({ kind: 'final', won: true });
+    expect(m.free).toBe(true);
+    expect(m.offers).toEqual([]);
+    expect(m.unseen.at(-1)!.parts!.length).toBe(4);
+    // Free play: nothing more is offered, a side errand included.
+    m.offered = undefined;
+    offerMain(base, c);
+    expect(m.offers).toEqual([]);
+    for (let i = 0; i < 200 && c.phase === 'term'; i++) { if (c.inbox.length) c.inbox = []; termWeek(base, c); }
+    expect(m.offers).toEqual([]);
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
+    expect(earned(base, c)).toContain('finalMission');
+  });
+
+  it('is lost when its two elections are used up, and a hold that is not kept at the winning election does not win it', () => {
+    const c = career(BP);
+    wonKinds(c, ['seize', 'hold', 'bloc', 'majority']);
+    acceptMission(c, openFinal(c)!.id);
+    const m = missionsOf(c);
+    const mine = seatsHeldBy(base, c, BP);
+    m.active[0].parts = [
+      { kind: 'hold', seats: mine.slice(0, 3), need: 3, done: false },
+      { kind: 'bloc', need: 3, done: false },
+    ];
+    const gov = { ...c.career!.government, pm: BP, partners: [PS, PT] };
+    const lost = base.seats.map((s) => (mine.slice(0, 3).includes(s.id) ? PS : BP));
+    missionsElection(base, c, gov, lost);
+    expect(m.active).toHaveLength(1);
+    expect(m.active[0].parts!.find((p) => p.kind === 'bloc')!.done).toBe(true);
+    const cred = c.career!.credibility;
+    missionsElection(base, c, gov, lost);
+    expect(m.active).toEqual([]);
+    expect(m.done.at(-1)).toMatchObject({ kind: 'final', won: false });
+    expect(m.free).toBeUndefined();
+    expect(c.career!.credibility).toBeLessThan(cred);
+  });
+
+  it('is unlocked through play: winning a hard main mission of each kind records it', () => {
+    const c = career(BP);
+    const m = missionsOf(c);
+    m.offers = [];
+    const kinds: Mission['kind'][] = ['seize', 'hold', 'bloc', 'majority'];
+    kinds.forEach((kind, i) => {
+      m.active = [{ id: 900 + i, kind, main: true, tier: i === 0 ? 3 : 1, need: 0, elections: 1, seats: [], alone: false, party: undefined }];
+      // Need 0 of nothing: met whatever the result, as for a government of anyone.
+      missionsElection(base, c, { ...c.career!.government, pm: BP, partners: [PS, PT], minority: false }, base.seats.map(() => BP));
+    });
+    expect(m.firsts).toEqual(expect.arrayContaining(kinds));
+    expect(m.hard).toBe(true);
+    expect(finalOpen(m)).toBe(true);
+  });
 });

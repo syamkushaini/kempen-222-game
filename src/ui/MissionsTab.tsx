@@ -1,5 +1,5 @@
 import type { StringKey } from '../i18n/strings';
-import { dearToLose, missionsOf, penaltyOf, progressOf, rewardOf } from '../sim/campaign/missions';
+import { dearToLose, FINAL_KINDS, missionsOf, penaltyOf, progressOf, rewardOf } from '../sim/campaign/missions';
 import type { Campaign, Mission, MissionRecord } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import { describeEffect } from './effectText';
@@ -7,7 +7,8 @@ import { seatName, useFormat, useT, useWorld, type Format, type T } from './hook
 import { Icon } from './Icon';
 import { EmptyState } from './EmptyState';
 import { ConfirmButton } from './SavesTab';
-import { missionGoal, missionWhy, recordAsk } from './missionText';
+import { missionGoal, missionWhy, partGoal, recordAsk } from './missionText';
+import type { FinalPart } from '../sim/campaign/types';
 import type { World } from '../sim/election';
 import { useGaugeColour } from './Gauge';
 
@@ -36,6 +37,23 @@ function SeatChips({ world, ids }: { world: World; ids: string[] }) {
   );
 }
 
+/** The four things the final mission asks, each ticked when done. */
+function Parts({ parts, world }: { parts: FinalPart[]; world: World }) {
+  const t = useT();
+  const f = useFormat();
+  return (
+    <ul className="mission-parts">
+      {parts.map((p, i) => (
+        <li key={i} className={p.done ? 'done' : ''}>
+          <span className="tick" aria-hidden="true">{p.done ? '✓' : '○'}</span>
+          <span><strong>{t(`mission.kind.${p.kind}` as StringKey)}.</strong> {partGoal(t, f, p)}{p.seats && <SeatChips world={world} ids={p.seats} />}</span>
+          <span className="sr-only">{t(p.done ? 'mission.part.done' : 'mission.part.todo')}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function Terms({ m, effects }: { m: Mission; effects: ReturnType<typeof useEffectsText> }) {
   const t = useT();
   return (
@@ -52,12 +70,13 @@ function Offer({ m, world, effects }: { m: Mission; world: World; effects: Retur
   const accept = useStore((s) => s.acceptMission);
   const decline = useStore((s) => s.declineMission);
   return (
-    <li className="action mission">
+    <li className={m.kind === 'final' ? 'action mission final' : 'action mission'}>
       <div className="grow">
         <span className="action-title">{t(`mission.kind.${m.kind}` as StringKey)}</span>
         <span className="action-meta">{missionGoal(t, f, m)}</span>
         <span className="action-meta muted">{missionWhy(t, m)}</span>
         {m.seats && <SeatChips world={world} ids={m.seats} />}
+        {m.parts && <Parts parts={m.parts} world={world} />}
         <Terms m={m} effects={effects} />
         <div className="mission-buttons">
           <button className="btn primary small" onClick={() => accept(m.id)}>{t('mission.take')}</button>
@@ -78,7 +97,7 @@ function Running({ m, campaign, world, effects }: { m: Mission; campaign: Campai
   const left = m.weeks !== undefined ? t('mission.left.weeks', { n: m.weeks }) : t('mission.left.elections', { n: m.elections ?? 1 });
   const figure = m.kind === 'funds' ? `${f.rm(have)} / ${f.rm(need)}` : t('mission.progress', { have, need });
   return (
-    <li className="action mission">
+    <li className={m.kind === 'final' ? 'action mission final' : 'action mission'}>
       <div className="grow">
         <span className="action-title">{t(`mission.kind.${m.kind}` as StringKey)} <span className="muted small">· {left}</span></span>
         <span className="action-meta">{missionGoal(t, f, m, '')}</span>
@@ -87,6 +106,7 @@ function Running({ m, campaign, world, effects }: { m: Mission; campaign: Campai
           <strong className="num">{figure}</strong>
         </div>
         {m.seats && <SeatChips world={world} ids={m.seats} />}
+        {m.parts && <Parts parts={m.parts} world={world} />}
         <Terms m={m} effects={effects} />
         <div className="mission-buttons">
           <ConfirmButton label={t('mission.giveUp')} confirmLabel={t('mission.giveUp.confirm')} onConfirm={() => abandon(m.id)} danger />
@@ -120,6 +140,10 @@ export function MissionsTab() {
   return (
     <section className="orders missions">
       <p className="muted small">{t('mission.intro')}</p>
+      {m.free && <p className="note">{t('mission.free')}</p>}
+      {!m.free && !m.active.concat(m.offers).some((x) => x.kind === 'final') && (
+        <p className="muted small">{t('mission.finalProgress', { n: FINAL_KINDS.filter((k) => m.firsts?.includes(k)).length, hard: t(m.hard ? 'mission.finalProgress.yes' : 'mission.finalProgress.no') })}</p>
+      )}
       <h3>{t('mission.running')}</h3>
       {m.active.length === 0 ? <p className="muted small">{t('mission.none.running')}</p> : (
         <ul className="seat-list">{m.active.map((x) => <Running key={x.id} m={x} campaign={campaign} world={world} effects={effects} />)}</ul>
@@ -144,21 +168,30 @@ export function MissionCard() {
   const f = useFormat();
   const campaign = useStore((s) => s.game!.campaign);
   const seen = useStore((s) => s.seenMission);
+  const newGame = useStore((s) => s.newGameSetup);
   const effects = useEffectsText();
   const r = campaign.career?.missions?.unseen[0];
   if (!r || campaign.phase !== 'term' || campaign.inbox.length > 0) return null;
   const ask = recordAsk(r);
   const terms = r.won ? rewardOf(r) : penaltyOf(r);
-  const title = t(r.won ? 'mission.won' : 'mission.lost');
+  // The final mission won is the end of the missions: the player is asked what comes next.
+  const finale = r.kind === 'final' && r.won;
+  const title = finale ? t('mission.final.won') : t(r.won ? 'mission.won' : 'mission.lost');
   return (
     <div className="overlay">
-      <div className="dialog panel mission-card" role="dialog" aria-modal="true" aria-label={title}>
+      <div className={finale ? 'dialog panel mission-card finale' : 'dialog panel mission-card'} role="dialog" aria-modal="true" aria-label={title}>
         <div className={r.won ? 'verdict won' : 'verdict lost'}><Icon name={r.won ? 'trophy' : 'close'} size={28} /></div>
         <h2>{title}</h2>
         <p className="action-title">{t(`mission.kind.${r.kind}` as StringKey)}</p>
-        <p>{missionGoal(t, f, ask, '')}</p>
+        {finale ? <p>{t('mission.final.text')}</p> : <p>{missionGoal(t, f, ask, '')}</p>}
+        {r.parts && <ul className="mission-parts">{r.parts.map((p, i) => <li key={i} className={p.done ? 'done' : ''}><span className="tick" aria-hidden="true">{p.done ? '✓' : '○'}</span><span><strong>{t(`mission.kind.${p.kind}` as StringKey)}.</strong> {partGoal(t, f, p)}</span></li>)}</ul>}
         <p className="muted">{t(r.won ? 'mission.card.reward' : 'mission.card.risk')}: {effects(terms)}</p>
-        <button className="btn primary" autoFocus onClick={() => seen()}>{t('mission.card.close')}</button>
+        {finale ? (
+          <div className="mission-buttons">
+            <button className="btn primary" autoFocus onClick={() => seen()}>{t('mission.final.carryOn')}</button>
+            <button className="btn" onClick={() => { seen(); newGame(); }}>{t('mission.final.new')}</button>
+          </div>
+        ) : <button className="btn primary" autoFocus onClick={() => seen()}>{t('mission.card.close')}</button>}
       </div>
     </div>
   );

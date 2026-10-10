@@ -395,9 +395,19 @@ export interface Ending { kind: EndingKind; legacy: LegacyId; score: number; /**
 /** A career: the long game across terms. Null in one-off contests. */
 // ---------- missions ----------
 
-/** What a mission asks. The first four are the main ones, judged at an election; the last three are side ones, judged week by week (see missions.ts). */
-export const MISSION_KINDS = ['seize', 'hold', 'bloc', 'majority', 'credibility', 'funds', 'unity'] as const;
+/** What a mission asks. The first five are the main ones, judged at an election (the fifth is the final mission, all four at once); the last three are side ones, judged week by week (see missions.ts). */
+export const MISSION_KINDS = ['seize', 'hold', 'bloc', 'majority', 'final', 'credibility', 'funds', 'unity'] as const;
 export type MissionKind = (typeof MISSION_KINDS)[number];
+
+/** One of the four things the final mission asks at once: what a main mission of that kind asks, and whether it has been done. */
+export interface FinalPart {
+  kind: 'seize' | 'hold' | 'bloc' | 'majority';
+  seats?: string[];
+  need: number;
+  party?: number;
+  alone?: boolean;
+  done: boolean;
+}
 
 export interface Mission {
   /** Unique within a career. */
@@ -421,6 +431,8 @@ export interface Mission {
   weeks?: number;
   /** An offer not yet taken: weeks left before it is withdrawn (side). A main offer stays until the next election. */
   ttl?: number;
+  /** The final mission: the parts, each done once at some election in its window (the seats to hold are judged at the one that wins it). */
+  parts?: FinalPart[];
 }
 
 /** How a mission ended, kept for the record and shown once. */
@@ -434,6 +446,8 @@ export interface MissionRecord {
   need: number;
   party?: number;
   alone?: boolean;
+  /** The final mission: its parts as they stood. */
+  parts?: FinalPart[];
 }
 
 export interface Missions {
@@ -451,6 +465,12 @@ export interface Missions {
   offered?: number;
   /** Who was in government when the missions were last looked at, as "pm:partner,partner": a change of government between elections is judged when it shows. */
   gov?: string;
+  /** The kinds of main mission the player has won at least once; with a hard one among them, the final mission opens. */
+  firsts?: MissionKind[];
+  /** A hard (third tier) main mission has been won. */
+  hard?: boolean;
+  /** The final mission has been won: the career goes on as free play, and no more missions are offered. */
+  free?: boolean;
 }
 
 export interface Career {

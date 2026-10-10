@@ -135,6 +135,6 @@ describe('achievements', () => {
 
   it('are listed in the order they are shown', () => {
     expect(new Set(ACHIEVEMENT_IDS).size).toBe(ACHIEVEMENT_IDS.length);
-    expect(ACHIEVEMENT_IDS).toHaveLength(30);
+    expect(ACHIEVEMENT_IDS).toHaveLength(31);
   });
 });

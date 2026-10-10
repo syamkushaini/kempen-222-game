@@ -9,7 +9,7 @@ import { PARTY_IDS } from '../types';
 import { isPm } from './office';
 import { termIncome } from './career';
 import { truth } from './turn';
-import { MISSION_KINDS, type Campaign, type Mission, type MissionKind, type MissionRecord, type Missions, type Outcome } from './types';
+import { MISSION_KINDS, type Campaign, type FinalPart, type Mission, type MissionKind, type MissionRecord, type Missions, type Outcome } from './types';
 
 // Missions give a career something to aim at beyond the next election. The main ones are offered when a parliament
 // opens (take any, all or none) and are judged when the votes are counted: seats to take from a rival, seats to
@@ -32,9 +32,17 @@ export const HISTORY = 40;
 const FEDERAL = 222;
 
 export const missionsOf = (c: Campaign): Missions => (c.career!.missions ??= { active: [], offers: [], seq: 0, done: [], unseen: [] });
-export const isMain = (kind: MissionKind): boolean => kind === 'seize' || kind === 'hold' || kind === 'bloc' || kind === 'majority';
+export const isMain = (kind: MissionKind): boolean => kind === 'seize' || kind === 'hold' || kind === 'bloc' || kind === 'majority' || kind === 'final';
 /** Whether failing a mission of this kind is dear (the other kinds cost little). */
-export const dearToLose = (kind: MissionKind): boolean => kind === 'hold' || kind === 'majority';
+export const dearToLose = (kind: MissionKind): boolean => kind === 'hold' || kind === 'majority' || kind === 'final';
+
+/**
+ * The final mission opens once the leader has won a main mission of each of the four kinds, one of them a hard one. It asks
+ * all four at once, over two elections, and is the hardest thing the game asks: to win it is to have mastered a career.
+ */
+export const FINAL_KINDS = ['seize', 'hold', 'bloc', 'majority'] as const;
+export const FINAL_ELECTIONS = 2;
+export const finalOpen = (m: Missions): boolean => !m.free && !!m.hard && FINAL_KINDS.every((k) => m.firsts?.includes(k));
 
 const sizeFactor = (world: World) => Math.sqrt(world.seats.length / FEDERAL);
 const count = (world: World, base: number) => Math.max(1, Math.round(base * sizeFactor(world)));
@@ -44,6 +52,8 @@ const count = (world: World, base: number) => Math.max(1, Math.round(base * size
 /** Money at general-election scale is what `applyEffects` takes: it is scaled to the contest there. */
 export function rewardOf(m: Pick<Mission, 'kind' | 'tier' | 'main'>): Effect[] {
   const t = m.tier;
+  // The final mission is paid as nothing else is.
+  if (m.kind === 'final') return [{ t: 'funds', n: 1_500_000 }, { t: 'cred', n: 10 }, { t: 'mood', blocs: 'all', n: 0.02 }, { t: 'unity', n: 10 }];
   const money: Effect = { t: 'funds', n: [100_000, 250_000, 450_000][t - 1] };
   // A main mission brings money, standing, a better mood in the country and a party pleased with itself.
   if (m.main) return [money, { t: 'cred', n: 2 * t }, { t: 'mood', blocs: 'all', n: 0.003 * t }, { t: 'unity', n: 2 * t }];
@@ -55,6 +65,7 @@ export function rewardOf(m: Pick<Mission, 'kind' | 'tier' | 'main'>): Effect[] {
 
 export function penaltyOf(m: Pick<Mission, 'kind' | 'tier'>): Effect[] {
   const t = m.tier;
+  if (m.kind === 'final') return [{ t: 'cred', n: -12 }, { t: 'unity', n: -10 }, { t: 'mood', blocs: 'all', n: -0.004 }];
   if (dearToLose(m.kind)) return [{ t: 'cred', n: -(3 + 2 * t) }, { t: 'unity', n: -(2 + 2 * t) }, { t: 'mood', blocs: 'all', n: -0.002 * t }];
   return [{ t: 'cred', n: -(1 + t) }, { t: 'unity', n: -(1 + t) }];
 }
@@ -72,6 +83,7 @@ export function progressOf(world: World, c: Campaign, m: Mission): { have: numbe
       return m.party !== undefined ? { have: inIt && (g.pm === m.party || g.partners.includes(m.party)) ? 1 : 0, need: 1 } : { have: inIt ? 1 + g.partners.length : 0, need: m.need };
     }
     case 'majority': return { have: houseTally(world, c)[me] ?? 0, need: m.alone ? m.need : majorityLine(world) };
+    case 'final': return { have: (m.parts ?? []).filter((p) => p.done).length, need: (m.parts ?? []).length };
     case 'credibility': return { have: Math.round(k.credibility), need: m.need };
     case 'unity': return { have: Math.round(c.parties[me]!.unity), need: m.need };
     case 'funds': return { have: Math.round(c.parties[me]!.funds), need: m.need };
@@ -92,6 +104,10 @@ function met(world: World, c: Campaign, m: Mission, made: Outcome, winners?: rea
     default: return false;
   }
 }
+
+/** Whether one part of the final mission is met by this election. */
+const partMet = (world: World, c: Campaign, p: FinalPart, made: Outcome, winners: readonly number[]): boolean =>
+  met(world, c, { id: 0, main: true, tier: 3, ...p }, made, winners);
 
 // ---------- offering ----------
 
@@ -169,6 +185,23 @@ function majority(world: World, c: Campaign): Offer | null {
   return { kind: 'majority', main: true, tier, need: line, alone: false, elections: ELECTIONS_FOR(tier) };
 }
 
+/** The final mission as it stands for this party: the seats it must take and keep, a government of several parties, and a majority of its own. */
+function finale(world: World, c: Campaign): Offer | null {
+  const g = c.career!.government;
+  const inIt = isPm(c) || g.partners.includes(c.player);
+  const parts: FinalPart[] = [];
+  const pool = reachable(world, c, 0.2);
+  const take = Math.min(pool.length, count(world, 8));
+  if (take >= 2) parts.push({ kind: 'seize', seats: pool.slice(0, take).map((x) => x.id), need: Math.ceil(take * 0.7), done: false });
+  const now = truth(world, c);
+  const mine = seatsHeldBy(world, c, c.player).map((id) => ({ id, margin: now.seats[world.seatIndex.get(id)!].margin })).sort((a, b) => a.margin - b.margin);
+  const keep = Math.min(mine.length, count(world, 8));
+  if (keep >= 2) parts.push({ kind: 'hold', seats: mine.slice(0, keep).map((x) => x.id), need: Math.max(1, keep - 1), done: false });
+  parts.push({ kind: 'bloc', need: clamp((inIt ? 1 + g.partners.length : 1) + 2, 3, 5), done: false });
+  parts.push({ kind: 'majority', need: majorityLine(world), alone: true, done: false });
+  return parts.length < 3 ? null : { kind: 'final', main: true, tier: 3, need: parts.length, parts, elections: FINAL_ELECTIONS };
+}
+
 /** What has to be reached, and in how many weeks, for a side mission. */
 function side(world: World, c: Campaign, kind: MissionKind, tier: 1 | 2 | 3): Offer | null {
   const k = c.career!, pc = c.parties[c.player]!;
@@ -200,18 +233,23 @@ export function offerMain(world: World, c: Campaign): void {
   if (m.offered === k.term) return;
   m.offered = k.term;
   m.offers = m.offers.filter((o) => !o.main);
+  // A leader who has won the final mission is in free play: nothing more is offered.
+  if (m.free) return;
   const rng = new Rng(((c.seed ^ 0x3155) + k.term * 977) >>> 0);
   const base = standing(world, c);
   const picks = [seize(world, c, tierFor(base, rng)), hold(world, c, tierFor(base, rng)), bloc(world, c, rng), majority(world, c)];
+  // The final mission waits for whoever has earned it, and comes round again at each parliament until it is won.
+  if (finalOpen(m) && !m.active.some((a) => a.kind === 'final')) picks.push(finale(world, c));
   const made = picks.filter((p): p is Offer => p !== null).map((p) => give(m, p));
   if (made.length > 0) pushNews(c, { party: c.player, key: 'news.mission.offers', vars: { n: made.length }, tone: 'neutral' });
+  if (made.some((x) => x.kind === 'final')) pushNews(c, { party: c.player, key: 'news.mission.final', tone: 'good' });
 }
 
 /** Now and then, during a term, a smaller errand comes along. */
 function offerSide(world: World, c: Campaign, rng: Rng): void {
   const m = missionsOf(c);
   const busy = [...m.active, ...m.offers].filter((x) => !x.main);
-  if (busy.length >= SIDE_AT_ONCE || c.career!.week % 4 !== 0 || rng.next() >= SIDE_CHANCE) return;
+  if (m.free || busy.length >= SIDE_AT_ONCE || c.career!.week % 4 !== 0 || rng.next() >= SIDE_CHANCE) return;
   const free = SIDE_KINDS.filter((kind) => !busy.some((x) => x.kind === kind));
   if (free.length === 0) return;
   const kind = free[rng.int(free.length)];
@@ -257,8 +295,14 @@ function settle(world: World, c: Campaign, mission: Mission, won: boolean, term 
   const m = missionsOf(c);
   m.active = m.active.filter((a) => a.id !== mission.id);
   applyEffects(world, c, won ? rewardOf(mission) : penaltyOf(mission));
-  const record: MissionRecord = { kind: mission.kind, main: mission.main, tier: mission.tier, won, term, need: mission.need, ...(mission.seats ? { seats: mission.seats } : {}), ...(mission.party !== undefined ? { party: mission.party } : {}), ...(mission.alone !== undefined ? { alone: mission.alone } : {}) };
+  const record: MissionRecord = { kind: mission.kind, main: mission.main, tier: mission.tier, won, term, need: mission.need, ...(mission.parts ? { parts: structuredClone(mission.parts) } : {}), ...(mission.seats ? { seats: mission.seats } : {}), ...(mission.party !== undefined ? { party: mission.party } : {}), ...(mission.alone !== undefined ? { alone: mission.alone } : {}) };
   m.done = [...m.done, record].slice(-HISTORY);
+  if (won && mission.main && mission.kind !== 'final') {
+    if (!(m.firsts ??= []).includes(mission.kind)) m.firsts.push(mission.kind);
+    if (mission.tier === 3) m.hard = true;
+  }
+  // The final mission won, the career goes on as free play.
+  if (won && mission.kind === 'final') { m.free = true; m.offers = []; m.active = []; }
   m.unseen.push(record);
   pushNews(c, { party: c.player, key: won ? 'news.mission.won' : 'news.mission.lost', vars: { mission: ref.mission(mission.kind) }, tone: won ? 'good' : 'bad' });
 }
@@ -302,10 +346,21 @@ export function missionsElection(world: World, c: Campaign, made: Outcome, winne
   const m = c.career?.missions;
   if (!m) return;
   for (const a of [...m.active].filter((x) => x.main)) {
-    const ok = met(world, c, a, made, winners);
-    a.elections = (a.elections ?? 1) - 1;
     // The election was the last parliament's: the career has moved on to the next by the time it is counted.
     const held = c.career!.term - 1;
+    if (a.kind === 'final') {
+      // Each part but the seats to hold is done once, at any election in the window; the seats to hold must be held at the election that wins it.
+      const parts = a.parts ?? [];
+      for (const p of parts) if (p.kind !== 'hold' && !p.done && partMet(world, c, p, made, winners)) p.done = true;
+      const holding = parts.filter((p) => p.kind === 'hold');
+      for (const p of holding) p.done = partMet(world, c, p, made, winners);
+      a.elections = (a.elections ?? 1) - 1;
+      if (parts.every((p) => p.done)) settle(world, c, a, true, held);
+      else if (a.elections <= 0) settle(world, c, a, false, held);
+      continue;
+    }
+    const ok = met(world, c, a, made, winners);
+    a.elections = (a.elections ?? 1) - 1;
     if (a.kind === 'hold') {
       if (!ok) settle(world, c, a, false, held);
       else if (a.elections <= 0) settle(world, c, a, true, held);

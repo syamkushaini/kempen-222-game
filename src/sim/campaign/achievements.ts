@@ -15,7 +15,7 @@ export const ACHIEVEMENT_IDS = [
   'pactMaker', 'katak', 'premier', 'partner', 'minority', 'bedfellows',
   // a career
   'fullTerm', 'mandate', 'secondMandate', 'outsider', 'promiseKeeper', 'hawk', 'toppler', 'survivor', 'decade',
-  'machine', 'magnate', 'longArm',
+  'machine', 'magnate', 'longArm', 'finalMission',
   // endings
   'bowOut', 'statesman', 'knives', 'collector',
 ] as const;
@@ -118,6 +118,7 @@ export function earned(world: World, c: Campaign, legacies: LegacyId[] = []): Ac
     if (pc.machinery.some((m) => m >= 90) && (world.rules.kind !== 'state' || k.week >= 52 || k.term >= 2)) out.add('machine');
     if (k.assets >= scaled(world, 1_000_000)) out.add('magnate');
     if (pm && k.levers.every((week) => week > 0)) out.add('longArm');
+    if (k.missions?.free) out.add('finalMission');
 
     const end = k.ending;
     if (end) {

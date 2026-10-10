@@ -33,6 +33,7 @@ export const MISSIONS_EN = {
   'mission.kind.credibility': 'Win back trust',
   'mission.kind.unity': 'Close the ranks',
   'mission.kind.funds': 'Fill the war chest',
+  'mission.kind.final': 'The Final Mission',
 
   'mission.goal.seize': 'Win {need} of these {n} seats {when}.',
   'mission.goal.hold': 'Keep {need} of these {n} seats {when}.',
@@ -43,6 +44,7 @@ export const MISSIONS_EN = {
   'mission.goal.credibility': 'Raise the party’s credibility to {need} {when}.',
   'mission.goal.unity': 'Raise the party’s unity to {need} {when}.',
   'mission.goal.funds': 'Build the party’s funds up to {rm} {when}.',
+  'mission.goal.final': 'Do all {n} of these, over the next two elections. Each is done once; the seats to keep must be kept at the election that finishes it.',
 
   'mission.why.seize': 'Your candidates trail narrowly in these seats. A good campaign could turn them.',
   'mission.why.hold': 'These are the seats your rivals will aim at. Losing them costs more than winning others gains.',
@@ -53,6 +55,7 @@ export const MISSIONS_EN = {
   'mission.why.credibility': 'The voters believe a party more when it keeps its word.',
   'mission.why.unity': 'A party that quarrels in public loses seats it should win.',
   'mission.why.funds': 'Campaigns are won by whoever still has money in the bank at the end of them.',
+  'mission.why.final': 'Everything the party has learned, asked of it at once. Nobody has been given an easier one, and few have finished it.',
 
   'mission.won': 'Mission accomplished',
   'mission.lost': 'Mission failed',
@@ -61,11 +64,22 @@ export const MISSIONS_EN = {
   'mission.card.reward': 'The reward',
   'mission.card.risk': 'The price',
   'mission.card.close': 'Continue',
+  'mission.part.done': 'done',
+  'mission.part.todo': 'not yet',
+  'mission.finalProgress': 'The final mission opens when you have won a main mission of each kind, one of them a hard one: {n} of 4 kinds won, a hard one {hard}.',
+  'mission.finalProgress.yes': 'won',
+  'mission.finalProgress.no': 'not yet',
+  'mission.free': 'Free play. The final mission is won, so no more missions come: the country carries on as you play it.',
+  'mission.final.won': 'The final mission is done',
+  'mission.final.text': 'You asked of the party everything the game asks of a leader, and it was done. What happens next is for you to say: the country, its troubles and its rivals carry on until you are bored of them.',
+  'mission.final.carryOn': 'Carry on playing',
+  'mission.final.new': 'Start a new career',
 
   'news.mission.offers': '{n} missions are on offer for this parliament.',
   'news.mission.side': 'A new errand is on offer: {mission}.',
   'news.mission.won': 'Mission accomplished: {mission}.',
   'news.mission.lost': 'Mission failed: {mission}.',
+  'news.mission.final': 'The final mission is open: the hardest thing the party has been asked.',
 } as const;
 
 export const MISSIONS_MS: Record<keyof typeof MISSIONS_EN, string> = {
@@ -100,6 +114,7 @@ export const MISSIONS_MS: Record<keyof typeof MISSIONS_EN, string> = {
   'mission.kind.credibility': 'Menang semula kepercayaan',
   'mission.kind.unity': 'Rapatkan saf',
   'mission.kind.funds': 'Isi tabung perang',
+  'mission.kind.final': 'Misi Terakhir',
 
   'mission.goal.seize': 'Menangi {need} daripada {n} kerusi ini {when}.',
   'mission.goal.hold': 'Kekalkan {need} daripada {n} kerusi ini {when}.',
@@ -110,6 +125,7 @@ export const MISSIONS_MS: Record<keyof typeof MISSIONS_EN, string> = {
   'mission.goal.credibility': 'Naikkan kredibiliti parti ke {need} {when}.',
   'mission.goal.unity': 'Naikkan perpaduan parti ke {need} {when}.',
   'mission.goal.funds': 'Kumpulkan dana parti sehingga {rm} {when}.',
+  'mission.goal.final': 'Siapkan kesemua {n} perkara ini, dalam dua pilihan raya akan datang. Setiap satu disiapkan sekali sahaja; kerusi yang perlu dikekalkan mesti dikekalkan pada pilihan raya yang menamatkannya.',
 
   'mission.why.seize': 'Calon anda ketinggalan tipis di kerusi ini. Kempen yang baik boleh mengubahnya.',
   'mission.why.hold': 'Inilah kerusi yang akan disasarkan lawan. Kehilangannya lebih mahal daripada apa yang dapat dirampas.',
@@ -120,6 +136,7 @@ export const MISSIONS_MS: Record<keyof typeof MISSIONS_EN, string> = {
   'mission.why.credibility': 'Pengundi lebih percaya parti yang menepati janji.',
   'mission.why.unity': 'Parti yang bertengkar di khalayak kehilangan kerusi yang sepatutnya dimenangi.',
   'mission.why.funds': 'Kempen dimenangi oleh yang masih ada wang di bank pada penghujungnya.',
+  'mission.why.final': 'Segala yang telah dipelajari parti, dituntut serentak. Tiada siapa diberi yang lebih mudah, dan hanya sedikit yang menamatkannya.',
 
   'mission.won': 'Misi berjaya',
   'mission.lost': 'Misi gagal',
@@ -128,11 +145,22 @@ export const MISSIONS_MS: Record<keyof typeof MISSIONS_EN, string> = {
   'mission.card.reward': 'Ganjarannya',
   'mission.card.risk': 'Harganya',
   'mission.card.close': 'Teruskan',
+  'mission.part.done': 'selesai',
+  'mission.part.todo': 'belum',
+  'mission.finalProgress': 'Misi terakhir dibuka bila anda sudah menang satu misi utama bagi setiap jenis, satu daripadanya yang sukar: {n} daripada 4 jenis dimenangi, yang sukar {hard}.',
+  'mission.finalProgress.yes': 'sudah',
+  'mission.finalProgress.no': 'belum',
+  'mission.free': 'Main bebas. Misi terakhir sudah dimenangi, maka tiada misi lagi: negara berjalan seperti yang anda mainkan.',
+  'mission.final.won': 'Misi terakhir selesai',
+  'mission.final.text': 'Anda menuntut daripada parti segala yang dituntut permainan ini daripada seorang pemimpin, dan ia terlaksana. Selepas ini terpulang kepada anda: negara, masalahnya dan lawan-lawannya berjalan terus sehingga anda bosan.',
+  'mission.final.carryOn': 'Teruskan bermain',
+  'mission.final.new': 'Mulakan kerjaya baharu',
 
   'news.mission.offers': '{n} misi ditawarkan untuk parlimen ini.',
   'news.mission.side': 'Satu tugas baharu ditawarkan: {mission}.',
   'news.mission.won': 'Misi berjaya: {mission}.',
   'news.mission.lost': 'Misi gagal: {mission}.',
+  'news.mission.final': 'Misi terakhir dibuka: perkara paling sukar yang pernah dituntut daripada parti.',
 };
 
 export type MissionKey = keyof typeof MISSIONS_EN;
