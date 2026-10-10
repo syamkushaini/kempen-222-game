@@ -1,5 +1,5 @@
 import type { StringKey } from '../i18n/strings';
-import { dearToLose, FINAL_KINDS, OFFER_WARN, missionsOf, penaltyOf, progressOf, rewardOf } from '../sim/campaign/missions';
+import { dearToLose, FINAL_KINDS, lapsePenaltyOf, OFFER_WARN, missionsOf, penaltyOf, progressOf, rewardOf } from '../sim/campaign/missions';
 import type { Campaign, Mission, MissionRecord } from '../sim/campaign/types';
 import { useState } from 'react';
 import { useStore } from '../state/store';
@@ -81,6 +81,7 @@ function Offer({ m, world, effects }: { m: Mission; world: World; effects: Retur
         {m.seats && <SeatChips world={world} ids={m.seats} />}
         {m.parts && <Parts parts={m.parts} world={world} />}
         <Terms m={m} effects={effects} />
+        {m.ttl !== undefined && <p className="muted small">{t('mission.lapse')}: {effects(lapsePenaltyOf(m))}</p>}
         <div className="mission-buttons">
           <button className="btn primary small" onClick={() => accept(m.id)}>{t('mission.take')}</button>
           <button className="btn small" onClick={() => decline(m.id)}>{t('mission.decline')}</button>

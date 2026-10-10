@@ -5,6 +5,7 @@ import { N_BLOCS, PARTY_IDS } from '../types';
 import { FOUNDING_SEED_SHARE } from './founding';
 import { answerEvent, inGovernment, nextTerm, resumeTerm, skipAhead, startCareer, syncOpinion } from './career';
 import { endDay } from './formation';
+import { declineMission } from './missions';
 import { autoPlayWeek, closeNight, electionResult, endWeek, playable } from './turn';
 import type { Campaign } from './types';
 import { isValidCampaign } from './validate';
@@ -14,6 +15,7 @@ const careerOf = (state: string) => getWorld(`career:${state}`)!;
 function playTerm(c: Campaign, world: ReturnType<typeof careerOf>): void {
   for (let guard = 0; guard < 400 && c.phase !== 'campaign' && !c.career!.ending; guard++) {
     if (c.phase === 'term') {
+      for (const o of [...(c.career!.missions?.offers ?? [])]) declineMission(c, o.id); // an answer, so that none lapses at a cost
       skipAhead(world, c, 260);
       while (c.inbox.length) { const s = c.inbox.shift()!; answerEvent(world, c, s, 0); }
     } else {

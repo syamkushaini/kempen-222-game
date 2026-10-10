@@ -8,7 +8,7 @@ import { holderOf, seatsHeldBy } from './contests';
 import { endDay } from './formation';
 import {
   abandonMission, acceptMission, declineMission, dearToLose, ELECTIONS_FOR, isMain, missionsElection, missionsOf, missionsWeek, offerMain,
-  finalOpen, FINAL_ELECTIONS, EXTENSION, MAIN_OFFER_WAIT, OFFER_WARN, SIDE_WEEKS, penaltyOf, progressOf, rewardOf, seenMissions, SIDE_OFFER_WAIT,
+  finalOpen, FINAL_ELECTIONS, EXTENSION, lapsePenaltyOf, MAIN_OFFER_WAIT, OFFER_WARN, SIDE_WEEKS, penaltyOf, progressOf, rewardOf, seenMissions, SIDE_OFFER_WAIT,
 } from './missions';
 import { earned } from './achievements';
 import { translate } from '../../i18n/strings';
@@ -220,12 +220,31 @@ describe('the time to decide', () => {
     expect(m.offers.filter((o) => o.main)).toHaveLength(left.length);
     expect(c.news.some((n) => n.key === 'news.mission.closing')).toBe(true);
     expect(c.news.some((n) => n.key === 'news.mission.lapsed')).toBe(false);
+    const cred = c.career!.credibility, unity = c.parties[c.player]!.unity;
     for (let w = 0; w < OFFER_WARN; w++) missionsWeek(base, c, rng);
     expect(m.offers.filter((o) => o.main)).toEqual([]);
+    // An offer left unanswered costs the party: half of what failing would have.
+    expect(c.career!.credibility).toBeLessThan(cred);
+    expect(c.parties[c.player]!.unity).toBeLessThan(unity);
     expect(c.news.filter((n) => n.key === 'news.mission.lapsed')).toHaveLength(left.length);
     // The one that was taken is still running.
     expect(m.active.some((a) => a.id === taken.id)).toBe(true);
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
+  });
+
+  it('costs half of failing for an offer left to lapse, and nothing for one turned down', () => {
+    const c = career(PS, 7);
+    const m = missionsOf(c);
+    const [a, b] = m.offers;
+    for (const o of [a, b]) {
+      const fail = penaltyOf(o), lapse = lapsePenaltyOf(o);
+      expect(lapse).toHaveLength(fail.length);
+      fail.forEach((e, i) => { if (e.t === 'cred' || e.t === 'unity') expect(-(lapse[i] as { n: number }).n, o.kind).toBeLessThanOrEqual(-(e as { n: number }).n); });
+    }
+    const cred = c.career!.credibility, unity = c.parties[c.player]!.unity;
+    expect(declineMission(c, a.id)).toBe(true);
+    expect(c.career!.credibility).toBe(cred);
+    expect(c.parties[c.player]!.unity).toBe(unity);
   });
 
   it('leaves an offer saved before the deadline existed alone', () => {

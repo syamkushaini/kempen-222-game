@@ -5,6 +5,7 @@ import { BLOC_IDS, PARTY_IDS } from '../types';
 import { MINOR_PURSE, purseOf, scaled } from './actions';
 import { answerEvent, nextTerm, resumeTerm, skipAhead, startCareer } from './career';
 import { endDay } from './formation';
+import { declineMission } from './missions';
 import { FOUNDING_FUNDS, FOUNDING_SEED_SHARE, foundingLift, foundingPace, foundingRoom, growFoundedParty } from './founding';
 import { alignment } from './policy';
 import { autoPlayWeek, closeNight, electionResult, endWeek, startingFunds } from './turn';
@@ -104,6 +105,7 @@ describe('how a founded party grows', () => {
     for (let term = 1; term <= 3; term++) {
       for (let guard = 0; (c.phase === 'term' || (c.phase === 'formation' && c.career!.midterm)) && guard < 400; guard++) {
         if (c.phase === 'formation') { for (let d = 0; d < 12 && c.phase === 'formation'; d++) endDay(w, c); resumeTerm(c); continue; }
+        for (const o of [...(c.career!.missions?.offers ?? [])]) declineMission(c, o.id); // an answer, so that none lapses at a cost
         skipAhead(w, c, 300);
         while (c.inbox.length) answerEvent(w, c, c.inbox.shift()!, 0);
       }

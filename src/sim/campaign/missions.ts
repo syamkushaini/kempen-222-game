@@ -76,6 +76,11 @@ export function penaltyOf(m: Pick<Mission, 'kind' | 'tier'>): Effect[] {
   return [{ t: 'cred', n: -(1 + t) }, { t: 'unity', n: -(1 + t) }];
 }
 
+/** What an offer left unanswered costs when its time is up: half of what failing it would have cost. Turning it down is an answer and costs nothing. */
+export function lapsePenaltyOf(m: Pick<Mission, 'kind' | 'tier'>): Effect[] {
+  return penaltyOf(m).map((e) => (e.t === 'mood' ? { ...e, n: e.n / 2 } : e.t === 'cred' || e.t === 'unity' ? { ...e, n: -Math.max(1, Math.round(-e.n / 2)) } : e));
+}
+
 // ---------- where a mission stands ----------
 
 /** What the party has and what it needs: seats won or kept, parties in the government, its own seats, or the level of its credibility, unity or funds. */
@@ -337,6 +342,7 @@ export function missionsWeek(world: World, c: Campaign, rng: Rng): void {
     if (m.gov !== undefined && m.gov !== sig) missionsFormed(world, c, g);
     m.gov = sig;
     // An offer left too long lapses; the leader is warned when it is close, and told when it has gone.
+    const lapsed: Mission[] = [];
     m.offers = m.offers.filter((o) => {
       if (o.ttl === undefined) return true;
       o.ttl -= 1;
@@ -345,8 +351,11 @@ export function missionsWeek(world: World, c: Campaign, rng: Rng): void {
         return true;
       }
       pushNews(c, { party: c.player, key: 'news.mission.lapsed', vars: { mission: ref.mission(o.kind) }, tone: 'bad' });
+      lapsed.push(o);
       return false;
     });
+    // An offer left unanswered is a choice made by default, and it costs the party something.
+    for (const o of lapsed) applyEffects(world, c, lapsePenaltyOf(o));
     for (const a of [...m.active].filter((x) => !x.main)) {
       a.weeks = (a.weeks ?? 0) - 1;
       const { have, need } = progressOf(world, c, a);
