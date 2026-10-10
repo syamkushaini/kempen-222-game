@@ -1,6 +1,7 @@
 import { majorityLine, type World } from '../election';
 import { PARTY_IDS, type ElectionOutcome } from '../types';
 import { scaled } from './actions';
+import { weekOfCode } from './weekly';
 import { electionResult } from './turn';
 import type { Campaign, LegacyId } from './types';
 
@@ -15,7 +16,7 @@ export const ACHIEVEMENT_IDS = [
   'pactMaker', 'katak', 'premier', 'partner', 'minority', 'bedfellows',
   // a career
   'fullTerm', 'mandate', 'secondMandate', 'outsider', 'promiseKeeper', 'hawk', 'toppler', 'survivor', 'decade',
-  'machine', 'magnate', 'longArm', 'finalMission',
+  'machine', 'magnate', 'longArm', 'finalMission', 'weekly',
   // endings
   'bowOut', 'statesman', 'knives', 'collector',
 ] as const;
@@ -82,6 +83,8 @@ export function earned(world: World, c: Campaign, legacies: LegacyId[] = []): Ac
       if (swept(world, result, me)) out.add('sweep');
     }
     if (first && c.difficulty === 'hard') out.add('ruthless');
+    // The challenge of the week, played to its count.
+    if (c.challenge?.code && weekOfCode(c.challenge.code) !== null) out.add('weekly');
     // No tycoon's cheque in the campaign, and in a career no leaning on donors or the state when the votes were cast.
     if (first && kind !== 'byelection' && pc?.tycoon === 0 && (!k || (k.orders.donors === 0 && k.orders.state === 0))) out.add('cleanHands');
   }

@@ -9,6 +9,7 @@ import { useStore } from '../state/store';
 import { useFormat, useT, useWorld, type T } from './hooks';
 import { BoardButton, PostChallenge } from './ChallengeBoard';
 import { ChallengeMaker, CopyLink } from './ChallengeMaker';
+import { WeeklyChallenge } from './WeeklyChallenge';
 
 const goalText = (t: T, goal: Goal) =>
   goal.kind === 'win' ? t('challenges.goal.win') : t(`challenges.goal.${goal.kind}` as StringKey, { n: goal.atLeast });
@@ -30,6 +31,7 @@ export function ChallengeList() {
   }));
   return (
     <>
+    <WeeklyChallenge />
     <details className="challenges">
       <summary><h3>{t('challenges.title')}</h3></summary>
       <p className="muted small">{t('challenges.intro')}</p>

@@ -49,12 +49,14 @@ const TermDesk = lazy(() => import('./TermDesk').then((m) => ({ default: m.TermD
 installIdentity();
 
 /**
- * The tabs come in three groups so that the row holds three things, not eight: what you run (the campaign, or the
+ * The tabs come in groups so that the row holds a few things, not a dozen: what you run (the campaign, or the
  * government between elections), the people around you, and what you know. Saves is in the Menu.
  */
-type GroupId = 'run' | 'people' | 'intel';
+type GroupId = 'run' | 'missions' | 'people' | 'intel';
 const GROUPS: { id: GroupId; icon: IconName; tabs: SidebarTab[] }[] = [
-  { id: 'run', icon: 'flag', tabs: ['desk', 'orders', 'house', 'actions', 'chiefs', 'policy', 'missions'] },
+  { id: 'run', icon: 'flag', tabs: ['desk', 'orders', 'house', 'actions', 'chiefs', 'policy'] },
+  // Missions have a place of their own on the row, so that the player cannot miss that there are any (a badge counts the offers waiting).
+  { id: 'missions', icon: 'trophy', tabs: ['missions'] },
   { id: 'people', icon: 'people', tabs: ['team', 'party', 'slate', 'deals'] },
   { id: 'intel', icon: 'intel', tabs: ['seats', 'polls', 'voters', 'news'] },
 ];

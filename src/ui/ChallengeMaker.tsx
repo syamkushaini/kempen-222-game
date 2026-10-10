@@ -22,7 +22,7 @@ const rulesOf = (t: T, s: Pick<ChallengeSpec, 'fog' | 'noisy' | 'lean' | 'weeks'
 ];
 
 /** The name of a contest as a player would pick it. */
-const contestLabel = (t: T, id: string): string =>
+export const contestLabel = (t: T, id: string): string =>
   id === 'general' ? t('scenario.general') : id === 'hung' ? t('scenario.hung') : id === 'byelection' ? t('scenario.byelection') : `${t('scenario.state')} · ${t(`state.${id.slice('state:'.length)}` as StringKey)}`;
 
 /** Whether the scenario of a spec, once loaded, can be played in as that party. */

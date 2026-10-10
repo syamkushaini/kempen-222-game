@@ -4739,7 +4739,7 @@ const ONE: Record<string, string> = {
   seats: 'seat', weeks: 'week', members: 'member', points: 'point', days: 'day', quarters: 'quarter', actions: 'action', votes: 'vote',
   parliaments: 'parliament', states: 'state', years: 'year', times: 'time', decisions: 'decision', boxes: 'box', voters: 'voter',
   independents: 'independent', meetings: 'meeting', MPs: 'MP', terms: 'term', promises: 'promise', parties: 'party', ministers: 'minister',
-  pledges: 'pledge', branches: 'branch', months: 'month', posts: 'post', bills: 'bill', candidates: 'candidate', rounds: 'round', elections: 'election',
+  pledges: 'pledge', branches: 'branch', months: 'month', posts: 'post', bills: 'bill', candidates: 'candidate', rounds: 'round', elections: 'election', hours: 'hour', minutes: 'minute',
 };
 const ONE_VERB: Record<string, string> = { ' are': ' is', ' were': ' was', ' have': ' has' };
 const ONE_OF = new RegExp(`(^|[^\\d.,])1 ((?:more |extra |new |assembly )?)(${Object.keys(ONE).join('|')})\\b( are| were| have)?`, 'g');

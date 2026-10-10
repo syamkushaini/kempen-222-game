@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PARTIES } from '../data/parties';
 import type { StringKey } from '../i18n/strings';
 import { challengeById, goalResult } from '../sim/campaign/challenges';
+import { weekEnded } from '../sim/campaign/weekly';
 import type { Summary } from '../sim/campaign/night';
 import { PARTY_IDS, type PartyId } from '../sim/types';
 import { challengeKey, postResult, resultOf, topResults, type ChallengeRow } from '../state/challengeBoard';
@@ -101,10 +102,13 @@ export function PostChallenge({ summary }: { summary: Pick<Summary, 'seats' | 'b
     setState(result === 'ok' ? 'done' : result);
   };
   const posted = state === 'done' || state === 'again';
+  // A challenge of the week can be posted until its week is out; the board can be read for ever.
+  const over = !posted && !!c.challenge?.code && weekEnded(c.challenge.code, Date.now());
   return (
     <div className="post-career">
       <h3>{t('challenge.post.title')}</h3>
-      {!posted && (
+      {over && <p className="note">{t('challenge.weekly.ended')}</p>}
+      {!posted && !over && (
         <>
           <p className="muted small">{t('challenge.post.sends')}</p>
           <div className="post-row">

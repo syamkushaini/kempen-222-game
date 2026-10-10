@@ -40,6 +40,13 @@ export const MAKER_EN = {
   'challenge.post.title': 'Post this result to the challenge’s board',
   'challenge.post.sends': 'Sent: the name you type, your party, the seats and share of the vote, and the challenge. No account, nothing else.',
   'challenge.post.again': 'This result is already on the board.',
+  'challenge.weekly.title': 'Challenge of the week',
+  'challenge.weekly.body': '{contest} as {party}, on {level}. Everyone is offered the same election this week.',
+  'challenge.weekly.ends': 'Ends in {d} days and {h} hours (Monday at midnight, Malaysian time).',
+  'challenge.weekly.endsHours': 'Ends in {h} hours.',
+  'challenge.weekly.endsMinutes': 'Ends in {m} minutes.',
+  'challenge.weekly.last': 'Last week’s board',
+  'challenge.weekly.ended': 'That week’s challenge has ended, so results can no longer be posted. The board can still be read.',
   'challenge.sendOn': 'Send this challenge on: whoever plays the link faces this very election.',
 } as const;
 
@@ -82,6 +89,13 @@ export const MAKER_MS: Record<keyof typeof MAKER_EN, string> = {
   'challenge.post.title': 'Hantar keputusan ini ke papan cabaran',
   'challenge.post.sends': 'Dihantar: nama yang anda taip, parti anda, kerusi dan peratusan undi, serta cabarannya. Tiada akaun, tiada yang lain.',
   'challenge.post.again': 'Keputusan ini sudah ada di papan.',
+  'challenge.weekly.title': 'Cabaran minggu ini',
+  'challenge.weekly.body': '{contest} sebagai {party}, pada tahap {level}. Semua orang ditawarkan pilihan raya yang sama minggu ini.',
+  'challenge.weekly.ends': 'Tamat dalam {d} hari dan {h} jam (Isnin tengah malam, waktu Malaysia).',
+  'challenge.weekly.endsHours': 'Tamat dalam {h} jam.',
+  'challenge.weekly.endsMinutes': 'Tamat dalam {m} minit.',
+  'challenge.weekly.last': 'Papan minggu lepas',
+  'challenge.weekly.ended': 'Cabaran minggu itu sudah tamat, jadi keputusan tidak boleh dihantar lagi. Papan masih boleh dibaca.',
   'challenge.sendOn': 'Hantar cabaran ini kepada orang lain: sesiapa yang memainkan pautan ini menghadapi pilihan raya yang sama.',
 };
 

@@ -3,6 +3,7 @@
 
 export const MISSIONS_EN = {
   'tab.missions': 'Missions',
+  'group.missions': 'Missions',
   'mission.intro': 'Errands the party can take on. Main missions run to an election, side ones for a number of weeks. Win one and the party is paid; fail one and the party pays. Take any, all or none.',
   'mission.running': 'Under way',
   'mission.offers': 'On offer',
@@ -98,6 +99,7 @@ export const MISSIONS_EN = {
 
 export const MISSIONS_MS: Record<keyof typeof MISSIONS_EN, string> = {
   'tab.missions': 'Misi',
+  'group.missions': 'Misi',
   'mission.intro': 'Tugas yang boleh diambil parti. Misi utama berjalan hingga pilihan raya, misi sampingan beberapa minggu. Berjaya, parti diganjari; gagal, parti membayarnya. Ambil mana-mana, semua atau tiada.',
   'mission.running': 'Sedang berjalan',
   'mission.offers': 'Ditawarkan',
