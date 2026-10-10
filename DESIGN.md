@@ -1243,3 +1243,12 @@ From the interview (question 49): some achievements give something to wear. The 
 - **Skins:** Standard is free; *Paper* (a warm light surface, for Pact Maker) and *Midnight* (black for an OLED screen, for Still Standing) are earned. A skin sets the colour scheme itself (paper is light, midnight is dark), so the Theme row is greyed and says so while one is worn.
 - **Earned, not trusted:** what is chosen is worn only if the achievement is on the profile; a cleared profile or a borrowed device falls back to the standard look and the party's colour. The locked ones are listed with what earns them, the lock is shown on the swatch, and each achievement that gives something says so in the Achievements dialog ("Unlocks: Batik blue").
 - Not built: cosmetics for the map, the leaders' portraits or sounds.
+
+## A party with no seats goes on (10 Oct 2026)
+
+A player in a state career lost every seat in the first election and was shown the end of the career. That was the rule set in the seventh four answers (6), but it was hard on a small party in a small assembly, so the designer asked for the career to go on outside the House.
+
+- A party that wins no seat no longer ends in `wipedOut`. The count is recorded (`record.terms`), a bad-tone news item (`news.wiped`) says so, and the term carries on: standing orders, funds, the machinery, the next election are all as before. The leader may retire at any quiet moment, as always (`retire`).
+- `wipedOut` stays a valid ending kind, so old saves and old leaderboard rows still load; nothing now produces it.
+- Tests: `house.test.ts` plays on from a wipe-out to the next election and retires; `statecareer.test.ts` loses every seat three elections running in Sarawak and Selangor and checks the saved game stays valid.
+

@@ -810,8 +810,8 @@ export function nextTerm(world: World, c: Campaign): boolean {
   missionsElection(world, c, outcome, recorded.votes.map((row) => row.indexOf(Math.max(...row))));
   // A win this large is more than a party can hold together.
   if (seats >= Math.ceil(LANDSLIDE * world.seats.length)) landslide(c);
-  // A leader whose party has no seats left has no party to lead.
-  if (seats === 0) endCareer(c, 'wipedOut');
+  // A party left with no seats is not the end: the leader carries on from outside the House, and may retire at any quiet moment.
+  if (seats === 0) pushNews(c, { party: c.player, key: 'news.wiped', vars: {}, tone: 'bad' });
   return true;
 }
 

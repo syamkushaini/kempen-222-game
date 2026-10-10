@@ -245,7 +245,7 @@ describe('the record and the ending', () => {
     expect(slow.career!.ending?.kind).toBe('ousted');
   });
 
-  it('ends when there is no party left to lead', () => {
+  it('carries on when there is no seat left, and the leader may still retire', () => {
     const c = career(PT);
     c.career!.week = c.career!.length;
     termWeek(base, c);
@@ -259,8 +259,22 @@ describe('the record and the ending', () => {
     expect(nextTerm(base, c)).toBe(true);
     expect(c.career!.record.elections).toBe(1);
     expect(c.career!.record.terms).toHaveLength(1);
-    expect(c.career!.ending?.kind).toBe('wipedOut');
+    expect(c.career!.ending ?? null).toBeNull();
+    expect(c.career!.record.terms![0].seats).toBe(0);
+    expect(c.news.some((n) => n.key === 'news.wiped')).toBe(true);
+    expect(c.phase).toBe('term');
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), worldOf(c)!)).toBe(true);
+    // The term runs, and the party can face the next election with no seat to its name.
+    for (let guard = 0; guard < 400 && c.phase === 'term' && !c.career!.ending; guard++) {
+      if (c.inbox.length) { answerEvent(worldOf(c)!, c, c.inbox.shift()!, 0); continue; }
+      termWeek(worldOf(c)!, c);
+    }
+    expect(c.career!.ending ?? null).toBeNull();
+    expect(c.phase).toBe('campaign');
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), worldOf(c)!)).toBe(true);
+    c.phase = 'term';
+    expect(retire(c)).toBe(true);
+    expect(c.career!.ending?.kind).toBe('retired');
   });
 });
 

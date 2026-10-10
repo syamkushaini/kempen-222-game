@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { getWorld, STATE_SCENARIOS, worldOf } from '../../data/world';
 import { lastElection, majorityLine } from '../election';
-import { PARTY_IDS } from '../types';
-import { answerEvent, inGovernment, nextTerm, resumeTerm, skipAhead, startCareer } from './career';
+import { N_BLOCS, PARTY_IDS } from '../types';
+import { answerEvent, inGovernment, nextTerm, resumeTerm, skipAhead, startCareer, syncOpinion } from './career';
 import { endDay } from './formation';
 import { closeNight, endWeek, playable } from './turn';
 import type { Campaign } from './types';
@@ -80,6 +80,29 @@ describe('a career in one state', () => {
     }
     // Not every leader survives two terms, but the careers are not all cut short.
     expect(finished).toBeGreaterThanOrEqual(2);
+  });
+
+  it('goes on after a party loses every seat in its first election', () => {
+    for (const st of ['sarawak', 'selangor'] as const) {
+      const c = startCareer(careerOf(st), { player: playable(careerOf(st)).slice(-1)[0], difficulty: 'normal', seed: 5 });
+      let world = careerOf(st);
+      for (const term of [1, 2, 3]) {
+        playTerm(c, world);
+        expect(c.career!.ending ?? null, `${st} term ${term}`).toBeNull();
+        // The voters desert the party entirely.
+        for (let b = 0; b < N_BLOCS; b++) c.career!.mood[b][c.player] = -30;
+        syncOpinion(c);
+        while (c.phase === 'campaign') endWeek(world, c);
+        closeNight(world, c);
+        for (let day = 0; day < 10 && c.phase === 'formation'; day++) endDay(world, c);
+        expect(nextTerm(world, c), st).toBe(true);
+        world = worldOf(c)!;
+        expect(c.career!.record.terms![term - 1].seats, st).toBe(0);
+        expect(c.career!.ending ?? null, st).toBeNull();
+        expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world), st).toBe(true);
+      }
+      expect(c.career!.term, st).toBe(4);
+    }
   });
 
   it('is not a country career, and the other way round', () => {
