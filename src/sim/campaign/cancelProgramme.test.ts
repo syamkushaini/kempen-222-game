@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getWorld } from '../../data/world';
 import { PARTY_IDS } from '../types';
 import { startCareer } from './career';
-import { cancelProgramme, canCancel, enact, repeal } from './govern';
+import { cancelProgramme, canCancel, enact, programmesOf, repeal } from './govern';
 
 const PS = PARTY_IDS.indexOf('ps');
 const world = getWorld('career')!;
@@ -24,7 +24,7 @@ describe('cancelling a programme and repealing an Act take their cost off the st
     const trust = k.government.trust, cred = k.credibility;
     expect(cancelProgramme(c, 'cashAid')).toBe(true);
     expect(k.fiscal).toBe(before);
-    expect(k.programmes).toBeUndefined();
+    expect(k.programmes?.cashAid).toBe(0);
     expect(k.government.trust).toBe(trust - 2);
     expect(k.credibility).toBe(cred - 2);
     expect(cancelProgramme(c, 'cashAid')).toBe(false);
@@ -39,6 +39,17 @@ describe('cancelling a programme and repealing an Act take their cost off the st
     const fiscal = k.fiscal;
     expect(repeal(c, 'gigRights')).toBe(true);
     expect(k.fiscal).toBe(fiscal - 0.5);
-    expect(k.programmes?.gigRights).toBeUndefined();
+    expect(k.programmes?.gigRights).toBe(0);
+  });
+
+  it('finds the programmes of a game saved before they were recorded, from the promises kept', () => {
+    const c = career();
+    const k = c.career!;
+    k.delivery.cashAid = 'kept';
+    k.fiscal = 3;
+    expect(programmesOf(k)).toEqual([['cashAid', 2]]);
+    expect(cancelProgramme(c, 'cashAid')).toBe(true);
+    expect(k.fiscal).toBe(1);
+    expect(programmesOf(k)).toEqual([]);
   });
 });

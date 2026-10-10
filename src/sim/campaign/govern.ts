@@ -163,8 +163,16 @@ const billRef = (id: string) => `@bill:${id}`;
 
 /** One Act a government may repeal in a term: it goes back to being something that can be promised, at a price in trust and in the voters who liked it. */
 export function canRepeal(c: Campaign, id: PledgeId): boolean {
+  return repealBlock(c, id) === null;
+}
+
+/** Why an Act cannot be repealed now, or null if it can. */
+export function repealBlock(c: Campaign, id: PledgeId): 'notPm' | 'busy' | 'used' | 'none' | null {
   const k = c.career;
-  return !!k && c.phase === 'term' && isPm(c) && c.inbox.length === 0 && isEnacted(k, id) && !k.flags.includes(`repeal${k.term}`);
+  if (!k || c.phase !== 'term' || !isEnacted(k, id)) return 'none';
+  if (!isPm(c)) return 'notPm';
+  if (c.inbox.length > 0) return 'busy';
+  return k.flags.includes(`repeal${k.term}`) ? 'used' : null;
 }
 
 /** An Act that is no longer on the books is no longer shaky, nor protected by a vote of the people. */
@@ -175,18 +183,31 @@ export function forgetAct(k: Career, id: PledgeId): void {
 
 /** Takes a promise's cost off the standing commitments, as far as it was recorded. Returns the units shed. */
 function shed(k: Career, id: PledgeId): number {
-  const units = k.programmes?.[id] ?? 0;
+  const units = programmesOf(k).find(([p]) => p === id)?.[1] ?? 0;
   if (units <= 0) return 0;
   k.fiscal = Math.max(0, k.fiscal - units);
-  delete k.programmes![id];
-  if (Object.keys(k.programmes!).length === 0) delete k.programmes;
+  // Left at nothing, not removed, so that a promise passed before programmes were recorded is not counted again.
+  (k.programmes ??= {})[id] = 0;
   return units;
+}
+
+/**
+ * The programmes the government passed this parliament and still pays for, with the units each adds to the standing commitments.
+ * A game saved before they were recorded has them worked out from the promises kept, at what passing them added.
+ */
+export function programmesOf(k: Career): [PledgeId, number][] {
+  const out: Partial<Record<PledgeId, number>> = { ...(k.programmes ?? {}) };
+  for (const [id, result] of Object.entries(k.delivery)) {
+    const pid = id as PledgeId;
+    if (result === 'kept' && !(pid in out) && PLEDGES[pid]?.cost > 0) out[pid] = PLEDGES[pid].cost * 0.5 * (isBrief(k, pid) ? BRIEF.share : 1);
+  }
+  return (Object.entries(out) as [PledgeId, number][]).filter(([id, n]) => n > 0 && !isEnacted(k, id));
 }
 
 /** A programme the government has passed and still pays for: one that is not an Act (an Act is repealed). */
 export function canCancel(c: Campaign, id: PledgeId): boolean {
   const k = c.career;
-  return !!k && c.phase === 'term' && isPm(c) && c.inbox.length === 0 && (k.programmes?.[id] ?? 0) > 0 && !isEnacted(k, id);
+  return !!k && c.phase === 'term' && isPm(c) && c.inbox.length === 0 && programmesOf(k).some(([p]) => p === id);
 }
 
 /** The head of government cancels a programme: its cost comes off the standing commitments, and the people who counted on it are let down. */

@@ -4,7 +4,7 @@ import {
 } from '../sim/campaign/policy';
 import { ISSUE_IDS, PLEDGE_IDS, type IssueId, type PledgeId } from '../sim/campaign/types';
 import { LETTER, TONES, canWrite, letterWait } from '../sim/campaign/letters';
-import { agenda, canCancel, canRepeal } from '../sim/campaign/govern';
+import { agenda, canCancel, programmesOf, repealBlock } from '../sim/campaign/govern';
 import { govMoney } from '../sim/campaign/treasury';
 import { REFERENDUM, canReferendum, isContested, referendumOdds } from '../sim/campaign/courts';
 
@@ -183,20 +183,24 @@ export function PolicyTab() {
       {(k.laws?.length ?? 0) === 0
         ? <p className="muted small">{t('manifesto.lawsNone')}</p>
         : <ul className="plain-list">{k.laws!.map((id) => (
-          <li key={id}>{t(`pledge.${id}`)}{k.programmes?.[id] ? <span className="muted small"> · {f.rm(commitmentWeekly(world, k.programmes[id]!) * MONTH)}{t('cost.perMonth')}</span> : null}{canRepeal(campaign, id) && <> <ConfirmButton className="btn small" label={t('manifesto.repeal')} confirmLabel={t('manifesto.repeal.confirm')} onConfirm={() => repeal(id)} /></>}</li>
+          <li key={id}>{t(`pledge.${id}`)}{k.programmes?.[id] ? <span className="muted small"> · {f.rm(commitmentWeekly(world, k.programmes[id]!) * MONTH)}{t('cost.perMonth')}</span> : null}{repealBlock(campaign, id) === null
+            ? <> <ConfirmButton className="btn small" label={t('manifesto.repeal')} confirmLabel={t('manifesto.repeal.confirm')} onConfirm={() => repeal(id)} /></>
+            : <span className="action-reason muted small"> · {t(`repeal.no.${repealBlock(campaign, id)}` as StringKey)}</span>}</li>
         ))}</ul>}
-      {Object.keys(k.programmes ?? {}).filter((id) => !isEnacted(k, id as PledgeId)).length > 0 && (
+      {k.government.pm === campaign.player && (
         <>
           <h4>{t('programmes.title')}</h4>
           <p className="muted small">{t('programmes.desc')}</p>
-          <ul className="plain-list">
-            {Object.entries(k.programmes!).filter(([id]) => !isEnacted(k, id as PledgeId)).map(([id, units]) => (
-              <li key={id}>
-                {t(`pledge.${id}` as StringKey)} <span className="muted small">· {f.rm(commitmentWeekly(world, units ?? 0) * MONTH)}{t('cost.perMonth')}</span>{' '}
-                {canCancel(campaign, id as PledgeId) && <ConfirmButton className="btn small" label={t('programmes.cancel')} confirmLabel={t('programmes.cancel.confirm')} onConfirm={() => cancel(id as PledgeId)} />}
-              </li>
-            ))}
-          </ul>
+          {programmesOf(k).length === 0
+            ? <p className="muted small">{t('programmes.none')}</p>
+            : <ul className="plain-list">
+              {programmesOf(k).map(([id, units]) => (
+                <li key={id}>
+                  {t(`pledge.${id}` as StringKey)} <span className="muted small">· {f.rm(commitmentWeekly(world, units) * MONTH)}{t('cost.perMonth')}</span>{' '}
+                  {canCancel(campaign, id) && <ConfirmButton className="btn small" label={t('programmes.cancel')} confirmLabel={t('programmes.cancel.confirm')} onConfirm={() => cancel(id)} />}
+                </li>
+              ))}
+            </ul>}
         </>
       )}
       {!k.launched && (
