@@ -75,22 +75,27 @@ describe('talking to the board', () => {
   it('reads the best fifty, best first, and the ones of one kind of career when asked', async () => {
     const row = { id: 1, created_at: '2026-10-01T00:00:00Z', name: 'Ali', party: 'ps', mode: 'federal', state: null, difficulty: 'normal', kind: 'retired', legacy: 'premier', score: 90, years: '14.5', years_pm: '9.0', elections: 3, victories: 2, kept: 5, broken: 1 };
     const f = reply(200, [row, { nonsense: true }, { ...row, id: 2, score: 70 }]);
-    const rows = await top('all', cfg, f);
+    const rows = await top('normal', 'all', cfg, f);
     expect(rows).toHaveLength(2);
     expect(rows![0]).toMatchObject({ id: 1, score: 90, years: 14.5, years_pm: 9 });
     const url = (f as unknown as { mock: { calls: [string][] } }).mock.calls[0][0];
     expect(url).toContain('order=score.desc,victories.desc,years.desc,created_at.asc');
     expect(url).toContain(`limit=${BOARD_SIZE}`);
     expect(url).not.toContain('mode=eq');
+    // Each level of difficulty has its own board.
+    expect(url).toContain('&difficulty=eq.normal&');
     const g = reply(200, []);
-    await top('state', cfg, g);
-    expect((g as unknown as { mock: { calls: [string][] } }).mock.calls[0][0]).toContain('&mode=eq.state');
+    await top('hard', 'state', cfg, g);
+    const hard = (g as unknown as { mock: { calls: [string][] } }).mock.calls[0][0];
+    expect(hard).toContain('&difficulty=eq.hard&');
+    expect(hard).toContain('&mode=eq.state');
+    expect(await top('nightmare' as never, 'all', cfg, reply(200, []))).toBeNull();
   });
   it('gives null, not an error, when the board cannot be reached or answers with rubbish', async () => {
-    expect(await top('all', cfg, reply(500))).toBeNull();
-    expect(await top('all', cfg, reply(200, { not: 'a list' }))).toBeNull();
-    expect(await top('all', null, reply(200, []))).toBeNull();
-    expect(await top('all', cfg, vi.fn(async () => { throw new Error('offline'); }) as unknown as typeof fetch)).toBeNull();
+    expect(await top('normal', 'all', cfg, reply(500))).toBeNull();
+    expect(await top('normal', 'all', cfg, reply(200, { not: 'a list' }))).toBeNull();
+    expect(await top('normal', 'all', null, reply(200, []))).toBeNull();
+    expect(await top('normal', 'all', cfg, vi.fn(async () => { throw new Error('offline'); }) as unknown as typeof fetch)).toBeNull();
   });
 });
 

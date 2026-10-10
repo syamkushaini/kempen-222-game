@@ -38,6 +38,8 @@ create table if not exists public.scores (
 
 create index if not exists scores_rank on public.scores (score desc, victories desc, years desc, created_at asc);
 create index if not exists scores_mode_rank on public.scores (mode, score desc, victories desc, years desc);
+-- Each level of difficulty has a board of its own (the game asks for one level at a time).
+create index if not exists scores_level_rank on public.scores (difficulty, mode, score desc, victories desc, years desc);
 
 alter table public.scores enable row level security;
 

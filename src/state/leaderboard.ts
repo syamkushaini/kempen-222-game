@@ -18,6 +18,9 @@ export const CONFIG: Config | null = configOf(import.meta.env);
 
 export type BoardMode = 'federal' | 'state';
 export type Filter = 'all' | BoardMode;
+/** Each level of difficulty has a board of its own: a career on Easygoing is not ranked against one on Ruthless. */
+export type Level = 'easy' | 'normal' | 'hard';
+export const LEVELS: readonly Level[] = ['easy', 'normal', 'hard'];
 
 /** One career as it is sent: a row of the table. */
 export interface Submission {
@@ -26,7 +29,7 @@ export interface Submission {
   party: string;
   mode: BoardMode;
   state: string | null;
-  difficulty: 'easy' | 'normal' | 'hard';
+  difficulty: Level;
   kind: string;
   legacy: string;
   score: number;
@@ -116,10 +119,10 @@ const isRow = (x: unknown): x is Row => {
     [r.score, r.years, r.years_pm, r.elections, r.victories].every((n) => typeof n === 'number' || (typeof n === 'string' && Number.isFinite(Number(n))));
 };
 
-/** The best careers, best first: by score, then victories, then years. null if the board cannot be reached. */
-export async function top(filter: Filter, cfg: Config | null = CONFIG, fetchFn: Fetch = fetch): Promise<Row[] | null> {
-  if (!cfg) return null;
-  const q = `select=${COLUMNS}&order=score.desc,victories.desc,years.desc,created_at.asc&limit=${BOARD_SIZE}${filter === 'all' ? '' : `&mode=eq.${filter}`}`;
+/** The best careers played at one level of difficulty, best first: by score, then victories, then years. null if the board cannot be reached. */
+export async function top(level: Level, filter: Filter, cfg: Config | null = CONFIG, fetchFn: Fetch = fetch): Promise<Row[] | null> {
+  if (!cfg || !LEVELS.includes(level)) return null;
+  const q = `select=${COLUMNS}&difficulty=eq.${level}&order=score.desc,victories.desc,years.desc,created_at.asc&limit=${BOARD_SIZE}${filter === 'all' ? '' : `&mode=eq.${filter}`}`;
   const res = await call(fetchFn, `${cfg.url}/rest/v1/scores?${q}`, { headers: headers(cfg) });
   if (!res?.ok) return null;
   let body: unknown;
