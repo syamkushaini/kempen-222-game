@@ -29,8 +29,8 @@ type TabId = 'start' | 'career' | 'missions' | 'challenges' | 'money' | 'economy
 const TABS: TabId[] = ['start', 'career', 'missions', 'challenges', 'money', 'economy', 'tips', 'words'];
 /** The titled paragraphs of each tab, by the stem of their strings (`help.<stem>.t` and `.x`). */
 const SECTIONS: Partial<Record<TabId, string[]>> = {
-  start: ['start.pick', 'start.map', 'start.save'],
-  career: ['career.term', 'career.tabs', 'career.promises', 'career.end', 'career.own'],
+  start: ['start.pick', 'start.map', 'start.zoom', 'start.save'],
+  career: ['career.term', 'career.tabs', 'career.promises', 'career.conduct', 'career.advice', 'career.festival', 'career.formation', 'career.end', 'career.own'],
   missions: ['missions.what', 'missions.decide', 'missions.risk', 'missions.final'],
   challenges: ['challenges.weekly', 'challenges.own', 'challenges.points'],
   money: ['money.funds', 'money.limit', 'money.team', 'money.candidates'],

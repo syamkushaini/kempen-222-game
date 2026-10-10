@@ -89,6 +89,16 @@ export const HELP_EN = {
   'help.words.t': 'What the words mean',
   'help.words.keys': 'Keys',
   'help.words.keys.x': 'Space ends the week, or moves a term on by a week. The number keys open the groups of tabs (1 for the first, 2 for the second and so on); pressing the same number again goes on to the next tab in the group. Escape opens the menu or closes whatever is open.',
+  'help.start.zoom.t': 'Moving and sharing the map',
+  'help.start.zoom.x': 'Pinch or use the buttons to zoom. When zoomed in, on a state or anywhere else, drag the map to move it without zooming out first; Fit brings it back. Close on a seat returns you to the list you opened it from, the whole country or that state. The Share map button makes a picture of the map your party controls, without the numbers; the seat count is a separate line you can copy.',
+  'help.career.conduct.t': 'Each week’s conduct',
+  'help.career.conduct.x': 'Every week the game checks five things: the manifesto is being kept, you are doing what voters want, you are not living off donors or state resources, your team is hired and paid, and your standing orders are funded. Meet all five and credibility and unity each rise by 1 (up to 85); meet two or fewer and each falls by 1. The Party tab shows how you are doing.',
+  'help.career.advice.t': 'Your manager’s advice',
+  'help.career.advice.x': 'Once you hire a campaign manager they speak to you in the adviser strip instead of Kak Ros, and about every quarter suggest what to do next. Following a suggestion pays off in credibility, unity or votes; ignoring it costs nothing. A better team gives larger effects: more days, cheaper polls, sharper targeting, fewer gaffes and more money.',
+  'help.career.festival.t': 'The carnival gamble',
+  'help.career.festival.x': 'A carnival or open house is a gamble. About half of them go well and draw the crowd you wanted, one in five goes viral, and the rest flop and waste the money and the week. It suits a party with money to spare, not one with a thin purse.',
+  'help.career.formation.t': 'Government talks and small parties',
+  'help.career.formation.x': 'When no party wins a majority, leaders bargain for support. Offers are posts, a senior post, concessions and cash. A small party can press a leader who has made it an offer for more (one more post, a senior post, an envelope or a concession); each ask costs a meeting. The more the leader needs your seats to reach a majority, and the better you get on, the likelier they give; push too hard and they cool towards you. Sign by backing them.',
 } as const;
 
 export const HELP_MS: Record<keyof typeof HELP_EN, string> = {
@@ -179,6 +189,16 @@ export const HELP_MS: Record<keyof typeof HELP_EN, string> = {
   'help.words.t': 'Maksud istilah',
   'help.words.keys': 'Kekunci',
   'help.words.keys.x': 'Space menamatkan minggu, atau menggerakkan penggal seminggu. Kekunci nombor membuka kumpulan tab (1 untuk yang pertama, 2 untuk yang kedua dan seterusnya); menekan nombor yang sama lagi pergi ke tab seterusnya dalam kumpulan. Escape membuka menu atau menutup apa-apa yang terbuka.',
+  'help.start.zoom.t': 'Menggerakkan dan berkongsi peta',
+  'help.start.zoom.x': 'Cubit atau guna butang untuk zum. Bila sudah zum, pada negeri atau di mana-mana, seret peta untuk menggerakkannya tanpa zum keluar dahulu; Fit mengembalikannya. Close pada kerusi membawa anda kembali ke senarai asal, seluruh negara atau negeri itu. Butang Share map membuat gambar peta yang dikuasai parti anda, tanpa angka; bilangan kerusi ialah baris berasingan yang boleh disalin.',
+  'help.career.conduct.t': 'Tingkah laku mingguan',
+  'help.career.conduct.x': 'Setiap minggu permainan menyemak lima perkara: manifesto dikotakan, anda melakukan apa yang pengundi mahu, anda tidak hidup dengan derma atau sumber negeri, pasukan anda diambil dan dibayar, dan arahan tetap anda dibiayai. Penuhi kelima-limanya dan kredibiliti serta perpaduan masing-masing naik 1 (sehingga 85); penuhi dua atau kurang dan masing-masing turun 1. Tab Parti menunjukkan prestasi anda.',
+  'help.career.advice.t': 'Nasihat pengurus anda',
+  'help.career.advice.x': 'Sebaik anda mengambil pengurus kempen, dialah yang bercakap di ruang penasihat menggantikan Kak Ros, dan kira-kira setiap suku tahun mencadangkan langkah seterusnya. Mengikut cadangan memberi ganjaran kredibiliti, perpaduan atau undi; mengabaikannya tidak merugikan. Pasukan yang lebih baik memberi kesan lebih besar: lebih banyak hari, tinjauan lebih murah, sasaran lebih tepat, kurang gaffe dan lebih banyak wang.',
+  'help.career.festival.t': 'Pertaruhan karnival',
+  'help.career.festival.x': 'Karnival atau rumah terbuka ialah pertaruhan. Kira-kira separuh berjaya menarik orang ramai yang diharapkan, satu daripada lima jadi viral, dan selebihnya gagal serta membazir wang dan seminggu. Ia sesuai untuk parti yang berduit, bukan yang bajetnya nipis.',
+  'help.career.formation.t': 'Rundingan kerajaan dan parti kecil',
+  'help.career.formation.x': 'Bila tiada parti menang majoriti, pemimpin berunding untuk sokongan. Tawaran ialah jawatan, jawatan kanan, tuntutan dan wang tunai. Parti kecil boleh mendesak pemimpin yang sudah membuat tawaran supaya memberi lebih (satu jawatan lagi, jawatan kanan, sampul atau satu tuntutan); setiap desakan menggunakan satu pertemuan. Makin pemimpin itu perlukan kerusi anda untuk capai majoriti, dan makin baik hubungan anda, makin besar kemungkinan dia beri; desak terlalu keras dan dia jadi dingin. Tandatangan dengan menyokongnya.',
 };
 
 export type HelpKey = keyof typeof HELP_EN;
