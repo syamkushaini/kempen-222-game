@@ -173,6 +173,34 @@ export function forgetAct(k: Career, id: PledgeId): void {
   if (k.mandated) { k.mandated = k.mandated.filter((x) => x !== id); if (k.mandated.length === 0) delete k.mandated; }
 }
 
+/** Takes a promise's cost off the standing commitments, as far as it was recorded. Returns the units shed. */
+function shed(k: Career, id: PledgeId): number {
+  const units = k.programmes?.[id] ?? 0;
+  if (units <= 0) return 0;
+  k.fiscal = Math.max(0, k.fiscal - units);
+  delete k.programmes![id];
+  if (Object.keys(k.programmes!).length === 0) delete k.programmes;
+  return units;
+}
+
+/** A programme the government has passed and still pays for: one that is not an Act (an Act is repealed). */
+export function canCancel(c: Campaign, id: PledgeId): boolean {
+  const k = c.career;
+  return !!k && c.phase === 'term' && isPm(c) && c.inbox.length === 0 && (k.programmes?.[id] ?? 0) > 0 && !isEnacted(k, id);
+}
+
+/** The head of government cancels a programme: its cost comes off the standing commitments, and the people who counted on it are let down. */
+export function cancelProgramme(c: Campaign, id: PledgeId): boolean {
+  if (!canCancel(c, id)) return false;
+  const k = c.career!;
+  shed(k, id);
+  k.government.trust = clamp(k.government.trust - 2, 0, 100);
+  k.credibility = clamp(k.credibility - 2, 0, 100);
+  for (const [bloc, v] of Object.entries(PLEDGES[id].appeal)) lift(k, c.player, [bloc as BlocId], v > 0 ? -v * 0.5 : -v * 0.3);
+  pushNews(c, { party: c.player, key: 'news.gov.cancelled', vars: { bill: `@bill:pledge:${id}` }, tone: 'bad' });
+  return true;
+}
+
 /** The head of government repeals an Act: its friends punish them, its enemies are a little pleased, and the public sees what it is. */
 export function repeal(c: Campaign, id: PledgeId): boolean {
   if (!canRepeal(c, id)) return false;
@@ -180,6 +208,7 @@ export function repeal(c: Campaign, id: PledgeId): boolean {
   k.laws = (k.laws ?? []).filter((x) => x !== id);
   if (k.laws.length === 0) delete k.laws;
   forgetAct(k, id);
+  shed(k, id);
   k.flags.push(`repeal${k.term}`);
   k.government.trust = clamp(k.government.trust - 3, 0, 100);
   k.credibility = clamp(k.credibility - 3, 0, 100);
@@ -197,6 +226,7 @@ export function enact(c: Campaign, id: string, proposer: number, share?: number)
   const scale = kind === 'pledge' && proposer === c.player && isBrief(k, name as PledgeId) ? BRIEF.share : 1;
   for (const [bloc, v] of Object.entries(def.appeal)) lift(k, proposer, [bloc as BlocId], v * 0.5 * scale);
   k.fiscal += def.cost * scale;
+  if (kind === 'pledge' && def.cost * scale > 0) (k.programmes ??= {})[name as PledgeId] = (k.programmes[name as PledgeId] ?? 0) + def.cost * scale;
   // An Act stays on the books: it leaves every party's manifesto, and is not promised again at the next election.
   if (kind === 'pledge' && PLEDGES[name as PledgeId]?.law && !isEnacted(k, name as PledgeId)) {
     (k.laws ??= []).push(name as PledgeId);

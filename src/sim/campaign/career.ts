@@ -197,7 +197,7 @@ export function foundForContest(world: World, c: Campaign, backstory: unknown): 
 }
 
 /** Opens a career at the start of a parliamentary term, with the coffers low after the last election. */
-export function startCareer(world: World, opts: CampaignOptions & { ideology?: IdeologyId | null; founded?: boolean; stances?: number[]; own?: boolean; held?: string[]; realStates?: boolean }): Campaign {
+export function startCareer(world: World, opts: CampaignOptions & { ideology?: IdeologyId | null; founded?: boolean; stances?: number[]; own?: boolean; held?: string[]; realStates?: boolean; foundedSeat?: string }): Campaign {
   const c = newCampaign(world, opts);
   // A party founded from nothing has no leader in the cast: without a past of the player's choosing, theirs is ordinary.
   if (opts.founded && !opts.backstory) c.team.leader = neutralLeader();
@@ -225,6 +225,7 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   if (opts.founded) {
     // A party of the player's own making: one seat, a small purse, and a platform that is all its own.
     c.career.founded = true;
+    if (opts.foundedSeat) c.career.foundedSeat = opts.foundedSeat;
     c.parties[c.player]!.funds = scaled(world, FOUNDING_FUNDS);
   }
   if (opts.stances && opts.stances.length === N_ISSUES) {
@@ -718,7 +719,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.shadow ? { shadow: { ...k.shadow } } : {}),
     manifesto: next.manifesto.map((m, p) => withoutLaws(k, p === c.player ? k.manifesto[p] : m)),
     promises: k.promises, flags: k.flags,
-    economy: k.economy, reports: k.reports, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, record: k.record, states: k.states,
+    economy: k.economy, reports: k.reports, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, ...(k.programmes ? { programmes: Object.fromEntries(Object.entries(k.programmes).map(([id, n]) => [id, (n ?? 0) * 0.5])) } : {}), record: k.record, states: k.states,
   };
   // Two parliaments at the head of the government is all a term limit allows: in the third the party governs, and its leader does not.
   const run = outcome.pm === c.player ? (k.pmRun ?? 0) + 1 : 0;

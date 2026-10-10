@@ -57,6 +57,8 @@ export interface StartOptions {
   ideology: IdeologyId | null;
   founded?: boolean;
   stances?: number[];
+  /** The seat a founded party began in, so that starting the game again begins it there. */
+  seat?: string;
   /** A career that fights its state elections in person. */
   realStates?: boolean;
   challenge?: Partial<Challenge>;
@@ -76,7 +78,7 @@ export function startOf(game: GameState): StartOptions {
     scenario: c.scenario, player: c.player, difficulty: c.difficulty,
     ...(fixed ? { seed: fixed.seed } : {}),
     backstory: c.team.leader.backstory ?? null, ideology: null,
-    ...(c.career?.founded ? { founded: true, stances: [...c.career.stances0[c.player]] } : c.newParty ? { founded: true } : {}),
+    ...(c.career?.founded ? { founded: true, stances: [...c.career.stances0[c.player]], ...(c.career.foundedSeat ? { seat: c.career.foundedSeat } : {}) } : c.newParty ? { founded: true } : {}),
     ...(c.challenge ? { challenge: { ...c.challenge } } : {}),
   };
 }
@@ -89,7 +91,7 @@ function isStart(x: unknown): x is StartOptions {
     (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
     (x.seed === undefined || Number.isInteger(x.seed)) &&
     (x.backstory === null || typeof x.backstory === 'string') && (x.ideology === null || typeof x.ideology === 'string') &&
-    (x.founded === undefined || typeof x.founded === 'boolean') && (x.realStates === undefined || typeof x.realStates === 'boolean') &&
+    (x.founded === undefined || typeof x.founded === 'boolean') && (x.seat === undefined || typeof x.seat === 'string') && (x.realStates === undefined || typeof x.realStates === 'boolean') &&
     (x.stances === undefined || (Array.isArray(x.stances) && x.stances.every((v) => typeof v === 'number'))) &&
     (x.challenge === undefined || isRecord(x.challenge))
   );

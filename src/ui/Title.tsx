@@ -8,6 +8,7 @@ import { playable, standingPact, startingFunds } from '../sim/campaign/turn';
 import type { BackstoryId, Difficulty } from '../sim/campaign/types';
 import { startStances } from '../sim/campaign/policy';
 import { FOUNDING_SLOT } from '../sim/campaign/founding';
+import { FoundingSeat } from './FoundingSeat';
 import { inContention, outlook, par } from '../sim/campaign/outlook';
 import { PARTY_IDS, type FieldedId, type StateId } from '../sim/types';
 import { AUTO_SLOT } from '../state/saves';
@@ -107,6 +108,7 @@ export function Title() {
   const [own, setOwn] = useState(false);
   // A party of one's own can take over one of the big three or be founded from nothing. A hung parliament's votes are already in, so it cannot be founded there.
   const [founded, setFounded] = useState(false);
+  const [foundSeat, setFoundSeat] = useState('random');
   // A state election can be one contest, or the first of a career in that state.
   const [stateCareer, setStateCareer] = useState(false);
   // A career begun from the choice between a country's and a state's: the set-up then asks only which state, not what kind of contest.
@@ -360,6 +362,7 @@ export function Title() {
             </label>
           )}
           {own && <PartyCreator draft={shown} career={inCareer && !founding} slate={inCareer} onChange={(patch) => setDraft((d) => ({ ...(d ?? base), ...patch }))} />}
+          {founding && inCareer && <FoundingSeat world={world} value={foundSeat} onChange={setFoundSeat} />}
           {founding && inCareer && <PlatformEditor stances={stances ?? newPlatform} base={newPlatform} onChange={setStances} />}
           </>}
 
@@ -415,7 +418,7 @@ export function Title() {
             {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>‹ {t('steps.back')}</button>}
             {step < STEPS.length - 1
               ? <button className="btn primary" onClick={() => setStep(step + 1)}>{t('steps.next')} ▸</button>
-              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy, ...(kind === 'general' && whatIf ? { whatIf } : {}) }, founded: founding, realStates: kind === 'career' && realStates, stances: founding && inCareer ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
+              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy, ...(kind === 'general' && whatIf ? { whatIf } : {}) }, founded: founding, ...(founding && inCareer ? { seat: foundSeat } : {}), realStates: kind === 'career' && realStates, stances: founding && inCareer ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
             }
           </div>
           </>

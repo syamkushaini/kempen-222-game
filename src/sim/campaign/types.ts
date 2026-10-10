@@ -647,6 +647,10 @@ export interface Career {
   tabled: Budget;
   /** Standing commitments taken on since the last election, in budget units. */
   fiscal: number;
+  /** How many units of the standing commitments each promise the government has passed added, so that a programme can be cancelled or an Act repealed and its cost taken off. Absent in a game saved before this existed. */
+  programmes?: Partial<Record<PledgeId, number>>;
+  /** The seat a party founded from nothing began in, when it was not the one the founding slot already held. */
+  foundedSeat?: string;
   /** The player chose to fight state elections in person when a round of state polls falls due (see aside.ts), rather than leave them to the model. */
   realStates?: boolean;
   /** The government's money, apart from the party's: what has come in as the weekly allocation and has not yet been granted or diverted. Absent before the treasury existed. */

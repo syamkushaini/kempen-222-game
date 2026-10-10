@@ -247,8 +247,9 @@ function fingerprint(results: SeatResults): number {
  * state), with the new party already on the ballot in every seat with a few votes. Without them it could never win a seat
  * it did not already hold.
  */
-export function foundedWorld(scenario = 'career'): World {
-  const key = scenario === 'career' ? FOUNDED : `${FOUNDED}:${scenario}`;
+export function foundedWorld(scenario = 'career', home?: string): World {
+  const base = scenario === 'career' ? FOUNDED : `${FOUNDED}:${scenario}`;
+  const key = home ? `${base}@${home}` : base;
   const hit = cache.get(key);
   if (hit) return hit;
   const p = PARTY_IDS.indexOf(FOUNDING_SLOT);
@@ -260,10 +261,24 @@ export function foundedWorld(scenario = 'career'): World {
   };
   const plan = blueprint(scenario);
   if (!plan || !plan.rules.career) throw new Error(`no career world for ${scenario}`);
+  // The seat the founding slot already wins is where the new party begins, unless the player (or luck) chose another seat: then that
+  // seat goes to the new party by the same margin, and the seat it held goes back to whoever came second there.
+  const winning = (votes: number[]) => votes.indexOf(Math.max(...votes)) === p;
+  const homes = plan.file.seats.filter((s) => winning(s.last.votes));
+  const lead = homes.length ? Math.max(1.05, homes[0].last.votes[p] / Math.max(1, Math.max(...homes[0].last.votes.filter((_, q) => q !== p)))) : 1.1;
+  const moved = !!home && plan.file.seats.some((s) => s.id === home) && !homes.some((s) => s.id === home);
+  const place = (s: { id: string }, votes: number[]) => {
+    if (!moved) return seed(votes);
+    const total = votes.reduce((a, b) => a + b, 0);
+    const out = [...votes];
+    if (s.id === home) out[p] = Math.round(Math.max(...votes.filter((_, q) => q !== p)) * lead);
+    else if (winning(votes)) out[p] = Math.round(total * FOUNDING_SEED_SHARE);
+    return s.id === home ? out : seed(out);
+  };
   const seats = plan.file.seats.map((s) => ({
     ...s,
-    last: { ...s.last, votes: seed(s.last.votes) },
-    ...(s.basis ? { basis: { ...s.basis, votes: seed(s.basis.votes) } } : {}),
+    last: { ...s.last, votes: place(s, s.last.votes) },
+    ...(s.basis ? { basis: { ...s.basis, votes: place(s, s.basis.votes) } } : {}),
   }));
   const built = createWorld({ ...plan.file, seats }, plan.rules, scenario);
   cache.set(key, built);
@@ -302,7 +317,7 @@ export function ownWorld(scenario: string, p: number): World | null {
 export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean; player?: number }): World | null {
   const results = campaign.career?.results;
   if (!results) {
-    if (campaign.career?.founded) return foundedWorld(campaign.scenario);
+    if (campaign.career?.founded) return foundedWorld(campaign.scenario, campaign.career.foundedSeat);
     if (campaign.career?.own && campaign.player !== undefined) return ownWorld(campaign.scenario, campaign.player) ?? getWorld(campaign.scenario);
     return campaign.newParty ? newPartyWorld(campaign.scenario) ?? getWorld(campaign.scenario) : getWorld(campaign.scenario);
   }

@@ -142,7 +142,7 @@ function isValidOffice(x: Record<string, unknown>): boolean {
   const e = x.economy, r = x.record, end = x.ending;
   return (
     isObj(e) && isNum(e.growth) && isNum(e.inflation) && isNum(e.jobless) && isNum(e.debt) &&
-    isBudget(x.budget) && isBudget(x.tabled) && isNum(x.fiscal) &&
+    isBudget(x.budget) && isBudget(x.tabled) && isNum(x.fiscal) && (x.programmes === undefined || (isObj(x.programmes) && Object.values(x.programmes).every(isNum))) &&
     isList(x.cabinet, (m) => isObj(m) && (PORTFOLIO_IDS as readonly unknown[]).includes(m.portfolio) && isParty(m.party) && isNum(m.name) && isNum(m.skill) && (m.trait === undefined || (MINISTER_TRAITS as readonly unknown[]).includes(m.trait)) && (m.acting === undefined || typeof m.acting === 'boolean') && (m.done === undefined || typeof m.done === 'boolean')) &&
     (x.appointments === undefined || isList(x.appointments, (a) => isObj(a) && (PORTFOLIO_IDS as readonly unknown[]).includes(a.portfolio) && isList(a.options, (o) => isObj(o) && isNum(o.name) && isNum(o.skill) && (MINISTER_TRAITS as readonly unknown[]).includes(o.trait)))) &&
     isList(x.bills, (b) => isObj(b) && typeof b.id === 'string' && isNum(b.weeks)) &&

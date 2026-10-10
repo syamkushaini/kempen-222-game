@@ -7,7 +7,7 @@ import {
   answerEvent, dissolve, foundForContest, invest, nextTerm, resumeTerm, setOrders, skipAhead, startCareer, syncOpinion,
 } from '../sim/campaign/career';
 import {
-  appoint, deliver, leaveGovernment, repeal, pullLever, reshuffle, setBudget, tableBill, tableMotion,
+  appoint, cancelProgramme, deliver, leaveGovernment, repeal, pullLever, reshuffle, setBudget, tableBill, tableMotion,
 } from '../sim/campaign/govern';
 import { choose, openSeat, standLeader, vetHopeful } from '../sim/campaign/candidates';
 import { canChoose } from '../sim/campaign/events';
@@ -31,7 +31,7 @@ import type {
   ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
   IssueId, OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId,
 } from '../sim/campaign/types';
-import { randomSeed } from '../sim/rng';
+import { Rng, randomSeed } from '../sim/rng';
 import type { World } from '../sim/election';
 import { PARTY_IDS, type RegionId, type StateId } from '../sim/types';
 import { PARTIES } from '../data/parties';
@@ -202,6 +202,8 @@ interface Store {
     backstory?: BackstoryId | null; ideology?: IdeologyId | null; identity?: Identity | null; challenge?: Partial<Challenge>; realStates?: boolean;
     /** Weeks of campaign, where a challenge made by a player does not want the contest's usual. */
     weeks?: number;
+    /** Where a career's founded party begins: a seat's id, or 'random' (or nothing) to leave it to luck. */
+    seat?: string;
   }): void;
   /** A challenge sent as a link, waiting for the player to say whether to play it. */
   pendingChallenge: ChallengeSpec | null;
@@ -284,6 +286,8 @@ interface Store {
   supply(party: number, price: SupplyPrice): void;
   /** The head of government repeals an Act. */
   repeal(id: PledgeId): void;
+  /** The head of government cancels a programme and takes its cost off the standing commitments. */
+  cancelProgramme(id: PledgeId): void;
   /** Buys (positive lots) or sells (negative) one kind of party business. */
   trade(holding: HoldingId, lots: number): void;
   /** Does one of the things a party does between elections. */
@@ -425,18 +429,21 @@ export const useStore = create<Store>((set, get) => {
       return { selectedSeat: seatId, selectedState: state ?? s.selectedState, seatReturn: s.selectedSeat === null ? s.selectedState : s.seatReturn };
     }),
 
-    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge, realStates = false, weeks }) => {
+    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge, realStates = false, weeks, seat }) => {
       // A founded party's first term is played in a country with its name already on every ballot.
       const base = getWorld(scenario);
       // A party the player has made their own may stand in any seat of a career, at a price; it needs a world in which it is on every ballot.
       const own = !!(base?.rules.career && identity && !founded);
-      const world = founded ? (base?.rules.career ? foundedWorld(scenario) : newPartyWorld(scenario)) : own ? ownWorld(scenario, player) ?? base : base;
+      const drawn = seed ?? randomSeed();
+      // A party founded from nothing begins in one seat: the one chosen, or one drawn by the game's seed.
+      const home = founded && base?.rules.career ? (seat && seat !== 'random' && base.seatIndex.has(seat) ? seat : base.seats[new Rng(drawn).int(base.seats.length)].id) : undefined;
+      const world = founded ? (base?.rules.career ? foundedWorld(scenario, home) : newPartyWorld(scenario)) : own ? ownWorld(scenario, player) ?? base : base;
       if (!world) return;
-      const opts = { player, difficulty, seed: seed ?? randomSeed(), backstory, challenge, ...(weeks !== undefined ? { totalWeeks: weeks } : {}) };
+      const opts = { player, difficulty, seed: drawn, backstory, challenge, ...(weeks !== undefined ? { totalWeeks: weeks } : {}) };
       // Kept with the game so that it can be started again exactly as it was set up.
-      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}), ...(weeks !== undefined ? { weeks } : {}) };
+      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances, ...(home ? { seat: home } : {}) } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}), ...(weeks !== undefined ? { weeks } : {}) };
       // A platform of its own belongs to a party of the player's own making.
-      const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, realStates, own, held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
+      const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, realStates, own, ...(home ? { foundedSeat: home } : {}), held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
       if (founded && !world.rules.career) foundForContest(world, campaign, backstory);
       // A career opens with its first missions on offer (the game draws them once for each parliament).
       if (campaign.career) offerMain(world, campaign);
@@ -536,6 +543,7 @@ export const useStore = create<Store>((set, get) => {
 
     setOrders: (patch) => mutate((c, _g, world) => setOrders(world, c, patch)),
     repeal: (id) => mutate((c) => { repeal(c, id); }),
+    cancelProgramme: (id) => mutate((c) => { cancelProgramme(c, id); }),
     supply: (party, price) => mutate((c, _g, world) => { signSupply(world, c, party, price); }),
     chest: (lots) => mutate((c, _g, world) => { setAside(world, c, lots); }),
     foreign: (favour) => mutate((c, _g, world) => { takeForeign(world, c, favour); }),
