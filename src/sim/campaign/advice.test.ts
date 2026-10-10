@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getWorld } from '../../data/world';
 import { PARTY_IDS } from '../types';
 import { startCareer } from './career';
-import { ADVICE_EVERY, adviceFor, canFollow, followAdvice, gainOf, weeksToWait } from './advice';
+import { ADVICE_EVERY, adviceFor, canFollow, followAdvice, gainOf, voice, weeksToWait } from './advice';
 import { hire } from './staff';
 import type { Campaign } from './types';
 
@@ -90,5 +90,29 @@ describe('what the people the leader has hired suggest', () => {
     expect(followAdvice(base, c, 'treasurer')).toBe(true);
     expect(c.career!.orders.donors).toBe(1);
     expect(c.career!.credibility).toBeGreaterThan(cred);
+  });
+});
+
+describe('the team speaks up through the game', () => {
+  it('says nothing with nobody hired, then each hired person takes a turn', () => {
+    const c = career();
+    expect(voice(base, c)).toBeNull();
+    best(c, 'manager'); best(c, 'media');
+    const k = c.career!;
+    c.parties[PS]!.unity = 90; k.credibility = 90; k.government.trust = 95; k.orders.donors = 0;
+    c.parties[PS]!.machinery = c.parties[PS]!.machinery.map(() => 100);
+    const roles = new Set<string>();
+    for (let w = 0; w < 6; w++) { k.week = w; const v = voice(base, c); expect(v).not.toBeNull(); roles.add(v!.role); expect(v!.line).toBeGreaterThanOrEqual(1); }
+    expect(roles).toEqual(new Set(['manager', 'media']));
+  });
+
+  it('puts someone with a suggestion to follow first, and goes quiet when wages are unpaid', () => {
+    const c = career();
+    best(c, 'manager'); best(c, 'treasurer');
+    c.parties[PS]!.unity = 90; c.career!.credibility = 90; c.career!.orders.donors = 2;
+    expect(voice(base, c)?.role).toBe('treasurer');
+    expect(voice(base, c)?.advice?.id).toBe('clean');
+    c.team.unpaid = true;
+    expect(voice(base, c)).toBeNull();
   });
 });

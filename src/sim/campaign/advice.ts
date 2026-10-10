@@ -83,3 +83,19 @@ export function followAdvice(world: World, c: Campaign, role: RoleId): boolean {
   pushNews(c, { party: c.player, key: 'news.advice.followed', vars: { role: `@role:${role}` }, tone: 'good' });
   return true;
 }
+
+/** What one of the hired people has to say this week: a suggestion that can be followed, or a few plain words from their field. */
+export interface Voice { role: RoleId; advice: Advice | null; line: number }
+
+/** The hired, paid people take turns to speak, one a week; one with something to follow goes before the rest. */
+export function voice(world: World, c: Campaign): Voice | null {
+  const k = c.career;
+  if (!k || c.phase !== 'term' || c.team.unpaid) return null;
+  const hired = ROLE_IDS.filter((_, r) => c.team.staff[r]);
+  if (!hired.length) return null;
+  const ready = hired.filter((r) => canFollow(world, c, r).ok);
+  const pool = ready.length ? ready : hired;
+  const role = pool[k.week % pool.length];
+  const check = canFollow(world, c, role);
+  return { role, advice: check.ok ? check.advice : null, line: 1 + (Math.floor(k.week / hired.length) % 4) };
+}

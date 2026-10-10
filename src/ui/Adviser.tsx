@@ -7,6 +7,7 @@ import { Portrait } from './Portrait';
 import { Jargon } from './Term';
 import { atHome } from '../sim/campaign/turn';
 import { STAFF_NAMES } from '../sim/campaign/staff';
+import { voice } from '../sim/campaign/advice';
 import { ROLE_IDS } from '../sim/campaign/types';
 import { STEPS, stepFor } from './tutorial';
 
@@ -88,7 +89,7 @@ function Warning() {
     { id: 'trust', value: k.government.trust, tab: 'orders' as const },
   ].sort((a, b) => a.value - b.value);
   const worst = figures[0];
-  if (worst.value >= DANGER) return null;
+  if (worst.value >= DANGER) return <TeamVoice />;
   const key = `${worst.id}|${k.term}|${k.week}`;
   if (away === key) return null;
   return (
@@ -100,6 +101,36 @@ function Warning() {
         <div className="button-row tight">
           <button className="btn small primary" onClick={() => setTab(worst.tab)}>{t('adviser.danger.go')}</button>
           <button className="btn small" onClick={() => setAway(key)}>{t('adviser.danger.later')}</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * When nothing is in danger, one of the people the leader has hired speaks each week: a suggestion they can follow,
+ * or a word from their own field. They take turns, and what they say can be put away for the week.
+ */
+function TeamVoice() {
+  const t = useT();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const follow = useStore((s) => s.followAdvice);
+  const [away, setAway] = useState<number | null>(null);
+  const v = voice(world, campaign);
+  const week = campaign.career?.week ?? 0;
+  if (!v || away === week || campaign.career?.ending) return null;
+  const who = campaign.team.staff[ROLE_IDS.indexOf(v.role)]!;
+  const name = STAFF_NAMES[who.name];
+  return (
+    <section className="adviser adviser-strip" aria-live="polite">
+      <span className="staff-avatar" aria-hidden="true">{name.split(' ').map((w) => w[0]).slice(0, 2).join('')}</span>
+      <div className="grow">
+        <p className="adviser-name">{name} <span className="muted">· {t(`role.${v.role}`)}</span></p>
+        <p className="adviser-text"><Jargon>{t(v.advice ? (`advice.${v.advice.id}` as StringKey) : (`chat.${v.role}.${v.line}` as StringKey))}</Jargon></p>
+        <div className="button-row tight">
+          {v.advice && <button className="btn small primary" onClick={() => follow(v.role)}>{t('chat.follow')}</button>}
+          <button className="btn small" onClick={() => setAway(week)}>{t('adviser.danger.later')}</button>
         </div>
       </div>
     </section>
