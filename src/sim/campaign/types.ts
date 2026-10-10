@@ -429,7 +429,7 @@ export interface Mission {
   elections?: number;
   /** Weeks of the term left (side). */
   weeks?: number;
-  /** An offer not yet taken: weeks left before it is withdrawn (side). A main offer stays until the next election. */
+  /** An offer not yet taken: weeks left before it lapses. Offers saved before this was set for main missions have none, and stay until the next parliament's. */
   ttl?: number;
   /** The final mission: the parts, each done once at some election in its window (the seats to hold are judged at the one that wins it). */
   parts?: FinalPart[];

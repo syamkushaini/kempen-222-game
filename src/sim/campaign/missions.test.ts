@@ -8,7 +8,7 @@ import { holderOf, seatsHeldBy } from './contests';
 import { endDay } from './formation';
 import {
   abandonMission, acceptMission, declineMission, dearToLose, ELECTIONS_FOR, isMain, missionsElection, missionsOf, missionsWeek, offerMain,
-  finalOpen, FINAL_ELECTIONS, penaltyOf, progressOf, rewardOf, seenMissions, SIDE_OFFER_WAIT,
+  finalOpen, FINAL_ELECTIONS, MAIN_OFFER_WAIT, OFFER_WARN, penaltyOf, progressOf, rewardOf, seenMissions, SIDE_OFFER_WAIT,
 } from './missions';
 import { earned } from './achievements';
 import { translate } from '../../i18n/strings';
@@ -193,6 +193,40 @@ describe('side missions', () => {
       missionsWeek(base, c, new Rng(3));
       expect(m.offers.filter((o) => o.ttl !== undefined && o.ttl <= 0)).toEqual([]);
     }
+  });
+});
+
+describe('the time to decide', () => {
+  it('is set on every main offer, warns when it is close, and lets a mission lapse that was never answered', () => {
+    const c = career(PS, 7);
+    const m = missionsOf(c);
+    const main = m.offers.filter((o) => o.main);
+    expect(main.length).toBeGreaterThan(1);
+    for (const o of main) expect(o.ttl).toBe(MAIN_OFFER_WAIT);
+    // One is taken in good time and keeps no deadline; the rest are left.
+    const [taken, ...left] = main;
+    expect(acceptMission(c, taken.id)).toBe(true);
+    expect(m.active.find((a) => a.id === taken.id)!.ttl).toBeUndefined();
+    const rng = new Rng(1);
+    for (let w = 0; w < MAIN_OFFER_WAIT - OFFER_WARN; w++) missionsWeek(base, c, rng);
+    expect(m.offers.filter((o) => o.main)).toHaveLength(left.length);
+    expect(c.news.some((n) => n.key === 'news.mission.closing')).toBe(true);
+    expect(c.news.some((n) => n.key === 'news.mission.lapsed')).toBe(false);
+    for (let w = 0; w < OFFER_WARN; w++) missionsWeek(base, c, rng);
+    expect(m.offers.filter((o) => o.main)).toEqual([]);
+    expect(c.news.filter((n) => n.key === 'news.mission.lapsed')).toHaveLength(left.length);
+    // The one that was taken is still running.
+    expect(m.active.some((a) => a.id === taken.id)).toBe(true);
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
+  });
+
+  it('leaves an offer saved before the deadline existed alone', () => {
+    const c = career(PS, 7);
+    const m = missionsOf(c);
+    for (const o of m.offers) delete o.ttl;
+    const rng = new Rng(1);
+    for (let w = 0; w < 60; w++) missionsWeek(base, c, rng);
+    expect(m.offers.filter((o) => o.main).length).toBeGreaterThan(1);
   });
 });
 

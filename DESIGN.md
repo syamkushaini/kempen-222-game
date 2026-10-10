@@ -1252,3 +1252,12 @@ A player in a state career lost every seat in the first election and was shown t
 - `wipedOut` stays a valid ending kind, so old saves and old leaderboard rows still load; nothing now produces it.
 - Tests: `house.test.ts` plays on from a wipe-out to the next election and retires; `statecareer.test.ts` loses every seat three elections running in Sarawak and Selangor and checks the saved game stays valid.
 
+## A time to decide on a mission (10 Oct 2026)
+
+The designer asked for a due date on the missions, so that the player must decide to take one on or turn it down. A side offer already lapsed after 26 weeks; a main offer sat there for the whole parliament.
+
+- A main offer now carries `ttl = MAIN_OFFER_WAIT` (26 weeks of the term, as a side one does). Each week of the term it runs down; at `OFFER_WARN` (4) weeks left the news says it is closing, and when it reaches nothing it lapses, with a bad-tone news item (`news.mission.lapsed`). No penalty: an offer never taken is no mission.
+- The Missions tab shows the time left on every offer ("Decide within N weeks, or the offer lapses"), in a red badge for the last four.
+- Taking an offer on drops its `ttl`; a mission under way keeps its own clock (weeks for a side one, elections for a main one) and still costs its price if it is given up or runs out.
+- Offers saved before this have no `ttl` for a main mission and keep the old rule (until the next parliament's offers), so saved games load as they were.
+

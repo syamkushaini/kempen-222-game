@@ -1,5 +1,5 @@
 import type { StringKey } from '../i18n/strings';
-import { dearToLose, FINAL_KINDS, missionsOf, penaltyOf, progressOf, rewardOf } from '../sim/campaign/missions';
+import { dearToLose, FINAL_KINDS, OFFER_WARN, missionsOf, penaltyOf, progressOf, rewardOf } from '../sim/campaign/missions';
 import type { Campaign, Mission, MissionRecord } from '../sim/campaign/types';
 import { useState } from 'react';
 import { useStore } from '../state/store';
@@ -77,6 +77,7 @@ function Offer({ m, world, effects }: { m: Mission; world: World; effects: Retur
         <span className="action-title">{t(`mission.kind.${m.kind}` as StringKey)}</span>
         <span className="action-meta">{missionGoal(t, f, m)}</span>
         <span className="action-meta muted">{missionWhy(t, m)}</span>
+        {m.ttl !== undefined && <span className={m.ttl <= OFFER_WARN ? 'action-meta badge marginal' : 'action-meta muted'}>{t(m.ttl <= OFFER_WARN ? 'mission.decide.soon' : 'mission.decide', { n: m.ttl })}</span>}
         {m.seats && <SeatChips world={world} ids={m.seats} />}
         {m.parts && <Parts parts={m.parts} world={world} />}
         <Terms m={m} effects={effects} />

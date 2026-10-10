@@ -24,6 +24,10 @@ export const ELECTIONS_FOR = (tier: number) => (tier >= 3 ? 2 : 1);
 /** How long a side mission runs, and how long an offer of one waits to be taken, in weeks of a term. */
 export const SIDE_WEEKS = [26, 39, 52] as const;
 export const SIDE_OFFER_WAIT = 26;
+/** How long an offer of a main mission waits to be taken: after this the offer lapses, and the leader is told when it is close. */
+export const MAIN_OFFER_WAIT = 26;
+/** An offer with this many weeks or fewer left is flagged as running out. */
+export const OFFER_WARN = 4;
 /** The chance each fourth week that a side mission is offered, while fewer than this many are running or on offer. */
 export const SIDE_CHANCE = 0.2;
 export const SIDE_AT_ONCE = 2;
@@ -220,7 +224,7 @@ function side(world: World, c: Campaign, kind: MissionKind, tier: 1 | 2 | 3): Of
 const SIDE_KINDS = MISSION_KINDS.filter((k) => !isMain(k));
 
 function give(m: Missions, pick: Offer): Mission {
-  const mission = { ...pick, id: ++m.seq } as Mission;
+  const mission = { ...pick, id: ++m.seq, ...(pick.ttl === undefined && pick.main ? { ttl: MAIN_OFFER_WAIT } : {}) } as Mission;
   m.offers.push(mission);
   return mission;
 }
@@ -330,7 +334,17 @@ export function missionsWeek(world: World, c: Campaign, rng: Rng): void {
     const sig = `${g.pm}:${g.partners.join(',')}`;
     if (m.gov !== undefined && m.gov !== sig) missionsFormed(world, c, g);
     m.gov = sig;
-    m.offers = m.offers.filter((o) => o.ttl === undefined || --o.ttl > 0);
+    // An offer left too long lapses; the leader is warned when it is close, and told when it has gone.
+    m.offers = m.offers.filter((o) => {
+      if (o.ttl === undefined) return true;
+      o.ttl -= 1;
+      if (o.ttl > 0) {
+        if (o.ttl === OFFER_WARN) pushNews(c, { party: c.player, key: 'news.mission.closing', vars: { mission: ref.mission(o.kind), n: OFFER_WARN }, tone: 'neutral' });
+        return true;
+      }
+      pushNews(c, { party: c.player, key: 'news.mission.lapsed', vars: { mission: ref.mission(o.kind) }, tone: 'bad' });
+      return false;
+    });
     for (const a of [...m.active].filter((x) => !x.main)) {
       a.weeks = (a.weeks ?? 0) - 1;
       const { have, need } = progressOf(world, c, a);
