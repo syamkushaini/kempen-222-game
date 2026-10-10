@@ -3,6 +3,7 @@ import { publicAmount, realistic, type Effect } from '../sim/campaign/events';
 import { hasPublicMoney } from '../sim/campaign/treasury';
 import type { Campaign } from '../sim/campaign/types';
 import type { World } from '../sim/election';
+import type { StringKey } from '../i18n/strings';
 import type { Format, T } from './hooks';
 
 /**
@@ -25,7 +26,19 @@ export function describeEffect(t: T, f: Format, world: World, campaign: Campaign
     case 'stability': return sign(real(e.n), t('hint.stability'));
     case 'trust': return sign(real(e.n), t('hint.trust'));
     case 'fiscal': return arrow(e.n, t('hint.fiscal'));
-    case 'economy': return e.growth ? arrow(e.growth, t('house.growth')) : e.inflation ? arrow(e.inflation, t('house.inflation')) : null;
+    case 'economy': {
+      const parts = [e.growth ? sign(Math.round(e.growth * 10) / 10, t('house.growth')) : '', e.inflation ? sign(Math.round(e.inflation * 10) / 10, t('house.inflation')) : ''].filter(Boolean);
+      return parts.length ? parts.join(' · ') : null;
+    }
+    case 'nation': {
+      const parts = [e.health ? arrow(e.health, t('nation.health')) : '', e.education ? arrow(e.education, t('nation.education')) : '', e.standing ? arrow(e.standing, t('nation.standing')) : ''].filter(Boolean);
+      return parts.length ? parts.join(' · ') : null;
+    }
+    case 'dossier': return arrow(e.n, t('hint.dossier'));
+    case 'salience': return arrow(e.n, t('hint.salience', { issue: t(`issue.${e.issue}` as StringKey) }));
+    case 'minister': return t(e.act === 'sack' ? 'hint.minister.sack' : 'hint.minister.keep');
+    case 'ksu': return t(`hint.ksu.${e.act}` as StringKey);
+    case 'adviser': return t(`hint.adviser.${e.act}` as StringKey);
     case 'machinery': return arrow(e.n, t('hint.branches'));
     case 'donors': return arrow(e.n, t('hint.donors'));
     case 'state': return arrow(e.n, t('hint.state'));

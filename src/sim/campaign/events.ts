@@ -25,6 +25,7 @@ import { KSU, replaceKsu, shiftKsu } from './ksu';
 import { endCareer } from './legacy';
 import { fightOdds } from './trial';
 import { dismiss } from './office';
+import { GOVERN_EFFECTS } from './governEffects';
 import { pushNews } from './news';
 import { scaleHoldings } from './party';
 import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEvent, standingOf, topicOf, type Standing } from './standing';
@@ -74,11 +75,12 @@ export const SOUND_CHOICE: Record<string, Record<number, Effect[]>> = {
 };
 const sound = (id: string, choices: Choice[]): Choice[] => {
   const more = SOUND_CHOICE[id];
-  return more ? choices.map((ch, i) => (more[i] ? { ...ch, effects: [...ch.effects, ...more[i]] } : ch)) : choices;
+  const govern = GOVERN_EFFECTS[id];
+  return more || govern ? choices.map((ch, i) => (more?.[i] || govern?.[i] ? { ...ch, effects: [...ch.effects, ...(more?.[i] ?? []), ...(govern?.[i] ?? [])] } : ch)) : choices;
 };
 /** Everything that can happen between elections. */
 export const EVENTS: Record<string, EventDef> = Object.fromEntries(Object.entries(ALL_EVENTS).map(([id, raw]) => {
-  const def: EventDef = SOUND_CHOICE[id] ? { ...raw, choices: sound(id, raw.choices) } : raw;
+  const def: EventDef = SOUND_CHOICE[id] || GOVERN_EFFECTS[id] ? { ...raw, choices: sound(id, raw.choices) } : raw;
   return [
   id,
   !PUBLIC_MONEY.has(id) ? def : {
