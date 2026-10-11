@@ -268,13 +268,13 @@ export const PARTNER_EVENTS_MS: Record<string, EventText> = {
     ],
   },
   budgetShare: {
-    title: 'Bahagian belanjawan',
-    body: 'Belanjawan untuk kementerian parti anda akan dipotong sepersepuluh, untuk membayar apa yang parti Perdana Menteri sebut “keutamaan bersama”. Menteri anda menghasilkan jadual untuk menunjukkan potongan itu tidak dikongsi, dan memasukkannya ke poket sendiri, kerana tiada orang lain mahu membacanya.',
-    options: ['Lawan potongan itu dalam kabinet', 'Terima, demi semangat perkongsian', 'Tukarkan dengan janji untuk belanjawan tahun depan'],
+    title: 'Bahagian bajet',
+    body: 'Bajet untuk kementerian parti anda akan dipotong sepersepuluh, untuk membayar apa yang parti Perdana Menteri sebut “keutamaan bersama”. Menteri anda menghasilkan jadual untuk menunjukkan potongan itu tidak dikongsi, dan memasukkannya ke poket sendiri, kerana tiada orang lain mahu membacanya.',
+    options: ['Lawan potongan itu dalam kabinet', 'Terima, demi semangat perkongsian', 'Tukarkan dengan janji untuk bajet tahun depan'],
     results: [
       'Pertarungan dimenangi sebahagian, dan kalah sebahagian, dan panjang. Ahli anda melihat anda berjuang, begitu juga Perdana Menteri.',
       'Potongan diterima. Pegawai kementerian mula mencari cara untuk menghilangkannya.',
-      ['Janji ditepati, dan kementerian dipulihkan setahun kemudian.', 'Janji dilupakan, seperti janji tentang belanjawan tahun depan.'],
+      ['Janji ditepati, dan kementerian dipulihkan setahun kemudian.', 'Janji dilupakan, seperti janji tentang bajet tahun depan.'],
     ],
   },
   coalitionSummit: {

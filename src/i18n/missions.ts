@@ -107,7 +107,7 @@ export const MISSIONS_EN = {
   'card.mission.unit.funds': 'in the war chest',
   'card.mission.unit.final': 'parts done',
 
-  'news.mission.offers': '{n} missions are on offer for this parliament.',
+  'news.mission.offers': 'Missions on offer for this parliament: {n}.',
   'news.mission.side': 'A new errand is on offer: {mission}.',
   'news.mission.extended': 'The time for a mission ran out before it was met, and has been given {n} more weeks, once: {mission}.',
   'mission.extended': 'extended',
@@ -225,7 +225,7 @@ export const MISSIONS_MS: Record<keyof typeof MISSIONS_EN, string> = {
   'card.mission.unit.funds': 'dalam tabung',
   'card.mission.unit.final': 'bahagian selesai',
 
-  'news.mission.offers': '{n} misi ditawarkan untuk parlimen ini.',
+  'news.mission.offers': 'Ada {n} misi ditawarkan untuk parlimen ni.',
   'news.mission.side': 'Satu tugas baharu ditawarkan: {mission}.',
   'news.mission.extended': 'Masa bagi satu misi habis sebelum ia tercapai, dan diberi {n} minggu lagi, sekali sahaja: {mission}.',
   'mission.extended': 'dilanjutkan',

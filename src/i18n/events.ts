@@ -17,6 +17,7 @@ import { LEAD_EVENTS_EN, LEAD_EVENTS_MS } from './events12';
 import { LEAD_EVENTS_2_EN, LEAD_EVENTS_2_MS } from './events13';
 import { OPP_EVENTS_EN, OPP_EVENTS_MS } from './events14';
 import { DESK_EVENTS_EN, DESK_EVENTS_MS } from './events15';
+import { DEBT_EVENTS_EN, DEBT_EVENTS_MS } from './events16';
 
 /** A result is one line, or for a gamble a pair: how it reads when it comes off, and when it does not. */
 export interface EventText {
@@ -603,18 +604,18 @@ export const EVENTS_MS: Record<string, EventText> = {
     ],
   },
   budget: {
-    title: 'Hari belanjawan',
-    body: 'Belanjawan dibentang hari ini. Pelannya seperti yang ditetapkan di bawah “Belanjawan tahun depan” dalam tab Parlimen; semak dahulu jika belum.',
-    options: ['Bentang belanjawan seperti dirancang', 'Bentang semula belanjawan tahun lalu'],
-    results: ['Belanjawan kini di hadapan Dewan.', 'Belanjawan tanpa perubahan kini di hadapan Dewan.'],
+    title: 'Hari bajet',
+    body: 'Bajet dibentang hari ini. Pelannya seperti yang ditetapkan di bawah “Bajet tahun depan” dalam tab Parlimen; semak dahulu jika belum.',
+    options: ['Bentang bajet seperti dirancang', 'Bentang semula bajet tahun lalu'],
+    results: ['Bajet kini di hadapan Dewan.', 'Bajet tanpa perubahan kini di hadapan Dewan.'],
   },
   budgetRevolt: {
-    title: 'Pemberontakan belanjawan',
-    body: 'Rakan gabungan sudah membaca belanjawan dan tidak menemui apa-apa untuk mereka. Kata mereka, mereka tidak dapat menyokongnya. Jika belanjawan tumbang, kerajaan turut tumbang.',
+    title: 'Pemberontakan bajet',
+    body: 'Rakan gabungan sudah membaca bajet dan tidak menemui apa-apa untuk mereka. Kata mereka, mereka tidak dapat menyokongnya. Jika bajet tumbang, kerajaan turut tumbang.',
     options: ['Cari wang untuk kawasan mereka', 'Bawa ke Dewan dan cabar mereka'],
     results: [
-      'Rakan gabungan mendapati belanjawan yang dipinda itu amat meyakinkan.',
-      ['Mereka menyokongnya, sambil menjeling.', 'Mereka menolaknya. Kerajaan yang gagal meluluskan belanjawan tidak boleh memerintah.'],
+      'Rakan gabungan mendapati bajet yang dipinda itu amat meyakinkan.',
+      ['Mereka menyokongnya, sambil menjeling.', 'Mereka menolaknya. Kerajaan yang gagal meluluskan bajet tidak boleh memerintah.'],
     ],
   },
   motion: {
@@ -630,13 +631,13 @@ export const EVENTS_MS: Record<string, EventText> = {
     results: ['Pelan itu meyakinkan dan memeritkan, mengikut turutan itu.', 'Agensi itu tidak berganjak. Begitu juga pasaran bon.'],
   },
   budgetAsk: {
-    title: 'Belanjawan sedang didraf',
-    body: 'Menteri Kewangan sedang menulis belanjawan, dan rakan gabungan dijangka menyatakan kehendak mereka sebelum terlambat.',
-    options: ['Minta peruntukan untuk kawasan kuat anda', 'Sokong belanjawan tanpa syarat', 'Ugut membantah melainkan mendapat lebih'],
+    title: 'Bajet sedang didraf',
+    body: 'Menteri Kewangan sedang menulis bajet, dan rakan gabungan dijangka menyatakan kehendak mereka sebelum terlambat.',
+    options: ['Minta peruntukan untuk kawasan kuat anda', 'Sokong bajet tanpa syarat', 'Ugut membantah kecuali kalau mendapat lebih'],
     results: [
       'Anda mendapat peruntukan, dan reputasi sebagai peminta.',
       'Kesetiaan anda dicatat, dan disimpan.',
-      ['Mereka mengalah. Kawasan anda beruntung dalam belanjawan ini.', 'Mereka mencabar gertakan anda, dan tidak akan melupakannya.'],
+      ['Mereka mengalah. Kawasan anda beruntung dalam bajet ini.', 'Mereka mencabar gertakan anda, dan tidak akan melupakannya.'],
     ],
   },
   downturnGov: {
@@ -663,7 +664,7 @@ export const EVENTS_MS: Record<string, EventText> = {
   },
   walkoutThreat: {
     title: 'Rakan gabungan ugut keluar',
-    body: 'Satu rakan gabungan berkata ia tidak lagi dapat menyokong kerajaan melainkan keadaan berubah. Maksudnya: jawatan Kabinet.',
+    body: 'Satu rakan gabungan berkata ia tidak lagi dapat menyokong kerajaan kecuali kalau keadaan berubah. Maksudnya: jawatan Kabinet.',
     options: ['Beri mereka jawatan itu', 'Cabar gertakan mereka'],
     results: [
       'Mereka mendapat jawatan, dan menteri anda sendiri berkurangan.',
@@ -691,11 +692,11 @@ export const EVENTS_MS: Record<string, EventText> = {
     ],
   },
   shadowBudget: {
-    title: 'Belanjawan alternatif',
-    body: 'Belanjawan kerajaan dibentang minggu depan. Pembangkang dijangka menyatakan apa yang akan dibuatnya.',
+    title: 'Bajet alternatif',
+    body: 'Bajet kerajaan dibentang minggu depan. Pembangkang dijangka menyatakan apa yang akan dibuatnya.',
     options: ['Terbitkan alternatif berkos penuh', 'Janjikan bulan dan bintang', 'Kritik sahaja dan berhenti di situ'],
     results: [
-      'Belanjawan alternatif anda seimbang. Pengulas terkejut sampai terpuji.',
+      'Bajet alternatif anda seimbang. Pengulas terkejut sampai terpuji.',
       'Bulan dan bintang dijanjikan. Pengundi suka; pakar ekonomi mengira sifarnya.',
       'Anda mengkritik. Itulah, bagaimanapun, tugasnya.',
     ],
@@ -809,8 +810,8 @@ Object.assign(EVENTS_EN, STORY_EVENTS_2_EN);
 Object.assign(EVENTS_MS, STORY_EVENTS_2_MS);
 Object.assign(EVENTS_EN, NEW_EVENTS_EN, NEW_EVENTS_2_EN);
 Object.assign(EVENTS_MS, NEW_EVENTS_MS, NEW_EVENTS_2_MS);
-Object.assign(EVENTS_EN, PM_EVENTS_EN, PARTNER_EVENTS_EN, LEAD_EVENTS_EN, LEAD_EVENTS_2_EN, OPP_EVENTS_EN, DESK_EVENTS_EN);
-Object.assign(EVENTS_MS, PM_EVENTS_MS, PARTNER_EVENTS_MS, LEAD_EVENTS_MS, LEAD_EVENTS_2_MS, OPP_EVENTS_MS, DESK_EVENTS_MS);
+Object.assign(EVENTS_EN, PM_EVENTS_EN, PARTNER_EVENTS_EN, LEAD_EVENTS_EN, LEAD_EVENTS_2_EN, OPP_EVENTS_EN, DESK_EVENTS_EN, DEBT_EVENTS_EN);
+Object.assign(EVENTS_MS, PM_EVENTS_MS, PARTNER_EVENTS_MS, LEAD_EVENTS_MS, LEAD_EVENTS_2_MS, OPP_EVENTS_MS, DESK_EVENTS_MS, DEBT_EVENTS_MS);
 
 /** Spreads the event text into the flat keys the interface looks up. */
 export function flattenEvents(texts: Record<string, EventText>): Record<string, string> {

@@ -362,7 +362,7 @@ export const STORY_EVENTS_2_MS: Record<string, EventText> = {
 
   sovereignFund: {
     title: 'Berbilion yang hilang',
-    body: 'Sebuah akhbar luar negara menerbitkan cerita bahawa sebuah dana pelaburan negeri meminjam banyak, kehilangan banyak dalam perjanjian di luar negara, dan tidak dapat mengatakan ke mana perginya selebihnya. Jumlahnya lebih besar daripada belanjawan kesihatan negara. Pengerusi dana berkata semuanya disalah faham.',
+    body: 'Sebuah akhbar luar negara menerbitkan cerita bahawa sebuah dana pelaburan negeri meminjam banyak, kehilangan banyak dalam perjanjian di luar negara, dan tidak dapat mengatakan ke mana perginya selebihnya. Jumlahnya lebih besar daripada bajet kesihatan negara. Pengerusi dana berkata semuanya disalah faham.',
     options: ['Seru siasatan bebas', 'Pertahankan dana, dan pengerusi', 'Katakan ia urusan lembaga dana sendiri'],
     results: [
       'Siasatan diseru. Tiada siapa boleh kata mereka tidak bertanya.',

@@ -168,13 +168,13 @@ export const LEAD_EVENTS_2_MS: Record<string, EventText> = {
     ],
   },
   budgetTip: {
-    title: 'Belanjawan dalam sampul',
-    body: 'Salinan belanjawan kerajaan, yang akan dibentang minggu depan, sampai ke meja anda dalam sampul surat. Ia mungkin yang sebenar. Ia mungkin tiruan yang sangat bagus. Penghantarnya, seperti biasa, tidak meninggalkan nama.',
+    title: 'Bajet dalam sampul',
+    body: 'Salinan bajet kerajaan, yang akan dibentang minggu depan, sampai ke meja anda dalam sampul surat. Ia mungkin yang sebenar. Ia mungkin tiruan yang sangat bagus. Penghantarnya, seperti biasa, tidak meninggalkan nama.',
     options: ['Dedahkan apa di dalamnya, sebelum kerajaan', 'Hantar semula, tidak dibaca, dengan nota', 'Gunakan secara senyap, untuk menyediakan jawapan anda'],
     results: [
       ['Ia sebenar. Hari besar kerajaan rosak, dan akhbar bercakap tentang tiada yang lain.', 'Ia bukan sebenar, atau tidak semuanya, dan anda terpaksa membela rekaan di hadapan negara.'],
       'Anda menghantarnya semula, dan pejabat Perdana Menteri mencatat. Pengundi mengagumi kejujuran anda, dan kerajaan nasibnya.',
-      'Anda menggunakannya. Jawapan anda pada hari belanjawan sangat cepat secara mencurigakan, dan kerajaan menghabiskan seminggu mencari kebocoran yang tiada.',
+      'Anda menggunakannya. Jawapan anda pada hari bajet sangat cepat secara mencurigakan, dan kerajaan menghabiskan seminggu mencari kebocoran yang tiada.',
     ],
   },
   showcaseState: {

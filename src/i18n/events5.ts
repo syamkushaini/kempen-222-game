@@ -179,7 +179,7 @@ export const SEASON_EVENTS_MS: Record<string, EventText> = {
   },
   sanctionsThreat: {
     title: 'Tarif, atau lain-lain',
-    body: 'Sebuah kuasa besar telah memberitahu menteri perdagangan anda bahawa satu pakej tarif akan datang melainkan kerajaan anda menggugurkan satu peraturan ke atas pelabur asing. Pengeksport takut, dan mereka yang mengundi untuk peraturan tidak.',
+    body: 'Sebuah kuasa besar telah memberitahu menteri perdagangan anda bahawa satu pakej tarif akan datang kecuali kalau kerajaan anda menggugurkan satu peraturan ke atas pelabur asing. Pengeksport takut, dan mereka yang mengundi untuk peraturan tidak.',
     options: ['Gugurkan peraturan itu', 'Tetap pendirian dan katakannya', 'Cari pasaran baharu, secara senyap'],
     results: [
       'Tarif itu ditangguhkan. Peraturan itu hilang, dan pengeksport berterima kasih secara peribadi.',

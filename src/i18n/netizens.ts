@@ -62,7 +62,7 @@ export const NETIZENS_MS: Record<NetizenKind, string[]> = {
   fine: ['{party} didenda sebab belanja lebih. Kita belanja lebih kat pasar malam tak ada siapa kisah pun.', 'Ada had perbelanjaan? Dalam ekonomi macam ni?', 'SPR dah bangun. Tandakan kalendar.'],
   troopers: ['AKU DAH AGAK akaun tu palsu. Mana ada orang sayang ahli politik sampai macam tu.', 'Laskar siber berbayar. Aku pulak bertekak dengan diorang percuma.', '“Sokongan organik”, katanya.'],
   gaffe: ['Satu ayat. Itu je yang perlu. Satu ayat.', 'Wartawan tu tak payah usaha pun.', 'Tolong ambil mikrofon tu daripada dia. Perlahan-lahan.'],
-  budget: ['Hari belanjawan. Kita tengok apa yang diambil dengan tangan sebelah lagi.', 'Atas kertas cantik. Dompet aku baca kertas lain.', 'Tiap tahun “belanjawan rakyat”. Rakyat mana? Rakyat nak tahu.'],
+  budget: ['Hari bajet. Kita tengok apa yang diambil dengan tangan sebelah lagi.', 'Atas kertas cantik. Dompet aku baca kertas lain.', 'Tiap tahun “bajet rakyat”. Rakyat mana? Rakyat nak tahu.'],
   billPassed: ['Janji ditunaikan?? Tengok luar, hujan katak ke.', 'Betul-betul lulus. Aku kena duduk kejap.', 'Baiklah. Pujian yang patut. Sekarang janji yang lain pula.'],
   billDefeated: ['Kalah undi dalam Dewan sendiri. Malu.', 'Rakan gabungan undi bantah. Gabungan apa macam tu.', 'Rupanya manifesto tu cadangan je.'],
   motion: ['Usul tidak percaya. Kepercayaan aku memang dari awal tak ada.', 'Parlimen buat kira-kira lagi: siapa cukup bilangan?', 'Boleh usul tidak percaya terhadap harga ayam tak?'],

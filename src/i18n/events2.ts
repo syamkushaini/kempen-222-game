@@ -653,7 +653,7 @@ export const MORE_EVENTS_MS: Record<string, EventText> = {
     title: 'Subsidi bahan api',
     body: 'Separuh subsidi bahan api pergi kepada mereka yang paling kurang memerlukannya. Pelan penyasaran sudah siap sedekad, menunggu seseorang yang berani atau nekad.',
     options: ['Laksanakan', 'Simpan semula ke dalam laci'],
-    results: ['Harga naik, belanjawan lega, dan kelas pertengahan sudah mencatat nama anda.', 'Pelan itu kembali ke laci. Ia sudah hafal jalannya.'],
+    results: ['Harga naik, bajet lega, dan kelas pertengahan sudah mencatat nama anda.', 'Pelan itu kembali ke laci. Ia sudah hafal jalannya.'],
   },
   foreignWorkers: {
     title: 'Siapa yang membuat kerja',
@@ -663,7 +663,7 @@ export const MORE_EVENTS_MS: Record<string, EventText> = {
   },
   windfall: {
     title: 'Durian runtuh',
-    body: 'Harga minyak naik dan hasil pun naik: beberapa bilion lebih daripada jangkaan belanjawan. Semua orang ada pendapat tentang wang siapa itu.',
+    body: 'Harga minyak naik dan hasil pun naik: beberapa bilion lebih daripada jangkaan bajet. Semua orang ada pendapat tentang wang siapa itu.',
     options: ['Bayar hutang', 'Bantuan tunai untuk setiap isi rumah', 'Bahagian lebih besar untuk Sabah dan Sarawak'],
     results: ['Tiada siapa berterima kasih. Agensi penarafan menghantar kad ucapan.', 'Wang itu habis menjelang hujung minggu, dan harga barang menyusul naik.', 'Kuching dan Kota Kinabalu gembira. Semenanjung bertanya ke mana bahagiannya.'],
   },
@@ -779,7 +779,7 @@ export const MORE_EVENTS_MS: Record<string, EventText> = {
     title: 'Minyak siapa',
     body: 'Sarawak meluluskan undang-undang yang menuntut minyak dan gas di luar pantainya. Syarikat minyak negara ada peguam, begitu juga Kuching.',
     options: ['Akur dengan tuntutan itu', 'Jumpa di mahkamah'],
-    results: ['Perjanjian ditandatangani. Ia membebankan belanjawan persekutuan selama satu generasi, dan ia mengekalkan keamanan.', 'Writ difailkan. Hubungan dengan Kuching tidak pernah seburuk ini dalam beberapa dekad.'],
+    results: ['Perjanjian ditandatangani. Ia membebankan bajet persekutuan selama satu generasi, dan ia mengekalkan keamanan.', 'Writ difailkan. Hubungan dengan Kuching tidak pernah seburuk ini dalam beberapa dekad.'],
   },
   borneoHighway: {
     title: 'Jalan yang tidak sudah-sudah',

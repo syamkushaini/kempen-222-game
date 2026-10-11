@@ -194,7 +194,7 @@ export const PM_EVENTS_MS: Record<string, EventText> = {
     results: [
       'Kenaikan diberi, perkhidmatan awam memuji kerajaan, dan perbendaharaan menghantar memorandum dengan beberapa garis bawah.',
       'Pembekuan diumumkan, dan jawapan kesatuan ialah perarakan dengan pancaragam.',
-      ['Pengperingkatan diterima, agak berat hati, dan belanjawan bertahan.', 'Pengperingkatan ditolak, dan kesatuan bekerja perlahan, yang dalam perkhidmatan awam sukar dibezakan daripada biasa.'],
+      ['Pengperingkatan diterima, agak berat hati, dan bajet bertahan.', 'Pengperingkatan ditolak, dan kesatuan bekerja perlahan, yang dalam perkhidmatan awam sukar dibezakan daripada biasa.'],
     ],
   },
   judicialPanel: {

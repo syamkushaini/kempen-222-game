@@ -399,7 +399,7 @@ export const NEW_EVENTS_2_MS: Record<string, EventText> = {
   },
   carbonRule: {
     title: 'Peraturan karbon',
-    body: 'Sekumpulan rakan dagang tidak lama lagi akan mengenakan cukai di sempadan mereka ke atas barangan yang dihasilkan dengan jejak karbon tinggi. Pengeksport kita akan membayar melainkan mereka mengubah cara pengeluaran. Pengeksport berkata mereka perlukan masa. Rakan dagang berkata mereka sudah diberitahu begitu sebelum ini.',
+    body: 'Sekumpulan rakan dagang tidak lama lagi akan mengenakan cukai di sempadan mereka ke atas barangan yang dihasilkan dengan jejak karbon tinggi. Pengeksport kita akan membayar kecuali kalau mereka mengubah cara pengeluaran. Pengeksport berkata mereka perlukan masa. Rakan dagang berkata mereka sudah diberitahu begitu sebelum ini.',
     options: ['Patuhi awal, dan bantu pengeksport membayarnya', 'Runding pengecualian untuk pengeksport kita', 'Abaikan, dan lihat siapa yang berkelip dahulu'],
     results: [
       'Pengeksport mematuhi, dengan geran, dan rakan dagang menyebutnya “contoh yang baik”. Beberapa kilang tetap ditutup.',

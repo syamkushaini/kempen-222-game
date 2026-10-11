@@ -119,7 +119,7 @@ export const LEAD_EVENTS_EN: Record<string, EventText> = {
 export const LEAD_EVENTS_MS: Record<string, EventText> = {
   shadowGaffe: {
     title: 'Kesilapan menteri bayangan anda',
-    body: 'Menteri kewangan bayangan anda, dalam temu bual, mengelirukan hutang negara dengan defisit negara, kemudian membandingkan belanjawan negara dengan majlis perkahwinan, kemudian berkata dia “bercakap sebagai seorang bapa”. Kerajaan memasang klip itu berulang-ulang.',
+    body: 'Menteri kewangan bayangan anda, dalam temu bual, mengelirukan hutang negara dengan defisit negara, kemudian membandingkan bajet negara dengan majlis perkahwinan, kemudian berkata dia “bercakap sebagai seorang bapa”. Kerajaan memasang klip itu berulang-ulang.',
     options: ['Gantikan dia, dan katakan anda mempertanggungjawabkan orang anda', 'Sokong dia, dan katakan semua orang tersilap cakap', 'Pindahkan dia ke portfolio lain dalam rombakan akan datang'],
     results: [
       'Dia pergi, dengan maruah dan surat ringkas. Parti berkata anda tegas, dan akhbar berkata anda agak dingin.',

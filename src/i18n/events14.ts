@@ -249,7 +249,7 @@ export const OPP_EVENTS_MS: Record<string, EventText> = {
   },
   speakingTime: {
     title: 'Tiada masa bercakap',
-    body: 'Dalam perbahasan belanjawan, masa untuk ucapan dibahagikan mengikut saiz parti. Parti anda kecil, dan diperuntukkan empat minit, antara dua ucapan sejam setiap satu.',
+    body: 'Dalam perbahasan bajet, masa untuk ucapan dibahagikan mengikut saiz parti. Parti anda kecil, dan diperuntukkan empat minit, antara dua ucapan sejam setiap satu.',
     options: ['Bangkitkan perkara tatatertib, dan minta masa adil', 'Terima, dan jadikan empat minit itu bermakna', 'Bawa ucapan ke media sosial, di mana tiada jam'],
     results: [
       'Perkara tatatertib diterima, sebahagian, dan anda diberi tujuh minit. Ia digunakan dengan baik.',
@@ -294,7 +294,7 @@ export const OPP_EVENTS_MS: Record<string, EventText> = {
     results: [
       'Wang datang, dan habis cepat. Seorang wartawan menemui ahli perniagaan itu dalam sebulan.',
       'Anda menerima separuh, dan menyiarkannya, dan penderma malu, dan pengundi tidak.',
-      'Anda menolak. Bendahari mengeluh, akhbar memuji anda, dan belanjawan kekal ketat.',
+      'Anda menolak. Bendahari mengeluh, akhbar memuji anda, dan bajet kekal ketat.',
     ],
   },
   mergerInvite: {
@@ -339,7 +339,7 @@ export const OPP_EVENTS_MS: Record<string, EventText> = {
   },
   shadowPortfolio: {
     title: 'Tawaran portfolio bayangan',
-    body: 'Ketua pembangkang menawarkan salah seorang ahli anda portfolio bayangan pembangunan luar bandar, jawatan dengan gelaran besar dan tiada belanjawan. Ia mengangkat. Ia juga cara ketua menjadikan parti anda sebahagian pasukan ketua.',
+    body: 'Ketua pembangkang menawarkan salah seorang ahli anda portfolio bayangan pembangunan luar bandar, jawatan dengan gelaran besar dan tiada bajet. Ia mengangkat. Ia juga cara ketua menjadikan parti anda sebahagian pasukan ketua.',
     options: ['Terima portfolio itu', 'Bertahan untuk yang lebih besar', 'Tolak, dan kekalkan suara parti anda sendiri'],
     results: [
       'Portfolio diterima, dan ahli anda berucap baik di Dewan, dan diucapkan terima kasih, dan salah seorang daripada ramai.',

@@ -298,7 +298,7 @@ export const GOVERNING_EVENTS_MS: Record<string, EventText> = {
   royaltiesRow: {
     title: 'Pertikaian royalti',
     body: 'Sabah dan Sarawak meminta bahagian lebih besar hasil minyak dan gas, merujuk syarat pembentukan persekutuan. Pemimpin mereka di koridor, dan kesabaran mereka tidak.',
-    options: ['Setuju bahagian penuh yang mereka minta', 'Tawar kenaikan lebih kecil sekarang dan semak kemudian', 'Tolak: belanjawan persekutuan tak mampu menanggungnya'],
+    options: ['Setuju bahagian penuh yang mereka minta', 'Tawar kenaikan lebih kecil sekarang dan semak kemudian', 'Tolak: bajet persekutuan tak mampu menanggungnya'],
     results: [
       'Pemimpin Borneo memuji anda. Perbendaharaan semenanjung merungut.',
       'Kompromi yang tiada siapa suka dan semua boleh terima.',
