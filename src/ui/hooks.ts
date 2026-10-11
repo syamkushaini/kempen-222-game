@@ -223,6 +223,7 @@ export function renderNews(t: T, f: Format, world: World, item: NewsItem): strin
       kind === 'event' ? t(`event.${value}.title` as StringKey) :
       kind === 'adviser' ? t(`adviser.${value}` as StringKey) :
       kind === 'alliance' ? (shownAlliance()?.title ?? t(`alliance.name.${value}` as StringKey)) :
+      kind === 'project' ? t(`project.${value}` as StringKey) :
       kind === 'tool' ? t(`tool.${value}` as StringKey) :
       kind === 'faction' ? t(`faction.${value}` as StringKey) :
       kind === 'hopeful' ? t(`hopeful.${value}` as StringKey) :

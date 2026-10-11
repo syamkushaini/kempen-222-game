@@ -5,6 +5,7 @@ import { contestsState, scaled } from './actions';
 import { STATE_GOVERNMENT_INCOME, statesHeld } from './contests';
 import { figuresOf, sectorShares, STATE_PUBLIC } from './gdp';
 import { MEASURES, RATE, inGov, isPm } from './office';
+import { builtEffects, projectsCost, taxEffects } from './econPlansData';
 import { patronageMult } from './patronage';
 import { pushNews, ref } from './news';
 import { SECTOR_IDS, type SectorId } from './sectors';
@@ -93,7 +94,7 @@ export const measureWeekly = (world: World, m: keyof typeof MEASURES): number =>
 /** What a number of units of standing commitment cost a week: a policy, a programme or a deal adds some. */
 export const commitmentWeekly = (world: World, units: number): number => govMoney(world, ALLOCATION.pm) * COMMITMENT_UNIT * units;
 
-export interface BookFlow { id: 'tax' | 'states' | SectorId | LineId | 'measures' | 'commitments' | 'interest'; amount: number }
+export interface BookFlow { id: 'tax' | 'states' | SectorId | LineId | 'measures' | 'commitments' | 'interest' | 'projects' | 'repay'; amount: number }
 export interface Books {
   income: BookFlow[];
   spend: BookFlow[];
@@ -109,7 +110,7 @@ export function govBooks(world: World, c: Campaign, budget?: Budget): Books | nu
   const unit = govMoney(world, ALLOCATION.pm);
   const e = k.economy;
   const econ = clamp(1 + GROWTH_PULL * (e.growth - 4) - JOBS_PULL * (e.jobless - 3.5), 0.7, 1.3);
-  const takings = unit * TAKINGS * econ * (1 + TAX_STEP * b.tax);
+  const takings = unit * TAKINGS * econ * (1 + TAX_STEP * b.tax + taxEffects(k).takings + builtEffects(k).takings);
   const shares = sectorShares(world, k);
   const income: BookFlow[] = [{ id: 'tax', amount: takings * TAX_SHARE }, ...SECTOR_IDS.map((id) => ({ id, amount: takings * (1 - TAX_SHARE) * shares[id] }))];
   // The patronage of the states the party governs also goes into the government's treasury.
@@ -120,9 +121,14 @@ export function govBooks(world: World, c: Campaign, budget?: Budget): Books | nu
     { id: 'measures', amount: unit * MEASURE_UNIT * (b.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0) },
     { id: 'commitments', amount: unit * COMMITMENT_UNIT * Math.max(0, k.fiscal) },
     { id: 'interest', amount: unit * INTEREST * (e.debt / 63) * (1 + RATE.interest * (k.rate ?? 0)) },
+    { id: 'projects', amount: unit * projectsCost(k) },
   ];
   const sum = (xs: BookFlow[]) => xs.reduce((a, x) => a + x.amount, 0);
-  return { income, spend, net: sum(income) - sum(spend) };
+  // What the plan sets aside for the debt is a share of what is left, and goes to it each week (see treasuryWeek).
+  const left = sum(income) - sum(spend);
+  const repay = Math.max(0, left) * (k.repayShare ?? 0);
+  spend.push({ id: 'repay', amount: repay });
+  return { income, spend, net: left - repay };
 }
 
 /** What the economy takes in each week with taxes at a setting of their dial (-1 cut, 0 hold, 1 raise); the head of government's books, else zero. */
@@ -201,6 +207,9 @@ export function treasuryWeek(world: World, c: Campaign): number {
   }
   if (!hasPublicMoney(c)) { k.treasury = 0; return 0; }
 
+  // What the debt plan sets aside goes to the debt as it is earned.
+  const set = govBooks(world, c)?.spend.find((x) => x.id === 'repay')?.amount ?? 0;
+  if (set > 0) k.economy.debt = Math.max(DEBT_FLOOR, k.economy.debt - debtEased(world, c, set));
   const flow = treasuryOf(c) + allocation(world, c);
   // What the treasury cannot cover is borrowed: the debt grows by its share of national income.
   if (flow < 0) {

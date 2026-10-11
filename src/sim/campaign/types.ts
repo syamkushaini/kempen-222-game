@@ -665,6 +665,13 @@ export interface Career {
   fiscal: number;
   /** How many units of the standing commitments each promise the government has passed added, so that a programme can be cancelled or an Act repealed and its cost taken off. Absent in a game saved before this existed. */
   programmes?: Partial<Record<PledgeId, number>>;
+  /** The share (0 to 0.5) of each month's surplus that goes to the national debt. */
+  repayShare?: number;
+  /** The tax mix: each tax lowered, left or raised. */
+  taxMix?: { sales: Dial; income: Dial; corporate: Dial; luxury: Dial };
+  /** National projects under way, and those finished. */
+  projects?: { id: string; left: number }[];
+  built?: string[];
   /** The week each economic tool was last used (see econTools.ts). */
   toolsUsed?: Record<string, number>;
   /** The policy rate: lowered (-1), left (absent), or raised (1). */

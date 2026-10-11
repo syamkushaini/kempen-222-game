@@ -1,5 +1,8 @@
 import type { StringKey } from '../i18n/strings';
 import { TOOLS, TOOL_GOALS, canUseTool, rateOf } from '../sim/campaign/econTools';
+import { MAX_PROJECTS_AT_ONCE, PROJECTS, REPAY_MAX, TAX_IDS, TAX_MIX, canStartProject, taxMixOf } from '../sim/campaign/econPlans';
+import { MONTH, debtEased, govBooks, govMoney } from '../sim/campaign/treasury';
+import { ALLOCATION } from '../sim/campaign/treasury';
 import { isPm } from '../sim/campaign/office';
 import { useStore } from '../state/store';
 import { describeEffect } from './effectText';
@@ -16,8 +19,14 @@ export function EconomyTools() {
   const campaign = useStore((s) => s.game!.campaign);
   const use = useStore((s) => s.useTool);
   const setRate = useStore((s) => s.setRate);
+  const setTax = useStore((s) => s.setTax);
+  const setRepay = useStore((s) => s.setRepayShare);
+  const start = useStore((s) => s.startProject);
+  const stop = useStore((s) => s.stopProject);
   if (!campaign.career || campaign.phase !== 'term' || !isPm(campaign)) return null;
   const rate = rateOf(campaign);
+  const books = govBooks(world, campaign);
+  const yearly = books ? debtEased(world, campaign, (books.spend.find((x) => x.id === 'repay')?.amount ?? 0) * 52) : 0;
   const effectsOf = (id: string) => TOOLS.find((x) => x.id === id)!.effects.map((e) => describeEffect(t, f, world, campaign, e)).filter(Boolean).join(' · ');
   return (
     <section className="econ-tools" aria-label={t('tools.title')}>
@@ -33,6 +42,55 @@ export function EconomyTools() {
             <button key={d} type="button" className={rate === d ? 'active' : ''} aria-pressed={rate === d} onClick={() => setRate(d)}>{t(`tools.rate.btn.${d}` as StringKey)}</button>
           ))}
         </div>
+      </div>
+      <div className="plan-card">
+        <h4>{t('plan.repay.title')}</h4>
+        <p className="muted small">{t('plan.repay.desc')}</p>
+        <label className="muted small" htmlFor="repay-share">{t('plan.repay.label', { pct: Math.round((campaign.career.repayShare ?? 0) * 100) })}</label>
+        <input id="repay-share" type="range" min={0} max={REPAY_MAX * 100} step={5} value={Math.round((campaign.career.repayShare ?? 0) * 100)} onChange={(e) => setRepay(Number(e.target.value) / 100)} />
+        <p className="small num">{t('plan.repay.forecast', { pts: yearly.toFixed(2) })}</p>
+      </div>
+      <div className="plan-card">
+        <h4>{t('plan.tax.title')}</h4>
+        <p className="muted small">{t('plan.tax.desc')}</p>
+        <ul>
+          {TAX_IDS.map((id) => (
+            <li key={id} className="action">
+              <div className="grow">
+                <span className="action-title">{t(`plan.tax.${id}` as StringKey)}</span>
+                <span className="action-meta num">{t('plan.tax.effect', { take: Math.round(TAX_MIX[id].takings * 100), prices: TAX_MIX[id].prices.toFixed(2), growth: TAX_MIX[id].growth.toFixed(2) })}</span>
+                <span className="action-meta">{t(`plan.tax.${id}.who` as StringKey)}</span>
+              </div>
+              <div className="segmented small" role="group" aria-label={t(`plan.tax.${id}` as StringKey)}>
+                {([-1, 0, 1] as const).map((d) => <button key={d} type="button" className={taxMixOf(campaign.career!)[id] === d ? 'active' : ''} aria-pressed={taxMixOf(campaign.career!)[id] === d} onClick={() => setTax(id, d)}>{t(d === -1 ? 'dial.cut' : d === 0 ? 'dial.hold' : 'dial.raise')}</button>)}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="plan-card">
+        <h4>{t('plan.projects.title')}</h4>
+        <p className="muted small">{t('plan.projects.desc', { n: MAX_PROJECTS_AT_ONCE })}</p>
+        <ul>
+          {PROJECTS.map((p) => {
+            const running = campaign.career!.projects?.find((x) => x.id === p.id);
+            const built = campaign.career!.built?.includes(p.id);
+            const check = canStartProject(campaign, p.id);
+            return (
+              <li key={p.id} className="action">
+                <div className="grow">
+                  <span className="action-title">{t(`project.${p.id}` as StringKey)}{built ? ` · ${t('plan.projects.built')}` : ''}</span>
+                  <span className="action-meta">{t(`project.${p.id}.desc` as StringKey)}</span>
+                  <span className="action-meta num">{t('plan.projects.cost', { rm: f.rm(govMoney(world, ALLOCATION.pm) * p.cost * MONTH), weeks: p.weeks })}</span>
+                  {running && <div className="progress" role="img" aria-label={t('plan.projects.left', { n: running.left })}><span style={{ width: `${((p.weeks - running.left) / p.weeks) * 100}%` }} /></div>}
+                  {running && <span className="action-meta">{t('plan.projects.left', { n: running.left })}</span>}
+                  {!check.ok && !running && !built && check.reason !== 'none' && <span className="action-reason">{t(`plan.projects.no.${check.reason}` as StringKey)}</span>}
+                </div>
+                {running ? <button type="button" className="btn small" onClick={() => stop(p.id)}>{t('plan.projects.stop')}</button> : <button type="button" className="btn small" disabled={!check.ok} onClick={() => start(p.id)}>{t('plan.projects.start')}</button>}
+              </li>
+            );
+          })}
+        </ul>
       </div>
       {TOOL_GOALS.map((goal) => (
         <div key={goal} className="tool-group">

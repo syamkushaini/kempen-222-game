@@ -61,6 +61,7 @@ import { grantSafe, revokeSafe } from '../sim/campaign/safeseat';
 import { discipline, doActivity, padRolls, rebrand, setAside, takeForeign, trade, type Discipline, type ActivityId, type FavourId, type HoldingId } from '../sim/campaign/party';
 import { followAdvice } from '../sim/campaign/advice';
 import { repayDebt } from '../sim/campaign/treasury';
+import { setRepayShare as setRepay, setTax as setTaxDial, startProject as beginProject, stopProject as endProject, type TaxId } from '../sim/campaign/econPlans';
 import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaign/econTools';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, ProfileStore, recordPoints, type Profile } from './profile';
@@ -346,6 +347,10 @@ interface Store {
   /** The head of government uses an economic tool. */
   useTool(id: string): void;
   setRate(value: Dial): void;
+  setTax(id: TaxId, value: Dial): void;
+  setRepayShare(share: number): void;
+  startProject(id: string): void;
+  stopProject(id: string): void;
   repayDebt(amount: number): void;
   chooseCandidate(seat: string, option: number): void;
   vetHopeful(seat: string, option: number): void;
@@ -614,6 +619,10 @@ export const useStore = create<Store>((set, get) => {
 
     repayDebt: (amount) => mutate((c, _g, world) => { repayDebt(world, c, amount); }),
     useTool: (id) => mutate((c, _g, world) => { useEconTool(world, c, id); }),
+    setTax: (id, value) => mutate((c) => { setTaxDial(c, id, value); }),
+    setRepayShare: (share) => mutate((c) => { setRepay(c, share); }),
+    startProject: (id) => mutate((c) => { beginProject(c, id); }),
+    stopProject: (id) => mutate((c) => { endProject(c, id); }),
     setRate: (value) => mutate((c) => { setPolicyRate(c, value); }),
     closeDecisionNews: () => set({ decisionNews: null }),
     hideScene: (id) => set((s) => ({ hiddenScene: [...s.hiddenScene, id] })),

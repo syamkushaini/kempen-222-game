@@ -873,3 +873,8 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 /* The economic tools. */
 .econ-tools .rate-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; flex-wrap: wrap; }
 .econ-tools .tool-group h4 { margin: 14px 0 4px; }
+
+.plan-card { margin: 12px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); display: grid; gap: 6px; }
+.plan-card h4 { margin: 0; }
+.plan-card input[type=range] { width: 100%; }
+.plan-card .progress { height: 6px; }
