@@ -161,7 +161,10 @@ export function MapView(props: {
   const preview = useStore((s) => s.preview);
 
   const [map, setMap] = useState<MapData | null>(null);
-  const narrow = useNarrow() && !useTablet();
+  // Both are asked every time: a hook asked only when another is true changes the order of hooks when the window crosses the width, and the page breaks.
+  const isNarrow = useNarrow();
+  const isTablet = useTablet();
+  const narrow = isNarrow && !isTablet;
   const viewH = props.tall && narrow && map ? Math.round(map.width * PHONE_SHAPE) : VIEW_HEIGHT;
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
   const frame = useRef<HTMLDivElement>(null);
