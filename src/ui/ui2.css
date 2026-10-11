@@ -820,3 +820,16 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .treasury-card .progress { height: 8px; }
 .treasury-card .repay { display: grid; gap: 6px; margin-top: 8px; }
 .treasury-card .repay input[type=range] { width: 100%; }
+
+/* The figures that say how the game is going, in one place at the top. */
+.metrics-strip { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; margin: 0; }
+.metric { display: grid; gap: 2px; text-align: left; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); color: inherit; cursor: pointer; font: inherit; }
+.metric:hover { background: var(--panel-2); }
+.metric-label { font-size: 11px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.metric-value { font-size: 16px; font-weight: 600; display: flex; align-items: baseline; gap: 4px; }
+.metric-bar { display: block; height: 4px; border-radius: 2px; background: var(--line-2); overflow: hidden; }
+.metric-bar > span { display: block; height: 100%; background: var(--ink-muted); transition: width 200ms linear; }
+@media (max-width: 700px) {
+  .metrics-strip { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
+  .metric { flex: 0 0 auto; min-width: 84px; }
+}

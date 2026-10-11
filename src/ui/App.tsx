@@ -14,6 +14,7 @@ import { ActionToasts, Toasts } from './Honours';
 import { SceneModal } from './SceneModal';
 import { CampaignBar, Header, TermBar } from './Header';
 import { GoalLine } from './Challenges';
+import { MetricsStrip } from './MetricsStrip';
 import { GameMenu } from './GameMenu';
 import { NextStep } from './NextStep';
 import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useTablet, useWorld, useNarrow } from './hooks';
@@ -182,6 +183,7 @@ function CampaignScreen() {
       <main className={phone ? `layout phone-${screen}` : 'layout'}>
         <NextStep />
         <GoalLine />
+        <MetricsStrip />
         <section className="map-column">
           <MapView tall display={display} toolbar={<ViewSwitch />} marker={term ? null : campaign.parties[campaign.player]!.location} pulse={flash.seat ? { id: flash.seat, kind: 'gain', n: flash.n } : null} />
           {/* the poll sits under the map, so that the side column is all tabs: what the player works in gets the height */}
