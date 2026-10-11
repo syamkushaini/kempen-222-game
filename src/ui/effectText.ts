@@ -34,6 +34,9 @@ export function describeEffect(t: T, f: Format, world: World, campaign: Campaign
       const parts = [e.health ? arrow(e.health, t('nation.health')) : '', e.education ? arrow(e.education, t('nation.education')) : '', e.standing ? arrow(e.standing, t('nation.standing')) : ''].filter(Boolean);
       return parts.length ? parts.join(' · ') : null;
     }
+    case 'debt': return `${e.n > 0 ? '▲' : '▼'} ${t('house.debt')} ${e.n > 0 ? '+' : '−'}${Math.abs(e.n)} ${t('hint.debt.points')}`;
+    case 'austerity': return t('hint.austerity');
+    case 'bankrupt': return t('hint.bankrupt');
     case 'dossier': return arrow(e.n, t('hint.dossier'));
     case 'salience': return arrow(e.n, t('hint.salience', { issue: t(`issue.${e.issue}` as StringKey) }));
     case 'minister': return t(e.act === 'sack' ? 'hint.minister.sack' : 'hint.minister.keep');

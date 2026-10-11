@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { foundedWorld } from '../../data/world';
+import { foundedWorld, worldOf } from '../../data/world';
 import { lastElection } from '../election';
 import { PARTY_IDS } from '../types';
 import { FOUNDING_SLOT } from './founding';
@@ -36,5 +36,13 @@ describe('where a party founded from nothing begins', () => {
     const c = startCareer(w, { player: P, difficulty: 'normal', seed: 3, founded: true, foundedSeat: target.id });
     expect(c.career!.foundedSeat).toBe(target.id);
     expect(foundedWorld(c.scenario, c.career!.foundedSeat)).toBe(w);
+  });
+
+  it('is the world the screens draw, which they ask for from the founded flag and the seat alone', () => {
+    const home = foundedWorld('career');
+    const target = home.seats.find((s) => s.state === 'kedah')!;
+    const w = worldOf({ scenario: 'career', career: { founded: true, foundedSeat: target.id } as never });
+    expect(w).toBe(foundedWorld('career', target.id));
+    expect(worldOf({ scenario: 'career', career: { founded: true } as never })).toBe(home);
   });
 });

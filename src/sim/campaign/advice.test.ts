@@ -116,3 +116,28 @@ describe('the team speaks up through the game', () => {
     expect(voice(base, c)).toBeNull();
   });
 });
+
+describe('advice comes when something needs mending, not all the time', () => {
+  it('asks for a tour of the branches only as an election nears', () => {
+    const c = career();
+    best(c, 'manager');
+    const k = c.career!;
+    c.parties[PS]!.unity = 90;
+    c.parties[PS]!.machinery = c.parties[PS]!.machinery.map(() => 30);
+    k.week = 20;
+    expect(adviceFor(base, c, 'manager')).toBeNull();
+    k.week = k.length - 40;
+    expect(adviceFor(base, c, 'manager')?.id).toBe('tour');
+  });
+
+  it('is quiet about a name that is middling, and speaks up when it is poor', () => {
+    const c = career();
+    best(c, 'media');
+    const k = c.career!;
+    k.government.trust = 95;
+    k.credibility = 60;
+    expect(adviceFor(base, c, 'media')).toBeNull();
+    k.credibility = 50;
+    expect(adviceFor(base, c, 'media')?.id).toBe('profile');
+  });
+});

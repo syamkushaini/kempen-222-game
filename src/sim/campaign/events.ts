@@ -12,6 +12,8 @@ import { NEW_EVENTS } from './eventList8';
 import { GOVERNING_SEATS } from './eventList9';
 import { OPPOSITION_SEATS } from './eventList10';
 import { DESK_EVENTS } from './eventList11';
+import { DEBT_EVENTS } from './eventListDebt';
+import { austerity, bankrupt } from './debt';
 import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
 import { scaled } from './actions';
@@ -31,7 +33,7 @@ import { scaleHoldings } from './party';
 import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEvent, standingOf, topicOf, type Standing } from './standing';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
-const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS };
+const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS };
 
 /**
  * Events whose money is the public's: relief for a flood, a bridge, a subsidy, a port. Where the player's party governs they are paid
@@ -109,6 +111,12 @@ export type Effect =
   | { t: 'public'; n: number }
   | { t: 'unity' | 'funds' | 'cred' | 'stability' | 'trust' | 'machinery' | 'dossier' | 'donors' | 'state' | 'fiscal'; n: number }
   | { t: 'economy'; growth?: number; inflation?: number }
+  /** The national debt moves by this many points of national income (repaid when negative). */
+  | { t: 'debt'; n: number }
+  /** The IMF's terms: the budget is forced tight and every standing commitment is wiped. */
+  | { t: 'austerity' }
+  /** The country cannot pay: the government falls, and what is owed is restructured. */
+  | { t: 'bankrupt' }
   | { t: 'nation'; health?: number; education?: number; standing?: number }
   | { t: 'assets'; pct: number }
   | { t: 'dividend'; pct: number }
@@ -341,6 +349,9 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
       case 'donors': k.orders.donors = clamp(k.orders.donors + e.n, 0, 3) as Level; break;
       case 'state': k.orders.state = clamp(k.orders.state + e.n, 0, 3) as Level; break;
       case 'fiscal': k.fiscal = Math.max(0, k.fiscal + e.n); break;
+      case 'debt': k.economy.debt = Math.max(30, Math.min(120, k.economy.debt + e.n)); break;
+      case 'austerity': austerity(c); break;
+      case 'bankrupt': bankrupt(world, c); falls = true; break;
       case 'economy': k.economy.growth += e.growth ?? 0; k.economy.inflation += e.inflation ?? 0; break;
       case 'nation': shiftNation(k, e); break;
       case 'assets': scaleHoldings(k, Math.max(0, 1 + e.pct)); break;

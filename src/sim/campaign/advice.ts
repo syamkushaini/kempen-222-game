@@ -13,6 +13,8 @@ import { ROLE_IDS, type Campaign, type RoleId, type Staffer } from './types';
 export const ADVICE_EVERY = 13;
 /** What a suggestion does by the skill of whoever gives it (1 to 5). */
 export const GAIN = [1, 2, 2, 3, 4] as const;
+/** Branches matter at the next election: the manager only asks for a tour of them in the last year and a half of a parliament. */
+export const TOUR_WITHIN = 78;
 export const gainOf = (skill: number): number => GAIN[Math.max(1, Math.min(5, skill)) - 1];
 
 export type AdviceId = 'meeting' | 'tour' | 'paper' | 'honest' | 'profile' | 'clean' | 'steady';
@@ -32,15 +34,15 @@ export function adviceFor(_world: World, c: Campaign, role: RoleId): Advice | nu
   const make = (id: AdviceId, effects: Effect[], cost: number): Advice => ({ id, role, effects, cost });
   switch (role) {
     case 'manager':
-      if (pc.unity < 72) return make('meeting', [{ t: 'unity', n: g }, { t: 'cred', n: 1 }], 8_000);
-      if (avgBranches < 60) return make('tour', [{ t: 'machinery', n: g * 2 }], 10_000);
+      if (pc.unity < 65) return make('meeting', [{ t: 'unity', n: g }, { t: 'cred', n: 1 }], 8_000);
+      if (avgBranches < 60 && k.length - k.week <= TOUR_WITHIN) return make('tour', [{ t: 'machinery', n: g * 2 }], 10_000);
       return null;
     case 'strategist':
-      if (failed(0) || failed(1) || k.credibility < 70) return make('paper', [{ t: 'cred', n: g }], 6_000);
+      if (failed(0) || failed(1) || k.credibility < 55) return make('paper', [{ t: 'cred', n: g }], 6_000);
       return null;
     case 'media':
       if (governing && k.government.trust < 70) return make('honest', [{ t: 'trust', n: g }], 8_000);
-      if (k.credibility < 70) return make('profile', [{ t: 'cred', n: g }], 8_000);
+      if (k.credibility < 55) return make('profile', [{ t: 'cred', n: g }], 8_000);
       return null;
     case 'treasurer':
       if (k.orders.donors > 0) return make('clean', [{ t: 'donors', n: -1 }, { t: 'cred', n: Math.ceil(g / 2) }], 0);

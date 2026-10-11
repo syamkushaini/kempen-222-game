@@ -26,6 +26,7 @@ import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
 import { trendWeek } from './trend';
+import { debtWeek } from './debt';
 import { allocation, diverted, hasPublicMoney, syncGoodwill, treasuryWeek } from './treasury';
 import { agendaTerm } from './agenda';
 import { foldMerged, standMerged } from './merge';
@@ -412,6 +413,12 @@ export function termWeek(world: World, c: Campaign): void {
   sectorsWeek(c, rngWeek);
   gdpWeek(world, c);
   trendWeek(world, c);
+  // A debt that reaches the top of its ladder is bankruptcy: whoever governs is out, and the Palace asks who can form a government.
+  if (debtWeek(world, c)) {
+    if (k.government.pm === c.player) k.record.falls++;
+    openTalks(world, c);
+    return;
+  }
   trialWeek(c);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);

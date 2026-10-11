@@ -41,6 +41,8 @@ export const EVENT_ART: Record<string, string> = {
   motion: 'room: wallroom@50, crowd@28, crowd@56, leader@84, scales@46*0.7, gavel@94*0.8',
   ultimatum: 'room: wallroom@50, leader@26, clock@50*1.2, leader@74',
   downgrade: 'storm: tower@20, tower@36, chartDown@68*1.3, alarm@90',
+  debtAlarm: 'storm: tower@20, tower@36, chartDown@68*1.3, alarm@90, warning@50',
+  debtCrisis: 'storm: tower@18, tower@32, chartDown@62*1.4, alarm@86, warning@46',
   budgetAsk: 'room: wallroom@50, table@50, leader@30, person@70, coin@88',
   downturnGov: 'storm: tower@18, factory@50, chartDown@82*1.3, cloud@40',
   walkoutThreat: 'room: wallroom@50, leader@26, chair@50, person@78',

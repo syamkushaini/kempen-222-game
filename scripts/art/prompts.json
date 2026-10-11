@@ -1120,6 +1120,14 @@
    "title": "“Mana Peruntukan?”",
    "body": "Residents ask why their area has not received funding for drainage, roads and community facilities. They ask in front of a camera. Your team suggests blaming the current government, and has already drafted the sentence."
   },
+  "debtAlarm": {
+   "title": "The debt alarm",
+   "body": "The national debt has passed nine-tenths of national income. The finance ministry warns that at this rate the country will not be able to borrow on its own terms by next year. The bond markets have noticed before you did."
+  },
+  "debtCrisis": {
+   "title": "The country cannot borrow",
+   "body": "The last bond auction failed. The debt is past a hundred per cent of national income and lenders will not roll it over on any terms the government can live with. There are two ways out, both bitter, and a third that is a prayer."
+  },
   "kind-pactOffer": {
    "title": "An offer from another party",
    "body": "The leader of another party calls with an offer of a pact: seats to stand aside in, seats in return. Two leaders at a table with glasses of teh tarik, a handshake half offered."
