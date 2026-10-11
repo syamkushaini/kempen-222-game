@@ -25,6 +25,7 @@ import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
+import { trendWeek } from './trend';
 import { allocation, diverted, hasPublicMoney, syncGoodwill, treasuryWeek } from './treasury';
 import { agendaTerm } from './agenda';
 import { foldMerged, standMerged } from './merge';
@@ -410,6 +411,7 @@ export function termWeek(world: World, c: Campaign): void {
   advisersWeek(c);
   sectorsWeek(c, rngWeek);
   gdpWeek(world, c);
+  trendWeek(world, c);
   trialWeek(c);
 
   const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
@@ -719,7 +721,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.shadow ? { shadow: { ...k.shadow } } : {}),
     manifesto: next.manifesto.map((m, p) => withoutLaws(k, p === c.player ? k.manifesto[p] : m)),
     promises: k.promises, flags: k.flags,
-    economy: k.economy, reports: k.reports, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, ...(k.programmes ? { programmes: Object.fromEntries(Object.entries(k.programmes).map(([id, n]) => [id, (n ?? 0) * 0.5])) } : {}), record: k.record, states: k.states,
+    economy: k.economy, reports: k.reports, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, ...(k.trend ? { trend: k.trend } : {}), ...(k.programmes ? { programmes: Object.fromEntries(Object.entries(k.programmes).map(([id, n]) => [id, (n ?? 0) * 0.5])) } : {}), record: k.record, states: k.states,
   };
   // Two parliaments at the head of the government is all a term limit allows: in the third the party governs, and its leader does not.
   const run = outcome.pm === c.player ? (k.pmRun ?? 0) + 1 : 0;

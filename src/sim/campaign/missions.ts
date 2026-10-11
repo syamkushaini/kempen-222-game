@@ -6,7 +6,9 @@ import { relation } from './diplomacy';
 import { applyEffects, type Effect } from './events';
 import { pushNews, ref } from './news';
 import { PARTY_IDS } from '../types';
-import { isPm } from './office';
+import { inGov, isPm } from './office';
+import { START_NATION } from './nation';
+import { hasPublicMoney, treasuryCap, treasuryOf } from './treasury';
 import { termIncome } from './career';
 import { truth } from './turn';
 import { MISSION_KINDS, type Campaign, type FinalPart, type Mission, type MissionKind, type MissionRecord, type Missions, type Outcome } from './types';
@@ -40,6 +42,8 @@ const FEDERAL = 222;
 export const missionsOf = (c: Campaign): Missions => (c.career!.missions ??= { active: [], offers: [], seq: 0, done: [], unseen: [] });
 export const isMain = (kind: MissionKind): boolean => kind === 'seize' || kind === 'hold' || kind === 'bloc' || kind === 'majority' || kind === 'final';
 /** Whether failing a mission of this kind is dear (the other kinds cost little). */
+/** The side missions about the economy and the state of the nation: for a party in government. */
+export const isEconomic = (kind: MissionKind): boolean => kind === 'debt' || kind === 'treasury' || kind === 'health' || kind === 'education' || kind === 'standing';
 export const dearToLose = (kind: MissionKind): boolean => kind === 'hold' || kind === 'majority' || kind === 'final';
 
 /**
@@ -66,6 +70,8 @@ export function rewardOf(m: Pick<Mission, 'kind' | 'tier' | 'main'>): Effect[] {
   // A side one brings the other thing the party was short of: money, but not for a mission to raise it.
   if (m.kind === 'credibility') return [money, { t: 'unity', n: 2 * t }];
   if (m.kind === 'unity') return [money, { t: 'cred', n: 2 * t }];
+  // The economic ones are about the country: what the government earns is the public's trust, and a good name.
+  if (isEconomic(m.kind)) return [{ t: 'cred', n: 2 * t }, { t: 'trust', n: 2 * t }];
   return [{ t: 'cred', n: 2 * t }, { t: 'unity', n: t }];
 }
 
@@ -102,6 +108,11 @@ export function progressOf(world: World, c: Campaign, m: Mission): { have: numbe
     case 'credibility': return { have: Math.round(k.credibility), need: m.need };
     case 'unity': return { have: Math.round(c.parties[me]!.unity), need: m.need };
     case 'funds': return { have: Math.round(c.parties[me]!.funds), need: m.need };
+    // How far the debt has come down since the mission was taken, in points of national income.
+    case 'debt': return { have: Math.max(0, Math.round(((m.from ?? k.economy.debt) - k.economy.debt) * 10) / 10), need: m.need };
+    // How full the treasury is, as a share of the most it keeps.
+    case 'treasury': { const cap = treasuryCap(world, c); return { have: cap > 0 ? Math.round((treasuryOf(c) / cap) * 100) : 0, need: m.need }; }
+    case 'health': case 'education': case 'standing': return { have: Math.round((k.nation ?? START_NATION)[m.kind]), need: m.need };
   }
 }
 
@@ -224,6 +235,19 @@ function side(world: World, c: Campaign, kind: MissionKind, tier: 1 | 2 | 3): Of
   const base = { kind, main: false, tier, weeks } as const;
   if (kind === 'credibility') { const need = Math.round(k.credibility + [6, 10, 15][tier - 1]); return need > 95 ? null : { ...base, need }; }
   if (kind === 'unity') { const need = Math.round(pc.unity + [8, 14, 20][tier - 1]); return need > 95 ? null : { ...base, need }; }
+  if (isEconomic(kind) && (c.phase !== 'term' || !inGov(c, c.player))) return null;
+  if (kind === 'debt') return isPm(c) && k.economy.debt > 35 ? { ...base, need: [0.8, 1.5, 2.5][tier - 1], from: k.economy.debt } : null;
+  if (kind === 'treasury') {
+    if (!hasPublicMoney(c) || treasuryCap(world, c) <= 0) return null;
+    const have = Math.round((treasuryOf(c) / treasuryCap(world, c)) * 100);
+    const need = Math.min(95, have + [15, 30, 45][tier - 1]);
+    return need > have + 5 ? { ...base, need } : null;
+  }
+  if (kind === 'health' || kind === 'education' || kind === 'standing') {
+    const now = Math.round((k.nation ?? START_NATION)[kind]);
+    const need = now + [4, 7, 10][tier - 1];
+    return need > 92 ? null : { ...base, need };
+  }
   if (kind === 'funds') {
     const weekly = termIncome(world, c).total;
     if (weekly <= 0) return null;
@@ -284,6 +308,8 @@ export function acceptMission(c: Campaign, id: number): boolean {
   if (!m || at < 0) return false;
   const [mission] = m.offers.splice(at, 1);
   delete mission.ttl;
+  // What the debt is when the mission is taken is what it is judged from.
+  if (mission.kind === 'debt') mission.from = c.career!.economy.debt;
   m.active.push(mission);
   return true;
 }

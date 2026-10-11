@@ -142,7 +142,7 @@ function isValidOffice(x: Record<string, unknown>): boolean {
   const e = x.economy, r = x.record, end = x.ending;
   return (
     isObj(e) && isNum(e.growth) && isNum(e.inflation) && isNum(e.jobless) && isNum(e.debt) &&
-    isBudget(x.budget) && isBudget(x.tabled) && isNum(x.fiscal) && (x.programmes === undefined || (isObj(x.programmes) && Object.values(x.programmes).every(isNum))) &&
+    isBudget(x.budget) && isBudget(x.tabled) && isNum(x.fiscal) && (x.trend === undefined || isList(x.trend, (p) => isObj(p) && isNum(p.week) && isNum(p.growth) && isNum(p.debt) && Array.isArray(p.sectors))) && (x.programmes === undefined || (isObj(x.programmes) && Object.values(x.programmes).every(isNum))) &&
     isList(x.cabinet, (m) => isObj(m) && (PORTFOLIO_IDS as readonly unknown[]).includes(m.portfolio) && isParty(m.party) && isNum(m.name) && isNum(m.skill) && (m.trait === undefined || (MINISTER_TRAITS as readonly unknown[]).includes(m.trait)) && (m.acting === undefined || typeof m.acting === 'boolean') && (m.done === undefined || typeof m.done === 'boolean')) &&
     (x.appointments === undefined || isList(x.appointments, (a) => isObj(a) && (PORTFOLIO_IDS as readonly unknown[]).includes(a.portfolio) && isList(a.options, (o) => isObj(o) && isNum(o.name) && isNum(o.skill) && (MINISTER_TRAITS as readonly unknown[]).includes(o.trait)))) &&
     isList(x.bills, (b) => isObj(b) && typeof b.id === 'string' && isNum(b.weeks)) &&
@@ -164,7 +164,7 @@ function isValidMission(x: unknown, world: World): boolean {
     isNum(x.id) && (MISSION_KINDS as readonly unknown[]).includes(x.kind) && typeof x.main === 'boolean' && isTier(x.tier) && isNum(x.need) &&
     (x.seats === undefined || (Array.isArray(x.seats) && x.seats.every((s) => typeof s === 'string' && world.seatIndex.has(s)))) &&
     (x.party === undefined || isParty(x.party)) && (x.alone === undefined || typeof x.alone === 'boolean') &&
-    (x.elections === undefined || isNum(x.elections)) && (x.weeks === undefined || isNum(x.weeks)) && (x.ttl === undefined || isNum(x.ttl)) &&
+    (x.elections === undefined || isNum(x.elections)) && (x.weeks === undefined || isNum(x.weeks)) && (x.ttl === undefined || isNum(x.ttl)) && (x.from === undefined || isNum(x.from)) &&
     (x.parts === undefined || isList(x.parts, (p) => isObj(p) && (FINAL_PARTS as readonly unknown[]).includes(p.kind) && isNum(p.need) && typeof p.done === 'boolean' &&
       (p.seats === undefined || (Array.isArray(p.seats) && p.seats.every((s) => typeof s === 'string' && world.seatIndex.has(s)))) && (p.party === undefined || isParty(p.party)) && (p.alone === undefined || typeof p.alone === 'boolean')))
   );

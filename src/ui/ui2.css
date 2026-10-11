@@ -833,3 +833,21 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .metrics-strip { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
   .metric { flex: 0 0 auto; min-width: 84px; }
 }
+
+/* The economy's charts. */
+.economy-charts { margin: 12px 0; }
+.charts-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.econ-chart { margin: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); display: grid; gap: 4px; }
+.econ-chart figcaption { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+.econ-chart svg { width: 100%; height: auto; display: block; }
+.econ-line { stroke: var(--ink); }
+.econ-dot { fill: var(--ink); }
+.econ-chart .aim { stroke: var(--ink-muted); stroke-dasharray: 3 3; stroke-width: 1; opacity: 0.6; }
+.econ-chart .range { font-size: 11px; }
+.flow-bars { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.flow { display: grid; grid-template-columns: minmax(110px, 1.2fr) 2fr auto; gap: 8px; align-items: center; font-size: 12px; }
+.flow-bar { display: block; height: 8px; border-radius: 4px; background: var(--line-2); overflow: hidden; }
+.flow-bar > span { display: block; height: 100%; border-radius: 4px; }
+.flow.in .flow-bar > span { background: var(--good); }
+.flow.out .flow-bar > span { background: var(--bad); }

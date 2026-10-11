@@ -29,6 +29,7 @@ function goal(t: T, f: Format, m: Ask, when: string): string {
     case 'credibility': return t('mission.goal.credibility', { need: m.need, when });
     case 'unity': return t('mission.goal.unity', { need: m.need, when });
     case 'funds': return t('mission.goal.funds', { rm: f.rm(m.need), when });
+    case 'debt': case 'treasury': case 'health': case 'education': case 'standing': return t(`mission.goal.${m.kind}` as StringKey, { need: m.need, when });
   }
 }
 

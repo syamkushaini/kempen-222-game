@@ -372,6 +372,20 @@ export interface Obligation { party: number; demand: DemandId; due: number; done
 export const LEVER_IDS = ['agency', 'police', 'broadcaster'] as const;
 export type LeverId = (typeof LEVER_IDS)[number];
 
+/** One month's figures of the economy, as kept for the charts. */
+export interface TrendPoint {
+  week: number;
+  term: number;
+  growth: number;
+  inflation: number;
+  jobless: number;
+  debt: number;
+  /** How full the treasury is, as a share of the most it keeps. */
+  treasury: number;
+  /** The four sectors, in order (oil, electronics, tourism, farming), each from 0 to 100. */
+  sectors: number[];
+}
+
 /** What the player has done over the whole career, for the day it ends. */
 export interface CareerRecord {
   elections: number;
@@ -400,7 +414,7 @@ export interface Ending { kind: EndingKind; legacy: LegacyId; score: number; /**
 // ---------- missions ----------
 
 /** What a mission asks. The first five are the main ones, judged at an election (the fifth is the final mission, all four at once); the last three are side ones, judged week by week (see missions.ts). */
-export const MISSION_KINDS = ['seize', 'hold', 'bloc', 'majority', 'final', 'credibility', 'funds', 'unity'] as const;
+export const MISSION_KINDS = ['seize', 'hold', 'bloc', 'majority', 'final', 'credibility', 'funds', 'unity', 'debt', 'treasury', 'health', 'education', 'standing'] as const;
 export type MissionKind = (typeof MISSION_KINDS)[number];
 
 /** One of the four things the final mission asks at once: what a main mission of that kind asks, and whether it has been done. */
@@ -423,6 +437,8 @@ export interface Mission {
   tier: 1 | 2 | 3;
   /** seize: the seats to take. hold: the seats to keep. */
   seats?: string[];
+  /** debt: the national debt, in points of national income, when the mission was taken, so that it is judged by how much it has fallen since. */
+  from?: number;
   /** How many of the seats; how many parties govern together; the party's own seats needed; or the level to reach (credibility, unity, funds). */
   need: number;
   /** bloc: a party that must be in the government. */
@@ -649,6 +665,8 @@ export interface Career {
   fiscal: number;
   /** How many units of the standing commitments each promise the government has passed added, so that a programme can be cancelled or an Act repealed and its cost taken off. Absent in a game saved before this existed. */
   programmes?: Partial<Record<PledgeId, number>>;
+  /** The economy's figures, a month at a time, for the charts. Absent in a game saved before they were kept. */
+  trend?: TrendPoint[];
   /** The seat a party founded from nothing began in, when it was not the one the founding slot already held. */
   foundedSeat?: string;
   /** The player chose to fight state elections in person when a round of state polls falls due (see aside.ts), rather than leave them to the model. */
