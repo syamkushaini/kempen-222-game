@@ -30,11 +30,11 @@ const TABS: TabId[] = ['start', 'career', 'missions', 'challenges', 'money', 'ec
 /** The titled paragraphs of each tab, by the stem of their strings (`help.<stem>.t` and `.x`). */
 const SECTIONS: Partial<Record<TabId, string[]>> = {
   start: ['start.pick', 'start.map', 'start.zoom', 'start.save'],
-  career: ['career.metrics', 'career.term', 'career.tabs', 'career.promises', 'career.conduct', 'career.advice', 'career.festival', 'career.formation', 'career.end', 'career.own'],
+  career: ['career.metrics', 'career.remind', 'career.term', 'career.tabs', 'career.promises', 'career.conduct', 'career.advice', 'career.festival', 'career.formation', 'career.end', 'career.own'],
   missions: ['missions.what', 'missions.decide', 'missions.risk', 'missions.final'],
   challenges: ['challenges.weekly', 'challenges.own', 'challenges.points'],
   money: ['money.funds', 'money.limit', 'money.team', 'money.candidates'],
-  economy: ['economy.figures', 'economy.size', 'economy.treasury', 'economy.books', 'economy.charts', 'economy.mood', 'economy.budget', 'economy.debt', 'economy.repay', 'economy.nation', 'economy.notice', 'economy.keep'],
+  economy: ['economy.figures', 'economy.size', 'economy.treasury', 'economy.books', 'economy.charts', 'economy.mood', 'economy.budget', 'economy.debt', 'economy.bankrupt', 'economy.repay', 'economy.nation', 'economy.notice', 'economy.keep'],
 };
 const TIPS = 10;
 const KEEP = ['credibility', 'unity', 'stability', 'trust'];

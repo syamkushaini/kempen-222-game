@@ -15,6 +15,7 @@ import { SceneModal } from './SceneModal';
 import { CampaignBar, Header, TermBar } from './Header';
 import { GoalLine } from './Challenges';
 import { MetricsStrip } from './MetricsStrip';
+import { ReminderStrip } from './ReminderStrip';
 import { GameMenu } from './GameMenu';
 import { NextStep } from './NextStep';
 import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useTablet, useWorld, useNarrow } from './hooks';
@@ -184,6 +185,7 @@ function CampaignScreen() {
         <NextStep />
         <GoalLine />
         <MetricsStrip />
+        <ReminderStrip />
         <section className="map-column">
           <MapView tall display={display} toolbar={<ViewSwitch />} marker={term ? null : campaign.parties[campaign.player]!.location} pulse={flash.seat ? { id: flash.seat, kind: 'gain', n: flash.n } : null} />
           {/* the poll sits under the map, so that the side column is all tabs: what the player works in gets the height */}

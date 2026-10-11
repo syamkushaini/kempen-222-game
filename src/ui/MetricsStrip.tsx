@@ -1,3 +1,4 @@
+import type { StringKey } from '../i18n/strings';
 import type { SidebarTab } from '../state/store';
 import { useStore } from '../state/store';
 import { inGov } from '../sim/campaign/office';
@@ -18,6 +19,7 @@ interface Tile {
   /** Whole points to show a change in, where it changes in whole points. */
   delta?: number;
   tab: SidebarTab;
+  group: 'party' | 'gov' | 'eco' | 'nation';
 }
 
 /**
@@ -39,34 +41,44 @@ export function MetricsStrip() {
   const e = k.economy;
   const nation = k.nation ?? START_NATION;
   const tiles: Tile[] = [
-    { id: 'unity', label: t('hint.unity'), text: String(Math.round(me.unity)), bar: me.unity, good: me.unity, delta: me.unity, tab: 'party' },
-    { id: 'credibility', label: t('hint.cred'), text: String(Math.round(k.credibility)), bar: k.credibility, good: k.credibility, delta: k.credibility, tab: 'policy' },
+    { group: 'party' as const, id: 'unity', label: t('hint.unity'), text: String(Math.round(me.unity)), bar: me.unity, good: me.unity, delta: me.unity, tab: 'party' },
+    { group: 'party' as const, id: 'credibility', label: t('hint.cred'), text: String(Math.round(k.credibility)), bar: k.credibility, good: k.credibility, delta: k.credibility, tab: 'policy' },
     ...(governing ? [
-      { id: 'stability', label: t('hint.stability'), text: String(Math.round(k.government.stability)), bar: k.government.stability, good: k.government.stability, delta: k.government.stability, tab: 'orders' as const },
-      { id: 'trust', label: t('hint.trust'), text: String(Math.round(k.government.trust)), bar: k.government.trust, good: k.government.trust, delta: k.government.trust, tab: 'orders' as const },
+      { group: 'gov' as const, id: 'stability', label: t('hint.stability'), text: String(Math.round(k.government.stability)), bar: k.government.stability, good: k.government.stability, delta: k.government.stability, tab: 'orders' as const },
+      { group: 'gov' as const, id: 'trust', label: t('hint.trust'), text: String(Math.round(k.government.trust)), bar: k.government.trust, good: k.government.trust, delta: k.government.trust, tab: 'orders' as const },
     ] : []),
     ...(campaign.phase === 'term' && hasPublicMoney(campaign) ? [{
-      id: 'treasury', label: t('metrics.treasury'), text: f.rm(treasuryOf(campaign)), bar: treasuryCap(world, campaign) > 0 ? (treasuryOf(campaign) / treasuryCap(world, campaign)) * 100 : 0,
+      group: 'gov' as const, id: 'treasury', label: t('metrics.treasury'), text: f.rm(treasuryOf(campaign)), bar: treasuryCap(world, campaign) > 0 ? (treasuryOf(campaign) / treasuryCap(world, campaign)) * 100 : 0,
       good: treasuryCap(world, campaign) > 0 ? Math.min(100, (treasuryOf(campaign) / treasuryCap(world, campaign)) * 100 + 20) : 50, tab: 'house' as const,
     }] : []),
-    { id: 'debt', label: t('house.debt'), text: `${e.debt.toFixed(0)}%`, bar: (e.debt / 120) * 100, good: 100 - Math.max(0, Math.min(100, ((e.debt - 40) / 60) * 100)), tab: 'house' },
-    { id: 'growth', label: t('house.growth'), text: `${e.growth.toFixed(1)}%`, good: Math.max(0, Math.min(100, 50 + (e.growth - 4) * 20)), tab: 'house' },
-    { id: 'inflation', label: t('house.inflation'), text: `${e.inflation.toFixed(1)}%`, good: Math.max(0, Math.min(100, 50 - (e.inflation - 2.5) * 20)), tab: 'house' },
-    { id: 'jobless', label: t('house.jobless'), text: `${e.jobless.toFixed(1)}%`, good: Math.max(0, Math.min(100, 50 - (e.jobless - 3.5) * 20)), tab: 'house' },
+    { group: 'eco' as const, id: 'debt', label: t('house.debt'), text: `${e.debt.toFixed(0)}%`, bar: (e.debt / 120) * 100, good: 100 - Math.max(0, Math.min(100, ((e.debt - 40) / 60) * 100)), tab: 'house' },
+    { group: 'eco' as const, id: 'growth', label: t('house.growth'), text: `${e.growth.toFixed(1)}%`, good: Math.max(0, Math.min(100, 50 + (e.growth - 4) * 20)), tab: 'house' },
+    { group: 'eco' as const, id: 'inflation', label: t('house.inflation'), text: `${e.inflation.toFixed(1)}%`, good: Math.max(0, Math.min(100, 50 - (e.inflation - 2.5) * 20)), tab: 'house' },
+    { group: 'eco' as const, id: 'jobless', label: t('house.jobless'), text: `${e.jobless.toFixed(1)}%`, good: Math.max(0, Math.min(100, 50 - (e.jobless - 3.5) * 20)), tab: 'house' },
     ...(campaign.phase === 'term' ? [
-      { id: 'health', label: t('nation.health'), text: String(Math.round(nation.health)), bar: nation.health, good: nation.health, delta: nation.health, tab: 'house' as const },
-      { id: 'education', label: t('nation.education'), text: String(Math.round(nation.education)), bar: nation.education, good: nation.education, delta: nation.education, tab: 'house' as const },
-      { id: 'standing', label: t('nation.standing'), text: String(Math.round(nation.standing)), bar: nation.standing, good: nation.standing, delta: nation.standing, tab: 'house' as const },
+      { group: 'nation' as const, id: 'health', label: t('nation.health'), text: String(Math.round(nation.health)), bar: nation.health, good: nation.health, delta: nation.health, tab: 'house' as const },
+      { group: 'nation' as const, id: 'education', label: t('nation.education'), text: String(Math.round(nation.education)), bar: nation.education, good: nation.education, delta: nation.education, tab: 'house' as const },
+      { group: 'nation' as const, id: 'standing', label: t('nation.standing'), text: String(Math.round(nation.standing)), bar: nation.standing, good: nation.standing, delta: nation.standing, tab: 'house' as const },
     ] : []),
   ];
+  const groups = (['party', 'gov', 'eco', 'nation'] as const).map((g) => ({ g, items: tiles.filter((x) => x.group === g) })).filter((x) => x.items.length > 0);
+  // Colour is kept for what needs it: a figure in the middle stays plain, and one that is doing well or badly shows it.
+  const tone = (good: number | undefined) => (good === undefined ? undefined : good >= 62 ? colour(good) : good <= 38 ? colour(good) : undefined);
   return (
     <section className="metrics-strip" aria-label={t('metrics.title')}>
-      {tiles.map((x) => (
-        <button key={x.id} type="button" className="metric" data-metric={x.id} title={t('metrics.open', { name: x.label })} onClick={() => setTab(x.tab)}>
-          <span className="metric-label">{x.label}</span>
-          <strong className="num metric-value" style={x.good !== undefined ? { color: colour(x.good) } : undefined}>{x.text}{x.delta !== undefined && <Delta value={x.delta} />}</strong>
-          {x.bar !== undefined && <span className="metric-bar" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, x.bar))}%`, background: x.good !== undefined ? colour(x.good) : undefined }} /></span>}
-        </button>
+      {groups.map(({ g, items }) => (
+        <div key={g} className="metric-group" role="group" aria-label={t(`metrics.group.${g}` as StringKey)}>
+          <span className="metric-group-name">{t(`metrics.group.${g}` as StringKey)}</span>
+          <div className="metric-row">
+            {items.map((x) => (
+              <button key={x.id} type="button" className="metric" data-metric={x.id} title={t('metrics.open', { name: x.label })} onClick={() => setTab(x.tab)}>
+                <span className="metric-label">{x.label}</span>
+                <strong className="num metric-value" style={{ color: tone(x.good) }}>{x.text}{x.delta !== undefined && <Delta value={x.delta} />}</strong>
+                {x.bar !== undefined && <span className="metric-bar" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, x.bar))}%`, background: tone(x.good) }} /></span>}
+              </button>
+            ))}
+          </div>
+        </div>
       ))}
     </section>
   );
