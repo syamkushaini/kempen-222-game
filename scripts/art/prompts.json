@@ -1128,6 +1128,26 @@
    "title": "The country cannot borrow",
    "body": "The last bond auction failed. The debt is past a hundred per cent of national income and lenders will not roll it over on any terms the government can live with. There are two ways out, both bitter, and a third that is a prayer."
   },
+  "boomWarn": {
+   "title": "The central bank sees a windfall coming",
+   "body": "Commodity prices are climbing faster than anyone planned for. The central bank expects revenue to jump in about two months, and every ministry is already drawing up a wish list."
+  },
+  "boom": {
+   "title": "The windfall arrives",
+   "body": "The revenue has come in, more than the budget counted on. Everybody has a view on what to do with it, and it will not be there next year."
+  },
+  "stormWarn": {
+   "title": "The central bank warns of a storm",
+   "body": "A downturn abroad is heading this way: orders are falling, and the bank expects it to reach the factories in about two months. It is a warning, not a forecast, and what you do now decides how hard it lands."
+  },
+  "dip": {
+   "title": "The slowdown, softer than feared",
+   "body": "The shock has arrived and, because the government saw it coming, it is not the worst case. Factories are cutting shifts, not closing. There is a decision to make about how much to cushion it."
+  },
+  "crash": {
+   "title": "The crash",
+   "body": "The shock has arrived and nobody was ready. Export orders have collapsed, a lender has frozen credit, and every bank in the country is on the telephone to the finance minister."
+  },
   "kind-pactOffer": {
    "title": "An offer from another party",
    "body": "The leader of another party calls with an offer of a pact: seats to stand aside in, seats in return. Two leaders at a table with glasses of teh tarik, a handshake half offered."

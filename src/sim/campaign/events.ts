@@ -13,6 +13,7 @@ import { GOVERNING_SEATS } from './eventList9';
 import { OPPOSITION_SEATS } from './eventList10';
 import { DESK_EVENTS } from './eventList11';
 import { DEBT_EVENTS } from './eventListDebt';
+import { SHOCK_EVENTS } from './eventListShocks';
 import { austerity, bankrupt } from './debt';
 import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
@@ -33,7 +34,7 @@ import { scaleHoldings } from './party';
 import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEvent, standingOf, topicOf, type Standing } from './standing';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
-const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS };
+const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS };
 
 /**
  * Events whose money is the public's: relief for a flood, a bridge, a subsidy, a port. Where the player's party governs they are paid

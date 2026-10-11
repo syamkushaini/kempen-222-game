@@ -18,6 +18,7 @@ import { LEAD_EVENTS_2_EN, LEAD_EVENTS_2_MS } from './events13';
 import { OPP_EVENTS_EN, OPP_EVENTS_MS } from './events14';
 import { DESK_EVENTS_EN, DESK_EVENTS_MS } from './events15';
 import { DEBT_EVENTS_EN, DEBT_EVENTS_MS } from './events16';
+import { SHOCK_EVENTS_EN, SHOCK_EVENTS_MS } from './events17';
 
 /** A result is one line, or for a gamble a pair: how it reads when it comes off, and when it does not. */
 export interface EventText {
@@ -810,8 +811,8 @@ Object.assign(EVENTS_EN, STORY_EVENTS_2_EN);
 Object.assign(EVENTS_MS, STORY_EVENTS_2_MS);
 Object.assign(EVENTS_EN, NEW_EVENTS_EN, NEW_EVENTS_2_EN);
 Object.assign(EVENTS_MS, NEW_EVENTS_MS, NEW_EVENTS_2_MS);
-Object.assign(EVENTS_EN, PM_EVENTS_EN, PARTNER_EVENTS_EN, LEAD_EVENTS_EN, LEAD_EVENTS_2_EN, OPP_EVENTS_EN, DESK_EVENTS_EN, DEBT_EVENTS_EN);
-Object.assign(EVENTS_MS, PM_EVENTS_MS, PARTNER_EVENTS_MS, LEAD_EVENTS_MS, LEAD_EVENTS_2_MS, OPP_EVENTS_MS, DESK_EVENTS_MS, DEBT_EVENTS_MS);
+Object.assign(EVENTS_EN, PM_EVENTS_EN, PARTNER_EVENTS_EN, LEAD_EVENTS_EN, LEAD_EVENTS_2_EN, OPP_EVENTS_EN, DESK_EVENTS_EN, DEBT_EVENTS_EN, SHOCK_EVENTS_EN);
+Object.assign(EVENTS_MS, PM_EVENTS_MS, PARTNER_EVENTS_MS, LEAD_EVENTS_MS, LEAD_EVENTS_2_MS, OPP_EVENTS_MS, DESK_EVENTS_MS, DEBT_EVENTS_MS, SHOCK_EVENTS_MS);
 
 /** Spreads the event text into the flat keys the interface looks up. */
 export function flattenEvents(texts: Record<string, EventText>): Record<string, string> {
