@@ -9,6 +9,7 @@ import { MONTH, commitmentWeekly, lineWeekly, measureWeekly, takingsWeekly } fro
 import { EconomyBook } from './EconomyBook';
 import { TreasuryCard } from './TreasuryCard';
 import { EconomyCharts } from './EconomyCharts';
+import { EconomyTools } from './EconomyTools';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
 import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
 import { MAX_MEASURES } from '../sim/campaign/office';
@@ -110,6 +111,7 @@ export function GovernmentTab() {
       <EconomyCharts />
       <EconomyBook />
       <NationCard />
+      <EconomyTools />
 
       {pm && (
         <>

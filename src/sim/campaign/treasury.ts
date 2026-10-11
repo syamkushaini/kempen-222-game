@@ -4,7 +4,7 @@ import { N_BLOCS, N_PARTIES, type RegionId } from '../types';
 import { contestsState, scaled } from './actions';
 import { STATE_GOVERNMENT_INCOME, statesHeld } from './contests';
 import { figuresOf, sectorShares, STATE_PUBLIC } from './gdp';
-import { MEASURES, inGov, isPm } from './office';
+import { MEASURES, RATE, inGov, isPm } from './office';
 import { patronageMult } from './patronage';
 import { pushNews, ref } from './news';
 import { SECTOR_IDS, type SectorId } from './sectors';
@@ -119,7 +119,7 @@ export function govBooks(world: World, c: Campaign, budget?: Budget): Books | nu
     ...LINE_IDS.map((id) => ({ id, amount: unit * LINES_SPEND * LINE_WEIGHT[id] * (1 + LINE_STEP * b.lines[id]) })),
     { id: 'measures', amount: unit * MEASURE_UNIT * (b.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0) },
     { id: 'commitments', amount: unit * COMMITMENT_UNIT * Math.max(0, k.fiscal) },
-    { id: 'interest', amount: unit * INTEREST * (e.debt / 63) },
+    { id: 'interest', amount: unit * INTEREST * (e.debt / 63) * (1 + RATE.interest * (k.rate ?? 0)) },
   ];
   const sum = (xs: BookFlow[]) => xs.reduce((a, x) => a + x.amount, 0);
   return { income, spend, net: sum(income) - sum(spend) };

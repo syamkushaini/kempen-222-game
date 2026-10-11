@@ -64,6 +64,7 @@ export function remindersOf(world: World, c: Campaign): Reminder[] {
 
   if (k.conduct && k.conduct.ok.filter(Boolean).length <= 2) add({ id: 'conduct', level: 'warn', tab: 'party', vars: { n: k.conduct.ok.filter(Boolean).length } });
 
+  if (isPm(c) && k.economy.inflation >= 4.5) add({ id: 'prices', level: 'warn', tab: 'house', vars: { pct: Math.round(k.economy.inflation * 10) / 10 } });
   if (k.economy.debt >= 80) add({ id: 'debt', level: k.economy.debt >= 95 ? 'urgent' : 'warn', tab: 'house', vars: { debt: Math.round(k.economy.debt) } });
 
   if (isPm(c)) {

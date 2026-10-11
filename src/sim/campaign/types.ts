@@ -665,6 +665,10 @@ export interface Career {
   fiscal: number;
   /** How many units of the standing commitments each promise the government has passed added, so that a programme can be cancelled or an Act repealed and its cost taken off. Absent in a game saved before this existed. */
   programmes?: Partial<Record<PledgeId, number>>;
+  /** The week each economic tool was last used (see econTools.ts). */
+  toolsUsed?: Record<string, number>;
+  /** The policy rate: lowered (-1), left (absent), or raised (1). */
+  rate?: Dial;
   /** The economy's figures, a month at a time, for the charts. Absent in a game saved before they were kept. */
   trend?: TrendPoint[];
   /** The seat a party founded from nothing began in, when it was not the one the founding slot already held. */

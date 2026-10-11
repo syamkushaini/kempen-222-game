@@ -69,13 +69,17 @@ export function economicMood(e: Economy): number {
   return clamp((e.growth - 4) * 0.5 - (e.inflation - 2.5) * 0.6 - (e.jobless - 3.5) * 0.5, -3, 3);
 }
 
+/** The policy rate: raising it brings prices down and slows growth and costs more on the debt; cutting it does the reverse. */
+export const RATE = { growth: -0.3, prices: -0.6, interest: 0.3 } as const;
+
 export function economyWeek(c: Campaign, rng: Rng) {
   const k = c.career!;
   const e = k.economy;
   const loose = looseness(k);
   // Loose budgets buy growth and prices; heavy debt drags; cutting aid shows up at the till.
-  const growthTo = 4 + 0.15 * loose - Math.max(0, e.debt - 70) * 0.08;
-  const pricesTo = 2.5 + 0.3 * loose - 0.3 * k.tabled.lines.aid;
+  const rate = k.rate ?? 0;
+  const growthTo = 4 + 0.15 * loose - Math.max(0, e.debt - 70) * 0.08 + RATE.growth * rate;
+  const pricesTo = 2.5 + 0.3 * loose - 0.3 * k.tabled.lines.aid + RATE.prices * rate;
   e.growth = clamp(e.growth + (growthTo - e.growth) * 0.04 + rng.normal(0, 0.05), -6, 9);
   e.inflation = clamp(e.inflation + (pricesTo - e.inflation) * 0.04 + rng.normal(0, 0.04), -1, 12);
   e.jobless = clamp(e.jobless + (3.5 - (e.growth - 4) * 0.35 - e.jobless) * 0.03 + rng.normal(0, 0.015), 2, 12);
