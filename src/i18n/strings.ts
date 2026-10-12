@@ -2863,7 +2863,7 @@ const ms: Record<CoreKey, string> = {
   'action.attack.desc': 'Menjejaskan mereka jika mengena. Tiga daripada sepuluh kali ia memakan diri.',
   'action.dinner': 'Majlis makan malam kutipan dana',
   'action.dinner.desc': 'Kutip dana di negeri tempat pemimpin berada. Negeri yang lebih kaya biasanya menyumbang lebih banyak, tetapi kutipan berulang akan berkurang.',
-  'action.crowdfund': 'Kutipan dana dalam talian',
+  'action.crowdfund': 'Kutip dana dalam talian',
   'action.crowdfund.desc': 'Sumbangan kecil daripada penyokong. Setiap rayuan mengutip kurang.',
   'action.tycoon': 'Sumbangan taikun',
   'action.tycoon.desc': 'Satu cek besar, sekali sahaja. Jika bocor, padahnya besar.',
