@@ -1160,6 +1160,66 @@
    "title": "The facts about the minister are in",
    "body": "You suspended the minister while the facts were found, and the inquiry has finished. The report is on your desk. It is neither a clean bill nor a damning one, and both the cabinet and the press are waiting to see which way you read it."
   },
+  "waterMains": {
+   "title": "The brown tap",
+   "body": "Water from the taps in three districts has come out brown for a fortnight. The state water company says the mains are older than the people complaining about them, and that replacing them will cost more than the state has. The mosques are handing out bottles, which is more than the company is doing."
+  },
+  "royaltyAccount": {
+   "title": "Where the royalty goes",
+   "body": "The state’s share of the oil money has been paid, for years, to an agency in the capital that spends it on the state’s behalf. The opposition says it should be paid straight into the state’s own account, and has a petition. The agency says it is doing the state a favour, and has a brochure."
+  },
+  "zoneIncentives": {
+   "title": "The zone across the causeway",
+   "body": "A special economic zone is to be marked out along the border with the island republic, and every company with a lawyer has asked for land at a discount. The investors want tax holidays. The farmers whose land is wanted want to know what a holiday has to do with them."
+  },
+  "riverFines": {
+   "title": "The factory on the river",
+   "body": "The river that supplies the city has gone the colour of a bad cup of tea. The cause is a factory with no licence, whose owner has friends at the district office. The law lets you fine it a sum that the owner could pay from petty cash, and the people in the pictures are asking why."
+  },
+  "digUp": {
+   "title": "The road is dug up",
+   "body": "The new light rail line has taken the main road for the third year. The shopkeepers who used to have passing trade now have a hoarding, and some have put their stock in the back of vans. The contractor says the schedule is fixed. The shopkeepers say so is their rent."
+  },
+  "techValley": {
+   "title": "The valley and the forest",
+   "body": "A company wants a vast site near the old forest for a valley of factories making electric cars, and the planning application is a metre thick. Young people from the district have queued for the interviews. The environmental assessment, which is thicker, says the forest is the only thing between the site and the next flood."
+  },
+  "padiGrants": {
+   "title": "The grant that did not come",
+   "body": "The irrigation money for the padi fields was promised in the capital in March and has not arrived. The farmers have planted anyway, and the canal gates are rusted. They are looking at the state government, because it is the nearest one."
+  },
+  "highlandFarms": {
+   "title": "The slope above the road",
+   "body": "A farm has been cut into the hillside above the main road without a permit, and after a week of rain the slope has begun to move. The owner has a family and no other land. The road below has a bus on it every hour."
+  },
+  "appointedSeats": {
+   "title": "Seats by appointment",
+   "body": "A bill before the assembly would let the state appoint seven additional members without an election, from lists drawn up by the parties. Supporters call it making room for talent. Opponents call it making room for friends, and have taken it to the High Court."
+  },
+  "sittingOverdue": {
+   "title": "The assembly has not met",
+   "body": "The constitution says the assembly must sit within six months of its last meeting. It has been seven. The clerk has written a letter, the opposition has written a longer one, and a lawyer has written to the newspapers to say the House may already have dissolved itself, which would be a first."
+  },
+  "borderStalls": {
+   "title": "The border market",
+   "body": "A hundred stalls at the border market trade without licences, and have done for thirty years. The council wants to count them and charge them. The traders say the market is the only reason the town has not emptied, and the town’s members, who eat there, agree."
+  },
+  "plantationPapers": {
+   "title": "Papers on the plantations",
+   "body": "Inspectors have found that the registers on a dozen plantations do not match the people working on them. Some employers have no papers for their workers; some workers have no papers for themselves. The planters say the harvest cannot wait. The unions say the workers cannot be blamed for the paperwork of others."
+  },
+  "carbonStorage": {
+   "title": "The carbon deal",
+   "body": "A company from abroad has offered to buy the right to store carbon underground in the old gas fields, and to pay the state a fee for every tonne. The money is large. The villages near the fields were not asked, and the fees would start before the first test well."
+  },
+  "buildingCode": {
+   "title": "The new building code",
+   "body": "After the tremor last month, which broke nothing but frightened everyone, the assembly has been asked to change the building rules so that new towers must withstand the next one. The developers say it will add a tenth to every price. The engineers say they would like to be asked before the next one, and not after."
+  },
+  "schoolClosures": {
+   "title": "The haze and the schools",
+   "body": "The air index is in the unhealthy range, and the federal rule says the schools may stay open until it is worse. The state may set its own rule. The parents are calling the office, half of them to ask you to close the schools, and half to ask who will mind the children if you do."
+  },
   "kind-pactOffer": {
    "title": "An offer from another party",
    "body": "The leader of another party calls with an offer of a pact: seats to stand aside in, seats in return. Two leaders at a table with glasses of teh tarik, a handshake half offered."
