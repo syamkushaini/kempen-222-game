@@ -4249,7 +4249,7 @@ const ms: Record<CoreKey, string> = {
   'appoint.risk': 'Risiko',
   'trait.expert': 'Si Pakar',
   'trait.expert.good': 'Hebat dalam jawatan itu, dan pengundi percaya pakar: kredibiliti +3.',
-  'trait.expert.bad': 'Bukan orang parti: perpaduan −3.',
+  'trait.expert.bad': 'Dia bukan ahli parti, jadi perpaduan parti menurun 3 mata.',
   'trait.loyalist': 'Si Setia',
   'trait.loyalist.good': 'Lama dalam parti dan dipercayai ahli: perpaduan +3.',
   'trait.loyalist.bad': 'Sederhana paling baik: jawatan itu kurang cekap diurus.',
