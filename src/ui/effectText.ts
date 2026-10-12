@@ -1,5 +1,5 @@
 import { scaled } from '../sim/campaign/actions';
-import { publicAmount, realistic, type Effect } from '../sim/campaign/events';
+import { gambleChance, publicAmount, realistic, type Choice, type Effect } from '../sim/campaign/events';
 import { MONTH, commitmentWeekly, hasPublicMoney } from '../sim/campaign/treasury';
 import type { Campaign } from '../sim/campaign/types';
 import type { World } from '../sim/election';
@@ -37,6 +37,7 @@ export function describeEffect(t: T, f: Format, world: World, campaign: Campaign
     case 'debt': return `${e.n > 0 ? '▲' : '▼'} ${t('house.debt')} ${e.n > 0 ? '+' : '−'}${Math.abs(e.n)} ${t('hint.debt.points')}`;
     case 'austerity': return t('hint.austerity');
     case 'bankrupt': return t('hint.bankrupt');
+    case 'end': return t(e.kind === 'ousted' ? 'hint.end.ousted' : 'hint.end.retired');
     case 'dossier': return arrow(e.n, t('hint.dossier'));
     case 'salience': return arrow(e.n, t('hint.salience', { issue: t(`issue.${e.issue}` as StringKey) }));
     case 'minister': return t(e.act === 'sack' ? 'hint.minister.sack' : 'hint.minister.keep');
@@ -51,4 +52,18 @@ export function describeEffect(t: T, f: Format, world: World, campaign: Campaign
     case 'falls': return t('hint.falls');
     default: return null;
   }
+}
+
+/**
+ * What a choice will do, in a line: what is certain, what is left to chance (with its chance, unless the game is played blind), and a mark
+ * where the choice has a sequel, so that the player knows it is not over when it is made. Built from the same effects that are applied.
+ */
+export function choiceHint(t: T, f: Format, world: World, campaign: Campaign, choice: Choice, fog: boolean): string {
+  const list = (effects: Effect[]) => effects.map((e) => describeEffect(t, f, world, campaign, e)).filter(Boolean).join(' · ');
+  const sure = list(choice.effects);
+  const later = choice.then ? t('hint.later') : '';
+  if (!choice.gamble) return [sure || t('hint.nothing'), later].filter(Boolean).join(' · ');
+  const pct = f.pct(gambleChance(campaign, choice.gamble.chance), 0);
+  const win = list(choice.gamble.win) || t('hint.nothing'), lose = list(choice.gamble.lose) || t('hint.nothing');
+  return [sure, fog ? t('hint.gamble.fog', { win, lose }) : t('hint.gamble', { pct, win, lose }), later].filter(Boolean).join(' · ');
 }

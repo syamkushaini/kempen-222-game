@@ -878,3 +878,15 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .plan-card h4 { margin: 0; }
 .plan-card input[type=range] { width: 100%; }
 .plan-card .progress { height: 6px; }
+
+/* The week's briefing: a decision is told apart from a piece of news by a coloured edge. */
+.briefing { display: grid; gap: 8px; margin-bottom: 12px; }
+.briefing h3 { margin: 0; }
+.brief-part h4 { margin: 4px 0; font-size: 13px; color: var(--ink-muted); font-weight: 500; }
+.brief-part ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.brief-item { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 10px; border: 1px solid var(--line); border-left-width: 4px; border-radius: var(--radius); background: var(--panel); font-size: 13px; }
+.brief-item > span { flex: 1; min-width: 0; }
+.brief-item.urgent { border-left-color: var(--bad); }
+.brief-item.warn { border-left-color: var(--warn, #d6a23a); }
+.brief-item.note { border-left-color: var(--ink-muted); }
+.brief-change { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 2px 2px; border-bottom: 1px solid var(--line); }
