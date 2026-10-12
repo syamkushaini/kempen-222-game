@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { contests } from '../sim/campaign/actions';
-import { CHOOSE_DAYS, HOPEFUL_NAMES, canOpen, canStand } from '../sim/campaign/candidates';
+import { CHOOSE_DAYS, HOPEFUL_NAMES, canChoose, canOpen, canStand } from '../sim/campaign/candidates';
 import { canForce } from '../sim/campaign/contests';
 import { FACTION_IDS } from '../sim/campaign/factions';
 import { canGrantSafe, safeSeats } from '../sim/campaign/safeseat';
@@ -31,6 +31,7 @@ export function CandidatesTab() {
   const revokeSafe = useStore((s) => s.revokeSafe);
   const forceBy = useStore((s) => s.forceByElection);
   const setTab = useStore((s) => s.setTab);
+  const autoFillAll = useStore((s) => s.autoFillAll);
   const display = useDisplay();
   const [filter, setFilter] = useState<Filter>('hold');
   const [query, setQuery] = useState('');
@@ -82,6 +83,17 @@ export function CandidatesTab() {
         <span className="muted small">{t('slate.summary', { n: counts.hold + counts.target, total: world.seats.length })}</span>
       </div>
       <p className="muted small">{t('slate.intro', { hold: counts.hold, close: counts.close, named: withCandidates })}</p>
+      {campaign.phase === 'campaign' && canChoose(campaign) && (() => {
+        const days = campaign.parties[me]?.days ?? 0;
+        const can = rows.filter((r) => canOpen(world, campaign, r.seat.id)).length;
+        const doable = Math.min(can, Math.floor(days / CHOOSE_DAYS));
+        return (
+          <div className="autofill">
+            <button className="btn small primary" disabled={doable === 0 && !campaign.team.keySeats.some((x) => x.pick === null)} onClick={autoFillAll}>{t('slate.autoAll')}</button>
+            <p className="muted small">{t('slate.autoAll.hint', { n: doable, days: f.days(doable * CHOOSE_DAYS) })}</p>
+          </div>
+        );
+      })()}
       {campaign.team.leaderSeat && <p className="note">{t('slate.leader', { seat: world.seats[world.seatIndex.get(campaign.team.leaderSeat)!].name })}</p>}
       <div className="chips" role="group" aria-label={t('slate.filter')}>
         {FILTERS.map((id) => (

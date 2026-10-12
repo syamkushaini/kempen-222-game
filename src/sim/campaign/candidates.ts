@@ -300,6 +300,25 @@ export function autoChoose(world: World, c: Campaign): number {
   return n;
 }
 
+/**
+ * Looks at the hopefuls in every seat the party stands in and chooses the best, the closest seats first, for as long as the leader has days
+ * to give (half a day a seat). Seats already chosen are left. Returns how many seats were opened and how many were chosen in all.
+ */
+export function openAndChooseAll(world: World, c: Campaign): { opened: number; chosen: number } {
+  if (!canChoose(c)) return { opened: 0, chosen: 0 };
+  const last = lastElection(world);
+  const todo = world.seats
+    .map((s, i) => ({ id: s.id, margin: last.seats[i].margin }))
+    .filter((x) => canOpen(world, c, x.id))
+    .sort((a, b) => a.margin - b.margin);
+  let opened = 0;
+  for (const x of todo) {
+    if (!openSeat(world, c, x.id)) break;
+    opened++;
+  }
+  return { opened, chosen: autoChoose(world, c) };
+}
+
 /** Whether the leader can look at the hopefuls for a seat, and choose: before nomination day, in a seat that has only the party's own choice, with half a day to spare. */
 export function canOpen(world: World, c: Campaign, seat: string): boolean {
   const pc = c.parties[c.player];
