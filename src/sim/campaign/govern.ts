@@ -9,6 +9,7 @@ import { startFormation } from './formation';
 import { nationWeek } from './nation';
 import { pushNews, ref } from './news';
 import { rivalPmWeek } from './rivalPm';
+import { withinPowers } from './stateScope';
 import { cabinetWeek, economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
 import { draftingShift } from './ksu';
 import { rebelShare, speakerOf, speakerTip } from './chamber';
@@ -79,7 +80,7 @@ export const prepWeeks = (k: Career, id: string) => {
 export function agenda(c: Campaign): string[] {
   const k = c.career!;
   const busy = new Set(k.bills.map((b) => b.id));
-  const promises = k.promises.filter((id) => !k.delivery[id]).map((id) => `pledge:${id}`);
+  const promises = k.promises.filter((id) => !k.delivery[id] && withinPowers(c, id)).map((id) => `pledge:${id}`);
   const owed = k.obligations.filter((o) => !o.done && DEMAND_BILLS[o.demand]).map((o) => `demand:${o.demand}`);
   return [...new Set([...promises, ...owed])].filter((id) => !busy.has(id));
 }
@@ -299,8 +300,11 @@ export function resolveVote(world: World, c: Campaign, scene: Scene, choice: num
 function rivalBill(c: Campaign): void {
   const k = c.career!;
   const pm = k.government.pm;
+  if ((pm === c.player && !k.limited) || k.week < 20 || (k.week - 20) % 40 !== 0) return;
+  // A state's government tables only what a state can do: the rest of its programme is passed over.
+  while (k.manifesto[pm][k.rivalBills] && !withinPowers(c, k.manifesto[pm][k.rivalBills])) k.rivalBills++;
   const next = k.manifesto[pm][k.rivalBills];
-  if ((pm === c.player && !k.limited) || !next || k.week < 20 || (k.week - 20) % 40 !== 0) return;
+  if (!next) return;
   k.rivalBills++;
   addScene(c, { kind: 'houseVote', from: pm, bill: `pledge:${next}` });
 }
