@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { bodyVariant } from '../i18n/eventsMore';
 import { majorityLine } from '../sim/election';
 import { scaled } from '../sim/campaign/actions';
 import { BY_EFFORT, holderOf, ROUNDS, STATE_EFFORT } from '../sim/campaign/contests';
@@ -102,7 +103,7 @@ function SceneCard({ scene }: { scene: Scene }) {
     const voting = id === 'statePolls' && k.rounds < ROUNDS.length ? ROUNDS[k.rounds].states.filter((st) => world.states.includes(st)) : [];
     body = (
       <>
-        <p>{t(`event.${id}.body` as StringKey)}</p>
+        <p>{t((bodyVariant(id, k.fired.filter((x) => x === id).length) > 0 ? `event.${id}.body.${bodyVariant(id, k.fired.filter((x) => x === id).length)}` : `event.${id}.body`) as StringKey)}</p>
         {vacant !== undefined && (
           <p className="note">{t('scene.by.seat', { seat: world.seats[vacant].name, party: partyName(t, holderOf(world, campaign, scene.seat!)), pct: (lastOutcome(world).seats[vacant].margin * 100).toFixed(1) })}</p>
         )}
