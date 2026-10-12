@@ -173,7 +173,7 @@ export const PARTNER_EVENTS_MS: Record<string, EventText> = {
     options: ['Katakan demikian di khalayak', 'Kongsi kredit dengan mesra, dan biar Perdana Menteri mengetuai', 'Diam, dan harap pengundi membaca nota kaki'],
     results: [
       'Akhbar menyiarkan cerita itu bertajuk “Rakan tuntut skim”. Pejabat Perdana Menteri menyebutnya “salah faham” dengan nada yang bukan begitu.',
-      'Kredit dikongsi dalam sidang media bersama. Perdana Menteri bermurah hati, dan mencatatnya.',
+      'Penghargaan dikongsi dalam sidang media bersama. Perdana Menteri nampak bermurah hati, tetapi dia tetap mengingatinya.',
       'Pengundi tidak membaca nota kaki. Skim itu menjadi milik Perdana Menteri, dan parti anda mendapati dirinya mengucapkan tahniah kepadanya.',
     ],
   },
@@ -182,7 +182,7 @@ export const PARTNER_EVENTS_MS: Record<string, EventText> = {
     body: 'Perdana Menteri menawarkan parti anda jawatan timbalan menteri dan duta, yang ahli anda fikir pulangan yang kecil bagi dua puluh kerusi. Seorang ahli kanan didengar berkata tawaran itu “murah hati, untuk seekor tikus”.',
     options: ['Terima apa yang ditawarkan, dan ucap terima kasih', 'Bertahan untuk kementerian penuh', 'Ugut untuk keluar daripada kerajaan'],
     results: [
-      'Jawatan diterima. Ahli anda merungut dan kemudian mula mengisinya, yang tindakan bijak.',
+      'Tawaran jawatan diterima. Ahli anda mula-mula merungut, kemudian mengambil alih tugas itu. Itu pilihan yang bijak.',
       ['Anda bertahan dan kementerian itu datang, selepas jeda yang terasa seperti dua minggu.', 'Anda bertahan, dan Perdana Menteri berkata tawaran itu ditarik balik.'],
       'Ugutan itu didengar, dan diambil serius. Ia membuat kerajaan gementar, Perdana Menteri tidak mesra dan ahli anda, mengejutkan mereka, bangga.',
     ],
