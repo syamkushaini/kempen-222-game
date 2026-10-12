@@ -12,8 +12,8 @@ import { chiefView } from './chiefs';
 import { HOPEFUL_KINDS, type Campaign, type Hopeful, type HopefulKind, type KeySeat } from './types';
 import type { RegionId } from '../types';
 
-/** Invented names for would-be candidates. Proper nouns; the same in every language. */
-export const HOPEFUL_NAMES = [
+/** The first names, kept in their places: a saved game points at a name by its number. */
+const FIRST_NAMES = [
   'Zainal Abidin Hamzah', 'Nurul Izzati Rahim', 'Mohd Fadzli Ismail', 'Siti Hajar Yusof', 'Ahmad Faizal Noor', 'Rohana Jalil',
   'Khairul Anwar Saad', 'Norhayati Bakar', 'Lim Wei Jian', 'Tan Mei Ling', 'Ong Kah Seng', 'Chua Pei Shan',
   'Yap Chee Wai', 'Low Siew Fong', 'Kumar Subramaniam', 'Devi Ramasamy', 'Vijay Pillai', 'Kavitha Rajan',
@@ -23,8 +23,8 @@ export const HOPEFUL_NAMES = [
 export type Ethnic = 'malay' | 'chinese' | 'indian' | 'bumi';
 export interface HopefulTraits { woman: boolean; young: boolean; ethnic: Ethnic }
 
-/** Who the names are, in the order of HOPEFUL_NAMES. */
-export const HOPEFUL_TRAITS: readonly HopefulTraits[] = [
+/** Who the first names are, in their order. */
+const FIRST_TRAITS: readonly HopefulTraits[] = [
   { woman: false, young: false, ethnic: 'malay' }, { woman: true, young: true, ethnic: 'malay' }, { woman: false, young: false, ethnic: 'malay' },
   { woman: true, young: false, ethnic: 'malay' }, { woman: false, young: false, ethnic: 'malay' }, { woman: true, young: false, ethnic: 'malay' },
   { woman: false, young: true, ethnic: 'malay' }, { woman: true, young: false, ethnic: 'malay' }, { woman: false, young: false, ethnic: 'chinese' },
@@ -34,6 +34,64 @@ export const HOPEFUL_TRAITS: readonly HopefulTraits[] = [
   { woman: false, young: false, ethnic: 'bumi' }, { woman: true, young: true, ethnic: 'bumi' }, { woman: false, young: false, ethnic: 'bumi' },
   { woman: true, young: false, ethnic: 'bumi' }, { woman: false, young: false, ethnic: 'bumi' }, { woman: true, young: false, ethnic: 'bumi' },
 ];
+
+// Many more names, so that a party with a dozen close seats and four hopefuls in each is not offered the same person again and again:
+// each group has men's and women's given names and family names, mixed in a fixed order so that the same number is always the same person.
+const POOLS: { ethnic: Ethnic; men: string[]; women: string[]; family: string[]; shape: 'given-family' | 'family-given' }[] = [
+  {
+    ethnic: 'malay', shape: 'given-family',
+    men: ['Muhammad Hafiz', 'Ahmad Syafiq', 'Mohd Azlan', 'Khairul Hisham', 'Zulkifli', 'Faizal', 'Hasnan', 'Rosdi', 'Amirul', 'Shahrul', 'Nazri', 'Azman', 'Firdaus', 'Ikmal', 'Hairul'],
+    women: ['Nurul Aina', 'Siti Aminah', 'Norazlina', 'Farah Nadia', 'Aisyah', 'Haslinda', 'Rohani', 'Suraya', 'Zarina', 'Maisarah', 'Nadiah', 'Salmah', 'Liyana', 'Hidayah', 'Fatimah'],
+    family: ['Abdullah', 'Rahman', 'Hassan', 'Omar', 'Ibrahim', 'Yaakob', 'Mahmud', 'Kamaruddin', 'Zakaria', 'Razali', 'Latif', 'Salleh', 'Ariffin', 'Daud', 'Mansor'],
+  },
+  {
+    ethnic: 'chinese', shape: 'family-given',
+    men: ['Wei Hong', 'Jun Kit', 'Chee Keong', 'Boon Hock', 'Kok Leong', 'Zhi Hao', 'Eng Seng', 'Kian Wee', 'Tze Yong', 'Yong Sheng', 'Wen Jie', 'Soon Heng'],
+    women: ['Mei Yee', 'Li Ting', 'Siew Lan', 'Xin Yi', 'Hui Min', 'Pei Fen', 'Shu Ling', 'Jia Wen', 'Yen Nee', 'Wan Ting', 'Su Mei', 'Kah Yan'],
+    family: ['Lee', 'Wong', 'Lim', 'Tan', 'Ng', 'Chong', 'Goh', 'Teo', 'Koh', 'Liew', 'Chin', 'Yeoh'],
+  },
+  {
+    ethnic: 'indian', shape: 'given-family',
+    men: ['Suresh', 'Ganesan', 'Prakash', 'Arun', 'Ravi', 'Mohan', 'Dinesh', 'Selvam', 'Thevan', 'Murali', 'Harish', 'Shankar'],
+    women: ['Priya', 'Lakshmi', 'Anita', 'Shanti', 'Meena', 'Sumathi', 'Kalai', 'Revathi', 'Vani', 'Nirmala', 'Gita', 'Sangeetha'],
+    family: ['Nair', 'Kumar', 'Pillai', 'Raj', 'Menon', 'Maniam', 'Krishnan', 'Muthu', 'Singh', 'Arumugam', 'Rao', 'Devan'],
+  },
+  {
+    ethnic: 'bumi', shape: 'given-family',
+    men: ['Jaul', 'Peter', 'Stephen', 'Dennis', 'Jeffrey', 'Ricky', 'Anthony', 'Awang', 'Abang', 'Mering', 'Gerald', 'Joseph'],
+    women: ['Mary', 'Dayang', 'Jessica', 'Rosalind', 'Marina', 'Linda', 'Voon', 'Elsie', 'Betty', 'Siti Rahmah', 'Doris', 'Ellen'],
+    family: ['Jilid', 'Tuah', 'Gunsiang', 'Mojilip', 'Ating', 'Sebastian', 'Entri', 'Langgi', 'Unting', 'Sandai', 'Bujang', 'Matusin'],
+  },
+];
+
+function moreHopefuls(): { names: string[]; traits: HopefulTraits[] } {
+  const names: string[] = [], traits: HopefulTraits[] = [];
+  const taken = new Set<string>(FIRST_NAMES);
+  for (let i = 0; i < 30; i++) {
+    for (const pool of POOLS) {
+      for (const woman of [false, true]) {
+        const given = (woman ? pool.women : pool.men)[(i * (woman ? 5 : 7) + (woman ? 3 : 0)) % (woman ? pool.women : pool.men).length];
+        let k = 0, name = '';
+        do {
+          const fam = pool.family[(i * 11 + k * 5 + (woman ? 4 : 1)) % pool.family.length];
+          name = pool.shape === 'given-family' ? `${given} ${fam}` : `${fam} ${given}`;
+          k++;
+        } while (taken.has(name) && k < pool.family.length);
+        if (taken.has(name)) continue;
+        taken.add(name);
+        names.push(name);
+        traits.push({ woman, young: (i + (woman ? 1 : 0)) % 4 === 0, ethnic: pool.ethnic });
+      }
+    }
+  }
+  return { names, traits };
+}
+const MORE = moreHopefuls();
+
+/** Invented names for would-be candidates. Proper nouns; the same in every language. */
+export const HOPEFUL_NAMES: readonly string[] = [...FIRST_NAMES, ...MORE.names];
+/** Who the names are, in the order of HOPEFUL_NAMES. */
+export const HOPEFUL_TRAITS: readonly HopefulTraits[] = [...FIRST_TRAITS, ...MORE.traits];
 
 /**
  * What a candidate's own background adds in a seat that suits it, in logit units: a woman where the seat is of the

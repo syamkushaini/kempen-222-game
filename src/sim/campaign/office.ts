@@ -183,7 +183,7 @@ export function freeName(rng: Rng, used: ReadonlySet<number>): number {
   return start;
 }
 
-function newMinister(k: Career, portfolio: PortfolioId, party: number, rng: Rng): Minister {
+export function newMinister(k: Career, portfolio: PortfolioId, party: number, rng: Rng): Minister {
   const taken = new Set([...k.cabinet.map((m) => m.name), ...aides(k)]);
   // People on offer for a post the player has yet to fill are spoken for too, where there are names enough to go round.
   const offered = new Set((k.appointments ?? []).flatMap((a) => a.options.map((o) => o.name)));

@@ -33,7 +33,7 @@ const FROM_ROLE: Record<string, Standing[]> = { any: ALL, gov: GOVERNING, partne
 export const GOVERNING_ONLY: readonly string[] = [
   'gigInsurance', 'trawlers', 'heritageHouse', 'hawkerLicence', 'ferryStops', 'cropGlut', 'trafficJam', 'tuitionCentres',
   'priceSurge', 'flashFloods', 'mayorRow', 'fedGrantCut', 'fedTalks', 'fedSettlement', 'haze', 'subsidyReform',
-  'borneoHighway', 'bridgeContract', 'bridgeOpening', 'fundProbe', 'fundTrial', 'budgetAsk',
+  'borneoHighway', 'bridgeContract', 'bridgeOpening', 'fundProbe', 'fundTrial',
 ];
 
 /** The places an event may come to, from what it says of itself. */

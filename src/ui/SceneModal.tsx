@@ -7,7 +7,7 @@ import { MONTH, commitmentWeekly } from '../sim/campaign/treasury';
 import { AGENDA, type AgendaChoice } from '../sim/campaign/agenda';
 import { CHIEF_NAMES, FACTION_IDS, POLL_ANSWERS, backing, deputyOf, pollOdds, type FactionId } from '../sim/campaign/factions';
 import type { StateId } from '../sim/types';
-import { canChoose, EVENTS, gambleChance, ULTIMATUM_MONEY, type Choice, type Effect } from '../sim/campaign/events';
+import { canChoose, EVENTS, ULTIMATUM_MONEY, type Choice } from '../sim/campaign/events';
 import { bluffChance } from '../sim/campaign/plots';
 import { billDef, confidenceCount, deficit, looseness, standstill, voteNeed, whipCount } from '../sim/campaign/govern';
 import { billName } from './GovernmentTab';
@@ -16,7 +16,7 @@ import { useStore } from '../state/store';
 import type { StringKey } from '../i18n/strings';
 import { lastOutcome, leaderName, partyName, partyShort, regionLabel, seatName, useFog, useFormat, useT, useWorld } from './hooks';
 import { StateFight } from './StateFight';
-import { describeEffect } from './effectText';
+import { choiceHint } from './effectText';
 import { Portrait } from './Portrait';
 import { Chamber } from './Chamber';
 import { divisionSeating } from './seating';
@@ -61,15 +61,7 @@ function SceneCard({ scene }: { scene: Scene }) {
 
   // What a choice will plainly do, so the player is choosing and not guessing. What is left to chance is flagged as such.
   // The figures are the ones that will be applied: the level of difficulty makes a loss larger or smaller, and a gain too.
-  const describe = (e: Effect): string | null => describeEffect(t, f, world, campaign, e);
-  const list = (effects: Effect[]) => effects.map(describe).filter(Boolean).join(' · ');
-  const hintFor = (choice: Choice): string => {
-    const sure = list(choice.effects);
-    if (!choice.gamble) return sure || t('hint.nothing');
-    const pct = f.pct(gambleChance(campaign, choice.gamble.chance), 0);
-    const win = list(choice.gamble.win) || t('hint.nothing'), lose = list(choice.gamble.lose) || t('hint.nothing');
-    return [sure, fog ? t('hint.gamble.fog', { win, lose }) : t('hint.gamble', { pct, win, lose })].filter(Boolean).join(' · ');
-  };
+  const hintFor = (choice: Choice): string => choiceHint(t, f, world, campaign, choice, fog);
 
   let title = '', body: React.ReactNode = null, options: { label: string; choice: number; primary?: boolean; disabled?: boolean; hint?: string; after?(): void }[] = [];
   if (scene.kind === 'pactOffer' && from !== null) {

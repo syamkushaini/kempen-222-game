@@ -8,6 +8,7 @@ import { addScene, relation, shiftRelation } from './diplomacy';
 import { startFormation } from './formation';
 import { nationWeek } from './nation';
 import { pushNews, ref } from './news';
+import { rivalPmWeek } from './rivalPm';
 import { cabinetWeek, economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
 import { draftingShift } from './ksu';
 import { rebelShare, speakerOf, speakerTip } from './chamber';
@@ -568,6 +569,7 @@ export function governWeek(c: Campaign, rng: Rng): void {
 
   if (!isPm(c)) {
     rivalBill(c);
+    rivalPmWeek(c);
     if (((k.week - 1) % 52) + 1 === 40) rivalBudget(c);
   }
 }

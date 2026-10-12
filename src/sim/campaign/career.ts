@@ -27,6 +27,7 @@ import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
 import { trendWeek } from './trend';
 import { plansWeek } from './econPlans';
+import { briefWeek } from './snaps';
 import { debtWeek } from './debt';
 import { allocation, diverted, hasPublicMoney, syncGoodwill, treasuryWeek } from './treasury';
 import { agendaTerm } from './agenda';
@@ -415,6 +416,7 @@ export function termWeek(world: World, c: Campaign): void {
   gdpWeek(world, c);
   trendWeek(world, c);
   plansWeek(c);
+  briefWeek(c);
   // A debt that reaches the top of its ladder is bankruptcy: whoever governs is out, and the Palace asks who can form a government.
   if (debtWeek(world, c)) {
     if (k.government.pm === c.player) k.record.falls++;

@@ -649,6 +649,10 @@ export interface Career {
   seen?: string[];
   /** [topic]: the week a matter of that kind last came up, so that the same kind of trouble does not come twice running. */
   topicWeeks?: Record<string, number>;
+  /** The week each event last came in this term, so that one that has just come is not drawn again by chance for a while (see eventContext.ts). */
+  eventWeeks?: Record<string, number>;
+  /** Two snapshots of the figures a month apart, so that the briefing can say what has changed (see briefing.ts). */
+  snaps?: { week: number; unity: number; credibility: number; stability: number; trust: number; funds: number; growth: number; inflation: number; jobless: number; debt: number; treasury: number }[];
   /** The party leading the opposition: the largest outside the government, noted each week of the term. */
   oppLeader?: number;
   /** Events due later because of earlier choices. */
