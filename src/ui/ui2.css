@@ -890,3 +890,13 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .brief-item.warn { border-left-color: var(--warn, #d6a23a); }
 .brief-item.note { border-left-color: var(--ink-muted); }
 .brief-change { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 2px 2px; border-bottom: 1px solid var(--line); }
+
+.profile { margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); display: grid; gap: 6px; }
+.profile h4, .profile h5 { margin: 0; }
+.profile h5 { font-size: 13px; color: var(--ink-muted); font-weight: 500; margin-top: 6px; }
+.profile-groups { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.profile-groups li { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr) auto; gap: 8px; align-items: center; font-size: 13px; }
+.profile-bar { display: block; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.profile-bar > span { display: block; height: 100%; background: var(--accent, #3a7bd5); }
+.profile-leaders { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; font-size: 13px; }
+.profile-leaders .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }

@@ -9,6 +9,7 @@ import type { BackstoryId, Difficulty } from '../sim/campaign/types';
 import { startStances } from '../sim/campaign/policy';
 import { FOUNDING_SLOT } from '../sim/campaign/founding';
 import { FoundingSeat } from './FoundingSeat';
+import { RegionProfile } from './RegionProfile';
 import { inContention, outlook, par } from '../sim/campaign/outlook';
 import { PARTY_IDS, type FieldedId, type StateId } from '../sim/types';
 import { AUTO_SLOT } from '../state/saves';
@@ -291,6 +292,8 @@ export function Title() {
               ))}
             </div>
           )}
+
+          {kind !== 'byelection' && <RegionProfile world={world} title={kind === 'state' ? t(`state.${state}`) : t('profile.country')} />}
 
           {kind === 'state' && !viaCareer && (
             <>
