@@ -23,24 +23,24 @@ export const MONEY_EN = {
 } as const;
 
 export const MONEY_MS: Record<keyof typeof MONEY_EN, string> = {
-  'hint.treasury': 'Perbendaharaan',
+  'hint.treasury': 'Kewangan kerajaan',
   'house.size': 'Saiz ekonomi',
-  'house.gdp': 'Keluaran setahun',
-  'house.perCapita': 'Seorang',
+  'house.gdp': 'Saiz ekonomi setahun',
+  'house.perCapita': 'Setiap orang',
   'house.population': 'Penduduk',
   'house.owed': 'Hutang awam',
   'house.deficitRm': 'Defisit setahun',
-  'house.mix': 'Dari mana keluaran datang',
-  'house.reports': 'Pengumuman tahunan',
-  'house.reports.none': 'Pengumuman pertama datang pada akhir tahun pertama.',
+  'house.mix': 'Sumber ekonomi',
+  'house.reports': 'Laporan tahunan',
+  'house.reports.none': 'Laporan pertama akan keluar pada hujung tahun pertama.',
   'house.reports.year': 'Tahun',
   'house.reports.growth': 'Pertumbuhan',
   'house.reports.debtPct': 'Hutang',
-  'house.line.rm': 'Kira-kira {rm} setahun',
-  'news.gdp.up.debtUp': 'Angka hujung tahun: ekonomi menghasilkan {gdp} tahun ini, dan bahagian setiap orang naik kepada {pc}. Hutang awam bertambah kepada {debt}, {pct}% daripada pendapatan.',
-  'news.gdp.up.debtDown': 'Angka hujung tahun: ekonomi menghasilkan {gdp} tahun ini, dan bahagian setiap orang naik kepada {pc}. Hutang awam turun kepada {debt}, {pct}% daripada pendapatan.',
-  'news.gdp.down.debtUp': 'Angka hujung tahun: ekonomi menghasilkan {gdp} tahun ini, tetapi bahagian setiap orang jatuh kepada {pc}. Hutang awam bertambah kepada {debt}, {pct}% daripada pendapatan.',
-  'news.gdp.down.debtDown': 'Angka hujung tahun: ekonomi menghasilkan {gdp} tahun ini, tetapi bahagian setiap orang jatuh kepada {pc}. Hutang awam reda kepada {debt}, {pct}% daripada pendapatan.',
+  'house.line.rm': 'Lebih kurang {rm} setahun',
+  'news.gdp.up.debtUp': 'Laporan hujung tahun: ekonomi berkembang kepada {gdp}, dan pendapatan bagi setiap orang naik kepada {pc}. Hutang negara pula meningkat kepada {debt}, iaitu {pct}% daripada pendapatan.',
+  'news.gdp.up.debtDown': 'Laporan hujung tahun: ekonomi berkembang kepada {gdp}, dan pendapatan bagi setiap orang naik kepada {pc}. Hutang negara turun kepada {debt}, iaitu {pct}% daripada pendapatan.',
+  'news.gdp.down.debtUp': 'Laporan hujung tahun: ekonomi mengecil kepada {gdp}, dan pendapatan bagi setiap orang turun kepada {pc}. Hutang negara pula meningkat kepada {debt}, iaitu {pct}% daripada pendapatan.',
+  'news.gdp.down.debtDown': 'Laporan hujung tahun: ekonomi mengecil kepada {gdp}, dan pendapatan bagi setiap orang turun kepada {pc}. Hutang negara turun kepada {debt}, iaitu {pct}% daripada pendapatan.',
 };
 
 export type MoneyKey = keyof typeof MONEY_EN;
