@@ -53,6 +53,7 @@ import { patronageWeek } from './patronage';
 import { applyTenure, recordTenure } from './tenure';
 import { applySafe } from './safeseat';
 import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, crowdIncome, fatigueOf, foreignWeek, paddedWeek, grassrootsLift, holdingsWeek, trailWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
+import { forPowers } from './stateScope';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
 import {
   freshParty, makeDrift, newCampaign, publishPublicPoll, startingFunds, weeklyIncome, type CampaignOptions,
@@ -207,6 +208,7 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   if (opts.founded && !opts.backstory) c.team.leader = neutralLeader();
   c.phase = 'term';
   c.career = freshCareer(1, firstGovernment(world), null);
+  c.career.manifesto = c.career.manifesto.map((m, p) => forPowers(c, p, m));
   const pc = c.parties[c.player]!;
   pc.funds = Math.round(startingFunds(world, c.player) * 0.4);
   // The government was elected on its usual programme, and will be held to it.
@@ -730,7 +732,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     // Acts already passed are not promised again, by anyone.
     ...(k.laws?.length ? { laws: [...k.laws] } : {}),
     ...(k.shadow ? { shadow: { ...k.shadow } } : {}),
-    manifesto: next.manifesto.map((m, p) => withoutLaws(k, p === c.player ? k.manifesto[p] : m)),
+    manifesto: next.manifesto.map((m, p) => forPowers(c, p, withoutLaws(k, p === c.player ? k.manifesto[p] : m))),
     promises: k.promises, flags: k.flags,
     economy: k.economy, reports: k.reports, tabled: k.tabled, budget: k.budget, fiscal: k.fiscal * 0.5, ...(k.trend ? { trend: k.trend } : {}), ...(k.programmes ? { programmes: Object.fromEntries(Object.entries(k.programmes).map(([id, n]) => [id, (n ?? 0) * 0.5])) } : {}), record: k.record, states: k.states,
   };

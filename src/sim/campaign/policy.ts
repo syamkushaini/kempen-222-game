@@ -1,4 +1,5 @@
 import type { World } from '../election';
+import { withinPowers } from './stateScope';
 import { clamp, zeros2 } from '../math';
 import { Rng } from '../rng';
 import { BLOC_IDS, N_BLOCS, N_PARTIES, PARTY_IDS, isMinor, type BlocId, type PartyId } from '../types';
@@ -325,7 +326,7 @@ export function togglePledge(c: Campaign, id: PledgeId): boolean {
     career.manifesto[c.player] = mine.filter((x) => x !== id);
     if (career.brief) { career.brief = career.brief.filter((x) => x !== id); if (career.brief.length === 0) delete career.brief; }
   }
-  else if (mine.length < MAX_PLEDGES) mine.push(id);
+  else if (mine.length < MAX_PLEDGES && withinPowers(c, id)) mine.push(id);
   else return false;
   return true;
 }
