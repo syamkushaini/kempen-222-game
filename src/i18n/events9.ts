@@ -232,7 +232,7 @@ export const NEW_EVENTS_2_MS: Record<string, EventText> = {
     body: 'Parti masih menerima ahli baharu dengan borang kertas, mesin fotokopi dan seorang kerani bernama Hasnah. Seorang sukarelawan yang bekerja di firma perisian berkata keseluruhan proses boleh ada di telefon bulan depan, jika parti mempercayainya dengan pangkalan data.',
     options: ['Bina aplikasi dengan betul', 'Beli yang sedia ada', 'Biarkan seperti sedia ada: Hasnah sangat bagus'],
     results: [
-      'Aplikasi itu beroperasi. Ia mendaftar sebelas ribu ahli dalam sebulan, dan Hasnah menyelianya, dengan sedikit dengusan.',
+      'Aplikasi itu mula beroperasi dan berjaya mendaftarkan 11,000 ahli dalam sebulan. Hasnah menguruskan semuanya sambil sesekali mengeluh.',
       ['Aplikasi sedia ada itu berfungsi, mengejutkan semua orang sedikit.', 'Aplikasi sedia ada itu rupa-rupanya berkongsi senarai parti dengan pengiklan.'],
       'Hasnah berterima kasih, dan sukarelawan itu pergi untuk membina satu untuk parti lain.',
     ],

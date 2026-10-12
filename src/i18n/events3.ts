@@ -171,8 +171,8 @@ export const GOVERNING_EVENTS_MS: Record<string, EventText> = {
     body: 'Hospital penuh. Pesakit menunggu atas troli di koridor, dan video seorang jururawat menangis di wad kecemasan sudah ditonton empat juta kali.',
     options: ['Biayai pakej wad dan kakitangan kecemasan', 'Suruh negeri uruskan dengan apa yang ada', 'Kontrakkan hospital swasta untuk menampung limpahan'],
     results: [
-      'Wad baharu dibuka dalam suku tahun ini. Perbendaharaan lebih miskin, koridor lebih lengang.',
-      'Negeri-negeri kata mereka diberi tanggungjawab tetapi bukan wang. Mereka betul, dan akhbar menyebutnya.',
+      'Wad baharu dibuka pada suku tahun ini. Wang kerajaan berkurang, tetapi koridornya lebih lengang.',
+      'Kerajaan negeri kata mereka diberi tanggungjawab tanpa peruntukan yang mencukupi. Mereka memang ada asas untuk berkata begitu, dan akhbar turut membangkitkannya.',
       'Barisan memendek. Begitu juga kesabaran mereka yang mahu hospital awam.',
     ],
   },
@@ -193,7 +193,7 @@ export const GOVERNING_EVENTS_MS: Record<string, EventText> = {
     results: [
       'Ia akan ambil masa bertahun-tahun, tetapi sekolah pertama sudah melaporkan kehadiran lebih baik.',
       'Ada betulnya, dan tiada siapa bertepuk tangan untuk main salah-menyalahkan.',
-      'Kadar lulus naik semalaman. Majikan perasan pembelajaran tidak naik.',
+      'Kadar kelulusan naik mendadak, tetapi majikan mendapati mutu pembelajaran tidak meningkat.',
     ],
   },
   campusProtest: {

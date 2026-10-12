@@ -233,8 +233,8 @@ export const NEW_EVENTS_MS: Record<string, EventText> = {
     options: ['Biayai skim kemalangan untuk semua penunggang', 'Wajibkan platform membayarnya, melalui undang-undang', 'Katakan ia urusan antara penunggang dan aplikasi'],
     results: [
       'Skim itu membayar dalam masa dua minggu. Para penunggang menampal pelekat parti anda di sebelah kotak penghantaran.',
-      'Platform mengugut untuk keluar dan menaikkan yuran sebaliknya. Penunggang diinsuranskan. Restoran masam muka.',
-      'Anda dipetik dengan tepat, dan anda tidak diucapkan terima kasih.',
+      'Platform itu mengugut untuk menarik diri, tetapi sebaliknya menaikkan yuran. Penunggang kini dilindungi insurans, namun restoran tidak berpuas hati.',
+      'Kenyataan anda dipetik dengan tepat, tetapi tiada siapa pun berterima kasih.',
     ],
   },
   nightMarket: {

@@ -419,8 +419,8 @@ export const EVENTS_MS: Record<string, EventText> = {
     body: 'Pemimpin sebuah parti rakan meminta berjumpa anda bersendirian, dan tidak duduk. Ahli-ahlinya resah, katanya, dan pihak lain sudah mula membuat tawaran. Keadaan mesti berubah, atau mereka akan mencari aturan lain.',
     options: ['Cari wang untuk kawasan mereka', 'Tunaikan permintaan mereka, dan hadapi parti sendiri', 'Suruh mereka buat apa yang mereka mahu'],
     results: [
-      'Wang ditemui, dan keresahan itu reda. Buat masa ini.',
-      'Mereka mendapat apa yang diminta. Parti anda sendiri perasan siapa yang tidak.',
+      'Wang berjaya dikumpulkan, jadi keadaan reda buat sementara waktu.',
+      'Mereka dapat apa yang diminta. Ahli parti anda pula perasan siapa yang tidak mendapat apa-apa.',
       ['Mereka mengalah. Cakap-cakap mahu keluar terhenti petang itu juga.', 'Mereka buat apa yang mereka mahu.'],
     ],
   },
@@ -429,7 +429,7 @@ export const EVENTS_MS: Record<string, EventText> = {
     body: 'Pantai timur ditenggelami air sekali lagi. Ribuan orang berada di pusat pemindahan, dan setiap ahli politik di negara ini tiba-tiba jatuh cinta dengan but getah.',
     options: ['Ketuai misi bantuan dan tanggung kosnya', 'Terbang masuk, bergambar menyerahkan satu kotak, terbang keluar', 'Kekal di ibu kota'],
     results: [
-      'Sukarelawan anda memasak, mencuci dan mengangkat barang selama dua minggu. Orang ramai perasan.',
+      'Sukarelawan anda memasak, mengemas dan mengangkat barang selama dua minggu. Orang ramai menghargainya.',
       ['Gambarnya cantik, dan tiada siapa bertanya apa isi kotak itu.', 'Video anda didukung melintasi lopak air sudah mencecah dua juta tontonan.'],
       'Anda kekal kering. Begitu juga sokongan anda di pantai timur.',
     ],
@@ -480,8 +480,8 @@ export const EVENTS_MS: Record<string, EventText> = {
     body: 'Ketua negeri anda yang paling berkuasa mahu memilih sendiri setiap calon di negerinya. Dialah yang membawa undi di sana, dan dia tahu itu.',
     options: ['Biar dia dengan senarainya', 'Senarai calon hak pemimpin', 'Bawa dia ke ibu pejabat dengan gelaran besar'],
     results: [
-      'Dia mendapat senarainya, dan jentera negeri belum pernah selancar ini. Ibu pejabat belum pernah sekecil ini.',
-      'Dia mendiamkan diri. Orang-orangnya tidak.',
+      'Dia mendapat senarai yang diminta. Jentera negeri berjalan lebih lancar daripada biasa, tetapi pengaruh ibu pejabat semakin kecil.',
+      'Dia berdiam diri. Orang-orangnya pula terus bersuara.',
       'Kini dia ada pejabat, gelaran dan pemandangan. Dia sedang mengira hari.',
     ],
   },
