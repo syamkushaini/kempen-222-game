@@ -64,7 +64,7 @@ export const DESK_EVENTS_MS: Record<string, EventText> = {
     results: [
       'Pekerja sementara datang, dibayar, dan menyiapkan kerja. Ia tidak murah, dan siap menjelang petang.',
       ['Yang hadir terus bertahan, dan hari itu terselamat. Mereka penat, dan mengatakannya dengan ceria.', 'Yang hadir terus bertahan, dan sebahagian pulang dengan marah. Kumpulan WhatsApp menjadi senyap seperti biasa.'],
-      'Anda mengecilkan hari itu setakat yang mampu dibuat oleh orang yang hadir. Cawangan tenang, dan poster parti lawan memiliki jalan itu sendirian.',
+      'Anda jalankan aktiviti sekadar yang termampu dengan jumlah orang yang hadir. Cawangan lebih tenang, tetapi poster parti lawan memenuhi jalan itu.',
     ],
   },
   manifestoMistake: {
