@@ -20,7 +20,9 @@ export function useT(): T {
   const lang = useStore((s) => s.settings.lang);
   // In a state's assembly (a state election or a career in one) some words change: the Chief Minister, not the Prime Minister.
   const assembly = useStore((s) => { const sc = s.game?.campaign.scenario; return !!sc && (sc.startsWith('state:') || sc.startsWith('career:')); });
-  return useCallback((key, vars) => translate(lang, key, vars, assembly), [lang, assembly]);
+  // Which state, so that a Sarawak career says Premier and a Sabah one Chief Minister (see headOf in strings.ts).
+  const state = useStore((s) => { const sc = s.game?.campaign.scenario; return sc && /^(state|career):/.test(sc) ? sc.slice(sc.indexOf(':') + 1) || undefined : undefined; });
+  return useCallback((key, vars) => translate(lang, key, vars, assembly, state), [lang, assembly, state]);
 }
 
 export interface Format {

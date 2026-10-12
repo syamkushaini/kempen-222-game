@@ -2502,6 +2502,14 @@ const en = {
   'portfolio.rural': 'Rural Development',
   'portfolio.works': 'Works and Transport',
   'portfolio.defence': 'Defence',
+  'portfolio.finance.assembly': 'State Finance',
+  'portfolio.home.assembly': 'Land and Natural Resources',
+  'portfolio.economy.assembly': 'Investment and Industry',
+  'portfolio.education.assembly': 'Education and Skills',
+  'portfolio.health.assembly': 'Welfare and Public Health',
+  'portfolio.rural.assembly': 'Rural Development and Agriculture',
+  'portfolio.works.assembly': 'Works, Utilities and Transport',
+  'portfolio.defence.assembly': 'Local Government and Housing',
   'scene.from.house': 'In the House',
   'scene.later': 'Look around first',
   'scene.waiting': 'A decision is waiting on your desk. Time stands still until you make it.',
@@ -2620,7 +2628,7 @@ const en = {
   'legacy.plotter': 'The Plotter',
   'legacy.plotter.text': 'You understood that governments are made in hotel rooms as well as polling stations. History will be divided on whether that was a compliment.',
   'legacy.premier': 'The Premier',
-  'legacy.premier.assembly': 'The Chief Minister',
+  'legacy.premier.assembly': 'The {head}',
   'legacy.premier.text': 'You held the highest office in the land for a time, and handed it on. Most never get that far, and most who do leave less tidily.',
   'legacy.premier.text.assembly': 'You held the highest office in the state for a time, and handed it on. Most never get that far, and most who do leave less tidily.',
   'legacy.kingmaker': 'The Kingmaker',
@@ -2630,7 +2638,7 @@ const en = {
   'legacy.conscience.text': 'You never governed, and never sold out to do so. The country is not sure it deserved you, or that it would have voted for you either.',
   'legacy.conscience.text.assembly': 'You never governed, and never sold out to do so. The state is not sure it deserved you, or that it would have voted for you either.',
   'legacy.nearly': 'The Almost Prime Minister',
-  'legacy.nearly.assembly': 'The Almost Chief Minister',
+  'legacy.nearly.assembly': 'The Almost {head}',
   'legacy.nearly.text': 'You led a great party to the very edge of power. The edge is where it stayed.',
   'legacy.nearly.text.assembly': 'You led a great party to the very edge of the state’s government. The edge is where it stayed.',
   'legacy.footnote': 'A Footnote',
@@ -5129,6 +5137,14 @@ const ms: Record<CoreKey, string> = {
   'portfolio.rural': 'Pembangunan Luar Bandar',
   'portfolio.works': 'Kerja Raya dan Pengangkutan',
   'portfolio.defence': 'Pertahanan',
+  'portfolio.finance.assembly': 'Kewangan Negeri',
+  'portfolio.home.assembly': 'Tanah dan Sumber Asli',
+  'portfolio.economy.assembly': 'Pelaburan dan Industri',
+  'portfolio.education.assembly': 'Pendidikan dan Kemahiran',
+  'portfolio.health.assembly': 'Kebajikan dan Kesihatan Awam',
+  'portfolio.rural.assembly': 'Pembangunan Luar Bandar dan Pertanian',
+  'portfolio.works.assembly': 'Kerja Raya, Utiliti dan Pengangkutan',
+  'portfolio.defence.assembly': 'Kerajaan Tempatan dan Perumahan',
   'scene.from.house': 'Di Dewan',
   'scene.later': 'Tinjau dahulu',
   'scene.waiting': 'Satu keputusan menanti di meja anda. Masa terhenti sehingga anda memutuskannya.',
@@ -5247,7 +5263,7 @@ const ms: Record<CoreKey, string> = {
   'legacy.plotter': 'Perancang',
   'legacy.plotter.text': 'Anda faham bahawa kerajaan dibentuk di bilik hotel, bukan hanya di pusat mengundi. Sejarah akan berbelah bahagi sama ada itu satu pujian.',
   'legacy.premier': 'Perdana Menteri',
-  'legacy.premier.assembly': 'Menteri Besar',
+  'legacy.premier.assembly': '{head}',
   'legacy.premier.text': 'Anda pernah memegang jawatan tertinggi negara untuk seketika, lalu menyerahkannya. Kebanyakan orang tidak sampai ke situ, dan kebanyakan yang sampai pergi dengan lebih kucar-kacir.',
   'legacy.premier.text.assembly': 'Anda pernah memegang jawatan tertinggi negeri untuk seketika, lalu menyerahkannya. Kebanyakan orang tidak sampai ke situ, dan kebanyakan yang sampai pergi dengan lebih kucar-kacir.',
   'legacy.kingmaker': 'Penentu Raja',
@@ -5257,7 +5273,7 @@ const ms: Record<CoreKey, string> = {
   'legacy.conscience.text': 'Anda tidak pernah memerintah, dan tidak pernah menggadai prinsip untuk memerintah. Negara tidak pasti ia layak mendapat anda, atau sanggup mengundi anda.',
   'legacy.conscience.text.assembly': 'Anda tidak pernah memerintah, dan tidak pernah menggadai prinsip untuk memerintah. Negeri tidak pasti ia layak mendapat anda, atau sanggup mengundi anda.',
   'legacy.nearly': 'Hampir Perdana Menteri',
-  'legacy.nearly.assembly': 'Hampir Menteri Besar',
+  'legacy.nearly.assembly': 'Hampir {head}',
   'legacy.nearly.text': 'Anda memimpin parti besar ke ambang kuasa. Di ambang itulah ia kekal.',
   'legacy.nearly.text.assembly': 'Anda memimpin parti besar ke ambang kerajaan negeri. Di ambang itulah ia kekal.',
   'legacy.footnote': 'Nota Kaki',
@@ -5293,30 +5309,45 @@ const singular = (text: string): string =>
 // a state (a key ending ".assembly") has the offices in it renamed, so that a career in one state does not speak of the
 // country's. What is about the country whichever contest is being played (the title screen, the guide, the honours) is left alone.
 const COUNTRYWIDE = /^(title|howto|scenario|ach|adviser|credits|challenges|saves)\./;
-const OFFICES = /arliament|\bMPs?\b|rime [Mm]inister|arlimen|erdana [Mm]enteri/;
-const STATE_WORDS: Record<Lang, [RegExp, string][]> = {
-  en: [
+const OFFICES = /arliament|\bMPs?\b|rime [Mm]inister|arlimen|erdana [Mm]enteri|abinet/;
+
+/** The head of a state's government: a Menteri Besar in nine states, a Chief Minister in Sabah, Penang and Melaka, and the Premier in Sarawak. Unknown: as the texts have always said it. */
+const CHIEF_MINISTERS = ['sabah', 'penang', 'melaka'];
+const headOf = (lang: Lang, state?: string): string =>
+  state === 'sarawak' ? 'Premier' : CHIEF_MINISTERS.includes(state ?? '') ? (lang === 'ms' ? 'Ketua Menteri' : 'Chief Minister') : state ? 'Menteri Besar' : lang === 'ms' ? 'Menteri Besar' : 'Chief Minister';
+/** The state's cabinet: an EXCO on the Peninsula and in Penang, Melaka (as in the Peninsula's Executive Councils), a State Cabinet in Sabah and Sarawak. */
+const cabinetOf = (state?: string): boolean => state === 'sabah' || state === 'sarawak';
+
+const STATE_WORDS = (lang: Lang, state?: string): [RegExp, string][] => {
+  const head = headOf(lang, state);
+  const cabinet = state === undefined ? null : cabinetOf(state) ? (lang === 'ms' ? 'Kabinet Negeri' : 'State Cabinet') : 'EXCO';
+  const words: [RegExp, string][] = lang === 'en' ? [
     [/\bHung parliament\b/g, 'Hung assembly'], [/\bhung parliament\b/g, 'hung assembly'], [/\bFixed-term parliaments\b/g, 'Fixed-term assemblies'],
     [/\b(M|m)(embers?) of Parliament\b/g, '$1$2 of the Assembly'], [/\bMPs\b/g, 'assembly members'], [/\bMP\b/g, 'assembly member'],
     [/\bthe Parliament\b/g, 'the Assembly'], [/(^|[.!?][”’"]? )Parliament\b/g, '$1The Assembly'], [/\bParliament\b/g, 'the Assembly'],
     [/\bparliaments\b/g, 'terms'], [/\bparliament\b/g, 'term'],
-    [/\bPrime Minister/g, 'Chief Minister'], [/\bPrime minister/g, 'Chief minister'], [/\bprime minister/g, 'chief minister'],
-  ],
-  ms: [
+    [/\bPrime Minister/g, head], [/\bPrime minister/g, head], [/\bprime minister/g, head.toLowerCase()],
+  ] : [
     [/\bParlimen tergantung\b/g, 'Dewan tergantung'], [/\bparlimen tergantung\b/g, 'dewan tergantung'],
     [/\b[Aa]hli Parlimennya\b/g, 'ADUN-nya'], [/\b[Aa]hli Parlimen\b/g, 'ADUN'], [/\b(K|k)erusi Parlimen\b/g, '$1erusi DUN'],
     [/\bParlimen\b/g, 'Dewan Undangan Negeri'], [/\bparlimen\b/g, 'penggal'],
-    [/\bPerdana Menteri/g, 'Menteri Besar'], [/\bPerdana menteri/g, 'Menteri besar'], [/\bperdana menteri/g, 'menteri besar'],
-  ],
+    [/\bPerdana Menteri/g, head], [/\bPerdana menteri/g, head], [/\bperdana menteri/g, head.toLowerCase()],
+  ];
+  if (cabinet) words.push(...(lang === 'en'
+    ? [[/\ba cabinet\b/g, cabinet === 'EXCO' ? 'an EXCO' : 'a state cabinet'], [/\b[Cc]abinet\b/g, cabinet]] as [RegExp, string][]
+    : [[/\b[Kk]abinet\b/g, cabinet]] as [RegExp, string][]));
+  return words;
 };
-const stateWording = (lang: Lang, text: string): string => (OFFICES.test(text) ? STATE_WORDS[lang].reduce((out, [from, to]) => out.replace(from, to), text) : text);
+const stateWording = (lang: Lang, text: string, state?: string): string => (OFFICES.test(text) ? STATE_WORDS(lang, state).reduce((out, [from, to]) => out.replace(from, to), text) : text);
 
-export function translate(lang: Lang, key: StringKey, vars?: Record<string, string | number>, assembly = false): string {
+export function translate(lang: Lang, key: StringKey, vars?: Record<string, string | number>, assembly = false, state?: string): string {
   const own = `${key}.assembly` as StringKey;
   const written = assembly ? STRINGS[lang][own] ?? (STRINGS[lang][key] === undefined ? STRINGS.en[own] : undefined) : undefined;
   const from: Lang = STRINGS[lang][key] === undefined ? 'en' : lang;
   let text = written ?? STRINGS[lang][key] ?? STRINGS.en[key] ?? key;
-  if (assembly && written === undefined && !COUNTRYWIDE.test(key)) text = stateWording(from, text);
+  if (assembly && key === 'form.head.state' && state) text = headOf(lang, state);
+  else if (assembly && written === undefined && !COUNTRYWIDE.test(key)) text = stateWording(from, text, state);
+  if (assembly && text.includes('{head}')) text = text.replaceAll('{head}', headOf(lang, state));
   if (!vars) return text;
   for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, String(v));
   return lang === 'en' ? singular(text) : text;
