@@ -216,7 +216,8 @@ describe('candidates', () => {
       expect(new Set(key.options.map((h) => h.kind)).size).toBe(4);
       expect(key.pick).toBeNull();
     }
-    expect(new Set(c.team.keySeats.flatMap((k) => k.options.map((h) => h.name))).size).toBe(24);
+    // Every hopeful in every seat is someone different: there were only 24 names for 48 places, and the rest were all the same person.
+    expect(new Set(c.team.keySeats.flatMap((k) => k.options.map((h) => h.name))).size).toBe(48);
   });
 
   it('bring something to the seat for the whole campaign, and cannot be withdrawn', () => {
