@@ -1148,6 +1148,18 @@
    "title": "The crash",
    "body": "The shock has arrived and nobody was ready. Export orders have collapsed, a lender has frozen credit, and every bank in the country is on the telephone to the finance minister."
   },
+  "ministerSacked": {
+   "title": "The sacked minister speaks",
+   "body": "The minister you dismissed has given an interview. They say they were a scapegoat, that others in the cabinet knew, and that they have a great deal to say. The papers have already cleared a page."
+  },
+  "ministerReview": {
+   "title": "The questions about the minister return",
+   "body": "You stood by the minister in front of the cameras. Now an audit has found more: the same contracts, and a second cousin. The press has the pictures from your press conference ready to run beside the new story."
+  },
+  "ministerVerdict": {
+   "title": "The facts about the minister are in",
+   "body": "You suspended the minister while the facts were found, and the inquiry has finished. The report is on your desk. It is neither a clean bill nor a damning one, and both the cabinet and the press are waiting to see which way you read it."
+  },
   "kind-pactOffer": {
    "title": "An offer from another party",
    "body": "The leader of another party calls with an offer of a pact: seats to stand aside in, seats in return. Two leaders at a table with glasses of teh tarik, a handshake half offered."

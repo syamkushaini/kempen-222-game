@@ -14,6 +14,7 @@ import { OPPOSITION_SEATS } from './eventList10';
 import { DESK_EVENTS } from './eventList11';
 import { DEBT_EVENTS } from './eventListDebt';
 import { SHOCK_EVENTS } from './eventListShocks';
+import { FOLLOW_EVENTS, FOLLOW_UPS } from './eventListFollow';
 import { austerity, bankrupt } from './debt';
 import { BY_EFFORT, STATE_EFFORT, statesHeld } from './contests';
 import type { World } from '../election';
@@ -29,12 +30,13 @@ import { endCareer } from './legacy';
 import { fightOdds } from './trial';
 import { dismiss } from './office';
 import { GOVERN_EFFECTS } from './governEffects';
+import { pressure, recency } from './eventContext';
 import { pushNews } from './news';
 import { scaleHoldings } from './party';
 import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEvent, standingOf, topicOf, type Standing } from './standing';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
-const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS };
+const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS };
 
 /**
  * Events whose money is the public's: relief for a flood, a bridge, a subsidy, a port. Where the player's party governs they are paid
@@ -79,11 +81,12 @@ export const SOUND_CHOICE: Record<string, Record<number, Effect[]>> = {
 const sound = (id: string, choices: Choice[]): Choice[] => {
   const more = SOUND_CHOICE[id];
   const govern = GOVERN_EFFECTS[id];
-  return more || govern ? choices.map((ch, i) => (more?.[i] || govern?.[i] ? { ...ch, effects: [...ch.effects, ...(more?.[i] ?? []), ...(govern?.[i] ?? [])] } : ch)) : choices;
+  const follow = FOLLOW_UPS[id];
+  return more || govern || follow ? choices.map((ch, i) => (more?.[i] || govern?.[i] || follow?.[i] ? { ...ch, effects: [...ch.effects, ...(more?.[i] ?? []), ...(govern?.[i] ?? [])], ...(follow?.[i] && !ch.then ? { then: follow[i] } : {}) } : ch)) : choices;
 };
 /** Everything that can happen between elections. */
 export const EVENTS: Record<string, EventDef> = Object.fromEntries(Object.entries(ALL_EVENTS).map(([id, raw]) => {
-  const def: EventDef = SOUND_CHOICE[id] || GOVERN_EFFECTS[id] ? { ...raw, choices: sound(id, raw.choices) } : raw;
+  const def: EventDef = SOUND_CHOICE[id] || GOVERN_EFFECTS[id] || FOLLOW_UPS[id] ? { ...raw, choices: sound(id, raw.choices) } : raw;
   return [
   id,
   !PUBLIC_MONEY.has(id) ? def : {
@@ -254,6 +257,7 @@ export function eligible(c: Campaign, id: string): boolean {
 
 function fire(c: Campaign, id: string): void {
   c.career!.fired.push(id);
+  (c.career!.eventWeeks ??= {})[id] = c.career!.week;
   (c.career!.topicWeeks ??= {})[topicOf(id, EVENTS[id])] = c.career!.week;
   addScene(c, { kind: 'event', from: null, event: id });
 }
@@ -288,7 +292,9 @@ export function rollEvent(c: Campaign, rng: Rng): boolean {
     // What has come in an earlier term is less likely to come again; what was written for the player's own place is likelier.
     const before = (k.seen ?? []).filter((x) => x === id).length;
     const own = seatsOfEvent(id, EVENTS[id]).length <= 2 ? OWN_PLACE : 1;
-    return EVENTS[id].weight * own * Math.max(0.05, SEEN_FACTOR ** before) * (last !== undefined && k.week - last < COOL_WEEKS ? COOL_FACTOR : 1);
+    // What fits what is going on is likelier, what does not is rarer; and an event that has just come is not drawn again by chance for a while.
+    const fits = pressure(c, topicOf(id, EVENTS[id]));
+    return EVENTS[id].weight * own * fits * recency(c, id) * Math.max(0.05, SEEN_FACTOR ** before) * (last !== undefined && k.week - last < COOL_WEEKS ? COOL_FACTOR : 1);
   };
   const total = pool.reduce((a, id) => a + weigh(id), 0);
   if (total <= 0) return false;
