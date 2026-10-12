@@ -455,7 +455,7 @@ export const MORE_EVENTS_MS: Record<string, EventText> = {
     options: ['Terima sahaja: “Ya, saya membosankan. Itulah yang anda perlukan.”', 'Upah jurulatih pidato'],
     results: [
       ['Menjadi. “Bosan” kini sohor kini, dan kelas pertengahan berasa tenang.', 'Orang kampung memutuskan anda menganggap mereka bodoh.'],
-      'Kini anda boleh menerangkan inflasi dalam masa seminit. Hampir.',
+      'Sekarang anda boleh terangkan inflasi dalam masa seminit. Hampir berjaya.',
     ],
   },
   technocratOffer: {
@@ -478,7 +478,7 @@ export const MORE_EVENTS_MS: Record<string, EventText> = {
     body: 'Sepuluh ribu orang dalam hujan, melaungkan janji yang tidak mampu anda buat. Mikrofon di tangan anda.',
     options: ['Janjikan', 'Beritahu mereka kosnya'],
     results: [
-      'Sorakan terdengar hingga tiga kampung. Begitu juga, kemudiannya, kira-kira Perbendaharaan.',
+      'Sorakan kedengaran sampai tiga kampung. Tidak lama kemudian, bil perbelanjaan kerajaan pun sampai.',
       ['Mereka mendengar. Khalayak yang sanggup mendengar kira-kira ialah khalayak yang berharga.', 'Bunyi hujan pun kedengaran. Begitulah senyapnya.'],
     ],
   },
@@ -509,7 +509,7 @@ export const MORE_EVENTS_MS: Record<string, EventText> = {
     options: ['Duduk bersamanya dan pikat dia', 'Bercakap dengan editornya'],
     results: [
       ['Profil itu menggelar anda “tidak boleh diganti”. Anda sudah membingkaikannya.', 'Profil itu menggelar anda “punca tiada apa berubah”. Kini semua orang pun begitu.'],
-      'Rencana itu digugurkan. Editor itu akan meminta sesuatu suatu hari nanti.',
+      'Rencana itu tidak jadi diterbitkan. Editor itu pasti akan meminta balasan suatu hari nanti.',
     ],
   },
   activistVigil: {
@@ -562,7 +562,7 @@ export const MORE_EVENTS_MS: Record<string, EventText> = {
     options: ['Hadir', 'Tolak'],
     results: [
       ['Anda bertahan. Orang yang tidak pernah mengundi anda pun mengakuinya.', 'Klip anda tercari-cari jawapan hanya sebelas saat. Terasa lebih lama.'],
-      'Sebuah kerusi kosong ditayangkan dengan nama anda.',
+      'Nama anda dipaparkan pada kerusi kosong itu.',
     ],
   },
   deepfake: {
