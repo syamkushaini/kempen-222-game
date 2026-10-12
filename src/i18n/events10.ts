@@ -132,7 +132,7 @@ export const PM_EVENTS_MS: Record<string, EventText> = {
     body: 'Rakan gabungan perasan tiga kementerian terbaik dipegang parti anda sendiri, dan menghantar nota sopan dengan senarai calon mereka. Nota itu dua baris. Senarainya dua muka surat.',
     options: ['Beri satu kementerian besar kepada rakan', 'Rombak penyokong setia anda sendiri dan jangan beri rakan apa-apa yang baharu', 'Biarkan semua orang meneka beberapa minggu'],
     results: [
-      'Rakan mendapat kementerian itu dan gambar upacara mengangkat sumpah. Parti anda sendiri perasan kementerian yang mana.',
+      'Rakan gabungan mendapat kementerian itu dan bergambar semasa majlis angkat sumpah. Ahli parti anda sendiri perasan kementerian mana yang diberikan kepada mereka.',
       'Kabinet berubah, dan tiada siapa di luar parti anda terkejut tiada apa yang berubah. Rakan mula mengira.',
       ['Penantian berlarutan, dan rakan memutuskan satu kehormatan dibiarkan menunggu.', 'Penantian berlarutan, dan seorang rakan berkata, di koridor, ia “bukan gabungan yang sabar”.'],
     ],
