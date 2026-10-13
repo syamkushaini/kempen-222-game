@@ -206,8 +206,8 @@ body::before {
 .action .btn.primary:hover:not(:disabled), .action > .btn.primary:hover:not(:disabled) { background: var(--fill-2); }
 .btn.armed { box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%), 0 8px 22px color-mix(in srgb, var(--bad) 40%, transparent); }
 .chip.active, .chip[aria-pressed='true'] {
-  background: color-mix(in srgb, var(--primary) 34%, var(--fill));
-  box-shadow: var(--glass-shine), inset 0 0 0 1.5px color-mix(in srgb, var(--primary) 80%, white 20%);
+  background: color-mix(in srgb, var(--primary) 26%, var(--fill));
+  box-shadow: var(--glass-shine), inset 0 0 0 1px color-mix(in srgb, var(--primary) 55%, transparent);
 }
 
 /* ---------- fields: sunk into the glass ---------- */
@@ -245,6 +245,46 @@ hr, .rule { border-color: var(--line); }
 ::-webkit-scrollbar-thumb { background: var(--fill-2); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
 ::-webkit-scrollbar-track { background: transparent; }
 
+/* ---------- the two earned surfaces, in glass: they keep their colours and ink, and lose their solid fills ---------- */
+
+/* Kertas: warm paper glass over a sunlit backdrop */
+:root[data-theme='light'][data-skin='paper'] {
+  --g-base: #f7edd3;
+  --g-a: #f2b66b;
+  --g-b: #c9d98a;
+  --g-c: #e98f6b;
+  --g-d: #8fc5c0;
+  --panel: rgb(255 251 238 / 62%);
+  --panel-2: rgb(255 251 238 / 74%);
+  --panel-3: rgb(255 251 238 / 86%);
+  --panel-4: rgb(255 251 238 / 94%);
+  --fill: rgb(255 251 238 / 58%);
+  --fill-2: rgb(255 251 238 / 80%);
+  --glass: rgb(255 251 238 / 60%);
+  --glass-strong: rgb(255 251 238 / 84%);
+  --sea: rgb(255 251 238 / 45%);
+  --undeclared: rgb(96 72 32 / 16%);
+}
+/* Tengah Malam: near-black glass over a deep, low backdrop */
+:root[data-theme='dark'][data-skin='midnight'] {
+  --g-base: #000000;
+  --g-a: #3b2bd9;
+  --g-b: #0a7a78;
+  --g-c: #8a1f63;
+  --g-d: #123a99;
+  --g-strength: 38%;
+  --panel: rgb(255 255 255 / 6%);
+  --panel-2: rgb(255 255 255 / 9%);
+  --panel-3: rgb(255 255 255 / 13%);
+  --panel-4: rgb(255 255 255 / 18%);
+  --fill: rgb(255 255 255 / 10%);
+  --fill-2: rgb(255 255 255 / 17%);
+  --glass: rgb(255 255 255 / 7%);
+  --glass-strong: rgb(8 8 18 / 76%);
+  --sea: rgb(0 0 0 / 55%);
+  --undeclared: rgb(255 255 255 / 12%);
+}
+
 /* ---------- where glass is not wanted or not possible, every layer is solid ---------- */
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -255,4 +295,14 @@ hr, .rule { border-color: var(--line); }
   :root { --glass: #1a1f4d; --glass-strong: #20265c; --panel: #1a1f4d; --panel-2: #20265c; --panel-3: #272d6b; --panel-4: #2f3678; --fill: #272d6b; --fill-2: #30377c; --blur: none; --glass-edge: rgb(255 255 255 / 45%); }
   :root[data-theme='light'] { --glass: #ffffff; --glass-strong: #ffffff; --panel: #ffffff; --panel-2: #f4f5ff; --panel-3: #eceeff; --panel-4: #e2e5ff; --fill: #eceeff; --fill-2: #e2e5ff; --glass-edge: rgb(40 50 110 / 40%); }
   body::before { opacity: 0.55; }
+}
+
+/* the same fallback for the two surfaces */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-theme='light'][data-skin='paper'] { --glass: #fbf5e4; --glass-strong: #fbf5e4; --panel: #fbf5e4; --panel-2: #f4ead1; --panel-3: #eadfc2; --panel-4: #ddd0ae; --fill: #f4ead1; --fill-2: #eadfc2; --blur: none; }
+  :root[data-theme='dark'][data-skin='midnight'] { --glass: #060607; --glass-strong: #0b0b0d; --panel: #060607; --panel-2: #0b0b0d; --panel-3: #111114; --panel-4: #17171a; --fill: #111114; --fill-2: #17171a; --blur: none; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root[data-theme='light'][data-skin='paper'] { --glass: #fbf5e4; --glass-strong: #fbf5e4; --panel: #fbf5e4; --panel-2: #f4ead1; --panel-3: #eadfc2; --panel-4: #ddd0ae; --fill: #f4ead1; --fill-2: #eadfc2; --blur: none; --glass-edge: rgb(96 72 32 / 40%); }
+  :root[data-theme='dark'][data-skin='midnight'] { --glass: #060607; --glass-strong: #0b0b0d; --panel: #060607; --panel-2: #0b0b0d; --panel-3: #111114; --panel-4: #17171a; --fill: #111114; --fill-2: #17171a; --blur: none; --glass-edge: rgb(255 255 255 / 40%); }
 }
