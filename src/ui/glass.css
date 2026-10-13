@@ -1,0 +1,258 @@
+/*
+ * Kempen 222 in glass. The last stylesheet loaded: a vivid, fixed backdrop of soft colour, and on top of it frosted, translucent layers
+ * (panels, cards, bars, tabs, buttons, fields and dialogs) with a bright hairline edge, a faint inner highlight and a soft shadow.
+ * Almost all of it works through the tokens the other stylesheets already use, so the layout rules are untouched.
+ *
+ * Blur is spent only on the layers that sit straight on the backdrop; what sits inside them is translucent but not blurred again
+ * (a blur inside a blur costs a phone far more than it shows). Text stays on layers dense enough for 4.5:1 against the ink.
+ * Where the browser cannot blur, or the player has asked their device for less transparency or more contrast, every layer becomes solid.
+ * The accent, the party colours and the colours of the map are not touched: glass never changes what a colour means.
+ */
+
+/* ---------- the backdrop ---------- */
+
+:root {
+  --g-base: #070a1a;
+  --g-a: #6a4cff;
+  --g-b: #00b8a9;
+  --g-c: #ff4fa3;
+  --g-d: #2f7bff;
+  --g-strength: 52%;
+}
+:root[data-theme='light'] {
+  --g-base: #eef1ff;
+  --g-a: #9b8cff;
+  --g-b: #5fe0d2;
+  --g-c: #ff9cc9;
+  --g-d: #7fb0ff;
+  --g-strength: 70%;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --g-base: #eef1ff;
+    --g-a: #9b8cff;
+    --g-b: #5fe0d2;
+    --g-c: #ff9cc9;
+    --g-d: #7fb0ff;
+    --g-strength: 70%;
+  }
+}
+html { background: var(--g-base); }
+body { background: transparent; }
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 48% at 10% 6%, color-mix(in srgb, var(--g-a) var(--g-strength), transparent), transparent 72%),
+    radial-gradient(48% 42% at 92% 10%, color-mix(in srgb, var(--g-b) calc(var(--g-strength) - 8%), transparent), transparent 72%),
+    radial-gradient(54% 46% at 84% 94%, color-mix(in srgb, var(--g-c) calc(var(--g-strength) - 12%), transparent), transparent 72%),
+    radial-gradient(48% 42% at 4% 90%, color-mix(in srgb, var(--g-d) var(--g-strength), transparent), transparent 72%);
+}
+
+/* ---------- the tokens: every surface in the game is drawn from these ---------- */
+
+:root {
+  color-scheme: dark;
+  --bg: #0b0f2a;
+  --panel: rgb(255 255 255 / 8%);
+  --panel-2: rgb(255 255 255 / 11%);
+  --panel-3: rgb(255 255 255 / 15%);
+  --panel-4: rgb(255 255 255 / 20%);
+  --line: rgb(255 255 255 / 15%);
+  --line-2: rgb(255 255 255 / 24%);
+  --line-3: rgb(255 255 255 / 34%);
+  --ink: #ffffff;
+  --ink-muted: #e4e8ff;
+  --muted: #b9c0e6;
+  --faint: #98a0cc;
+  --fill: rgb(255 255 255 / 12%);
+  --fill-2: rgb(255 255 255 / 20%);
+  --glass: rgb(255 255 255 / 9%);
+  --glass-strong: rgb(24 28 66 / 68%);
+  --glass-edge: rgb(255 255 255 / 24%);
+  --glass-shine: inset 0 1px 0 rgb(255 255 255 / 28%);
+  --glass-shadow: 0 12px 40px rgb(3 5 30 / 45%);
+  --blur: blur(18px) saturate(170%);
+  --undeclared: rgb(255 255 255 / 14%);
+  --sea: rgb(8 12 40 / 55%);
+  --radius: 22px;
+  --edge: var(--glass-shine);
+  --shadow: var(--glass-shadow);
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #eef1ff;
+  --panel: rgb(255 255 255 / 58%);
+  --panel-2: rgb(255 255 255 / 70%);
+  --panel-3: rgb(255 255 255 / 82%);
+  --panel-4: rgb(255 255 255 / 92%);
+  --line: rgb(40 50 110 / 14%);
+  --line-2: rgb(40 50 110 / 24%);
+  --line-3: rgb(40 50 110 / 36%);
+  --ink: #11142b;
+  --ink-muted: #2c3157;
+  --muted: #565d88;
+  --faint: #6c7399;
+  --fill: rgb(255 255 255 / 55%);
+  --fill-2: rgb(255 255 255 / 78%);
+  --glass: rgb(255 255 255 / 56%);
+  --glass-strong: rgb(255 255 255 / 80%);
+  --glass-edge: rgb(255 255 255 / 85%);
+  --glass-shine: inset 0 1px 0 rgb(255 255 255 / 95%);
+  --glass-shadow: 0 12px 36px rgb(60 70 150 / 20%);
+  --undeclared: rgb(40 50 110 / 14%);
+  --sea: rgb(255 255 255 / 45%);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --bg: #eef1ff;
+    --panel: rgb(255 255 255 / 58%);
+    --panel-2: rgb(255 255 255 / 70%);
+    --panel-3: rgb(255 255 255 / 82%);
+    --panel-4: rgb(255 255 255 / 92%);
+    --line: rgb(40 50 110 / 14%);
+    --line-2: rgb(40 50 110 / 24%);
+    --line-3: rgb(40 50 110 / 36%);
+    --ink: #11142b;
+    --ink-muted: #2c3157;
+    --muted: #565d88;
+    --faint: #6c7399;
+    --fill: rgb(255 255 255 / 55%);
+    --fill-2: rgb(255 255 255 / 78%);
+    --glass: rgb(255 255 255 / 56%);
+    --glass-strong: rgb(255 255 255 / 80%);
+    --glass-edge: rgb(255 255 255 / 85%);
+    --glass-shine: inset 0 1px 0 rgb(255 255 255 / 95%);
+    --glass-shadow: 0 12px 36px rgb(60 70 150 / 20%);
+    --undeclared: rgb(40 50 110 / 14%);
+    --sea: rgb(255 255 255 / 45%);
+  }
+}
+
+/* ---------- panels and cards: frosted, with a bright edge ---------- */
+
+.panel, .desk-card, .metrics-strip, .campaign-bar, .recap, .nominations, .profile, .plan-card, .party-card, .bloc-card, .badge-card, .action-card, .map-options-panel, .display-panel, .state-fight, .help-section, .creator, .challenge-code {
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius);
+  box-shadow: var(--glass-shine), var(--glass-shadow);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+}
+/* what sits inside a layer is lighter glass, with no blur of its own */
+.action, .brief-item, .desk-card .action, .panel .action, .panel .choice, .panel .candidate, .panel .chief, .panel .leader, .panel .reminder, .panel .note, .panel .post, .report .news-item, .seat-row, .layer-row, .facts div, .conduct-list li, .picks-list li, .help-tips li, .goal-line, .poll-result, .says li, .econ-chart, .recap-figures, .offer .action, .leader-moves .action {
+  background: var(--panel);
+  border: 1px solid var(--glass-edge);
+  border-radius: 16px;
+  box-shadow: var(--glass-shine);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.choice:hover:not(:disabled), .action:hover, .seat-row:hover, .layer-row:hover:not(.off), .menu-item:hover { background: var(--panel-3); }
+.party-card.active, .party-card.plain.active, .bloc-card.active, .action.chosen, .focus.active, .choice.active {
+  background: color-mix(in srgb, var(--primary) 26%, var(--glass));
+  border-color: color-mix(in srgb, var(--primary) 70%, white 30%);
+  box-shadow: var(--glass-shine), 0 0 0 1px color-mix(in srgb, var(--primary) 60%, transparent), 0 10px 30px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+/* ---------- the bars: header, tabs and the bottom bar ---------- */
+
+.header::before { background: var(--glass); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
+.header::after { border-bottom-color: var(--glass-edge); }
+.tabs, .segmented, .subtabs {
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shine);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border-radius: 9999px;
+}
+.tab, .segmented button, .subtabs button { color: var(--muted); }
+.tab:not(.active):hover, .segmented button:not(.active):hover, .subtabs button:not(.active):hover { background: var(--fill); color: var(--ink); }
+.tab.active, .segmented button.active, .subtabs button.active {
+  background: linear-gradient(180deg, rgb(255 255 255 / 34%), rgb(255 255 255 / 16%));
+  color: var(--ink);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shine), 0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+:root[data-theme='light'] .tab.active, :root[data-theme='light'] .segmented button.active, :root[data-theme='light'] .subtabs button.active { background: linear-gradient(180deg, #ffffff, rgb(255 255 255 / 70%)); }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .tab.active, :root:not([data-theme]) .segmented button.active, :root:not([data-theme]) .subtabs button.active { background: linear-gradient(180deg, #ffffff, rgb(255 255 255 / 70%)); }
+}
+.phone-nav { background: var(--glass); border-top: 1px solid var(--glass-edge); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
+.phone-nav button.active { background: color-mix(in srgb, var(--primary) 30%, transparent); box-shadow: var(--glass-shine); }
+
+/* ---------- buttons: frosted pills; the main one glows in the accent ---------- */
+
+.btn, .icon-btn, .chip {
+  background: var(--fill);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shine);
+  color: var(--ink);
+}
+.btn:hover:not(:disabled), .icon-btn:hover, .chip:hover { background: var(--fill-2); border-color: var(--line-3); }
+.btn.primary {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 94%, white 6%), color-mix(in srgb, var(--primary) 72%, #7a5cff 28%));
+  border-color: rgb(255 255 255 / 40%);
+  color: var(--on-primary);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 45%), 0 8px 22px color-mix(in srgb, var(--primary) 42%, transparent);
+}
+.btn.primary:hover:not(:disabled) { background: linear-gradient(135deg, color-mix(in srgb, var(--primary-hover) 94%, white 6%), color-mix(in srgb, var(--primary-hover) 76%, #7a5cff 24%)); border-color: rgb(255 255 255 / 55%); }
+.action .btn.primary, .action-card > .btn.primary, .action > .btn.primary { background: var(--fill); color: var(--ink); border-color: var(--glass-edge); box-shadow: var(--glass-shine); }
+.action .btn.primary:hover:not(:disabled), .action > .btn.primary:hover:not(:disabled) { background: var(--fill-2); }
+.btn.armed { box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%), 0 8px 22px color-mix(in srgb, var(--bad) 40%, transparent); }
+.chip.active, .chip[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--primary) 34%, var(--fill));
+  box-shadow: var(--glass-shine), inset 0 0 0 1.5px color-mix(in srgb, var(--primary) 80%, white 20%);
+}
+
+/* ---------- fields: sunk into the glass ---------- */
+
+.field select, .field input, input[type='text'], input[type='number'], input[type='search'], select, textarea, .state-select, .seat-search input {
+  background: color-mix(in srgb, var(--fill) 70%, transparent);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 14%);
+  color: var(--ink);
+}
+.field select:focus, .field input:focus, input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+select option { color: #11142b; background: #ffffff; }
+
+/* ---------- dialogs and what floats: denser glass, so the words stay readable ---------- */
+
+.dialog, .dialog.panel, .toast, .action-toast, .seat-card, .overlay.analysis, .menu, .display-menu[open] .display-panel {
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shine), var(--glass-shadow);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+}
+.overlay { background: color-mix(in srgb, var(--g-base) 45%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.overlay.fall { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+/* the strip of jump links that sticks under the header on a phone: glass, not a dark band */
+.section-jump { background: var(--glass); box-shadow: none; -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border-bottom: 1px solid var(--glass-edge); }
+
+/* ---------- small things ---------- */
+
+.badge, .cost-chip, .pos, .state-chip { background: var(--fill); border: 1px solid var(--glass-edge); }
+.gauge-track, .bar, .flow-track { background: var(--fill); }
+hr, .rule { border-color: var(--line); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--fill-2); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- where glass is not wanted or not possible, every layer is solid ---------- */
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass: #1a1f4d; --glass-strong: #20265c; --panel: #1a1f4d; --panel-2: #20265c; --panel-3: #272d6b; --panel-4: #2f3678; --fill: #272d6b; --fill-2: #30377c; --blur: none; }
+  :root[data-theme='light'] { --glass: #ffffff; --glass-strong: #ffffff; --panel: #ffffff; --panel-2: #f4f5ff; --panel-3: #eceeff; --panel-4: #e2e5ff; --fill: #eceeff; --fill-2: #e2e5ff; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root { --glass: #1a1f4d; --glass-strong: #20265c; --panel: #1a1f4d; --panel-2: #20265c; --panel-3: #272d6b; --panel-4: #2f3678; --fill: #272d6b; --fill-2: #30377c; --blur: none; --glass-edge: rgb(255 255 255 / 45%); }
+  :root[data-theme='light'] { --glass: #ffffff; --glass-strong: #ffffff; --panel: #ffffff; --panel-2: #f4f5ff; --panel-3: #eceeff; --panel-4: #e2e5ff; --fill: #eceeff; --fill-2: #e2e5ff; --glass-edge: rgb(40 50 110 / 40%); }
+  body::before { opacity: 0.55; }
+}
