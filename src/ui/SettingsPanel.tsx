@@ -86,7 +86,8 @@ function SettingsDialog({ onClose }: { onClose(): void }) {
   const themes: Theme[] = ['system', 'light', 'dark'];
   // A skin that is worn sets the colour scheme itself.
   const profile = useStore((x) => x.profile);
-  const forced = wearing(profile, s.skin, s.accent).skin.scheme !== null;
+  const wornScheme = wearing(profile, s.skin, s.accent).skin.scheme;
+  const forced = wornScheme !== null;
   return (
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dialog panel settings-dialog" role="dialog" aria-modal="true" aria-label={t('settings.title')}>
@@ -98,7 +99,7 @@ function SettingsDialog({ onClose }: { onClose(): void }) {
           <Choice label={t('lang.label')} value={s.lang} options={[{ id: 'en', name: 'English' }, { id: 'ms', name: 'Bahasa Malaysia' }]} onPick={(lang) => set({ lang })} />
         </Row>
         <Row label={t('theme.label')} note={forced ? t('look.themeSet') : undefined}>
-          <Choice label={t('theme.label')} value={s.theme} options={themes.map((id) => ({ id, name: t(`theme.${id}`) }))} onPick={(theme) => set({ theme })} disabled={() => forced} />
+          <Choice label={t('theme.label')} value={s.theme} options={themes.map((id) => ({ id, name: t(`theme.${id}`) }))} onPick={(theme) => set(forced && wornScheme !== theme ? { theme, skin: 'standard' } : { theme })} />
         </Row>
         <Look />
         <Row label={t('display.palette')}>
