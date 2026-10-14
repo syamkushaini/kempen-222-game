@@ -28,6 +28,7 @@ import { houseTally } from '../sim/campaign/contests';
 import { SHADOW_COST, canShadow, shadowOf } from '../sim/campaign/shadow';
 import { PORTFOLIO_IDS } from '../sim/campaign/types';
 import { majorityLine } from '../sim/election';
+import { CROSS_MONEY, CROSS_STAKES, canCross, crossChance, crossCount, seatsHeldBy } from '../sim/campaign/crossing';
 import { canClaim, claimChance } from '../sim/campaign/claims';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
@@ -74,6 +75,7 @@ export function GovernmentTab() {
   const appoint = useStore((s) => s.appoint);
   const tableBill = useStore((s) => s.tableBill);
   const deliver = useStore((s) => s.deliver);
+  const crossFloor = useStore((s) => s.crossFloor);
   const claimPromise = useStore((s) => s.claimPromise);
   const pullLever = useStore((s) => s.pullLever);
   const tableMotion = useStore((s) => s.tableMotion);
@@ -344,6 +346,30 @@ export function GovernmentTab() {
               </li>
             )}
           </ul>
+          {seat === 'opp' && (
+            <>
+              <h3>{t('cross.title')}</h3>
+              <p className="muted small action-desc">{t('cross.desc')}</p>
+              <ul>
+                {[k.government.pm, ...k.government.partners].map((p) => (
+                  <li key={p} className="action">
+                    <span className="dot" data-party={p} style={{ background: partyColor(p) }} />
+                    <div className="grow">
+                      <span className="action-title">{partyName(t, p)}</span>
+                      <span className="action-meta num">{t('cross.seats', { n: seatsHeldBy(world, campaign, p).length })}</span>
+                      {(() => { const check = canCross(world, campaign, p, 1); return !check.ok && check.reason !== 'target' ? <span className="action-reason">{t(`cross.no.${check.reason}` as StringKey, { n: check.weeks ?? 0 })}</span> : null; })()}
+                    </div>
+                    <div className="button-row tight">
+                      {CROSS_STAKES.map((stake) => (
+                        <ConfirmButton key={stake} className="btn small" label={t('cross.try', { stake, n: crossCount(world, campaign, p, stake), pct: Math.round(crossChance(world, campaign, p, stake) * 100) })} confirmLabel={t('cross.confirm', { rm: f.rm(scaled(world, CROSS_MONEY) * stake) })} disabled={!canCross(world, campaign, p, stake).ok} onConfirm={() => crossFloor(p, stake)} danger />
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p className="muted small">{t('cross.note')}</p>
+            </>
+          )}
         </>
       )}
 

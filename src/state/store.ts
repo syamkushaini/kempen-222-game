@@ -16,6 +16,7 @@ import { courtEndorser } from '../sim/campaign/endorsers';
 import type { IdeologyId } from '../sim/campaign/leader';
 import { retire } from '../sim/campaign/legacy';
 import { hireTroopers, interview } from '../sim/campaign/media';
+import { crossTheFloor, type CrossStake } from '../sim/campaign/crossing';
 import { claim } from '../sim/campaign/claims';
 import { dismiss, hire, vet } from '../sim/campaign/staff';
 import { abandonMission, acceptMission, declineMission, offerMain, seenMission, seenMissions } from '../sim/campaign/missions';
@@ -340,6 +341,8 @@ interface Store {
   claimPromise(index: number): void;
   pullLever(id: LeverId): void;
   tableMotion(): void;
+  /** The player, in opposition, tries to bring members of a governing party across the floor (see crossing.ts). */
+  crossFloor(party: number, stake: CrossStake): void;
   leaveGovernment(): void;
   retire(): void;
 
@@ -697,6 +700,10 @@ export const useStore = create<Store>((set, get) => {
     pullLever: (id) => mutate((c, _g, world) => { if (pullLever(world, c, id)) syncOpinion(c); }),
     tableMotion: () => mutate((c, _g, world) => {
       tableMotion(world, c);
+      if (c.phase === 'formation') return { showNight: false, offerReply: null };
+    }),
+    crossFloor: (party, stake) => mutate((c, _g, world) => {
+      if (crossTheFloor(world, c, party, stake)) syncOpinion(c);
       if (c.phase === 'formation') return { showNight: false, offerReply: null };
     }),
     leaveGovernment: () => mutate((c, _g, world) => {

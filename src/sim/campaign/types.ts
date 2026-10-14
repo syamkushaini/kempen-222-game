@@ -618,6 +618,8 @@ export interface Career {
   grass?: number;
   /** Parliaments in a row the player's party has sat in government, as head or as partner, this one included: the longer it has, the more tired the voters are of it (see party.ts). */
   govRun?: number;
+  /** The week the player last tried to bring members of a governing party across the floor (see crossing.ts). */
+  crossWeek?: number;
   /** The weariness voters carry towards the party after its parliaments in government, in logit units (see wearyOf in party.ts). */
   weary?: number;
   /** Money set aside for the next campaign, out of reach of the weeks between (see party.ts). */
