@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { publicFinance } from '../sim/campaign/gdp';
+import { debtDrift, DEFICIT_CARRIED } from '../sim/campaign/debtDrift';
 import { allocation, debtEased, govBooks, hasPublicMoney, repayLimit, treasuryCap, treasuryOf, type BookFlow } from '../sim/campaign/treasury';
 import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
@@ -23,6 +24,8 @@ export function TreasuryCard() {
   const fin = publicFinance(world, k);
   const now = govBooks(world, campaign);
   const next = govBooks(world, campaign, k.budget);
+  const drift = debtDrift(world, campaign);
+  const sum = (xs: BookFlow[]) => xs.reduce((a, x) => a + x.amount, 0);
   return (
     <section className="treasury-card" aria-label={t('treasury.title')}>
       <h4>{t('treasury.title')}</h4>
@@ -44,13 +47,28 @@ export function TreasuryCard() {
             <tbody>
               <tr className="group"><th colSpan={3}>{t('books.in')}</th></tr>
               {now.income.map((x, i) => <Row key={x.id} name={t(books(x))} a={x.amount} b={next.income[i].amount} good />)}
+              <tr className="total"><th>{t('books.totalIn')}</th><Money v={sum(now.income)} /><Money v={sum(next.income)} /></tr>
               <tr className="group"><th colSpan={3}>{t('books.out')}</th></tr>
               {now.spend.map((x, i) => <Row key={x.id} name={t(books(x))} a={x.amount} b={next.spend[i].amount} />)}
+              <tr className="total"><th>{t('books.totalOut')}</th><Money v={sum(now.spend)} /><Money v={sum(next.spend)} /></tr>
               <tr className="total"><th>{t('books.net')}</th><Money v={now.net} /><Money v={next.net} /></tr>
             </tbody>
           </table>
           {now.net < 0 && held < -now.net * 4 && <p className="note bad">{t('books.borrow')}</p>}
           <p className="muted small">{t('books.control')}</p>
+          {drift && (
+            <div className="debt-why">
+              <h4>{t('debt.why.title')}</h4>
+              <p className="muted small">{t('debt.why.desc')}</p>
+              <dl className="facts orders-facts">
+                <div><dt>{t('debt.why.budget', { pct: drift.deficit.toFixed(1), base: DEFICIT_CARRIED })}</dt><dd className={`num ${drift.budget > 0 ? 'neg' : ''}`}>{points(drift.budget)}</dd></div>
+                <div><dt>{t('debt.why.growth')}</dt><dd className={`num ${drift.growth > 0 ? 'neg' : ''}`}>{points(drift.growth)}</dd></div>
+                <div><dt>{t('debt.why.repay')}</dt><dd className="num">{points(drift.repay)}</dd></div>
+                <div><dt>{t('debt.why.net')}</dt><dd className={`num ${drift.net > 0.05 ? 'neg' : ''}`}>{points(drift.net)}</dd></div>
+              </dl>
+              <p className="muted small">{t('debt.why.once')}</p>
+            </div>
+          )}
         </>
       )}
       {limit > 0 ? (
@@ -66,6 +84,9 @@ export function TreasuryCard() {
     </section>
   );
 }
+
+/** A change in the debt, in points of national income: "+1.5" is more debt, "−0.4" is less. */
+const points = (n: number): string => `${n > 0.005 ? '+' : n < -0.005 ? '−' : ''}${Math.abs(n).toFixed(2)}`;
 
 /** Weeks to a month, for the figures shown. */
 const MONTH = 52 / 12;
