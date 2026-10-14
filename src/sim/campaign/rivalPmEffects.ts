@@ -1,7 +1,7 @@
 import { clamp } from '../math';
 import type { Effect } from './events';
 import { shiftNation } from './nation';
-import { lift } from './office';
+import { DEBT_FLOOR, lift } from './office';
 import type { Campaign } from './types';
 
 /**
@@ -15,8 +15,8 @@ export function applyRivalEffects(c: Campaign, effects: Effect[]): void {
   for (const x of effects) {
     switch (x.t) {
       case 'economy': e.growth += x.growth ?? 0; e.inflation += x.inflation ?? 0; break;
-      case 'debt': e.debt = clamp(e.debt + x.n, 30, 120); break;
-      case 'public': e.debt = clamp(e.debt - x.n / 500_000, 30, 120); break;
+      case 'debt': e.debt = clamp(e.debt + x.n, DEBT_FLOOR, 120); break;
+      case 'public': e.debt = clamp(e.debt - x.n / 500_000, DEBT_FLOOR, 120); break;
       case 'stability': k.government.stability = clamp(k.government.stability + x.n, 5, 95); break;
       case 'mood': lift(k, k.government.pm, x.blocs, x.n); break;
       case 'nation': shiftNation(k, x); break;

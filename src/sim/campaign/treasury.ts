@@ -4,7 +4,7 @@ import { N_BLOCS, N_PARTIES, type RegionId } from '../types';
 import { contestsState, scaled } from './actions';
 import { STATE_GOVERNMENT_INCOME, statesHeld } from './contests';
 import { figuresOf, sectorShares, STATE_PUBLIC } from './gdp';
-import { MEASURES, RATE, inGov, isPm } from './office';
+import { DEBT_FLOOR, MEASURES, RATE, inGov, isPm } from './office';
 import { builtEffects, projectsCost, taxEffects } from './econPlansData';
 import { patronageMult } from './patronage';
 import { pushNews, ref } from './news';
@@ -231,8 +231,7 @@ export function treasuryWeek(world: World, c: Campaign): number {
   return toParty;
 }
 
-/** The lowest the national debt can be brought down to by repaying it. */
-export const DEBT_FLOOR = 30;
+export { DEBT_FLOOR };
 
 /** The most of the treasury that can go to the debt now: what it holds, and no more than takes the debt to its floor. Zero unless the player heads the government. */
 export function repayLimit(world: World, c: Campaign): number {

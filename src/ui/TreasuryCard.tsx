@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { publicFinance } from '../sim/campaign/gdp';
 import { debtDrift, DEFICIT_CARRIED } from '../sim/campaign/debtDrift';
-import { allocation, debtEased, govBooks, hasPublicMoney, repayLimit, treasuryCap, treasuryOf, type BookFlow } from '../sim/campaign/treasury';
+import { allocation, DEBT_FLOOR, debtEased, govBooks, hasPublicMoney, repayLimit, treasuryCap, treasuryOf, type BookFlow } from '../sim/campaign/treasury';
 import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { useFormat, useT, useWorld } from './hooks';
@@ -79,7 +79,7 @@ export function TreasuryCard() {
           <button className="btn small primary" disabled={amount <= 0} onClick={() => { repay(amount); }}>{t('treasury.repay.go')}</button>
         </div>
       ) : (
-        <p className="muted small">{k.economy.debt <= 30 ? t('treasury.repay.clear') : now ? t('treasury.repay.empty') : t('treasury.repay.pm')}</p>
+        <p className="muted small">{k.economy.debt <= DEBT_FLOOR ? t('treasury.repay.clear') : now ? t('treasury.repay.empty') : t('treasury.repay.pm')}</p>
       )}
     </section>
   );
