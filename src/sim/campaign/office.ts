@@ -71,6 +71,9 @@ export function economicMood(e: Economy): number {
 }
 
 /** The policy rate: raising it brings prices down and slows growth and costs more on the debt; cutting it does the reverse. */
+/** The lowest the national debt can fall to: nothing. Paying it all off is possible; no law stops a government doing it. */
+export const DEBT_FLOOR = 0;
+
 export const RATE = { growth: -0.3, prices: -0.6, interest: 0.3 } as const;
 
 export function economyWeek(c: Campaign, rng: Rng) {
@@ -86,7 +89,7 @@ export function economyWeek(c: Campaign, rng: Rng) {
   e.inflation = clamp(e.inflation + (pricesTo - e.inflation) * 0.04 + rng.normal(0, 0.04), -1, 12);
   e.jobless = clamp(e.jobless + (3.5 - (e.growth - 4) * 0.35 - e.jobless) * 0.03 + rng.normal(0, 0.015), 2, 12);
   // A deficit above what growth can carry piles up as debt: the bill for this year's generosity arrives later.
-  e.debt = clamp(e.debt + ((deficit(k) - 3.5) * 1.5) / 52 - (e.growth - 4) * 0.01, 30, 120);
+  e.debt = clamp(e.debt + ((deficit(k) - 3.5) * 1.5) / 52 - (e.growth - 4) * 0.01, DEBT_FLOOR, 120);
   // Those in office answer for it.
   const g = k.government;
   const feel = 0.0009 * economicMood(e);

@@ -3,7 +3,7 @@ import { PROJECTS, projectOf, projectsCost, taxMixOf, type TaxId } from './econP
 import { MAX_PROJECTS_AT_ONCE, REPAY_MAX } from './econPlans';
 import { toolOf, type Tool } from './econTools';
 import { applyRivalEffects } from './rivalPmEffects';
-import { newMinister } from './office';
+import { DEBT_FLOOR, newMinister } from './office';
 import { pushNews, ref } from './news';
 import type { Campaign, Dial } from './types';
 
@@ -112,7 +112,7 @@ export function rivalPmMonth(c: Campaign): void {
   const repay = repayFor(c);
   if ((k.repayShare ?? 0) !== repay) { if (repay === 0) delete k.repayShare; else k.repayShare = repay; }
   // What is set aside brings the debt down by a little each month.
-  if (repay > 0) k.economy.debt = Math.max(30, k.economy.debt - 0.12 * (repay / REPAY_MAX));
+  if (repay > 0) k.economy.debt = Math.max(DEBT_FLOOR, k.economy.debt - 0.12 * (repay / REPAY_MAX));
 
   // What the projects cost while they are built is borrowed.
   const bill = projectsCost(k) * PROJECT_DEBT;

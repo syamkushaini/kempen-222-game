@@ -905,3 +905,5 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .note .verdict.good strong { color: var(--good); }
 .note .verdict.bad strong { color: var(--bad); }
 .issue-now { margin: 2px 0 0; }
+.tally-list li.alliance-row { border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-bottom: 4px; }
+.tally-list li.alliance-row .grow { font-weight: 700; }

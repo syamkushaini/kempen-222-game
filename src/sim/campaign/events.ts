@@ -29,7 +29,7 @@ import { queueEcho } from './echoes';
 import { KSU, replaceKsu, shiftKsu } from './ksu';
 import { endCareer } from './legacy';
 import { fightOdds } from './trial';
-import { dismiss } from './office';
+import { DEBT_FLOOR, dismiss } from './office';
 import { GOVERN_EFFECTS } from './governEffects';
 import { pressure, recency } from './eventContext';
 import { pushNews } from './news';
@@ -357,7 +357,7 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
       case 'donors': k.orders.donors = clamp(k.orders.donors + e.n, 0, 3) as Level; break;
       case 'state': k.orders.state = clamp(k.orders.state + e.n, 0, 3) as Level; break;
       case 'fiscal': k.fiscal = Math.max(0, k.fiscal + e.n); break;
-      case 'debt': k.economy.debt = Math.max(30, Math.min(120, k.economy.debt + e.n)); break;
+      case 'debt': k.economy.debt = Math.max(DEBT_FLOOR, Math.min(120, k.economy.debt + e.n)); break;
       case 'austerity': austerity(c); break;
       case 'bankrupt': bankrupt(world, c); falls = true; break;
       case 'economy': k.economy.growth += e.growth ?? 0; k.economy.inflation += e.inflation ?? 0; break;
