@@ -900,3 +900,8 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .profile-bar > span { display: block; height: 100%; background: var(--accent, #3a7bd5); }
 .profile-leaders { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; font-size: 13px; }
 .profile-leaders .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+
+.note .verdict { margin: 0 0 4px; font-size: 13px; line-height: 1.45; }
+.note .verdict.good strong { color: var(--good); }
+.note .verdict.bad strong { color: var(--bad); }
+.issue-now { margin: 2px 0 0; }

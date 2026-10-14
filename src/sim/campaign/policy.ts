@@ -289,6 +289,49 @@ export function stanceReaction(career: Career, issue: number, from: number, to: 
   })).filter((x) => Math.abs(x.change) > 0.004).sort((a, b) => b.change - a.change);
 }
 
+export interface StanceVerdict {
+  /** What the move gains and loses among all voters, in points of support (a group's feeling times its share of the voters), and the difference. */
+  gain: number;
+  loss: number;
+  net: number;
+  /** Good for votes, bad for votes, a trade-off that comes out about even, or too small to matter. */
+  kind: 'good' | 'bad' | 'mixed' | 'little';
+  /** The groups it pleases and annoys, each with its share of all voters, the most affected first. */
+  pleased: { bloc: BlocId; share: number; change: number }[];
+  annoyed: { bloc: BlocId; share: number; change: number }[];
+}
+
+/** A net effect of this many points of support or more is called good (or bad); under a gain and a loss of this together, it hardly matters. */
+export const VERDICT_CLEAR = 0.5;
+export const VERDICT_LITTLE = 0.4;
+
+/**
+ * Whether moving to a position on an issue is good or bad for the party's vote, from the same reaction of each group the game applies:
+ * each group's change of feeling, weighted by how many of the voters it is. The price in credibility and unity is a separate matter (see stanceCost).
+ */
+export function stanceVerdict(world: World, career: Career, issue: number, from: number, to: number): StanceVerdict {
+  const size = blocSizes(world);
+  const rows = stanceReaction(career, issue, from, to).map((r) => ({ ...r, share: size[BLOC_IDS.indexOf(r.bloc)] }));
+  const gain = rows.filter((r) => r.change > 0).reduce((a, r) => a + r.change * r.share, 0) * 100;
+  const loss = rows.filter((r) => r.change < 0).reduce((a, r) => a - r.change * r.share, 0) * 100;
+  const net = gain - loss;
+  const kind = gain + loss < VERDICT_LITTLE ? 'little' : net >= VERDICT_CLEAR ? 'good' : net <= -VERDICT_CLEAR ? 'bad' : 'mixed';
+  const weight = (r: { change: number; share: number }) => Math.abs(r.change) * r.share;
+  return {
+    gain, loss, net, kind,
+    pleased: rows.filter((r) => r.change > 0).sort((a, b) => weight(b) - weight(a)),
+    annoyed: rows.filter((r) => r.change < 0).sort((a, b) => weight(b) - weight(a)),
+  };
+}
+
+/** Who likes and dislikes where a party stands on an issue now: the groups that feel most strongly, with their share of all voters. */
+export function standFeeling(world: World, career: Career, p: number, issue: number): { pleased: { bloc: BlocId; share: number }[]; annoyed: { bloc: BlocId; share: number }[] } {
+  const size = blocSizes(world);
+  const feel = blocFeeling(career, p, issue).map((v, b) => ({ bloc: BLOC_IDS[b], v, share: size[b] }));
+  const strong = feel.filter((x) => Math.abs(x.v) >= 0.12).sort((a, b) => Math.abs(b.v) * b.share - Math.abs(a.v) * a.share);
+  return { pleased: strong.filter((x) => x.v > 0), annoyed: strong.filter((x) => x.v < 0) };
+}
+
 /** The party's founding position on an issue. Its members resent moves away from it. */
 export const foundingStance = (p: number, issue: number) => START_STANCES[PARTY_IDS[p]][issue];
 

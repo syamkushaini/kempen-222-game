@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { withinPowers } from '../sim/campaign/stateScope';
 import {
-  BRIEF, FISCAL_ROOM, fits, isBrief, isEnacted, ISSUE_GROUPS, manifestoCost, MAX_PLEDGES, PLEDGES, stanceCost, stanceReaction,
+  BRIEF, FISCAL_ROOM, fits, isBrief, isEnacted, ISSUE_GROUPS, manifestoCost, MAX_PLEDGES, PLEDGES, standFeeling, stanceCost, stanceVerdict,
 } from '../sim/campaign/policy';
 import { ISSUE_IDS, PLEDGE_IDS, type IssueId, type PledgeId } from '../sim/campaign/types';
 import { LETTER, TONES, canWrite, letterWait } from '../sim/campaign/letters';
@@ -44,6 +44,8 @@ export function PolicyTab() {
   const mine = k.manifesto[me];
   const cost = manifestoCost(mine, k.brief);
   const blocNames = (ids: BlocId[]) => ids.map((b) => t(`bloc.${b}`)).join(', ');
+  /** Groups with their share of all voters, for saying who is pleased and who is not. */
+  const groups = (list: { bloc: BlocId; share: number }[]) => list.map((g) => `${t(`bloc.${g.bloc}`)} (${f.pct(g.share, 0)})`).join(', ');
 
   return (
     <section className="policy">
@@ -62,7 +64,8 @@ export function PolicyTab() {
               const here = k.stances[me][i];
               const moving = draft?.issue === i ? draft.to : null;
               const price = moving !== null ? stanceCost(campaign, i, moving) : null;
-              const reaction = moving !== null ? stanceReaction(k, i, here, moving) : [];
+              const verdict = moving !== null ? stanceVerdict(world, k, i, here, moving) : null;
+              const now = standFeeling(world, k, me, i);
               const hot = k.salience[i] > 1.15;
               return (
                 <li key={id} className="issue">
@@ -85,14 +88,26 @@ export function PolicyTab() {
                     ))}
                     <span className="pole right">{t(`issue.${id}.hi`)}</span>
                   </div>
+                  {moving === null && (
+                    <p className="muted small issue-now">
+                      {now.pleased.length + now.annoyed.length === 0
+                        ? t('policy.now.none')
+                        : t('policy.now', { likes: now.pleased.length ? groups(now.pleased.slice(0, 3)) : t('policy.now.nobody'), dislikes: now.annoyed.length ? groups(now.annoyed.slice(0, 3)) : t('policy.now.nobody') })}
+                    </p>
+                  )}
                   {price && moving !== null && (
                     <div className="note">
+                      {verdict && (
+                        <>
+                          <p className={`verdict ${verdict.kind}`}><strong>{t(`policy.verdict.${verdict.kind}`)}</strong> {t('policy.net', { n: `${verdict.net >= 0 ? '+' : '−'}${Math.abs(verdict.net).toFixed(1)}` })}</p>
+                          {verdict.pleased.length > 0 && <p>{t('policy.likes', { blocs: groups(verdict.pleased.slice(0, 4)) })}</p>}
+                          {verdict.annoyed.length > 0 && <p>{t('policy.dislikes', { blocs: groups(verdict.annoyed.slice(0, 4)) })}</p>}
+                        </>
+                      )}
                       <p>
                         {t('policy.cost', { cred: price.credibility })}
                         {price.unity > 0 && ` ${t('policy.cost.unity', { n: price.unity })}`}
                       </p>
-                      {reaction.some((r) => r.change > 0) && <p>{t('policy.likes', { blocs: blocNames(reaction.filter((r) => r.change > 0).slice(0, 4).map((r) => r.bloc)) })}</p>}
-                      {reaction.some((r) => r.change < 0) && <p>{t('policy.dislikes', { blocs: blocNames(reaction.filter((r) => r.change < 0).reverse().slice(0, 4).map((r) => r.bloc)) })}</p>}
                       <div className="button-row tight">
                         <button className="btn small primary" onClick={() => { setStance(i, moving); setDraft(null); }}>{t('policy.move')}</button>
                         <button className="btn small" onClick={() => setDraft(null)}>{t('policy.cancel')}</button>
