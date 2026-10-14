@@ -23,6 +23,8 @@ import { missionsElection, missionsWeek } from './missions';
 import { membersWeek } from './members';
 import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
+import { claimsWeek, makeClaims } from './claims';
+import { termMediaWeek } from './media';
 import { governmentScore } from './record';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
@@ -185,6 +187,7 @@ function takeOffice(c: Campaign): void {
   formCabinet(c, rng);
   c.rng = rng.state;
   makeObligations(c);
+  makeClaims(c);
   // A shadow cabinet has done its work once the party governs.
   if (inGovernment(c, c.player)) delete c.career!.shadow;
   c.career!.bills = [];
@@ -437,6 +440,8 @@ export function termWeek(world: World, c: Campaign): void {
   staffWeek(world, c, new Rng((c.rng ^ 0x57aff) + k.week), false);
   conductWeek(world, c, afford);
   plotsWeek(world, c);
+  termMediaWeek(c);
+  claimsWeek(c, new Rng((c.rng ^ 0xc1a15) + k.week));
   if (c.phase !== 'term') return;
   membersWeek(world, c, new Rng((c.rng ^ 0x3e3be5) + k.week));
   if (o.focus === 'leaders' && o.courting !== null && k.week % 4 === 0 && relation(c, me, o.courting) < 45) shiftRelation(c, me, o.courting, 2);

@@ -17,6 +17,7 @@ import type { IdeologyId } from '../sim/campaign/leader';
 import { retire } from '../sim/campaign/legacy';
 import { hireTroopers, interview } from '../sim/campaign/media';
 import { crossTheFloor, type CrossStake } from '../sim/campaign/crossing';
+import { claim } from '../sim/campaign/claims';
 import { dismiss, hire, vet } from '../sim/campaign/staff';
 import { abandonMission, acceptMission, declineMission, offerMain, seenMission, seenMissions } from '../sim/campaign/missions';
 import { launchManifesto, setBrief, setStance, togglePledge } from '../sim/campaign/policy';
@@ -336,6 +337,8 @@ interface Store {
   finishAside(): Promise<void>;
   tableBill(id: string): void;
   deliver(index: number): void;
+  /** The player, a partner in the government, presses the head of government for a promise (see claims.ts). */
+  claimPromise(index: number): void;
   pullLever(id: LeverId): void;
   tableMotion(): void;
   /** The player, in opposition, tries to bring members of a governing party across the floor (see crossing.ts). */
@@ -693,6 +696,7 @@ export const useStore = create<Store>((set, get) => {
     },
     tableBill: (id) => mutate((c) => { tableBill(c, id); }),
     deliver: (index) => mutate((c) => { if (deliver(c, index)) syncOpinion(c); }),
+    claimPromise: (index) => mutate((c) => { if (claim(c, index)) syncOpinion(c); }),
     pullLever: (id) => mutate((c, _g, world) => { if (pullLever(world, c, id)) syncOpinion(c); }),
     tableMotion: () => mutate((c, _g, world) => {
       tableMotion(world, c);
