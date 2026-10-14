@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { majorityLine } from '../sim/election';
-import { partyColor, partyName, partyShort, useFormat, useT, useWorld } from './hooks';
+import { allianceTitle, inShownAlliance, partyColor, partyName, partyShort, useFormat, useT, useWorld } from './hooks';
 
 /** A number that runs up to its new value instead of jumping, unless the player asked for less motion. */
 export function CountUp({ value, ms = 320 }: { value: number; ms?: number }) {
@@ -56,6 +56,9 @@ export function Tally(props: { tally: number[]; votes: number[]; title: string; 
   const leader = order[0];
   // Leave out parties that are not in this contest at all.
   const shown = order.filter((o) => o.seats > 0 || props.votes[o.p] > 0);
+  // The player's alliance stands as one on the map, so it is counted as one here too: its members' seats and votes together.
+  const members = order.filter((o) => inShownAlliance(o.p) && (o.seats > 0 || props.votes[o.p] > 0));
+  const together = members.length >= 2 ? { seats: members.reduce((a, o) => a + o.seats, 0), votes: members.reduce((a, o) => a + props.votes[o.p], 0), first: members[0].p } : null;
 
   return (
     <section className="panel tally">
@@ -64,10 +67,20 @@ export function Tally(props: { tally: number[]; votes: number[]; title: string; 
         {props.note && <span className="muted">{props.note}</span>}
       </div>
       <p className="headline">
-        {leader.seats >= MAJORITY ? t('tally.hasMajority', { party: partyName(t, leader.p) }) : t(kind === 'state' ? 'tally.noMajority.state' : 'tally.noMajority')}
+        {together && together.seats >= MAJORITY && leader.seats < MAJORITY
+          ? t('tally.hasMajority', { party: allianceTitle(t) })
+          : leader.seats >= MAJORITY ? t('tally.hasMajority', { party: partyName(t, leader.p) }) : t(kind === 'state' ? 'tally.noMajority.state' : 'tally.noMajority')}
       </p>
       <SeatBar tally={props.tally} />
       <ul className="tally-list">
+        {together && (
+          <li className="alliance-row">
+            <span className="dot" data-party={together.first} style={{ background: partyColor(together.first) }} />
+            <span className="grow">{t('tally.alliance', { name: allianceTitle(t), parts: members.map((o) => `${partyShort(t, o.p)} ${o.seats}`).join(' + ') })}</span>
+            <span className="muted num">{totalVotes > 0 ? f.pct(together.votes / totalVotes) : '–'}</span>
+            <strong className="num seats"><CountUp value={together.seats} /></strong>
+          </li>
+        )}
         {shown.map((o) => (
           <li key={o.p} className={o.p === props.highlight ? 'mine' : ''}>
             <span className="dot" data-party={o.p} style={{ background: partyColor(o.p) }} />
