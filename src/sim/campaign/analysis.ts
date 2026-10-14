@@ -2,6 +2,7 @@ import type { World } from '../election';
 import { N_PARTIES, type ElectionOutcome } from '../types';
 import { effortByState, review, type BlocSwing, type CloseCall, type StateSwing } from './review';
 import type { Campaign, Decision } from './types';
+import { economicMood } from './office';
 
 // The look at a whole election, laid out for a page of charts: how every party did, where the player's party gained and lost
 // and how hard it had worked there, how its polls compared with the count, and a few plain sentences about what it all says.
@@ -55,6 +56,8 @@ export interface Analysis {
   share: number;
   shareBefore: number;
   insights: Insight[];
+  /** Why seats were lost, from how the government and the party stood at the dissolution (a career only; empty when no seats were lost). */
+  why: Insight[];
 }
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
@@ -98,9 +101,10 @@ export function analyse(world: World, c: Campaign, result: ElectionOutcome): Ana
   const a: Analysis = {
     total, majority, seats: mine.seats, before: mine.before, gained: gainedSeats, lost: lostSeats, held,
     parties, states: r.states, blocs: r.blocs, closeWins: r.closeWins, closeLosses: r.closeLosses, poll, work,
-    share: mine.share, shareBefore: mine.shareBefore, insights: [],
+    share: mine.share, shareBefore: mine.shareBefore, insights: [], why: [],
   };
   a.insights = insightsOf(a, effortByState(world, c));
+  a.why = whyOf(c, a);
   return a;
 }
 
@@ -150,4 +154,33 @@ function insightsOf(a: Analysis, effort: Record<string, number>): Insight[] {
     out.push({ key: 'analysis.in.noPoll', tone: 'neutral', vars: {} });
   }
   return out.slice(0, 7);
+}
+
+/** A party that took fewer actions than this in a campaign did not really campaign. */
+const IDLE_ACTIONS = 4;
+
+/**
+ * Why a party that governed lost seats, said plainly: what counts at the ballot box (the voters' mood, the party's credibility and unity, the
+ * promises kept, weariness with a long government, the campaign itself) and, so that nobody looks in the wrong place, what does not (public
+ * trust and the government's stability). Every line is read from the state the career was in at the dissolution; nothing is estimated.
+ */
+export function whyOf(c: Campaign, a: Analysis): Insight[] {
+  const k = c.career;
+  if (!k || a.seats >= a.before) return [];
+  const out: Insight[] = [];
+  const me = c.player;
+  if (k.govRun !== undefined && k.govRun >= 2) out.push({ key: 'analysis.why.tired', tone: 'bad', vars: { n: k.govRun } });
+  const reckoning = [...c.news].reverse().find((n) => n.key === 'news.gov.reckoning');
+  const kept = Number(reckoning?.vars?.kept ?? 0), total = Number(reckoning?.vars?.total ?? 0);
+  if (reckoning && total > 0 && kept < total) out.push({ key: 'analysis.why.broken', tone: 'bad', vars: { kept, total, broken: total - kept } });
+  if (k.credibility < 50) out.push({ key: 'analysis.why.cred', tone: 'bad', vars: { n: Math.round(k.credibility) } });
+  const unity = c.parties[me]?.unity ?? 100;
+  if (unity < 50) out.push({ key: 'analysis.why.unity', tone: 'bad', vars: { n: Math.round(unity) } });
+  const mood = economicMood(k.economy);
+  if (mood < -0.5) out.push({ key: 'analysis.why.economy', tone: 'bad', vars: { growth: Math.round(k.economy.growth * 10) / 10, prices: Math.round(k.economy.inflation * 10) / 10, jobless: Math.round(k.economy.jobless * 10) / 10 } });
+  const actions = actionsTaken(c);
+  if (actions < IDLE_ACTIONS) out.push({ key: 'analysis.why.idle', tone: 'bad', vars: { n: actions, weeks: c.totalWeeks } });
+  // The two things a government watches that the voters do not count.
+  if (k.government.trust >= 60 || k.government.stability >= 60) out.push({ key: 'analysis.why.notCounted', tone: 'neutral', vars: { trust: Math.round(k.government.trust), stability: Math.round(k.government.stability) } });
+  return out;
 }
