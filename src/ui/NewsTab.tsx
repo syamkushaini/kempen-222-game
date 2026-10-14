@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { StringKey } from '../i18n/strings';
-import { canHireTroopers, canInterview, coverage, interviewOdds, OUTLETS, trooperCost, usualCoverage } from '../sim/campaign/media';
+import { canHireTroopers, canInterview, coverage, INTERVIEW_GAP, interviewOdds, OUTLETS, trooperCost, usualCoverage } from '../sim/campaign/media';
 import { OUTLET_IDS, type NewsItem } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import { partyColor, partyName, renderNews, useFog, useFormat, useT, useWorld, weekLabel } from './hooks';
@@ -33,6 +33,7 @@ function Press() {
   const hireTroopers = useStore((s) => s.hireTroopers);
   const me = campaign.player;
   const inCampaign = campaign.phase === 'campaign';
+  const canTalk = inCampaign || campaign.phase === 'term';
   const usual = useMemo(() => usualCoverage(campaign), [campaign]);
 
   // What kind of week the player had, as the papers would see it.
@@ -58,11 +59,11 @@ function Press() {
                 {inCampaign && <span className="headline-quote">{t(`front.${slant}.${topic}.${(o + latest) % 2}` as StringKey, { party: partyName(t, me) })}</span>}
                 <span className="action-meta num">
                   {now !== usual[o][me] && <>{t('press.usual', { word: t(word(usual[o][me])).toLowerCase() })} · </>}
-                  {inCampaign && <>{f.days(0.5)}{!fog && <> · {t('press.odds', { good: f.pct(odds.good, 0), gaffe: f.pct(odds.gaffe, 0) })}</>}</>}
+                  {canTalk && <>{inCampaign ? f.days(0.5) : t('press.term.cost', { n: INTERVIEW_GAP })}{!fog && <> · {t('press.odds', { good: f.pct(odds.good, 0), gaffe: f.pct(odds.gaffe, 0) })}</>}</>}
                 </span>
-                {inCampaign && !check.ok && check.reason !== 'closed' && <span className="action-reason">{t(`reason.${check.reason}` as StringKey)}</span>}
+                {canTalk && !check.ok && check.reason !== 'closed' && <span className="action-reason">{t(`reason.${check.reason}` as StringKey, { n: check.weeks ?? 0 })}</span>}
               </div>
-              {inCampaign && (
+              {canTalk && (
                 <button className="btn small primary" disabled={!check.ok} onClick={() => interview(id)} aria-label={`${t('press.interview')}: ${t(`outlet.${id}`)}`}>{t('press.interview')}</button>
               )}
             </li>

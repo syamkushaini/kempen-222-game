@@ -147,7 +147,7 @@ function isValidOffice(x: Record<string, unknown>): boolean {
     (x.appointments === undefined || isList(x.appointments, (a) => isObj(a) && (PORTFOLIO_IDS as readonly unknown[]).includes(a.portfolio) && isList(a.options, (o) => isObj(o) && isNum(o.name) && isNum(o.skill) && (MINISTER_TRAITS as readonly unknown[]).includes(o.trait)))) &&
     isList(x.bills, (b) => isObj(b) && typeof b.id === 'string' && isNum(b.weeks)) &&
     isObj(x.delivery) && Object.entries(x.delivery).every(([id, v]) => isPledge(id) && (v === 'kept' || v === 'failed')) &&
-    isList(x.obligations, (o) => isObj(o) && isParty(o.party) && (DEMAND_IDS as readonly unknown[]).includes(o.demand) && isNum(o.due) && typeof o.done === 'boolean') &&
+    isList(x.obligations, (o) => isObj(o) && isParty(o.party) && (DEMAND_IDS as readonly unknown[]).includes(o.demand) && isNum(o.due) && typeof o.done === 'boolean') && (x.claims === undefined || isList(x.claims, (o) => isObj(o) && isParty(o.party) && (DEMAND_IDS as readonly unknown[]).includes(o.demand) && isNum(o.due) && typeof o.done === 'boolean')) && (x.pressWeeks === undefined || (isObj(x.pressWeeks) && Object.values(x.pressWeeks).every(isNum))) &&
     isList(x.levers, isNum, LEVER_IDS.length) && isNum(x.motion) && isNum(x.rivalBills) &&
     isObj(x.house) && Object.values(x.house).every(isParty) && isObj(x.states) && Object.values(x.states).every(isParty) && isNum(x.rounds) &&
     isObj(r) && ['elections', 'victories', 'weeksPm', 'weeksGov', 'weeksOpp', 'broken', 'bestSeats', 'falls', 'toppled'].every((key) => isNum(r[key])) && isList(r.kept, isPledge) &&
