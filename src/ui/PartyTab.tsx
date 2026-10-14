@@ -1,6 +1,6 @@
 import { termIncome, termSpending } from '../sim/campaign/career';
 import {
-  ACTIVITY_IDS, ACTIVITIES, PADDING, canPad, padChance, paddedOf, FAVOUR_IDS, FOREIGN, canTakeForeign, exposureChance, inquiryChance, CHEST_BONUS, DISCIPLINE, DISCIPLINE_EVERY, REBRAND, canDiscipline, canRebrand, CHEST_PENALTY, HOLDINGS, fatigueOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
+  ACTIVITY_IDS, ACTIVITIES, PADDING, canPad, padChance, paddedOf, FAVOUR_IDS, FOREIGN, canTakeForeign, exposureChance, inquiryChance, CHEST_BONUS, DISCIPLINE, DISCIPLINE_EVERY, REBRAND, canDiscipline, canRebrand, CHEST_PENALTY, HOLDINGS, wearyOf, grassrootsLift, probeChance, HOLDING_IDS, activityCost, activityWait, baseRolls, canDoActivity, holdingScale, holdingsOf, rollsOf, rollsTarget,
 } from '../sim/campaign/party';
 import { scaled } from '../sim/campaign/actions';
 import { styleOf } from '../sim/campaign/ai';
@@ -216,7 +216,7 @@ export function PartyTab() {
           </div>
         </li>
       </ul>
-      {(k.govRun ?? 0) > 1 && <p className="note bad">{t('party.fatigue', { n: k.govRun!, pts: (Math.round(fatigueOf(k.govRun!) * 25 * 10) / 10).toFixed(1) })}</p>}
+      {(k.govRun ?? 0) > 1 && <p className="note bad">{t('party.fatigue', { n: k.govRun!, pts: (Math.round(wearyOf(k) * 25 * 10) / 10).toFixed(1) })}</p>}
 
       <h3>{t('rivals.title')}</h3>
       <p className="muted small action-desc">{t('rivals.desc')}</p>

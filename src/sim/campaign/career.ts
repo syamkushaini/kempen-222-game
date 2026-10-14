@@ -23,6 +23,7 @@ import { missionsElection, missionsWeek } from './missions';
 import { membersWeek } from './members';
 import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
+import { governmentScore } from './record';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
 import { trendWeek } from './trend';
@@ -52,7 +53,7 @@ import { courtWeek } from './courts';
 import { patronageWeek } from './patronage';
 import { applyTenure, recordTenure } from './tenure';
 import { applySafe } from './safeseat';
-import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, crowdIncome, fatigueOf, foreignWeek, paddedWeek, grassrootsLift, holdingsWeek, trailWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade } from './party';
+import { FOOTHOLD, LANDSLIDE, MATURE, YOUNG_BRANCHES, crowdIncome, foreignWeek, paddedWeek, grassrootsLift, holdingsWeek, trailWeek, landslide, openChest, holdingsYield, rollsFactor, rollsWeek, trade, weariness, wearyOf } from './party';
 import { forPowers } from './stateScope';
 import { defaultManifestos, launchManifesto, nationalAppeal, policyEffect, startStances, withoutLaws, isEnacted } from './policy';
 import {
@@ -831,7 +832,13 @@ export function nextTerm(world: World, c: Campaign): boolean {
   pushNews(c, { party: null, key: 'news.term.start', vars: { party: ref.party(outcome.pm), n: outcome.seats }, tone: 'neutral' });
   // Weariness with a party long in government is a level, not a debt that is charged again in full each parliament: what is
   // taken off now is what this parliament adds to it, and a party that has left government is given back what it had lost.
-  const tired = fatigueOf(govRun) - fatigueOf(k.govRun ?? 0);
+  // What the parliament that ended adds depends on how the party did in it: the economy, its credibility, and the promises it kept.
+  const before = wearyOf(k);
+  const score = governmentScore(k, c.news);
+  const after = govRun === 0 ? 0 : govRun >= 2 ? before + weariness(score) : 0;
+  c.career.weary = after;
+  if (after === 0) delete c.career.weary;
+  const tired = after - before;
   if (tired !== 0) for (const row of c.career.mood) row[c.player] -= tired;
   if (tired > 0) pushNews(c, { party: c.player, key: 'news.fatigue', vars: { n: govRun }, tone: 'bad' });
   else if (tired < 0) pushNews(c, { party: c.player, key: 'news.fatigue.over', vars: {}, tone: 'good' });

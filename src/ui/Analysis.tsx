@@ -159,7 +159,7 @@ function PollGauge({ a }: { a: Data }) {
   );
 }
 
-function Says({ list }: { list: Insight[] }) {
+function Says({ list, title }: { list: Insight[]; title?: StringKey }) {
   const t = useT();
   const world = useWorld();
   if (list.length === 0) return null;
@@ -171,7 +171,7 @@ function Says({ list }: { list: Insight[] }) {
   });
   return (
     <section>
-      <h3>{t('analysis.says')}</h3>
+      <h3>{t(title ?? 'analysis.says')}</h3>
       <ul className="says">{list.map((i) => <li key={i.key} className={i.tone}>{words(i)}</li>)}</ul>
     </section>
   );
@@ -233,6 +233,7 @@ export function Analysis({ campaign, summary, result, onClose }: { campaign: Cam
         )}
 
         <Says list={a.insights} />
+        <Says list={a.why} title="analysis.why" />
         {a.total > 1 && <section><h3>{t('analysis.flow')}</h3><Flow a={a} /></section>}
         <Parties a={a} me={me} />
         <States a={a} />
