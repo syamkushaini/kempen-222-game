@@ -763,6 +763,15 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.mandated?.length ? { mandated: [...k.mandated] } : {}),
     ...(k.shaky?.length ? { shaky: [...k.shaky] } : {}),
     ...(k.missions ? { missions: structuredClone(k.missions) } : {}),
+    // What a government has set running with the economy goes on: the national projects under way and those built, the taxes, the policy rate and
+    // the debt plan, and when each act on the economy was last used (a parliament ending is not a reason to start the projects again).
+    ...(k.projects?.length ? { projects: k.projects.map((p) => ({ ...p })) } : {}),
+    ...(k.built?.length ? { built: [...k.built] } : {}),
+    ...(k.taxMix ? { taxMix: { ...k.taxMix } } : {}),
+    ...(k.repayShare ? { repayShare: k.repayShare } : {}),
+    ...(k.rate ? { rate: k.rate } : {}),
+    ...(k.toolsUsed ? { toolsUsed: { ...k.toolsUsed } } : {}),
+    ...(k.eventWeeks ? { eventWeeks: { ...k.eventWeeks } } : {}),
   };
   Object.assign(c.career, carry);
   // The new parliament counts its weeks from one: what was marked with a week of the old one is moved back by the term and the campaign.

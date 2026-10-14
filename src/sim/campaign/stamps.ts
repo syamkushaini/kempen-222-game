@@ -12,12 +12,14 @@ const moved = (marks: Record<string, number> | undefined, by: number): void => {
 export function carryStamps(k: Career, gone: number): void {
   moved(k.activity, gone);
   moved(k.sectorAid, gone);
+  moved(k.toolsUsed, gone);
+  moved(k.eventWeeks, gone);
   for (const e of k.echoes ?? []) e.week -= gone;
 }
 
 /** A mark later than this week cannot have been made in this parliament: it was carried over unmoved by an older save, and is dropped. */
 export function dropStale(k: Career): void {
-  for (const marks of [k.activity, k.sectorAid] as (Record<string, number> | undefined)[]) {
+  for (const marks of [k.activity, k.sectorAid, k.toolsUsed, k.eventWeeks] as (Record<string, number> | undefined)[]) {
     for (const id of Object.keys(marks ?? {})) if (marks![id] > k.week) delete marks![id];
   }
 }
