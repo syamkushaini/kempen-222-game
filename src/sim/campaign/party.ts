@@ -280,6 +280,18 @@ export const FATIGUE_PER_TERM = 0.05;
 /** The weariness voters feel at the start of this parliament: nothing for a first term in government, and more with each one after. */
 export const fatigueOf = (run: number): number => FATIGUE_PER_TERM * Math.max(0, run - 1);
 
+/** How much of a parliament's weariness a government that did well is spared: none at the worst record, this share at the best. */
+export const WEARY_RELIEF = 0.5;
+
+/**
+ * What a parliament in government adds to the voters' weariness, by how the party did in it: a record scored from 0 (the economy against
+ * it, no credibility, promises broken) to 1 (the opposite) spares up to half of it, so that a government that keeps delivering lasts longer.
+ */
+export const weariness = (score: number): number => FATIGUE_PER_TERM * (1 - WEARY_RELIEF * Math.min(1, Math.max(0, score)));
+
+/** The weariness voters carry now. A career keeps the level; a save from before it did is read from the parliaments in a row, as it was. */
+export const wearyOf = (k: { weary?: number; govRun?: number }): number => k.weary ?? fatigueOf(k.govRun ?? 0);
+
 /** A party that wins this share of the seats has won more than is good for it. */
 export const LANDSLIDE = 0.675;
 
