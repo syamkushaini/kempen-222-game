@@ -368,6 +368,9 @@ export interface Bill { id: string; weeks: number }
 /** Something the head of government promised a partner when the government was formed. */
 export interface Obligation { party: number; demand: DemandId; due: number; done: boolean }
 
+/** A promise the head of government made to the player's party, as a partner: who owes it, when it fell due, whether it was kept, and when it was last pressed. */
+export interface Claim extends Obligation { asked?: number; late?: boolean }
+
 /** Ways a government can lean on institutions that are meant to be independent. */
 export const LEVER_IDS = ['agency', 'police', 'broadcaster'] as const;
 export type LeverId = (typeof LEVER_IDS)[number];
@@ -704,6 +707,10 @@ export interface Career {
   delivery: Partial<Record<PledgeId, 'kept' | 'failed'>>;
   /** What the player, as head of government, owes the partners. */
   obligations: Obligation[];
+  /** What the head of government promised the player's party, when it is a partner in the government (see claims.ts). */
+  claims?: Claim[];
+  /** The week the player last sat down with each outlet between elections. */
+  pressWeeks?: Record<string, number>;
   /** [lever]: the week it was last pulled this term, or 0. */
   levers: number[];
   /** The week of the last no-confidence motion this term, or 0. */

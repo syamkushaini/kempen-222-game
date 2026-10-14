@@ -28,6 +28,7 @@ import { houseTally } from '../sim/campaign/contests';
 import { SHADOW_COST, canShadow, shadowOf } from '../sim/campaign/shadow';
 import { PORTFOLIO_IDS } from '../sim/campaign/types';
 import { majorityLine } from '../sim/election';
+import { canClaim, claimChance } from '../sim/campaign/claims';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
 import { partyColor, partyName, partyShort, useFog, useFormat, useT, useWorld, type T } from './hooks';
@@ -73,6 +74,7 @@ export function GovernmentTab() {
   const appoint = useStore((s) => s.appoint);
   const tableBill = useStore((s) => s.tableBill);
   const deliver = useStore((s) => s.deliver);
+  const claimPromise = useStore((s) => s.claimPromise);
   const pullLever = useStore((s) => s.pullLever);
   const tableMotion = useStore((s) => s.tableMotion);
   const leaveGovernment = useStore((s) => s.leaveGovernment);
@@ -287,6 +289,33 @@ export function GovernmentTab() {
               </li>
             ))}
           </ul>
+        </>
+      )}
+
+      {!pm && (k.claims?.length ?? 0) > 0 && (
+        <>
+          <h3>{t('claims.title')}</h3>
+          <p className="muted small action-desc">{t('claims.desc', { party: partyName(t, k.government.pm) })}</p>
+          <ul>
+            {k.claims!.map((o, i) => {
+              const check = canClaim(campaign, i);
+              return (
+                <li key={i} className="action">
+                  <span className="dot" data-party={o.party} style={{ background: partyColor(o.party) }} />
+                  <div className="grow">
+                    <span className="action-title">{t(`demand.${o.demand}`)}</span>
+                    <span className="action-meta num">
+                      {o.done ? t('claims.done') : k.week >= o.due ? t('claims.late', { n: k.week - o.due }) : t('claims.due', { n: o.due - k.week })}
+                      {!o.done && <> · {t('claims.chance', { pct: Math.round(claimChance(campaign, o) * 100) })}</>}
+                    </span>
+                    {!o.done && !check.ok && check.reason === 'wait' && <span className="action-reason">{t('claims.wait', { n: check.weeks ?? 0 })}</span>}
+                  </div>
+                  {!o.done && <button className="btn small" disabled={!check.ok} onClick={() => claimPromise(i)}>{t('claims.press')}</button>}
+                </li>
+              );
+            })}
+          </ul>
+          <p className="muted small">{t('claims.note')}</p>
         </>
       )}
 

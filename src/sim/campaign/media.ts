@@ -5,6 +5,7 @@ import { BLOC_IDS, N_PARTIES, PARTY_IDS, type BlocId, type PartyId } from '../ty
 import { scaled } from './actions';
 import { stat } from './perks';
 import { pushNews } from './news';
+import { stampOf } from './stamps';
 import { gaffeCut } from './perks';
 import { OUTLET_IDS, type Campaign, type OutletId } from './types';
 
@@ -34,6 +35,11 @@ export const OUTLETS: Record<OutletId, OutletDef> = {
 
 /** What a step of friendlier or cooler coverage does to a party each week among the outlet's audience, in logit units. */
 const WEEKLY = 0.008;
+/** Between elections the press is slower to move: a step of coverage tells a quarter as much a week on the mood, and fades a step towards the outlet's habit every this many weeks. */
+const TERM_WEEKLY = 0.002;
+const TERM_FADE = 12;
+/** Weeks a leader must wait before sitting down with the same outlet again between elections. */
+export const INTERVIEW_GAP = 8;
 const INTERVIEW_DAYS = 0.5;
 const TROOPER_COST = 100_000;
 const TROOPER_EXPOSURE = 0.2;
@@ -64,10 +70,16 @@ export function pressReacts(c: Campaign, p: number, by: number, outlets: OutletI
   for (const id of outlets) shift(c, id, p, by);
 }
 
-export type InterviewRefusal = 'closed' | 'days' | 'usedThisWeek';
-export function canInterview(c: Campaign, id: OutletId): { ok: true } | { ok: false; reason: InterviewRefusal } {
+export type InterviewRefusal = 'closed' | 'days' | 'usedThisWeek' | 'pressWait';
+export function canInterview(c: Campaign, id: OutletId): { ok: true } | { ok: false; reason: InterviewRefusal; weeks?: number } {
   const pc = c.parties[c.player];
-  if (c.phase !== 'campaign' || !pc) return { ok: false, reason: 'closed' };
+  if (!pc || (c.phase !== 'campaign' && c.phase !== 'term')) return { ok: false, reason: 'closed' };
+  // Between elections the leader's time is not counted in days; instead an outlet will not have the same leader in its studio every week.
+  if (c.phase === 'term') {
+    const last = c.career ? stampOf(c.career, c.career.pressWeeks, id) : undefined;
+    if (last !== undefined && c.career!.week - last < INTERVIEW_GAP) return { ok: false, reason: 'pressWait', weeks: INTERVIEW_GAP - (c.career!.week - last) };
+    return { ok: true };
+  }
   if (pc.used[`interview:${id}`]) return { ok: false, reason: 'usedThisWeek' };
   if (pc.days < INTERVIEW_DAYS) return { ok: false, reason: 'days' };
   return { ok: true };
@@ -88,8 +100,8 @@ export function interview(c: Campaign, id: OutletId) {
   if (!canInterview(c, id).ok) return null;
   const me = c.player;
   const pc = c.parties[me]!;
-  pc.days -= INTERVIEW_DAYS;
-  pc.used[`interview:${id}`] = 1;
+  if (c.phase === 'term') (c.career!.pressWeeks ??= {})[id] = c.career!.week;
+  else { pc.days -= INTERVIEW_DAYS; pc.used[`interview:${id}`] = 1; }
   const odds = interviewOdds(c, id);
   const rng = new Rng(c.rng);
   const roll = rng.next();
@@ -147,4 +159,21 @@ export function mediaWeek(world: World, c: Campaign, rng: Rng): void {
     if (c.career) c.career.credibility = Math.max(0, c.career.credibility - 5);
     pushNews(c, { party: me, key: 'news.media.troopersExposed', tone: 'bad' });
   }
+}
+
+/**
+ * The press between elections: coverage kinder or harsher than an outlet's habit still moves its audience, more gently than in a campaign, and
+ * fades back towards the habit a step at a time, so that a warm press has to be kept warm.
+ */
+export function termMediaWeek(c: Campaign): void {
+  const k = c.career;
+  if (!k || c.phase !== 'term') return;
+  const me = c.player;
+  const usual = usualCoverage(c);
+  OUTLET_IDS.forEach((id, o) => {
+    const delta = (c.team.media[o]?.[me] ?? usual[o][me]) - usual[o][me];
+    if (delta === 0) return;
+    for (const bloc of OUTLETS[id].audience) k.mood[BLOC_IDS.indexOf(bloc)][me] += TERM_WEEKLY * delta;
+    if (k.week % TERM_FADE === 0) c.team.media[o][me] += delta > 0 ? -1 : 1;
+  });
 }
