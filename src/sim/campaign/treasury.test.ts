@@ -4,7 +4,7 @@ import { PARTY_IDS } from '../types';
 import { scaled } from './actions';
 import { setOrders, startCareer, termIncome, termSpending, termWeek } from './career';
 import { statesHeld } from './contests';
-import { ALLOCATION, allocation, govBooks, GOODWILL_EFFECT, govMoney, GRANT_STEP, grantsCost, grantTargets, syncGoodwill, TREASURY_WEEKS, treasuryCap, treasuryOf, treasuryWeek } from './treasury';
+import { ALLOCATION, allocation, govBooks, GOODWILL_EFFECT, govMoney, GRANT_STEP, grantsCost, creditShare, grantTargets, RIVAL_CREDIT, syncGoodwill, TREASURY_WEEKS, treasuryCap, treasuryOf, treasuryWeek } from './treasury';
 import { isValidCampaign } from './validate';
 import type { Campaign } from './types';
 
@@ -152,5 +152,29 @@ describe('the government’s money', () => {
     const bad = JSON.parse(JSON.stringify(c));
     bad.career.treasury = -5;
     expect(isValidCampaign(bad, base)).toBe(false);
+  });
+
+  it('develops the states the government chose, whether or not the party stands in them, and gives a rival state government a share of the credit', () => {
+    const c = career(PS);
+    const k = c.career!;
+    const rival = Object.keys(k.states).find((st) => k.states[st] !== PS && k.states[st] !== k.government.pm && !k.government.partners.includes(k.states[st]))!;
+    const own = Object.keys(k.states).find((st) => k.states[st] === PS || k.states[st] === k.government.pm)!;
+    expect(rival && own).toBeTruthy();
+    setOrders(base, c, { grants: 3, develop: [rival, own, rival, 'nowhere' as never] });
+    expect(k.orders.develop).toEqual([rival, own]);
+    expect(grantTargets(base, c)).toEqual([rival, own]);
+    expect(creditShare(c, own)).toBe(1);
+    expect(creditShare(c, rival)).toBe(1 - RIVAL_CREDIT);
+    weeks(c, 8);
+    expect(Object.keys(k.goodwill!).sort()).toEqual([own, rival].sort());
+    expect(k.goodwill![own]).toBeGreaterThan(k.goodwill![rival]);
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
+    // Chosen with no public money, nothing is kept; cleared, the grants go back to the target states.
+    const opposition = career(PT);
+    opposition.career!.states = {};
+    setOrders(base, opposition, { develop: [rival] });
+    expect(opposition.career!.orders.develop).toEqual([]);
+    setOrders(base, c, { develop: [] });
+    expect(grantTargets(base, c)).not.toEqual([rival, own]);
   });
 });

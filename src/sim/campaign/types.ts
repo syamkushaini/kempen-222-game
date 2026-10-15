@@ -301,6 +301,8 @@ export interface Orders {
   state: Level;
   /** How much of the government's money goes each week to development grants in the target regions. Absent in a game saved before the treasury existed. */
   grants?: Level;
+  /** The states the government chooses to develop: up to three, and the grants go there, whether or not the party stands in them. None means the target states. */
+  develop?: RegionId[];
 }
 
 /** An election's result in every seat, kept so the next term can be fitted to it. */
