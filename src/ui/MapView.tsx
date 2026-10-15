@@ -299,8 +299,11 @@ export function MapView(props: {
   useEffect(() => {
     const el = svgRef.current;
     if (!el) return;
+    // Two fingers on the map are a pinch: without this the browser takes them as a scroll, cancels the pointers, and the pinch never happens.
+    const onTouchStart = (e: TouchEvent) => { if (e.touches.length >= 2) e.preventDefault(); };
     el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    return () => { el.removeEventListener('wheel', onWheel); el.removeEventListener('touchstart', onTouchStart); };
   });
   const zoomButton = (factor: number) => map && setView((v) => zoomBy(v, factor, map.width, viewH, framed));
 

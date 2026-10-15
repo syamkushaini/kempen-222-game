@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FIT, holdPoint, keepInside, MAX_VIEW, viewTransform, zoomBy } from './mapGesture';
+import { FIT, holdPoint, keepInside, MAX_VIEW, pinchFactor, viewTransform, zoomBy } from './mapGesture';
 
 const W = 1000, H = 470;
 /** Where a map point lands on screen under a view. */
@@ -58,5 +58,14 @@ describe('zooming and dragging the map', () => {
     expect(moved.x).toBeCloseTo(80, 6);
     expect(moved.y).toBeCloseTo(30, 6);
     expect(zoomBy(FIT, 2, W, H, 4).k).toBe(2);
+  });
+
+  it('turns the change in how far apart two fingers are into a zoom, within bounds', () => {
+    expect(pinchFactor(100, 150)).toBeCloseTo(1.5);
+    expect(pinchFactor(150, 100)).toBeCloseTo(2 / 3);
+    expect(pinchFactor(100, 1000)).toBe(2);
+    expect(pinchFactor(100, 1)).toBe(0.5);
+    expect(pinchFactor(0, 100)).toBe(1);
+    expect(pinchFactor(100, 0)).toBe(1);
   });
 });

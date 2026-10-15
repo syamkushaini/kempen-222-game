@@ -38,6 +38,9 @@ export function zoomBy(v: View, factor: number, w: number, h: number, framed = 1
   return keepInside({ k, x: v.x * r, y: v.y * r }, w, h, framed);
 }
 
+/** How much a pinch zooms: the ratio of how far apart the fingers are now to how far apart they were. One (no change) if either was not apart at all. */
+export const pinchFactor = (before: number, now: number): number => (before > 0 && now > 0 ? clamp(now / before, 0.5, 2) : 1);
+
 /** The SVG transform that draws a view. */
 export const viewTransform = (v: View, w: number, h: number) =>
   `translate(${v.x} ${v.y}) translate(${w / 2} ${h / 2}) scale(${v.k}) translate(${-w / 2} ${-h / 2})`;
