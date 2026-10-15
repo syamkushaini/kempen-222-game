@@ -51,6 +51,24 @@ export function recordResults(world: World, c: Campaign): SeatResults {
   };
 }
 
+/**
+ * The result of a state election fought in person, in the form the next one in that state is fitted to. The same as `recordResults`, but the
+ * election was a campaign of its own with no career behind it: opinion settles to the drift it left, with no mood or promises of a career to add.
+ */
+export function recordAsideResults(world: World, nested: Campaign): SeatResults | null {
+  const result = electionResult(world, nested);
+  if (!result) return null;
+  const settled = emptyDynamics();
+  for (const [st, rows] of Object.entries(nested.drift.support.state)) settled.support.state[st] = rows.map((row) => [...row]);
+  for (const [seat, row] of Object.entries(nested.drift.support.seat)) settled.support.seat[seat] = [...row];
+  const basis = projectElection(world, settled);
+  return {
+    votes: result.seats.map((s) => s.votes),
+    turnout: result.seats.map((s) => s.turnout),
+    basis: basis.seats.map((s) => ({ votes: s.votes, turnout: s.turnout })),
+  };
+}
+
 /** The seats of a career's world: the data's seats, with the last election replaced by the career's own. */
 export function seatsAfter(base: SeatData[], results: SeatResults): SeatData[] {
   return base.map((s, i) => ({

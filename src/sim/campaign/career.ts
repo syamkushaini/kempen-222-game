@@ -777,6 +777,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.repayShare ? { repayShare: k.repayShare } : {}),
     ...(k.rate ? { rate: k.rate } : {}),
     ...(k.toolsUsed ? { toolsUsed: { ...k.toolsUsed } } : {}),
+    ...(k.stateResults ? { stateResults: structuredClone(k.stateResults) } : {}),
     ...(k.eventWeeks ? { eventWeeks: { ...k.eventWeeks } } : {}),
   };
   Object.assign(c.career, carry);
