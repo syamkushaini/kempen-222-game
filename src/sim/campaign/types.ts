@@ -501,6 +501,8 @@ export interface Missions {
 }
 
 export interface Career {
+  /** The opposition's challenges to the government's policies this parliament: when the last was made, and what has been challenged. */
+  challenged?: { last: number; done: string[] };
   /** The parties the leader has left after being removed from them, with when: set once they have joined another (see switching.ts). */
   previous?: { party: number; term: number; week: number }[];
   /**

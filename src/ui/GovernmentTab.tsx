@@ -22,6 +22,7 @@ import { GRAND, canUnite } from '../sim/campaign/grand';
 import { ksuOf } from '../sim/campaign/ksu';
 import { canOfferDeputy, isRival } from '../sim/campaign/plots';
 import { COMMITTEE, canInquire, committeeWait, inquiryOdds } from '../sim/campaign/committee';
+import { CHALLENGE, METHODS, canChallenge, challengeOdds, challengeWait, isAct, isBill, opposition, targets } from '../sim/campaign/challengePolicy';
 import { canExpel } from '../sim/campaign/alliance';
 import { SUPPLY_CASH, canRenew, canSupply, discontent } from '../sim/campaign/supply';
 import { houseTally } from '../sim/campaign/contests';
@@ -176,6 +177,7 @@ export function GovernmentTab() {
       {pm && k.government.partners.length > 0 && <PutOut />}
       {seat === 'opp' && <ShadowCabinet />}
       {seat === 'opp' && <CommitteeInquiry />}
+      {seat === 'opp' && <PolicyChallenge />}
 
       {(k.appointments?.length ?? 0) > 0 && (
         <section className="appointments" aria-label={t('appoint.title')}>
@@ -587,6 +589,54 @@ function CommitteeInquiry() {
           </div>
           <button className="btn small" disabled={!check.ok} onClick={() => inquiry()}>{t('committee.open')}</button>
         </li>
+      </ul>
+    </>
+  );
+}
+
+/** The opposition may contest any policy of the government: in the House, in court, or before the public. */
+function PolicyChallenge() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const challengePolicy = useStore((s) => s.challengePolicy);
+  const k = campaign.career!;
+  const list = targets(campaign);
+  const wait = challengeWait(campaign);
+  return (
+    <>
+      <h3>{t('contest.title')}</h3>
+      <p className="muted small action-desc">{t('contest.desc', { n: CHALLENGE.every })}</p>
+      {wait > 0 && <p className="muted small">{t('contest.wait', { n: wait })}</p>}
+      {list.length === 0 && <p className="muted small">{t('contest.none')}</p>}
+      <ul>
+        {list.map((id) => {
+          const done = k.challenged?.done.includes(id);
+          const kind = isAct(campaign, id) ? 'act' : isBill(campaign, id) ? 'bill' : 'programme';
+          return (
+            <li className="action" key={id}>
+              <div className="grow">
+                <span className="action-title">{t(`pledge.${id}` as StringKey)}</span>
+                <span className="action-meta">{t(`contest.kind.${kind}` as StringKey)} · {t(opposition(world, id) > 0 ? 'contest.unpopular' : 'contest.popular')}</span>
+                {done && <span className="action-reason">{t('contest.done')}</span>}
+              </div>
+              {METHODS.map((m) => {
+                const check = canChallenge(world, campaign, id, m);
+                const odds = m === 'public' ? null : Math.round(challengeOdds(world, campaign, id, m) * 100);
+                return (
+                  <button
+                    key={m} className="btn small" disabled={!check.ok}
+                    title={t('contest.cost', { rm: f.rm(scaled(world, CHALLENGE.money[m])), dossier: CHALLENGE.dossier[m] })}
+                    onClick={() => challengePolicy(id, m)}
+                  >
+                    {t(`contest.${m}` as StringKey)}{odds !== null && ` · ${odds}%`}
+                  </button>
+                );
+              })}
+            </li>
+          );
+        })}
       </ul>
     </>
   );
