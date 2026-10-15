@@ -15,10 +15,20 @@ describe('a brand-new party in a single contest', () => {
     expect(fresh.id).toBe('general');
     for (const seat of fresh.seats) {
       const total = seat.last.votes.reduce((a, b) => a + b, 0);
-      expect(seat.last.votes[GENBA] / total).toBeGreaterThanOrEqual(NEW_PARTY_SHARE.general * 0.9);
+      expect(seat.last.votes[GENBA] / total).toBeGreaterThanOrEqual(NEW_PARTY_SHARE.general * 0.4);
     }
     expect(plain.seats.filter((s) => s.last.votes[GENBA] > 0).length).toBeLessThan(plain.seats.length / 4);
     expect(newPartyWorld('general')).toBe(fresh);
+  });
+
+  it('does not follow the same share in every seat of a state, but stays near what the contest gives a new party', () => {
+    const fresh = newPartyWorld('state:penang')!;
+    const shares = fresh.seats.map((seat) => seat.last.votes[GENBA] / seat.last.votes.reduce((a, b) => a + b, 0));
+    expect(new Set(shares.map((x) => x.toFixed(3))).size).toBeGreaterThan(shares.length / 2);
+    const mean = shares.reduce((a, b) => a + b, 0) / shares.length;
+    expect(mean).toBeGreaterThan(0.08);
+    expect(mean).toBeLessThan(0.16);
+    expect(Math.min(...shares)).toBeGreaterThan(0.05);
   });
 
   it('is offered for every kind of contest but a hung parliament, and never for a career', () => {

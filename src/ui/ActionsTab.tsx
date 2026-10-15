@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
-import { ACTIONS, PITCHED, actionCost, canDo, expectedPitchGain, expectedSeatGain, debateOdds, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
-import { ISSUE_IDS, LOCAL_THEMES, POSTURES, type IssueId, type LocalTheme, type Posture } from '../sim/campaign/types';
+import { ACTIONS, PITCHED, blitzAreas, actionCost, canDo, expectedPitchGain, expectedSeatGain, debateOdds, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
+import { ISSUE_IDS, LOCAL_THEMES, POSTURES, SWEEPS, type IssueId, type LocalTheme, type Posture, type Sweep } from '../sim/campaign/types';
 import { weatherIn } from '../sim/campaign/weather';
 import { MEDIA_AIMED, resentfulOf, segmentShare, segmentsOf, type SegmentId } from '../sim/campaign/segments';
 import { probeChance } from '../sim/campaign/spending';
@@ -18,7 +18,7 @@ import { EntriesPanel } from './Entries';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
   { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival', 'local'] },
-  { family: 'machinery', actions: ['canvass', 'gotv', 'build', 'conference'] },
+  { family: 'machinery', actions: ['canvass', 'gotv', 'build', 'blitz', 'conference'] },
   { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack', 'troops'] },
   { family: 'funds', actions: ['dinner', 'crowdfund', 'tycoon'] },
 ];
@@ -27,7 +27,7 @@ const FAMILIES: { family: Family; actions: ActionId[] }[] = [
 const ACTION_ICON: Record<ActionId, IconName> = {
   ceramah: 'megaphone', walkabout: 'walk', megarally: 'flag', canvass: 'home', gotv: 'ballot', build: 'tool',
   tv: 'tv', social: 'phone', billboards: 'board', attack: 'bolt', dinner: 'coins', crowdfund: 'heart', tycoon: 'crown',
-  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic', local: 'flag', troops: 'bolt',
+  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic', local: 'flag', troops: 'bolt', blitz: 'board',
 };
 
 const GROUPS_KEY = 'k222.groups';
@@ -71,6 +71,7 @@ export function ActionsTab() {
   const [segment, setSegment] = useState<SegmentId | null>(null);
   // A state’s or a seat’s manifesto is about one thing.
   const [localTheme, setLocalTheme] = useState<LocalTheme>('roads');
+  const [sweep, setSweep] = useState<Sweep>('flags');
   // A debate: the question to be answered, and the way of answering it.
   const hottest = campaign.career ? [...ISSUE_IDS].sort((a, b) => campaign.career!.salience[ISSUE_IDS.indexOf(b)] - campaign.career!.salience[ISSUE_IDS.indexOf(a)]).slice(0, 4) : [];
   const [debateTopic, setDebateTopic] = useState<IssueId | undefined>(undefined);
@@ -91,6 +92,8 @@ export function ActionsTab() {
 
   /** Whether an action can be done now, or only waits for the player to pick a seat on the map. */
   const available = (id: ActionId) => {
+    // The blitz is for a state's election only.
+    if (id === 'blitz' && world.rules.kind !== 'state') return false;
     const targets: ActionTarget[] =
       ACTIONS[id].target === 'seat' ? [{ seat: seat?.id, ...(segment && PITCHED.includes(id) ? { segment } : {}) }]
       : ACTIONS[id].target === 'state' ? [{ state }]
@@ -114,6 +117,7 @@ export function ActionsTab() {
   /** The extra fact shown beside an action's cost: what a fundraiser should bring in, or how strong the machinery is. */
   const extraFor = (id: ActionId, target: ActionTarget): string | undefined => {
     if (id === 'dinner') return t('actions.expected', { rm: f.rm(expectedYield(world, campaign, me, 'dinner', target.state)) });
+    if (id === 'blitz') return t('actions.blitz', { n: blitzAreas(world, campaign, me).length });
     if (id === 'crowdfund' || id === 'tycoon') return t('actions.expected', { rm: f.rm(expectedYield(world, campaign, me, id)) });
     if (ACTIONS[id].target === 'state' && ACTIONS[id].family === 'machinery') return t('actions.machinery', { n: pc.machinery[world.states.indexOf(target.state!)] });
     return undefined;
@@ -159,7 +163,7 @@ export function ActionsTab() {
     const cost = actionCost(world, campaign, me, id, target);
     const gain = target.seat ? expectedSeatGain(world, campaign, me, id, target.seat, target.segment) : null;
     const reason = check.ok ? null
-      : check.reason === 'noTarget' ? t(`reason.noTarget.${ACTIONS[id].target === 'state' ? area : (ACTIONS[id].target as 'seat' | 'party')}`)
+      : check.reason === 'noTarget' ? t(`reason.noTarget.${ACTIONS[id].target === 'state' ? area : (ACTIONS[id].target as 'seat' | 'party' | 'none')}`)
       : t(`reason.${check.reason}` as StringKey);
     return (
       <li
@@ -212,8 +216,8 @@ export function ActionsTab() {
       case 'party':
         return rivals.map((r) => row(id, { party: r, ...(id === 'debate' ? { topic: debateTopic, posture: debatePosture } : {}) }, `${id}-${r}`, `${name} — ${partyShort(t, r)}`, id === 'debate' && campaign.career ? t('debate.odds', { pct: Math.round(debateOdds(world, campaign, me, r, debateTopic, debatePosture) * 100) }) : undefined));
       default: {
-        const target: ActionTarget = mediaSegment && MEDIA_AIMED.includes(id as never) ? { segment: mediaSegment } : id === 'manifesto' && world.rules.kind !== 'general' ? { theme: localTheme } : {};
-        return row(id, target, id, target.segment ? `${name} · ${t(`bloc.${target.segment}`)}` : name, extraFor(id, target));
+        const target: ActionTarget = mediaSegment && MEDIA_AIMED.includes(id as never) ? { segment: mediaSegment } : id === 'manifesto' && world.rules.kind !== 'general' ? { theme: localTheme } : id === 'blitz' ? { sweep } : {};
+        return row(id, target, id, id === 'blitz' ? `${name} · ${t(`sweep.${sweep}` as StringKey)}` : target.segment ? `${name} · ${t(`bloc.${target.segment}`)}` : name, extraFor(id, target));
       }
     }
   };
@@ -265,6 +269,14 @@ export function ActionsTab() {
               )}
               {actions.map((id) => (
                 <li key={id} className="action-group">
+                  {id === 'blitz' && world.rules.kind === 'state' && (
+                    <section className="pitch" aria-label={t('sweep.title')}>
+                      <p className="muted small"><strong>{t('sweep.title')}</strong> — {t('sweep.note')}</p>
+                      <div className="chips" role="group" aria-label={t('sweep.title')}>
+                        {SWEEPS.map((x) => <button key={x} className={sweep === x ? 'chip active' : 'chip'} aria-pressed={sweep === x} onClick={() => setSweep(x)}>{t(`sweep.${x}` as StringKey)}</button>)}
+                      </div>
+                    </section>
+                  )}
                   {id === 'manifesto' && world.rules.kind !== 'general' && (
                     <section className="pitch" aria-label={t('theme.title')}>
                       <p className="muted small"><strong>{t('theme.title')}</strong> — {t('theme.note')}</p>

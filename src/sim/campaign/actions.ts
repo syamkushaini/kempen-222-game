@@ -15,7 +15,7 @@ import { MEDIA_AIMED, MIN_SEGMENT, addAimedPitch, aimReach, isBloc, segmentShare
 import { stateOf } from './agenda';
 import { ISSUE_IDS, type IssueId } from './types';
 import type {
-  ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, LocalTheme, PartyCampaign, Posture, Quality, TargetKind,
+  ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, LocalTheme, PartyCampaign, Posture, Quality, Sweep, TargetKind,
 } from './types';
 
 export interface ActionDef {
@@ -53,6 +53,7 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   radio:      { family: 'media',     target: 'state', days: 0.5, presence: false, perWeek: 1 },
   local:      { family: 'ground',    target: 'state', days: 1,   presence: true,  perWeek: 1 },
   troops:     { family: 'media',     target: 'party', days: 0.5, presence: false, perWeek: 1 },
+  blitz:      { family: 'machinery', target: 'none',  days: 2,   presence: false, perWeek: 1 },
 };
 
 /**
@@ -174,6 +175,8 @@ export const EFFECT = {
   tv: 0.03,
   social: 0.018,
   billboards: 0.012,
+  // The branches hang flags and banners in every area at once: each area gets this share of what its own billboards would, for this share of the price.
+  blitz: 0.75, blitzPrice: 0.7,
   attack: 0.025, attackMotivation: 0.03, attackBackfire: 0.02, attackBackfireChance: 0.3,
   lateSwing: 0.04,
   townhall: 0.14, townhallFlopChance: 0.2, townhallFlop: 0.04, townhallFlopNat: 0.008,
@@ -269,6 +272,7 @@ export function actionState(world: World, id: ActionId, target: ActionTarget): R
 
 function usageKey(id: ActionId, target: ActionTarget): string {
   const def = ACTIONS[id];
+  if (id === 'blitz') return `blitz:${sweepOf(target)}`;
   return def.target === 'seat' ? `${id}:${target.seat}` : def.target === 'state' ? `${id}:${target.state}` : id;
 }
 
@@ -304,6 +308,21 @@ const room = (current: number, cap: number) => Math.max(0, 1 - current / cap);
 
 export interface Cost { days: number; money: number; travelDays: number }
 
+/** The areas a flag-and-banner blitz would reach: every one of the contest where the party has candidates. */
+export const blitzAreas = (world: World, c: Campaign, p: number): RegionId[] => world.states.filter((st) => contestsState(world, c, p, st));
+/** The sweep a blitz is of: flags and banners if none is said. */
+export const sweepOf = (target: ActionTarget): Sweep => target.sweep ?? 'flags';
+/** What each sweep costs in one area, at the party's scale: what the same thing costs on its own there. */
+const SWEEP_COST: Record<Sweep, (seats: number) => number> = {
+  flags: (n) => 20_000 + 3_500 * n,
+  doors: (n) => 15_000 + 4_000 * n,
+  turnout: (n) => 15_000 + 4_000 * n,
+  branches: () => 60_000,
+};
+/** What the blitz costs: the same thing done in every area, at a discount for doing them together. */
+const blitzMoney = (world: World, c: Campaign, p: number, sweep: Sweep): number =>
+  scaled(world, Math.round(blitzAreas(world, c, p).reduce((a, st) => a + SWEEP_COST[sweep](world.seatsByState[st].length), 0) * EFFECT.blitzPrice));
+
 /** What an action costs the leader, or (with `chief`) what it costs when the region's chief does it instead. */
 export function actionCost(world: World, c: Campaign, p: number, id: ActionId, target: ActionTarget, chief = false): Cost {
   const def = ACTIONS[id];
@@ -324,6 +343,9 @@ export function actionCost(world: World, c: Campaign, p: number, id: ActionId, t
       break;
     case 'billboards':
       money = st ? scaled(world, 20_000 + 3_500 * world.seatsByState[st].length) : 0;
+      break;
+    case 'blitz':
+      money = blitzMoney(world, c, p, sweepOf(target));
       break;
     default:
       money = 0;
@@ -348,6 +370,10 @@ export function canDo(world: World, c: Campaign, p: number, id: ActionId, target
   const pc = c.parties[p];
   if (!pc || !world.rules.actions.includes(id)) return no('noCampaign');
   if (chief && !CHIEF_ACTIONS.includes(id)) return no('noCampaign');
+  // The blitz is for a state's election, where the areas are many and the days few; it needs at least two areas to be worth the name.
+  if (id === 'blitz' && (world.rules.kind !== 'state' || blitzAreas(world, c, p).length < 2)) return no('noTarget');
+  // Getting the vote out works only in the last weeks, in a sweep as on its own.
+  if (id === 'blitz' && sweepOf(target) === 'turnout' && c.week <= c.totalWeeks - gotvWeeks(c)) return no('tooEarly');
 
   if (def.target === 'seat') {
     const i = target.seat === undefined ? undefined : world.seatIndex.get(target.seat);
@@ -572,6 +598,21 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
     case 'billboards':
       boostBlocs(stateSupport(c, st!), p, EFFECT.billboards * onAir * roll, null, CAP.state);
       break;
+    case 'blitz': {
+      // Every area where the party has candidates; the better its branches are built there, the more they get done.
+      const sweep = sweepOf(target);
+      for (const area of blitzAreas(world, c, p)) {
+        const i = stateIndex(world, area);
+        const built = 0.5 + 0.5 * Math.min(1, pc.machinery[i] / 60);
+        const ground = (pc.machinery[i] / 60) * Math.min(1, 0.5 + pc.unity / 100);
+        if (sweep === 'flags') boostBlocs(stateSupport(c, area), p, EFFECT.billboards * EFFECT.blitz * organised * built * onAir * roll, null, CAP.state);
+        else if (sweep === 'doors') boostBlocs(stateSupport(c, area), p, EFFECT.canvass * EFFECT.blitz * organised * ground * roll, GROUND_REACH, CAP.state);
+        else if (sweep === 'turnout') { const t = stateTurnout(c, area); t[p] += EFFECT.gotv * EFFECT.blitz * organised * ground * roll * room(t[p], CAP.stateTurnout); }
+        else pc.machinery[i] = Math.min(100, pc.machinery[i] + Math.round(EFFECT.build * EFFECT.blitz * organised * (pc.machinery[i] < NEW_GROUND ? EFFECT.buildNew : 1)));
+      }
+      if (sweep === 'branches') quality = 'ok';
+      break;
+    }
     case 'troops': {
       // A hand on the keyboards: accounts that are not people say what people would not. It works, for a while, and the longer it goes on the likelier it is to come out.
       const rival = target.party!;

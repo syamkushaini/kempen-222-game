@@ -18,6 +18,8 @@ export const ACTION_IDS = [
   'troops',
   // The thing that is done in one state and no other.
   'local',
+  // A state election's flags and banners, hung in every area at once.
+  'blitz',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 export type Family = 'ground' | 'machinery' | 'media' | 'funds';
@@ -29,7 +31,13 @@ export type LocalTheme = (typeof LOCAL_THEMES)[number];
 export type Posture = 'policy' | 'attack' | 'warm';
 export const POSTURES: readonly Posture[] = ['policy', 'attack', 'warm'];
 
+/** What the branches do in every area at once, when a state's election sends them all out together. */
+export const SWEEPS = ['flags', 'doors', 'branches', 'turnout'] as const;
+export type Sweep = (typeof SWEEPS)[number];
+
 export interface ActionTarget {
+  /** A sweep of every area: the one thing the branches do there. Flags and banners when absent. */
+  sweep?: Sweep;
   seat?: string;
   /** Region id. */
   state?: RegionId;
