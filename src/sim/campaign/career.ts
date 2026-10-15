@@ -182,7 +182,7 @@ function freshCareer(term: number, government: Outcome, results: SeatResults | n
 }
 
 /** A new government takes office: ministers are appointed and, if the player leads it, what was promised to partners falls due. */
-function takeOffice(c: Campaign): void {
+export function takeOffice(c: Campaign): void {
   const rng = new Rng(c.rng);
   formCabinet(c, rng);
   c.rng = rng.state;
@@ -309,6 +309,7 @@ export function setOrders(world: World, c: Campaign, patch: Partial<Orders>): vo
   if (patch.focusStates) {
     o.focusStates = [...new Set(patch.focusStates)].filter((st) => world.states.includes(st) && contestsState(world, c, c.player, st)).slice(0, MAX_FOCUS_STATES);
   }
+  if (patch.develop) o.develop = hasPublicMoney(c) ? [...new Set(patch.develop)].filter((st) => world.states.includes(st)).slice(0, MAX_FOCUS_STATES) : [];
   if (isLevel(patch.donors)) o.donors = patch.donors;
   if (isLevel(patch.state)) o.state = hasPublicMoney(c) ? patch.state : 0;
   if (isLevel(patch.grants)) o.grants = hasPublicMoney(c) ? patch.grants : 0;

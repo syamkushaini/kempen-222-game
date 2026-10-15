@@ -1,7 +1,7 @@
 import {
   ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, machineryTargets, ledger, termIncome, termSpending,
 } from '../sim/campaign/career';
-import { govMoney, grantsCost, hasPublicMoney, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
+import { creditShare, govMoney, grantsCost, hasPublicMoney, RIVAL_CREDIT, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
 import { useState } from 'react';
 import { contestsState, scaled } from '../sim/campaign/actions';
 import { ROUNDS, STATE_GOVERNMENT_INCOME, statesHeld } from '../sim/campaign/contests';
@@ -286,6 +286,29 @@ export function OrdersTab() {
               <LevelSwitch label={t('orders.gov.grants')} value={o.grants ?? 0} onChange={(level) => setOrders({ grants: level })} />
             </li>
           </ul>
+          {world.rules.kind !== 'state' && (
+            <div className="develop">
+              <span className="action-title">{t('orders.develop')}</span>
+              <p className="muted small action-desc">{t('orders.develop.desc', { pct: Math.round(RIVAL_CREDIT * 100) })}</p>
+              <div className="chips">
+                {world.states.map((st) => {
+                  const chosen = o.develop ?? [];
+                  const on = chosen.includes(st);
+                  const holder = k.states[st];
+                  const rival = creditShare(campaign, st) < 1;
+                  return (
+                    <button
+                      key={st} className={on ? 'chip active' : 'chip'} aria-pressed={on}
+                      onClick={() => setOrders({ develop: on ? chosen.filter((x) => x !== st) : [...chosen, st] })}
+                    >
+                      {regionLabel(t, world, st)}{holder !== undefined && <span className="muted small"> · {partyName(t, holder)}{rival ? ' ⚑' : ''}</span>} <span className="num">{Math.round(k.goodwill?.[st] ?? 0)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="muted small">{(o.develop ?? []).length ? t('orders.develop.chosen', { states: (o.develop ?? []).map((st) => regionLabel(t, world, st)).join(', ') }) : t('orders.develop.none')}</p>
+            </div>
+          )}
           {Object.keys(k.goodwill ?? {}).length > 0 && (
             <p className="note">{t('orders.gov.goodwill', { places: Object.entries(k.goodwill!).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([st, v]) => `${regionLabel(t, world, st)} ${Math.round(v)}`).join(' · ') })}</p>
           )}

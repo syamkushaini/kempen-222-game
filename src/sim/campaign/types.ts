@@ -301,6 +301,8 @@ export interface Orders {
   state: Level;
   /** How much of the government's money goes each week to development grants in the target regions. Absent in a game saved before the treasury existed. */
   grants?: Level;
+  /** The states the government chooses to develop: up to three, and the grants go there, whether or not the party stands in them. None means the target states. */
+  develop?: RegionId[];
 }
 
 /** An election's result in every seat, kept so the next term can be fitted to it. */
@@ -501,6 +503,8 @@ export interface Missions {
 export interface Career {
   /** The opposition's challenges to the government's policies this parliament: when the last was made, and what has been challenged. */
   challenged?: { last: number; done: string[] };
+  /** The parties the leader has left after being removed from them, with when: set once they have joined another (see switching.ts). */
+  previous?: { party: number; term: number; week: number }[];
   /**
    * The seat-by-seat result of each state election the player fought in person, by state, so that the next one in that state is fitted to it
    * as a general election is (see `fightWorld`). Absent until one has been fought, and in a game saved before it existed.
