@@ -182,7 +182,7 @@ function freshCareer(term: number, government: Outcome, results: SeatResults | n
 }
 
 /** A new government takes office: ministers are appointed and, if the player leads it, what was promised to partners falls due. */
-function takeOffice(c: Campaign): void {
+export function takeOffice(c: Campaign): void {
   const rng = new Rng(c.rng);
   formCabinet(c, rng);
   c.rng = rng.state;
