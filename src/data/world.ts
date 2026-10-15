@@ -190,6 +190,16 @@ export function getWorld(id: string): World | null {
 /** Whether a contest can be fought by a party the player founded: any single contest, but not a hung parliament, whose votes are already in. */
 export const canFound = (kind: ContestKind) => kind === 'byelection' || kind === 'state' || kind === 'general';
 
+/** A number from 0 to 1 that depends only on the text: the same seat always gets the same one. */
+function unit(text: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
+  // Names that differ only at the end hash to nearly the same number: mix the bits again so that they do not.
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+  return ((h ^ (h >>> 16)) >>> 0) / 0xffffffff;
+}
+
 /**
  * The world for a contest fought by a brand-new party: the same seats and results, with the new party on every ballot
  * and given the following a new party arrives with. It keeps the contest's own id, so maps and saves read it as the same contest.
@@ -203,16 +213,19 @@ export function newPartyWorld(id: string): World | null {
   if (!plan || plan.rules.career || !kind || !canFound(kind)) return null;
   const share = NEW_PARTY_SHARE[kind as keyof typeof NEW_PARTY_SHARE];
   const p = PARTY_IDS.indexOf(FOUNDING_SLOT);
-  const seed = (votes: number[]) => {
+  // The same share in every seat would read as a flat line across the map (14% of the old total is 12.3% of the new, in every seat). A new
+  // party does better where the voters are less tied to one side, and its following is never quite the same from one seat to the next.
+  const seed = (votes: number[], seat: string) => {
     const total = votes.reduce((a, b) => a + b, 0);
     const out = [...votes];
-    out[p] = Math.max(out[p], Math.round(total * share));
+    const open = Math.min(1.4, Math.max(0.6, (1 - Math.max(...votes) / Math.max(1, total)) / 0.4));
+    out[p] = Math.max(out[p], Math.round(total * share * open * (0.85 + 0.3 * unit(`${id}:${seat}`))));
     return out;
   };
   const seats = plan.file.seats.map((s) => ({
     ...s,
-    last: { ...s.last, votes: seed(s.last.votes) },
-    ...(s.basis ? { basis: { ...s.basis, votes: seed(s.basis.votes) } } : {}),
+    last: { ...s.last, votes: seed(s.last.votes, s.id) },
+    ...(s.basis ? { basis: { ...s.basis, votes: seed(s.basis.votes, s.id) } } : {}),
   }));
   const built = createWorld({ ...plan.file, seats }, plan.rules, id);
   cache.set(key, built);
