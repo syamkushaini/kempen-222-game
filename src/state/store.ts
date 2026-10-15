@@ -51,6 +51,7 @@ import { formUnity } from '../sim/campaign/grand';
 import { offerDeputy } from '../sim/campaign/plots';
 import { aidSector, type SectorId } from '../sim/campaign/sectors';
 import { openInquiry } from '../sim/campaign/committee';
+import { challenge, type Method } from '../sim/campaign/challengePolicy';
 import { dissolveAlliance, expel, foundAlliance, invite, setAllianceLook as setAlliance } from '../sim/campaign/alliance';
 import { renewSupply, signSupply, type SupplyPrice } from '../sim/campaign/supply';
 import { merge } from '../sim/campaign/merge';
@@ -274,6 +275,8 @@ interface Store {
   formUnity(): void;
   offerDeputy(party: number): void;
   inquiry(): void;
+  /** The opposition challenges a policy of the government: in the House, in court, or before the public. */
+  challengePolicy(id: PledgeId, method: Method): void;
   foundAlliance(name: number, mark: number, title?: string, color?: string): void;
   setAllianceLook(title: string | undefined, color: string | undefined): void;
   inviteAlly(party: number): void;
@@ -574,6 +577,7 @@ export const useStore = create<Store>((set, get) => {
     expel: (party) => mutate((c, _g, world) => { expel(world, c, party); }),
     renewSupply: (party) => mutate((c, _g, world) => { renewSupply(world, c, party); }),
     inquiry: () => mutate((c, _g, world) => { openInquiry(world, c); }),
+    challengePolicy: (id, method) => mutate((c, _g, world) => { challenge(world, c, id, method); }),
     agreeEarly: (party) => mutate((c, _g, world) => { agreeEarly(world, c, party); }),
     dropEarly: (party) => mutate((c) => { dropEarly(c, party); }),
     formUnity: () => mutate((c, _g, world) => { formUnity(world, c); }),

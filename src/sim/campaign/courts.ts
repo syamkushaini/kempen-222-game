@@ -92,18 +92,23 @@ export function courtWeek(c: Campaign, rng: Rng): void {
   if (k.week % COURT.every !== 0 || !k.laws?.length) return;
   for (const id of [...k.laws]) {
     if (rng.next() >= strikeChance(c, id)) continue;
-    k.laws = k.laws.filter((x) => x !== id);
-    if (k.laws.length === 0) delete k.laws;
-    forgetAct(k, id);
-    delete k.delivery[id];
-    // The party that made it loses part of what it gained.
-    const pm = k.government.pm;
-    for (const [bloc, v] of Object.entries(PLEDGES[id].appeal)) if (v > 0) lift(k, pm, [bloc as BlocId], -v * COURT.undo);
-    if (pm === c.player) {
-      k.government.trust = clamp(k.government.trust - COURT.trust, 0, 100);
-      k.credibility = clamp(k.credibility - COURT.credibility, 0, 100);
-    }
-    pushNews(c, { party: pm, key: 'news.court.struck', vars: { bill: `@bill:pledge:${id}` }, tone: pm === c.player ? 'bad' : 'neutral' });
+    strikeDown(c, id);
     return;
   }
+}
+
+/** The court strikes an Act off the books: the party that made it loses part of what it gained, and if the player led it, its word. */
+export function strikeDown(c: Campaign, id: PledgeId): void {
+  const k = c.career!;
+  k.laws = (k.laws ?? []).filter((x) => x !== id);
+  if (k.laws.length === 0) delete k.laws;
+  forgetAct(k, id);
+  delete k.delivery[id];
+  const pm = k.government.pm;
+  for (const [bloc, v] of Object.entries(PLEDGES[id].appeal)) if (v > 0) lift(k, pm, [bloc as BlocId], -v * COURT.undo);
+  if (pm === c.player) {
+    k.government.trust = clamp(k.government.trust - COURT.trust, 0, 100);
+    k.credibility = clamp(k.credibility - COURT.credibility, 0, 100);
+  }
+  pushNews(c, { party: pm, key: 'news.court.struck', vars: { bill: `@bill:pledge:${id}` }, tone: pm === c.player ? 'bad' : 'neutral' });
 }

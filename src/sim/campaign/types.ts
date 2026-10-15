@@ -499,6 +499,8 @@ export interface Missions {
 }
 
 export interface Career {
+  /** The opposition's challenges to the government's policies this parliament: when the last was made, and what has been challenged. */
+  challenged?: { last: number; done: string[] };
   /**
    * The seat-by-seat result of each state election the player fought in person, by state, so that the next one in that state is fitted to it
    * as a general election is (see `fightWorld`). Absent until one has been fought, and in a game saved before it existed.
