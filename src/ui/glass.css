@@ -306,3 +306,10 @@ hr, .rule { border-color: var(--line); }
   :root[data-theme='light'][data-skin='paper'] { --glass: #fbf5e4; --glass-strong: #fbf5e4; --panel: #fbf5e4; --panel-2: #f4ead1; --panel-3: #eadfc2; --panel-4: #ddd0ae; --fill: #f4ead1; --fill-2: #eadfc2; --blur: none; --glass-edge: rgb(96 72 32 / 40%); }
   :root[data-theme='dark'][data-skin='midnight'] { --glass: #060607; --glass-strong: #0b0b0d; --panel: #060607; --panel-2: #0b0b0d; --panel-3: #111114; --panel-4: #17171a; --fill: #111114; --fill-2: #17171a; --blur: none; --glass-edge: rgb(255 255 255 / 40%); }
 }
+
+/* On a phone the bars and the money sheet sit over scrolling text: it must not show through them. */
+.money-sheet { background: var(--bg); }
+@media (max-width: 980px) {
+  .campaign-bar, .phone-nav { background: color-mix(in srgb, var(--bg) 94%, transparent); }
+  .header::before { background: color-mix(in srgb, var(--bg) 94%, transparent); }
+}

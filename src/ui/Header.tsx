@@ -4,6 +4,7 @@ import { hasPublicMoney, treasuryOf } from '../sim/campaign/treasury';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import { MenuButton } from './GameMenu';
+import { MoneyButton } from './MoneySheet';
 import { Delta } from './Delta';
 import { Icon } from './Icon';
 import { PartyMark } from './identity';
@@ -33,7 +34,6 @@ function EndWeekButton({ className = '' }: { className?: string }) {
 /** The days left, funds and End week button, kept at the bottom of a phone screen so they never scroll away. */
 export function CampaignBar() {
   const t = useT();
-  const f = useFormat();
   const campaign = useStore((s) => s.game!.campaign);
   const narrow = useNarrow();
   if (campaign.phase !== 'campaign' || !narrow) return null;
@@ -44,10 +44,7 @@ export function CampaignBar() {
         <span className="hud-label">{t('hud.days')}</span>
         <strong className="num hud-value">{me.days}</strong>
       </div>
-      <div className="hud-item">
-        <span className="hud-label">{t('hud.funds')}</span>
-        <strong className="num hud-value">{f.rm(me.funds)}</strong>
-      </div>
+      <MoneyButton />
       <EndWeekButton />
     </div>
   );
@@ -143,23 +140,15 @@ function TermHud() {
 /** Between elections, on a phone: the money and the buttons that move time, kept at the bottom where a thumb is. */
 export function TermBar() {
   const t = useT();
-  const f = useFormat();
-  const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const advance = useStore((s) => s.advance);
   const narrow = useNarrow();
   const k = campaign.career;
   if (campaign.phase !== 'term' || !narrow || !k || k.ending) return null;
-  const me = campaign.parties[campaign.player]!;
-  const net = termIncome(world, campaign).total - termSpending(world, campaign).total;
   const waiting = campaign.inbox.length > 0;
   return (
     <div className="campaign-bar term-bar">
-      <div className="hud-item">
-        <span className="hud-label">{t('hud.funds')}</span>
-        <strong className="num hud-value">{f.rm(me.funds)} <span className={`small ${net < 0 ? 'neg' : 'muted'}`}>{net < 0 ? '−' : '+'}{f.rm(Math.abs(net))}</span></strong>
-        {hasPublicMoney(campaign) && <span className="hud-sub small muted">{t('hud.gov')} {f.rm(treasuryOf(campaign))}</span>}
-      </div>
+      <MoneyButton />
       <div className="button-row tight term-buttons">
         <button className="btn small" disabled={waiting} onClick={() => advance(1)} aria-label={t('term.next')}>▸ 1</button>
         <button className="btn small" disabled={waiting} onClick={() => advance(4)} aria-label={t('term.month')}>▸▸ 4</button>
