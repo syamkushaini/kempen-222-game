@@ -1,3 +1,4 @@
+import { pinchFactor } from './mapGesture';
 import {
   AmbientLight, BoxGeometry, BufferAttribute, BufferGeometry, Color, ConeGeometry, CylinderGeometry, DirectionalLight, ExtrudeGeometry, Group,
   HemisphereLight, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, MeshLambertMaterial, OctahedronGeometry, Path, PerspectiveCamera, Raycaster, Scene, Shape,
@@ -110,6 +111,13 @@ export class MapScene3D {
   private selectedState: string | null = null;
   private display: SeatLook[] = [];
   private pointer: { x: number; y: number } | null = null;
+  /** The fingers on the map, and how far apart the first two are: a pinch zooms it. */
+  private fingers = new Map<number, { x: number; y: number }>();
+  private spread = 0;
+  private fingerSpread(): number {
+    const [a, b] = [...this.fingers.values()];
+    return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+  }
   private down: { x: number; y: number } | null = null;
   /** Width or height of the area on show: heights, tiles and markers are in proportion to it, so they follow the camera into a state. */
   private size: number;
@@ -166,8 +174,19 @@ export class MapScene3D {
       this.cleanup.push(() => el.removeEventListener(type, fn));
     };
     on('wheel', (e) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); this.zoomBy(e.deltaY < 0 ? 1.2 : 1 / 1.2); } }, { passive: false });
-    on('pointerdown', (e) => { this.down = { x: e.clientX, y: e.clientY }; });
+    on('pointerdown', (e) => {
+      this.down = { x: e.clientX, y: e.clientY };
+      this.fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      // A second finger makes it a pinch, not a tap.
+      if (this.fingers.size >= 2) { this.down = null; this.spread = this.fingerSpread(); }
+    });
+    const lift = (e: PointerEvent) => {
+      this.fingers.delete(e.pointerId);
+      this.spread = this.fingers.size >= 2 ? this.fingerSpread() : 0;
+    };
+    on('pointercancel', lift);
     on('pointerup', (e) => {
+      lift(e);
       const d = this.down;
       this.down = null;
       if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5) return;
@@ -175,6 +194,16 @@ export class MapScene3D {
       if (id) this.o.onPick(id);
     });
     on('pointermove', (e) => {
+      // Two fingers zoom the map, as the buttons do; a plain scroll with a mouse still belongs to the page.
+      if (this.fingers.has(e.pointerId)) {
+        this.fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (this.fingers.size >= 2) {
+          const now = this.fingerSpread();
+          const factor = pinchFactor(this.spread, now);
+          this.spread = now;
+          if (factor !== 1) this.zoomBy(factor);
+        }
+      }
       if (e.buttons) { this.o.onHover(null, 0, 0); return; }
       this.pointer = { x: e.clientX, y: e.clientY };
       if (!this.frame) this.frame = requestAnimationFrame((t) => this.tick(t));
