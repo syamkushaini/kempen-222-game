@@ -1,5 +1,8 @@
 import { seatOf } from '../sim/campaign/events';
 import { careerYears } from '../sim/campaign/legacy';
+import { inGovernment } from '../sim/campaign/career';
+import { canSwitch, SWITCH_COST, takers } from '../sim/campaign/switching';
+import { worldOf } from '../data/world';
 import { useStore } from '../state/store';
 import { useMemo, useState } from 'react';
 import { leaderName, partyName, useT } from './hooks';
@@ -12,12 +15,15 @@ export function LegacyScreen() {
   const t = useT();
   const campaign = useStore((s) => s.game!.campaign);
   const quitToTitle = useStore((s) => s.quitToTitle);
+  const switchParty = useStore((s) => s.switchParty);
   const k = campaign.career!;
   const end = k.ending!;
   const r = k.record;
   const years = careerYears(campaign);
   const [sharing, setSharing] = useState(false);
   const card = useMemo(() => legacyCard(t, campaign), [t, campaign]);
+  const world = worldOf(campaign);
+  const options = world && canSwitch(campaign) ? takers(world, campaign) : [];
   return (
     <main className="title legacy">
       <section className="panel title-main">
@@ -47,6 +53,19 @@ export function LegacyScreen() {
         </dl>
         <p className="note">{t('legacy.left', { party: partyName(t, campaign.player), seat: t(`orders.seat.${seatOf(campaign)}`) })}</p>
         <p className="muted small">{t('legacy.hung')}</p>
+        {options.length > 0 && (
+          <section className="panel switch-offer">
+            <h3>{t('switch.title')}</h3>
+            <p className="muted small">{t('switch.intro', { cost: SWITCH_COST.credibility })}</p>
+            <div className="button-row">
+              {options.map((p) => (
+                <button key={p} className="btn" onClick={() => switchParty(p)}>
+                  {t('switch.join', { party: partyName(t, p) })} <span className="muted small">({t(inGovernment(campaign, p) ? 'switch.gov' : 'switch.opp')})</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         <PostCareer />
         <div className="button-row">
           <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>

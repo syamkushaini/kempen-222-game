@@ -15,6 +15,7 @@ import { borrow } from '../sim/campaign/loan';
 import { courtEndorser } from '../sim/campaign/endorsers';
 import type { IdeologyId } from '../sim/campaign/leader';
 import { retire } from '../sim/campaign/legacy';
+import { switchParty } from '../sim/campaign/switching';
 import { hireTroopers, interview } from '../sim/campaign/media';
 import { crossTheFloor, type CrossStake } from '../sim/campaign/crossing';
 import { claim } from '../sim/campaign/claims';
@@ -345,6 +346,8 @@ interface Store {
   crossFloor(party: number, stake: CrossStake): void;
   leaveGovernment(): void;
   retire(): void;
+  /** An ousted leader joins another party and the career goes on. */
+  switchParty(to: number): void;
 
   hire(role: RoleId, index: number): void;
   dismiss(role: RoleId): void;
@@ -711,6 +714,7 @@ export const useStore = create<Store>((set, get) => {
       if (c.phase === 'formation') return { showNight: false, offerReply: null };
     }),
     retire: () => mutate((c) => { retire(c); }),
+    switchParty: (to) => mutate((c, _g, world) => { switchParty(world, c, to); }),
 
     hire: (role, index) => mutate((c) => { hire(c, role, index); }),
     dismiss: (role) => mutate((c) => { dismiss(c, role); }),

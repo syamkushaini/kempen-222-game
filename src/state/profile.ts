@@ -115,7 +115,12 @@ export const totalPoints = (profile: Profile): number => Object.values(profile.c
 
 /** Hangs a finished career in the gallery, once. Returns the same profile if it is already there. */
 export function hang(profile: Profile, entry: LegacyEntry): Profile {
-  if (profile.legacies.some((e) => e.game === entry.game)) return profile;
+  const held = profile.legacies.find((e) => e.game === entry.game);
+  // A leader who was removed and joined another party has one entry, brought up to date when the career really ends.
+  if (held) {
+    if ((Object.keys(entry) as (keyof LegacyEntry)[]).every((key) => key === 'at' || held[key] === entry[key])) return profile;
+    return { ...profile, legacies: profile.legacies.map((e) => (e === held ? { ...entry, at: held.at } : e)) };
+  }
   return { ...profile, legacies: [entry, ...profile.legacies].slice(0, MAX_LEGACIES) };
 }
 
