@@ -907,3 +907,14 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .issue-now { margin: 2px 0 0; }
 .tally-list li.alliance-row { border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-bottom: 4px; }
 .tally-list li.alliance-row .grow { font-weight: 700; }
+
+/* ---------- the money on a phone: one tap says what it is ---------- */
+.hud-btn { background: none; border: 0; padding: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; }
+.hud-btn .hud-label { text-decoration: underline dotted; text-underline-offset: 3px; white-space: nowrap; }
+.money-backdrop { position: fixed; inset: 0; z-index: 29; background: rgb(0 0 0 / 0.25); }
+.money-sheet { position: fixed; left: 12px; right: 12px; bottom: calc(132px + env(safe-area-inset-bottom)); z-index: 30; max-height: 60vh; overflow: auto; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgb(0 0 0 / 0.35); }
+.money-sheet header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.money-sheet h3 { margin: 0; }
+.money-sheet dt { margin-top: 12px; font-weight: 600; }
+.money-sheet dd { margin: 4px 0 0; }
+.term-bar .money-sheet { bottom: calc(132px + env(safe-area-inset-bottom)); }
