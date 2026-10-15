@@ -6,6 +6,7 @@ import { FOUNDING_FUNDS } from './founding';
 import { playable, startingFunds } from './field';
 import { endCareer, OUSTED_BELOW } from './legacy';
 import { pushNews, ref } from './news';
+import { recordAsideResults } from './results';
 import { neutralLeader } from './perks';
 import { electionResult, newCampaign } from './turn';
 import type { Campaign } from './types';
@@ -65,6 +66,9 @@ export function startAside(parent: Campaign, stateWorld: World, state: StateId, 
   const seed = ((parent.rng ^ h) >>> 0) || 1;
   const backstory = parent.team.leader.backstory ?? null;
   const nested = newCampaign(stateWorld, { player: parent.player, difficulty: parent.difficulty, seed, backstory });
+  // A state the party has fought before is fought on the result of that election, not the data's: what it won stays won.
+  const before = parent.career?.stateResults?.[state];
+  if (before) nested.carried = structuredClone(before);
   // The branches the leader built in the state are the ones that fight its election, in every seat of it: a campaign begun afresh gave
   // them back the little that last year's votes would suggest (a hundred in the career, forty-one in the contest).
   const built = parentWorld ? parent.parties[parent.player]?.machinery[parentWorld.states.indexOf(state)] ?? 0 : 0;
@@ -102,6 +106,8 @@ export function settleAside(parent: Campaign, nested: Campaign, stateWorld: Worl
   parent.parties[me]!.funds += Math.max(0, nested.parties[me]?.funds ?? 0);
   const result: StateResult = { state, winner, was: k.states[state], vote: { seats: [...held.tally], before: [...lastElection(stateWorld).tally], inPerson: true } };
   applyStateResults(parent, [result]);
+  const kept = recordAsideResults(stateWorld, nested);
+  if (kept) (k.stateResults ??= {})[state] = kept;
   pushNews(parent, { party: me, key: 'news.states.fought', vars: { state: `@states:${state}`, seats, party: ref.party(winner) }, tone: winner === me ? 'good' : 'neutral' });
   // A leader whose party has lost faith in them is out, whatever the state election did.
   if (parent.parties[me]!.unity <= OUSTED_BELOW) endCareer(parent, 'ousted');

@@ -213,4 +213,29 @@ describe('fighting a state election in person with a party founded from nothing'
     g.aside = { parked: c, state: 'selangor', queue: ['kedah'] };
     expect(parseSave(serializeSave(g))).toEqual({ ok: true, state: g });
   });
+
+  it('carries the result into the next election in that state, as a general election does', () => {
+    const c = due();
+    c.parties[PS]!.funds = 1_000_000;
+    const nested = startAside(c, fightWorld(c, 'selangor')!, 'selangor', base);
+    expect(nested.carried).toBeUndefined();
+    while (nested.phase === 'campaign') { autoPlayWeek(selangor, nested); endWeek(selangor, nested); }
+    closeNight(selangor, nested);
+    for (let d = 0; d < 10 && nested.phase === 'formation'; d++) endDay(selangor, nested);
+    settleAside(c, nested, selangor, 'selangor');
+    const kept = c.career!.stateResults!.selangor;
+    expect(kept.votes).toHaveLength(selangor.seats.length);
+    // The next election there is fought on what was declared, seat by seat: not on the data's old result.
+    const next = fightWorld(c, 'selangor')!;
+    expect(next).not.toBe(selangor);
+    next.seats.forEach((seat, i) => expect(seat.last.votes).toEqual(kept.votes[i]));
+    const again = startAside(c, next, 'selangor', base);
+    expect(again.carried).toEqual(kept);
+    expect(worldOf(again)).toBe(next);
+    // A state not fought in person is still the data's.
+    expect(fightWorld(c, 'kedah')).toBe(kedah);
+    // It goes with the career into the next parliament, and through a save.
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
+    expect(JSON.parse(JSON.stringify(c.career!.stateResults))).toEqual(c.career!.stateResults);
+  }, 60_000);
 });

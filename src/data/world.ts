@@ -224,7 +224,23 @@ export function newPartyWorld(id: string): World | null {
  * the state with that party already on every ballot, as in a state election played alone by a new party.
  */
 export function fightWorld(parent: Pick<Campaign, 'career'>, state: string): World | null {
+  const before = parent.career?.stateResults?.[state];
+  if (before) return stateAfter(`state:${state}`, before) ?? null;
   return parent.career?.founded ? newPartyWorld(`state:${state}`) : getWorld(`state:${state}`);
+}
+
+/** A state's world fitted to the last election fought in it in person, as a career's later terms are fitted to the last general election. */
+function stateAfter(scenario: string, results: SeatResults): World | null {
+  const key = `${scenario}:${fingerprint(results)}`;
+  let built = careerWorlds.get(key);
+  if (!built) {
+    const plan = blueprint(scenario);
+    if (!plan || plan.file.seats.length !== results.votes.length) return null;
+    built = createWorld({ ...plan.file, seats: seatsAfter(plan.file.seats, results) }, plan.rules, scenario);
+    if (careerWorlds.size >= KEPT) careerWorlds.delete(careerWorlds.keys().next().value!);
+    careerWorlds.set(key, built);
+  }
+  return built;
 }
 
 export const scenarioInfo = (id: string) => SCENARIOS.find((s) => s.id === id) ?? null;
@@ -314,7 +330,8 @@ export function ownWorld(scenario: string, p: number): World | null {
 }
 
 /** The world a game is played in: its scenario's world, or for a career past its first election, one built from that election. */
-export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean; player?: number }): World | null {
+export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean; player?: number; carried?: SeatResults }): World | null {
+  if (campaign.carried && !campaign.career) return stateAfter(campaign.scenario, campaign.carried) ?? getWorld(campaign.scenario);
   const results = campaign.career?.results;
   if (!results) {
     if (campaign.career?.founded) return foundedWorld(campaign.scenario, campaign.career.foundedSeat);

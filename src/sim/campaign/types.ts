@@ -499,6 +499,11 @@ export interface Missions {
 }
 
 export interface Career {
+  /**
+   * The seat-by-seat result of each state election the player fought in person, by state, so that the next one in that state is fitted to it
+   * as a general election is (see `fightWorld`). Absent until one has been fought, and in a game saved before it existed.
+   */
+  stateResults?: Record<string, SeatResults>;
   /** Missions the leader has taken on, and those on offer (see missions.ts). Absent until the first are offered. */
   missions?: Missions;
   /** The player founded this party: it began as a one-seat party and grows by winning over the groups its platform suits. */
@@ -756,6 +761,8 @@ export interface Challenge { fog: boolean; noisy: boolean; /** A lean purse: les
 
 /** A campaign in progress: everything the rules need, as plain JSON. */
 export interface Campaign {
+  /** A state election fought in person inside a career: the last result of this state, which it is fitted to in place of the data's. */
+  carried?: SeatResults;
   /** Which contest this is; matches the id of the world it is played in. */
   scenario: string;
   /** Party index the player leads. */
