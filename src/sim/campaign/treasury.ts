@@ -167,8 +167,21 @@ export function grantsCost(world: World, c: Campaign): number {
   return govMoney(world, GRANT_STEP) * (k.orders.grants ?? 0);
 }
 
-/** Where grants go: the regions chosen as targets, or everywhere the party stands. */
+/** How much of the credit for a state's development a rival state government takes for itself. */
+export const RIVAL_CREDIT = 0.3;
+
+/** The share of the goodwill a grant buys that reaches the party: all of it where the party or its allies govern the state, less where a rival does. */
+export function creditShare(c: Campaign, st: RegionId): number {
+  const k = c.career!;
+  const holder = k.states[st];
+  if (holder === undefined || holder === c.player || k.government.pm === holder || k.government.partners.includes(holder)) return 1;
+  return 1 - RIVAL_CREDIT;
+}
+
+/** Where grants go: the states the government chose to develop, else the regions chosen as targets, else everywhere the party stands. */
 export function grantTargets(world: World, c: Campaign): RegionId[] {
+  const develop = (c.career!.orders.develop ?? []).filter((st) => world.states.includes(st));
+  if (develop.length) return develop;
   const chosen = c.career!.orders.focusStates.filter((st) => contestsState(world, c, c.player, st));
   return chosen.length ? chosen : world.states.filter((st) => contestsState(world, c, c.player, st));
 }
@@ -226,7 +239,7 @@ export function treasuryWeek(world: World, c: Campaign): number {
   if (spent > 0) {
     k.treasury -= spent;
     const targets = grantTargets(world, c);
-    for (const st of targets) goodwill[st] = clamp((goodwill[st] ?? 0) + spent / targets.length / govMoney(world, GRANT_PER_POINT), 0, GOODWILL_MAX);
+    for (const st of targets) goodwill[st] = clamp((goodwill[st] ?? 0) + (spent / targets.length / govMoney(world, GRANT_PER_POINT)) * creditShare(c, st), 0, GOODWILL_MAX);
   }
   return toParty;
 }
