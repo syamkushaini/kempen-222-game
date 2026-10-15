@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STREAMFLIX</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="nav">
+  <div class="left">
+    <a class="logo" href="#">STREAMFLIX</a>
+    <nav>
+      <a href="#" data-view="home" class="active">Home</a>
+      <a href="#" data-view="series">TV Shows</a>
+      <a href="#" data-view="movie">Movies</a>
+      <a href="#" data-view="list">My List</a>
+    </nav>
+  </div>
+  <div class="right">
+    <div class="search" id="search">
+      <button id="searchBtn" aria-label="Search">&#128269;</button>
+      <input id="searchInput" type="text" placeholder="Titles, genres" autocomplete="off">
+    </div>
+    <div class="avatar" title="Profile">S</div>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <button class="close" id="closeModal" aria-label="Close">&times;</button>
+    <div class="m-hero" id="mHero"></div>
+    <div class="m-body" id="mBody"></div>
+  </div>
+</div>
+
+<footer>This is a demo UI clone for learning purposes. Not affiliated with Netflix.</footer>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
