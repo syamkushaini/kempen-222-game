@@ -49,6 +49,18 @@ export const DOCTRINES_EN = {
   'news.milestone.readiness.bad': 'Readiness falls under 30: the exercises are cancelled for lack of fuel, and the neighbours notice.',
   'news.milestone.influence.good': 'The armed forces’ say falls under 30: defence is run by civilians, and the barracks keep to the barracks.',
   'news.milestone.influence.bad': 'The armed forces’ say passes 70: the generals are asked about things they were never asked about before, and answer.',
+  'radar.title': 'The shape of the country',
+  'radar.desc': 'Each point is a meter, drawn so that further out is better. The solid shape is now; the dashed shape is where the sliders are taking it in a year. The rings mark the weak (30) and strong (70) lines.',
+  'radar.now': 'Now',
+  'radar.year': 'In a year',
+  'radar.cohesion': 'Cohesion',
+  'radar.tech': 'Technology',
+  'radar.environment': 'Environment',
+  'radar.law': 'Rule of law',
+  'radar.readiness': 'Readiness',
+  'radar.influence': 'Civilian control',
+  'forecast.line': 'The next year at this setting (solid) and at the middle (dashed)',
+  'forecast.end': 'In a year: {at} at this setting, {mid} at the middle',
 };
 
 export const DOCTRINES_MS: Record<keyof typeof DOCTRINES_EN, string> = {
@@ -100,6 +112,18 @@ export const DOCTRINES_MS: Record<keyof typeof DOCTRINES_EN, string> = {
   'news.milestone.readiness.bad': 'Kesiapsiagaan jatuh di bawah 30: latihan dibatalkan kerana kekurangan bahan api, dan jiran perasan.',
   'news.milestone.influence.good': 'Pengaruh angkatan tentera jatuh di bawah 30: pertahanan diurus orang awam, dan berek kekal di berek.',
   'news.milestone.influence.bad': 'Pengaruh angkatan tentera melepasi 70: para jeneral ditanya perkara yang tidak pernah ditanya sebelum ini, dan mereka menjawab.',
+  'radar.title': 'Bentuk negara',
+  'radar.desc': 'Setiap titik ialah satu meter, dilukis supaya lebih jauh bermakna lebih baik. Bentuk padu ialah sekarang; bentuk putus-putus ialah ke mana gelangsar membawanya dalam setahun. Gelang menandakan garis lemah (30) dan kuat (70).',
+  'radar.now': 'Sekarang',
+  'radar.year': 'Setahun lagi',
+  'radar.cohesion': 'Perpaduan',
+  'radar.tech': 'Teknologi',
+  'radar.environment': 'Alam sekitar',
+  'radar.law': 'Undang-undang',
+  'radar.readiness': 'Kesiapsiagaan',
+  'radar.influence': 'Kawalan awam',
+  'forecast.line': 'Setahun akan datang pada tetapan ini (padu) dan di tengah (putus-putus)',
+  'forecast.end': 'Setahun lagi: {at} pada tetapan ini, {mid} di tengah',
 };
 
 export type DoctrineKey = keyof typeof DOCTRINES_EN;

@@ -8,6 +8,8 @@ import type { Career } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import { START_DEFENCE } from '../sim/campaign/defence';
 import { DOCTRINES, METERS, PEERS, STRONG_AT, WEAK_AT, TITLE_WEEKS, doctrineAvailable, doctrineHeld, gradeOf, peerScore } from '../sim/campaign/doctrines';
+import { MeterRadar, Sparkline } from './MeterRadar';
+import { sound } from './audio';
 import { Portrait } from './Portrait';
 import { useFormat, useT, useWorld } from './hooks';
 
@@ -50,6 +52,7 @@ export function MeterSliders() {
         </div>
         <p className="small muted">{thin < 1 ? t('stances.capital.over', { pct: Math.round(thin * 100) }) : used >= cap ? t('stances.capital.full') : t('stances.capital.desc')}</p>
       </div>
+      <MeterRadar k={k} scenario={campaign.scenario} />
       <div className="doctrines">
         <h4>{t('doctrines.title')}</h4>
         <p className="muted small">{t('doctrines.desc')}</p>
@@ -64,7 +67,7 @@ export function MeterSliders() {
                   <p className="small muted">{t(`doctrine.${d.id}.desc` as StringKey)}</p>
                   {on && <p className="small num">{t('doctrines.held', { n: weeks })}{!titles.includes(d.id) && ` · ${Math.min(weeks, TITLE_WEEKS)}/${TITLE_WEEKS}`}</p>}
                 </div>
-                <button type="button" className="btn small" disabled={on} onClick={() => adopt(d.id)}>{on ? t('doctrines.set') : t('doctrines.adopt')}</button>
+                <button type="button" className="btn small" disabled={on} onClick={() => { adopt(d.id); sound.play('good'); navigator.vibrate?.([10, 40, 20]); }}>{on ? t('doctrines.set') : t('doctrines.adopt')}</button>
               </li>
             );
           })}
@@ -81,14 +84,14 @@ export function MeterSliders() {
         const pleased = notch >= 0 ? def.likes : def.dislikes, displeased = notch >= 0 ? def.dislikes : def.likes;
         const growth = (def.growth ?? 0) * notch;
         return (
-          <div key={id} className="plan-card stance">
+          <div key={id} id={`stance-${id}`} className="plan-card stance">
             <div className="result-label">
               <strong>{name}</strong>
               <span className="num muted">{t(`stances.notch.${notch}` as StringKey)}</span>
             </div>
             <p className="muted small">{t(`stance.${id}.desc` as StringKey)}</p>
             <input type="range" min={-2} max={2} step={1} value={notch} aria-label={name} aria-valuetext={t(`stances.notch.${notch}` as StringKey)}
-              onChange={(e) => { const n = Number(e.target.value) as Notch; if (capitalUsed(k, [id, n]) > cap && capitalUsed(k, [id, n]) > used) return; set(id, n); }} list={`stance-ticks-${id}`} />
+              onChange={(e) => { const n = Number(e.target.value) as Notch; if (capitalUsed(k, [id, n]) > cap && capitalUsed(k, [id, n]) > used) return; set(id, n); sound.play('tick'); navigator.vibrate?.(8); }} list={`stance-ticks-${id}`} />
             <datalist id={`stance-ticks-${id}`}>{NOTCHES.map((n) => <option key={n} value={n} />)}</datalist>
             <div className="stance-poles small muted"><span>{t(`stance.${id}.lo` as StringKey)}</span><span>{t(`stance.${id}.hi` as StringKey)}</span></div>
             {(() => {
@@ -105,6 +108,7 @@ export function MeterSliders() {
                 </div>
               );
             })()}
+            <Sparkline k={k} id={id} notch={notch} />
             <p className="small num">
               {t('stances.forecast', { to: Math.round(heading(k, id, notch)), now: Math.round(nowOf(k, id)) })}
               {' · '}{cost < 0 ? t('stances.saves', { rm: f.rm(-cost) }) : t('stances.cost', { rm: f.rm(cost) })}
