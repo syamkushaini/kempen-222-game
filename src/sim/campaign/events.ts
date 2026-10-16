@@ -26,6 +26,7 @@ import { govMoney, hasPublicMoney, treasuryCap, treasuryOf } from './treasury';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { membersFeel } from './members';
 import { nationOf, shiftNation } from './nation';
+import { shiftPestel } from './pestel';
 import { answerAdviser } from './advisers';
 import { queueEcho } from './echoes';
 import { KSU, replaceKsu, shiftKsu } from './ksu';
@@ -125,6 +126,8 @@ export type Effect =
   /** The country cannot pay: the government falls, and what is owed is restructured. */
   | { t: 'bankrupt' }
   | { t: 'nation'; health?: number; education?: number; standing?: number }
+  /** The four PESTEL meters beyond the nation's (see pestel.ts). */
+  | { t: 'pestel'; cohesion?: number; tech?: number; environment?: number; law?: number }
   | { t: 'assets'; pct: number }
   | { t: 'dividend'; pct: number }
   | { t: 'relation'; who: Who; n: number }
@@ -364,6 +367,7 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
       case 'bankrupt': bankrupt(world, c); falls = true; break;
       case 'economy': k.economy.growth += e.growth ?? 0; k.economy.inflation += e.inflation ?? 0; break;
       case 'nation': shiftNation(k, e); break;
+      case 'pestel': shiftPestel(k, e); break;
       case 'assets': scaleHoldings(k, Math.max(0, 1 + e.pct)); break;
       case 'dividend': pc.funds = Math.max(0, pc.funds + Math.round(k.assets * e.pct)); break;
       case 'relation': for (const p of partiesOf(c, e.who)) shiftRelation(c, me, p, e.n); break;

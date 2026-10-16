@@ -372,6 +372,9 @@ export interface Appointment { portfolio: PortfolioId; options: Candidate[] }
 /** How well the country is looked after, and how it stands among other nations, each from 0 to 100. */
 export interface Nation { health: number; education: number; standing: number }
 
+/** The four PESTEL meters the nation's figures did not cover (see pestel.ts), each from 0 to 100. */
+export interface PestelFigures { cohesion: number; tech: number; environment: number; law: number }
+
 /** The figures everyone watches. All in per cent; debt is per cent of national income. */
 export interface Economy {
   growth: number; inflation: number; jobless: number; debt: number;
@@ -516,6 +519,8 @@ export interface Missions {
 }
 
 export interface Career {
+  /** Social cohesion, technology, the environment and the rule of law; absent in a game saved before they existed. */
+  pestel?: PestelFigures;
   /** The opposition's challenges to the government's policies this parliament: when the last was made, and what has been challenged. */
   challenged?: { last: number; done: string[] };
   /** The parties the leader has left after being removed from them, with when: set once they have joined another (see switching.ts). */
