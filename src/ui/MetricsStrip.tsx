@@ -65,7 +65,7 @@ export function MetricsStrip() {
     // How people hold together, the country's technology, its environment and the rule of law; and, for a federal prime minister, the armed forces.
     ...(campaign.phase === 'term' ? (['cohesion', 'tech', 'environment', 'law'] as const).map((key) => {
       const v = (k.pestel ?? START_PESTEL)[key];
-      return { group: 'pestel' as const, id: key, label: t(`pestel.${key}`), text: String(Math.round(v)), bar: v, good: v, delta: v, tab: 'house' as const };
+      return { group: 'pestel' as const, id: key, label: key === 'cohesion' ? t('metrics.cohesion') : t(`pestel.${key}`), text: String(Math.round(v)), bar: v, good: v, delta: v, tab: 'house' as const };
     }) : []),
     ...(campaign.phase === 'term' && defenceShown(campaign) ? (['readiness', 'influence'] as const).map((key) => {
       const v = (k.defence ?? START_DEFENCE)[key];
@@ -81,12 +81,12 @@ export function MetricsStrip() {
       {groups.map(({ g, items }) => (
         <div key={g} className="metric-group" role="group" aria-label={t(`metrics.group.${g}` as StringKey)}>
           <span className="metric-group-name">{t(`metrics.group.${g}` as StringKey)}</span>
-          <div className="metric-row">
+          <div className="metric-row" style={{ ['--n' as string]: items.length }}>
             {items.map((x) => (
               <button key={x.id} type="button" className="metric" data-metric={x.id} title={t('metrics.open', { name: x.label })} onClick={() => setTab(x.tab)}>
                 <span className="metric-label">{x.label}</span>
                 <strong className="num metric-value" style={{ color: tone(x.good) }}>{x.text}{x.delta !== undefined && <Delta value={x.delta} />}</strong>
-                {x.bar !== undefined && <span className="metric-bar" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, x.bar))}%`, background: tone(x.good) }} /></span>}
+                {(x.bar ?? x.good) !== undefined && <span className="metric-bar" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, (x.bar ?? x.good)!))}%`, background: tone(x.good) }} /></span>}
               </button>
             ))}
           </div>
