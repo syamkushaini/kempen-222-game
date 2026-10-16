@@ -1,6 +1,7 @@
 import { WEAK, STRONG } from '../sim/campaign/nation';
-import { PESTEL_GROUPS, groupScore, pestelAnswers, pestelScores } from '../sim/campaign/pestel';
+import { PESTEL_GROUPS, DEFENCE_METERS, groupScore, pestelAnswers, pestelScores, wellness } from '../sim/campaign/pestel';
 import type { StringKey } from '../i18n/strings';
+import { defenceShown } from '../sim/campaign/defence';
 import { useStore } from '../state/store';
 import { useGaugeColour } from './Gauge';
 import { useT } from './hooks';
@@ -17,6 +18,8 @@ export function PestelCard() {
   const colour = useGaugeColour();
   const k = campaign.career!;
   const scores = pestelScores(k);
+  // The armed forces are a federal head of government's to answer for, and no one else's to see.
+  const defence = defenceShown(campaign);
   const e = k.economy;
   /** What is written beside an economic bar: the figure itself, which is what a player knows it by. */
   const figure = (m: string): string | null => (m === 'growth' ? `${e.growth.toFixed(1)}%` : m === 'inflation' ? `${e.inflation.toFixed(1)}%` : m === 'jobless' ? `${e.jobless.toFixed(1)}%` : m === 'debt' ? `${e.debt.toFixed(0)}%` : null);
@@ -25,26 +28,27 @@ export function PestelCard() {
       <h3>{t('pestel.title')}</h3>
       <p className="muted small">{t(pestelAnswers(campaign) ? 'pestel.note.gov' : 'pestel.note.opp')}</p>
       {PESTEL_GROUPS.map((g) => {
-        const score = groupScore(k, g.id);
+        const score = groupScore(k, g.id, defence);
         return (
           <section key={g.id} className="pestel-group" aria-label={t(`pestel.group.${g.id}` as StringKey)}>
             <div className="result-label">
               <strong>{t(`pestel.group.${g.id}.letter` as StringKey)} · {t(`pestel.group.${g.id}` as StringKey)}</strong>
               <span className={`num ${word(score) === 'weak' ? 'neg' : word(score) === 'strong' ? 'pos-text' : 'muted'}`}>{t(`nation.${word(score)}` as StringKey)} · {Math.round(score)}</span>
             </div>
-            <p className="muted small">{t(`pestel.group.${g.id}.desc` as StringKey)}</p>
+            <p className="muted small">{t(`pestel.group.${g.id}.desc` as StringKey)}{g.id === 'political' && defence ? ` ${t('pestel.defence.note')}` : ''}</p>
             <ul className="nation-list">
-              {g.meters.map((m) => {
+              {g.meters.filter((m) => defence || !DEFENCE_METERS.includes(m)).map((m) => {
                 const value = scores[m];
+                const good = wellness(m, value);
                 const fig = figure(m);
                 return (
                   <li key={m}>
                     <div className="result-label">
                       <span>{t(`pestel.${m}` as StringKey)}</span>
-                      <span className={`num ${word(value) === 'weak' ? 'neg' : word(value) === 'strong' ? 'pos-text' : 'muted'}`}>{fig ? `${fig} · ` : ''}{Math.round(value)}</span>
+                      <span className={`num ${word(good) === 'weak' ? 'neg' : word(good) === 'strong' ? 'pos-text' : 'muted'}`}>{fig ? `${fig} · ` : ''}{Math.round(value)}</span>
                     </div>
                     <div className="bar" role="img" aria-label={`${t(`pestel.${m}` as StringKey)} ${Math.round(value)}`}>
-                      <span style={{ width: `${value}%`, background: colour(value) }} />
+                      <span style={{ width: `${value}%`, background: colour(good) }} />
                     </div>
                   </li>
                 );

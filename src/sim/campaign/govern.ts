@@ -7,6 +7,7 @@ import { houseTally } from './contests';
 import { addScene, relation, shiftRelation } from './diplomacy';
 import { startFormation } from './formation';
 import { nationWeek } from './nation';
+import { defenceWeek } from './defence';
 import { pestelWeek } from './pestel';
 import { pushNews, ref } from './news';
 import { rivalPmWeek } from './rivalPm';
@@ -554,6 +555,7 @@ export function governWeek(c: Campaign, rng: Rng): void {
   economyWeek(c, rng);
   nationWeek(c, rng);
   pestelWeek(c, rng);
+  defenceWeek(c, rng);
   if (isPm(c)) k.record.weeksPm++; else if (inGov(c, me)) k.record.weeksGov++; else k.record.weeksOpp++;
 
   // A game saved with a smaller cabinet has the rest of the posts filled.

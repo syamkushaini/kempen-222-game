@@ -3,6 +3,7 @@ import { clamp, zeros2 } from '../math';
 import { N_BLOCS, N_PARTIES, type RegionId } from '../types';
 import { contestsState, scaled } from './actions';
 import { STATE_GOVERNMENT_INCOME, statesHeld } from './contests';
+import { isFederalWorld, procurementMult } from './defence';
 import { figuresOf, sectorShares, STATE_PUBLIC } from './gdp';
 import { DEBT_FLOOR, MEASURES, RATE, inGov, isPm } from './office';
 import { builtEffects, projectsCost, taxEffects } from './econPlansData';
@@ -69,7 +70,13 @@ export function baseAllocation(world: World, c: Campaign): number {
 // cover is borrowed, and the debt grows by it.
 
 /** What each line of a plain budget is of the spending, and how far a notch of the dial moves it. */
-const LINE_WEIGHT: Record<LineId, number> = { aid: 0.3, health: 0.2, education: 0.25, rural: 0.1, civil: 0.15 };
+const LINE_WEIGHT: Record<LineId, number> = { aid: 0.3, health: 0.2, education: 0.25, rural: 0.1, civil: 0.15, defence: 0.1 };
+/**
+ * What a line is of the spending in a given place. A country's armed forces take a tenth, and the other lines share the rest in the
+ * same proportions as before, so that a plain budget costs what it always did; a state has no defence line and keeps the old shares.
+ */
+const lineWeight = (world: World, id: LineId): number =>
+  !isFederalWorld(world) ? (id === 'defence' ? 0 : LINE_WEIGHT[id]) : id === 'defence' ? LINE_WEIGHT.defence : LINE_WEIGHT[id] * (1 - LINE_WEIGHT.defence);
 const LINE_STEP = 0.2;
 /** A plain budget takes in three times the allocation, and spends two: lines 1.85, interest 0.15. */
 const TAKINGS = 3;
@@ -88,7 +95,7 @@ const TAX_SHARE = 0.4;
 /** Weeks to a month: the books are shown by the month. */
 export const MONTH = 52 / 12;
 /** What a line of the budget costs a week at a setting of its dial (-1 cut, 0 hold, 1 boost). */
-export const lineWeekly = (world: World, id: LineId, dial: number): number => govMoney(world, ALLOCATION.pm) * LINES_SPEND * LINE_WEIGHT[id] * (1 + LINE_STEP * dial);
+export const lineWeekly = (world: World, id: LineId, dial: number): number => govMoney(world, ALLOCATION.pm) * LINES_SPEND * lineWeight(world, id) * (1 + LINE_STEP * dial);
 /** What one particular measure costs a week. */
 export const measureWeekly = (world: World, m: keyof typeof MEASURES): number => govMoney(world, ALLOCATION.pm) * MEASURE_UNIT * MEASURES[m].cost;
 /** What a number of units of standing commitment cost a week: a policy, a programme or a deal adds some. */
@@ -117,7 +124,10 @@ export function govBooks(world: World, c: Campaign, budget?: Budget): Books | nu
   const patronage = Math.round(govMoney(world, STATE_GOVERNMENT_INCOME) * statesHeld(c, c.player) * patronageMult(k));
   if (patronage > 0) income.push({ id: 'states', amount: patronage });
   const spend: BookFlow[] = [
-    ...LINE_IDS.map((id) => ({ id, amount: unit * LINES_SPEND * LINE_WEIGHT[id] * (1 + LINE_STEP * b.lines[id]) })),
+    // The armed forces' line is the country's only, and costs more where they have a great say over what they buy.
+    ...LINE_IDS.filter((id) => id !== 'defence' || isFederalWorld(world)).map((id) => ({
+      id, amount: unit * LINES_SPEND * lineWeight(world, id) * (1 + LINE_STEP * (b.lines[id] ?? 0)) * (id === 'defence' ? procurementMult(k) : 1),
+    })),
     { id: 'measures', amount: unit * MEASURE_UNIT * (b.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0) },
     { id: 'commitments', amount: unit * COMMITMENT_UNIT * Math.max(0, k.fiscal) },
     { id: 'interest', amount: unit * INTEREST * (e.debt / 63) * (1 + RATE.interest * (k.rate ?? 0)) },

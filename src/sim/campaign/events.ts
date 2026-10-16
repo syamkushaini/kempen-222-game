@@ -27,6 +27,7 @@ import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { membersFeel } from './members';
 import { nationOf, shiftNation } from './nation';
 import { shiftPestel } from './pestel';
+import { BORDER_SEA, WEAK_FORCE, defenceOf, forceWeak, isFederal, shiftDefence } from './defence';
 import { answerAdviser } from './advisers';
 import { queueEcho } from './echoes';
 import { KSU, replaceKsu, shiftKsu } from './ksu';
@@ -128,6 +129,8 @@ export type Effect =
   | { t: 'nation'; health?: number; education?: number; standing?: number }
   /** The four PESTEL meters beyond the nation's (see pestel.ts). */
   | { t: 'pestel'; cohesion?: number; tech?: number; environment?: number; law?: number }
+  /** The armed forces' readiness and their say in the government's business (see defence.ts); a federal career only. */
+  | { t: 'defence'; readiness?: number; influence?: number }
   | { t: 'assets'; pct: number }
   | { t: 'dividend'; pct: number }
   | { t: 'relation'; who: Who; n: number }
@@ -175,6 +178,8 @@ export interface EventDef {
     debt?: number;
     /** The care of the country's health, schooling, or standing among nations is below this (0-100). */
     health?: number; education?: number; standing?: number;
+    /** A federal career's armed forces are less ready than this (0-100), or have more say than this. */
+    readiness?: number; influence?: number;
     /** The player's leader has this past. */
     backstory?: BackstoryId;
     /** The player has hired at least one of their people. */
@@ -249,6 +254,9 @@ export function eligible(c: Campaign, id: string): boolean {
   if (n.health !== undefined && nationOf(k).health >= n.health) return false;
   if (n.education !== undefined && nationOf(k).education >= n.education) return false;
   if (n.standing !== undefined && nationOf(k).standing >= n.standing) return false;
+  if ((n.readiness !== undefined || n.influence !== undefined) && !isFederal(c.scenario)) return false;
+  if (n.readiness !== undefined && defenceOf(k).readiness >= n.readiness) return false;
+  if (n.influence !== undefined && defenceOf(k).influence <= n.influence) return false;
   if (n.backstory && c.team.leader.backstory !== n.backstory) return false;
   if (n.staff && !c.team.staff.some((s) => s !== null)) return false;
   if (n.states && statesHeld(c, c.player) === 0) return false;
@@ -368,6 +376,7 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
       case 'economy': k.economy.growth += e.growth ?? 0; k.economy.inflation += e.inflation ?? 0; break;
       case 'nation': shiftNation(k, e); break;
       case 'pestel': shiftPestel(k, e); break;
+      case 'defence': shiftDefence(c, e); break;
       case 'assets': scaleHoldings(k, Math.max(0, 1 + e.pct)); break;
       case 'dividend': pc.funds = Math.max(0, pc.funds + Math.round(k.assets * e.pct)); break;
       case 'relation': for (const p of partiesOf(c, e.who)) shiftRelation(c, me, p, e.n); break;
@@ -429,6 +438,15 @@ export function canChoose(world: World, c: Campaign, event: string, choice: numb
   return choiceCost(world, c, event, choice) <= (c.parties[c.player]?.funds ?? 0) && publicCost(world, c, event, choice) <= treasuryOf(c);
 }
 
+/** The losses in a list of effects, made worse (see `WEAK_FORCE`): what is gained stays as it was. */
+export const worsen = (effects: Effect[]): Effect[] => effects.map((e): Effect => {
+  switch (e.t) {
+    case 'mood': case 'cred': case 'stability': case 'trust': case 'unity': case 'rival': return e.n < 0 ? { ...e, n: e.n * WEAK_FORCE } : e;
+    case 'nation': return e.standing && e.standing < 0 ? { ...e, standing: e.standing * WEAK_FORCE } : e;
+    default: return e;
+  }
+});
+
 /**
  * Carries out the player's answer to an event. Returns true if the choice
  * brought the government down, so the caller can open the talks.
@@ -437,13 +455,16 @@ export function resolveEvent(world: World, c: Campaign, scene: Scene, choice: nu
   const def = scene.event ? EVENTS[scene.event] : undefined;
   const picked = def?.choices[choice];
   if (!c.career || !def || !picked) return false;
-  let falls = applyEffects(world, c, picked.effects);
+  // Trouble at the border and at sea goes worse for a country whose armed forces are weak.
+  const weak = !!scene.event && BORDER_SEA.has(scene.event) && forceWeak(c);
+  const worse = (effects: Effect[]) => (weak ? worsen(effects) : effects);
+  let falls = applyEffects(world, c, worse(picked.effects));
   let suffix = '';
   if (picked.gamble) {
     const rng = new Rng(c.rng);
     const won = rng.next() < gambleChance(c, picked.gamble.chance);
     c.rng = rng.state;
-    falls = applyEffects(world, c, won ? picked.gamble.win : picked.gamble.lose) || falls;
+    falls = applyEffects(world, c, won ? picked.gamble.win : worse(picked.gamble.lose)) || falls;
     suffix = won ? 'w' : 'l';
   }
   // The members of the player's coalition each make what they will of it.

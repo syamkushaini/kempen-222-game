@@ -38,6 +38,10 @@ export function describeEffect(t: T, f: Format, world: World, campaign: Campaign
       const parts = (['cohesion', 'tech', 'environment', 'law'] as const).filter((key) => e[key]).map((key) => arrow(e[key]!, t(`pestel.${key}`)));
       return parts.length ? parts.join(' · ') : null;
     }
+    case 'defence': {
+      const parts = (['readiness', 'influence'] as const).filter((key) => e[key]).map((key) => arrow(e[key]!, t(`pestel.${key}`)));
+      return parts.length ? parts.join(' · ') : null;
+    }
     case 'debt': return `${e.n > 0 ? '▲' : '▼'} ${t('house.debt')} ${e.n > 0 ? '+' : '−'}${Math.abs(e.n)} ${t('hint.debt.points')}`;
     case 'austerity': return t('hint.austerity');
     case 'bankrupt': return t('hint.bankrupt');

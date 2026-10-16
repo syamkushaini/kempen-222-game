@@ -42,7 +42,9 @@ export function nationTargets(k: Career, believed: number = k.credibility): Nati
     health: clamp(55 + 14 * lines.health + 2 * (portfolioSkill(k, 'health') - 3) - squeeze, 15, 90),
     education: clamp(55 + 14 * lines.education + 2 * (portfolioSkill(k, 'education') - 3) - squeeze, 15, 90),
     // Others look at a government that is steady, believed, solvent and growing.
-    standing: clamp(55 + 0.25 * (g.stability - 50) + 0.2 * (believed - 60) - 0.3 * Math.max(0, e.debt - 70) + 0.5 * (e.growth - 4), 15, 90),
+    // A country whose armed forces are weak is thought less of abroad (only a country's has the figure; see defence.ts).
+    standing: clamp(55 + 0.25 * (g.stability - 50) + 0.2 * (believed - 60) - 0.3 * Math.max(0, e.debt - 70) + 0.5 * (e.growth - 4)
+      - 0.3 * Math.max(0, 50 - (k.defence?.readiness ?? 55)), 15, 90),
   };
 }
 
