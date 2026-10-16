@@ -1,9 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { PARTIES } from '../data/parties';
 import { shownAlliance } from '../state/allianceLook';
 import { scenarioInfo, world as generalWorld, worldOf } from '../data/world';
 import { LEADERS } from '../sim/campaign/cast';
-import { translate, type StringKey } from '../i18n/strings';
+import { eventTextReady, onEventText, translate, type StringKey } from '../i18n/strings';
 import { latestSeatIntel, type SeatIntel } from '../sim/campaign/polls';
 import { FORMATION_WEEK, shownWeek } from '../sim/campaign/news';
 import { truth } from '../sim/campaign/turn';
@@ -22,7 +22,9 @@ export function useT(): T {
   const assembly = useStore((s) => { const sc = s.game?.campaign.scenario; return !!sc && (sc.startsWith('state:') || sc.startsWith('career:')); });
   // Which state, so that a Sarawak career says Premier and a Sabah one Chief Minister (see headOf in strings.ts).
   const state = useStore((s) => { const sc = s.game?.campaign.scenario; return sc && /^(state|career):/.test(sc) ? sc.slice(sc.indexOf(':') + 1) || undefined : undefined; });
-  return useCallback((key, vars) => translate(lang, key, vars, assembly, state), [lang, assembly, state]);
+  // The words of the events arrive after the first screen: when they do, what was drawn is drawn again with them.
+  const events = useSyncExternalStore(onEventText, eventTextReady, eventTextReady);
+  return useCallback((key, vars) => translate(lang, key, vars, assembly, state), [lang, assembly, state, events]);
 }
 
 export interface Format {
