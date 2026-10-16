@@ -36,7 +36,7 @@ import { canClaim, claimChance } from '../sim/campaign/claims';
 import { useStore } from '../state/store';
 import { ConfirmButton } from './SavesTab';
 import { partyColor, partyName, partyShort, useFog, useFormat, useT, useWorld, type T } from './hooks';
-import { NationCard } from './NationCard';
+import { PestelCard } from './PestelCard';
 import { Portrait } from './Portrait';
 import { Chamber } from './Chamber';
 import { houseSeating } from './seating';
@@ -117,7 +117,7 @@ export function GovernmentTab() {
       <TreasuryCard />
       <EconomyCharts />
       <EconomyBook />
-      <NationCard />
+      <PestelCard />
       <EconomyTools />
 
       {pm && (
