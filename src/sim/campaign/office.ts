@@ -5,6 +5,7 @@ import { BLOC_IDS, N_BLOCS, PARTY_IDS, type BlocId, type PartyId } from '../type
 import { scaled } from './actions';
 import { builtEffects, taxEffects } from './econPlansData';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
+import { stanceGrowth } from './stances';
 import { defenceDial, defenceShown, resentCut } from './defence';
 import { pushNews, ref } from './news';
 import { GENERAL_RULES, STATE_RULES } from './rules';
@@ -107,7 +108,7 @@ export function economyWeek(c: Campaign, rng: Rng) {
   // Loose budgets buy growth and prices; heavy debt drags; cutting aid shows up at the till.
   const rate = k.rate ?? 0;
   const tax = taxEffects(k), built = builtEffects(k);
-  const growthTo = 4 + 0.15 * loose - Math.max(0, e.debt - 70) * 0.08 + RATE.growth * rate + tax.growth + built.growth;
+  const growthTo = 4 + 0.15 * loose - Math.max(0, e.debt - 70) * 0.08 + RATE.growth * rate + tax.growth + built.growth + stanceGrowth(k);
   const pricesTo = 2.5 + 0.3 * loose - 0.3 * k.tabled.lines.aid + RATE.prices * rate + tax.prices + built.prices;
   e.growth = clamp(e.growth + (growthTo - e.growth) * 0.04 + rng.normal(0, 0.05), -6, 9);
   e.inflation = clamp(e.inflation + (pricesTo - e.inflation) * 0.04 + rng.normal(0, 0.04), -1, 12);

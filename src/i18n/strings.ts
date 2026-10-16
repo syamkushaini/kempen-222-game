@@ -14,6 +14,7 @@ import { MAPSHARE_EN, MAPSHARE_MS, type MapShareKey } from './mapshare';
 import { CONDUCT_EN, CONDUCT_MS, type ConductKey } from './conduct';
 import { ADVICE_EN, ADVICE_MS, type AdviceKey } from './advice';
 import { AUTOFILL_EN, AUTOFILL_MS, type AutofillKey } from './autofill';
+import { DOCTRINES_EN, DOCTRINES_MS, type DoctrineKey } from './doctrines';
 import { METERTOOLS_EN, METERTOOLS_MS, type MeterToolKey } from './meterTools';
 import { LOOK_EN, LOOK_MS, type LookKey } from './look';
 
@@ -1662,6 +1663,9 @@ const en = {
   'pledge.tollCut': 'National Toll Rationalisation Act: toll rates cut by 20% on selected highways, and the concessionaires paid back over the years',
   'pledge.epfWithdrawal': 'Retirement Flexibility Act: limited early withdrawals from retirement savings in a declared economic emergency',
   'pledge.civilReform': 'Public Service Performance Act: targets for every department and consequences for persistent underperformance',
+  'pledge.dataProtection': 'Personal Data Protection Act: how the state and companies may keep and use people’s data, with penalties that bite',
+  'pledge.conflictOfInterest': 'Conflict of Interest Act: those in office must declare and keep their private interests apart from the public’s',
+  'pledge.defenceOversight': 'Defence Oversight Act: a civilian committee to watch the armed forces’ budget and purchases',
   'manifesto.amend': 'Needs two thirds',
   'manifesto.amendNote': 'This changes the constitution: it needs two thirds of the House, not a majority.',
   'manifesto.law': 'Law',
@@ -1999,7 +2003,9 @@ const en = {
   'plan.projects.no.phase': 'Not during a campaign',
   'plan.projects.no.running': 'Under way',
   'plan.projects.no.built': 'Built',
+  'plan.projects.no.federal': 'The armed forces are the country’s, not a state’s',
   'books.projects': 'National projects',
+  'books.stances': 'Meter policies',
   'books.repay': 'Set aside for the debt',
   'news.project.start': 'The government starts a national project: {project}.',
   'news.project.done': 'A national project is finished: {project}.',
@@ -2013,6 +2019,18 @@ const en = {
   'project.railPorts.desc': 'The costly one. When it is built, growth is higher for good.',
   'project.digitalGov': 'Digital government',
   'project.digitalGov.desc': 'Put services online and cut the paperwork. When it is done, the state costs less to run: standing commitments fall.',
+  'project.communityHalls': 'Community halls and open spaces',
+  'project.communityHalls.desc': 'Halls, courts and parks in every district, built to bring neighbours together. When finished, social cohesion is held higher for good.',
+  'project.nationalBroadband': 'National broadband',
+  'project.nationalBroadband.desc': 'Fibre to towns, villages and schools. When finished, the country stays further ahead in technology, and growth gets a little push.',
+  'project.greenTransition': 'Green transition',
+  'project.greenTransition.desc': 'Clean energy, restored forest and cleaner rivers, over two years. The building strains the environment while it lasts; when done, it holds the environment higher for good.',
+  'project.courtsModernisation': 'Courts modernisation',
+  'project.courtsModernisation.desc': 'Digital filing, more courtrooms and a case queue that moves. When finished, the rule of law is held higher for good.',
+  'project.forcesModernisation': 'Armed forces modernisation',
+  'project.forcesModernisation.desc': 'New ships, aircraft and vehicles over two years. When finished, readiness is held higher, and the armed forces’ say with it. A country’s only.',
+  'project.defenceCollege': 'Civil-military defence college',
+  'project.defenceCollege.desc': 'A college where officers and civilians train together. When finished, the armed forces’ say is held lower and readiness a little higher. A country’s only.',
   'project.taxCollection': 'Tax collection drive',
   'project.taxCollection.desc': 'Close the gaps in who pays. When it is done, the takings are higher for good.',
   'tools.title': 'What you can do about the economy',
@@ -2855,7 +2873,7 @@ const en = {
 type CoreKey = keyof typeof en;
 /** The keys defined in this file, so that text kept elsewhere can be checked not to reuse one. */
 export const CORE_KEYS: readonly string[] = Object.keys(en);
-export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey | ThanksKey | MapShareKey | ConductKey | AdviceKey | AutofillKey | MeterToolKey;
+export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey | ThanksKey | MapShareKey | ConductKey | AdviceKey | AutofillKey | MeterToolKey | DoctrineKey;
 
 const ms: Record<CoreKey, string> = {
   'app.title': 'Kempen 222',
@@ -4502,6 +4520,9 @@ const ms: Record<CoreKey, string> = {
   'pledge.tollCut': 'Akta Rasionalisasi Tol Negara: kadar tol dikurangkan 20% di lebuh raya terpilih, dan konsesi dibayar balik sepanjang tahun',
   'pledge.epfWithdrawal': 'Akta Fleksibiliti Persaraan: pengeluaran awal terhad daripada simpanan persaraan semasa kecemasan ekonomi yang diisytiharkan',
   'pledge.civilReform': 'Akta Prestasi Perkhidmatan Awam: sasaran bagi setiap jabatan dan akibat bagi prestasi yang terus lemah',
+  'pledge.dataProtection': 'Akta Perlindungan Data Peribadi: bagaimana kerajaan dan syarikat boleh menyimpan dan menggunakan data rakyat, dengan penalti yang menggigit',
+  'pledge.conflictOfInterest': 'Akta Konflik Kepentingan: mereka yang memegang jawatan mesti mengisytihar dan memisahkan kepentingan peribadi daripada kepentingan awam',
+  'pledge.defenceOversight': 'Akta Pemantauan Pertahanan: jawatankuasa awam memantau bajet dan pembelian angkatan tentera',
   'manifesto.amend': 'Perlu dua pertiga',
   'manifesto.amendNote': 'Ini meminda perlembagaan: ia perlukan dua pertiga Dewan, bukan majoriti.',
   'manifesto.law': 'Undang-undang',
@@ -4839,7 +4860,9 @@ const ms: Record<CoreKey, string> = {
   'plan.projects.no.phase': 'Tidak semasa kempen',
   'plan.projects.no.running': 'Sedang berjalan',
   'plan.projects.no.built': 'Siap',
+  'plan.projects.no.federal': 'Angkatan tentera milik negara, bukan negeri',
   'books.projects': 'Projek negara',
+  'books.stances': 'Dasar meter',
   'books.repay': 'Diketepikan untuk hutang',
   'news.project.start': 'Kerajaan memulakan projek negara: {project}.',
   'news.project.done': 'Satu projek negara siap: {project}.',
@@ -4853,6 +4876,18 @@ const ms: Record<CoreKey, string> = {
   'project.railPorts.desc': 'Projek ini paling mahal, tetapi apabila siap, ia boleh meningkatkan pertumbuhan ekonomi untuk jangka panjang.',
   'project.digitalGov': 'Kerajaan digital',
   'project.digitalGov.desc': 'Pindahkan lebih banyak perkhidmatan kerajaan ke dalam talian dan kurangkan urusan kertas. Apabila siap, kos operasi kerajaan boleh dikurangkan.',
+  'project.communityHalls': 'Dewan komuniti dan ruang terbuka',
+  'project.communityHalls.desc': 'Dewan, gelanggang dan taman di setiap daerah, dibina untuk menyatukan jiran. Apabila siap, perpaduan sosial kekal lebih tinggi.',
+  'project.nationalBroadband': 'Jalur lebar negara',
+  'project.nationalBroadband.desc': 'Gentian ke bandar, kampung dan sekolah. Apabila siap, negara kekal lebih maju dalam teknologi, dan pertumbuhan mendapat sedikit dorongan.',
+  'project.greenTransition': 'Peralihan hijau',
+  'project.greenTransition.desc': 'Tenaga bersih, hutan dipulihkan dan sungai lebih bersih, selama dua tahun. Pembinaannya menekan alam sekitar semasa berjalan; apabila siap, alam sekitar kekal lebih tinggi.',
+  'project.courtsModernisation': 'Pemodenan mahkamah',
+  'project.courtsModernisation.desc': 'Pemfailan digital, lebih banyak bilik mahkamah dan barisan kes yang bergerak. Apabila siap, kedaulatan undang-undang kekal lebih tinggi.',
+  'project.forcesModernisation': 'Pemodenan angkatan tentera',
+  'project.forcesModernisation.desc': 'Kapal, pesawat dan kenderaan baharu selama dua tahun. Apabila siap, kesiapsiagaan kekal lebih tinggi, begitu juga pengaruh angkatan tentera. Hanya untuk negara.',
+  'project.defenceCollege': 'Kolej pertahanan awam-tentera',
+  'project.defenceCollege.desc': 'Kolej tempat pegawai dan orang awam berlatih bersama. Apabila siap, pengaruh angkatan tentera kekal lebih rendah dan kesiapsiagaan sedikit lebih tinggi. Hanya untuk negara.',
   'project.taxCollection': 'Tingkatkan kutipan cukai',
   'project.taxCollection.desc': 'Pastikan semua pihak membayar cukai yang sepatutnya. Apabila siap, hasil cukai kerajaan dijangka meningkat untuk jangka panjang.',
   'tools.title': 'Apa yang boleh dibuat tentang ekonomi',
@@ -5695,8 +5730,8 @@ const ms: Record<CoreKey, string> = {
 export type Lang = 'en' | 'ms';
 // Event text is kept in its own file and looked up by keys built from event ids.
 export const STRINGS: Record<Lang, Record<string, string>> = {
-  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...CONDUCT_EN, ...ADVICE_EN, ...AUTOFILL_EN, ...METERTOOLS_EN, ...flattenEvents(EVENTS_EN), ...flattenMore(MORE_EN) },
-  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...CONDUCT_MS, ...ADVICE_MS, ...AUTOFILL_MS, ...METERTOOLS_MS, ...flattenEvents(EVENTS_MS), ...flattenMore(MORE_MS) },
+  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...CONDUCT_EN, ...ADVICE_EN, ...AUTOFILL_EN, ...METERTOOLS_EN, ...DOCTRINES_EN, ...flattenEvents(EVENTS_EN), ...flattenMore(MORE_EN) },
+  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...CONDUCT_MS, ...ADVICE_MS, ...AUTOFILL_MS, ...METERTOOLS_MS, ...DOCTRINES_MS, ...flattenEvents(EVENTS_MS), ...flattenMore(MORE_MS) },
 };
 
 /**

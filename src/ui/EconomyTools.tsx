@@ -4,6 +4,8 @@ import { MAX_PROJECTS_AT_ONCE, PROJECTS, REPAY_MAX, TAX_IDS, TAX_MIX, canStartPr
 import { MONTH, debtEased, govBooks, govMoney } from '../sim/campaign/treasury';
 import { ALLOCATION } from '../sim/campaign/treasury';
 import { isPm } from '../sim/campaign/office';
+import { isFederal } from '../sim/campaign/defence';
+import { FORCES_PROJECTS } from '../sim/campaign/econPlansData';
 import { useStore } from '../state/store';
 import { describeEffect } from './effectText';
 import { useFormat, useT, useWorld } from './hooks';
@@ -72,7 +74,7 @@ export function EconomyTools() {
         <h4>{t('plan.projects.title')}</h4>
         <p className="muted small">{t('plan.projects.desc', { n: MAX_PROJECTS_AT_ONCE })}</p>
         <ul>
-          {PROJECTS.map((p) => {
+          {PROJECTS.filter((p) => !FORCES_PROJECTS.includes(p.id) || isFederal(campaign.scenario)).map((p) => {
             const running = campaign.career!.projects?.find((x) => x.id === p.id);
             const built = campaign.career!.built?.includes(p.id);
             const check = canStartProject(campaign, p.id);
@@ -82,6 +84,7 @@ export function EconomyTools() {
                   <span className="action-title">{t(`project.${p.id}` as StringKey)}{built ? ` · ${t('plan.projects.built')}` : ''}</span>
                   <span className="action-meta">{t(`project.${p.id}.desc` as StringKey)}</span>
                   <span className="action-meta num">{t('plan.projects.cost', { rm: f.rm(govMoney(world, ALLOCATION.pm) * p.cost * MONTH), weeks: p.weeks })}</span>
+                  {(p.meters || p.forces) && <span className="action-meta num">{[p.meters && describeEffect(t, f, world, campaign, { t: 'pestel', ...p.meters }), p.forces && describeEffect(t, f, world, campaign, { t: 'defence', ...p.forces })].filter(Boolean).join(' · ')}</span>}
                   {running && <div className="progress" role="img" aria-label={t('plan.projects.left', { n: running.left })}><span style={{ width: `${((p.weeks - running.left) / p.weeks) * 100}%` }} /></div>}
                   {running && <span className="action-meta">{t('plan.projects.left', { n: running.left })}</span>}
                   {!check.ok && !running && !built && check.reason !== 'none' && <span className="action-reason">{t(`plan.projects.no.${check.reason}` as StringKey)}</span>}

@@ -284,6 +284,8 @@ export const PLEDGE_IDS = [
   'schoolMeals', 'healthCover', 'greenGrid', 'villageRoads', 'smeLoans', 'seniorPension',
   // Three Acts more: the tolls, the retirement fund and the civil service.
   'tollCut', 'epfWithdrawal', 'civilReform',
+  // Three Acts that steer the PESTEL and defence meters for good (see pestel.ts and defence.ts).
+  'dataProtection', 'conflictOfInterest', 'defenceOversight',
 ] as const;
 export type PledgeId = (typeof PLEDGE_IDS)[number];
 
@@ -528,6 +530,13 @@ export interface Career {
   pestel?: PestelFigures;
   /** Absent in a game saved before it existed, and in any career but a federal one. */
   defence?: DefenceFigures;
+  /** The sliders for the meters beyond the budget (see stances.ts): -2 to 2, absent where left in the middle. */
+  stance?: Partial<Record<'cohesion' | 'tech' | 'environment' | 'law' | 'readiness' | 'influence', -2 | -1 | 0 | 1 | 2>>;
+  /** The combinations of sliders in play now, the ones ever found, and when each minister last grumbled about a slider set against them (see stances.ts). */
+  /** The doctrine adopted and when, the titles earned, the tipping points passed and the annual report cards kept (see doctrines.ts). */
+  doctrine?: { id: string; since: number }; titles?: string[]; milestones?: string[];
+  scorecards?: { term: number; year: number; scores: Record<string, number>; overall: number; rank: number }[];
+  combos?: string[]; combosSeen?: string[]; grumbled?: Partial<Record<'cohesion' | 'tech' | 'environment' | 'law' | 'readiness' | 'influence', number>>;
   /** The opposition's challenges to the government's policies this parliament: when the last was made, and what has been challenged. */
   challenged?: { last: number; done: string[] };
   /** The parties the leader has left after being removed from them, with when: set once they have joined another (see switching.ts). */
