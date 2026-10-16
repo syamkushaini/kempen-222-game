@@ -1,6 +1,8 @@
 import type { World } from '../election';
 import type { BlocId } from '../types';
 import { applyEffects, publicAmount, type Effect } from './events';
+import { DEFENCE_GOALS, METER_TOOLS, type MeterGoal } from './meterTools';
+import { isFederal } from './defence';
 import { pushNews } from './news';
 import { RATE, isPm } from './office';
 import { treasuryOf } from './treasury';
@@ -11,7 +13,9 @@ import type { Campaign, Dial } from './types';
 // before it is used. The policy rate is a standing choice rather than an act. Money is at general-election scale.
 
 export const TOOL_GOALS = ['debt', 'prices', 'growth', 'books'] as const;
-export type ToolGoal = (typeof TOOL_GOALS)[number];
+/** The goals of the economy's own tools; the other goals are the six meters' (see meterTools.ts). */
+export type EconGoal = (typeof TOOL_GOALS)[number];
+export type ToolGoal = EconGoal | MeterGoal;
 
 export interface Tool { id: string; goal: ToolGoal; /** Weeks before it can be used again. */ wait: number; effects: Effect[] }
 
@@ -40,11 +44,12 @@ export const TOOLS: Tool[] = [
   // The books
   { id: 'freeze', goal: 'books', wait: 39, effects: [eff('fiscal', -1.5), mood(['civil'], -0.04), eff('cred', 1)] },
   { id: 'bonds', goal: 'books', wait: 26, effects: [pub(200_000), debt(1.5)] },
+  ...METER_TOOLS,
 ];
 
 export const toolOf = (id: string): Tool | undefined => TOOLS.find((t) => t.id === id);
 
-export type ToolRefusal = 'phase' | 'notPm' | 'busy' | 'wait' | 'money' | 'none';
+export type ToolRefusal = 'phase' | 'notPm' | 'busy' | 'wait' | 'money' | 'federal' | 'none';
 
 /** Whether a tool can be used now, and if not why not; and the weeks left to wait. */
 export function canUseTool(world: World, c: Campaign, id: string): { ok: true } | { ok: false; reason: ToolRefusal; weeks?: number } {
@@ -53,6 +58,7 @@ export function canUseTool(world: World, c: Campaign, id: string): { ok: true } 
   if (!k || !tool) return { ok: false, reason: 'none' };
   if (c.phase !== 'term') return { ok: false, reason: 'phase' };
   if (!isPm(c)) return { ok: false, reason: 'notPm' };
+  if (DEFENCE_GOALS.includes(tool.goal) && !isFederal(c.scenario)) return { ok: false, reason: 'federal' };
   if (c.inbox.length > 0) return { ok: false, reason: 'busy' };
   const last = k.toolsUsed?.[id];
   if (last !== undefined && k.week - last < tool.wait) return { ok: false, reason: 'wait', weeks: tool.wait - (k.week - last) };
