@@ -335,7 +335,12 @@ export const MEASURE_IDS = [
 export type MeasureId = (typeof MEASURE_IDS)[number];
 export interface Budget { lines: Record<LineId, Dial>; tax: Dial; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
 
-export const PORTFOLIO_IDS = ['finance', 'home', 'economy', 'education', 'health', 'rural', 'works', 'defence'] as const;
+export const PORTFOLIO_IDS = [
+  'finance', 'home', 'economy', 'education', 'health', 'rural', 'works', 'defence',
+  // The rest of a federal cabinet (a state's executive council has two of these: the environment and tourism).
+  'foreign', 'highered', 'costOfLiving', 'humanRes', 'plantation', 'environment', 'energy', 'agri', 'housing', 'digital', 'science', 'comms',
+  'law', 'women', 'youth', 'tourism', 'religion',
+] as const;
 export type PortfolioId = (typeof PORTFOLIO_IDS)[number];
 
 /** What kind of person a minister is the player chose: each brings something and costs something. */
@@ -347,6 +352,8 @@ export interface Minister {
   party: number;
   /** Index into the pool of invented names. */
   name: number;
+  /** A name the player gave them in place of the invented one. */
+  label?: string;
   /** 1 (out of their depth) to 5 (formidable). */
   skill: number;
   /** Set on a minister the player appointed; ministers of other parties, and those from before this existed, have none. */
@@ -564,7 +571,7 @@ export interface Career {
   /** The party's factions and wings, made the first time they are looked at (see factions.ts). */
   factions?: { size: number[]; mood: number[]; wing: number[]; chief: number[]; deputy?: { name: number; faction: number; ambition: number } };
   /** The shadow cabinet the player has named from the opposition benches, by portfolio (see shadow.ts). */
-  shadow?: Partial<Record<PortfolioId, { name: number; skill: number }>>;
+  shadow?: Partial<Record<PortfolioId, { name: number; skill: number; label?: string }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
   /** The three advisers, what worries each and how many times they have said so (see advisers.ts). */

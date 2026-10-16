@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { DEMANDS } from '../sim/campaign/cast';
 import { seatOf } from '../sim/campaign/events';
@@ -27,7 +28,8 @@ import { canExpel } from '../sim/campaign/alliance';
 import { SUPPLY_CASH, canRenew, canSupply, discontent } from '../sim/campaign/supply';
 import { houseTally } from '../sim/campaign/contests';
 import { SHADOW_COST, canShadow, shadowOf } from '../sim/campaign/shadow';
-import { PORTFOLIO_IDS } from '../sim/campaign/types';
+import { ministerName, portfoliosOf } from '../sim/campaign/office';
+import type { PortfolioId } from '../sim/campaign/types';
 import { majorityLine } from '../sim/election';
 import { CROSS_MONEY, CROSS_STAKES, canCross, crossChance, crossCount, seatsHeldBy } from '../sim/campaign/crossing';
 import { canClaim, claimChance } from '../sim/campaign/claims';
@@ -212,8 +214,9 @@ export function GovernmentTab() {
             <Portrait minister={m.name} party={m.party} size={36} />
             <div className="grow">
               <span className="action-title">{t(`portfolio.${m.portfolio}`)}</span>
-              <span className="action-meta">{MINISTER_NAMES[m.name]} · {partyShort(t, m.party)} · <span aria-label={t('house.skill', { n: m.skill })}>{'★'.repeat(m.skill)}{'☆'.repeat(5 - m.skill)}</span>{m.acting && <> · <span className="badge plain">{t('appoint.acting')}</span></>}{m.trait && <> · <span className="badge plain">{t(`trait.${m.trait}` as StringKey)}</span></>}</span>
+              <span className="action-meta">{ministerName(m)} · {partyShort(t, m.party)} · <span aria-label={t('house.skill', { n: m.skill })}>{'★'.repeat(m.skill)}{'☆'.repeat(5 - m.skill)}</span>{m.acting && <> · <span className="badge plain">{t('appoint.acting')}</span></>}{m.trait && <> · <span className="badge plain">{t(`trait.${m.trait}` as StringKey)}</span></>}</span>
             </div>
+            <RenameButton portfolio={m.portfolio} current={ministerName(m)} />
             {pm && <ConfirmButton label={t('house.reshuffle')} confirmLabel={t(m.party === me ? 'house.reshuffle.own' : 'house.reshuffle.theirs')} onConfirm={() => reshuffle(m.portfolio)} />}
           </li>
         ))}
@@ -675,6 +678,21 @@ function PutOut() {
 }
 
 /** The opposition's cabinet in waiting: someone to shadow each post. */
+/** A small control to give a minister a name of the player's own: the invented one stays if they leave it empty. */
+function RenameButton({ portfolio, current, shadow = false }: { portfolio: PortfolioId; current: string; shadow?: boolean }) {
+  const t = useT();
+  const rename = useStore((s) => s.renameMinister);
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState(current);
+  if (!open) return <button className="btn small" onClick={() => { setText(current); setOpen(true); }}>{t('house.rename')}</button>;
+  return (
+    <form className="rename-row" onSubmit={(e) => { e.preventDefault(); rename(portfolio, text, shadow); setOpen(false); }}>
+      <input className="text-input" value={text} maxLength={24} autoFocus autoComplete="off" aria-label={t('house.rename')} placeholder={t('house.rename.hint')} onChange={(e) => setText(e.target.value)} />
+      <button className="btn small primary" type="submit">{t('house.rename.ok')}</button>
+    </form>
+  );
+}
+
 function ShadowCabinet() {
   const t = useT();
   const f = useFormat();
@@ -685,19 +703,20 @@ function ShadowCabinet() {
   const may = canShadow(world, campaign);
   return (
     <>
-      <h3>{t('shadow.title')} <span className="muted small num">{Object.keys(named).length} / {PORTFOLIO_IDS.length}</span></h3>
+      <h3>{t('shadow.title')} <span className="muted small num">{Object.keys(named).length} / {portfoliosOf(campaign.scenario).length}</span></h3>
       <p className="muted small action-desc">{t('shadow.desc', { rm: f.rm(scaled(world, SHADOW_COST)) })}</p>
       <ul>
-        {PORTFOLIO_IDS.map((id) => {
+        {portfoliosOf(campaign.scenario).map((id) => {
           const who = named[id];
           return (
             <li className="action" key={id}>
               <div className="grow">
                 <span className="action-title">{t(`portfolio.${id}`)}</span>
                 <span className="action-meta">
-                  {who ? <>{MINISTER_NAMES[who.name]} <span aria-label={t('house.skill', { n: who.skill })}>{'★'.repeat(who.skill)}{'☆'.repeat(5 - who.skill)}</span></> : t('shadow.empty')}
+                  {who ? <>{ministerName(who)} <span aria-label={t('house.skill', { n: who.skill })}>{'★'.repeat(who.skill)}{'☆'.repeat(5 - who.skill)}</span></> : t('shadow.empty')}
                 </span>
               </div>
+              {who && <RenameButton portfolio={id} current={ministerName(who)} shadow />}
               <button className="btn small" disabled={!may} onClick={() => shadow(id)}>{t(who ? 'shadow.replace' : 'shadow.name')}</button>
             </li>
           );

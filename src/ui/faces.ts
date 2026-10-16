@@ -165,6 +165,34 @@ export const MINISTER_LOOKS: Look[] = [
   m(1, 'bun', 'brown', 'blouse'),                                     // Felicia Jainal
   m(2, 'short', 'grey', 'suit', { facial: 'moustache' }),             // Maxwell Gimbang
   m(1, 'bob', 'brown', 'blouse', { glasses: true }),                  // Rosalind Sipin
+  m(2, 'side', 'black', 'suit', { headwear: 'songkok' }),             // Hafizuddin Saad
+  m(1, 'long', 'black', 'baju', { headwear: 'scarf' }),      // Norlaila Rahim
+  m(2, 'swept', 'grey', 'baju', { facial: 'beard', glasses: true }),  // Syed Imran
+  m(2, 'bun', 'black', 'blouse', { headwear: 'scarf', glasses: true }),// Faridah Othman
+  m(1, 'thin', 'grey', 'suit', { headwear: 'songkok', facial: 'moustache' }),// Mazlan Ismail
+  m(1, 'bob', 'grey', 'blouse', { headwear: 'scarf', glasses: true }),// Salmah Kassim
+  m(2, 'short', 'black', 'baju', { facial: 'moustache' }),            // Hishamuddin Roslan
+  m(2, 'bob', 'black', 'baju', { headwear: 'scarf' }),       // Nurul Huda
+  m(2, 'side', 'grey', 'suit', { headwear: 'songkok', glasses: true }),// Ariffin Zakaria
+  m(1, 'bun', 'black', 'baju', { headwear: 'scarf', glasses: true }), // Sharifah Aini
+  m(0, 'short', 'black', 'suit', { facial: 'moustache' }),            // Goh Kian Seng
+  m(0, 'long', 'black', 'blouse', { glasses: true }),                 // Lim Pei Shan
+  m(0, 'thin', 'grey', 'suit', { glasses: true }),                    // Ong Teck Wee
+  m(0, 'bob', 'brown', 'blouse'),                                     // Yap Li Ting
+  m(0, 'swept', 'black', 'suit', { facial: 'beard' }),                // Ng Wai Kit
+  m(0, 'bun', 'brown', 'blouse', { glasses: true }),                  // Chew Ai Ling
+  m(3, 'swept', 'black', 'suit', { facial: 'beard' }),                // Mohan Raj
+  m(3, 'long', 'black', 'blouse', { glasses: true }),                 // Kavitha Nair
+  m(3, 'short', 'grey', 'baju', { facial: 'moustache', glasses: true }),// Suresh Pillai
+  m(3, 'bob', 'black', 'blouse'),                                     // Lakshmi Perumal
+  m(3, 'side', 'black', 'suit', { glasses: true }),                   // Vikram Singh
+  m(3, 'bun', 'brown', 'blouse', { glasses: true }),                  // Devi Arumugam
+  m(1, 'swept', 'black', 'suit', { glasses: true }),                  // Anthony Lajim
+  m(1, 'bob', 'black', 'blouse'),                                     // Margaret Ejau
+  m(2, 'thin', 'black', 'baju', { facial: 'beard' }),                 // Clarence Bugat
+  m(2, 'long', 'brown', 'blouse'),                                    // Dorothy Sulu
+  m(1, 'short', 'grey', 'suit', { facial: 'beard' }),                 // Stephen Tuyan
+  m(2, 'bun', 'black', 'blouse', { glasses: true }),                  // Marina Lumat
 ];
 
 const cache = new Map<string, string>();

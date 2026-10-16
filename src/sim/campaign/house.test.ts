@@ -1,3 +1,4 @@
+import { PORTFOLIO_IDS } from './types';
 import { describe, expect, it } from 'vitest';
 import { getWorld, worldOf } from '../../data/world';
 import { lastElection, majorityLine } from '../election';
@@ -136,7 +137,7 @@ describe('confidence', () => {
     expect(g.stability).toBe(55);
     expect(c.career!.orders.state).toBe(0);
     expect(c.career!.cabinet.some((m) => m.party === BP)).toBe(false); // its ministers go with it
-    expect(c.career!.cabinet).toHaveLength(8);
+    expect(c.career!.cabinet).toHaveLength(PORTFOLIO_IDS.length);
     expect(relation(c, BP, PS)).toBe(Math.max(-100, withPs - 30));
     expect(leaveGovernment(base, c)).toBe(false);
 
@@ -291,7 +292,8 @@ describe('a term in office', () => {
       if (guard % 50 === 0) expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
     }
     const r = c.career!.record;
-    expect(r.weeksPm + r.weeksGov + r.weeksOpp).toBeGreaterThan(150);
+    // Nobody here fills the posts the party holds, so the government may fall some time before the term is out.
+    expect(r.weeksPm + r.weeksGov + r.weeksOpp).toBeGreaterThan(100);
     if (c.phase === 'campaign') expect(r.kept.length + r.broken).toBeGreaterThan(0);
   });
 });

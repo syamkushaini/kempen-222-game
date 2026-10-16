@@ -10,7 +10,7 @@ import { nationWeek } from './nation';
 import { pushNews, ref } from './news';
 import { rivalPmWeek } from './rivalPm';
 import { withinPowers } from './stateScope';
-import { cabinetWeek, economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
+import { cabinetWeek, fillCabinet, economyWeek, inGov, isPm, lift, rivalBudget, skillOf, vacate } from './office';
 import { draftingShift } from './ksu';
 import { rebelShare, speakerOf, speakerTip } from './chamber';
 import { BRIEF, PLEDGES, isBrief, isEnacted } from './policy';
@@ -40,11 +40,11 @@ export interface BillDef {
 }
 
 const PLEDGE_PORTFOLIO: Record<PledgeId, PortfolioId> = {
-  cashAid: 'finance', fuelSubsidy: 'finance', minWage: 'economy', taxCut: 'finance', graftCommission: 'home', termLimit: 'home',
-  hospitals: 'health', transitPass: 'works', debtWriteOff: 'education', civilPay: 'finance', borneoFund: 'rural',
-  settlerDebt: 'rural', floorPrices: 'rural', valuesSchools: 'education', repealLaws: 'home', homes: 'works',
-  partyHopBan: 'home', fixedTerm: 'home', infoAct: 'home', localVote: 'home', gigRights: 'economy', oilRoyalty: 'finance',
-  schoolMeals: 'education', healthCover: 'health', greenGrid: 'works', villageRoads: 'rural', smeLoans: 'economy', seniorPension: 'finance',
+  cashAid: 'finance', fuelSubsidy: 'costOfLiving', minWage: 'humanRes', taxCut: 'finance', graftCommission: 'law', termLimit: 'law',
+  hospitals: 'health', transitPass: 'works', debtWriteOff: 'highered', civilPay: 'finance', borneoFund: 'rural',
+  settlerDebt: 'rural', floorPrices: 'agri', valuesSchools: 'education', repealLaws: 'law', homes: 'housing',
+  partyHopBan: 'law', fixedTerm: 'law', infoAct: 'comms', localVote: 'law', gigRights: 'humanRes', oilRoyalty: 'finance',
+  schoolMeals: 'education', healthCover: 'health', greenGrid: 'energy', villageRoads: 'rural', smeLoans: 'economy', seniorPension: 'women',
   tollCut: 'works', epfWithdrawal: 'finance', civilReform: 'home',
 };
 
@@ -52,7 +52,7 @@ const PLEDGE_PORTFOLIO: Record<PledgeId, PortfolioId> = {
 const DEMAND_BILLS: Partial<Record<DemandId, BillDef>> = {
   autonomy: { portfolio: 'home', issue: ['federalism', 1], cost: 1, appeal: { borneo_native: 0.05, borneo_urban: 0.05, civil: -0.02 } },
   valuesAgenda: { portfolio: 'education', issue: ['values', 1], cost: 0, appeal: { heartland: 0.05, felda: 0.02, urban_lib: -0.06, borneo_urban: -0.03 } },
-  reformAgenda: { portfolio: 'home', issue: ['reform', 1], cost: 0, appeal: { urban_lib: 0.05, m40: 0.03, civil: -0.02 } },
+  reformAgenda: { portfolio: 'law', issue: ['reform', 1], cost: 0, appeal: { urban_lib: 0.05, m40: 0.03, civil: -0.02 } },
 };
 
 export function billDef(id: string): BillDef | null {
@@ -554,6 +554,8 @@ export function governWeek(c: Campaign, rng: Rng): void {
   nationWeek(c, rng);
   if (isPm(c)) k.record.weeksPm++; else if (inGov(c, me)) k.record.weeksGov++; else k.record.weeksOpp++;
 
+  // A game saved with a smaller cabinet has the rest of the posts filled.
+  fillCabinet(c, rng);
   // A capable cabinet steadies a government a little; a poor one wears it down.
   const skill = k.cabinet.reduce((a, m) => a + m.skill, 0) / Math.max(1, k.cabinet.length);
   k.government.stability = clamp(k.government.stability + 0.03 * (skill - 3), 5, 95);
