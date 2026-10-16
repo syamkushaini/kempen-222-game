@@ -324,8 +324,10 @@ export interface SeatResults {
 // ---------- governing ----------
 
 /** The main lines of the annual budget. */
-export const LINE_IDS = ['aid', 'health', 'education', 'rural', 'civil'] as const;
+export const LINE_IDS = ['aid', 'health', 'education', 'rural', 'civil', 'defence'] as const;
 export type LineId = (typeof LINE_IDS)[number];
+/** The lines every budget has; the defence line is only a federal government's, and a budget saved before it existed has none (held). */
+export type BaseLineId = Exclude<LineId, 'defence'>;
 /** Cut, hold or boost. */
 export type Dial = -1 | 0 | 1;
 /** Concrete things a budget can pay for inside its lines: each notices a few groups of voters and costs a little more than holding the line. */
@@ -333,7 +335,7 @@ export const MEASURE_IDS = [
   'cashTopUp', 'fuelPrice', 'clinics', 'hospitalBeds', 'scholarships', 'schoolRepairs', 'roads', 'farmInputs', 'civilBonus', 'pensions',
 ] as const;
 export type MeasureId = (typeof MEASURE_IDS)[number];
-export interface Budget { lines: Record<LineId, Dial>; tax: Dial; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
+export interface Budget { lines: Record<BaseLineId, Dial> & { defence?: Dial }; tax: Dial; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
 
 export const PORTFOLIO_IDS = [
   'finance', 'home', 'economy', 'education', 'health', 'rural', 'works', 'defence',
@@ -371,6 +373,9 @@ export interface Appointment { portfolio: PortfolioId; options: Candidate[] }
 
 /** How well the country is looked after, and how it stands among other nations, each from 0 to 100. */
 export interface Nation { health: number; education: number; standing: number }
+
+/** How ready the armed forces are, and how much say they have in the government's business, each from 0 to 100 (see defence.ts). */
+export interface DefenceFigures { readiness: number; influence: number }
 
 /** The four PESTEL meters the nation's figures did not cover (see pestel.ts), each from 0 to 100. */
 export interface PestelFigures { cohesion: number; tech: number; environment: number; law: number }
@@ -521,6 +526,8 @@ export interface Missions {
 export interface Career {
   /** Social cohesion, technology, the environment and the rule of law; absent in a game saved before they existed. */
   pestel?: PestelFigures;
+  /** Absent in a game saved before it existed, and in any career but a federal one. */
+  defence?: DefenceFigures;
   /** The opposition's challenges to the government's policies this parliament: when the last was made, and what has been challenged. */
   challenged?: { last: number; done: string[] };
   /** The parties the leader has left after being removed from them, with when: set once they have joined another (see switching.ts). */

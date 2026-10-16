@@ -12,6 +12,7 @@ import { TreasuryCard } from './TreasuryCard';
 import { EconomyCharts } from './EconomyCharts';
 import { EconomyTools } from './EconomyTools';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
+import { defenceShown } from '../sim/campaign/defence';
 import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
 import { MAX_MEASURES } from '../sim/campaign/office';
 import { SECTOR, SECTORS, SECTOR_IDS, canAid, sectorsOf } from '../sim/campaign/sectors';
@@ -125,14 +126,14 @@ export function GovernmentTab() {
           <h3>{t('house.budget')}</h3>
           <p className="muted small action-desc">{t('house.budget.desc', { n: toBudget })}</p>
           <ul>
-            {LINE_IDS.map((id) => (
+            {LINE_IDS.filter((id) => id !== 'defence' || defenceShown(campaign)).map((id) => (
               <li key={id} className="action">
                 <div className="grow">
                   <span className="action-title">{t(`line.${id}`)}</span>
                   <span className="action-meta">{t(`line.${id}.desc`)}</span>
                   <span className="action-meta num">{t('cost.line', { cut: f.rm(lineWeekly(world, id, -1) * MONTH), hold: f.rm(lineWeekly(world, id, 0) * MONTH), boost: f.rm(lineWeekly(world, id, 1) * MONTH) })}</span>
                 </div>
-                <DialSwitch label={t(`line.${id}`)} value={k.budget.lines[id]} onChange={(value) => setBudget({ line: id, value })} />
+                <DialSwitch label={t(`line.${id}`)} value={k.budget.lines[id] ?? 0} onChange={(value) => setBudget({ line: id, value })} />
               </li>
             ))}
             <li className="action measures">
