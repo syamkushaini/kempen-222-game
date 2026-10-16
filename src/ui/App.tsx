@@ -34,6 +34,7 @@ import { CandidatesTab } from './CandidatesTab';
 import { VotersTab } from './VotersTab';
 import { Icon, type IconName } from './Icon';
 import { Title } from './Title';
+import { Music } from './Music';
 import { installIdentity } from './identity';
 import { ground, mix } from './shareCard';
 
@@ -353,6 +354,7 @@ export function App() {
         {!ended && phase && !night && <SceneModal />}
       </Fragment>
       <GameMenu />
+      <Music />
       <Toasts />
       <ActionToasts />
       <footer className="footer">{t('footer.fiction')}</footer>
