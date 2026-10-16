@@ -778,6 +778,8 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.repayShare ? { repayShare: k.repayShare } : {}),
     ...(k.rate ? { rate: k.rate } : {}),
     ...(k.stance ? { stance: { ...k.stance } } : {}),
+    ...(k.combos ? { combos: [...k.combos] } : {}),
+    ...(k.combosSeen ? { combosSeen: [...k.combosSeen] } : {}),
     ...(k.toolsUsed ? { toolsUsed: { ...k.toolsUsed } } : {}),
     ...(k.stateResults ? { stateResults: structuredClone(k.stateResults) } : {}),
     ...(k.eventWeeks ? { eventWeeks: { ...k.eventWeeks } } : {}),

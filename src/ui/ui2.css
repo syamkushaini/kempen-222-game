@@ -927,3 +927,20 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .stance-poles { display: flex; justify-content: space-between; margin-top: -2px; }
 .meter-acts { margin-top: 12px; }
 .meter-acts > summary { cursor: pointer; padding: 6px 0; }
+
+/* Political capital, the minister under each slider, and the combinations. */
+.capital { margin: 10px 0; display: grid; gap: 6px; }
+.capital-pips { display: flex; flex-wrap: wrap; gap: 5px; }
+.capital-pips i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line-2); background: transparent; transition: background 150ms; }
+.capital-pips i.used { background: var(--accent, var(--ink)); border-color: var(--accent, var(--ink)); }
+.capital-pips i.over { background: var(--neg, #c0392b); border-color: var(--neg, #c0392b); }
+.stance-minister { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; }
+.stance-minister p { margin: 2px 0 0; font-style: italic; }
+.stance-minister.mood-furious p, .stance-minister.mood-uneasy p { color: var(--neg, #c0392b); }
+.stance-minister.mood-delighted p, .stance-minister.mood-pleased p { color: var(--pos, #2e8b57); }
+.combos ul { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 6px; }
+.combo { padding: 8px 10px; border: 1px dashed var(--line-2); border-radius: var(--radius); }
+.combo.on { border-style: solid; }
+.combo.on.bonus { border-color: var(--pos, #2e8b57); }
+.combo.on.clash { border-color: var(--neg, #c0392b); }
+.combo p { margin: 2px 0 0; }

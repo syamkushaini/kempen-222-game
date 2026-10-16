@@ -191,6 +191,8 @@ function isValidCareer(x: unknown, world: World): boolean {
     (x.founded === undefined || typeof x.founded === 'boolean') &&
     (x.nation === undefined || (isObj(x.nation) && isNum(x.nation.health) && isNum(x.nation.education) && isNum(x.nation.standing))) &&
     (x.stance === undefined || (isObj(x.stance) && Object.entries(x.stance).every(([id, n]) => ['cohesion', 'tech', 'environment', 'law', 'readiness', 'influence'].includes(id) && [-2, -1, 0, 1, 2].includes(n as number)))) &&
+    (x.combos === undefined || isList(x.combos, (v) => typeof v === 'string')) && (x.combosSeen === undefined || isList(x.combosSeen, (v) => typeof v === 'string')) &&
+    (x.grumbled === undefined || (isObj(x.grumbled) && Object.values(x.grumbled).every(isNum))) &&
     (x.defence === undefined || (isObj(x.defence) && isUnit(x.defence.readiness) && isUnit(x.defence.influence))) &&
     (x.members === undefined || (Array.isArray(x.members) && x.members.every((v) => isNum(v) && v >= -1 && v <= 100))) &&
     (x.plots === undefined || (isObj(x.plots) && Object.values(x.plots).every((v) => isNum(v) && v >= 0 && v <= 100))) &&

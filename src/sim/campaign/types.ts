@@ -532,6 +532,8 @@ export interface Career {
   defence?: DefenceFigures;
   /** The sliders for the meters beyond the budget (see stances.ts): -2 to 2, absent where left in the middle. */
   stance?: Partial<Record<'cohesion' | 'tech' | 'environment' | 'law' | 'readiness' | 'influence', -2 | -1 | 0 | 1 | 2>>;
+  /** The combinations of sliders in play now, the ones ever found, and when each minister last grumbled about a slider set against them (see stances.ts). */
+  combos?: string[]; combosSeen?: string[]; grumbled?: Partial<Record<'cohesion' | 'tech' | 'environment' | 'law' | 'readiness' | 'influence', number>>;
   /** The opposition's challenges to the government's policies this parliament: when the last was made, and what has been challenged. */
   challenged?: { last: number; done: string[] };
   /** The parties the leader has left after being removed from them, with when: set once they have joined another (see switching.ts). */
