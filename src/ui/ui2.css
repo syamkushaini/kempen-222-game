@@ -821,23 +821,26 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .treasury-card .repay { display: grid; gap: 6px; margin-top: 8px; }
 .treasury-card .repay input[type=range] { width: 100%; }
 
-/* The figures that say how the game is going, as one ribbon in four groups. Colour is kept for what is doing well or badly. */
-.metrics-strip { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 0; margin: 0; padding: 8px 4px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
-.metric-group { display: grid; gap: 2px; padding: 0 14px; border-left: 1px solid var(--line); flex: 1 1 auto; min-width: 0; }
-.metric-group:first-child { border-left: 0; }
-.metric-group-name { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.01em; }
-.metric-row { display: flex; gap: 14px; flex-wrap: wrap; }
-.metric { display: grid; gap: 1px; text-align: left; padding: 2px 0; min-width: 62px; background: none; border: 0; color: inherit; cursor: pointer; font: inherit; border-radius: 6px; }
+/* The figures that say how the game is going, in six groups on one grid: two across, three on a wide screen, one on a phone. Each
+   group is a cell with its name above and its figures in equal columns, every figure with a bar, so the rows line up. Colour is kept
+   for what is doing well or badly. */
+.metrics-strip { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--line); }
+.metric-group { display: grid; align-content: start; gap: 6px; padding: 10px 14px 12px; min-width: 0; background: var(--panel); }
+.metric-group-name { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+.metric-row { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 4px 14px; }
+.metric { display: grid; align-content: start; gap: 2px; text-align: left; padding: 2px 0; min-width: 0; background: none; border: 0; color: inherit; cursor: pointer; font: inherit; border-radius: 6px; }
 .metric:hover .metric-value { text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
 .metric:focus-visible { outline: 2px solid var(--accent, var(--ink)); outline-offset: 2px; }
-.metric-label { font-size: 11px; color: var(--ink-muted); white-space: nowrap; }
+.metric-label { font-size: 11px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .metric-value { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 4px; }
 .metric-bar { display: block; height: 3px; border-radius: 2px; background: var(--line-2); overflow: hidden; }
 .metric-bar > span { display: block; height: 100%; background: var(--ink-muted); transition: width 200ms linear; }
+@media (min-width: 1100px) { .metrics-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 700px) {
-  .metrics-strip { flex-wrap: nowrap; overflow-x: auto; padding: 8px 2px; }
-  .metric-group { flex: 0 0 auto; padding: 0 12px; }
-  .metric-row { flex-wrap: nowrap; }
+  .metrics-strip { grid-template-columns: minmax(0, 1fr); }
+  .metric-group { padding: 8px 12px 10px; }
+  .metric-row { gap: 4px 10px; }
+  .metric-value { font-size: 15px; }
 }
 
 /* The economy's charts. */
