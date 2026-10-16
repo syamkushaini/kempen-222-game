@@ -424,3 +424,8 @@ export function closeNight(world: World, c: Campaign): void {
 
 export { countBatches, declarationOrder, summarise, type Summary, type Verdict } from './night';
 export { beforeNomination, effectiveDynamics, latestNationalPoll, truth };
+const actionsWithMeta = rawActions.map(a => ({
+  ...a,
+  fading: getFading(a.id, seatId),
+  effectiveness: getSeatEffectiveness(a.id, seatType),
+}))
