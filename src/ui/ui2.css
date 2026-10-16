@@ -944,3 +944,18 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .combo.on.bonus { border-color: var(--pos, #2e8b57); }
 .combo.on.clash { border-color: var(--neg, #c0392b); }
 .combo p { margin: 2px 0 0; }
+
+/* Doctrines, and the annual report card. */
+.doctrines ul, .report-card ul, .report-card ol { list-style: none; padding: 0; margin: 6px 0 0; }
+.doctrines ul { display: grid; gap: 6px; }
+.doctrine { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px dashed var(--line-2); border-radius: var(--radius); }
+.doctrine.on { border-style: solid; border-color: var(--accent, var(--ink)); }
+.doctrine p { margin: 2px 0 0; }
+.report-card { margin: 12px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); display: grid; gap: 6px; }
+.report-card .grades { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 4px 14px; }
+.report-card .grades li { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+.grade { font-size: 18px; }
+.grade-A, .grade-B { color: var(--pos, #2e8b57); }
+.grade-D, .grade-F { color: var(--neg, #c0392b); }
+.league li { display: flex; justify-content: space-between; padding: 2px 0; }
+.league li.you { font-weight: 700; }

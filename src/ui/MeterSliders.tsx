@@ -7,6 +7,7 @@ import { ALLOCATION, MONTH, govMoney } from '../sim/campaign/treasury';
 import type { Career } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import { START_DEFENCE } from '../sim/campaign/defence';
+import { DOCTRINES, METERS, PEERS, STRONG_AT, WEAK_AT, TITLE_WEEKS, doctrineAvailable, doctrineHeld, gradeOf, peerScore } from '../sim/campaign/doctrines';
 import { Portrait } from './Portrait';
 import { useFormat, useT, useWorld } from './hooks';
 
@@ -27,11 +28,16 @@ export function MeterSliders() {
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const set = useStore((s) => s.setMeterPolicy);
+  const adopt = useStore((s) => s.adoptDoctrine);
   if (!campaign.career || campaign.phase !== 'term' || !isPm(campaign)) return null;
   const k = campaign.career;
   const unit = govMoney(world, ALLOCATION.pm) * MONTH;
   const cap = capitalOf(k), used = capitalUsed(k), thin = stretch(k);
   const active = activeCombos(k).map((x) => x.id);
+  const held = doctrineHeld(campaign);
+  const titles = k.titles ?? [];
+  const cards = k.scorecards ?? [];
+  const latest = cards[cards.length - 1], before = cards[cards.length - 2];
   const visible = STANCE_IDS.filter((id) => stanceAvailable(campaign.scenario, id));
   return (
     <section className="meter-sliders" aria-label={t('stances.title')}>
@@ -43,6 +49,27 @@ export function MeterSliders() {
           {Array.from({ length: Math.max(cap, used) }, (_, i) => <i key={i} className={i < used ? (i >= cap ? 'over' : 'used') : ''} />)}
         </div>
         <p className="small muted">{thin < 1 ? t('stances.capital.over', { pct: Math.round(thin * 100) }) : used >= cap ? t('stances.capital.full') : t('stances.capital.desc')}</p>
+      </div>
+      <div className="doctrines">
+        <h4>{t('doctrines.title')}</h4>
+        <p className="muted small">{t('doctrines.desc')}</p>
+        <ul>
+          {DOCTRINES.filter((d) => doctrineAvailable(campaign.scenario, d)).map((d) => {
+            const on = held?.id === d.id;
+            const weeks = on && k.doctrine?.id === d.id ? k.week - k.doctrine.since : 0;
+            return (
+              <li key={d.id} className={`doctrine ${on ? 'on' : ''}`}>
+                <div className="grow">
+                  <strong>{t(`doctrine.${d.id}` as StringKey)}</strong>{titles.includes(d.id) && <span className="small pos-text"> ★</span>}{d.federal && <span className="small muted"> · {t('doctrines.forces')}</span>}
+                  <p className="small muted">{t(`doctrine.${d.id}.desc` as StringKey)}</p>
+                  {on && <p className="small num">{t('doctrines.held', { n: weeks })}{!titles.includes(d.id) && ` · ${Math.min(weeks, TITLE_WEEKS)}/${TITLE_WEEKS}`}</p>}
+                </div>
+                <button type="button" className="btn small" disabled={on} onClick={() => adopt(d.id)}>{on ? t('doctrines.set') : t('doctrines.adopt')}</button>
+              </li>
+            );
+          })}
+        </ul>
+        {titles.length > 0 && <p className="small">{t('doctrines.titles')}: {titles.map((id) => t(`doctrine.${id}` as StringKey)).join(', ')}</p>}
       </div>
       {visible.map((id) => {
         const def = STANCES[id];
@@ -104,6 +131,37 @@ export function MeterSliders() {
             );
           })}
         </ul>
+      </div>
+      <div className="report-card">
+        <h4>{t('report.title')}</h4>
+        <p className="muted small">{t('report.desc')}</p>
+        {!latest ? <p className="small">{t('report.none')}</p> : (
+          <>
+            <div className="result-label">
+              <strong>{t('report.year', { year: latest.year })} · {t('report.overall')}: {gradeOf(latest.overall)}</strong>
+              <span className="num muted">{t('report.rank', { rank: latest.rank, of: PEERS.length + 1 })}</span>
+            </div>
+            <ul className="grades">
+              {Object.entries(latest.scores).map(([id, score]) => {
+                const prev = before?.scores[id];
+                const label = METERS.includes(id as never) ? t(`tools.goal.${id}` as StringKey) : t(`nation.${id}` as StringKey);
+                return (
+                  <li key={id}>
+                    <span>{label}</span>
+                    <strong className={`grade grade-${gradeOf(score)}`}>{gradeOf(score)}</strong>
+                    {prev !== undefined && Math.abs(score - prev) >= 1 && <span className={`small ${score > prev ? 'pos-text' : 'neg'}`} title={t(score > prev ? 'report.better' : 'report.worse')}>{score > prev ? '▲' : '▼'}</span>}
+                  </li>
+                );
+              })}
+            </ul>
+            <h5>{t('report.peers')}</h5>
+            <ol className="league small">
+              {[...PEERS.map((p) => ({ id: p.id, name: t(`report.peer.${p.id}` as StringKey), score: peerScore(p.id, p.base, p.trend, latest.term, latest.year) })), { id: 'you', name: t('report.you'), score: latest.overall }]
+                .sort((a, b) => b.score - a.score).map((x) => <li key={x.id} className={x.id === 'you' ? 'you' : ''}>{x.name} <span className="num muted">{Math.round(x.score)} · {gradeOf(x.score)}</span></li>)}
+            </ol>
+          </>
+        )}
+        <p className="small muted">{t('report.milestones', { n: k.milestones?.length ?? 0, of: METERS.filter((m) => visible.includes(m as never)).length * 2 })} ({t('report.tip', { hi: STRONG_AT, lo: WEAK_AT })})</p>
       </div>
     </section>
   );

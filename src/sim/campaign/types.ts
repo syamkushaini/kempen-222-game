@@ -533,6 +533,9 @@ export interface Career {
   /** The sliders for the meters beyond the budget (see stances.ts): -2 to 2, absent where left in the middle. */
   stance?: Partial<Record<'cohesion' | 'tech' | 'environment' | 'law' | 'readiness' | 'influence', -2 | -1 | 0 | 1 | 2>>;
   /** The combinations of sliders in play now, the ones ever found, and when each minister last grumbled about a slider set against them (see stances.ts). */
+  /** The doctrine adopted and when, the titles earned, the tipping points passed and the annual report cards kept (see doctrines.ts). */
+  doctrine?: { id: string; since: number }; titles?: string[]; milestones?: string[];
+  scorecards?: { term: number; year: number; scores: Record<string, number>; overall: number; rank: number }[];
   combos?: string[]; combosSeen?: string[]; grumbled?: Partial<Record<'cohesion' | 'tech' | 'environment' | 'law' | 'readiness' | 'influence', number>>;
   /** The opposition's challenges to the government's policies this parliament: when the last was made, and what has been challenged. */
   challenged?: { last: number; done: string[] };
