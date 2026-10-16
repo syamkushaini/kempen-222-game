@@ -3,6 +3,7 @@ import { BYELECTION_SEAT, BYELECTION_SEATS, byElectionId, getWorld, world } from
 import { nextTerm, skipAhead, startCareer, termWeek } from '../sim/campaign/career';
 import { endDay, makeOffer } from '../sim/campaign/formation';
 import { closeNight, endWeek, newCampaign } from '../sim/campaign/turn';
+import { PORTFOLIO_IDS } from '../sim/campaign/types';
 import { N_PARTIES } from '../sim/types';
 import { newGame, parseSave, serializeSave, SAVE_VERSION } from './game';
 import { exportFileName, SaveStore, type KeyValueStore } from './saves';
@@ -138,7 +139,7 @@ describe('save format', () => {
     if (!pm.ok || !opp.ok) throw new Error('upgrade failed');
     const k = pm.state.campaign.career!;
     expect(pm.state.version).toBe(SAVE_VERSION);
-    expect(k.cabinet).toHaveLength(8);
+    expect(k.cabinet).toHaveLength(PORTFOLIO_IDS.length);
     expect(k.tabled).toEqual({ lines: { aid: 0, health: 0, education: 0, rural: 0, civil: 0 }, tax: 0 });
     expect(k.obligations.map((o) => o.demand)).toEqual(['subsidies', 'autonomy', 'autonomy']);
     expect(k.record).toMatchObject({ elections: 0, weeksPm: 0, kept: [] });

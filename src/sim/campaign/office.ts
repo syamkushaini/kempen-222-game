@@ -53,6 +53,28 @@ const LINE_BLOCS: Record<LineId, BlocId[]> = {
   civil: ['civil', 'seniors'],
 };
 
+/** The posts of a state's executive council: the first eight, and the environment and tourism. A federal cabinet has every one. */
+export const STATE_PORTFOLIOS: readonly PortfolioId[] = ['finance', 'home', 'economy', 'education', 'health', 'rural', 'works', 'defence', 'environment', 'tourism'];
+/** The portfolios of the cabinet or council of a game, by its scenario. */
+export const portfoliosOf = (scenario: string): readonly PortfolioId[] => (scenario.startsWith('career:') || scenario.startsWith('state:') ? STATE_PORTFOLIOS : PORTFOLIO_IDS);
+/** What a cabinet of eight, the size the stand-ins' drag and the risk of each kind of minister were set for, is of the one in office. */
+const cabinetScale = (c: Campaign): number => 8 / portfoliosOf(c.scenario).length;
+
+/** What a minister is called: the name the player gave them, or the invented one. */
+export const ministerName = (m: { name: number; label?: string }): string => m.label ?? MINISTER_NAMES[m.name];
+/** A name the player may give: letters, digits and a few marks, single spaces, at most 24 long. */
+export const cleanLabel = (raw: string): string => raw.normalize('NFC').replace(/[^\p{L}\p{N} .'_-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 24).trim();
+
+/** The player gives a minister (or a shadow minister) a name of their own; an empty one gives the invented name back. */
+export function renameMinister(c: Campaign, portfolio: PortfolioId, raw: string, shadow = false): boolean {
+  const k = c.career;
+  const who = shadow ? k?.shadow?.[portfolio] : k?.cabinet.find((m) => m.portfolio === portfolio);
+  if (!k || !who) return false;
+  const label = cleanLabel(raw);
+  if (label) who.label = label; else delete who.label;
+  return true;
+}
+
 export const skillOf = (k: Career, portfolio: PortfolioId) => k.cabinet.find((m) => m.portfolio === portfolio)?.skill ?? 3;
 
 /** How far a budget loosens (positive) or tightens the purse: spending lines up, taxes down, plus standing commitments. */
@@ -170,6 +192,14 @@ export const MINISTER_NAMES = [
   'Lee Chee Keong', 'Wong Siew Lan', 'Tan Boon Hock', 'Chong Mei Yin',
   'Ravi Chandran', 'Shanti Devan', 'Gopal Krishnan', 'Anita Selvam',
   'Jimmy Laing', 'Patricia Unggang', 'Douglas Nyipa', 'Felicia Jainal', 'Maxwell Gimbang', 'Rosalind Sipin',
+  // Added for a cabinet of twenty-five and a council of ten: more of every community, so that nobody in the cabinet shares a name.
+  'Hafizuddin Saad', 'Norlaila Rahim', 'Syed Imran', 'Faridah Othman',
+  'Mazlan Ismail', 'Salmah Kassim', 'Hishamuddin Roslan', 'Nurul Huda',
+  'Ariffin Zakaria', 'Sharifah Aini', 'Goh Kian Seng', 'Lim Pei Shan',
+  'Ong Teck Wee', 'Yap Li Ting', 'Ng Wai Kit', 'Chew Ai Ling',
+  'Mohan Raj', 'Kavitha Nair', 'Suresh Pillai', 'Lakshmi Perumal',
+  'Vikram Singh', 'Devi Arumugam', 'Anthony Lajim', 'Margaret Ejau',
+  'Clarence Bugat', 'Dorothy Sulu', 'Stephen Tuyan', 'Marina Lumat',
 ];
 
 /** Names borne by those around the leader who are not ministers: the three advisers and the head of the civil service. Nobody else is given one of them. */
@@ -214,13 +244,14 @@ export function formCabinet(c: Campaign, rng: Rng): void {
     const senior = g.deals[p]?.senior;
     if (senior === 'finance' || senior === 'home') holder.set(senior, p);
   }
-  const free = PORTFOLIO_IDS.filter((id) => !holder.has(id) && id !== 'finance' && id !== 'home').reverse();
+  const all = portfoliosOf(c.scenario);
+  const free = all.filter((id) => !holder.has(id) && id !== 'finance' && id !== 'home').reverse();
   for (const p of [...g.partners].sort((a, b) => (g.deals[b]?.posts ?? 0) - (g.deals[a]?.posts ?? 0))) {
-    let share = Math.floor(((g.deals[p]?.posts ?? 0) * PORTFOLIO_IDS.length) / cabinetSize(c)) - (holder.has('finance') && holder.get('finance') === p ? 1 : 0) - (holder.get('home') === p ? 1 : 0);
+    let share = Math.floor(((g.deals[p]?.posts ?? 0) * all.length) / cabinetSize(c)) - (holder.has('finance') && holder.get('finance') === p ? 1 : 0) - (holder.get('home') === p ? 1 : 0);
     while (share-- > 0 && free.length > 0) holder.set(free.pop()!, p);
   }
   k.cabinet = [];
-  for (const id of PORTFOLIO_IDS) k.cabinet.push(newMinister(k, id, holder.get(id) ?? g.pm, rng));
+  for (const id of all) k.cabinet.push(newMinister(k, id, holder.get(id) ?? g.pm, rng));
   k.appointments = [];
   for (const m of k.cabinet) if (m.party === c.player && inGov(c, c.player)) stepIn(c, m);
 }
@@ -338,6 +369,19 @@ export function appoint(world: World, c: Campaign, portfolio: PortfolioId, index
   return true;
 }
 
+/** A game saved when the cabinet had eight posts has the rest filled, by the head of the government's party, the first week it is played. */
+export function fillCabinet(c: Campaign, rng: Rng): void {
+  const k = c.career!;
+  const want = portfoliosOf(c.scenario);
+  if (want.every((id) => k.cabinet.some((m) => m.portfolio === id))) return;
+  for (const id of want) {
+    if (k.cabinet.some((m) => m.portfolio === id)) continue;
+    const m = newMinister(k, id, k.government.pm, rng);
+    k.cabinet.push(m);
+    if (m.party === c.player && inGov(c, c.player)) stepIn(c, m);
+  }
+}
+
 /**
  * A week of the player's own ministers: a stand-in drags on the government, and the risk that comes with a kind of
  * person may come to pass. `rng` is the game's stream; it is only drawn from when there is a risk to roll.
@@ -346,18 +390,18 @@ export function cabinetWeek(c: Campaign, rng: Rng): void {
   const k = c.career!;
   const me = c.player;
   const standIns = k.cabinet.filter((m) => m.acting).length;
-  if (standIns > 0) k.government.stability = clamp(k.government.stability - ACTING_DRAG * standIns, 5, 95);
+  if (standIns > 0) k.government.stability = clamp(k.government.stability - ACTING_DRAG * cabinetScale(c) * standIns, 5, 95);
   for (const m of k.cabinet) {
     if (m.party !== me || !m.trait || m.done) continue;
-    const risk = TRAIT_RISK[m.trait];
+    const risk = (TRAIT_RISK[m.trait] ?? 0) * cabinetScale(c);
     if (!risk || rng.next() >= risk) continue;
     m.done = true;
     if (m.trait === 'rising') {
       shiftUnity(c, me, -6);
-      pushNews(c, { party: me, key: 'news.gov.ambition', vars: { name: MINISTER_NAMES[m.name], post: `@portfolio:${m.portfolio}` }, tone: 'bad' });
+      pushNews(c, { party: me, key: 'news.gov.ambition', vars: { name: ministerName(m), post: `@portfolio:${m.portfolio}` }, tone: 'bad' });
     } else {
       // A fixer's past catches up with them: it is the player's to answer, at a press conference, before anything is settled.
-      pushNews(c, { party: me, key: 'news.gov.scandal', vars: { name: MINISTER_NAMES[m.name], post: `@portfolio:${m.portfolio}` }, tone: 'bad' });
+      pushNews(c, { party: me, key: 'news.gov.scandal', vars: { name: ministerName(m), post: `@portfolio:${m.portfolio}` }, tone: 'bad' });
       if (!k.scandal && c.inbox.length === 0) {
         k.scandal = m.portfolio;
         addScene(c, { kind: 'event', from: null, event: 'ministerScandal' });

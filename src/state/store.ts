@@ -15,6 +15,7 @@ import { borrow } from '../sim/campaign/loan';
 import { courtEndorser } from '../sim/campaign/endorsers';
 import type { IdeologyId } from '../sim/campaign/leader';
 import { retire } from '../sim/campaign/legacy';
+import { renameMinister } from '../sim/campaign/office';
 import { switchParty } from '../sim/campaign/switching';
 import { hireTroopers, interview } from '../sim/campaign/media';
 import { crossTheFloor, type CrossStake } from '../sim/campaign/crossing';
@@ -256,6 +257,8 @@ interface Store {
   invest(lots: number): void;
   /** The opposition names someone to shadow a portfolio. */
   shadow(portfolio: PortfolioId): void;
+  /** The player gives a minister, or a shadow minister, a name of their own. */
+  renameMinister(portfolio: PortfolioId, name: string, shadow?: boolean): void;
   /** Takes a small ally into the player's party. */
   merge(party: number): void;
   /** Opens a seat to the leader's choice of candidate, for half a day. */
@@ -598,6 +601,7 @@ export const useStore = create<Store>((set, get) => {
     standLeader: (seat) => mutate((c, _g, world) => { standLeader(world, c, seat); }),
     merge: (party) => mutate((c, _g, world) => { merge(world, c, party); }),
     shadow: (portfolio) => mutate((c, _g, world) => { nameShadow(world, c, portfolio); }),
+    renameMinister: (portfolio, name, shadow = false) => mutate((c) => { renameMinister(c, portfolio, name, shadow); }),
     invest: (lots) => mutate((c, _g, world) => { invest(world, c, lots); }),
     trade: (holding, lots) => mutate((c, _g, world) => { trade(world, c, holding, lots); }),
     activity: (id) => mutate((c, _g, world) => { doActivity(world, c, id); }),

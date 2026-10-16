@@ -138,11 +138,12 @@ describe('a shadow cabinet', () => {
     const c = opposition();
     const k = c.career!;
     const cred = k.credibility;
-    PORTFOLIO_IDS.slice(0, 3).forEach((id) => nameShadow(base, c, id));
+    const half = Math.floor(PORTFOLIO_IDS.length / 2);
+    PORTFOLIO_IDS.slice(0, half - 1).forEach((id) => nameShadow(base, c, id));
     expect(k.credibility).toBe(cred);
-    nameShadow(base, c, PORTFOLIO_IDS[3]);
+    nameShadow(base, c, PORTFOLIO_IDS[half - 1]);
     expect(k.credibility).toBe(cred + 2);
-    PORTFOLIO_IDS.slice(4).forEach((id) => nameShadow(base, c, id));
+    PORTFOLIO_IDS.slice(half).forEach((id) => nameShadow(base, c, id));
     expect(k.credibility).toBe(cred + 5);
     nameShadow(base, c, PORTFOLIO_IDS[0]);
     expect(k.credibility).toBe(cred + 5);

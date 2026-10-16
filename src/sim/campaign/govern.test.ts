@@ -149,7 +149,8 @@ describe('the cabinet', () => {
     expect(new Set(cabinet.map((m) => m.name)).size).toBe(PORTFOLIO_IDS.length);
     expect(cabinet.every((m) => m.skill >= 1 && m.skill <= 5)).toBe(true);
     const held = (p: number) => cabinet.filter((m) => m.party === p).length;
-    expect([held(PS), held(BP), held(GBK), held(GBS)]).toEqual([6, 1, 1, 0]);
+    // The partners' posts out of the cabinet of 28 become their share of the twenty-five portfolios.
+    expect([held(PS), held(BP), held(GBK), held(GBS)]).toEqual([16, 5, 4, 0]);
     expect(cabinet.find((m) => m.portfolio === 'finance')!.party).toBe(PS);
     // A partner promised the treasury gets the treasury.
     c.career!.government.deals[BP]!.senior = 'finance';
@@ -195,7 +196,7 @@ describe('bills', () => {
   it('reach the floor sooner under a capable minister', () => {
     const c = career();
     const k = c.career!;
-    const works = k.cabinet.find((m) => m.portfolio === 'works')!;
+    const works = k.cabinet.find((m) => m.portfolio === 'housing')!;
     works.skill = 5;
     expect(prepWeeks(k, 'pledge:homes')).toBe(4);
     works.skill = 1;

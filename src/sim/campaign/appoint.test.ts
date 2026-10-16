@@ -79,7 +79,8 @@ describe('appointing ministers', () => {
     const n = own(c).length;
     k.government.stability = 60;
     cabinetWeek(c, new Rng(1));
-    expect(k.government.stability).toBeCloseTo(60 - ACTING_DRAG * n, 9);
+    // The drag was set for a cabinet of eight; a cabinet of twenty-five has each stand-in weigh in proportion.
+    expect(k.government.stability).toBeCloseTo(60 - ACTING_DRAG * (8 / PORTFOLIO_IDS.length) * n, 9);
     for (const a of [...k.appointments!]) appoint(base, c, a.portfolio, 0);
     const steady = k.government.stability;
     cabinetWeek(c, new Rng(1));
