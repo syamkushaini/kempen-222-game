@@ -5,6 +5,7 @@ import { BLOC_IDS, N_BLOCS, PARTY_IDS, type BlocId, type PartyId } from '../type
 import { scaled } from './actions';
 import { builtEffects, taxEffects } from './econPlansData';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
+import { defenceDial, defenceShown, resentCut } from './defence';
 import { pushNews, ref } from './news';
 import { GENERAL_RULES, STATE_RULES } from './rules';
 import {
@@ -51,6 +52,7 @@ const LINE_BLOCS: Record<LineId, BlocId[]> = {
   education: ['undi18', 'm40'],
   rural: ['agri', 'felda', 'borneo_native', 'borneo_urban'],
   civil: ['civil', 'seniors'],
+  defence: ['heartland', 'felda', 'borneo_native', 'smallbiz'],
 };
 
 /** The posts of a state's executive council: the first eight, and the environment and tourism. A federal cabinet has every one. */
@@ -79,7 +81,7 @@ export const skillOf = (k: Career, portfolio: PortfolioId) => k.cabinet.find((m)
 
 /** How far a budget loosens (positive) or tightens the purse: spending lines up, taxes down, plus standing commitments. */
 export function looseness(k: Career, budget: Budget = k.tabled): number {
-  return LINE_IDS.reduce((a, id) => a + budget.lines[id], 0) - 2 * budget.tax + 0.5 * k.fiscal + (budget.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0);
+  return LINE_IDS.reduce((a, id) => a + (budget.lines[id] ?? 0), 0) - 2 * budget.tax + 0.5 * k.fiscal + (budget.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0);
 }
 
 /** The deficit a budget produces, as a share of national income. A capable finance minister shaves it. */
@@ -136,6 +138,8 @@ export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; va
   }
   if (!k || c.phase !== 'term' || !isPm(c) || !('value' in patch) || ![-1, 0, 1].includes(patch.value)) return false;
   if (patch.tax) k.budget.tax = patch.value;
+  // The defence line is the federal head of government's alone.
+  else if (patch.line === 'defence') { if (!defenceShown(c)) return false; k.budget.lines.defence = patch.value; }
   else if (patch.line && LINE_IDS.includes(patch.line)) k.budget.lines[patch.line] = patch.value;
   else return false;
   return true;
@@ -145,21 +149,23 @@ export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; va
 export function tableBudget(c: Campaign, plan: Budget): void {
   const k = c.career!;
   const g = k.government;
-  k.tabled = { lines: { ...plan.lines }, tax: plan.tax, ...(plan.measures?.length ? { measures: [...plan.measures] } : {}) };
+  k.tabled = { lines: { ...plan.lines, ...(defenceDial(plan) !== 0 ? { defence: defenceDial(plan) } : {}) }, tax: plan.tax, ...(plan.measures?.length ? { measures: [...plan.measures] } : {}) };
   // What it pays for in particular is noticed by those it is for.
   for (const m of plan.measures ?? []) {
     for (const [bloc, v] of Object.entries(MEASURES[m].appeal)) { lift(k, g.pm, [bloc as BlocId], v); for (const p of g.partners) lift(k, p, [bloc as BlocId], v * 0.4); }
   }
   for (const id of LINE_IDS) {
-    if (plan.lines[id] === 0) continue;
-    lift(k, g.pm, LINE_BLOCS[id], 0.02 * plan.lines[id]);
-    for (const p of g.partners) lift(k, p, LINE_BLOCS[id], 0.008 * plan.lines[id]);
+    const dial = plan.lines[id] ?? 0;
+    if (dial === 0) continue;
+    lift(k, g.pm, LINE_BLOCS[id], 0.02 * dial);
+    for (const p of g.partners) lift(k, p, LINE_BLOCS[id], 0.008 * dial);
   }
+  resentCut(c, plan);
   if (plan.tax !== 0) lift(k, g.pm, ['smallbiz', 'm40'], plan.tax > 0 ? -0.02 : 0.015);
   // Partners with rural and Borneo seats, and the party of the civil service, watch their own lines.
   for (const p of g.partners) {
     const id = PARTY_IDS[p];
-    const cares: LineId = id === 'bp' ? 'civil' : 'rural';
+    const cares = id === 'bp' ? 'civil' : 'rural';
     if (plan.lines[cares] !== 0) shiftRelation(c, g.pm, p, 3 * plan.lines[cares]);
   }
   const loose = looseness(k);

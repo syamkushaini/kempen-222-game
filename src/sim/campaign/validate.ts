@@ -109,8 +109,9 @@ const isLevel = (x: unknown) => x === 0 || x === 1 || x === 2 || x === 3;
 const isPledge = (x: unknown) => (PLEDGE_IDS as readonly unknown[]).includes(x);
 const isVotes = (x: unknown) => isList(x, (v) => isNum(v) && v >= 0, N_PARTIES);
 
+const isUnit = (x: unknown): x is number => isNum(x) && x >= 0 && x <= 100;
 const isDial = (x: unknown) => x === -1 || x === 0 || x === 1;
-const isBudget = (x: unknown) => isObj(x) && isDial(x.tax) && (x.measures === undefined || (Array.isArray(x.measures) && x.measures.length <= 3 && x.measures.every((m) => (MEASURE_IDS as readonly unknown[]).includes(m)))) && isObj(x.lines) && LINE_IDS.every((id) => isDial((x.lines as Record<string, unknown>)[id]));
+const isBudget = (x: unknown) => isObj(x) && isDial(x.tax) && (x.measures === undefined || (Array.isArray(x.measures) && x.measures.length <= 3 && x.measures.every((m) => (MEASURE_IDS as readonly unknown[]).includes(m)))) && isObj(x.lines) && LINE_IDS.every((id) => (id === 'defence' && (x.lines as Record<string, unknown>)[id] === undefined) || isDial((x.lines as Record<string, unknown>)[id]));
 
 const isPerson = (x: unknown) => isObj(x) && isNum(x.name) && x.name >= 0 && typeof x.skeleton === 'boolean' && typeof x.vetted === 'boolean';
 const isStaffer = (x: unknown) => isPerson(x) && isNum((x as Record<string, unknown>).skill);
@@ -189,6 +190,7 @@ function isValidCareer(x: unknown, world: World): boolean {
   return (
     (x.founded === undefined || typeof x.founded === 'boolean') &&
     (x.nation === undefined || (isObj(x.nation) && isNum(x.nation.health) && isNum(x.nation.education) && isNum(x.nation.standing))) &&
+    (x.defence === undefined || (isObj(x.defence) && isUnit(x.defence.readiness) && isUnit(x.defence.influence))) &&
     (x.members === undefined || (Array.isArray(x.members) && x.members.every((v) => isNum(v) && v >= -1 && v <= 100))) &&
     (x.plots === undefined || (isObj(x.plots) && Object.values(x.plots).every((v) => isNum(v) && v >= 0 && v <= 100))) &&
     isNum(x.term) && x.term >= 1 && isNum(x.week) && x.week >= 1 && isNum(x.length) && x.week <= x.length &&

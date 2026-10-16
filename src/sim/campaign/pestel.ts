@@ -1,6 +1,7 @@
 import { clamp } from '../math';
 import type { Rng } from '../rng';
 import type { BlocId } from '../types';
+import { START_DEFENCE } from './defence';
 import { nationOf } from './nation';
 import { inGov, isPm, lift } from './office';
 import { isEnacted } from './policy';
@@ -18,9 +19,11 @@ export const PESTEL_KEYS = ['cohesion', 'tech', 'environment', 'law'] as const;
 export type PestelKey = (typeof PESTEL_KEYS)[number];
 
 export const START_PESTEL: Pestel = { cohesion: 55, tech: 50, environment: 55, law: 55 };
+/** The two defence meters in the political group: a federal head of government's alone (see defence.ts). */
+export const DEFENCE_METERS: readonly string[] = ['readiness', 'influence'];
 /** The groups of the analysis and the meters each shows. Economic ones are worked out from the economy's own figures. */
 export const PESTEL_GROUPS = [
-  { id: 'political', meters: ['stability', 'trust', 'standing'] },
+  { id: 'political', meters: ['stability', 'trust', 'standing', 'readiness', 'influence'] },
   { id: 'economic', meters: ['growth', 'inflation', 'jobless', 'debt'] },
   { id: 'social', meters: ['health', 'education', 'cohesion'] },
   { id: 'technological', meters: ['tech'] },
@@ -108,14 +111,20 @@ export function pestelScores(k: Career): Record<string, number> {
   const p = pestelOf(k);
   return {
     stability: k.government.stability, trust: k.government.trust, standing: n.standing,
+    ...(k.defence ?? START_DEFENCE),
     ...economicScores(k.economy),
     health: n.health, education: n.education, cohesion: p.cohesion, tech: p.tech, environment: p.environment, law: p.law,
   };
 }
 
-/** The mean of the meters in a group. */
-export function groupScore(k: Career, group: PestelGroup): number {
+/**
+ * How well a meter is doing, from 0 (in trouble) to 100: the armed forces having a great say is the one meter where more is worse.
+ */
+export const wellness = (meter: string, value: number): number => (meter === 'influence' ? 100 - value : value);
+
+/** The mean of the meters in a group; the defence meters count only where they are shown (a federal head of government). */
+export function groupScore(k: Career, group: PestelGroup, defence = false): number {
   const scores = pestelScores(k);
-  const meters = PESTEL_GROUPS.find((g) => g.id === group)!.meters as readonly string[];
-  return meters.reduce((a, m) => a + scores[m], 0) / meters.length;
+  const meters = (PESTEL_GROUPS.find((g) => g.id === group)!.meters as readonly string[]).filter((m) => defence || !DEFENCE_METERS.includes(m));
+  return meters.reduce((a, m) => a + wellness(m, scores[m]), 0) / meters.length;
 }
