@@ -835,9 +835,14 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .metric-bar { display: block; height: 3px; border-radius: 2px; background: var(--line-2); overflow: hidden; }
 .metric-bar > span { display: block; height: 100%; background: var(--ink-muted); transition: width 200ms linear; }
 @media (max-width: 700px) {
-  .metrics-strip { flex-wrap: nowrap; overflow-x: auto; padding: 8px 2px; }
-  .metric-group { flex: 0 0 auto; padding: 0 12px; }
-  .metric-row { flex-wrap: nowrap; }
+  /* Every figure is in sight at once: the groups stack, and a group's figures share its row. */
+  .metrics-strip { display: grid; gap: 6px 0; padding: 8px 4px; }
+  .metric-group { flex: none; padding: 0 10px; border-left: 0; }
+  .metric-group + .metric-group { border-top: 1px solid var(--line); padding-top: 6px; }
+  .metric-row { gap: 6px 12px; }
+  .metric { min-width: 0; flex: 1 1 0; }
+  .metric-value { font-size: 15px; }
+  .metric-label { white-space: normal; line-height: 1.15; }
 }
 
 /* The economy's charts. */
