@@ -10,8 +10,8 @@ const read = (): boolean => {
 };
 
 /**
- * The background music: two tracks played in turn, round and round, a button to silence it, and the choice remembered.
- * Browsers refuse sound before the player has touched the page, so it starts on the first tap or key press rather than at load.
+ * The background music: two tracks played in turn, round and round, a button to silence it, and the choice remembered. Browsers refuse sound
+ * before the player has touched the page, so it starts on the first tap or key press rather than at load.
  */
 export function Music() {
   const t = useT();

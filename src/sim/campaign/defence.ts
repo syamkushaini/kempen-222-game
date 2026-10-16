@@ -3,7 +3,10 @@ import { clamp } from '../math';
 import type { Rng } from '../rng';
 import type { BlocId } from '../types';
 import { WEAK, STRONG } from './nation';
+import { builtMeters } from './econPlansData';
 import { isPm, lift, skillOf } from './office';
+import { isEnacted } from './policy';
+import { CONTROL_COST_TO_READINESS, stanceShift } from './stances';
 import { pestelOf } from './pestel';
 import type { Budget, Campaign, Career, DefenceFigures, Dial } from './types';
 
@@ -45,9 +48,12 @@ export function defenceTargets(k: Career): DefenceFigures {
   const skill = skillOf(k, 'defence');
   const squeeze = Math.max(0, k.economy.debt - 80) * 0.15;
   const d = defenceOf(k);
+  // Programmes finished, and the Act that has civilians watch the armed forces, hold the figures up or down for good.
+  const built = builtMeters(k);
+  const s = stanceShift(k);
   return {
-    readiness: clamp(50 + 16 * dial + 2.5 * (skill - 3) - squeeze, 15, 90),
-    influence: clamp(40 + 15 * dial + 0.12 * (d.readiness - 50) - 1.5 * (skill - 3) - 0.2 * (pestelOf(k).law - 55), 10, 90),
+    readiness: clamp(50 + 16 * dial + 2.5 * (skill - 3) + built.readiness + s.readiness + CONTROL_COST_TO_READINESS * Math.min(0, s.influence) - squeeze, 15, 90),
+    influence: clamp(40 + 15 * dial + 0.12 * (d.readiness - 50) - 1.5 * (skill - 3) - 0.2 * (pestelOf(k).law - 55) + built.influence + s.influence - 8 * Number(isEnacted(k, 'defenceOversight')), 10, 90),
   };
 }
 

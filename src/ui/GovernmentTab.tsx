@@ -12,6 +12,7 @@ import { TreasuryCard } from './TreasuryCard';
 import { EconomyCharts } from './EconomyCharts';
 import { EconomyTools } from './EconomyTools';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
+import { MeterTools } from './MeterTools';
 import { defenceShown } from '../sim/campaign/defence';
 import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
 import { MAX_MEASURES } from '../sim/campaign/office';
@@ -119,6 +120,7 @@ export function GovernmentTab() {
       <EconomyCharts />
       <EconomyBook />
       <PestelCard />
+      <MeterTools />
       <EconomyTools />
 
       {pm && (

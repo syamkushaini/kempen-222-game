@@ -8,6 +8,8 @@ import { addScene, relation, shiftRelation } from './diplomacy';
 import { startFormation } from './formation';
 import { nationWeek } from './nation';
 import { defenceWeek } from './defence';
+import { storyWeek } from './doctrines';
+import { stanceWeek } from './stances';
 import { pestelWeek } from './pestel';
 import { pushNews, ref } from './news';
 import { rivalPmWeek } from './rivalPm';
@@ -48,6 +50,7 @@ const PLEDGE_PORTFOLIO: Record<PledgeId, PortfolioId> = {
   partyHopBan: 'law', fixedTerm: 'law', infoAct: 'comms', localVote: 'law', gigRights: 'humanRes', oilRoyalty: 'finance',
   schoolMeals: 'education', healthCover: 'health', greenGrid: 'energy', villageRoads: 'rural', smeLoans: 'economy', seniorPension: 'women',
   tollCut: 'works', epfWithdrawal: 'finance', civilReform: 'home',
+  dataProtection: 'digital', conflictOfInterest: 'law', defenceOversight: 'defence',
 };
 
 /** Promises to partners that need an Act of Parliament rather than a signature. */
@@ -556,6 +559,7 @@ export function governWeek(c: Campaign, rng: Rng): void {
   nationWeek(c, rng);
   pestelWeek(c, rng);
   defenceWeek(c, rng);
+  if (isPm(c)) { stanceWeek(c); storyWeek(c); }
   if (isPm(c)) k.record.weeksPm++; else if (inGov(c, me)) k.record.weeksGov++; else k.record.weeksOpp++;
 
   // A game saved with a smaller cabinet has the rest of the posts filled.

@@ -3,6 +3,7 @@ import { clamp, zeros2 } from '../math';
 import { N_BLOCS, N_PARTIES, type RegionId } from '../types';
 import { contestsState, scaled } from './actions';
 import { STATE_GOVERNMENT_INCOME, statesHeld } from './contests';
+import { stanceCost } from './stances';
 import { isFederalWorld, procurementMult } from './defence';
 import { figuresOf, sectorShares, STATE_PUBLIC } from './gdp';
 import { DEBT_FLOOR, MEASURES, RATE, inGov, isPm } from './office';
@@ -101,7 +102,7 @@ export const measureWeekly = (world: World, m: keyof typeof MEASURES): number =>
 /** What a number of units of standing commitment cost a week: a policy, a programme or a deal adds some. */
 export const commitmentWeekly = (world: World, units: number): number => govMoney(world, ALLOCATION.pm) * COMMITMENT_UNIT * units;
 
-export interface BookFlow { id: 'tax' | 'states' | SectorId | LineId | 'measures' | 'commitments' | 'interest' | 'projects' | 'repay'; amount: number }
+export interface BookFlow { id: 'tax' | 'states' | SectorId | LineId | 'measures' | 'commitments' | 'interest' | 'projects' | 'stances' | 'repay'; amount: number }
 export interface Books {
   income: BookFlow[];
   spend: BookFlow[];
@@ -132,6 +133,8 @@ export function govBooks(world: World, c: Campaign, budget?: Budget): Books | nu
     { id: 'commitments', amount: unit * COMMITMENT_UNIT * Math.max(0, k.fiscal) },
     { id: 'interest', amount: unit * INTEREST * (e.debt / 63) * (1 + RATE.interest * (k.rate ?? 0)) },
     { id: 'projects', amount: unit * projectsCost(k) },
+    // What the sliders for the meters cost a week: pushing costs, easing off saves a little. A state has no armed forces to pay for.
+    { id: 'stances', amount: unit * stanceCost(k, undefined, isFederalWorld(world)) },
   ];
   const sum = (xs: BookFlow[]) => xs.reduce((a, x) => a + x.amount, 0);
   // What the plan sets aside for the debt is a share of what is left, and goes to it each week (see treasuryWeek).

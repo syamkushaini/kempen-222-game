@@ -821,23 +821,26 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .treasury-card .repay { display: grid; gap: 6px; margin-top: 8px; }
 .treasury-card .repay input[type=range] { width: 100%; }
 
-/* The figures that say how the game is going, as one ribbon in four groups. Colour is kept for what is doing well or badly. */
-.metrics-strip { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 0; margin: 0; padding: 8px 4px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
-.metric-group { display: grid; gap: 2px; padding: 0 14px; border-left: 1px solid var(--line); flex: 1 1 auto; min-width: 0; }
-.metric-group:first-child { border-left: 0; }
-.metric-group-name { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.01em; }
-.metric-row { display: flex; gap: 14px; flex-wrap: wrap; }
-.metric { display: grid; gap: 1px; text-align: left; padding: 2px 0; min-width: 62px; background: none; border: 0; color: inherit; cursor: pointer; font: inherit; border-radius: 6px; }
+/* The figures that say how the game is going, in six groups on one grid: two across, three on a wide screen, one on a phone. Each
+   group is a cell with its name above and its figures in equal columns, every figure with a bar, so the rows line up. Colour is kept
+   for what is doing well or badly. */
+.metrics-strip { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--line); }
+.metric-group { display: grid; align-content: start; gap: 6px; padding: 10px 14px 12px; min-width: 0; background: var(--panel); }
+.metric-group-name { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+.metric-row { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 4px 14px; }
+.metric { display: grid; align-content: start; gap: 2px; text-align: left; padding: 2px 0; min-width: 0; background: none; border: 0; color: inherit; cursor: pointer; font: inherit; border-radius: 6px; }
 .metric:hover .metric-value { text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
 .metric:focus-visible { outline: 2px solid var(--accent, var(--ink)); outline-offset: 2px; }
-.metric-label { font-size: 11px; color: var(--ink-muted); white-space: nowrap; }
+.metric-label { font-size: 11px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .metric-value { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 4px; }
 .metric-bar { display: block; height: 3px; border-radius: 2px; background: var(--line-2); overflow: hidden; }
 .metric-bar > span { display: block; height: 100%; background: var(--ink-muted); transition: width 200ms linear; }
+@media (min-width: 1100px) { .metrics-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 700px) {
-  .metrics-strip { flex-wrap: nowrap; overflow-x: auto; padding: 8px 2px; }
-  .metric-group { flex: 0 0 auto; padding: 0 12px; }
-  .metric-row { flex-wrap: nowrap; }
+  .metrics-strip { grid-template-columns: minmax(0, 1fr); }
+  .metric-group { padding: 8px 12px 10px; }
+  .metric-row { gap: 4px 10px; }
+  .metric-value { font-size: 15px; }
 }
 
 /* The economy's charts. */
@@ -918,3 +921,68 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .money-sheet dt { margin-top: 12px; font-weight: 600; }
 .money-sheet dd { margin: 4px 0 0; }
 .term-bar .money-sheet { bottom: calc(132px + env(safe-area-inset-bottom)); }
+
+/* Sliders for the meters: the two ends of each named under it. */
+.meter-sliders .stance .result-label { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.stance-poles { display: flex; justify-content: space-between; margin-top: -2px; }
+.meter-acts { margin-top: 12px; }
+.meter-acts > summary { cursor: pointer; padding: 6px 0; }
+
+/* Political capital, the minister under each slider, and the combinations. */
+.capital { margin: 10px 0; display: grid; gap: 6px; }
+.capital-pips { display: flex; flex-wrap: wrap; gap: 5px; }
+.capital-pips i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line-2); background: transparent; transition: background 150ms; }
+.capital-pips i.used { background: var(--accent, var(--ink)); border-color: var(--accent, var(--ink)); }
+.capital-pips i.over { background: var(--neg, #c0392b); border-color: var(--neg, #c0392b); }
+.stance-minister { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; }
+.stance-minister p { margin: 2px 0 0; font-style: italic; }
+.stance-minister.mood-furious p, .stance-minister.mood-uneasy p { color: var(--neg, #c0392b); }
+.stance-minister.mood-delighted p, .stance-minister.mood-pleased p { color: var(--pos, #2e8b57); }
+.combos ul { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 6px; }
+.combo { padding: 8px 10px; border: 1px dashed var(--line-2); border-radius: var(--radius); }
+.combo.on { border-style: solid; }
+.combo.on.bonus { border-color: var(--pos, #2e8b57); }
+.combo.on.clash { border-color: var(--neg, #c0392b); }
+.combo p { margin: 2px 0 0; }
+
+/* Doctrines, and the annual report card. */
+.doctrines ul, .report-card ul, .report-card ol { list-style: none; padding: 0; margin: 6px 0 0; }
+.doctrines ul { display: grid; gap: 6px; }
+.doctrine { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px dashed var(--line-2); border-radius: var(--radius); }
+.doctrine.on { border-style: solid; border-color: var(--accent, var(--ink)); }
+.doctrine p { margin: 2px 0 0; }
+.report-card { margin: 12px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); display: grid; gap: 6px; }
+.report-card .grades { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 4px 14px; }
+.report-card .grades li { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+.grade { font-size: 18px; }
+.grade-A, .grade-B { color: var(--pos, #2e8b57); }
+.grade-D, .grade-F { color: var(--neg, #c0392b); }
+.league li { display: flex; justify-content: space-between; padding: 2px 0; }
+.league li.you { font-weight: 700; }
+
+/* The radar of the country, the forecast under each slider, and a little life when something is set. */
+.radar { margin: 12px 0; display: grid; gap: 6px; justify-items: center; }
+.radar figcaption { justify-self: stretch; }
+.radar svg { width: min(100%, 340px); height: auto; overflow: visible; }
+.radar-ring { fill: none; stroke: var(--line-2); stroke-width: 1; }
+.radar-ring.ring-70 { stroke-dasharray: 3 3; }
+.radar-ring.ring-30 { stroke-dasharray: 3 3; opacity: 0.7; }
+.radar-axis { stroke: var(--line); stroke-width: 1; }
+.radar-now { fill: color-mix(in srgb, var(--accent, #7c8cff) 35%, transparent); stroke: var(--accent, #7c8cff); stroke-width: 2; transition: all 300ms ease; }
+.radar-later { fill: none; stroke: var(--ink-muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.radar-point { cursor: pointer; outline: none; }
+.radar-point:focus-visible circle, .radar-point:hover circle { stroke: var(--ink); stroke-width: 2; }
+.radar-point .dot { fill: var(--ink); }
+.radar-point .dot-good { fill: var(--pos, #2e8b57); }
+.radar-point .dot-bad { fill: var(--neg, #c0392b); }
+.radar-label { font-size: 11px; fill: var(--ink-muted); }
+.radar-value { font-size: 12px; font-weight: 700; fill: var(--ink); }
+.radar-key { display: flex; gap: 6px; align-items: center; }
+.radar-key span { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--accent, #7c8cff); }
+.radar-key .key-later { border-top: 2px dashed var(--ink-muted); margin-left: 10px; }
+.spark { width: 100%; height: 44px; display: block; }
+.spark-here { fill: none; stroke: var(--accent, #7c8cff); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.spark-mid { fill: none; stroke: var(--ink-muted); stroke-width: 1.5; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+@keyframes stamp { 0% { transform: scale(1.06); } 40% { transform: scale(0.985); } 100% { transform: scale(1); } }
+.doctrine.on { animation: stamp 320ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .doctrine.on { animation: none; } .radar-now { transition: none; } }
