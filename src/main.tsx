@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { loadScenario } from './data/world';
+import { loadEventText } from './i18n/strings';
 import { saveStore } from './state/store';
 import { App } from './ui/App';
 import { ErrorBoundary } from './ui/ErrorBoundary';
@@ -20,11 +21,16 @@ import './ui/glass.css';
 // If one cannot be fetched (offline, say), the game still opens, and that save shows as unreadable until it can.
 void Promise.allSettled(saveStore.scenarios().map(loadScenario)).then(() => {
   // The splash has been up since the page opened; it goes a moment after the first screen is drawn, and not before.
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  // Two frames on, so that the first screen is on it. A page that is not on show (another tab, a hidden pane) runs no frames at all, so a timer
+  // takes the splash away as well, and whichever comes first does.
+  const dropSplash = () => {
     const splash = document.getElementById('splash');
-    splash?.classList.add('gone');
-    setTimeout(() => splash?.remove(), 450);
-  }));
+    if (!splash || splash.classList.contains('gone')) return;
+    splash.classList.add('gone');
+    setTimeout(() => splash.remove(), 450);
+  };
+  requestAnimationFrame(() => requestAnimationFrame(dropSplash));
+  setTimeout(dropSplash, 600);
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ErrorBoundary>
@@ -32,4 +38,6 @@ void Promise.allSettled(saveStore.scenarios().map(loadScenario)).then(() => {
       </ErrorBoundary>
     </StrictMode>,
   );
+  // The words of the events come after the first screen, and are there long before the first event.
+  void loadEventText();
 });

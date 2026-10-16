@@ -1,7 +1,6 @@
 // All interface text, in English and Bahasa Malaysia. English is the source of
 // truth for which keys exist; the `ms` table must provide every one of them.
 
-import { EVENTS_EN, EVENTS_MS, flattenEvents } from './events';
 import { MORE_EN, MORE_MS, flattenMore } from './eventsMore';
 import { HONOURS_EN, HONOURS_MS, type HonoursKey } from './honours';
 import { PEOPLE_EN, PEOPLE_MS, type PeopleKey } from './people';
@@ -5728,10 +5727,11 @@ const ms: Record<CoreKey, string> = {
 };
 
 export type Lang = 'en' | 'ms';
-// Event text is kept in its own file and looked up by keys built from event ids.
+// Event text is kept in its own files and looked up by keys built from event ids. It is more than a third of all the words in the game and is
+// wanted only once something happens, so it is not in the first download: it is fetched after the first screen is drawn (see loadEventText).
 export const STRINGS: Record<Lang, Record<string, string>> = {
-  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...CONDUCT_EN, ...ADVICE_EN, ...AUTOFILL_EN, ...METERTOOLS_EN, ...DOCTRINES_EN, ...flattenEvents(EVENTS_EN), ...flattenMore(MORE_EN) },
-  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...CONDUCT_MS, ...ADVICE_MS, ...AUTOFILL_MS, ...METERTOOLS_MS, ...DOCTRINES_MS, ...flattenEvents(EVENTS_MS), ...flattenMore(MORE_MS) },
+  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...CONDUCT_EN, ...ADVICE_EN, ...AUTOFILL_EN, ...METERTOOLS_EN, ...DOCTRINES_EN, ...flattenMore(MORE_EN) },
+  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...CONDUCT_MS, ...ADVICE_MS, ...AUTOFILL_MS, ...METERTOOLS_MS, ...DOCTRINES_MS, ...flattenMore(MORE_MS) },
 };
 
 /**
@@ -5798,4 +5798,21 @@ export function translate(lang: Lang, key: StringKey, vars?: Record<string, stri
   if (!vars) return text;
   for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, String(v));
   return lang === 'en' ? singular(text) : text;
+}
+
+let eventTextLoaded = false;
+const eventTextWaiters = new Set<() => void>();
+/** Whether the words of the events have arrived. */
+export const eventTextReady = (): boolean => eventTextLoaded;
+/** Calls back when the words of the events arrive; returns how to stop. */
+export const onEventText = (fn: () => void): (() => void) => { eventTextWaiters.add(fn); return () => { eventTextWaiters.delete(fn); }; };
+let eventTextLoading: Promise<void> | undefined;
+/** Fetches the words of the events and adds them to the strings. Safe to call more than once. */
+export function loadEventText(): Promise<void> {
+  return (eventTextLoading ??= import('./eventText').then((m) => {
+    Object.assign(STRINGS.en, m.EVENT_TEXT_EN);
+    Object.assign(STRINGS.ms, m.EVENT_TEXT_MS);
+    eventTextLoaded = true;
+    eventTextWaiters.forEach((fn) => fn());
+  }));
 }
