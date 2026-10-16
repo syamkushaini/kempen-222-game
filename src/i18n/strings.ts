@@ -3745,8 +3745,6 @@ const ms: Record<CoreKey, string> = {
   'analysis.why.tired': 'Ini parlimen nombor {n} anda berturut-turut dalam kerajaan, dan pengundi letih dengan parti yang kekal: keletihan itu memotong sebahagian undi anda dalam setiap kumpulan.',
   'analysis.why.broken': 'Anda membuat {total} janji dan menunaikan {kept}. Setiap janji yang dimungkiri menjejaskan kredibiliti dan muhibah pengundi yang dijanjikan.',
   'analysis.why.cred': 'Kredibiliti anda hanya {n}. Pengundi menolak pemimpin yang tidak lagi dipercayai, apa pun yang dijanjikan parti.',
-  'music.on': 'Pasang muzik',
-  'music.off': 'Matikan muzik',
   'analysis.why.unity': 'Perpaduan parti anda hanya {n}, dan parti yang berpecah lebih teruk di peti undi.',
   'analysis.why.economy': 'Ekonomi menentang anda: pertumbuhan {growth}%, harga naik {prices}%, pengangguran {jobless}%. Yang memerintah menjawab untuknya.',
   'analysis.why.idle': 'Anda mengambil {n} tindakan kempen dalam {weeks} minggu. Pesaing yang turun setiap minggu mengambil undi yang anda tak minta.',
