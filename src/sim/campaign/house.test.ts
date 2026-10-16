@@ -216,7 +216,7 @@ describe('the record and the ending', () => {
       'statesman', 'reformer', 'promiser', 'plotter', 'survivor', 'premier', 'kingmaker', 'conscience', 'nearly', 'footnote',
     ]);
     expect(seen.map((s) => s.legacy).sort()).toEqual([...LEGACY_IDS].sort());
-    for (const s of seen) { expect(s.score).toBeGreaterThanOrEqual(0); expect(s.score).toBeLessThanOrEqual(100); }
+    for (const s of seen) expect(s.score).toBeGreaterThanOrEqual(0);
     expect(seen[0].score).toBeGreaterThan(seen[5].score);
     expect(seen[5].score).toBeGreaterThan(seen[9].score);
   });

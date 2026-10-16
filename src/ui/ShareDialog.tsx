@@ -77,14 +77,14 @@ export function electionCard(t: T, f: Format, world: World, c: Campaign, result:
 }
 
 /** The card for the end of a career: the legacy, the score and the record. */
-export function legacyCard(t: T, c: Campaign): CardData {
+export function legacyCard(t: T, c: Campaign, total: number = c.career!.ending!.score): CardData {
   const k = c.career!;
   const end = k.ending!;
   const years = careerYears(c);
   return {
     ...common(t), accent: partyColor(c.player), kicker: `${t(`ending.${end.kind}`)} · ${partyName(t, c.player)}`,
     headline: t(`legacy.${end.legacy}`), body: t(`legacy.${end.legacy}.text`),
-    hero: { value: String(end.score), label: t('legacy.score'), sub: t('card.hero.years', { n: years.toFixed(1) }) },
+    hero: { value: String(total), label: t('legacy.score'), sub: t('card.hero.years', { n: years.toFixed(1) }) },
     stats: [
       { label: t('legacy.years'), value: years.toFixed(1) },
       { label: t('house.record.pm'), value: (k.record.weeksPm / 52).toFixed(1) },

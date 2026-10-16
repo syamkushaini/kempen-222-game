@@ -1,18 +1,45 @@
-import { clamp } from '../math';
 import type { Campaign, EndingKind, LegacyId, PledgeId } from './types';
 
 const REFORMS: PledgeId[] = ['graftCommission', 'termLimit', 'repealLaws'];
 /** Acts that remake how the country is governed: if they are still on the books when the career ends, they count as reform whether or not they were promised. */
 export const REFORM_LAWS: readonly PledgeId[] = ['graftCommission', 'termLimit', 'repealLaws', 'partyHopBan', 'fixedTerm', 'infoAct', 'localVote'];
 /** What each Act still standing is worth to the score. */
-export const LAW_SCORE = 2;
+export const LAW_SCORE = 5;
 /** The Dewan Rakyat, which the seat thresholds below were set for: a state's assembly is measured as the same share of its own seats. */
 const FEDERAL_SEATS = 222;
 /** How many seats the House the career is fought in has: the campaign keeps a line for every one of them. */
 const houseSize = (c: Campaign): number => Object.keys(c.drift.support.seat).length || FEDERAL_SEATS;
 
+/** What each way of being remembered adds to the score, once. */
+export const LEGACY_BONUS: Record<LegacyId, number> = {
+  statesman: 100, reformer: 60, survivor: 40, premier: 30, kingmaker: 30, conscience: 30, nearly: 10, plotter: 0, promiser: 0, footnote: 0,
+};
+/** The points a career earns, with no ceiling: what it did, not how it compares to a perfect one. */
+export const SCORE = {
+  /** A point for each this many weeks as head of government, and as a partner in it. */
+  pmWeeks: 10, govWeeks: 25,
+  /** Each election fought, and each won at the head of the government. */
+  election: 10, win: 40,
+  /** A point for each this many seats at the best result (as it would read in the Dewan Rakyat). */
+  seatsPer: 5,
+  /** Each promise kept (and broken), each Act still law, each government fallen, each one brought down, and the leader's word at the end (÷). */
+  kept: 5, broken: 5, law: LAW_SCORE, fall: 8, toppled: 5, credibility: 5,
+  /** Each mission won, by how hard it was. */
+  mission: { 1: 10, 2: 20, 3: 30 } as Record<1 | 2 | 3, number>,
+};
+
+/** What the career itself came to, before what the legacy adds. */
+export function performanceOf(c: Campaign, best: number): number {
+  const k = c.career!;
+  const r = k.record;
+  const missions = (k.missions?.done ?? []).filter((m) => m.won).reduce((a, m) => a + SCORE.mission[m.tier], 0);
+  return r.weeksPm / SCORE.pmWeeks + r.weeksGov / SCORE.govWeeks + r.elections * SCORE.election + r.victories * SCORE.win + best / SCORE.seatsPer +
+    r.kept.length * SCORE.kept - r.broken * SCORE.broken + (k.laws?.length ?? 0) * SCORE.law - r.falls * SCORE.fall + r.toppled * SCORE.toppled +
+    k.credibility / SCORE.credibility + missions;
+}
+
 /**
- * How a career will be remembered, and a score out of 100. Judged on years in
+ * How a career will be remembered, and its score (not capped). Judged on years in
  * office, promises kept and broken, elections fought, and what the leader did
  * to get there.
  */
@@ -36,9 +63,7 @@ export function legacyOf(c: Campaign): { legacy: LegacyId; score: number; laws: 
     : r.weeksGov < 100 && k.credibility >= 70 ? 'conscience'
     : best >= 85 ? 'nearly'
     : 'footnote';
-  const score = clamp(Math.round(
-    r.weeksPm / 20 + r.weeksGov / 40 + kept * 3 - r.broken * 3 + r.victories * 6 + best / 10 + k.credibility / 10 - r.falls * 4 + laws * LAW_SCORE,
-  ), 0, 100);
+  const score = Math.max(0, Math.round(performanceOf(c, best) + LEGACY_BONUS[legacy]));
   return { legacy, score, laws };
 }
 

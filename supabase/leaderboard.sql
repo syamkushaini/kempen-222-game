@@ -25,7 +25,9 @@ create table if not exists public.scores (
   difficulty  text not null check (difficulty in ('easy', 'normal', 'hard')),
   kind        text not null check (kind in ('retired', 'ousted', 'wipedOut')),
   legacy      text not null check (legacy in ('statesman', 'reformer', 'survivor', 'promiser', 'plotter', 'premier', 'kingmaker', 'conscience', 'nearly', 'footnote')),
-  score       int not null check (score between 0 and 100),
+  score       int not null check (score between 0 and 10000),
+  -- 2: the score with no ceiling; 1: the old score out of 100 (rows from before, kept but not shown).
+  score_version int not null default 2 check (score_version in (1, 2)),
   years       numeric(5, 1) not null check (years between 0 and 150),
   years_pm    numeric(5, 1) not null check (years_pm between 0 and years),
   elections   int not null check (elections between 1 and 40),
@@ -40,6 +42,7 @@ create index if not exists scores_rank on public.scores (score desc, victories d
 create index if not exists scores_mode_rank on public.scores (mode, score desc, victories desc, years desc);
 -- Each level of difficulty has a board of its own (the game asks for one level at a time).
 create index if not exists scores_level_rank on public.scores (difficulty, mode, score desc, victories desc, years desc);
+create index if not exists scores_version_rank on public.scores (score_version, difficulty, mode, score desc, victories desc, years desc);
 
 alter table public.scores enable row level security;
 
