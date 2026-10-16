@@ -5,6 +5,7 @@ import { DEFENCE_GOALS, METER_GOALS } from '../sim/campaign/meterTools';
 import { isPm } from '../sim/campaign/office';
 import { pestelScores } from '../sim/campaign/pestel';
 import { useStore } from '../state/store';
+import { MeterSliders } from './MeterSliders';
 import { describeEffect } from './effectText';
 import { useFormat, useT, useWorld } from './hooks';
 
@@ -24,7 +25,9 @@ export function MeterTools() {
   const effectsOf = (id: string) => TOOLS.find((x) => x.id === id)!.effects.map((e) => describeEffect(t, f, world, campaign, e)).filter(Boolean).join(' · ');
   return (
     <section className="econ-tools meter-tools" aria-label={t('meters.tools.title')}>
-      <h3>{t('meters.tools.title')}</h3>
+      <MeterSliders />
+      <details className="meter-acts">
+      <summary><strong>{t('stances.acts')}</strong> · {t('meters.tools.title')}</summary>
       <p className="muted small action-desc">{t('meters.tools.desc')}</p>
       {METER_GOALS.filter((goal) => federal || !DEFENCE_GOALS.includes(goal)).map((goal) => (
         <div key={goal} className="tool-group">
@@ -47,6 +50,7 @@ export function MeterTools() {
           </ul>
         </div>
       ))}
+      </details>
     </section>
   );
 }

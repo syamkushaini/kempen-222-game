@@ -5,6 +5,7 @@ import { START_DEFENCE } from './defence';
 import { nationOf } from './nation';
 import { inGov, isPm, lift } from './office';
 import { builtMeters } from './econPlansData';
+import { stanceShift } from './stances';
 import { isEnacted } from './policy';
 import type { Campaign, Career, Economy, PortfolioId } from './types';
 
@@ -70,11 +71,12 @@ export function pestelTargets(k: Career, believed: number = k.credibility): Pest
   };
   // The Acts on the books and the programmes that have been finished hold a meter up for good.
   const b = builtMeters(k);
+  const s = stanceShift(k);
   return {
-    cohesion: clamp(base.cohesion + b.cohesion, 15, 90),
-    tech: clamp(base.tech + b.tech + 3 * Number(isEnacted(k, 'dataProtection')), 15, 90),
-    environment: clamp(base.environment + b.environment, 15, 90),
-    law: clamp(base.law + b.law + 4 * Number(isEnacted(k, 'dataProtection')) + 5 * Number(isEnacted(k, 'conflictOfInterest')), 15, 90),
+    cohesion: clamp(base.cohesion + b.cohesion + s.cohesion, 15, 90),
+    tech: clamp(base.tech + b.tech + s.tech + 3 * Number(isEnacted(k, 'dataProtection')), 15, 90),
+    environment: clamp(base.environment + b.environment + s.environment, 15, 90),
+    law: clamp(base.law + b.law + s.law + 4 * Number(isEnacted(k, 'dataProtection')) + 5 * Number(isEnacted(k, 'conflictOfInterest')), 15, 90),
   };
 }
 

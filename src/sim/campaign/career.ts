@@ -777,6 +777,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.taxMix ? { taxMix: { ...k.taxMix } } : {}),
     ...(k.repayShare ? { repayShare: k.repayShare } : {}),
     ...(k.rate ? { rate: k.rate } : {}),
+    ...(k.stance ? { stance: { ...k.stance } } : {}),
     ...(k.toolsUsed ? { toolsUsed: { ...k.toolsUsed } } : {}),
     ...(k.stateResults ? { stateResults: structuredClone(k.stateResults) } : {}),
     ...(k.eventWeeks ? { eventWeeks: { ...k.eventWeeks } } : {}),

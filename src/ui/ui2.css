@@ -921,3 +921,9 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .money-sheet dt { margin-top: 12px; font-weight: 600; }
 .money-sheet dd { margin: 4px 0 0; }
 .term-bar .money-sheet { bottom: calc(132px + env(safe-area-inset-bottom)); }
+
+/* Sliders for the meters: the two ends of each named under it. */
+.meter-sliders .stance .result-label { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.stance-poles { display: flex; justify-content: space-between; margin-top: -2px; }
+.meter-acts { margin-top: 12px; }
+.meter-acts > summary { cursor: pointer; padding: 6px 0; }

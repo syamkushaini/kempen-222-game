@@ -67,6 +67,7 @@ import { discipline, doActivity, padRolls, rebrand, setAside, takeForeign, trade
 import { followAdvice } from '../sim/campaign/advice';
 import { repayDebt } from '../sim/campaign/treasury';
 import { setRepayShare as setRepay, setTax as setTaxDial, startProject as beginProject, stopProject as endProject, type TaxId } from '../sim/campaign/econPlans';
+import { setStance as setMeterStance, type StanceId } from '../sim/campaign/stances';
 import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaign/econTools';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, noteAchieved, ProfileStore, recordPoints, type Profile } from './profile';
@@ -365,6 +366,7 @@ interface Store {
   /** The head of government uses an economic tool. */
   useTool(id: string): void;
   setRate(value: Dial): void;
+  setMeterPolicy(id: StanceId, notch: number): void;
   setTax(id: TaxId, value: Dial): void;
   setRepayShare(share: number): void;
   startProject(id: string): void;
@@ -644,6 +646,7 @@ export const useStore = create<Store>((set, get) => {
     startProject: (id) => mutate((c) => { beginProject(c, id); }),
     stopProject: (id) => mutate((c) => { endProject(c, id); }),
     setRate: (value) => mutate((c) => { setPolicyRate(c, value); }),
+    setMeterPolicy: (id, notch) => mutate((c) => { setMeterStance(c, id, notch); }),
     closeDecisionNews: () => set({ decisionNews: null }),
     hideScene: (id) => set((s) => ({ hiddenScene: [...s.hiddenScene, id] })),
     openScene: () => set({ hiddenScene: [] }),
