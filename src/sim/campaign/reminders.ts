@@ -4,6 +4,7 @@ import { canFollow } from './advice';
 import { termIncome, termSpending } from './career';
 import { canChoose, candidateDeadline } from './candidates';
 import { OFFER_WARN } from './missions';
+import { OUSTED_BELOW } from './legacy';
 import { isPm } from './office';
 import { hasPublicMoney, treasuryCap, treasuryOf, govBooks } from './treasury';
 
@@ -45,6 +46,12 @@ export function remindersOf(world: World, c: Campaign): Reminder[] {
   const weekOfYear = ((week - 1) % 52) + 1;
   const left = k.length - week;
   const me = c.parties[c.player]!;
+
+  // Your own party removes a leader it has lost faith in, and the career ends: it is said well before, not only when it comes.
+  const near = OUSTED_BELOW + 8, wary = OUSTED_BELOW + 20;
+  if (me.unity <= wary) add({ id: 'oust', level: me.unity <= near ? 'urgent' : 'warn', tab: 'party', vars: { unity: Math.round(me.unity), limit: OUSTED_BELOW } });
+  // A leader held to a term limit leads the governing party and not the government: the budget, the acts and the cabinet are the successor's.
+  if (k.limited && k.government.pm === c.player) add({ id: 'limited', level: 'note', tab: 'party' });
 
   if ((k.appointments?.length ?? 0) > 0) add({ id: 'appoint', level: 'urgent', tab: 'house', vars: { n: k.appointments!.length } });
 

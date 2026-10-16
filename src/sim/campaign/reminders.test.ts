@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { getWorld } from '../../data/world';
 import { PARTY_IDS } from '../types';
 import { startCareer } from './career';
+import { STRINGS, type StringKey } from '../../i18n/strings';
+import { OUSTED_BELOW } from './legacy';
 import { remindersOf } from './reminders';
 import type { Campaign } from './types';
 
@@ -52,5 +54,39 @@ describe('things the player may have missed', () => {
     expect(r.vars?.n).toBe(1);
     c.team.keySeats.forEach((s) => { s.pick = 0; });
     expect(ids(c)).not.toContain('candidates');
+  });
+
+  it('warns well before the party removes its leader, urgently when it is close, and says nothing while it is steady', () => {
+    const c = career();
+    c.career!.week = 10;
+    c.career!.appointments = [];
+    const me = c.parties[PS]!;
+    me.unity = OUSTED_BELOW + 30;
+    expect(ids(c)).not.toContain('oust');
+    me.unity = OUSTED_BELOW + 15;
+    expect(remindersOf(world, c).find((r) => r.id === 'oust')).toMatchObject({ level: 'warn', tab: 'party', vars: { unity: OUSTED_BELOW + 15, limit: OUSTED_BELOW } });
+    me.unity = OUSTED_BELOW + 5;
+    expect(remindersOf(world, c).find((r) => r.id === 'oust')?.level).toBe('urgent');
+  });
+
+  it('tells a leader held to a term limit that the party governs and they do not', () => {
+    const c = career();
+    const k = c.career!;
+    k.week = 10;
+    k.appointments = [];
+    expect(ids(c)).not.toContain('limited');
+    k.limited = true;
+    expect(remindersOf(world, c).find((r) => r.id === 'limited')).toMatchObject({ level: 'note', tab: 'party' });
+    // Only for the leader of the governing party: not for someone across the floor.
+    k.government.pm = PARTY_IDS.indexOf('bp');
+    expect(ids(c)).not.toContain('limited');
+  });
+
+  it('has words in both languages for each', () => {
+    for (const lang of ['en', 'ms'] as const) for (const id of ['oust', 'limited']) expect(STRINGS[lang][`remind.${id}` as StringKey], `${lang} ${id}`).toBeTruthy();
+    // The briefing words them its own way: an urgent one as 'a', the rest as 'w'.
+    for (const lang of ['en', 'ms'] as const) for (const key of ['brief.a.oust', 'brief.w.oust', 'brief.w.limited']) expect(STRINGS[lang][key as StringKey], `${lang} ${key}`).toBeTruthy();
+    expect(STRINGS.en['remind.oust' as StringKey]).toContain('{unity}');
+    expect(STRINGS.ms['remind.oust' as StringKey]).toContain('{limit}');
   });
 });
