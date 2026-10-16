@@ -367,6 +367,13 @@ function advise(c: Campaign): void {
 /** The government is settled: work out who is in it and how long it is likely to last. */
 function conclude(world: World, c: Campaign, pm: number, minority: boolean): void {
   const f = c.formation!;
+  // A player who stood aside for the new head of government at the polls, and was offered a place by them, is in their government. Left
+  // out, they would be in opposition with a ministry on offer, and the seats they stood down in would have gone to a rival.
+  const me = c.player;
+  if (pm !== me && f.pledge[me] !== pm && f.offers[pm]?.[me] && c.pacts.some((x) => (x.a === pm && x.b === me) || (x.b === pm && x.a === me))) {
+    if (playerClaims(c)) standAside(f, me);
+    f.pledge[me] = pm;
+  }
   const cabinet = rules(world).cabinet;
   const partners = f.pledge.map((to, p) => (to === pm && p !== pm && p !== OTH ? p : -1)).filter((p) => p >= 0);
   const withIndep = f.indep.some((i) => i.pledge === pm);
