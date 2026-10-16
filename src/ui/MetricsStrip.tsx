@@ -3,6 +3,8 @@ import type { SidebarTab } from '../state/store';
 import { useStore } from '../state/store';
 import { inGov } from '../sim/campaign/office';
 import { START_NATION } from '../sim/campaign/nation';
+import { START_DEFENCE, defenceShown } from '../sim/campaign/defence';
+import { START_PESTEL } from '../sim/campaign/pestel';
 import { hasPublicMoney, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
 import { Delta } from './Delta';
 import { useGaugeColour } from './Gauge';
@@ -19,7 +21,7 @@ interface Tile {
   /** Whole points to show a change in, where it changes in whole points. */
   delta?: number;
   tab: SidebarTab;
-  group: 'party' | 'gov' | 'eco' | 'nation';
+  group: 'party' | 'gov' | 'eco' | 'nation' | 'pestel' | 'defence';
 }
 
 /**
@@ -60,8 +62,18 @@ export function MetricsStrip() {
       { group: 'nation' as const, id: 'education', label: t('nation.education'), text: String(Math.round(nation.education)), bar: nation.education, good: nation.education, delta: nation.education, tab: 'house' as const },
       { group: 'nation' as const, id: 'standing', label: t('nation.standing'), text: String(Math.round(nation.standing)), bar: nation.standing, good: nation.standing, delta: nation.standing, tab: 'house' as const },
     ] : []),
+    // How people hold together, the country's technology, its environment and the rule of law; and, for a federal prime minister, the armed forces.
+    ...(campaign.phase === 'term' ? (['cohesion', 'tech', 'environment', 'law'] as const).map((key) => {
+      const v = (k.pestel ?? START_PESTEL)[key];
+      return { group: 'pestel' as const, id: key, label: t(`pestel.${key}`), text: String(Math.round(v)), bar: v, good: v, delta: v, tab: 'house' as const };
+    }) : []),
+    ...(campaign.phase === 'term' && defenceShown(campaign) ? (['readiness', 'influence'] as const).map((key) => {
+      const v = (k.defence ?? START_DEFENCE)[key];
+      // The armed forces having a great say is the one figure where more is worse.
+      return { group: 'defence' as const, id: key, label: t(`pestel.${key}`), text: String(Math.round(v)), bar: v, good: key === 'influence' ? 100 - v : v, delta: v, tab: 'house' as const };
+    }) : []),
   ];
-  const groups = (['party', 'gov', 'eco', 'nation'] as const).map((g) => ({ g, items: tiles.filter((x) => x.group === g) })).filter((x) => x.items.length > 0);
+  const groups = (['party', 'gov', 'eco', 'nation', 'pestel', 'defence'] as const).map((g) => ({ g, items: tiles.filter((x) => x.group === g) })).filter((x) => x.items.length > 0);
   // Colour is kept for what needs it: a figure in the middle stays plain, and one that is doing well or badly shows it.
   const tone = (good: number | undefined) => (good === undefined ? undefined : good >= 62 ? colour(good) : good <= 38 ? colour(good) : undefined);
   return (
