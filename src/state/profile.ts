@@ -16,6 +16,8 @@ export interface LegacyEntry {
   kind: EndingKind;
   legacy: LegacyId;
   score: number;
+  /** Of the score, the points that achievements earned in the career brought. */
+  ach?: number;
   /** Years leading the party, and years of those at the head of the government. */
   years: number;
   yearsPm: number;
@@ -38,11 +40,14 @@ export interface Profile {
   legacies: LegacyEntry[];
   /** The best points won in each challenge, by its key (see challengePoints.ts). */
   challengePoints?: Record<string, number>;
+  /** The achievements each game has earned so far, by game: a career's score counts the ones it earned, not those of other games. */
+  achievedIn?: Record<string, AchievementId[]>;
 }
 
 const KEY = 'k222.profile';
 const MAX_LEGACIES = 40;
 const MAX_CHALLENGES = 200;
+const MAX_GAMES = 60;
 
 export const emptyProfile = (): Profile => ({ version: 1, achievements: {}, legacies: [] });
 
@@ -53,7 +58,7 @@ function isEntry(x: unknown): x is LegacyEntry {
   return isObj(x) && typeof x.game === 'string' && isNum(x.at) && typeof x.name === 'string' &&
     (PARTY_IDS as readonly unknown[]).includes(x.party) && (x.kind === 'retired' || x.kind === 'ousted' || x.kind === 'wipedOut') &&
     (LEGACY_IDS as readonly unknown[]).includes(x.legacy) &&
-    [x.score, x.years, x.yearsPm, x.elections, x.victories, x.kept, x.broken].every(isNum);
+    [x.score, x.years, x.yearsPm, x.elections, x.victories, x.kept, x.broken].every(isNum) && (x.ach === undefined || isNum(x.ach));
 }
 
 /** Reads a profile from text. Anything unrecognised is dropped rather than trusted; nonsense gives an empty profile. */
@@ -69,6 +74,13 @@ export function parseProfile(text: string | null): Profile {
       if (isNum(at)) out.achievements[id] = at;
     }
   }
+  if (isObj(raw.achievedIn)) {
+    const kept: Record<string, AchievementId[]> = {};
+    for (const [game, ids] of Object.entries(raw.achievedIn).slice(-MAX_GAMES)) {
+      if (Array.isArray(ids)) kept[game.slice(0, 64)] = ids.filter((id): id is AchievementId => (ACHIEVEMENT_IDS as readonly unknown[]).includes(id));
+    }
+    if (Object.keys(kept).length > 0) out.achievedIn = kept;
+  }
   if (Array.isArray(raw.legacies)) out.legacies = raw.legacies.filter(isEntry).slice(0, MAX_LEGACIES);
   if (isObj(raw.challengePoints)) {
     const kept = Object.entries(raw.challengePoints).filter(([key, n]) => key.length >= 4 && key.length <= 80 && isNum(n) && n >= 0 && n <= POINTS_MAX).slice(0, MAX_CHALLENGES);
@@ -78,17 +90,29 @@ export function parseProfile(text: string | null): Profile {
 }
 
 /** The gallery entry for a career that has ended, or null if the game has no ending to record. */
-export function legacyEntry(game: GameState, now: number): LegacyEntry | null {
+export function legacyEntry(game: GameState, now: number, achievementPoints = 0): LegacyEntry | null {
   const c: Campaign = game.campaign;
   const k = c.career;
   if (!k?.ending) return null;
   const r = k.record;
   return {
     game: game.id, at: now, name: game.name, party: PARTY_IDS[c.player],
-    kind: k.ending.kind, legacy: k.ending.legacy, score: k.ending.score,
+    kind: k.ending.kind, legacy: k.ending.legacy, score: k.ending.score + achievementPoints, ach: achievementPoints,
     years: careerYears(c), yearsPm: r.weeksPm / 52,
     elections: r.elections, victories: r.victories, kept: r.kept.length, broken: r.broken,
   };
+}
+
+/** Notes the achievements a game has earned so far. The same profile if there is nothing new to note. */
+export function noteAchieved(profile: Profile, game: string, ids: readonly AchievementId[]): Profile {
+  const before = profile.achievedIn?.[game] ?? [];
+  const all = [...new Set([...before, ...ids])];
+  if (all.length === before.length) return profile;
+  const held = { ...(profile.achievedIn ?? {}) };
+  delete held[game];
+  held[game] = all;
+  for (const old of Object.keys(held).slice(0, Math.max(0, Object.keys(held).length - MAX_GAMES))) delete held[old];
+  return { ...profile, achievedIn: held };
 }
 
 /** Adds achievements not yet held. Returns the new profile and which were new; the same profile if none were. */

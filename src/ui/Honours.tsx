@@ -1,3 +1,4 @@
+import { ACHIEVEMENT_POINTS, ALL_POINTS, pointsOf } from '../sim/campaign/scoring';
 import { useEffect, useState } from 'react';
 import { PARTIES } from '../data/parties';
 import type { StringKey } from '../i18n/strings';
@@ -61,7 +62,7 @@ export function HonoursDialog({ onClose }: { onClose(): void }) {
 
         {tab === 'achievements' && (
           <>
-            <p className="muted small">{t('honours.count', { n, total: ACHIEVEMENT_IDS.length })} · {t('honours.note')}</p>
+            <p className="muted small">{t('honours.count', { n, total: ACHIEVEMENT_IDS.length })} · {t('honours.total', { n: pointsOf(ACHIEVEMENT_IDS.filter((id) => have(id) !== undefined)), all: ALL_POINTS })} · {t('honours.note')}</p>
             {(Object.keys(ACHIEVEMENT_GROUPS) as AchievementGroup[]).map((group) => {
               const ids = ACHIEVEMENT_GROUPS[group] as readonly AchievementId[];
               return (
@@ -77,7 +78,7 @@ export function HonoursDialog({ onClose }: { onClose(): void }) {
                             <span className="action-title">{t(`ach.${id}` as StringKey)}</span>
                             <span className="action-meta">{t(`ach.${id}.desc` as StringKey)}</span>
                             {rewardOf(id).length > 0 && <span className="action-meta reward">🎨 {t('look.reward', { name: rewardOf(id).map((r) => t(`${r.kind}.${r.id}` as StringKey)).join(', ') })}</span>}
-                            <span className="action-meta num">{at !== undefined ? t('honours.earned', { date: f.dateTime(at) }) : t('honours.notYet')}</span>
+                            <span className="action-meta num">{t('honours.points', { n: ACHIEVEMENT_POINTS[id] })} · {at !== undefined ? t('honours.earned', { date: f.dateTime(at) }) : t('honours.notYet')}</span>
                           </div>
                         </li>
                       );

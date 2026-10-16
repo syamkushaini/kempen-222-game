@@ -21,7 +21,9 @@ export function LegacyScreen() {
   const r = k.record;
   const years = careerYears(campaign);
   const [sharing, setSharing] = useState(false);
-  const card = useMemo(() => legacyCard(t, campaign), [t, campaign]);
+  const entry = useStore((s) => s.profile.legacies.find((e) => e.game === s.game?.id));
+  const total = entry?.score ?? end.score;
+  const card = useMemo(() => legacyCard(t, campaign, total), [t, campaign, total]);
   const world = worldOf(campaign);
   const options = world && canSwitch(campaign) ? takers(world, campaign) : [];
   return (
@@ -38,7 +40,9 @@ export function LegacyScreen() {
         <p className="title-intro">{t(`legacy.${end.legacy}.text`)}</p>
         {end.laws ? <p className="muted small">{t('legacy.laws', { n: end.laws })}</p> : null}
         <dl className="facts">
-          <div><dt>{t('legacy.score')}</dt><dd className="num">{end.score}</dd></div>
+          <div><dt>{t('legacy.score')}</dt><dd className="num">{total}</dd></div>
+          <div><dt>{t('legacy.score.career')}</dt><dd className="num">{end.score}</dd></div>
+          <div><dt>{t('legacy.score.ach')}</dt><dd className="num">{entry?.ach ?? 0}</dd></div>
           <div><dt>{t('legacy.years')}</dt><dd className="num">{years.toFixed(1)}</dd></div>
           <div><dt>{t('house.record.pm')}</dt><dd className="num">{(r.weeksPm / 52).toFixed(1)}</dd></div>
           <div><dt>{t('legacy.inGov')}</dt><dd className="num">{(r.weeksGov / 52).toFixed(1)}</dd></div>

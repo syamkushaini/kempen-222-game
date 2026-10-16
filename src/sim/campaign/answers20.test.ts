@@ -6,7 +6,7 @@ import { scaled } from './actions';
 import { STYLE_IDS, styleOf } from './ai';
 import { startCareer } from './career';
 import { REALISM, realistic, resolveEvent, rollEvent } from './events';
-import { LAW_SCORE, REFORM_LAWS, endCareer, legacyOf } from './legacy';
+import { LAW_SCORE, LEGACY_BONUS, REFORM_LAWS, endCareer, legacyOf } from './legacy';
 import { Rng } from '../rng';
 import { newCampaign } from './turn';
 import { WHATIF, WHATIF_IDS, applyWhatIf, isWhatIf, leadingParty } from './whatif';
@@ -129,7 +129,8 @@ describe('a legacy counts the laws that are still law', () => {
     k.laws = ['termLimit', 'infoAct', 'gigRights'];
     const some = legacyOf(c);
     expect(some.laws).toBe(3);
-    expect(some.score).toBe(Math.min(100, none.score + 3 * LAW_SCORE));
+    // The Acts count for themselves, and may change how the career is remembered, which has its own worth.
+    expect(some.score).toBe(none.score + 3 * LAW_SCORE + LEGACY_BONUS[some.legacy] - LEGACY_BONUS[none.legacy]);
     endCareer(c, 'retired');
     expect(k.ending!.laws).toBe(3);
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), careerWorld)).toBe(true);

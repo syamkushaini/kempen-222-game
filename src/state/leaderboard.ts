@@ -1,3 +1,4 @@
+import { SCORE_MAX } from '../sim/campaign/scoring';
 import { LEGACY_IDS } from '../sim/campaign/types';
 import type { Campaign } from '../sim/campaign/types';
 import type { LegacyEntry } from './profile';
@@ -33,6 +34,8 @@ export interface Submission {
   kind: string;
   legacy: string;
   score: number;
+  /** Which way of scoring the row was posted under: 2 is the score with no ceiling, 1 the old one out of 100. */
+  score_version: number;
   years: number;
   years_pm: number;
   elections: number;
@@ -43,10 +46,12 @@ export interface Submission {
 }
 
 /** A row as it is read back. */
-export interface Row extends Omit<Submission, 'game' | 'version'> { id: number; created_at: string }
+export interface Row extends Omit<Submission, 'game' | 'version' | 'score_version'> { id: number; created_at: string }
 
 const COLUMNS = 'id,created_at,name,party,mode,state,difficulty,kind,legacy,score,years,years_pm,elections,victories,kept,broken';
 export const BOARD_SIZE = 50;
+/** The way of scoring the board takes. Rows posted under the old one (a score out of 100) are kept but not shown. */
+export const SCORE_VERSION = 2;
 const WAIT_MS = 8000;
 
 // ---------- the name on the board ----------
@@ -85,7 +90,7 @@ export function submissionOf(entry: LegacyEntry, campaign: Pick<Campaign, 'scena
   const years = Math.min(150, tenth(entry.years));
   return {
     game: entry.game, name: clean, party: entry.party, mode: state ? 'state' : 'federal', state, difficulty: campaign.difficulty,
-    kind: entry.kind, legacy: entry.legacy, score: Math.max(0, Math.min(100, Math.round(entry.score))),
+    kind: entry.kind, legacy: entry.legacy, score: Math.max(0, Math.min(SCORE_MAX, Math.round(entry.score))), score_version: SCORE_VERSION,
     years, years_pm: Math.min(years, tenth(entry.yearsPm)), elections: Math.min(40, entry.elections), victories: Math.min(entry.victories, entry.elections, 40),
     kept: Math.min(400, entry.kept), broken: Math.min(400, entry.broken), version: version.slice(0, 32),
   };
@@ -122,7 +127,7 @@ const isRow = (x: unknown): x is Row => {
 /** The best careers played at one level of difficulty, best first: by score, then victories, then years. null if the board cannot be reached. */
 export async function top(level: Level, filter: Filter, cfg: Config | null = CONFIG, fetchFn: Fetch = fetch): Promise<Row[] | null> {
   if (!cfg || !LEVELS.includes(level)) return null;
-  const q = `select=${COLUMNS}&difficulty=eq.${level}&order=score.desc,victories.desc,years.desc,created_at.asc&limit=${BOARD_SIZE}${filter === 'all' ? '' : `&mode=eq.${filter}`}`;
+  const q = `select=${COLUMNS}&score_version=eq.${SCORE_VERSION}&difficulty=eq.${level}&order=score.desc,victories.desc,years.desc,created_at.asc&limit=${BOARD_SIZE}${filter === 'all' ? '' : `&mode=eq.${filter}`}`;
   const res = await call(fetchFn, `${cfg.url}/rest/v1/scores?${q}`, { headers: headers(cfg) });
   if (!res?.ok) return null;
   let body: unknown;

@@ -47,6 +47,8 @@ export const SHOESTRING = 0.25;
 const PS = PARTY_IDS.indexOf('ps'), PT = PARTY_IDS.indexOf('pt');
 /** A state has to be this big before winning all of it counts as a sweep. */
 const SWEEP_SEATS = 8;
+/** The score a career has to reach, retiring of its own accord, for "Bow out". */
+export const BOW_OUT_SCORE = 150;
 /** Different legacies to have earned before the collector's badge. */
 export const COLLECTOR_LEGACIES = 5;
 
@@ -185,7 +187,7 @@ export function earned(world: World, c: Campaign, legacies: LegacyId[] = []): Ac
 
     const end = k.ending;
     if (end) {
-      if (end.kind === 'retired' && end.score >= 50) out.add('bowOut');
+      if (end.kind === 'retired' && end.score >= BOW_OUT_SCORE) out.add('bowOut');
       if (end.legacy === 'statesman') out.add('statesman');
       if (end.kind === 'ousted') out.add('knives');
     }

@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
+import { SCORE_MAX } from '../sim/campaign/scoring';
 import { LEGACY_IDS } from '../sim/campaign/types';
 import { PARTY_IDS } from '../sim/types';
 import {
-  BOARD_SIZE, blocked, cleanName, configOf, lastName, nameOk, post, postedGames, rememberPosted, stateOf, submissionOf, top, type Config, type Submission,
+  BOARD_SIZE, SCORE_VERSION, blocked, cleanName, configOf, lastName, nameOk, post, postedGames, rememberPosted, stateOf, submissionOf, top, type Config, type Submission,
 } from './leaderboard';
 import type { LegacyEntry } from './profile';
 
@@ -33,7 +34,7 @@ describe('what is sent', () => {
   it('is a career of the game, to the tenth of a year, within what the table accepts', () => {
     const s = submissionOf(entry, { scenario: 'career', difficulty: 'hard' }, '  Ali  ', '0.1.0+abc')!;
     expect(s).toMatchObject({ game: entry.game, name: 'Ali', party: 'ps', mode: 'federal', state: null, difficulty: 'hard', score: 82, years: 15, years_pm: 9, victories: 2, elections: 3 });
-    expect(Object.keys(s).sort()).toEqual(['broken', 'difficulty', 'elections', 'game', 'kept', 'kind', 'legacy', 'mode', 'name', 'party', 'score', 'state', 'version', 'victories', 'years', 'years_pm']);
+    expect(Object.keys(s).sort()).toEqual(['broken', 'difficulty', 'elections', 'game', 'kept', 'kind', 'legacy', 'mode', 'name', 'party', 'score', 'score_version', 'state', 'version', 'victories', 'years', 'years_pm']);
   });
   it('knows a career in a state, and no other contest', () => {
     expect(stateOf('career:perak')).toBe('perak');
@@ -43,8 +44,10 @@ describe('what is sent', () => {
   });
   it('is never past the limits of the table, whatever a career reached', () => {
     const s = submissionOf({ ...entry, score: 400, years: 900, yearsPm: 900, elections: 90, victories: 99, kept: 9000, broken: 9000 }, { scenario: 'career', difficulty: 'normal' }, 'Ali', 'v'.repeat(80))!;
-    expect(s.score).toBe(100); expect(s.years).toBe(150); expect(s.years_pm).toBe(150); expect(s.elections).toBe(40); expect(s.victories).toBe(40);
+    expect(s.score).toBe(400); expect(s.years).toBe(150); expect(s.years_pm).toBe(150); expect(s.elections).toBe(40); expect(s.victories).toBe(40);
     expect(s.kept).toBe(400); expect(s.broken).toBe(400); expect(s.version).toHaveLength(32);
+    expect(submissionOf({ ...entry, score: 90_000 }, { scenario: 'career', difficulty: 'normal' }, 'Ali', 'v')!.score).toBe(SCORE_MAX);
+    expect(s.score_version).toBe(SCORE_VERSION);
     expect(submissionOf(entry, { scenario: 'career', difficulty: 'normal' }, 'A', 'v')).toBeNull();
     // A career that never fought an election has nothing to rank.
     expect(submissionOf({ ...entry, elections: 0, victories: 0 }, { scenario: 'career', difficulty: 'normal' }, 'Ali', 'v')).toBeNull();
@@ -80,6 +83,8 @@ describe('talking to the board', () => {
     expect(rows![0]).toMatchObject({ id: 1, score: 90, years: 14.5, years_pm: 9 });
     const url = (f as unknown as { mock: { calls: [string][] } }).mock.calls[0][0];
     expect(url).toContain('order=score.desc,victories.desc,years.desc,created_at.asc');
+    // Only the score with no ceiling: rows from the old one, out of 100, are kept in the table and not ranked with it.
+    expect(url).toContain(`score_version=eq.${SCORE_VERSION}`);
     expect(url).toContain(`limit=${BOARD_SIZE}`);
     expect(url).not.toContain('mode=eq');
     // Each level of difficulty has its own board.
@@ -123,6 +128,14 @@ describe('the table is the one the game sends to', () => {
     expect(list('kind').sort()).toEqual(['retired', 'ousted', 'wipedOut'].sort());
     expect(list('difficulty').sort()).toEqual(['easy', 'hard', 'normal']);
     expect(list('mode').sort()).toEqual(['federal', 'state']);
+  });
+  it('takes a score with no ceiling of 100, and marks which way of scoring a row was posted under', () => {
+    expect(sql).toMatch(/score\s+int not null check \(score between 0 and 10000\)/);
+    expect(sql).toMatch(/score_version/);
+    const migration = readFileSync(new URL('../../supabase/leaderboard-v2.sql', import.meta.url), 'utf8');
+    expect(migration).toMatch(/score between 0 and 10000/);
+    expect(migration).toMatch(/score_version int not null default 1/);
+    expect(SCORE_MAX).toBe(10_000);
   });
   it('can be read and added to by anyone, and changed by no one', () => {
     expect(sql).toMatch(/enable row level security/);

@@ -68,7 +68,8 @@ import { repayDebt } from '../sim/campaign/treasury';
 import { setRepayShare as setRepay, setTax as setTaxDial, startProject as beginProject, stopProject as endProject, type TaxId } from '../sim/campaign/econPlans';
 import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaign/econTools';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
-import { award, hang, legacyEntry, ProfileStore, recordPoints, type Profile } from './profile';
+import { award, hang, legacyEntry, noteAchieved, ProfileStore, recordPoints, type Profile } from './profile';
+import { pointsOf } from '../sim/campaign/scoring';
 import { finishedChallenge } from '../sim/campaign/challengePoints';
 import { isAccent, isSkin, type AccentId, type SkinId } from '../ui/cosmetics';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
@@ -778,9 +779,12 @@ useStore.subscribe((state, prev) => {
   const world = worldOf(game.campaign);
   if (!world) return;
   const now = Date.now();
-  const entry = legacyEntry(game, now);
-  const hung = entry ? hang(state.profile, entry) : state.profile;
-  const { profile: awarded, fresh } = award(hung, earned(world, game.campaign, hung.legacies.map((e) => e.legacy)), now);
+  // What this game has earned so far, and so what its career is worth: the score counts the achievements of this career alone.
+  const ids = earned(world, game.campaign, state.profile.legacies.map((e) => e.legacy));
+  const counted = noteAchieved(state.profile, game.id, ids);
+  const entry = legacyEntry(game, now, pointsOf(counted.achievedIn?.[game.id] ?? ids));
+  const hung = entry ? hang(counted, entry) : counted;
+  const { profile: awarded, fresh } = award(hung, ids, now);
   // A challenge finished leaves its points, at their best.
   const done = finishedChallenge(world, game.campaign);
   const profile = done ? recordPoints(awarded, done.key, done.points) : awarded;

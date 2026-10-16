@@ -81,8 +81,10 @@ export function PostCareer() {
   const [open, setOpen] = useState(false);
   if (!hasLeaderboard) return null;
   const counts = countsForBoard(game.campaign.career!.record);
+  const hung = useStore((s) => s.profile.legacies.find((e) => e.game === game.id));
   const send = async () => {
-    const entry = legacyEntry(game, Date.now());
+    // The entry in the gallery has the score with what this career's achievements brought; the game's own ending does not yet.
+    const entry = hung ?? legacyEntry(game, Date.now());
     const sub = entry ? submissionOf(entry, game.campaign, name, __APP_VERSION__) : null;
     if (!sub || !nameOk(name)) { setBad(true); return; }
     setBad(false); setState('busy');
