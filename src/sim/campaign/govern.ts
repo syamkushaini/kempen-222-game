@@ -48,6 +48,7 @@ const PLEDGE_PORTFOLIO: Record<PledgeId, PortfolioId> = {
   partyHopBan: 'law', fixedTerm: 'law', infoAct: 'comms', localVote: 'law', gigRights: 'humanRes', oilRoyalty: 'finance',
   schoolMeals: 'education', healthCover: 'health', greenGrid: 'energy', villageRoads: 'rural', smeLoans: 'economy', seniorPension: 'women',
   tollCut: 'works', epfWithdrawal: 'finance', civilReform: 'home',
+  dataProtection: 'digital', conflictOfInterest: 'law', defenceOversight: 'defence',
 };
 
 /** Promises to partners that need an Act of Parliament rather than a signature. */

@@ -1,5 +1,6 @@
 import type { BlocId } from '../types';
-import { MAX_PROJECTS_AT_ONCE, PROJECTS, TAX_MIX, TAX_IDS, builtEffects, projectOf, projectsCost, taxEffects, taxMixOf, type TaxId } from './econPlansData';
+import { isFederal } from './defence';
+import { FORCES_PROJECTS, MAX_PROJECTS_AT_ONCE, PROJECTS, TAX_MIX, TAX_IDS, builtEffects, projectOf, projectsCost, taxEffects, taxMixOf, type TaxId } from './econPlansData';
 import { lift, isPm } from './office';
 import { pushNews } from './news';
 import type { Campaign, Dial } from './types';
@@ -28,12 +29,13 @@ export function setRepayShare(c: Campaign, share: number): boolean {
   return true;
 }
 
-export type ProjectRefusal = 'phase' | 'notPm' | 'full' | 'running' | 'built' | 'none';
+export type ProjectRefusal = 'phase' | 'notPm' | 'full' | 'running' | 'built' | 'federal' | 'none';
 export function canStartProject(c: Campaign, id: string): { ok: true } | { ok: false; reason: ProjectRefusal } {
   const k = c.career;
   if (!k || !projectOf(id)) return { ok: false, reason: 'none' };
   if (c.phase !== 'term') return { ok: false, reason: 'phase' };
   if (!isPm(c)) return { ok: false, reason: 'notPm' };
+  if (FORCES_PROJECTS.includes(id) && !isFederal(c.scenario)) return { ok: false, reason: 'federal' };
   if ((k.projects ?? []).some((p) => p.id === id)) return { ok: false, reason: 'running' };
   if ((k.built ?? []).includes(id)) return { ok: false, reason: 'built' };
   if ((k.projects ?? []).length >= MAX_PROJECTS_AT_ONCE) return { ok: false, reason: 'full' };

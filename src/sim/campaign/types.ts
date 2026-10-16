@@ -284,6 +284,8 @@ export const PLEDGE_IDS = [
   'schoolMeals', 'healthCover', 'greenGrid', 'villageRoads', 'smeLoans', 'seniorPension',
   // Three Acts more: the tolls, the retirement fund and the civil service.
   'tollCut', 'epfWithdrawal', 'civilReform',
+  // Three Acts that steer the PESTEL and defence meters for good (see pestel.ts and defence.ts).
+  'dataProtection', 'conflictOfInterest', 'defenceOversight',
 ] as const;
 export type PledgeId = (typeof PLEDGE_IDS)[number];
 

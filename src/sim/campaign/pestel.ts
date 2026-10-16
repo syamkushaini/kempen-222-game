@@ -4,6 +4,7 @@ import type { BlocId } from '../types';
 import { START_DEFENCE } from './defence';
 import { nationOf } from './nation';
 import { inGov, isPm, lift } from './office';
+import { builtMeters } from './econPlansData';
 import { isEnacted } from './policy';
 import type { Campaign, Career, Economy, PortfolioId } from './types';
 
@@ -53,7 +54,7 @@ export function pestelTargets(k: Career, believed: number = k.credibility): Pest
   const squeeze = Math.max(0, e.debt - 80) * 0.15;
   const built = k.built?.length ?? 0;
   const strain = (k.projects?.length ?? 0) * 2;
-  return {
+  const base = {
     // People hold together when the poor are looked after, jobs and prices are tolerable, and those who look after the family and the young are good at it.
     cohesion: clamp(55 + 8 * lines.aid + 2 * (skill(k, 'women') - 3) + 1.5 * (skill(k, 'youth') - 3) + (skill(k, 'religion') - 3)
       - 0.8 * Math.max(0, e.jobless - 4) - 0.4 * Math.max(0, e.inflation - 3) + 0.1 * (k.government.trust - 50) - squeeze, 15, 90),
@@ -66,6 +67,14 @@ export function pestelTargets(k: Career, believed: number = k.credibility): Pest
     // The law is respected where the ministers in charge of it are able, where reforms stand on the books, and where those in office do not lean on state money, donors or the institutions.
     law: clamp(55 + 3 * (skill(k, 'law') - 3) + 1.5 * (skill(k, 'home') - 3) + 8 * Number(isEnacted(k, 'graftCommission')) + 4 * Number(isEnacted(k, 'infoAct'))
       - 3 * k.orders.state - 2 * k.orders.donors + 0.1 * (k.government.trust - 50), 15, 90),
+  };
+  // The Acts on the books and the programmes that have been finished hold a meter up for good.
+  const b = builtMeters(k);
+  return {
+    cohesion: clamp(base.cohesion + b.cohesion, 15, 90),
+    tech: clamp(base.tech + b.tech + 3 * Number(isEnacted(k, 'dataProtection')), 15, 90),
+    environment: clamp(base.environment + b.environment, 15, 90),
+    law: clamp(base.law + b.law + 4 * Number(isEnacted(k, 'dataProtection')) + 5 * Number(isEnacted(k, 'conflictOfInterest')), 15, 90),
   };
 }
 
