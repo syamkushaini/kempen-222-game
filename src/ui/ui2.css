@@ -826,7 +826,7 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
    for what is doing well or badly. */
 .metrics-strip { grid-column: 1 / -1; display: block; margin: 0; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
 .metrics-headline { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 6px 16px; align-items: end; padding: 10px 14px; }
-.metrics-headline .metric.alert { box-shadow: inset 0 -2px 0 var(--bad, #e5484d); }
+.metrics-headline .metric.alert .metric-label::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--bad, #e5484d); vertical-align: 1px; }
 .metrics-more { justify-self: end; align-self: center; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .metrics-more:hover { color: var(--ink); background: var(--fill); }
 .metrics-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border-top: 1px solid var(--line); background: var(--line); }
