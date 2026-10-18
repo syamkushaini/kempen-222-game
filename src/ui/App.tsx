@@ -135,7 +135,7 @@ function CampaignScreen() {
   const term = campaign.phase === 'term';
   const available = (id: SidebarTab) =>
     (id !== 'chiefs' || (hasChiefs(world) && (!term || !!campaign.career))) && (id !== 'deals' || hasDiplomacy(world)) &&
-    (id !== 'policy' || !!campaign.career) && ((id !== 'acts' && id !== 'allies') || isPm(campaign)) && (id !== 'markets' || isFederal(campaign.scenario)) && (id !== 'cabinet' || !!campaign.career) && (id !== 'missions' || !!campaign.career) && ((id !== 'party' && id !== 'funds' && id !== 'reshape') || !!campaign.career) && !(term ? CAMPAIGN_ONLY : TERM_ONLY).includes(id);
+    (id !== 'policy' || !!campaign.career) && ((id !== 'acts' && id !== 'allies') || (!!campaign.career && isPm(campaign))) && (id !== 'markets' || isFederal(campaign.scenario)) && (id !== 'cabinet' || !!campaign.career) && (id !== 'missions' || !!campaign.career) && ((id !== 'party' && id !== 'funds' && id !== 'reshape') || !!campaign.career) && !(term ? CAMPAIGN_ONLY : TERM_ONLY).includes(id);
   const groups = GROUPS.map((g) => ({ ...g, tabs: g.tabs.filter(available) })).filter((g) => g.tabs.length > 0);
   const every = groups.flatMap((g) => g.tabs);
   const shown = every.includes(tab) ? tab : every[0];
