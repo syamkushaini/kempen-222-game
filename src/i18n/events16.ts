@@ -28,22 +28,22 @@ export const DEBT_EVENTS_EN: Record<string, EventText> = {
 export const DEBT_EVENTS_MS: Record<string, EventText> = {
   debtAlarm: {
     title: 'Loceng amaran hutang',
-    body: 'Hutang negara telah melepasi sembilan persepuluh daripada pendapatan negara. Kementerian kewangan memberi amaran bahawa pada kadar ini negara tidak akan dapat meminjam dengan syaratnya sendiri menjelang tahun depan. Pasaran bon sudah perasan sebelum anda.',
-    options: ['Potong dengan keras sekarang, dan beritahu sebabnya', 'Jual aset negara untuk membayar hutang', 'Katakan ia terkawal'],
+    body: 'Hutang negara dah lepas sembilan persepuluh daripada pendapatan negara. Kementerian kewangan beri amaran, pada kadar ni negara tak akan dapat meminjam ikut syarat sendiri menjelang tahun depan. Pasaran bon dah perasan sebelum anda.',
+    options: ['Potong keras sekarang, dan beritahu sebabnya', 'Jual aset negara untuk bayar hutang', 'Kata ia terkawal'],
     results: [
-      'Ia menyakitkan dan ia dipercayai. Hutang reda; klinik dan sekolah merasainya.',
-      'Jualan itu membawa wang tunai dan siasatan tentang siapa membeli apa, dan pada harga berapa.',
-      ['Pasaran memberi anda manfaat keraguan, kali ini.', 'Pasaran tidak, dan hutang bertambah semasa anda menenangkan mereka.'],
+      'Menyakitkan, tapi dipercayai. Hutang reda; klinik dan sekolah yang rasa.',
+      'Jualan tu bawa duit tunai dan siasatan pasal siapa beli apa, dan harga berapa.',
+      ['Pasaran bagi anda ruang percaya, kali ni.', 'Pasaran tak, dan hutang bertambah masa anda sibuk tenangkan mereka.'],
     ],
   },
   debtCrisis: {
-    title: 'Negara tidak dapat meminjam',
-    body: 'Lelongan bon terakhir gagal. Hutang telah melepasi seratus peratus daripada pendapatan negara dan pemberi pinjaman tidak mahu memperbaharuinya dengan syarat yang boleh diterima kerajaan. Ada dua jalan keluar, kedua-duanya pahit, dan yang ketiga ialah doa.',
+    title: 'Negara tak boleh meminjam',
+    body: 'Lelongan bon terakhir gagal. Hutang dah lepas seratus peratus daripada pendapatan negara dan pemberi pinjaman tak mahu sambung dengan syarat yang kerajaan boleh terima. Ada dua jalan keluar, dua-dua pahit, dan yang ketiga ialah doa.',
     options: ['Terima bailout, dengan syaratnya', 'Susun semula: mungkir sebahagian hutang', 'Berdegil, dan harap pasaran mengalah'],
     results: [
-      'Pemberi pinjaman menghantar satu pasukan dan satu senarai. Perbelanjaan dipotong, cukai naik dan setiap program dihapuskan. Hutang turun, dan kerajaan bersamanya, dalam tinjauan.',
-      'Sebahagian hutang dihapus kira, dan bersamanya nama negara di luar negeri. Hutang lebih ringan dan tiada siapa mahu meminjamkan bertahun-tahun.',
-      ['Pasaran mengalah, buat masa ini. Negara telah membeli sedikit masa.', 'Pasaran tidak mengalah. Negara tidak dapat membayar, dan kerajaan jatuh.'],
+      'Pemberi pinjaman hantar satu pasukan dan satu senarai. Perbelanjaan dipotong, cukai naik dan setiap program dihapuskan. Hutang turun, dan kerajaan pun turun bersama, dalam tinjauan.',
+      'Sebahagian hutang dihapus kira, dan nama negara di luar negara pun ikut hilang. Hutang lebih ringan dan tak ada siapa nak pinjamkan bertahun-tahun.',
+      ['Pasaran mengalah, buat masa ni. Negara dah beli sedikit masa.', 'Pasaran tak mengalah. Negara tak boleh bayar, dan kerajaan jatuh.'],
     ],
   },
 };

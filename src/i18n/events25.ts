@@ -38,32 +38,32 @@ export const CRISIS_EVENTS_EN: Record<string, EventText> = {
 export const CRISIS_EVENTS_MS: Record<string, EventText> = {
   constCrisis: {
     title: 'Dewan undangan negeri buntu',
-    body: 'Dua orang kini mengaku menteri besar negeri yang sama. Speaker telah memutuskan satu hala, pihak sebelah berjalan keluar, dan semua orang bertanya sama ada dewan akan dibubarkan. Tuanku telah dimaklumkan, dan negara menunggu, dengan hormat, jawapannya.',
-    options: ['Minta perkara diselesaikan mengikut undang-undang, apa pun kosnya', 'Katakan pihak anda ada bilangan, dan buktikan di dewan', 'Jangan campur dan biar parti bertelagah'],
+    body: 'Dua orang sekarang mengaku Menteri Besar negeri yang sama. Speaker dah putuskan satu hala, pihak sebelah keluar dewan, dan semua orang tanya sama ada dewan akan dibubarkan. Tuanku telah dimaklumkan, dan negara menunggu, dengan hormat, jawapannya.',
+    options: ['Minta perkara diselesaikan ikut undang-undang, apa pun kosnya', 'Kata pihak anda ada bilangan, dan buktikan di dewan', 'Jangan campur dan biar parti bertelagah'],
     results: [
-      'Parti dilihat meletakkan undang-undang mengatasi kepentingannya. Negeri tidak lebih tenang kerananya.',
-      ['Pihak anda memegang bilangan dan dewan berkata demikian.', 'Bilangan tidak bertahan, dan dewan berkata demikian juga.'],
-      'Anda tidak terlibat, dan tiada yang berterima kasih kerana itu.',
+      'Parti dilihat letak undang-undang mengatasi kepentingannya. Negeri tak jadi lebih tenang pun.',
+      ['Pihak anda pegang bilangan dan dewan kata macam tu.', 'Bilangan tak bertahan, dan dewan kata macam tu juga.'],
+      'Anda tak terlibat, dan tak ada siapa ucap terima kasih sebab tu.',
     ],
   },
   constCourt: {
-    title: 'Mahkamah diminta memutuskan',
-    body: 'Soalan itu telah dibawa ke mahkamah tertinggi, dan peguam memenuhi koridor. Segala yang dikatakan tentang kes itu di luar mahkamah dilaporkan, dan para hakim menyedarinya.',
-    options: ['Katakan anda akan menerima apa sahaja keputusan mahkamah', 'Rayu keputusan pertama dan berkempen untuknya', 'Himpun penyokong di luar mahkamah'],
+    title: 'Mahkamah diminta putuskan',
+    body: 'Soalan tu dah dibawa ke mahkamah tertinggi, dan peguam penuhkan koridor. Segala yang dicakap pasal kes tu di luar mahkamah dilaporkan, dan para hakim perasan.',
+    options: ['Kata anda akan terima apa sahaja keputusan mahkamah', 'Rayu keputusan pertama dan berkempen untuknya', 'Himpun penyokong di luar mahkamah'],
     results: [
       'Penghormatan kepada mahkamah dicatat oleh semua orang.',
-      'Rayuan membeli masa, dan kelewatan itu tidak dilupakan.',
-      'Orang ramai lantang dan hakim tidak terkesan. Begitu juga yang berkecuali.',
+      'Rayuan beli masa, dan kelewatan tu tak dilupakan.',
+      'Orang ramai lantang dan hakim tak terkesan. Yang berkecuali pun sama.',
     ],
   },
   constSettled: {
-    title: 'Krisis diselesaikan',
-    body: 'Mahkamah telah memutuskan, keputusan Tuanku diterima dengan hormat, dan negeri ini mempunyai menteri besar yang diterima semua pihak, ada yang lebih gembira daripada yang lain. Ia akan ditulis bertahun-tahun lamanya.',
-    options: ['Alu-alukan keputusan dan seru perpaduan', 'Alu-alukan dan ingatkan semua bagaimana ia bermula', 'Katakan keputusan itu satu kesilapan'],
+    title: 'Krisis selesai',
+    body: 'Mahkamah dah putuskan, keputusan Tuanku diterima dengan hormat, dan negeri ni ada Menteri Besar yang diterima semua pihak, ada yang lebih gembira daripada yang lain. Ia akan ditulis bertahun-tahun lamanya.',
+    options: ['Alu-alukan keputusan dan seru perpaduan', 'Alu-alukan dan ingatkan semua macam mana ia bermula', 'Kata keputusan tu satu kesilapan'],
     results: [
-      'Menyeru perpaduan pada saat penyelesaian adalah anggun, dan ia membantu.',
-      'Peringatan itu benar dan tidak sepenuhnya dialu-alukan. Parti kekal bersatu.',
-      'Pemimpin yang menyerang keputusan selepas kejadian tidak pernah dilupakan.',
+      'Menyeru perpaduan pada saat penyelesaian itu anggun, dan ia membantu.',
+      'Peringatan tu benar dan tak sepenuhnya dialu-alukan. Parti kekal bersatu.',
+      'Pemimpin yang serang keputusan selepas kejadian tak pernah dilupakan.',
     ],
   },
 };
