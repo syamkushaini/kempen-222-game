@@ -1,3 +1,4 @@
+import { probeChance } from '../sim/campaign/party';
 import {
   ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, machineryTargets, ledger, termIncome, termSpending,
 } from '../sim/campaign/career';
@@ -248,6 +249,7 @@ export function OrdersTab() {
             <span className="action-title">{t('orders.source.assets')}</span>
             <span className="action-meta">{t('orders.source.assets.desc')}</span>
             <span className="action-meta num">{t('orders.assets', { value: f.rm(k.assets), rm: f.rm(income.assets) })}</span>
+            {k.assets > 0 && <span className="action-meta">{t('party.probe', { pct: (probeChance(world, k) * 100).toFixed(1) })}</span>}
           </div>
           <div className="button-row tight">
             <button className="btn small" disabled={pc.funds < lot * lots} onClick={() => invest(lots)}>{t('orders.buy', { rm: f.rm(lot * lots) })}</button>

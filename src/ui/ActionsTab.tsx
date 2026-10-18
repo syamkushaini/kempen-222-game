@@ -4,7 +4,7 @@ import { ACTIONS, PITCHED, blitzAreas, actionCost, canDo, expectedPitchGain, exp
 import { ISSUE_IDS, LOCAL_THEMES, POSTURES, SWEEPS, type IssueId, type LocalTheme, type Posture, type Sweep } from '../sim/campaign/types';
 import { weatherIn } from '../sim/campaign/weather';
 import { MEDIA_AIMED, resentfulOf, segmentShare, segmentsOf, type SegmentId } from '../sim/campaign/segments';
-import { probeChance } from '../sim/campaign/spending';
+import { PETITION_FROM, probeChance } from '../sim/campaign/spending';
 import { suggestions, type Suggestion } from '../sim/campaign/suggest';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
 import { BLOC_IDS, isMinor, type BlocId, type RegionId } from '../sim/types';
@@ -235,6 +235,7 @@ export function ActionsTab() {
       <p className={`muted small spend ${pc.spent > spendingLimit(world) ? 'over' : ''}`}>
         {t('spend.line', { spent: f.rm(pc.spent), limit: f.rm(spendingLimit(world)) })}
         {pc.fined ? ` ${t('spend.fined')}` : pc.spent > spendingLimit(world) ? ` ${fog ? t('spend.over.fog') : t('spend.over', { pct: f.pct(probeChance(world, campaign, me), 0) })}` : ''}
+        {pc.spent > spendingLimit(world) && ` ${t('spend.petition', { rm: f.rm(Math.round(spendingLimit(world) * PETITION_FROM)) })}`}
       </p>
       {seat && contesting && <PitchPicker seatId={seat.id} segment={segment} onPick={setSegment} />}
       {ideas.length > 0 && (
