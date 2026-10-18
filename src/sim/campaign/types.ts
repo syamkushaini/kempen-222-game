@@ -762,6 +762,10 @@ export interface Career {
   chiefTalk?: number;
   /** Votes won over for the next bill by a chief's talks with the opposition: added to the margin of those not in government, then spent. */
   chiefDeal?: number;
+  /** Seats the courts took from the party on petition as this parliament began, so the desk can say why the majority shrank (see TermDesk). */
+  petitioned?: { n: number; seats: string[] };
+  /** The last time the party's businesses lost money, and why: a probe, or bad luck. For the desk to say. */
+  lastLoss?: { week: number; id: string; rm: number; why: 'probe' | 'luck' };
   /** The week the next constitutional crisis breaks (see crisis.ts). */
   crisis?: number;
   /** [move]: the week the leader's move may be made again (see moves.ts). */

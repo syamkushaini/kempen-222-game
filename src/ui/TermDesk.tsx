@@ -1,7 +1,8 @@
+import type { StringKey } from '../i18n/strings';
 import { now } from '../sim/campaign/news';
 import { useStore } from '../state/store';
 import { BriefingCard } from './BriefingCard';
-import { useT } from './hooks';
+import { seatName, useFormat, useT, useWorld } from './hooks';
 import { Icon, type IconName } from './Icon';
 import { Moves } from './Moves';
 import { NewsLine } from './NewsTab';
@@ -25,6 +26,8 @@ function DeskCard({ icon, tone, title, children, go, onGo }: { icon: IconName; t
  */
 export function TermDesk() {
   const t = useT();
+  const f = useFormat();
+  const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const setTab = useStore((s) => s.setTab);
   const openScene = useStore((s) => s.openScene);
@@ -41,6 +44,16 @@ export function TermDesk() {
         {waiting > 0 && (
           <DeskCard icon="inbox" tone="dare" title={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} go={t('inbox.open')} onGo={() => openScene()}>
             <span className="action-meta">{t('desk.waiting')}</span>
+          </DeskCard>
+        )}
+        {k.petitioned && k.week <= 13 && (
+          <DeskCard icon="ballot" tone="dare" title={t('desk.petition.title', { n: k.petitioned.n })}>
+            <span className="action-meta">{t('desk.petition.body', { seats: k.petitioned.seats.map((id) => seatName(world, id)).join(', ') })}</span>
+          </DeskCard>
+        )}
+        {k.lastLoss && k.week - k.lastLoss.week <= 6 && k.week >= k.lastLoss.week && (
+          <DeskCard icon="coins" tone="dare" title={t(`desk.loss.${k.lastLoss.why}`, { rm: f.rm(k.lastLoss.rm), what: t(`holding.${k.lastLoss.id}` as StringKey) })} go={t('tab.funds')} onGo={() => setTab('funds')}>
+            <span className="action-meta">{t('desk.loss.note')}</span>
           </DeskCard>
         )}
         <DeskCard icon="ballot" tone="won" title={t('orders.due', { n: left })} go={t('tab.policy')} onGo={() => setTab('policy')}>

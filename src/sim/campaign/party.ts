@@ -118,7 +118,9 @@ export function holdingsWeek(world: World, c: Campaign, rng: Rng): void {
     }
     // Something goes wrong, more often with more at stake.
     if (rng.next() < def.risk * Math.max(0.3, scale)) {
+      const before = held[id];
       held[id] = Math.round(held[id] * (1 - def.loss));
+      k.lastLoss = { week: k.week, id, rm: before - held[id], why: 'luck' };
       k.credibility = clamp(k.credibility - def.stain, 0, 100);
       pushNews(c, { party: me, key: `news.holding.${id}`, vars: {}, tone: 'bad' });
     }
@@ -136,6 +138,7 @@ function probeWeek(world: World, c: Campaign, rng: Rng): void {
   const biggest = HOLDING_IDS.reduce((a, id) => (held[id] > held[a] ? id : a), HOLDING_IDS[0]);
   const lost = Math.round(held[biggest] * (PROBE.loss[0] + (PROBE.loss[1] - PROBE.loss[0]) * rng.next()));
   held[biggest] -= lost;
+  k.lastLoss = { week: k.week, id: biggest, rm: lost, why: 'probe' };
   k.holdings = Object.fromEntries(HOLDING_IDS.filter((x) => held[x] > 0).map((x) => [x, held[x]]));
   k.assets = HOLDING_IDS.reduce((a, x) => a + held[x], 0);
   k.credibility = clamp(k.credibility - 3, 0, 100);

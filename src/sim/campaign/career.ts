@@ -845,6 +845,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     const now = leaders(world, winners, togetherStates, k.states);
     applyStateResults(c, togetherStates.filter((st) => now[st] !== undefined).map((st) => ({ state: st, winner: now[st], was: k.states[st], vote: stateVoteOf(world, winners, st) })));
   }
+  if (petitioned.lost.length > 0) c.career.petitioned = { n: petitioned.lost.length, seats: [...petitioned.lost] };
   if (petitioned.lost.length > 0) pushNews(c, { party: c.player, key: 'news.petition', vars: { n: petitioned.lost.length, seats: `@seats:${petitioned.lost.join(',')}` }, tone: 'bad' });
   if (leaderOut) {
     c.career.credibility = clamp(c.career.credibility - LEADER_OUT.credibility, 0, 100);
