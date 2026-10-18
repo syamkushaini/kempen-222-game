@@ -361,4 +361,13 @@ export const EVENT_ART: Record<string, string> = {
   trappedVote: 'room: wallroom@50, ballot@38*1.3, crowd@62, leader@86, alarm@12',
   endorsement: 'day: kampung@22, chiefs@52, table@72, leader@88',
   councilWin: 'day: shophouses@28, ballot@52*1.2, trophy@70, crowd@88*0.8',
+  sarawakGridHandshake: 'room: wallroom@50, leader@30, person@58, tower@80, docs@44*1.2, clock@92*0.8',
+  borneoLanternPact: 'dusk: stage@50*1.2, boat@26, placard@76, person@64, moon@90',
+  longhouseLeakApology: 'day: longhouse@40*1.2, chiefs@62, leader@76, phone@88*0.8',
+  sarawakNativeMapChoice: 'day: hills@50, docs@30*1.3, person@52, worker@68, road@84',
+  sarawakPotholeBounty: 'day: road@50, chair@46, person@28, phone@64*1.2, worker@84',
+  sarawakTimberSalesTaxTweak: 'day: port@30*1.2, truck@52, palms@70, warning@88, docs@16*1.1',
+  hydroVillageTrustFund: 'dusk: longhouse@36*1.2, chiefs@60, docs@78*1.2, cash@92*0.8',
+  hydroVillageTrustReturns: 'night: docs@34*1.4, chiefs@58, phone@76, alarm@90, moon@12',
 };
+
