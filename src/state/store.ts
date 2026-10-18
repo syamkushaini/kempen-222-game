@@ -84,7 +84,7 @@ import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
  * or (developer mode only) how the country would really vote today.
  */
 export type MapView = 'last' | 'estimate' | 'truth';
-export type SidebarTab = 'desk' | 'orders' | 'house' | 'policy' | 'missions' | 'actions' | 'team' | 'party' | 'slate' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
+export type SidebarTab = 'desk' | 'economy' | 'markets' | 'acts' | 'meters' | 'allies' | 'cabinet' | 'orders' | 'funds' | 'reshape' | 'house' | 'policy' | 'missions' | 'actions' | 'team' | 'party' | 'slate' | 'chiefs' | 'deals' | 'seats' | 'polls' | 'voters' | 'news' | 'saves';
 export type Theme = 'system' | 'light' | 'dark';
 export type Palette = 'standard' | 'accessible';
 export type TextSize = 'normal' | 'large';

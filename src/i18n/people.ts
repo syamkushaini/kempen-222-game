@@ -3,7 +3,7 @@
 // from strings.ts for size; merged into the same lookup table.
 
 export const PEOPLE_EN = {
-  'tab.team': 'Team',
+  'tab.team': 'Staff',
 
   // the leader
   'leader.pick': 'Your leader',
@@ -268,7 +268,7 @@ export const PEOPLE_EN = {
 export type PeopleKey = keyof typeof PEOPLE_EN;
 
 export const PEOPLE_MS: Record<PeopleKey, string> = {
-  'tab.team': 'Pasukan',
+  'tab.team': 'Staf',
 
   'leader.pick': 'Pemimpin anda',
   'leader.pick.note': 'Latar belakang pemimpin menentukan kelebihannya. Setiap pilihan ada kekuatan dan kelemahan tersendiri, tetapi jumlah keseluruhan statistik tetap sama.',

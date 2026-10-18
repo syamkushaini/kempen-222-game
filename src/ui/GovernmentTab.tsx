@@ -10,7 +10,8 @@ import { MONTH, commitmentWeekly, lineWeekly, measureWeekly, takingsWeekly } fro
 import { EconomyBook } from './EconomyBook';
 import { TreasuryCard } from './TreasuryCard';
 import { EconomyCharts } from './EconomyCharts';
-import { EconomyTools } from './EconomyTools';
+import { EconomyTools, MarketsPanel } from './EconomyTools';
+import { Fold } from './Fold';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
 import { MeterTools } from './MeterTools';
 import { defenceShown } from '../sim/campaign/defence';
@@ -69,7 +70,14 @@ function DialSwitch(props: { value: Dial; label: string; tax?: boolean; onChange
  * cabinet, bills and promises, what partners are owed, and votes of
  * confidence. What can be done here depends on where the player sits.
  */
-export function GovernmentTab() {
+export type GovernmentPart = 'house' | 'economy' | 'markets' | 'acts' | 'meters' | 'allies' | 'cabinet';
+
+/**
+ * What a government (or an opposition) deals with between elections, in six screens that each answer one question:
+ * the economy's figures and the budget; the markets; the acts for the economy; the meters; the House; and who stands with the
+ * government, and who is in the cabinet. Every screen is a part of this one component, so that they share what they need.
+ */
+export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
   const t = useT();
   const f = useFormat();
   const fog = useFog();
@@ -102,11 +110,12 @@ export function GovernmentTab() {
   return (
     <section className="orders house">
       <div className="panel-head">
-        <h2>{t(`house.title.${seat}`)}</h2>
+        <h2>{part === 'house' ? t(`house.title.${seat}`) : t(`tab.${part}`)}</h2>
         <span className="muted">{t('orders.term', { n: k.term })}</span>
       </div>
-      <Chamber blocs={houseSeating(world, campaign)} need={need} sides={{ left: t('chamber.gov'), right: t('chamber.opp'), middle: t('chamber.cross') }} />
+      {part === 'house' && <Chamber blocs={houseSeating(world, campaign)} need={need} sides={{ left: t('chamber.gov'), right: t('chamber.opp'), middle: t('chamber.cross') }} />}
 
+      {part === 'economy' && <>
       <h3>{t('house.economy')}</h3>
       <dl className="facts orders-facts">
         <div><dt>{t('house.growth')}</dt><dd className="num">{e.growth.toFixed(1)}%</dd></div>
@@ -117,13 +126,22 @@ export function GovernmentTab() {
       <p className="muted small">{t(feel > 0.5 ? 'house.feel.good' : feel < -0.5 ? 'house.feel.bad' : 'house.feel.flat')} {t('house.deficit', { pct: deficit(k).toFixed(1) })}</p>
 
       <TreasuryCard />
-      <EconomyCharts />
-      <EconomyBook />
-      <PestelCard />
-      <MeterTools />
-      <EconomyTools />
+      <Fold title={t('fold.economy')}>
+        <EconomyCharts />
+        <EconomyBook />
+      </Fold>
+      </>}
+      {part === 'meters' && <>
+        <PestelCard />
+        <MeterTools />
+      </>}
+      {part === 'acts' && <EconomyTools />}
+      {part === 'markets' && <>
+        <MarketsPanel />
+        <Sectors />
+      </>}
 
-      {pm && (
+      {part === 'economy' && pm && (
         <>
           <h3>{t('house.budget')}</h3>
           <p className="muted small action-desc">{t('house.budget.desc', { n: toBudget })}</p>
@@ -174,23 +192,22 @@ export function GovernmentTab() {
         </>
       )}
 
-      <HouseFigures />
-      {pm && inStateCareer(campaign) && <StatePowers />}
-      <Sectors />
-      {pm && <SupplyDeals />}
-      {pm && <Unity />}
-      {pm && k.government.partners.length > 0 && <PutOut />}
-      {seat === 'opp' && <ShadowCabinet />}
-      {seat === 'opp' && <CommitteeInquiry />}
-      {seat === 'opp' && <PolicyChallenge />}
+      {part === 'house' && <HouseFigures />}
+      {part === 'allies' && pm && inStateCareer(campaign) && <StatePowers />}
+      {part === 'allies' && pm && <SupplyDeals />}
+      {part === 'allies' && pm && <Unity />}
+      {part === 'allies' && pm && k.government.partners.length > 0 && <PutOut />}
+      {part === 'cabinet' && seat === 'opp' && <ShadowCabinet />}
+      {part === 'house' && seat === 'opp' && <CommitteeInquiry />}
+      {part === 'house' && seat === 'opp' && <PolicyChallenge />}
 
-      {(k.appointments?.length ?? 0) > 0 && (
+      {part === 'cabinet' && (k.appointments?.length ?? 0) > 0 && (
         <section className="appointments" aria-label={t('appoint.title')}>
           <h3>{t('appoint.title')} <span className="count-badge">{k.appointments!.length}</span></h3>
           <p className="muted small action-desc">{t('appoint.desc')}</p>
-          {k.appointments!.map((a) => (
-            <div key={a.portfolio} className="appoint-post">
-              <strong className="action-title">{t(`portfolio.${a.portfolio}`)}</strong>
+          {k.appointments!.map((a, n) => (
+            <Fold key={a.portfolio} title={t(`portfolio.${a.portfolio}`)} open={n === 0}>
+            <div className="appoint-post">
               <ul>
                 {a.options.map((o, i) => (
                   <li key={o.name} className="candidate">
@@ -206,10 +223,12 @@ export function GovernmentTab() {
                 ))}
               </ul>
             </div>
+            </Fold>
           ))}
         </section>
       )}
 
+      {part === 'cabinet' && <>
       <h3>{t('house.cabinet')}</h3>
       <ul>
         {k.cabinet.map((m) => (
@@ -225,8 +244,9 @@ export function GovernmentTab() {
         ))}
       </ul>
       {pm && <p className="muted small">{t('house.cabinet.note')}</p>}
+      </>}
 
-      {pm && (
+      {part === 'house' && pm && (
         <>
           <h3>{t('house.promises')}</h3>
           <p className="muted small action-desc">{t('house.promises.desc', { n: MAX_BILLS })}</p>
@@ -286,6 +306,11 @@ export function GovernmentTab() {
             })}
           </ul>
 
+        </>
+      )}
+
+      {part === 'allies' && pm && (
+        <>
           <h3>{t('house.levers')}</h3>
           <p className="muted small action-desc">{t('house.levers.desc')}</p>
           <ul>
@@ -303,7 +328,7 @@ export function GovernmentTab() {
         </>
       )}
 
-      {!pm && (k.claims?.length ?? 0) > 0 && (
+      {part === 'house' && !pm && (k.claims?.length ?? 0) > 0 && (
         <>
           <h3>{t('claims.title')}</h3>
           <p className="muted small action-desc">{t('claims.desc', { party: partyName(t, k.government.pm) })}</p>
@@ -330,7 +355,7 @@ export function GovernmentTab() {
         </>
       )}
 
-      {!pm && (
+      {part === 'house' && !pm && (
         <>
           <h3>{t('house.parliament')}</h3>
           <p className="muted small action-desc">
@@ -382,6 +407,7 @@ export function GovernmentTab() {
         </>
       )}
 
+      {part === 'house' && <>
       <h3>{t('house.career')}</h3>
       <dl className="facts orders-facts">
         <div><dt>{t('house.record.pm')}</dt><dd className="num">{(r.weeksPm / 52).toFixed(1)}</dd></div>
@@ -392,6 +418,7 @@ export function GovernmentTab() {
       <div className="button-row">
         <ConfirmButton className="btn" label={t('house.retire')} confirmLabel={t('house.retire.confirm')} disabled={campaign.inbox.length > 0} onConfirm={retire} danger />
       </div>
+      </>}
     </section>
   );
 }
@@ -543,7 +570,7 @@ function Unity() {
 }
 
 /** The sectors of the economy: how each is doing, who lives by it, and, for the head of government, a hand to lend one. */
-function Sectors() {
+export function Sectors() {
   const t = useT();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);

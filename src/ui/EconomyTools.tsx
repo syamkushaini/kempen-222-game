@@ -9,35 +9,21 @@ import { BANK, bankActs } from '../sim/campaign/markets';
 import { STOCK_IDS } from '../sim/campaign/types';
 import { FORCES_PROJECTS } from '../sim/campaign/econPlansData';
 import { useStore } from '../state/store';
+import { Fold } from './Fold';
 import { describeEffect } from './effectText';
 import { useFormat, useT, useWorld } from './hooks';
 
-/**
- * What the head of government can do about the economy besides the budget: a policy rate left to stand, and acts for the debt, for
- * prices, for growth and jobs and for the books, each with what it does and costs shown before it is used, and the weeks it must rest after.
- */
-export function EconomyTools() {
+/** The central bank's rate, the ringgit and the stocks: what happens on the markets, which the government watches and does not set. */
+export function MarketsPanel() {
   const t = useT();
-  const f = useFormat();
-  const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
-  const use = useStore((s) => s.useTool);
   const setRate = useStore((s) => s.setRate);
-  const setTax = useStore((s) => s.setTax);
-  const setRepay = useStore((s) => s.setRepayShare);
-  const start = useStore((s) => s.startProject);
-  const stop = useStore((s) => s.stopProject);
-  if (!campaign.career || campaign.phase !== 'term' || !isPm(campaign)) return null;
+  if (!campaign.career || campaign.phase !== 'term') return null;
   const rate = rateOf(campaign);
   const banked = bankActs(campaign);
   const mk = campaign.career.markets;
-  const books = govBooks(world, campaign);
-  const yearly = books ? debtEased(world, campaign, (books.spend.find((x) => x.id === 'repay')?.amount ?? 0) * 52) : 0;
-  const effectsOf = (id: string) => TOOLS.find((x) => x.id === id)!.effects.map((e) => describeEffect(t, f, world, campaign, e)).filter(Boolean).join(' · ');
   return (
-    <section className="econ-tools" aria-label={t('tools.title')}>
-      <h3>{t('tools.title')}</h3>
-      <p className="muted small action-desc">{t('tools.desc')}</p>
+    <section className="econ-tools" aria-label={t('markets.title')}>
       <div className="rate-row">
         <div className="grow">
           <span className="action-title">{t('tools.rate')}</span>
@@ -67,6 +53,33 @@ export function EconomyTools() {
           </ul>
         </div>
       )}
+    </section>
+  );
+}
+
+/**
+ * What the head of government can do about the economy besides the budget: a policy rate left to stand, and acts for the debt, for
+ * prices, for growth and jobs and for the books, each with what it does and costs shown before it is used, and the weeks it must rest after.
+ */
+export function EconomyTools() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const use = useStore((s) => s.useTool);
+  const setTax = useStore((s) => s.setTax);
+  const setRepay = useStore((s) => s.setRepayShare);
+  const start = useStore((s) => s.startProject);
+  const stop = useStore((s) => s.stopProject);
+  if (!campaign.career || campaign.phase !== 'term' || !isPm(campaign)) return null;
+  const books = govBooks(world, campaign);
+  const yearly = books ? debtEased(world, campaign, (books.spend.find((x) => x.id === 'repay')?.amount ?? 0) * 52) : 0;
+  const effectsOf = (id: string) => TOOLS.find((x) => x.id === id)!.effects.map((e) => describeEffect(t, f, world, campaign, e)).filter(Boolean).join(' · ');
+  return (
+    <section className="econ-tools" aria-label={t('tools.title')}>
+      <h3>{t('tools.title')}</h3>
+      <p className="muted small action-desc">{t('tools.desc')}</p>
+      <Fold title={t('plan.repay.title')}>
       <div className="plan-card">
         <h4>{t('plan.repay.title')}</h4>
         <p className="muted small">{t('plan.repay.desc')}</p>
@@ -74,6 +87,8 @@ export function EconomyTools() {
         <input id="repay-share" type="range" min={0} max={REPAY_MAX * 100} step={5} value={Math.round((campaign.career.repayShare ?? 0) * 100)} onChange={(e) => setRepay(Number(e.target.value) / 100)} />
         <p className="small num">{t('plan.repay.forecast', { pts: yearly.toFixed(2) })}</p>
       </div>
+      </Fold>
+      <Fold title={t('plan.tax.title')}>
       <div className="plan-card">
         <h4>{t('plan.tax.title')}</h4>
         <p className="muted small">{t('plan.tax.desc')}</p>
@@ -92,6 +107,8 @@ export function EconomyTools() {
           ))}
         </ul>
       </div>
+      </Fold>
+      <Fold title={t('plan.projects.title')}>
       <div className="plan-card">
         <h4>{t('plan.projects.title')}</h4>
         <p className="muted small">{t('plan.projects.desc', { n: MAX_PROJECTS_AT_ONCE })}</p>
@@ -117,9 +134,10 @@ export function EconomyTools() {
           })}
         </ul>
       </div>
+      </Fold>
       {TOOL_GOALS.map((goal) => (
-        <div key={goal} className="tool-group">
-          <h4>{t(`tools.goal.${goal}` as StringKey)}</h4>
+        <Fold key={goal} title={t(`tools.goal.${goal}` as StringKey)}>
+        <div className="tool-group">
           <ul>
             {TOOLS.filter((x) => x.goal === goal).map((tool) => {
               const check = canUseTool(world, campaign, tool.id);
@@ -137,6 +155,7 @@ export function EconomyTools() {
             })}
           </ul>
         </div>
+        </Fold>
       ))}
     </section>
   );
