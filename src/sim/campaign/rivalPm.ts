@@ -2,6 +2,7 @@ import { Rng } from '../rng';
 import { PROJECTS, projectOf, projectsCost, taxMixOf, type TaxId } from './econPlansData';
 import { MAX_PROJECTS_AT_ONCE, REPAY_MAX } from './econPlans';
 import { toolOf, type Tool } from './econTools';
+import { bankActs } from './markets';
 import { applyRivalEffects } from './rivalPmEffects';
 import { DEBT_FLOOR, newMinister } from './office';
 import { pushNews, ref } from './news';
@@ -98,7 +99,8 @@ export function rivalPmMonth(c: Campaign): void {
   const need = needOf(c);
 
   const rate = rateFor(c);
-  if ((k.rate ?? 0) !== rate) {
+  // The central bank sets the rate in the federation, whoever governs.
+  if (!bankActs(c) && (k.rate ?? 0) !== rate) {
     if (rate === 0) delete k.rate; else k.rate = rate;
     pushNews(c, { party: pm, key: rate > 0 ? 'news.rate.up' : rate < 0 ? 'news.rate.down' : 'news.rate.hold', vars: { party: ref.party(pm) }, tone: 'neutral' });
   }

@@ -5,6 +5,8 @@ import { MONTH, debtEased, govBooks, govMoney } from '../sim/campaign/treasury';
 import { ALLOCATION } from '../sim/campaign/treasury';
 import { isPm } from '../sim/campaign/office';
 import { isFederal } from '../sim/campaign/defence';
+import { bankActs } from '../sim/campaign/markets';
+import { STOCK_IDS } from '../sim/campaign/types';
 import { FORCES_PROJECTS } from '../sim/campaign/econPlansData';
 import { useStore } from '../state/store';
 import { describeEffect } from './effectText';
@@ -27,6 +29,8 @@ export function EconomyTools() {
   const stop = useStore((s) => s.stopProject);
   if (!campaign.career || campaign.phase !== 'term' || !isPm(campaign)) return null;
   const rate = rateOf(campaign);
+  const banked = bankActs(campaign);
+  const mk = campaign.career.markets;
   const books = govBooks(world, campaign);
   const yearly = books ? debtEased(world, campaign, (books.spend.find((x) => x.id === 'repay')?.amount ?? 0) * 52) : 0;
   const effectsOf = (id: string) => TOOLS.find((x) => x.id === id)!.effects.map((e) => describeEffect(t, f, world, campaign, e)).filter(Boolean).join(' · ');
@@ -38,13 +42,31 @@ export function EconomyTools() {
         <div className="grow">
           <span className="action-title">{t('tools.rate')}</span>
           <span className="action-meta">{t(`tools.rate.${rate}` as StringKey)}</span>
+          {banked && <span className="action-meta">{t('bank.independent', { n: Math.max(0, (campaign.career.markets?.next ?? 0) - campaign.career.week) })}</span>}
         </div>
         <div className="segmented small" role="group" aria-label={t('tools.rate')}>
           {([-1, 0, 1] as const).map((d) => (
-            <button key={d} type="button" className={rate === d ? 'active' : ''} aria-pressed={rate === d} onClick={() => setRate(d)}>{t(`tools.rate.btn.${d}` as StringKey)}</button>
+            <button key={d} type="button" className={rate === d ? 'active' : ''} aria-pressed={rate === d} disabled={banked} onClick={() => setRate(d)}>{t(`tools.rate.btn.${d}` as StringKey)}</button>
           ))}
         </div>
       </div>
+      {banked && mk && (
+        <div className="plan-card">
+          <h4>{t('markets.title')}</h4>
+          <p className="muted small">{t('markets.desc')}</p>
+          <p className="small num">{t('markets.fx', { usd: mk.usd.toFixed(2), sgd: mk.sgd.toFixed(2) })}</p>
+          <ul>
+            {STOCK_IDS.map((s) => (
+              <li key={s} className="action">
+                <div className="grow">
+                  <span className="action-title">{t(`stock.${s}` as StringKey)}</span>
+                  <span className="action-meta num">{t('markets.index', { n: Math.round(mk.index[s]) })}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="plan-card">
         <h4>{t('plan.repay.title')}</h4>
         <p className="muted small">{t('plan.repay.desc')}</p>

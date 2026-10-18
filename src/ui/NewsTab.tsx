@@ -95,8 +95,11 @@ function Netizens() {
   const lang = useStore((s) => s.settings.lang);
   const campaign = useStore((s) => s.game!.campaign);
   const posts = useMemo(() => netizenFeed(campaign.news, lang, (p) => partyName(t, p), campaign.player), [campaign.news, lang, t, campaign.player]);
+  const pulse = Math.round(campaign.career?.net ?? 0);
   if (posts.length === 0) return <p className="muted">{t('news.empty')}</p>;
   return (
+    <>
+    {campaign.career && <p className="muted small num">{t('netizens.pulse', { n: pulse > 0 ? `+${pulse}` : `${pulse}` })}</p>}
     <ul className="feed">
       {posts.map((post, i) => (
         <li key={i} className="post">
@@ -105,6 +108,7 @@ function Netizens() {
         </li>
       ))}
     </ul>
+    </>
   );
 }
 

@@ -3,6 +3,27 @@ import type { EventText } from './events';
 // Booms and busts that give notice, in English and Bahasa Malaysia: the warning, then the day itself.
 
 export const SHOCK_EVENTS_EN: Record<string, EventText> = {
+  marketWindfall: {
+    title: 'The markets hand the country a windfall',
+    body: 'Palm oil, gas and chips are all fetching more than anyone budgeted for, and the ringgit has firmed. The central bank says the surge may not last. Every ministry, every state and every cousin has a use for the money.',
+    options: ['Bank it in the treasury', 'Pay down the national debt', 'Spend it on the people', 'Share it with the farmers and the gig workers'],
+    results: [
+      'A fuller treasury is a calmer one, and a government with money in hand is believed.',
+      'The debt eased, and the agencies noticed.',
+      'The hospitals, schools and shops felt it. The books will feel it next year.',
+      'Those who work with their hands felt remembered. The finance ministry felt raided.',
+    ],
+  },
+  blackSwan: {
+    title: 'A black swan lands on the ringgit',
+    body: 'A bank has failed abroad and nobody saw it coming. Money is leaving the region, the ringgit is sliding and the sector indices have dropped by a fifth in a week. The central bank is on the phone, and so are the shopkeepers.',
+    options: ['A stimulus package and a guarantee for deposits', 'Hold the line and let the market find its floor', 'Ask friends abroad for a credit line, and take their terms'],
+    results: [
+      'Money was spent, deposits were safe, and the worst did not come. The bill will.',
+      'The pain was real and short. Some voters called it discipline; most called it your doing.',
+      'The lines were opened and the panic stopped. Whatever was promised in the room was not in the press release.',
+    ],
+  },
   boomWarn: {
     title: 'The central bank sees a windfall coming',
     body: 'Commodity prices are climbing faster than anyone planned for. The central bank expects revenue to jump in about two months, and every ministry is already drawing up a wish list.',
@@ -56,6 +77,27 @@ export const SHOCK_EVENTS_EN: Record<string, EventText> = {
 };
 
 export const SHOCK_EVENTS_MS: Record<string, EventText> = {
+  marketWindfall: {
+    title: 'Pasaran memberi negara durian runtuh',
+    body: 'Minyak sawit, gas dan cip semuanya laku lebih mahal daripada yang dibajetkan, dan ringgit mengukuh. Bank pusat kata lonjakan ini mungkin tak lama. Setiap kementerian, setiap negeri dan setiap sepupu ada kegunaan untuk wang itu.',
+    options: ['Simpan dalam perbendaharaan', 'Bayar hutang negara', 'Belanjakan untuk rakyat', 'Kongsi dengan petani dan pekerja gig'],
+    results: [
+      'Perbendaharaan yang penuh lebih tenang, dan kerajaan yang ada wang di tangan lebih dipercayai.',
+      'Hutang berkurang, dan agensi menyedarinya.',
+      'Hospital, sekolah dan kedai merasainya. Buku akaun akan merasainya tahun depan.',
+      'Mereka yang bekerja dengan tangan rasa diingati. Kementerian kewangan rasa dirompak.',
+    ],
+  },
+  blackSwan: {
+    title: 'Angsa hitam menimpa ringgit',
+    body: 'Sebuah bank gagal di luar negara dan tiada siapa menjangkakannya. Wang keluar dari rantau ini, ringgit menjunam dan indeks sektor jatuh seperlima dalam seminggu. Bank pusat menelefon, begitu juga peniaga kedai.',
+    options: ['Pakej rangsangan dan jaminan simpanan', 'Tegas dan biar pasaran cari dasarnya', 'Minta talian kredit daripada rakan luar negara, dan terima syaratnya'],
+    results: [
+      'Wang dibelanjakan, simpanan selamat, dan yang paling buruk tak berlaku. Bilnya akan tiba.',
+      'Sakitnya nyata dan pendek. Ada pengundi menyebutnya disiplin; kebanyakan menyebutnya salah anda.',
+      'Talian dibuka dan panik berhenti. Apa yang dijanjikan di dalam bilik tak ada dalam kenyataan akhbar.',
+    ],
+  },
   boomWarn: {
     title: 'Bank pusat nampak durian runtuh akan tiba',
     body: 'Harga komoditi naik lebih laju daripada yang dirancang. Bank pusat jangka hasil melonjak dalam masa dua bulan, dan setiap kementerian dah mula menyenaraikan permintaan.',

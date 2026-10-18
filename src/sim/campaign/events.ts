@@ -14,6 +14,8 @@ import { OPPOSITION_SEATS } from './eventList10';
 import { DESK_EVENTS } from './eventList11';
 import { DEBT_EVENTS } from './eventListDebt';
 import { SHOCK_EVENTS } from './eventListShocks';
+import { VIRAL_EVENTS } from './eventListViral';
+import { CRISIS_EVENTS } from './eventListCrisis';
 import { FOLLOW_EVENTS, FOLLOW_UPS } from './eventListFollow';
 import { STATE_STORIES } from './eventList12';
 import { KEDAH_STORIES } from './eventList13';
@@ -43,7 +45,7 @@ import { scaleHoldings } from './party';
 import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEvent, standingOf, topicOf, type Standing } from './standing';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
-const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES };
+const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...CRISIS_EVENTS };
 
 /**
  * Events whose money is the public's: relief for a flood, a bridge, a subsidy, a port. Where the player's party governs they are paid
@@ -124,6 +126,8 @@ export type Effect =
   | { t: 'public'; n: number }
   | { t: 'unity' | 'funds' | 'cred' | 'stability' | 'trust' | 'machinery' | 'dossier' | 'donors' | 'state' | 'fiscal'; n: number }
   | { t: 'economy'; growth?: number; inflation?: number }
+  /** The mood online moves by this much (see netizens.ts). */
+  | { t: 'net'; n: number }
   /** The national debt moves by this many points of national income (repaid when negative). */
   | { t: 'debt'; n: number }
   /** The IMF's terms: the budget is forced tight and every standing commitment is wiped. */
@@ -367,6 +371,7 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
         if (hasPublicMoney(c)) k.treasury = clamp(treasuryOf(c) + publicAmount(world, c, e.n), 0, Math.max(treasuryCap(world, c), treasuryOf(c)));
         else pc.funds = Math.max(0, pc.funds + Math.sign(e.n) * scaled(world, Math.abs(realistic(c, e.n))));
         break;
+      case 'net': k.net = clamp((k.net ?? 0) + e.n, -100, 100); break;
       case 'cred': k.credibility = clamp(k.credibility + realistic(c, e.n), 0, 100); break;
       case 'stability': k.government.stability = clamp(k.government.stability + realistic(c, e.n), 5, 95); break;
       case 'trust': k.government.trust = clamp(k.government.trust + realistic(c, e.n), 0, 100); break;

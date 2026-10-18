@@ -1136,6 +1136,14 @@
    "title": "The windfall arrives",
    "body": "The revenue has come in, more than the budget counted on. Everybody has a view on what to do with it, and it will not be there next year."
   },
+  "marketWindfall": {
+   "title": "The markets hand the country a windfall",
+   "body": "Palm oil, gas and chips are all fetching more than anyone budgeted for, and the ringgit has firmed. The central bank says the surge may not last. Every ministry, every state and every cousin has a use for the money."
+  },
+  "blackSwan": {
+   "title": "A black swan lands on the ringgit",
+   "body": "A bank has failed abroad and nobody saw it coming. Money is leaving the region, the ringgit is sliding and the sector indices have dropped by a fifth in a week. The central bank is on the phone, and so are the shopkeepers."
+  },
   "stormWarn": {
    "title": "The central bank warns of a storm",
    "body": "A downturn abroad is heading this way: orders are falling, and the bank expects it to reach the factories in about two months. It is a warning, not a forecast, and what you do now decides how hard it lands."
@@ -1395,6 +1403,50 @@
   "hydroVillageTrustReturns": {
    "title": "The Audit Returns",
    "body": "Eight weeks later, the State Auditor finds Tabung Antawau’s first quarter statement: RM14,200 spent on “capacity building” — mostly a team-building retreat at a Damai resort. The Tuai Rumah is on the phone: “We thought it was for diesel for the generator.” Press has the invoice."
+  },
+  "viralCat": {
+   "title": "A cat takes over the ministry",
+   "body": "A stray cat has wandered into a government building and fallen asleep on a minister’s chair. A staffer’s photo of it has been shared a million times. Everyone online is asking what the government plans to do about the cat."
+  },
+  "viralDurian": {
+   "title": "A durian seller’s rant breaks the internet",
+   "body": "A durian seller’s video, in which he explains the price of the king of fruits to a customer who will not pay it, is everywhere. It is funny, it is rude, and nobody is sure whose side to be on."
+  },
+  "viralFootball": {
+   "title": "The national team loses on a last-minute penalty",
+   "body": "The whole country watched, and the whole country has an opinion about the referee, the coach and the penalty taker. The feed is a single wail."
+  },
+  "viralKopitiam": {
+   "title": "A kopitiam uncle’s sign becomes a meme",
+   "body": "The owner of a kopitiam has put up a sign about the price of a cup of coffee, and the sign has been photographed, translated, and made into a hundred jokes. A journalist wants your view."
+  },
+  "viralConcert": {
+   "title": "Tickets to a big concert sell out in a minute",
+   "body": "A famous singer’s concert has sold out in sixty seconds, and the young are furious at the bots, the touts and the platform. Someone is asking what the government will do about ticket touts."
+  },
+  "viralStudent": {
+   "title": "A schoolboy’s science project wins a prize abroad",
+   "body": "A teenager from a small town has won a prize at an international fair with a project built from rubbish. The whole country wants to be proud of him, and you are not the only one who has noticed."
+  },
+  "viralRaya": {
+   "title": "A festival advertisement makes everyone cry",
+   "body": "A short advertisement for the coming festival, about a father who drives home across the country, has been watched forty million times. People are asking if you have seen it, and what you thought."
+  },
+  "viralPothole": {
+   "title": "A pothole is named after a minister",
+   "body": "Someone has painted a minister’s face around a pothole on a busy road, and it has been photographed from every angle. It is not clear whose minister it is, and every side has decided it is the other’s."
+  },
+  "constCrisis": {
+   "title": "A state assembly is deadlocked",
+   "body": "Two men now say they are chief minister of the same state. The Speaker has ruled one way, the other side has walked out, and everyone wants to know whether the assembly will be dissolved. The ruler has been told, and the nation is waiting, politely, for the answer."
+  },
+  "constCourt": {
+   "title": "The courts are asked",
+   "body": "The question has gone to the highest court, and the lawyers have filled the corridors. Everything said about the case outside the courtroom is being reported, and the judges have noticed."
+  },
+  "constSettled": {
+   "title": "The crisis is settled",
+   "body": "The court has ruled, the ruler’s decision has been received with respect, and the state has a chief minister whom everyone accepts, some more happily than others. It will be written about for years."
   },
   "kind-pactOffer": {
    "title": "An offer from another party",

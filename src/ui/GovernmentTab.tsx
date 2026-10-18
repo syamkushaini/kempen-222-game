@@ -3,7 +3,7 @@ import type { StringKey } from '../i18n/strings';
 import { DEMANDS } from '../sim/campaign/cast';
 import { seatOf } from '../sim/campaign/events';
 import {
-  agenda, canMotion, canPull, confidenceCount, deficit, economicMood, MAX_BILLS, MINISTER_NAMES, needsBill, prepWeeks, whipCount,
+  agenda, canMotion, canPull, confidenceCount, deficit, economicMood, houseSits, MAX_BILLS, MINISTER_NAMES, needsBill, prepWeeks, weeksToSitting, whipCount,
 } from '../sim/campaign/govern';
 import { scaled } from '../sim/campaign/actions';
 import { MONTH, commitmentWeekly, lineWeekly, measureWeekly, takingsWeekly } from '../sim/campaign/treasury';
@@ -230,6 +230,7 @@ export function GovernmentTab() {
         <>
           <h3>{t('house.promises')}</h3>
           <p className="muted small action-desc">{t('house.promises.desc', { n: MAX_BILLS })}</p>
+          <p className="muted small">{houseSits(k.week) ? t('house.sitting.now') : t('house.sitting.next', { n: weeksToSitting(k.week) })} {(k.fatigue ?? 0) >= 0.5 && t('house.fatigue', { n: (k.fatigue ?? 0).toFixed(1) })}</p>
           <ul>
             {k.promises.map((id) => {
               const bill = `pledge:${id}`;

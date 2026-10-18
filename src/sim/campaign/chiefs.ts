@@ -27,7 +27,7 @@ export const LOYALTY = { restless: 30, mayGo: 20 };
 /** Weekly chance that a chief's hidden past comes out in the glare of a campaign. */
 const EXPOSURE = 0.06;
 /** What a chief who crosses over takes from the party's branches in the region. */
-const BRANCHES_LOST = 15;
+export const BRANCHES_LOST = 15;
 
 /** A stable number from a region's name, so the same game always meets the same chiefs. */
 const hash = (s: string) => { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0; return h; };
@@ -60,7 +60,7 @@ export type ChiefMood = 'loyal' | 'cooling' | 'restless';
 export const chiefMood = (person: ChiefPerson): ChiefMood => (person.loyalty < LOYALTY.restless ? 'restless' : person.loyalty < 50 ? 'cooling' : 'loyal');
 
 /** The chief is gone: the region has nobody in charge until the leader appoints the deputy who steps up. */
-function replace(world: World, c: Campaign, st: RegionId): void {
+export function replace(world: World, c: Campaign, st: RegionId): void {
   const pc = c.parties[c.player]!;
   const was = chiefOf(world, c, st);
   delete pc.chiefs[st];

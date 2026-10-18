@@ -62,10 +62,17 @@ describe('the economic tools', () => {
     expect(setRate(c, 1)).toBe(false);
   });
 
+  it('leave the policy rate to the central bank, whoever governs', () => {
+    const c = career();
+    expect(setRate(c, 1)).toBe(false);
+    expect(c.career!.rate).toBeUndefined();
+  });
+
   it('give a policy rate that trades prices against growth and the cost of the debt', () => {
     const settle = (rate: -1 | 0 | 1) => {
       const c = career();
-      setRate(c, rate);
+      // The policy rate is the central bank's in the federation: the economy answers to it all the same.
+      if (rate === 0) delete c.career!.rate; else c.career!.rate = rate;
       for (let w = 0; w < 400; w++) economyWeek(c, new Rng(3 + w));
       return { e: c.career!.economy, interest: govBooks(world, c)!.spend.find((x) => x.id === 'interest')!.amount };
     };

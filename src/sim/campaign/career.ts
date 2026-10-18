@@ -1,3 +1,4 @@
+import { chiefsTermWeek } from './chiefsTerm';
 import { emptyDynamics } from '../dynamics';
 import { lastElection, majorityLine, type World } from '../election';
 import { clamp, zeros, zeros2 } from '../math';
@@ -445,6 +446,7 @@ export function termWeek(world: World, c: Campaign): void {
   claimsWeek(c, new Rng((c.rng ^ 0xc1a15) + k.week));
   if (c.phase !== 'term') return;
   membersWeek(world, c, new Rng((c.rng ^ 0x3e3be5) + k.week));
+  chiefsTermWeek(world, c, new Rng((c.rng ^ 0xc41ef5) + k.week));
   if (o.focus === 'leaders' && o.courting !== null && k.week % 4 === 0 && relation(c, me, o.courting) < 45) shiftRelation(c, me, o.courting, 2);
 
   // Easy money has a slow price as well as a sudden one.

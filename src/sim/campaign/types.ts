@@ -92,6 +92,8 @@ export interface PartyCampaign {
   visits: string[];
   /** Regions where a chief runs the ground campaign on the leader's behalf, and how free a hand each has. */
   chiefs: Record<RegionId, ChiefLevel>;
+  /** A fraction of unity lost to restless chiefs and not yet felt (see chiefsTerm.ts). */
+  unityDrag?: number;
   /** Chiefs never spend the party's funds below this. */
   chiefFloor: number;
   /** How well the party holds together, 0-100. */
@@ -286,6 +288,9 @@ export const PLEDGE_IDS = [
   'tollCut', 'epfWithdrawal', 'civilReform',
   // Three Acts that steer the PESTEL and defence meters for good (see pestel.ts and defence.ts).
   'dataProtection', 'conflictOfInterest', 'defenceOversight',
+  // Ten more: five programmes and five Acts, some of which cost the treasury nothing, or bring money in, and cost something else.
+  'childcare', 'railLink', 'techFund', 'vocational', 'floodDefence',
+  'pressAct', 'targetedSubsidy', 'borneoSeats', 'autoRegister', 'carbonTax',
 ] as const;
 export type PledgeId = (typeof PLEDGE_IDS)[number];
 
@@ -387,6 +392,24 @@ export interface Economy {
   growth: number; inflation: number; jobless: number; debt: number;
   /** What the country or state produces in a year, in ringgit, and the people who share it (see gdp.ts). Absent in a game saved before they existed. */
   gdp?: number; population?: number;
+}
+
+/** The parts of the stock market that voters can feel (see markets.ts): banks, plantations, construction, electronics, and hotels. */
+export const STOCK_IDS = ['banks', 'plantation', 'construction', 'ee', 'hotel'] as const;
+export type StockId = (typeof STOCK_IDS)[number];
+
+/** The central bank's calendar, the ringgit, and the sector indices (see markets.ts). */
+export interface Markets {
+  /** Ringgit to the US dollar and to the Singapore dollar. */
+  usd: number; sgd: number;
+  /** [stock]: an index, 100 being where it usually sits. */
+  index: Record<StockId, number>;
+  /** A swing in commodity prices, carried by plantation and the rest, easing back to 0. */
+  commodity: number;
+  /** The week of the central bank's next meeting, and what it has hinted it will do. */
+  next: number; hinted?: Dial;
+  /** The week the next windfall or black swan arrives. */
+  swan: number;
 }
 
 /** A bill on its way to a vote: `pledge:<id>` for a manifesto promise, `demand:<id>` for something owed to a partner. */
@@ -734,6 +757,19 @@ export interface Career {
   toolsUsed?: Record<string, number>;
   /** The policy rate: lowered (-1), left (absent), or raised (1). */
   rate?: Dial;
+  /** [region]: the week the player last won a state chief over, and the week one was last sent to talk to the opposition (see chiefsTerm.ts). */
+  chiefWeeks?: Record<string, number>;
+  chiefTalk?: number;
+  /** Votes won over for the next bill by a chief's talks with the opposition: added to the margin of those not in government, then spent. */
+  chiefDeal?: number;
+  /** The week the next constitutional crisis breaks (see crisis.ts). */
+  crisis?: number;
+  /** [move]: the week the leader's move may be made again (see moves.ts). */
+  moves?: Record<string, number>;
+  /** The mood online, -100 to 100: what the netizens make of the player's week, which carries over and moves the young and the gig workers (see netizens.ts). Absent in a game saved before it existed. */
+  net?: number;
+  /** The central bank, the ringgit and the markets. Absent in a game saved before they existed. */
+  markets?: Markets;
   /** The economy's figures, a month at a time, for the charts. Absent in a game saved before they were kept. */
   trend?: TrendPoint[];
   /** The seat a party founded from nothing began in, when it was not the one the founding slot already held. */
@@ -768,6 +804,10 @@ export interface Career {
   motion: number;
   /** How many bills a rival-led government has put to the House this term. */
   rivalBills: number;
+  /** The sitting of the House (counted from the start of the term) at which the government last had a bill of its own voted on: one a sitting. */
+  floorSitting?: number;
+  /** Legislative fatigue: each Act passed leaves the House (and the partners) a little less willing for the next. It eases week by week. Absent in a game saved before this existed. */
+  fatigue?: number;
   record: CareerRecord;
   /** Set when the career is over. */
   ending: Ending | null;

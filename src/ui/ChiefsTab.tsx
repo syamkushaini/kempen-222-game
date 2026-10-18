@@ -1,6 +1,7 @@
 import { contestsState } from '../sim/campaign/actions';
 import { chiefAllowance } from '../sim/campaign/ai';
 import { CHIEF_NAMES, chiefMood, chiefView } from '../sim/campaign/chiefs';
+import { TERM_CHIEFS, courtRefusal, talkOdds, talkRefusal } from '../sim/campaign/chiefsTerm';
 import { now } from '../sim/campaign/news';
 import type { ChiefLevel, NewsItem } from '../sim/campaign/types';
 import { useStore } from '../state/store';
@@ -30,8 +31,56 @@ function LevelSwitch(props: { value: ChiefLevel | 0 | null; label: string; onCha
   );
 }
 
+/** Between elections: the chiefs as people to keep, and as envoys to the other side. */
+function ChiefsTerm() {
+  const t = useT();
+  const f = useFormat();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const court = useStore((s) => s.courtChief);
+  const send = useStore((s) => s.sendChief);
+  const k = campaign.career!;
+  const talk = talkRefusal(world, campaign);
+  return (
+    <section className="chiefs">
+      <div className="panel-head"><h2>{t('chiefs.term.title')}</h2></div>
+      <p className="muted small">{t('chiefs.term.intro')}</p>
+      {(k.chiefDeal ?? 0) > 0 && <p className="note">{t('chiefs.term.deal', { n: Math.round((k.chiefDeal ?? 0) * 100) })}</p>}
+      {talk === 'notGov' && <p className="muted small">{t('chiefs.term.notGov')}</p>}
+      <ul className="chief-list">
+        {world.states.map((st) => {
+          const person = chiefView(world, campaign, st);
+          const no = courtRefusal(world, campaign, st);
+          return (
+            <li key={st} className="chief">
+              <div className="grow">
+                <span className="chief-name">{regionLabel(t, world, st)}</span>
+                <span className="action-meta chief-person">
+                  <span>{CHIEF_NAMES[person.name]}</span>
+                  <Pips n={person.skill} label={`${t('chiefs.skill')}: ${person.skill} / 5`} />
+                  <Gauge value={person.loyalty} label={t(`chiefs.mood.${chiefMood(person)}`)} />
+                </span>
+                <span className="action-meta num">{t('chiefs.term.odds', { n: Math.round(talkOdds(world, campaign, st) * 100) })}</span>
+              </div>
+              <div className="stack">
+                <button type="button" className="btn small" disabled={!!no} title={no === 'rest' ? t('chiefs.term.rest', { n: TERM_CHIEFS.court.rest }) : undefined} onClick={() => court(st)}>{t('chiefs.term.court', { rm: f.rm(TERM_CHIEFS.court.cost * world.rules.econ) })}</button>
+                <button type="button" className="btn small" disabled={!!talk} title={talk === 'rest' ? t('chiefs.term.rest', { n: TERM_CHIEFS.talk.rest }) : undefined} onClick={() => send(st)}>{t('chiefs.term.send', { rm: f.rm(TERM_CHIEFS.talk.cost * world.rules.econ) })}</button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 /** Where the player hands regions over to chiefs who run the ground campaign there. */
 export function ChiefsTab() {
+  const campaign = useStore((s) => s.game!.campaign);
+  return campaign.phase === 'term' ? <ChiefsTerm /> : <ChiefsCampaign />;
+}
+
+function ChiefsCampaign() {
   const t = useT();
   const f = useFormat();
   const world = useWorld();

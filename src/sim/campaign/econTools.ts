@@ -3,6 +3,7 @@ import type { BlocId } from '../types';
 import { applyEffects, publicAmount, type Effect } from './events';
 import { DEFENCE_GOALS, METER_TOOLS, type MeterGoal } from './meterTools';
 import { isFederal } from './defence';
+import { bankActs } from './markets';
 import { pushNews } from './news';
 import { RATE, isPm } from './office';
 import { treasuryOf } from './treasury';
@@ -88,7 +89,7 @@ export const rateOf = (c: Campaign): Dial => c.career?.rate ?? 0;
 
 export function setRate(c: Campaign, value: Dial): boolean {
   const k = c.career;
-  if (!k || c.phase !== 'term' || !isPm(c) || ![-1, 0, 1].includes(value)) return false;
+  if (!k || c.phase !== 'term' || !isPm(c) || ![-1, 0, 1].includes(value) || bankActs(c)) return false;
   if (value === 0) delete k.rate; else k.rate = value;
   return true;
 }
