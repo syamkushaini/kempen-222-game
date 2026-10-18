@@ -100,23 +100,37 @@ export function economyPicture(t: T, f: Format, world: World, c: Campaign): Draw
   return { headline: title, text: t('brag.eco.text', { title, gdp: f.rm(now.gdp), perCapita: f.rm(now.perCapita), growth: pct(e.growth), tag: t('brag.tag') }), draw: (el) => drawEconomy(el, info) };
 }
 
-/** The record as the front page of a newspaper. */
+/** The record as the front page of a newspaper, with an article written from the figures. */
 export function recordPicture(t: T, world: World, c: Campaign): Drawn {
   const k = c.career!;
   const r = k.record;
   const years = careerYears(c).toFixed(1);
   const laws = k.laws?.length ?? 0;
   const party = partyName(t, c.player);
-  const headline = t(r.kept.length > 0 ? 'brag.paper.headline' : 'brag.paper.headline.none', { party, kept: r.kept.length });
+  const kept = r.kept.length;
+  const headline = t(kept >= 3 ? 'brag.paper.headline.many' : kept > 0 ? 'brag.paper.headline' : 'brag.paper.headline.none', { party, kept });
+  const v = { party, kept, years, elections: r.elections, best: r.bestSeats, pmYears: (r.weeksPm / 52).toFixed(1), toppled: r.toppled, falls: r.falls, broken: r.broken, laws };
+  // Most telling first: the page drops what does not fit from the end.
+  const body = [
+    t(kept >= 3 ? 'brag.paper.p.lede.many' : kept > 0 ? 'brag.paper.p.lede.some' : 'brag.paper.p.lede.none', v),
+    t(r.elections > 0 ? 'brag.paper.p.polls.some' : 'brag.paper.p.polls.none', v),
+    t(r.weeksPm > 0 ? 'brag.paper.p.top' : 'brag.paper.p.top.none', v),
+    ...(r.toppled > 0 ? [t('brag.paper.p.toppled', v)] : []),
+    t(r.broken > 0 ? 'brag.paper.p.broken' : 'brag.paper.p.broken.none', v),
+    ...(r.falls > 0 ? [t('brag.paper.p.fell', v)] : []),
+    ...(laws > 0 ? [t('brag.paper.p.laws', v)] : []),
+  ];
+  const mood = r.broken > kept ? 'mixed' : kept >= 3 ? 'many' : 'none';
   const page: FrontPage = {
     ...common(t), accent: partyColor(c.player), paper: t('brag.paper.name'), dateline: `${kicker(t, world, c)} · ${t('share.legacy.sub', { party, years })}`,
-    headline, standfirst: t('brag.paper.standfirst', { years, elections: r.elections, laws }),
+    headline, standfirst: t('brag.paper.standfirst', v), byline: t('brag.paper.by'), body,
+    quote: { text: t(`brag.paper.q.${mood}` as StringKey), by: t('brag.paper.q.by') },
     portrait: leaderFace(c.player), caption: t('brag.paper.caption', { name: leaderName(t, c.player), party, elections: r.elections }),
     chart: r.terms?.length ? { title: t('brag.paper.chart'), bars: r.terms.slice(-6).map((x, i, all) => ({ label: t('brag.paper.election', { n: r.terms!.length - all.length + i + 1 }), value: x.seats, won: x.pm })) } : undefined,
     numbers: {
       title: t('brag.paper.numbers'),
       items: [
-        { label: t('house.record.kept'), value: String(r.kept.length) },
+        { label: t('house.record.kept'), value: String(kept) },
         { label: t('house.record.pm'), value: (r.weeksPm / 52).toFixed(1) },
         { label: t('brag.paper.best'), value: String(r.bestSeats) },
         { label: t('brag.paper.laws'), value: String(laws) },

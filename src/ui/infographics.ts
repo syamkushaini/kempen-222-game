@@ -264,82 +264,156 @@ export interface FrontPage extends Footer {
   dateline: string;
   headline: string;
   standfirst: string;
+  byline: string;
+  /** The article, a paragraph each, most important first: those that do not fit are left out from the end. */
+  body: string[];
+  quote: { text: string; by: string };
   portrait?: string;
   caption: string;
   chart?: { title: string; bars: { label: string; value: number; won: boolean }[] };
   numbers: { title: string; items: { label: string; value: string }[] };
 }
 
+/** `text` broken into lines, each as wide as `widthOf(its number)` allows. */
+function shape(text: string, widthOf: (line: number) => number, measure: (s: string) => number): string[] {
+  const lines: string[] = [];
+  let line = '';
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && measure(next) > widthOf(lines.length)) { lines.push(line); line = word; } else line = next;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 export async function drawFrontPage(canvas: HTMLCanvasElement, d: FrontPage): Promise<void> {
-  const W = 1200, H = 860;
-  const { g, text, measure, mark } = await kit(canvas, W, H);
-  const PAPER = '#f4efe3', RULE = '#2a2620', pad = 50;
+  const W = 1200, H = 1176;
+  const { g, text, measure, mark, fit } = await kit(canvas, W, H);
+  const PAPER = '#f4efe3', RULE = '#2a2620', SOFT = '#4a4338', GRID = '#b9ae96', pad = 50, inner = W - pad * 2;
   g.fillStyle = PAPER; g.fillRect(0, 0, W, H);
   // A little grain, so the page does not look printed by a screen.
-  for (let i = 0; i < 1800; i++) { g.fillStyle = `rgba(90,70,40,${Math.random() * 0.05})`; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+  for (let i = 0; i < 2200; i++) { g.fillStyle = `rgba(90,70,40,${Math.random() * 0.05})`; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+  const rule = (y: number, w = 1, x = pad, len = inner) => { g.fillStyle = RULE; g.fillRect(x, y, len, w); };
 
-  const rule = (y: number, w = 1) => { g.fillStyle = RULE; g.fillRect(pad, y, W - pad * 2, w); };
+  // The masthead.
   rule(36, 4); rule(44, 1);
   await mark(pad, 56, 40);
   text(d.paper, W / 2, 104, `900 58px ${SERIF}`, RULE, 'center');
   rule(122, 1); rule(130, 4);
-  text(d.dateline.toUpperCase(), W / 2, 156, `600 14px ${SERIF}`, '#4a4338', 'center');
+  text(fit(d.dateline.toUpperCase(), inner, `600 14px ${SERIF}`), W / 2, 156, `600 14px ${SERIF}`, SOFT, 'center');
   rule(168, 1);
 
-  const hf = (s: number) => `900 ${s}px ${SERIF}`;
-  let hs = 78;
-  let lines = wrap(d.headline.toUpperCase(), W - pad * 2, measure(hf(hs)), 2);
-  while (hs > 44 && lines.some((l) => measure(hf(hs))(l) > W - pad * 2)) { hs -= 4; lines = wrap(d.headline.toUpperCase(), W - pad * 2, measure(hf(hs)), 2); }
-  lines.forEach((l, i) => text(l, W / 2, 246 + i * (hs + 6), hf(hs), RULE, 'center'));
-  let y = 246 + (lines.length - 1) * (hs + 6) + 40;
-  const sf = `italic 500 22px ${SERIF}`;
-  wrap(d.standfirst, W - pad * 2 - 120, measure(sf), 2).forEach((l, i) => text(l, W / 2, y + i * 30, sf, '#3a342a', 'center'));
-  y += 40;
-  rule(y, 2);
-  y += 28;
+  // The headline and the line under it, centred together in a zone of fixed height, so that the page below always starts at the same place.
+  const hf = (size: number) => `900 ${size}px ${SERIF}`;
+  const shout = d.headline.toUpperCase();
+  // The biggest size at which it is one line, or two lines of at most 56; the words are never cut.
+  let hs = 76;
+  let hl = wrap(shout, inner, measure(hf(hs)), 99);
+  while (hs > 40 && (hl.length > 2 || (hl.length === 2 && hs > 56))) { hs -= 4; hl = wrap(shout, inner, measure(hf(hs)), 99); }
+  const sf = `italic 500 21px ${SERIF}`;
+  const sl = wrap(d.standfirst, inner - 160, measure(sf), 2);
+  const block = hl.length * (hs + 4) + 14 + sl.length * 28;
+  let y = 180 + (210 - block) / 2 + hs;
+  hl.forEach((l) => { text(l, W / 2, y, hf(hs), RULE, 'center'); y += hs + 4; });
+  y += 2;
+  sl.forEach((l) => { text(l, W / 2, y + 12, sf, '#3a342a', 'center'); y += 28; });
+  const top = 426;
+  rule(top - 10, 2);
 
-  // Left column: the photograph.
-  const px = pad, pw = 340, ph = 400;
-  g.save(); g.beginPath(); g.rect(px, y, pw, ph); g.clip();
-  g.fillStyle = '#cfc7b4'; g.fillRect(px, y, pw, ph);
-  if (d.portrait) { try { g.filter = 'grayscale(1) contrast(1.1)'; g.drawImage(await loadImage(d.portrait), px, y, pw, pw); g.filter = 'none'; } catch { g.filter = 'none'; } }
-  g.fillStyle = d.accent; g.globalAlpha = 0.18; g.fillRect(px, y, pw, ph); g.globalAlpha = 1;
-  g.restore();
-  g.strokeStyle = RULE; g.lineWidth = 2; g.strokeRect(px, y, pw, ph);
-  const cf = `italic 500 15px ${SERIF}`;
-  wrap(d.caption, pw - 24, measure(cf), 3).forEach((l, i) => text(l, px + 12, y + pw + 28 + i * 21, cf, RULE));
+  // Row one, all the same height: the photograph, the article in two columns, the box of numbers.
+  const rowH = 440, photoW = 280, sideW = 250, gapX = 28;
+  const textX = pad + photoW + gapX, textW = inner - photoW - sideW - gapX * 2, colGap = 24, colW = (textW - colGap) / 2;
+  const sideX = textX + textW + gapX;
 
-  // Middle: a chart of the elections, in the manner of a paper's graphic.
-  const mx = px + pw + 40, mw = 440;
-  if (d.chart && d.chart.bars.length) {
-    text(d.chart.title.toUpperCase(), mx, y + 14, `800 15px ${SERIF}`, RULE);
-    g.fillStyle = RULE; g.fillRect(mx, y + 24, mw, 2);
-    const top = y + 50, base = y + ph - 40, hi = Math.max(1, ...d.chart.bars.map((b) => b.value));
-    const slot = mw / d.chart.bars.length, bw = Math.min(54, slot * 0.64);
-    g.strokeStyle = '#b9ae96'; g.lineWidth = 1;
-    for (let i = 0; i <= 3; i++) { const gy = base - ((base - top) * i) / 3; g.beginPath(); g.moveTo(mx, gy); g.lineTo(mx + mw, gy); g.stroke(); }
-    d.chart.bars.forEach((b, i) => {
-      const bx = mx + slot * i + (slot - bw) / 2, bh = Math.max(3, ((base - top) * b.value) / hi);
-      g.fillStyle = b.won ? d.accent : '#9b9484'; g.fillRect(bx, base - bh, bw, bh);
-      text(String(b.value), bx + bw / 2, base - bh - 8, `800 16px ${SERIF}`, RULE, 'center');
-      text(b.label, bx + bw / 2, base + 22, `600 13px ${SERIF}`, '#4a4338', 'center');
-    });
+  // The photograph, cropped to fill its frame, with its caption under it.
+  const photoH = 330;
+  g.save(); g.beginPath(); g.rect(pad, top, photoW, photoH); g.clip();
+  g.fillStyle = '#cfc7b4'; g.fillRect(pad, top, photoW, photoH);
+  if (d.portrait) {
+    try {
+      const img = await loadImage(d.portrait);
+      const k = Math.max(photoW / img.width, photoH / img.height);
+      g.filter = 'grayscale(1) contrast(1.1)';
+      g.drawImage(img, pad + (photoW - img.width * k) / 2, top + (photoH - img.height * k) / 2, img.width * k, img.height * k);
+      g.filter = 'none';
+    } catch { g.filter = 'none'; }
   }
+  g.globalAlpha = 0.16; g.fillStyle = d.accent; g.fillRect(pad, top, photoW, photoH); g.globalAlpha = 1;
+  g.restore();
+  g.strokeStyle = RULE; g.lineWidth = 2; g.strokeRect(pad, top, photoW, photoH);
+  const cf = `italic 500 15px ${SERIF}`;
+  wrap(d.caption, photoW, measure(cf), 4).forEach((l, i) => text(l, pad, top + photoH + 26 + i * 21, cf, RULE));
 
-  // Right: the box of numbers.
-  const nx = mx + mw + 40, nw = W - pad - nx;
-  g.fillStyle = RULE; g.fillRect(nx, y, nw, 40);
-  text(d.numbers.title.toUpperCase(), nx + nw / 2, y + 27, `800 15px ${SERIF}`, PAPER, 'center');
-  g.strokeStyle = RULE; g.lineWidth = 2; g.strokeRect(nx, y, nw, ph);
-  const rowH = (ph - 40) / Math.max(1, d.numbers.items.length);
-  d.numbers.items.slice(0, 4).forEach((it, i) => {
-    const ry = y + 40 + i * rowH;
-    if (i > 0) { g.fillStyle = '#b9ae96'; g.fillRect(nx + 14, ry, nw - 28, 1); }
-    text(it.value, nx + nw / 2, ry + rowH / 2 + 12, `900 44px ${SERIF}`, RULE, 'center');
-    wrap(it.label.toUpperCase(), nw - 24, measure(`700 11px ${SERIF}`), 2).forEach((l, j) => text(l, nx + nw / 2, ry + rowH / 2 + 34 + j * 14, `700 11px ${SERIF}`, '#4a4338', 'center'));
+  // The article: a byline, then paragraphs in two justified columns, the first with a drop cap.
+  text(fit(d.byline.toUpperCase(), textW, `800 12px ${SERIF}`), textX, top + 12, `800 12px ${SERIF}`, SOFT);
+  rule(top + 22, 1, textX, textW);
+  const bodyFont = `500 15px ${SERIF}`, lineH = 22, bodyTop = top + 46, perCol = Math.floor((rowH - 46) / lineH);
+  const m = measure(bodyFont);
+  const capFont = `900 64px ${SERIF}`, first = d.body[0] ?? '';
+  const cap = first.charAt(0).toUpperCase(), capW = (cap ? measure(capFont)(cap) : 0) + 8;
+  type Row = { t: string; x: number; w: number; last: boolean };
+  const rows: Row[] = [];
+  for (let n = 0; n < d.body.length; n++) {
+    const para = n === 0 ? first.slice(1).trimStart() : d.body[n];
+    const lead = n === 0 ? capW : 14;
+    const lines = shape(para, (i) => colW - (n === 0 ? (i < 3 ? capW : 0) : i === 0 ? 14 : 0), m);
+    if (rows.length + lines.length > perCol * 2) break;
+    lines.forEach((t, i) => rows.push({ t, x: n === 0 ? (i < 3 ? lead : 0) : i === 0 ? lead : 0, w: colW - (n === 0 ? (i < 3 ? capW : 0) : i === 0 ? 14 : 0), last: i === lines.length - 1 }));
+  }
+  rows.forEach((r, i) => {
+    const col = Math.floor(i / perCol), x = textX + col * (colW + colGap) + r.x, ly = bodyTop + (i % perCol) * lineH + 14;
+    const words = r.t.split(' ');
+    // Justified, except the last line of a paragraph and any line that would be pulled apart.
+    const natural = m(r.t), extra = r.w - natural;
+    if (r.last || words.length < 2 || extra > r.w * 0.2) { text(r.t, x, ly, bodyFont, RULE); return; }
+    const space = extra / (words.length - 1) + m(' ');
+    let wx = x;
+    words.forEach((w) => { text(w, wx, ly, bodyFont, RULE); wx += m(w) + space; });
+  });
+  if (cap) text(cap, textX, bodyTop + 14 + 2 * lineH + 4, capFont, d.accent === '#ffffff' ? RULE : mix(d.accent, '#000000', 0.2));
+  g.fillStyle = GRID; g.fillRect(textX + colW + colGap / 2, bodyTop - 4, 1, rowH - 46);
+
+  // The box of numbers, as tall as the row.
+  g.fillStyle = RULE; g.fillRect(sideX, top, sideW, 40);
+  text(fit(d.numbers.title.toUpperCase(), sideW - 20, `800 15px ${SERIF}`), sideX + sideW / 2, top + 26, `800 15px ${SERIF}`, PAPER, 'center');
+  g.strokeStyle = RULE; g.lineWidth = 2; g.strokeRect(sideX, top, sideW, rowH);
+  const items = d.numbers.items.slice(0, 4), each = (rowH - 40) / Math.max(1, items.length);
+  items.forEach((it, i) => {
+    const ry = top + 40 + i * each;
+    if (i > 0) { g.fillStyle = GRID; g.fillRect(sideX + 16, ry, sideW - 32, 1); }
+    text(it.value, sideX + sideW / 2, ry + each / 2 + 10, `900 46px ${SERIF}`, RULE, 'center');
+    const lf = `700 11px ${SERIF}`;
+    wrap(it.label.toUpperCase(), sideW - 28, measure(lf), 2).forEach((l, j) => text(l, sideX + sideW / 2, ry + each / 2 + 32 + j * 14, lf, SOFT, 'center'));
   });
 
+  // Row two: the chart of the elections, and a pull quote.
+  const r2 = top + rowH + 34, r2H = 200;
+  rule(r2 - 14, 2);
+  const chartW = d.chart && d.chart.bars.length ? 600 : 0;
+  if (chartW) {
+    text(d.chart!.title.toUpperCase(), pad, r2 + 14, `800 14px ${SERIF}`, RULE);
+    g.fillStyle = RULE; g.fillRect(pad, r2 + 24, chartW, 2);
+    const ctop = r2 + 54, base = r2 + r2H - 26, hi = Math.max(1, ...d.chart!.bars.map((b) => b.value));
+    const bars = d.chart!.bars, slot = chartW / bars.length, bw = Math.min(54, slot * 0.6);
+    g.strokeStyle = GRID; g.lineWidth = 1;
+    for (let i = 0; i <= 2; i++) { const gy = base - ((base - ctop) * i) / 2; g.beginPath(); g.moveTo(pad, gy); g.lineTo(pad + chartW, gy); g.stroke(); }
+    bars.forEach((b, i) => {
+      const bx = pad + slot * i + (slot - bw) / 2, bh = Math.max(3, ((base - ctop) * b.value) / hi);
+      g.fillStyle = b.won ? d.accent : '#9b9484'; g.fillRect(bx, base - bh, bw, bh);
+      text(String(b.value), bx + bw / 2, base - bh - 7, `800 15px ${SERIF}`, RULE, 'center');
+      text(b.label, bx + bw / 2, base + 18, `600 12px ${SERIF}`, SOFT, 'center');
+    });
+  }
+  const qx = chartW ? pad + chartW + 50 : pad + 100, qw = chartW ? inner - chartW - 50 : inner - 200;
+  g.fillStyle = RULE; g.fillRect(qx, r2, qw, 2); g.fillRect(qx, r2 + r2H - 4, qw, 2);
+  text('“', qx, r2 + 74, `900 90px ${SERIF}`, d.accent === '#ffffff' ? RULE : mix(d.accent, '#000000', 0.15));
+  const qf = `italic 700 24px ${SERIF}`;
+  const ql = wrap(d.quote.text, qw - 56, measure(qf), 4);
+  const qTop = r2 + 44 + Math.max(0, (r2H - 44 - 50 - ql.length * 32) / 2);
+  ql.forEach((l, i) => text(l, qx + 52, qTop + i * 32, qf, RULE));
+  text(fit(`— ${d.quote.by}`, qw - 56, `600 14px ${SERIF}`), qx + qw, r2 + r2H - 18, `600 14px ${SERIF}`, SOFT, 'right');
+
   rule(H - 56, 2);
-  text(d.tagline, pad, H - 28, `500 12px ${SERIF}`, '#4a4338');
-  text(d.fiction, W - pad, H - 28, `500 12px ${SERIF}`, '#4a4338', 'right');
+  text(d.tagline, pad, H - 28, `500 12px ${SERIF}`, SOFT);
+  text(d.fiction, W - pad, H - 28, `500 12px ${SERIF}`, SOFT, 'right');
 }
