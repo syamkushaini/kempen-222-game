@@ -8,7 +8,7 @@ import { addScene, relation, shiftRelation } from './diplomacy';
 import { startFormation } from './formation';
 import { bankWeek, marketsWeek, swanWeek } from './markets';
 import { crisisWeek } from './crisis';
-import { netizenWeek } from './netizens';
+import { netizenWeek, viralWeek } from './netizens';
 import { nationWeek } from './nation';
 import { defenceWeek } from './defence';
 import { storyWeek } from './doctrines';
@@ -594,6 +594,7 @@ export function governWeek(c: Campaign, rng: Rng): void {
   marketsWeek(c, rng);
   swanWeek(c, rng);
   netizenWeek(c);
+  viralWeek(c, new Rng((c.rng ^ 0x71a1c) + k.week * 13));
   crisisWeek(c, rng);
   nationWeek(c, rng);
   pestelWeek(c, rng);

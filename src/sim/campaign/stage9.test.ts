@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { getWorld } from '../../data/world';
 import { Rng } from '../rng';
 import { PARTY_IDS } from '../types';
-import { startCareer } from './career';
+import { nextTerm, startCareer, termWeek, TERM_WEEKS } from './career';
+import { endDay } from './formation';
+import { closeNight, endWeek } from './turn';
 import { courtChief, sendChief, chiefsTermWeek, TERM_CHIEFS } from './chiefsTerm';
 import { chiefOf } from './chiefs';
 import { crisisWeek, CRISIS } from './crisis';
@@ -156,5 +158,32 @@ describe('what was added', () => {
     for (const id of added) { expect(PLEDGE_IDS).toContain(id); expect(PLEDGES[id]).toBeDefined(); }
     expect(PLEDGES.targetedSubsidy.cost).toBeLessThan(0);
     expect(PLEDGES.borneoSeats.amend).toBe(true);
+  });
+});
+
+describe('across an election', () => {
+  it('carries the markets, the mood online, the crisis clock and the leader’s moves into the next parliament, moved back by the weeks gone', () => {
+    const c = career();
+    const k = c.career!;
+    const m = marketsOf(k);
+    m.usd = 4.9; m.next = TERM_WEEKS + 3; m.swan = TERM_WEEKS * 2;
+    k.net = 30; k.crisis = TERM_WEEKS * 3; k.moves = { closed: TERM_WEEKS + 5 }; k.viral = TERM_WEEKS + 2;
+    k.week = TERM_WEEKS;
+    termWeek(world, c);
+    while (c.phase === 'campaign') endWeek(world, c);
+    closeNight(world, c);
+    for (let day = 0; day < 10 && c.phase === 'formation'; day++) endDay(world, c);
+    expect(nextTerm(world, c)).toBe(true);
+    const n = c.career!;
+    const gone = TERM_WEEKS + c.totalWeeks;
+    expect(n.week).toBe(1);
+    expect(n.markets!.usd).toBeCloseTo(4.9, 0);
+    expect(n.markets!.next).toBe(TERM_WEEKS + 3 - gone);
+    expect(n.markets!.swan).toBe(TERM_WEEKS * 2 - gone);
+    expect(n.crisis).toBe(TERM_WEEKS * 3 - gone);
+    expect(n.viral).toBe(TERM_WEEKS + 2 - gone);
+    expect(n.moves!.closed).toBe(TERM_WEEKS + 5 - gone);
+    expect(n.net).toBeGreaterThan(20);
+    expect(n.net).toBeLessThanOrEqual(30);
   });
 });

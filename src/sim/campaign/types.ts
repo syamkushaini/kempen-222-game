@@ -766,6 +766,8 @@ export interface Career {
   crisis?: number;
   /** [move]: the week the leader's move may be made again (see moves.ts). */
   moves?: Record<string, number>;
+  /** The week the next viral story breaks (see netizens.ts). */
+  viral?: number;
   /** The mood online, -100 to 100: what the netizens make of the player's week, which carries over and moves the young and the gig workers (see netizens.ts). Absent in a game saved before it existed. */
   net?: number;
   /** The central bank, the ringgit and the markets. Absent in a game saved before they existed. */

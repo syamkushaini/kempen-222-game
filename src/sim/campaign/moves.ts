@@ -36,13 +36,13 @@ export const MOVES: Record<MoveId, MoveDef> = {
   // An audience at the Palace: the throne is a place of respect, and respect is what is gained and what is owed. Nothing is asked of it.
   palace: { who: 'gov', federal: true, effects: [eff('stability', 4), mood(['heartland', 'felda', 'seniors'], 0.012), mood(['urban_lib'], -0.008), eff('cred', -1)] },
   // A speech at the UN: standing abroad, a polite audience at home, and a week of the leader's time and the country's money.
-  un: { who: 'pm', federal: true, effects: [nat(0, 0, 4), mood(['urban_lib', 'm40'], 0.015), mood(['heartland'], -0.006), { t: 'public', n: -120_000 }] },
+  un: { who: 'pm', federal: true, effects: [nat(0, 0, 4), mood(['urban_lib', 'm40'], 0.015), mood(['heartland'], -0.006), { t: 'public', n: -10_000 }] },
   // Confront a neighbour over an old claim: the flag is a good distraction, and a cheap one until the neighbour answers.
   neighbour: { who: 'pm', federal: true, effects: [mood('all', 0.012), mood(['heartland', 'felda', 'seniors'], 0.02), net(5), nat(0, 0, -2)], gamble: { chance: 0.6, win: [eff('stability', 2)], lose: [nat(0, 0, -4), { t: 'economy', growth: -0.3 }, eff('cred', -2), net(-8)] } },
   // A collaboration with an influencer, chosen by a producer who has never met you.
   influencer: { who: 'any', effects: [], gamble: { chance: 0.55, win: [mood(ONLINE, 0.04), net(12), eff('cred', 1)], lose: [mood(ONLINE, -0.035), net(-14), eff('cred', -2)] } },
   // A closed-door meeting with allies and the party's members: it settles people, and the room has a phone in it.
-  closed: { who: 'any', effects: [eff('unity', 4), eff('stability', 3), eff('trust', -2)], gamble: { chance: 0.75, win: [], lose: [eff('unity', -3), eff('cred', -2), net(-8)] } },
+  closed: { who: 'any', effects: [eff('unity', 2), eff('stability', 2), eff('trust', -3)], gamble: { chance: 0.75, win: [], lose: [eff('unity', -3), eff('cred', -2), net(-8)] } },
   // A quiet word with reporters and commentators: fewer bad headlines this month, and a reputation for it.
   quiet: { who: 'gov', effects: [eff('stability', 3), mood('all', 0.008), eff('trust', -5), eff('cred', -2), net(-12)], gamble: { chance: 0.7, win: [], lose: [mood('all', -0.03), net(-15), eff('unity', -2)] } },
 };

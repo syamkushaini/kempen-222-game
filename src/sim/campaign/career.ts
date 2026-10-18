@@ -755,6 +755,14 @@ export function nextTerm(world: World, c: Campaign): boolean {
   if (c.career.chest === undefined) delete c.career.chest;
   // What the party has built up, and what follows it, goes with it into the next parliament.
   const carry = {
+    // The central bank's calendar, the markets, the mood online, the next crisis and the leader's moves go on across elections (their weeks are moved back below).
+    ...(k.markets ? { markets: structuredClone(k.markets) } : {}),
+    ...(k.net ? { net: k.net } : {}),
+    ...(k.crisis !== undefined ? { crisis: k.crisis } : {}),
+    ...(k.viral !== undefined ? { viral: k.viral } : {}),
+    ...(k.moves ? { moves: { ...k.moves } } : {}),
+    ...(k.chiefWeeks ? { chiefWeeks: { ...k.chiefWeeks } } : {}),
+    ...(k.chiefTalk !== undefined ? { chiefTalk: k.chiefTalk } : {}),
     ...(k.factions ? { factions: structuredClone(k.factions) } : {}),
     ...(k.fresh?.length ? { fresh: [...k.fresh] } : {}),
     ...(k.tenure ? { tenure: structuredClone(k.tenure) } : {}),

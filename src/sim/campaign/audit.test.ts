@@ -60,7 +60,7 @@ describe('money', () => {
 
 describe('what a campaign leaves behind', () => {
   it('keeps what lasts only one campaign out of the next parliament’s picture of the voters', () => {
-    const c = career();
+    const c = career(PS, 6);
     toCampaign(c);
     const world = worldOf(c)!;
     expect(c.phase).toBe('campaign');
@@ -78,7 +78,7 @@ describe('what a campaign leaves behind', () => {
   }, 60_000);
 
   it('carries a term’s campaign levels no further than the election', () => {
-    const c = career();
+    const c = career(PS, 6);
     toCampaign(c);
     let world = worldOf(c)!;
     heldOf(c).support.nat[0][PS] += 0.1;

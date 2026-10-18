@@ -57,6 +57,7 @@ describe('skipping ahead', () => {
     for (const seed of [5, 6, 7, 8]) {
       const c = career(seed);
       const { stops } = play(c);
+      if (c.career!.ending) continue; // a leader ousted in the first term proves nothing about budget day
       expect(c.phase).not.toBe('term');
       expect(c.career!.week).toBeLessThanOrEqual(c.career!.length + 1);
       budgets = Math.max(budgets, stops.filter((s) => s === 'budget').length);

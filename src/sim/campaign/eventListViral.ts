@@ -11,7 +11,7 @@ const eff = (t: 'cred' | 'unity' | 'trust', n: number): Effect => ({ t, n });
  * and the netizens shrug kindly; ignore it and nobody minds, much.
  */
 const viral = (heat: number): EventDef => ({
-  role: 'any', topic: 'viral', weight: 1.2, times: 2,
+  role: 'any', topic: 'viral', weight: 0, times: 3,
   choices: [
     { effects: [], gamble: { chance: 0.55, win: [mood(ONLINE, heat), eff('cred', 1)], lose: [mood(ONLINE, -heat * 0.7), eff('cred', -1)] } },
     { effects: [mood(ONLINE, heat * 0.35)] },

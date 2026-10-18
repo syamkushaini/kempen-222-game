@@ -5,7 +5,7 @@ import { MONTH, debtEased, govBooks, govMoney } from '../sim/campaign/treasury';
 import { ALLOCATION } from '../sim/campaign/treasury';
 import { isPm } from '../sim/campaign/office';
 import { isFederal } from '../sim/campaign/defence';
-import { bankActs } from '../sim/campaign/markets';
+import { BANK, bankActs } from '../sim/campaign/markets';
 import { STOCK_IDS } from '../sim/campaign/types';
 import { FORCES_PROJECTS } from '../sim/campaign/econPlansData';
 import { useStore } from '../state/store';
@@ -42,7 +42,7 @@ export function EconomyTools() {
         <div className="grow">
           <span className="action-title">{t('tools.rate')}</span>
           <span className="action-meta">{t(`tools.rate.${rate}` as StringKey)}</span>
-          {banked && <span className="action-meta">{t('bank.independent', { n: Math.max(0, (campaign.career.markets?.next ?? 0) - campaign.career.week) })}</span>}
+          {banked && <span className="action-meta">{t('bank.independent', { n: mk ? Math.max(0, mk.next - campaign.career.week) : BANK.every })}</span>}
         </div>
         <div className="segmented small" role="group" aria-label={t('tools.rate')}>
           {([-1, 0, 1] as const).map((d) => (

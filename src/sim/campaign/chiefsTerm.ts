@@ -18,9 +18,9 @@ export const TERM_CHIEFS = {
   court: { cost: 60_000, gain: 15, rest: 8 },
   talk: { cost: 80_000, rest: 6, deal: 0.12, cap: 0.25, base: 0.3, perSkill: 0.1 },
   /** Weekly: how far loyalty is pulled to where it ought to be, how much it jitters, the drag a restless chief puts on unity, and the branches a loyal one builds. */
-  pull: 0.03, jitter: 0.8, drag: 0.04, loyalAt: 65, steady: 0.01,
+  pull: 0.03, jitter: 0.8, drag: 0.003, dragMax: 0.02, loyalAt: 65, steady: 0.003, neglect: { from: 20, per: 10, max: 12 },
   /** Weekly chances: a hidden past coming out, and a chief who has had enough walking. */
-  exposed: 0.003, walks: 0.01,
+  exposed: 0.003, walks: 0.004,
 };
 
 const place = (st: RegionId, world: World) => world.states.indexOf(st);
@@ -35,10 +35,14 @@ export function chiefsTermWeek(world: World, c: Campaign, rng: Rng): void {
   for (const st of world.states) {
     const person = chiefOf(world, c, st);
     const vars = { name: CHIEF_NAMES[person.name], state: ref.state(st) };
-    const aim = 52 + (pc.unity - 50) * 0.3 + hold + lead - (person.skeleton ? 5 : 0);
+    // A chief nobody has bothered with for a while drifts away: the longer since the leader last won them over, the lower they settle.
+    const since = k.week - (k.chiefWeeks?.[st] ?? 0);
+    const neglect = clamp((since - TERM_CHIEFS.neglect.from) / TERM_CHIEFS.neglect.per, 0, TERM_CHIEFS.neglect.max);
+    const aim = 52 + (pc.unity - 50) * 0.3 + hold + lead - (person.skeleton ? 5 : 0) - neglect;
     person.loyalty = clamp(person.loyalty + (aim - person.loyalty) * TERM_CHIEFS.pull + rng.normal(0, TERM_CHIEFS.jitter), 0, 100);
     if (person.skeleton && rng.next() < TERM_CHIEFS.exposed) {
       replace(world, c, st);
+      (k.chiefWeeks ??= {})[st] = k.week;
       shiftUnity(c, c.player, -1);
       pushNews(c, { party: c.player, key: 'news.chief.exposed', vars, tone: 'bad' });
       continue;
@@ -47,9 +51,10 @@ export function chiefsTermWeek(world: World, c: Campaign, rng: Rng): void {
       const i = place(st, world);
       const to = c.parties.map((q, p) => ({ p, m: q && p !== c.player ? q.machinery[i] : -1 })).sort((a, b) => b.m - a.m)[0];
       replace(world, c, st);
+      (k.chiefWeeks ??= {})[st] = k.week;
       pc.machinery[i] = Math.max(pc.machinery[i] > 0 ? 10 : 0, pc.machinery[i] - BRANCHES_LOST);
       if (to && to.m >= 0) c.parties[to.p]!.machinery[i] = Math.min(100, to.m + BRANCHES_LOST / 2);
-      shiftUnity(c, c.player, -2);
+      shiftUnity(c, c.player, -1);
       pushNews(c, { party: c.player, key: 'news.chief.defected', vars: { ...vars, party: ref.party(to && to.m >= 0 ? to.p : c.player) }, tone: 'bad' });
       continue;
     }
@@ -57,7 +62,7 @@ export function chiefsTermWeek(world: World, c: Campaign, rng: Rng): void {
     else if (person.loyalty >= TERM_CHIEFS.loyalAt) drag -= TERM_CHIEFS.steady;
   }
   // Unity is whole numbers: a small drag (or steadying) builds up and is felt when it adds to one.
-  pc.unityDrag = (pc.unityDrag ?? 0) + drag;
+  pc.unityDrag = (pc.unityDrag ?? 0) + Math.min(drag, TERM_CHIEFS.dragMax);
   if (pc.unityDrag >= 1) { shiftUnity(c, c.player, -1); pc.unityDrag -= 1; }
   else if (pc.unityDrag <= -1) { shiftUnity(c, c.player, 1); pc.unityDrag += 1; }
 }

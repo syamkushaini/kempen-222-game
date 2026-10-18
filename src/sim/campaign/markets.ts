@@ -136,4 +136,6 @@ export function swanWeek(c: Campaign, rng: Rng): void {
     k.economy.growth = clamp(k.economy.growth - 1.4, -6, 9);
   }
   k.queue.push({ event: windfall ? 'marketWindfall' : 'blackSwan', week: k.week });
+  // Whoever governs, the country reads about it.
+  pushNews(c, { party: null, key: windfall ? 'news.market.windfall' : 'news.market.blackSwan', vars: {}, tone: windfall ? 'good' : 'bad' });
 }
