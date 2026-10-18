@@ -41,6 +41,7 @@ import { ConfirmButton } from './SavesTab';
 import { partyColor, partyName, partyShort, useFog, useFormat, useT, useWorld, type T } from './hooks';
 import { PestelCard } from './PestelCard';
 import { Portrait } from './Portrait';
+import { BragButton, hasCabinetSeat } from './BragCards';
 import { Chamber } from './Chamber';
 import { houseSeating } from './seating';
 
@@ -117,6 +118,7 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
 
       {part === 'economy' && <>
       <h3>{t('house.economy')}</h3>
+      <div className="button-row"><BragButton kind="economy" /></div>
       <dl className="facts orders-facts">
         <div><dt>{t('house.growth')}</dt><dd className="num">{e.growth.toFixed(1)}%</dd></div>
         <div><dt>{t('house.inflation')}</dt><dd className="num">{e.inflation.toFixed(1)}%</dd></div>
@@ -192,6 +194,7 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
         </>
       )}
 
+      {part === 'house' && <div className="button-row"><BragButton kind="record" /></div>}
       {part === 'house' && <HouseFigures />}
       {part === 'allies' && pm && inStateCareer(campaign) && <StatePowers />}
       {part === 'allies' && pm && <SupplyDeals />}
@@ -230,6 +233,7 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
 
       {part === 'cabinet' && <>
       <h3>{t('house.cabinet')}</h3>
+      {hasCabinetSeat(campaign) && <div className="button-row"><BragButton kind="cabinet" /></div>}
       <ul>
         {k.cabinet.map((m) => (
           <li key={m.portfolio} className="action">

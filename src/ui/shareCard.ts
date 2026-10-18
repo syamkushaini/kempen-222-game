@@ -82,7 +82,7 @@ export function wrap(text: string, width: number, measure: (s: string) => number
   return kept;
 }
 
-function loadImage(src: string): Promise<HTMLImageElement> {
+export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);

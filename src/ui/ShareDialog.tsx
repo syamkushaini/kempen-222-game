@@ -14,10 +14,10 @@ import { mapPicture } from './map3d';
 import { missionGoal, recordAsk } from './missionText';
 import { drawCard, type CardData } from './shareCard';
 
-const common = (t: T) => ({ tagline: t('share.tagline'), fiction: t('share.fiction') });
+export const common = (t: T) => ({ tagline: t('share.tagline'), fiction: t('share.fiction') });
 
 /** The leader's face for the card: the painted portrait where there is one, otherwise the drawn bust. */
-const face = (t: T, p: number) => ({ src: paintedLeader(p) ?? leaderPortrait(p) ?? '', caption: leaderName(t, p), sub: partyName(t, p) });
+export const face = (t: T, p: number) => ({ src: paintedLeader(p) ?? leaderPortrait(p) ?? '', caption: leaderName(t, p), sub: partyName(t, p) });
 
 /** How the game was played, for those who want to show it off: only what is worth showing. */
 function badgesOf(t: T, c: Campaign, summary: Pick<Summary, 'seats' | 'before' | 'voteShare'>): string[] {
@@ -120,20 +120,25 @@ export function missionCard(t: T, f: Format, c: Campaign, r: MissionRecord): Car
   };
 }
 
+/** A picture that draws itself (a chart, an infographic, a front page) in place of the result poster. */
+export interface Drawn { headline: string; text?: string; draw(canvas: HTMLCanvasElement): Promise<void> }
+
 /** Shows the result card, with buttons to save it as an image or hand it to the device's share sheet. */
-export function ShareDialog({ data, onClose }: { data: CardData; onClose(): void }) {
+export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose(): void }) {
   const t = useT();
   const canvas = useRef<HTMLCanvasElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [failed, setFailed] = useState(false);
+  const [ratio, setRatio] = useState<number | null>(null);
 
   useEffect(() => {
     let live = true;
     const el = canvas.current;
     if (!el) return;
     // If the 3D map is on screen behind this dialog, it goes on the card.
-    drawCard(el, { ...data, backdrop: data.backdrop ?? mapPicture() ?? undefined })
-      .then(() => el.toBlob((blob) => { if (live && blob) setFile(new File([blob], 'kempen-222.png', { type: 'image/png' })); else if (live) setFailed(true); }, 'image/png'))
+    const done = 'draw' in data ? data.draw(el) : drawCard(el, { ...data, backdrop: data.backdrop ?? mapPicture() ?? undefined });
+    done
+      .then(() => { if (live) setRatio(el.width / el.height); el.toBlob((blob) => { if (live && blob) setFile(new File([blob], 'kempen-222.png', { type: 'image/png' })); else if (live) setFailed(true); }, 'image/png'); })
       .catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
   }, [data]);
@@ -154,14 +159,14 @@ export function ShareDialog({ data, onClose }: { data: CardData; onClose(): void
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const canShare = !!file && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
-  const share = () => { if (file) void navigator.share({ files: [file], title: 'Kempen 222', text: data.headline }).catch(() => undefined); };
+  const share = () => { if (file) void navigator.share({ files: [file], title: 'Kempen 222', text: 'text' in data && data.text ? data.text : data.headline }).catch(() => undefined); };
 
   return (
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dialog panel share-dialog" role="dialog" aria-modal="true" aria-label={t('share.title')}>
         <h2>{t('share.title')}</h2>
         <p className="muted small">{t('share.hint')}</p>
-        <canvas ref={canvas} className="share-card" role="img" aria-label={t('share.alt', { headline: data.headline })} />
+        <canvas ref={canvas} className="share-card" style={ratio ? { aspectRatio: String(ratio) } : undefined} role="img" aria-label={t('share.alt', { headline: data.headline })} />
         {failed && <p className="note">{t('share.failed')}</p>}
         <div className="button-row">
           <button className="btn primary" disabled={!file} onClick={save}>{t('share.save')}</button>
