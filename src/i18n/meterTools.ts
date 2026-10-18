@@ -137,7 +137,7 @@ export const METERTOOLS_EN = {
 export const METERTOOLS_MS: Record<keyof typeof METERTOOLS_EN, string> = {
   'meters.tools.title': 'Apa yang boleh dibuat untuk meter ni',
   'meters.tools.desc': 'Selain bajet dan menteri, ketua kerajaan ada langkah untuk setiap meter: satu yang murah dan senyap, satu yang mahal dan kuat, dan satu yang berisiko tapi paling berkesan dan makan kos lain. Setiap satu tunjuk kesannya sebelum anda guna, dan perlu berehat sebelum boleh guna lagi.',
-  'tools.goal.cohesion': 'Perpaduan sosial',
+  'tools.goal.cohesion': 'Kerukunan',
   'tools.goal.tech': 'Teknologi',
   'tools.goal.environment': 'Alam sekitar',
   'tools.goal.law': 'Kedaulatan undang-undang',
@@ -235,7 +235,7 @@ export const METERTOOLS_MS: Record<keyof typeof METERTOOLS_EN, string> = {
   'combo.greenGrowth': 'Pertumbuhan hijau',
   'combo.greenGrowth.desc': 'Tekan alam sekitar dan teknologi sekali: industri bersih bawa hasil. Alam sekitar menuju lebih tinggi dan pertumbuhan terselamat daripada sebahagian kosnya.',
   'combo.nationalPride': 'Kebanggaan negara',
-  'combo.nationalPride.desc': 'Tekan kesiapsiagaan dan perpaduan sekali: negara bangga dengan angkatannya. Perpaduan dan kesiapsiagaan menuju lebih tinggi.',
+  'combo.nationalPride.desc': 'Tekan kesiapsiagaan dan kerukunan sekali: negara bangga dengan angkatannya. Kerukunan dan kesiapsiagaan menuju lebih tinggi.',
   'combo.professionalArmy': 'Tentera profesional',
   'combo.professionalArmy.desc': 'Tekan kesiapsiagaan dan kawalan awam sekali: angkatan terlatih yang bertanggungjawab kepada rakyat. Kesiapsiagaan menuju lebih tinggi.',
   'combo.surveillanceState': 'Negara pengawasan',
