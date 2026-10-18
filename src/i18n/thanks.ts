@@ -8,8 +8,8 @@ export const THANKS_EN = {
 
 export const THANKS_MS: Record<keyof typeof THANKS_EN, string> = {
   'support.thanks.title': 'Penaja teratas',
-  'support.thanks.note': 'Terima kasih kerana menaja kopi saya semasa membangunkan permainan ini.',
-  'support.thanks.body': 'Sumbangan anda amat dihargai.',
+  'support.thanks.note': 'Terima kasih sebab menaja kopi saya semasa membangunkan game ni.',
+  'support.thanks.body': 'Sumbangan anda sangat dihargai.',
 };
 
 export type ThanksKey = keyof typeof THANKS_EN;

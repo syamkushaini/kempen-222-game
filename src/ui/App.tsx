@@ -1,3 +1,5 @@
+import { isFederal } from '../sim/campaign/defence';
+import { isPm } from '../sim/campaign/office';
 import { Fragment, lazy, Suspense, useEffect, useState } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { useStore, type MapView as MapViewId, type SidebarTab } from '../state/store';
@@ -58,20 +60,27 @@ installIdentity();
  * (the campaign, or running the country between elections), how is my party doing (its weekly routine, money, team,
  * candidates and dealings), what missions am I on, and what do I know. Saves is in the Menu.
  */
-type GroupId = 'run' | 'missions' | 'people' | 'intel';
+type GroupId = 'run' | 'country' | 'parliament' | 'missions' | 'people' | 'party' | 'intel';
 const GROUPS: { id: GroupId; icon: IconName; tabs: SidebarTab[] }[] = [
-  { id: 'run', icon: 'flag', tabs: ['desk', 'house', 'actions', 'policy'] },
+  { id: 'run', icon: 'flag', tabs: ['desk', 'actions'] },
+  // The country between elections: its figures, its markets, what a government can do about them, and how the nation is doing.
+  { id: 'country', icon: 'coins', tabs: ['economy', 'markets', 'acts', 'meters'] },
+  // The House, and who stands with the government in it, and the manifesto that is held up against it.
+  { id: 'parliament', icon: 'landmark', tabs: ['house', 'allies', 'policy'] },
   // Missions have a place of their own on the row, so that the player cannot miss that there are any (a badge counts the offers waiting).
   { id: 'missions', icon: 'trophy', tabs: ['missions'] },
-  { id: 'people', icon: 'people', tabs: ['orders', 'party', 'team', 'slate', 'chiefs', 'deals'] },
+  // Who helps: the cabinet, the leader's own staff, the candidates and the state chiefs.
+  { id: 'people', icon: 'people', tabs: ['cabinet', 'team', 'slate', 'chiefs'] },
+  // The party itself: its standing orders and money, its members, and its dealings with other parties.
+  { id: 'party', icon: 'crown', tabs: ['orders', 'party', 'funds', 'reshape', 'deals'] },
   { id: 'intel', icon: 'intel', tabs: ['seats', 'polls', 'voters', 'news'] },
 ];
 /** Tabs that belong only to the years between elections, and only to the campaign. */
-const TERM_ONLY: SidebarTab[] = ['desk', 'orders', 'house'];
+const TERM_ONLY: SidebarTab[] = ['desk', 'orders', 'house', 'economy', 'markets', 'acts', 'meters', 'allies', 'cabinet'];
 const CAMPAIGN_ONLY: SidebarTab[] = ['actions', 'deals'];
 /** The picture that goes with each tab, beside its name. */
 const TAB_ICON: Record<SidebarTab, IconName> = {
-  desk: 'inbox', missions: 'trophy', orders: 'doc', house: 'landmark', policy: 'sliders', actions: 'megaphone', team: 'crown', party: 'coins', slate: 'ballot', chiefs: 'flag', deals: 'chat',
+  desk: 'inbox', economy: 'coins', markets: 'intel', acts: 'tool', meters: 'sliders', allies: 'heart', cabinet: 'crown', funds: 'coins', reshape: 'flag', missions: 'trophy', orders: 'doc', house: 'landmark', policy: 'sliders', actions: 'megaphone', team: 'crown', party: 'coins', slate: 'ballot', chiefs: 'flag', deals: 'chat',
   seats: 'target', polls: 'intel', voters: 'people', news: 'book', saves: 'folder',
 };
 const groupLabel = (id: GroupId, term: boolean): StringKey => (id === 'run' ? (term ? 'group.run.term' : 'group.run.campaign') : `group.${id}`) as StringKey;
@@ -125,7 +134,7 @@ function CampaignScreen() {
   const term = campaign.phase === 'term';
   const available = (id: SidebarTab) =>
     (id !== 'chiefs' || (hasChiefs(world) && (!term || !!campaign.career))) && (id !== 'deals' || hasDiplomacy(world)) &&
-    (id !== 'policy' || !!campaign.career) && (id !== 'missions' || !!campaign.career) && (id !== 'party' || !!campaign.career) && !(term ? CAMPAIGN_ONLY : TERM_ONLY).includes(id);
+    (id !== 'policy' || !!campaign.career) && ((id !== 'acts' && id !== 'allies') || isPm(campaign)) && (id !== 'markets' || isFederal(campaign.scenario)) && (id !== 'cabinet' || !!campaign.career) && (id !== 'missions' || !!campaign.career) && ((id !== 'party' && id !== 'funds' && id !== 'reshape') || !!campaign.career) && !(term ? CAMPAIGN_ONLY : TERM_ONLY).includes(id);
   const groups = GROUPS.map((g) => ({ ...g, tabs: g.tabs.filter(available) })).filter((g) => g.tabs.length > 0);
   const every = groups.flatMap((g) => g.tabs);
   const shown = every.includes(tab) ? tab : every[0];
@@ -141,7 +150,7 @@ function CampaignScreen() {
   // A decision waiting in the inbox is a bar, not a screen: it does not stop a seat being looked at.
   useEffect(() => { setCard(selectedSeat && world.seats.length > 1 ? selectedSeat : null); }, [selectedSeat]); // eslint-disable-line react-hooks/exhaustive-deps
   // What each tab has waiting: decisions for whoever runs things, bad news not yet read.
-  const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : id === 'desk' ? (shown === 'desk' ? 0 : campaign.inbox.length) : id === 'house' ? (shown === 'house' ? 0 : campaign.career?.appointments?.length ?? 0) : id === 'missions' ? (shown === 'missions' ? 0 : campaign.career?.missions?.offers.length ?? 0) : 0);
+  const waitingFor = (id: SidebarTab) => (id === 'news' ? (shown === 'news' ? 0 : unread) : id === 'desk' ? (shown === 'desk' ? 0 : campaign.inbox.length) : id === 'cabinet' ? (shown === 'cabinet' ? 0 : campaign.career?.appointments?.length ?? 0) : id === 'missions' ? (shown === 'missions' ? 0 : campaign.career?.missions?.offers.length ?? 0) : 0);
   // On a phone the map and the panel are separate screens, changed from a bar at the bottom.
   const narrow = useNarrow();
   // A tablet held upright has room for the map above the panel, so it needs no bar to change screens with.
@@ -201,7 +210,7 @@ function CampaignScreen() {
                 className={`${group.id === g.id ? 'tab active' : 'tab'}${g.tabs.some((id) => spot(`tab-${id}`)) ? ' spot' : ''}`}
                 onClick={() => { if (group.id !== g.id) setTab(g.tabs[0]); }}
               >
-                <Icon name={g.id === 'run' && term ? 'landmark' : g.icon} size={20} />
+                <Icon name={g.id === 'run' && term ? 'inbox' : g.icon} size={20} />
                 <span className="tab-name">{t(groupLabel(g.id, term))}</span>
                 {g.tabs.reduce((a, id) => a + waitingFor(id), 0) > 0 && group.id !== g.id && <span className="count-badge" aria-label={t('tab.waiting', { n: g.tabs.reduce((a, id) => a + waitingFor(id), 0) })}>{g.tabs.reduce((a, id) => a + waitingFor(id), 0)}</span>}
               </button>
@@ -223,12 +232,20 @@ function CampaignScreen() {
             <Suspense fallback={<p className="muted small">{t('app.loading')}</p>}>
             {shown === 'desk' && <TermDesk />}
             {shown === 'orders' && <OrdersTab />}
-            {shown === 'house' && <GovernmentTab />}
+            {shown === 'house' && <GovernmentTab part="house" />}
+            {shown === 'economy' && <GovernmentTab part="economy" />}
+            {shown === 'markets' && <GovernmentTab part="markets" />}
+            {shown === 'acts' && <GovernmentTab part="acts" />}
+            {shown === 'meters' && <GovernmentTab part="meters" />}
+            {shown === 'allies' && <GovernmentTab part="allies" />}
+            {shown === 'cabinet' && <GovernmentTab part="cabinet" />}
             {shown === 'policy' && <PolicyTab />}
             {shown === 'missions' && <MissionsTab />}
             {shown === 'actions' && <ActionsTab />}
             {shown === 'team' && <TeamTab />}
-            {shown === 'party' && <PartyTab />}
+            {shown === 'party' && <PartyTab part="party" />}
+            {shown === 'funds' && <PartyTab part="funds" />}
+            {shown === 'reshape' && <PartyTab part="reshape" />}
             {shown === 'slate' && <CandidatesTab />}
             {shown === 'chiefs' && <ChiefsTab />}
             {shown === 'deals' && <DiplomacyTab />}

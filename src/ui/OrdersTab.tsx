@@ -1,4 +1,3 @@
-import { Moves } from './Moves';
 import {
   ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, machineryTargets, ledger, termIncome, termSpending,
 } from '../sim/campaign/career';
@@ -92,7 +91,6 @@ export function OrdersTab() {
         <span className="muted">{t('orders.term', { n: k.term })}</span>
       </div>
       <Brief text={t('orders.intro')} />
-      <Moves />
 
       <h3>{t('orders.government')}</h3>
       <p>

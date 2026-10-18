@@ -31,28 +31,28 @@ export const MORE_EN: Record<string, string[]> = {
 
 export const MORE_MS: Record<string, string[]> = {
   monsoon: [
-    'Sungai naik melepasi jambatan di pekan pasar lagi. Bot sudah keluar, jurugambar pun sama, dan seorang menteri sedang disarungkan but getah. Pusat pemindahan ialah sekolah, dan sekolah itu yang banjir tahun lalu.',
-    'Tahun ini hujan datang awal dan tidak mahu pergi. Siren amaran berfungsi, yang sendirinya berita, tetapi jalan ke tiga buah kampung tidak. Seseorang mesti memutuskan siapa dahulu, dan kamera akan memutuskan siapa yang kelihatan pergi.',
+    'Sungai naik melepasi jambatan di pekan pasar lagi. Bot dah keluar, jurugambar pun sama, dan seorang menteri tengah disarungkan but getah. Pusat pemindahan ialah sekolah, dan sekolah tu yang banjir tahun lepas.',
+    'Tahun ni hujan datang awal dan tak mahu pergi. Siren amaran berfungsi, yang itu sendiri dah jadi berita, tapi jalan ke tiga buah kampung tak. Seseorang kena putuskan siapa dulu, dan kamera yang akan putuskan siapa yang nampak pergi.',
   ],
   haze: [
-    'Indeks udara sudah melepasi angka yang tidak lagi disebut sebagai angka. Sekolah ditutup, hospital penuh dengan batuk, dan jiran berkata mereka sedang buat apa yang mampu, seperti yang mereka katakan tahun lalu.',
-    'Petang yang kelabu pada waktu tengah hari: lampu pejabat dipasang dan penjual pelitup muka berniaga baik. Rundingan dengan jiran dijadualkan bulan depan. Jerebu dijadualkan minggu ini.',
+    'Indeks udara dah lepas angka yang orang berhenti panggil ia angka. Sekolah ditutup, hospital penuh dengan batuk, dan jiran kata mereka buat apa yang mampu, macam yang mereka cakap tahun lepas.',
+    'Petang yang kelabu pada waktu tengah hari: lampu pejabat dipasang dan penjual pelitup muka berniaga laris. Rundingan dengan jiran dijadualkan bulan depan. Jerebu dijadualkan minggu ni.',
   ],
   priceSurge: [
-    'Harga beras tidak bergerak, tetapi harga semua yang dimakan bersamanya sudah naik. Pasar penuh dengan orang membaca label, dan sesi panggilan radio penuh dengan orang membaca bil kepada kerajaan.',
-    'Seorang peniaga di televisyen berkata cili naik satu pertiga, lalu mengangkat cili itu. Cilinya kecil, kenaikannya besar. Menjelang petang setiap isi rumah di negara ini sudah membuat kira-kira yang sama.',
+    'Harga beras tak bergerak, tapi harga semua yang dimakan dengannya dah naik. Pasar penuh dengan orang baca label, dan sesi panggilan radio penuh dengan orang bacakan bil kepada kerajaan.',
+    'Seorang peniaga di televisyen kata cili naik satu pertiga, lepas tu angkat cili tu. Cilinya kecil, kenaikannya besar. Menjelang petang setiap isi rumah di negara ni dah buat kira-kira yang sama.',
   ],
   ksuMemo: [
-    'Satu lagi nota daripada Ketua Setiausaha, kali ini berpenanda. Dia tidak menentang rancangan kerajaan, tulisnya; dia hanya mencatat, untuk simpanan fail, yang mana dia sudah beritahu pada bulan Mac.',
-    'Ketua Setiausaha meminta sepuluh minit. Dia membawa sebuah fail, meletakkannya di atas meja, dan berkata dia akan cuai pada tugas jika tidak menyebut isinya. Kemudian dia menyebutnya, panjang lebar, dengan berhati-hati.',
+    'Satu lagi nota daripada Ketua Setiausaha, kali ni siap berpenanda. Dia tak menentang rancangan kerajaan, tulisnya; dia cuma mencatat, untuk simpanan fail, yang mana dia dah beritahu pada bulan Mac.',
+    'Ketua Setiausaha minta sepuluh minit. Dia bawa sebuah fail, letak atas meja, dan kata dia akan cuai pada tugas kalau tak sebut isinya. Lepas tu dia sebut, panjang lebar, dengan berhati-hati.',
   ],
   shadowBudget: [
-    'Ucapan bajet seminggu lagi dan kerajaan sudah membocorkan bahagian yang baik. Media mahu tahu apa yang pembangkang akan lakukan secara berbeza, dan sama ada ia boleh disebut dalam satu ayat.',
-    'Minggu bajet lagi. Pembangkang boleh menjanjikan segala-galanya kerana tidak perlu membayarnya, atau menunjukkan kira-kiranya dan menanggung risiko dibaca. Kedua-duanya sudah pernah dicuba.',
+    'Ucapan bajet seminggu lagi dan kerajaan dah bocorkan bahagian yang elok. Media nak tahu apa pembangkang akan buat lain, dan boleh ke sebut dalam satu ayat.',
+    'Minggu bajet lagi. Pembangkang boleh janji segala-galanya sebab tak perlu bayar pun, atau tunjuk kira-kiranya dan tanggung risiko dibaca. Dua-dua cara dah pernah dicuba.',
   ],
   budgetAsk: [
-    'Draf Menteri Kewangan beredar di pejabat-pejabat bersama sebatang pensel. Setiap rakan ada senarai, dan setiap senarai mempunyai perkara yang sama di atas sekali: kawasan mereka sendiri.',
-    'Bajet akan dibentang dalam beberapa minggu, dan peluang terakhir untuk didengar ialah sekarang. Rakan yang meminta terlalu banyak dipanggil tamak; yang meminta terlalu sedikit dipanggil tiada.',
+    'Draf Menteri Kewangan beredar di pejabat-pejabat bersama sebatang pensel. Setiap rakan ada senarai, dan setiap senarai ada benda yang sama di atas sekali: kawasan mereka sendiri.',
+    'Bajet akan dibentang dalam beberapa minggu, dan peluang terakhir untuk didengar ialah sekarang. Rakan yang minta terlalu banyak dipanggil tamak; yang minta terlalu sikit dipanggil menghilang.',
   ],
 };
 

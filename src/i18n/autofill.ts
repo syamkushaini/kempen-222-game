@@ -12,14 +12,14 @@ export const AUTOFILL_EN = {
 } as const;
 
 export const AUTOFILL_MS: Record<keyof typeof AUTOFILL_EN, string> = {
-  'autofill.button': 'Isi calon terbaik secara automatik',
-  'autofill.hint': 'Memilih calon terbaik di setiap kerusi yang belum anda pilih dan, bagi parti buatan sendiri, menambah kerusi yang paling berpeluang dimenangi, dengan sehingga {pct}% daripada wang anda. Anda masih boleh mengubahnya sehingga hari penamaan calon.',
-  'autofill.none': 'Tiada apa lagi untuk diisi.',
-  'picks.title': 'Siapa yang dipilih ketua negeri',
-  'picks.desc': 'Di setiap kerusi yang anda tak pilih, ketua negeri memilih calon. Ketua yang cekap dengan cawangan yang kuat di negeri itu memilih orang yang lebih baik, dan mereka membawa sedikit kepada kerusi itu.',
+  'autofill.button': 'Isi calon terbaik automatik',
+  'autofill.hint': 'Pilih calon terbaik di setiap kerusi yang belum anda pilih dan, untuk parti buatan sendiri, tambah kerusi yang paling berpeluang menang, dengan sehingga {pct}% daripada duit anda. Anda masih boleh ubah sehingga hari penamaan calon.',
+  'autofill.none': 'Tak ada lagi yang perlu diisi.',
+  'picks.title': 'Calon pilihan ketua negeri',
+  'picks.desc': 'Di kerusi yang anda tak pilih sendiri, ketua negeri yang pilih calon. Ketua yang cekap dengan cawangan kuat pilih orang yang lebih baik, dan mereka bawa sedikit undi ke kerusi itu.',
   'picks.row': '{chief}',
   'picks.quality': 'Mutu pilihan',
-  'picks.count': '{able} daripada {seats} kerusi dengan pilihan cekap · {risky} dengan sesuatu dalam latar mereka',
+  'picks.count': '{able} daripada {seats} kerusi dapat calon yang cekap · {risky} ada latar belakang bermasalah',
 };
 
 export type AutofillKey = keyof typeof AUTOFILL_EN;

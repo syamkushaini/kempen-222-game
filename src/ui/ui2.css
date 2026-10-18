@@ -877,6 +877,14 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .econ-tools .rate-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; flex-wrap: wrap; }
 .econ-tools .tool-group h4 { margin: 14px 0 4px; }
 
+.fold { margin: 12px 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+.fold > summary { cursor: pointer; padding: 10px 12px; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 8px; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::before { content: '▸'; transition: transform .15s; }
+.fold[open] > summary::before { transform: rotate(90deg); }
+.fold-body { padding: 0 12px 10px; }
+.fold .plan-card { border: 0; background: none; padding: 0; margin: 0; }
+.fold .plan-card > h4:first-child, .fold .tool-group > h4:first-child { display: none; }
 .plan-card { margin: 12px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); display: grid; gap: 6px; }
 .plan-card h4 { margin: 0; }
 .plan-card input[type=range] { width: 100%; }

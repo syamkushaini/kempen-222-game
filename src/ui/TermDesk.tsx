@@ -3,6 +3,7 @@ import { useStore } from '../state/store';
 import { BriefingCard } from './BriefingCard';
 import { useT } from './hooks';
 import { Icon, type IconName } from './Icon';
+import { Moves } from './Moves';
 import { NewsLine } from './NewsTab';
 
 function DeskCard({ icon, tone, title, children, go, onGo }: { icon: IconName; tone: string; title: string; children: React.ReactNode; go?: string; onGo?: () => void }) {
@@ -35,6 +36,7 @@ export function TermDesk() {
   return (
     <section className="desk">
       <BriefingCard />
+      <Moves />
       <ul className="desk-list">
         {waiting > 0 && (
           <DeskCard icon="inbox" tone="dare" title={t(waiting === 1 ? 'inbox.one' : 'inbox.many', { n: waiting })} go={t('inbox.open')} onGo={() => openScene()}>

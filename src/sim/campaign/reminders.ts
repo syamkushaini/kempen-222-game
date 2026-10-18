@@ -53,10 +53,10 @@ export function remindersOf(world: World, c: Campaign): Reminder[] {
   // A leader held to a term limit leads the governing party and not the government: the budget, the acts and the cabinet are the successor's.
   if (k.limited && k.government.pm === c.player) add({ id: 'limited', level: 'note', tab: 'party' });
 
-  if ((k.appointments?.length ?? 0) > 0) add({ id: 'appoint', level: 'urgent', tab: 'house', vars: { n: k.appointments!.length } });
+  if ((k.appointments?.length ?? 0) > 0) add({ id: 'appoint', level: 'urgent', tab: 'cabinet', vars: { n: k.appointments!.length } });
 
   if (isPm(c) && weekOfYear >= BUDGET_DAY - BUDGET_NOTICE && weekOfYear < BUDGET_DAY && JSON.stringify(k.budget) === JSON.stringify(k.tabled)) {
-    add({ id: 'budget', level: 'warn', tab: 'house', vars: { weeks: BUDGET_DAY - weekOfYear } });
+    add({ id: 'budget', level: 'warn', tab: 'economy', vars: { weeks: BUDGET_DAY - weekOfYear } });
   }
   if (!k.launched && left <= 60) add({ id: 'manifesto', level: left <= 20 ? 'urgent' : 'warn', tab: 'policy', vars: { weeks: left } });
 
@@ -71,14 +71,14 @@ export function remindersOf(world: World, c: Campaign): Reminder[] {
 
   if (k.conduct && k.conduct.ok.filter(Boolean).length <= 2) add({ id: 'conduct', level: 'warn', tab: 'party', vars: { n: k.conduct.ok.filter(Boolean).length } });
 
-  if (isPm(c) && k.economy.inflation >= 4.5) add({ id: 'prices', level: 'warn', tab: 'house', vars: { pct: Math.round(k.economy.inflation * 10) / 10 } });
-  if (k.economy.debt >= 80) add({ id: 'debt', level: k.economy.debt >= 95 ? 'urgent' : 'warn', tab: 'house', vars: { debt: Math.round(k.economy.debt) } });
+  if (isPm(c) && k.economy.inflation >= 4.5) add({ id: 'prices', level: 'warn', tab: 'economy', vars: { pct: Math.round(k.economy.inflation * 10) / 10 } });
+  if (k.economy.debt >= 80) add({ id: 'debt', level: k.economy.debt >= 95 ? 'urgent' : 'warn', tab: 'economy', vars: { debt: Math.round(k.economy.debt) } });
 
   if (isPm(c)) {
     const books = govBooks(world, c);
     const held = treasuryOf(c);
-    if (books && books.net < 0 && held < -books.net * 4) add({ id: 'dry', level: 'warn', tab: 'house' });
-    else if (hasPublicMoney(c) && treasuryCap(world, c) > 0 && held >= 0.95 * treasuryCap(world, c)) add({ id: 'full', level: 'note', tab: 'house' });
+    if (books && books.net < 0 && held < -books.net * 4) add({ id: 'dry', level: 'warn', tab: 'economy' });
+    else if (hasPublicMoney(c) && treasuryCap(world, c) > 0 && held >= 0.95 * treasuryCap(world, c)) add({ id: 'full', level: 'note', tab: 'economy' });
   }
   return out.sort((a, b) => RANK[a.level] - RANK[b.level]);
 }

@@ -32,7 +32,10 @@ const LOT = 100_000;
  * The party as an organisation between campaigns: who belongs, what it owns, and what it does with its time and money
  * before an election is called. Everything here is done in the years between elections.
  */
-export function PartyTab() {
+export type PartyPart = 'party' | 'funds' | 'reshape';
+
+/** The party, in three screens: its members and factions, its money, and the big changes (merging, a new name, an alliance). */
+export function PartyTab({ part = 'party' }: { part?: PartyPart }) {
   const t = useT();
   const f = useFormat();
   const world = useWorld();
@@ -78,11 +81,19 @@ export function PartyTab() {
   return (
     <section className="party">
       <div className="panel-head">
-        <h2>{t('party.title')}</h2>
+        <h2>{part === 'party' ? t('party.title') : t(`tab.${part}`)}</h2>
         <span className="muted">{t('orders.term', { n: k.term })}</span>
       </div>
-      <Brief text={t('party.intro')} />
+      {part === 'party' && <Brief text={t('party.intro')} />}
 
+      {part !== 'party' && (
+        <dl className="facts orders-facts">
+          <div><dt>{t('hud.funds')}</dt><dd className="num">{f.rm(pc.funds)}</dd></div>
+          <div><dt>{t('orders.in')}</dt><dd className="num">{f.rm(income.total)}</dd></div>
+          <div><dt>{t('orders.net')}</dt><dd className={`num ${net < 0 ? 'neg' : ''}`}>{net < 0 ? '−' : '+'}{f.rm(Math.abs(net))}</dd></div>
+        </dl>
+      )}
+      {part === 'party' && <>
       <dl className="facts orders-facts">
         <div><dt>{t('party.members')}</dt><dd className="num">{f.int(members)}</dd></div>
         <div><dt>{t('party.trend')}</dt><dd>{t(`party.trend.${trend}`)}</dd></div>
@@ -98,7 +109,9 @@ export function PartyTab() {
       <ConductCard />
       <p className="muted small">{t('party.members.note', { ordinary: f.int(ordinary) })}</p>
       <p className="note">{t('party.grassroots', { pts: (Math.round(grassrootsLift(world, campaign) * 25 * 10) / 10).toFixed(1) })}</p>
+      </>}
 
+      {part === 'party' && <>
       <h3>{t('party.factions')}</h3>
       <p className="muted small action-desc">{t('party.factions.desc', { n: PARTY_POLL_EVERY / 52, pct: backing(campaign), chance: f.pct(challengeChance(campaign), 0) })}</p>
       <p className="note">{t('party.deputy', { name: CHIEF_NAMES[deputyOf(campaign).name], faction: t(`faction.${FACTION_IDS[deputyOf(campaign).faction]}`), ambition: Math.round(deputyOf(campaign).ambition), chance: f.pct(deputyChance(campaign), 0) })}</p>
@@ -168,6 +181,8 @@ export function PartyTab() {
         );
       })()}
 
+      </>}
+      {part === 'reshape' && <>
       <h3>{t('party.merge')}</h3>
       <p className="muted small action-desc">{t('party.merge.desc', { n: Math.round(MERGER.size * 100), warm: MERGER.warmth })}</p>
       {(() => {
@@ -203,6 +218,8 @@ export function PartyTab() {
       </div>
       {rebranding && <RebrandDialog onClose={() => setRebranding(false)} />}
 
+      </>}
+      {part === 'funds' && <>
       <h3>{t('party.chest')}</h3>
       <p className="muted small action-desc">{t('party.chest.desc', { bonus: Math.round(CHEST_BONUS * 100), penalty: Math.round(CHEST_PENALTY * 100) })}</p>
       <ul>
@@ -218,6 +235,8 @@ export function PartyTab() {
       </ul>
       {(k.govRun ?? 0) > 1 && <p className="note bad">{t('party.fatigue', { n: k.govRun!, pts: (Math.round(wearyOf(k) * 25 * 10) / 10).toFixed(1) })}</p>}
 
+      </>}
+      {part === 'party' && <>
       <h3>{t('rivals.title')}</h3>
       <p className="muted small action-desc">{t('rivals.desc')}</p>
       <ul>
@@ -259,6 +278,8 @@ export function PartyTab() {
         })}
       </ul>
 
+      </>}
+      {part === 'reshape' && <>
       <h3>{t('alliance.title')}</h3>
       <p className="muted small action-desc">{t('alliance.desc', { found: f.rm(scaled(world, ALLIANCE.found)), join: f.rm(scaled(world, ALLIANCE.join)), n: ALLIANCE.max })}</p>
       {!k.alliance ? (
@@ -310,6 +331,8 @@ export function PartyTab() {
         </ul>
       )}
 
+      </>}
+      {part === 'funds' && <>
       <h3>{t('party.pad')}</h3>
       <ul>
         <li className="action wrapped">
@@ -364,6 +387,7 @@ export function PartyTab() {
           );
         })}
       </ul>
+      </>}
     </section>
   );
 }
