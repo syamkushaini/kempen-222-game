@@ -39,7 +39,15 @@ async function kit(canvas: HTMLCanvasElement, width: number, height: number) {
     g.restore();
     g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.strokeStyle = ring; g.lineWidth = 3; g.stroke();
   };
-  return { g, text, measure, box, mark, face };
+  /** One line no wider than `width`: cut with an ellipsis where it is too long, even if it is a single word. */
+  const fit = (s: string, width: number, font: string) => {
+    const m = measure(font);
+    if (m(s) <= width) return s;
+    let out = s;
+    while (out.length > 1 && m(`${out}…`) > width) out = out.slice(0, -1).trimEnd();
+    return `${out}…`;
+  };
+  return { g, text, measure, box, mark, face, fit };
 }
 
 // ---------- the cabinet as an organisation chart ----------
@@ -63,7 +71,7 @@ export async function drawCabinetChart(canvas: HTMLCanvasElement, d: CabinetChar
   const tallest = Math.max(1, ...d.branches.map((b) => b.people.length));
   const W = Math.max(1200, 330 * cols + 60), top = 420;
   const H = top + tallest * (TILE_H + TILE_GAP) + 150;
-  const { g, text, measure, box, mark, face } = await kit(canvas, W, H);
+  const { g, text, measure, box, mark, face, fit } = await kit(canvas, W, H);
   const [light, deep] = ground(d.accent);
 
   g.fillStyle = '#f4f6fb'; g.fillRect(0, 0, W, H);
@@ -84,8 +92,8 @@ export async function drawCabinetChart(canvas: HTMLCanvasElement, d: CabinetChar
   await face(d.head.portrait, hx + 78, hy + hh / 2, 46, d.head.color);
   const nf = `900 24px ${FONT}`;
   wrap(d.head.name, hw - 150, measure(nf), 2).forEach((line, i, all) => text(line, hx + 142, hy + (all.length > 1 ? 52 : 66) + i * 28, nf, INK));
-  text(d.head.post.toUpperCase(), hx + 142, hy + 94, `800 13px ${FONT}`, d.head.color === '#ffffff' ? MUTED : mix(d.head.color, '#000000', 0.25));
-  text(d.head.sub, hx + 142, hy + 114, `500 14px ${FONT}`, MUTED);
+  text(fit(d.head.post.toUpperCase(), hw - 160, `800 13px ${FONT}`), hx + 142, hy + 94, `800 13px ${FONT}`, d.head.color === '#ffffff' ? MUTED : mix(d.head.color, '#000000', 0.25));
+  text(fit(d.head.sub, hw - 160, `500 14px ${FONT}`), hx + 142, hy + 114, `500 14px ${FONT}`, MUTED);
 
   // The branches: a bar under the head, a drop to each, and the people in a line down the side.
   const margin = 30, colW = (W - margin * 2) / cols, bus = 300;
@@ -100,7 +108,7 @@ export async function drawCabinetChart(canvas: HTMLCanvasElement, d: CabinetChar
     const b = d.branches[i];
     const bx = margin + colW * i + 10, bw = colW - 20, by = bus + 28;
     box(bx, by, bw, 52, 14, mix(d.accent, '#000000', 0.15));
-    text(b.title.toUpperCase(), bx + bw / 2, by + 32, `800 16px ${FONT}`, '#ffffff', 'center');
+    text(fit(b.title.toUpperCase(), bw - 24, `800 16px ${FONT}`), bx + bw / 2, by + 32, `800 16px ${FONT}`, '#ffffff', 'center');
     const spine = bx + 14, last = by + 52 + 14 + (b.people.length - 1) * (TILE_H + TILE_GAP) + TILE_H / 2;
     g.strokeStyle = '#b8c1d4'; g.lineWidth = 2.5;
     g.beginPath(); g.moveTo(spine, by + 52); g.lineTo(spine, last); g.stroke();
@@ -110,10 +118,13 @@ export async function drawCabinetChart(canvas: HTMLCanvasElement, d: CabinetChar
       box(tx, ty, tw, TILE_H, 12, p.mine ? mix(d.accent, '#ffffff', 0.86) : '#ffffff', p.mine ? d.accent : LINE);
       g.fillStyle = p.color; g.beginPath(); g.roundRect(tx, ty, 7, TILE_H, [12, 0, 0, 12]); g.fill();
       await face(p.portrait, tx + 40, ty + TILE_H / 2, 22, p.color);
-      const f1 = `800 15px ${FONT}`, f2 = `700 11px ${FONT}`;
-      text(wrap(p.name, tw - 72 - 12, measure(f1), 1)[0] ?? '', tx + 72, ty + 27, f1, INK);
-      text(wrap(p.post.toUpperCase(), tw - 72 - 80, measure(f2), 1)[0] ?? '', tx + 72, ty + 46, f2, MUTED);
-      text('★'.repeat(p.stars) + '☆'.repeat(Math.max(0, 5 - p.stars)), tx + tw - 10, ty + 46, `600 11px ${FONT}`, WARN, 'right');
+      const f1 = `800 15px ${FONT}`, f2 = `700 11px ${FONT}`, f3 = `600 11px ${FONT}`;
+      const stars = '★'.repeat(p.stars) + '☆'.repeat(Math.max(0, 5 - p.stars));
+      const room = tw - 72 - 12, starsW = measure(f3)(stars);
+      text(fit(p.name, room, f1), tx + 72, ty + 27, f1, INK);
+      // The post gets what the stars leave; the stars keep their own corner.
+      text(fit(p.post.toUpperCase(), room - starsW - 10, f2), tx + 72, ty + 47, f2, MUTED);
+      text(stars, tx + tw - 12, ty + 47, f3, WARN, 'right');
     }
   }
 
@@ -123,7 +134,7 @@ export async function drawCabinetChart(canvas: HTMLCanvasElement, d: CabinetChar
     const fx = margin + i * (fw + gap);
     box(fx, fy, fw, 70, 16, '#ffffff', LINE);
     text(f.value, fx + 20, fy + 42, `900 30px ${FONT}`, mix(d.accent, '#000000', 0.2));
-    text(f.label.toUpperCase(), fx + 20, fy + 60, `700 11px ${FONT}`, MUTED);
+    text(fit(f.label.toUpperCase(), fw - 40, `700 11px ${FONT}`), fx + 20, fy + 60, `700 11px ${FONT}`, MUTED);
   });
   text(d.tagline, margin, H - 24, `500 12px ${FONT}`, MUTED);
   text(d.fiction, W - margin, H - 24, `500 12px ${FONT}`, MUTED, 'right');
