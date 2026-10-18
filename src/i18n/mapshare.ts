@@ -23,7 +23,7 @@ export const MAPSHARE_MS: Record<keyof typeof MAPSHARE_EN, string> = {
   'mapshare.majority': 'Itu majoriti.',
   'mapshare.short': 'Lagi {n} untuk majoriti.',
   'mapshare.tag': '#Kempen222 https://syamkushaini.github.io/kempen-222-game/',
-  'mapshare.text': 'Apa nak tulis bersamanya',
+  'mapshare.text': 'Nak tulis apa bersama gambar ni',
   'mapshare.copy': 'Salin teks',
   'mapshare.copied': 'Disalin',
 };

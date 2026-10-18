@@ -25,12 +25,12 @@ export const LOOK_EN = {
 
 export const LOOK_MS: Record<keyof typeof LOOK_EN, string> = {
   'look.title': 'Rupa',
-  'look.skin': 'Permukaan',
+  'look.skin': 'Tema',
   'look.accent': 'Warna aksen',
-  'look.hint': 'Permukaan dan warna diperoleh melalui pencapaian. Tiada perkara lain dalam permainan yang berubah.',
-  'look.themeSet': 'Ditetapkan oleh permukaan yang anda pakai. Memilih yang lain mengembalikan permukaan kepada Standard.',
-  'look.locked': 'Raih “{ach}” untuk memakai {name}.',
-  'look.reward': 'Membuka: {name}',
+  'look.hint': 'Tema dan warna diperoleh melalui pencapaian. Tiada apa-apa lain dalam game yang berubah.',
+  'look.themeSet': 'Ditetapkan oleh tema yang anda pakai. Pilih yang lain untuk kembali ke Biasa.',
+  'look.locked': 'Dapatkan “{ach}” untuk pakai {name}.',
+  'look.reward': 'Dibuka: {name}',
   'skin.standard': 'Biasa',
   'skin.paper': 'Kertas',
   'skin.midnight': 'Tengah Malam',
