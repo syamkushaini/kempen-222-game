@@ -19,6 +19,7 @@ import { GoalLine } from './Challenges';
 import { MetricsStrip } from './MetricsStrip';
 import { ReminderStrip } from './ReminderStrip';
 import { GameMenu } from './GameMenu';
+import { GroupMenu } from './GroupMenu';
 import { NextStep } from './NextStep';
 import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useTablet, useWorld, useNarrow } from './hooks';
 import { AsideBanner } from './Aside';
@@ -203,19 +204,12 @@ function CampaignScreen() {
         </section>
         <aside className="sidebar">
           <Inbox />
-          <div className="tabs" role="tablist">
-            {groups.map((g, n) => (
-              <button
-                key={g.id} role="tab" aria-selected={group.id === g.id} title={`${t(groupLabel(g.id, term))} (${n + 1})`}
-                className={`${group.id === g.id ? 'tab active' : 'tab'}${g.tabs.some((id) => spot(`tab-${id}`)) ? ' spot' : ''}`}
-                onClick={() => { if (group.id !== g.id) setTab(g.tabs[0]); }}
-              >
-                <Icon name={g.id === 'run' && term ? 'inbox' : g.icon} size={20} />
-                <span className="tab-name">{t(groupLabel(g.id, term))}</span>
-                {g.tabs.reduce((a, id) => a + waitingFor(id), 0) > 0 && group.id !== g.id && <span className="count-badge" aria-label={t('tab.waiting', { n: g.tabs.reduce((a, id) => a + waitingFor(id), 0) })}>{g.tabs.reduce((a, id) => a + waitingFor(id), 0)}</span>}
-              </button>
-            ))}
-          </div>
+          <GroupMenu
+            label={t('group.menu')}
+            current={group.id}
+            groups={groups.map((g) => { const waiting = g.tabs.reduce((a, id) => a + waitingFor(id), 0); return { id: g.id, label: t(groupLabel(g.id, term)), icon: g.id === 'run' && term ? 'inbox' : g.icon, waiting, waitingLabel: t('tab.waiting', { n: waiting }), spot: g.tabs.some((id) => spot(`tab-${id}`)) }; })}
+            onPick={(id) => { const g = groups.find((x) => x.id === id); if (g) setTab(g.tabs[0]); }}
+          />
           {group.tabs.length > 1 && (
             <div className="subtabs segmented small" role="tablist" aria-label={t(groupLabel(group.id, term))}>
               {group.tabs.map((id) => (

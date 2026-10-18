@@ -824,7 +824,12 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 /* The figures that say how the game is going, in six groups on one grid: two across, three on a wide screen, one on a phone. Each
    group is a cell with its name above and its figures in equal columns, every figure with a bar, so the rows line up. Colour is kept
    for what is doing well or badly. */
-.metrics-strip { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--line); }
+.metrics-strip { grid-column: 1 / -1; display: block; margin: 0; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+.metrics-headline { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 6px 16px; align-items: end; padding: 10px 14px; }
+.metrics-headline .metric.alert { box-shadow: inset 0 -2px 0 var(--bad, #e5484d); }
+.metrics-more { justify-self: end; align-self: center; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.metrics-more:hover { color: var(--ink); background: var(--fill); }
+.metrics-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border-top: 1px solid var(--line); background: var(--line); }
 .metric-group { display: grid; align-content: start; gap: 6px; padding: 10px 14px 12px; min-width: 0; background: var(--panel); }
 .metric-group-name { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
 .metric-row { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 4px 14px; }
@@ -835,9 +840,9 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .metric-value { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 4px; }
 .metric-bar { display: block; height: 3px; border-radius: 2px; background: var(--line-2); overflow: hidden; }
 .metric-bar > span { display: block; height: 100%; background: var(--ink-muted); transition: width 200ms linear; }
-@media (min-width: 1100px) { .metrics-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .metrics-detail { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 700px) {
-  .metrics-strip { grid-template-columns: minmax(0, 1fr); }
+  .metrics-detail { grid-template-columns: minmax(0, 1fr); }
   .metric-group { padding: 8px 12px 10px; }
   .metric-row { gap: 4px 10px; }
   .metric-value { font-size: 15px; }
@@ -994,3 +999,18 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 @keyframes stamp { 0% { transform: scale(1.06); } 40% { transform: scale(0.985); } 100% { transform: scale(1); } }
 .doctrine.on { animation: stamp 320ms ease-out; }
 @media (prefers-reduced-motion: reduce) { .doctrine.on { animation: none; } .radar-now { transition: none; } }
+
+/* The groups of tabs are one button that opens a list: the column shows where the player is, not seven names at once. */
+.group-menu { position: relative; }
+.group-menu-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--ink); font-weight: 600; font-size: 15px; cursor: pointer; }
+.group-menu-btn .tab-name { flex: 1; text-align: left; }
+.group-menu-chevron { color: var(--muted); }
+.group-menu-btn[aria-expanded='true'] .group-menu-chevron { transform: rotate(180deg); }
+.group-menu-list { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none; display: grid; gap: 2px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-3, var(--panel)); box-shadow: 0 12px 32px rgb(0 0 0 / 35%); backdrop-filter: blur(18px); }
+.group-menu-list button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: 0; border-radius: 10px; background: none; color: var(--ink); font-size: 14px; text-align: left; cursor: pointer; }
+.group-menu-list button .tab-name { flex: 1; }
+.group-menu-list button:hover { background: var(--fill); }
+.group-menu-list button.active { background: var(--panel-3, var(--fill)); font-weight: 600; }
+.group-menu-list kbd { color: var(--muted); font-size: 11px; border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; }
+.layout[class*="phone-"] .group-menu { display: none; }
+.metrics-detail .metric-label { white-space: normal; line-height: 1.25; }
