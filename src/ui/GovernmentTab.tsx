@@ -194,7 +194,6 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
         </>
       )}
 
-      {part === 'house' && <div className="button-row"><BragButton kind="record" /></div>}
       {part === 'house' && <HouseFigures />}
       {part === 'allies' && pm && inStateCareer(campaign) && <StatePowers />}
       {part === 'allies' && pm && <SupplyDeals />}
@@ -420,6 +419,7 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
         <div><dt>{t('house.record.broken')}</dt><dd className="num">{r.broken}</dd></div>
       </dl>
       <div className="button-row">
+        <BragButton kind="record" />
         <ConfirmButton className="btn" label={t('house.retire')} confirmLabel={t('house.retire.confirm')} disabled={campaign.inbox.length > 0} onConfirm={retire} danger />
       </div>
       </>}
