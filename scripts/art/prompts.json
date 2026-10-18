@@ -1136,6 +1136,14 @@
    "title": "The windfall arrives",
    "body": "The revenue has come in, more than the budget counted on. Everybody has a view on what to do with it, and it will not be there next year."
   },
+  "marketWindfall": {
+   "title": "The markets hand the country a windfall",
+   "body": "Palm oil, gas and chips are all fetching more than anyone budgeted for, and the ringgit has firmed. The central bank says the surge may not last. Every ministry, every state and every cousin has a use for the money."
+  },
+  "blackSwan": {
+   "title": "A black swan lands on the ringgit",
+   "body": "A bank has failed abroad and nobody saw it coming. Money is leaving the region, the ringgit is sliding and the sector indices have dropped by a fifth in a week. The central bank is on the phone, and so are the shopkeepers."
+  },
   "stormWarn": {
    "title": "The central bank warns of a storm",
    "body": "A downturn abroad is heading this way: orders are falling, and the bank expects it to reach the factories in about two months. It is a warning, not a forecast, and what you do now decides how hard it lands."
@@ -1363,6 +1371,162 @@
   "heatwaveSchools": {
    "title": "Thirty-Eight Degrees and a Maths Test",
    "body": "A heatwave has put the school fields at thirty-eight degrees, and a regional maths test is scheduled for the hottest hour. Parents have started sending children with frozen water bottles and notes. A headmaster has asked, in writing, whether he may shift the hours or whether the test is more important than the child."
+  },
+  "sarawakGridHandshake": {
+   "title": "The Borneo Grid Handshake",
+   "body": "The Premier of Sarawak is in your waiting room with a one-page MoU and a thermos of kopi O. He wants a federal letter of comfort so SEGrid Sarawak can sell 300MW of spare hydro to Nusantara via a 275kV line through Entikong. Treasury says any guarantee counts as federal contingent liability. Jakarta wants a yes before Friday."
+  },
+  "borneoLanternPact": {
+   "title": "The Lantern Bargain",
+   "body": "Your Sarawak partner party wants RM80k federal match for Pesta Tanglung Sungai Ruan — 2,000 recycled lanterns, 15 kampung bands, and a floating stage that almost sank last year. They say it proves “federal respects Borneo culture”. Your youth wing says it is a glorified photo-op while their hostel roof leaks. PM’s office says no extra culture budget unless you trade something."
+  },
+  "longhouseLeakApology": {
+   "title": "The Tuai Rumah Tape",
+   "body": "A 47-second clip leaked from your strategy huddle: your deputy mocks a Tuai Rumah welcoming chant as “karaoke with extra steps”. It hits WhatsApp groups in Kapit and Miri by lunch. The Tuai Rumah of Rh. Janting, Nanga Semuh — 78 doors, 312 voters — wants a public apology at his ruai tomorrow. Your base in KL thinks apologizing is surrender."
+  },
+  "sarawakNativeMapChoice": {
+   "title": "Who Draws the Line?",
+   "body": "Jabatan Tanah dan Survei reports 14,000 NCR claims stuck because old tracing paper maps smell of mildew. Three kampungs in Ulu Tebaang say their durian groves are inside a new oil palm provisional lease. You control land — federal cannot touch this. The Land Code requires you to decide how native boundaries are surveyed before gazette."
+  },
+  "sarawakPotholeBounty": {
+   "title": "The Pothole Bounty",
+   "body": "Jalan Datuk Tawi in Sibu Jaya has 23 potholes in 400 meters — enough to rattle dentures. State roads are state power, so you can hammer. Your intern builds JalanLubang.my: snap, geotag, RM5 bounty. The council says you are encouraging “trial by TikTok”. Your treasurer says bounties bleed funds fast."
+  },
+  "sarawakTimberSalesTaxTweak": {
+   "title": "The 5% That Floats the Budget",
+   "body": "Sarawak’s State Sales Tax on timber, like Sabah’s, is Sarawak’s own power — 5% on logs at export point. Your finance guy says raising valuation base from “contract price” to “market price” adds RM180m a year. Timber towkays in Bintulu say they will divert logs to “domestic processing” loophole. MA63 council meets next month and your move will be read as “Sarawak flexing autonomy”."
+  },
+  "hydroVillageTrustFund": {
+   "title": "The Resettlement Ledger",
+   "body": "Baleh micro-hydro is done. 41 families from Nanga Antawau moved to a new longhouse with zinc still smelling hot. State power says you must decide compensation model. The federal Indigenous Trust template offers annuity, but Sarawak land law lets you create a perpetual State Trust. Contractors want final payment this Friday."
+  },
+  "hydroVillageTrustReturns": {
+   "title": "The Audit Returns",
+   "body": "Eight weeks later, the State Auditor finds Tabung Antawau’s first quarter statement: RM14,200 spent on “capacity building” — mostly a team-building retreat at a Damai resort. The Tuai Rumah is on the phone: “We thought it was for diesel for the generator.” Press has the invoice."
+  },
+  "viralCat": {
+   "title": "A cat takes over the ministry",
+   "body": "A stray cat has wandered into a government building and fallen asleep on a minister’s chair. A staffer’s photo of it has been shared a million times. Everyone online is asking what the government plans to do about the cat."
+  },
+  "viralDurian": {
+   "title": "A durian seller’s rant breaks the internet",
+   "body": "A durian seller’s video, in which he explains the price of the king of fruits to a customer who will not pay it, is everywhere. It is funny, it is rude, and nobody is sure whose side to be on."
+  },
+  "viralFootball": {
+   "title": "The national team loses on a last-minute penalty",
+   "body": "The whole country watched, and the whole country has an opinion about the referee, the coach and the penalty taker. The feed is a single wail."
+  },
+  "viralKopitiam": {
+   "title": "A kopitiam uncle’s sign becomes a meme",
+   "body": "The owner of a kopitiam has put up a sign about the price of a cup of coffee, and the sign has been photographed, translated, and made into a hundred jokes. A journalist wants your view."
+  },
+  "viralConcert": {
+   "title": "Tickets to a big concert sell out in a minute",
+   "body": "A famous singer’s concert has sold out in sixty seconds, and the young are furious at the bots, the touts and the platform. Someone is asking what the government will do about ticket touts."
+  },
+  "viralStudent": {
+   "title": "A schoolboy’s science project wins a prize abroad",
+   "body": "A teenager from a small town has won a prize at an international fair with a project built from rubbish. The whole country wants to be proud of him, and you are not the only one who has noticed."
+  },
+  "viralRaya": {
+   "title": "A festival advertisement makes everyone cry",
+   "body": "A short advertisement for the coming festival, about a father who drives home across the country, has been watched forty million times. People are asking if you have seen it, and what you thought."
+  },
+  "viralPothole": {
+   "title": "A pothole is named after a minister",
+   "body": "Someone has painted a minister’s face around a pothole on a busy road, and it has been photographed from every angle. It is not clear whose minister it is, and every side has decided it is the other’s."
+  },
+  "constCrisis": {
+   "title": "A state assembly is deadlocked",
+   "body": "Two men now say they are chief minister of the same state. The Speaker has ruled one way, the other side has walked out, and everyone wants to know whether the assembly will be dissolved. The ruler has been told, and the nation is waiting, politely, for the answer."
+  },
+  "constCourt": {
+   "title": "The courts are asked",
+   "body": "The question has gone to the highest court, and the lawyers have filled the corridors. Everything said about the case outside the courtroom is being reported, and the judges have noticed."
+  },
+  "constSettled": {
+   "title": "The crisis is settled",
+   "body": "The court has ruled, the ruler’s decision has been received with respect, and the state has a chief minister whom everyone accepts, some more happily than others. It will be written about for years."
+  },
+  "heritageShopLotAppeal": {
+   "title": "The Five-Foot Way Is Not a Storage Room",
+   "body": "Shopkeepers in fictional Lorong Meranti, George Town, have been warned that display racks and delivery crates are blocking the five-foot way. Traders say the narrow shop lots leave them nowhere else to put stock; pedestrians and wheelchair users share photos of having to step into the road. The local authority wants a consistent rule before the heritage street festival."
+  },
+  "islandSlopePermit": {
+   "title": "The Hill Behind the New Condos",
+   "body": "Residents of fictional Taman Bayu Indah on the island report fresh cracks along a slope below a proposed hillside development. The developer says its earthworks are within approved boundaries; residents point to muddy runoff and a retaining wall that looks newly tired. The state can review land-use and planning conditions, but the project team says every week of delay costs money."
+  },
+  "ferryTerminalVendorSpace": {
+   "title": "The Kiosk Queue at Pier Nine",
+   "body": "At fictional Jeti Sembilan, a refurbished state-linked ferry terminal has room for only 12 kiosks but 37 local vendors have applied. The draft list gives several prime corners to a single facilities operator, while long-serving snack sellers say they kept the terminal alive during repairs. The transport committee wants a final allocation before the new timetable starts."
+  },
+  "hilltopViewpointConcession": {
+   "title": "A View Worth a Concession",
+   "body": "A fictional operator offers to build toilets, railings and a small café at Bukit Angin viewpoint in exchange for a long state-land concession. Hikers welcome safer facilities, but residents worry that the free public lookout will become a ticketed attraction with premium parking. The state has to decide before the operator's financing offer expires."
+  },
+  "urbanTreeRootConflict": {
+   "title": "The Tree Roots and the Drain Cover",
+   "body": "Residents along fictional Jalan Delima say old shade trees are lifting paving stones and blocking drain covers. Arborists argue the trees are healthy and valuable during hot afternoons; shop owners say customers trip on the uneven path and rainwater pools at their doors. The local authority needs a maintenance plan before the next scheduled footpath works."
+  },
+  "nightMarketNoiseRules": {
+   "title": "The Night Market That Ends at Midnight",
+   "body": "Residents near fictional Pasar Malam Taman Seroja complain that generators and dismantling crews keep them awake after midnight. Traders say the existing site has no nearby loading bay and the council's collection schedule starts too late. The state can guide local-authority policy, but the market association warns that strict hours could push sellers out."
+  },
+  "coastalFishingLanding": {
+   "title": "The Landing Jetty with No Landing Plan",
+   "body": "Small fishing operators at fictional Teluk Rusa say the state jetty has become crowded with recreational boats and food-tourism trips. Tour operators say they bring customers to nearby stalls; fishers say they are unloading catch beside selfie queues and paying more for repairs to damaged fenders. The state must decide how to allocate the jetty before the next busy weekend."
+  },
+  "stateLandAffordableHomes": {
+   "title": "The Cheap Land with Expensive Fine Print",
+   "body": "A consortium proposes 700 controlled-price homes on state land near fictional Sungai Pinang Baru. Its brochure highlights the headline price but places maintenance services under a related company and leaves annual fee reviews vague. First-time buyers want the project approved; nearby residents ask how traffic, drainage and public access will be protected. The land committee needs a recommendation before the offer expires."
+  },
+  "oldQuarryGreenBuffer": {
+   "title": "The Green Buffer on the Quarry Map",
+   "body": "Residents of fictional Kampung Relau notice survey pegs along a green strip beside an old quarry access road. A developer says the land is earmarked for a mixed-use project; residents say the strip screens dust and keeps a walking route open. The state must decide whether to preserve the buffer, allow limited development, or commission a new land-use assessment before the planning window closes."
+  },
+  "heritageNightMarketGamble": {
+   "title": "The Festival Contract with a Tiny Asterisk",
+   "body": "A fictional events company offers to stage a heritage night festival in George Town on state-controlled public space, promising visitor spending and a cleanup crew. The contract gives the company priority over stall placement and includes a vague clause for 'operational adjustments'; small traders want guaranteed spaces before they buy stock. The state must decide before publicity materials go to print."
+  },
+  "kakiBukitOrchardAccess": {
+   "title": "The Orchard Road Nobody Owns",
+   "body": "Growers near Kampung Padang Sera say a state road to their orchards is nearly impassable after years of patchwork repairs. The local authority says too few households use it to justify a full upgrade; farmers say fruit lorries are turning back. A decision is needed before harvest."
+  },
+  "kangarOldMarketStalls": {
+   "title": "Forty Stalls, One Very Long List",
+   "body": "A refurbished market near Pekan Sena has 40 stalls but 126 applications. The old list includes duplicate names, expired permits and a note reading 'keep aside for regular customer'. Traders want keys before the weekend; the opening ceremony is approaching."
+  },
+  "limestoneCaveSurvey": {
+   "title": "A Cave on the Tourist Map",
+   "body": "A limestone cave near Bukit Lada has become popular online, although its access track is on state-controlled land. Geologists say one chamber needs a safety survey; tour operators warn that closing it during school holidays would ruin their busiest month. The state must set access rules quickly."
+  },
+  "paddyDrainageBoard": {
+   "title": "The Drain That Ends at the Boundary",
+   "body": "Farmers in Kampung Alor Janggus say a state-maintained drain stops at an embankment, leaving nearby paddy fields waterlogged. Two local committees each insist the other should pay for the connecting section. Planting dates are close and the excavator quote expires Friday."
+  },
+  "stateLandSolarLease": {
+   "title": "Solar Panels over State Land",
+   "body": "A fictional energy cooperative proposes leasing dry state land outside Arau for a solar array, promising rent and a community fund. Nearby smallholders say the plot is used for seasonal grazing and worry that fencing will block their access route. The land office needs a recommendation before the offer expires."
+  },
+  "townHeritageSignage": {
+   "title": "The Shop Sign That Failed Inspection",
+   "body": "Shopkeepers along an old row in Kangar receive notices to replace oversized signs before a proposed heritage walk opens. Conservation volunteers want the original façade visible; traders say the approved sample is so small customers will need binoculars to find a pharmacy. The opening date is already on tourism posters."
+  },
+  "hilltopWaterTank": {
+   "title": "A Tank with a View and No Agreement",
+   "body": "A village committee near Wang Kelian offers a hilltop site for a state water tank, but the access track crosses three private plots. One owner wants compensation, another wants a boundary fence, and the third has stopped answering calls. Engineers say the site is suitable and the dry-season reserve needs a decision soon."
+  },
+  "lakeFishingPermit": {
+   "title": "The Lake with Three Rulebooks",
+   "body": "At a state-managed lake near Tasoh, anglers, small boat operators and residents each claim the rules favour the other two. Fish stocks are not monitored, rubbish bins overflow after weekends, and a new operator wants exclusive access to one jetty. The state needs a lake-use policy before the next holiday."
+  },
+  "smallQuarryDust": {
+   "title": "The Quarry Route Through the Village",
+   "body": "Residents of Kampung Bukit Chabang say heavy lorries from a fictional quarry are cracking culverts and shaking shop windows along a state road. The quarry says the approved route adds 14 kilometres and threatens contracts; shopkeepers show photos of dusty fruit and damaged drains. The state can set conditions before the next permit review."
+  },
+  "stateParkLeaseGamble": {
+   "title": "The Park Pavilion Deal",
+   "body": "A fictional event company offers to refurbish a neglected state park pavilion in Kangar in exchange for a long concession to run cafés and weekend events. The proposal has a glossy rendering, a suspiciously neat revenue forecast and no clear cap on private bookings. Families want better facilities, while local vendors fear being pushed out. The offer expires soon."
   },
   "kind-pactOffer": {
    "title": "An offer from another party",

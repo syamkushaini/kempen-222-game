@@ -17,6 +17,8 @@ import type { IdeologyId } from '../sim/campaign/leader';
 import { retire } from '../sim/campaign/legacy';
 import { renameMinister } from '../sim/campaign/office';
 import { switchParty } from '../sim/campaign/switching';
+import { makeMove as makeMoveOf, type MoveId } from '../sim/campaign/moves';
+import { courtChief as courtChiefOf, sendChief as sendChiefOf } from '../sim/campaign/chiefsTerm';
 import { hireTroopers, interview } from '../sim/campaign/media';
 import { crossTheFloor, type CrossStake } from '../sim/campaign/crossing';
 import { claim } from '../sim/campaign/claims';
@@ -379,6 +381,9 @@ interface Store {
   courtEndorser(id: EndorserId): void;
   interview(id: OutletId): void;
   hireTroopers(): void;
+  courtChief(state: RegionId): void;
+  makeMove(id: MoveId): void;
+  sendChief(state: RegionId): void;
   renameGame(name: string): void;
   loadGame(state: GameState): void;
   quitToTitle(): void;
@@ -739,6 +744,9 @@ export const useStore = create<Store>((set, get) => {
     vetHopeful: (seat, option) => mutate((c, _g, world) => { vetHopeful(world, c, seat, option); }),
     courtEndorser: (id) => mutate((c, _g, world) => ({ lastReport: courtEndorser(world, c, id) })),
     interview: (id) => mutate((c) => ({ lastReport: interview(c, id) })),
+    makeMove: (id) => mutate((c, _g, world) => { makeMoveOf(world, c, id); }),
+    courtChief: (st) => mutate((c, _g, world) => { courtChiefOf(world, c, st); }),
+    sendChief: (st) => mutate((c, _g, world) => { sendChiefOf(world, c, st, new Rng((c.rng ^ 0x5e0d) + (c.career?.week ?? 0))); }),
     hireTroopers: () => mutate((c, _g, world) => ({ lastReport: hireTroopers(world, c) })),
     renameGame: (name) => mutate((_c, g) => { g.name = name.slice(0, 60); }),
     loadGame: (state) => set((s) => ({

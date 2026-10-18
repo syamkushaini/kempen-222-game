@@ -58,9 +58,10 @@ describe('the head of government when the player is not', () => {
     set(c, { inflation: 7, growth: 4, debt: 60 });
     const debtBefore = k.economy.debt;
     for (let i = 0; i < 24; i++) { k.week += 1; rivalPmWeek(c); }
-    expect(k.rate).toBe(1);
+    // The central bank, not the head of government, sets the rate in the federation.
+    expect(k.rate).toBeUndefined();
     expect(Object.keys(k.toolsUsed ?? {}).length).toBeGreaterThan(0);
-    expect(c.news.some((n) => n.key === 'news.rate.up')).toBe(true);
+    expect(c.news.some((n) => n.key === 'news.rate.up')).toBe(false);
     expect(c.news.some((n) => n.key === 'news.tool.used')).toBe(true);
     expect(k.economy.debt).not.toBe(debtBefore);
   });

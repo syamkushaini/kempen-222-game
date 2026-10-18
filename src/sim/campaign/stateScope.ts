@@ -10,7 +10,7 @@ import type { Campaign, PledgeId } from './types';
 export const STATE_POWERS: readonly PledgeId[] = [
   'cashAid', 'graftCommission', 'termLimit', 'transitPass', 'partyHopBan', 'infoAct', 'schoolMeals', 'villageRoads', 'smeLoans', 'seniorPension',
   // Housing is a shared matter; local councils and their elections are the State List's.
-  'homes', 'localVote',
+  'homes', 'localVote', 'childcare', 'floodDefence',
 ];
 
 /** What only Sabah and Sarawak can promise: a state sales tax and royalties on their oil (the Tenth Schedule) and the share of federal revenue that MA63 sets aside for them. */

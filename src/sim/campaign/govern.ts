@@ -6,6 +6,9 @@ import { DEMANDS } from './cast';
 import { houseTally } from './contests';
 import { addScene, relation, shiftRelation } from './diplomacy';
 import { startFormation } from './formation';
+import { bankWeek, marketsWeek, swanWeek } from './markets';
+import { crisisWeek } from './crisis';
+import { netizenWeek, viralWeek } from './netizens';
 import { nationWeek } from './nation';
 import { defenceWeek } from './defence';
 import { storyWeek } from './doctrines';
@@ -51,6 +54,8 @@ const PLEDGE_PORTFOLIO: Record<PledgeId, PortfolioId> = {
   schoolMeals: 'education', healthCover: 'health', greenGrid: 'energy', villageRoads: 'rural', smeLoans: 'economy', seniorPension: 'women',
   tollCut: 'works', epfWithdrawal: 'finance', civilReform: 'home',
   dataProtection: 'digital', conflictOfInterest: 'law', defenceOversight: 'defence',
+  childcare: 'women', railLink: 'works', techFund: 'digital', vocational: 'highered', floodDefence: 'environment',
+  pressAct: 'comms', targetedSubsidy: 'costOfLiving', borneoSeats: 'home', autoRegister: 'law', carbonTax: 'environment',
 };
 
 /** Promises to partners that need an Act of Parliament rather than a signature. */
@@ -71,6 +76,31 @@ export function billDef(id: string): BillDef | null {
 }
 
 export const MAX_BILLS = 2;
+
+/**
+ * The House does not sit all year. It meets three times (weeks 9-16, 27-34 and 42-49 of each year), and a bill that is
+ * ready between meetings waits for the next. There is time at each meeting for one of the government's bills, so a long
+ * manifesto takes years. Every Act passed tires the House: fatigue costs the next bill support among
+ * partners and wavering members, and eases by `ease` a week.
+ */
+export const SITTINGS: readonly [number, number][] = [[9, 16], [27, 34], [42, 49]];
+export const FATIGUE = { perAct: 1, max: 4, ease: 0.08, margin: 0.05 };
+export const houseSits = (week: number): boolean => {
+  const w = ((week - 1) % 52) + 1;
+  return SITTINGS.some(([from, to]) => w >= from && w <= to);
+};
+/** The weeks until the House next sits, or 0 if it sits now. */
+export const weeksToSitting = (week: number): number => {
+  for (let i = 0; i < 52; i++) if (houseSits(week + i)) return i;
+  return 0;
+};
+/** Which meeting of the House this week falls in (0, 1, 2 in the first year, 3, 4, 5 in the second...), or -1 between meetings. */
+export const sittingNo = (week: number): number => {
+  const w = ((week - 1) % 52) + 1;
+  const i = SITTINGS.findIndex(([from, to]) => w >= from && w <= to);
+  return i < 0 ? -1 : Math.floor((week - 1) / 52) * SITTINGS.length + i;
+};
+export const fatigueOf = (k: Career): number => k.fatigue ?? 0;
 
 /** Weeks a bill takes to reach its vote. A capable minister drafts faster. */
 export const prepWeeks = (k: Career, id: string) => {
@@ -130,10 +160,11 @@ export function whipCount(world: World, c: Campaign, id: string, proposer: numbe
     }
     const align = def?.issue ? (k.stances[p][ISSUE_IDS.indexOf(def.issue[0])] * def.issue[1]) / 2 : 0.2;
     const warmth = relation(c, proposer, p) / 200;
+    const tired = fatigueOf(k) * FATIGUE.margin;
     const margin = p === proposer ? 1
       : (inGov(c, p) || supports(c, p)) && inGov(c, proposer)
-        ? 0.35 + k.government.stability / 250 + 0.5 * align + warmth + (terms.sweetened ? 0.25 : 0) + (terms.confidence ? 0.4 : 0) - 0.5
-        : 0.6 * align + warmth + (terms.sweetened ? 0.15 : 0) - 0.35;
+        ? 0.35 + k.government.stability / 250 + 0.5 * align + warmth + (terms.sweetened ? 0.25 : 0) + (terms.confidence ? 0.4 : 0) - 0.5 - tired
+        : 0.6 * align + warmth + (terms.sweetened ? 0.15 : 0) - 0.35 - tired + (k.chiefDeal ?? 0);
     out.lean[p] = margin;
     const vote: Vote = forced === 'yes' ? 'yes' : forced === 'no' ? 'no' : margin > 0.08 ? 'yes' : margin < -0.08 ? 'no' : 'wavering';
     out.votes[p] = vote;
@@ -286,9 +317,12 @@ export function resolveVote(world: World, c: Campaign, scene: Scene, choice: num
   }
   if (choice === 1) k.fiscal += 0.5;
   const result = divide(world, c, id, me, { sweetened: choice === 1, confidence: choice === 2 });
+  // Whatever the chiefs won over on the other side is spent on this vote.
+  delete k.chiefDeal;
   const vars = { bill: billRef(id), yes: result.yes, no: result.no };
   if (result.passed) {
     enact(c, id, me, result.yes / Math.max(1, result.yes + result.no));
+    k.fatigue = Math.min(FATIGUE.max, fatigueOf(k) + FATIGUE.perAct);
     if (kind === 'pledge') { k.delivery[name as PledgeId] = 'kept'; k.record.kept.push(name as PledgeId); k.credibility = clamp(k.credibility + (isBrief(k, name as PledgeId) ? BRIEF.kept : 3), 0, 100); }
     else settle(c, name as DemandId);
     pushNews(c, { party: me, key: 'news.gov.passed', vars, tone: 'good' });
@@ -556,6 +590,12 @@ export function governWeek(c: Campaign, rng: Rng): void {
   const k = c.career!;
   const me = c.player;
   economyWeek(c, rng);
+  bankWeek(c, rng);
+  marketsWeek(c, rng);
+  swanWeek(c, rng);
+  netizenWeek(c);
+  viralWeek(c, new Rng((c.rng ^ 0x71a1c) + k.week * 13));
+  crisisWeek(c, rng);
   nationWeek(c, rng);
   pestelWeek(c, rng);
   defenceWeek(c, rng);
@@ -570,8 +610,11 @@ export function governWeek(c: Campaign, rng: Rng): void {
   cabinetWeek(c, rng);
 
   for (const bill of k.bills) bill.weeks--;
-  const ready = k.bills.find((b) => b.weeks <= 0);
-  if (ready && isPm(c) && !c.inbox.some((s) => s.bill === ready.id)) addScene(c, { kind: 'vote', from: null, bill: ready.id });
+  if (k.fatigue) k.fatigue = Math.max(0, k.fatigue - FATIGUE.ease);
+  // The House has time for one of the government's bills at each meeting.
+  const sitting = sittingNo(k.week);
+  const ready = sitting >= 0 && sitting !== k.floorSitting ? k.bills.find((b) => b.weeks <= 0) : undefined;
+  if (ready && isPm(c) && !c.inbox.some((s) => s.bill === ready.id)) { addScene(c, { kind: 'vote', from: null, bill: ready.id }); k.floorSitting = sitting; }
 
   for (const o of k.obligations) {
     if (o.done || k.week <= o.due) continue;

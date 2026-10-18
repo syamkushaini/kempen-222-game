@@ -13,8 +13,8 @@ import { houseTally } from './contests';
 import { scaled } from './actions';
 import { isValidCampaign } from './validate';
 import {
-  agenda, deficit, deliver, dueWeeks, economicMood, formCabinet, governWeek, looseness, makeObligations, MAX_BILLS, prepWeeks, reshuffle,
-  resolveHouseVote, resolveVote, setBudget, standstill, tableBill, tableBudget, whipCount,
+  agenda, deficit, deliver, dueWeeks, economicMood, formCabinet, governWeek, houseSits, looseness, makeObligations, MAX_BILLS, prepWeeks, reshuffle,
+  resolveHouseVote, resolveVote, setBudget, standstill, tableBill, tableBudget, weeksToSitting, whipCount,
 } from './govern';
 import { DEMAND_IDS, PORTFOLIO_IDS, type Budget, type Campaign, type Scene } from './types';
 
@@ -201,6 +201,7 @@ describe('bills', () => {
     expect(prepWeeks(k, 'pledge:homes')).toBe(4);
     works.skill = 1;
     expect(prepWeeks(k, 'pledge:homes')).toBe(8);
+    k.week = 8; // so that it comes due while the House is sitting
     tableBill(c, 'pledge:homes');
     govern(c, 7);
     expect(c.inbox).toHaveLength(0);
@@ -209,6 +210,34 @@ describe('bills', () => {
     expect(c.inbox[0]).toMatchObject({ kind: 'vote', bill: 'pledge:homes' });
     govern(c, 3);
     expect(c.inbox).toHaveLength(1); // asked once
+  });
+
+  it('wait for the House to sit when they are ready between meetings', () => {
+    const c = career();
+    const k = c.career!;
+    expect(houseSits(10)).toBe(true);
+    expect(houseSits(20)).toBe(false);
+    expect(houseSits(52 + 30)).toBe(true); // the second year keeps the same calendar
+    expect(weeksToSitting(17)).toBe(10);
+    k.week = 17;
+    tableBill(c, 'pledge:homes');
+    k.bills[0].weeks = 0;
+    govern(c, 5);
+    expect(c.inbox).toHaveLength(0); // ready, but the House is in recess
+    govern(c, 6);
+    expect(c.inbox).toHaveLength(1); // week 27: it sits again
+  });
+
+  it('tire the House: each Act passed makes the next harder, and it passes', () => {
+    const c = career();
+    const k = c.career!;
+    const fresh = whipCount(base, c, 'pledge:homes', PS).lean[BP];
+    k.fatigue = 3;
+    expect(whipCount(base, c, 'pledge:homes', PS).lean[BP]).toBeLessThan(fresh);
+    k.fatigue = 0.05;
+    k.week = 10;
+    govern(c, 5);
+    expect(k.fatigue).toBe(0);
   });
 
   it('are counted before the vote, every member accounted for', () => {

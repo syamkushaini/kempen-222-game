@@ -68,7 +68,7 @@ const GROUPS: { id: GroupId; icon: IconName; tabs: SidebarTab[] }[] = [
 ];
 /** Tabs that belong only to the years between elections, and only to the campaign. */
 const TERM_ONLY: SidebarTab[] = ['desk', 'orders', 'house'];
-const CAMPAIGN_ONLY: SidebarTab[] = ['actions', 'chiefs', 'deals'];
+const CAMPAIGN_ONLY: SidebarTab[] = ['actions', 'deals'];
 /** The picture that goes with each tab, beside its name. */
 const TAB_ICON: Record<SidebarTab, IconName> = {
   desk: 'inbox', missions: 'trophy', orders: 'doc', house: 'landmark', policy: 'sliders', actions: 'megaphone', team: 'crown', party: 'coins', slate: 'ballot', chiefs: 'flag', deals: 'chat',
@@ -124,7 +124,7 @@ function CampaignScreen() {
   // A one-seat contest has nobody to delegate to and no pacts to make.
   const term = campaign.phase === 'term';
   const available = (id: SidebarTab) =>
-    (id !== 'chiefs' || hasChiefs(world)) && (id !== 'deals' || hasDiplomacy(world)) &&
+    (id !== 'chiefs' || (hasChiefs(world) && (!term || !!campaign.career))) && (id !== 'deals' || hasDiplomacy(world)) &&
     (id !== 'policy' || !!campaign.career) && (id !== 'missions' || !!campaign.career) && (id !== 'party' || !!campaign.career) && !(term ? CAMPAIGN_ONLY : TERM_ONLY).includes(id);
   const groups = GROUPS.map((g) => ({ ...g, tabs: g.tabs.filter(available) })).filter((g) => g.tabs.length > 0);
   const every = groups.flatMap((g) => g.tabs);

@@ -16,6 +16,14 @@ export function carryStamps(k: Career, gone: number): void {
   moved(k.pressWeeks, gone);
   moved(k.eventWeeks, gone);
   for (const e of k.echoes ?? []) e.week -= gone;
+  // The central bank's meetings, the next windfall or crisis, the leader's moves and the chiefs' dinners are dated too. Floor time starts afresh.
+  moved(k.moves, gone);
+  moved(k.chiefWeeks, gone);
+  if (k.markets) { k.markets.next -= gone; k.markets.swan -= gone; }
+  if (k.crisis !== undefined) k.crisis -= gone;
+  if (k.viral !== undefined) k.viral -= gone;
+  if (k.chiefTalk !== undefined) k.chiefTalk -= gone;
+  delete k.floorSitting;
 }
 
 /** A mark later than this week cannot have been made in this parliament: it was carried over unmoved by an older save, and is dropped. */

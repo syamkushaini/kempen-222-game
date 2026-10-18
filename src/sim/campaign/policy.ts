@@ -122,9 +122,21 @@ export const PLEDGES: Record<PledgeId, PledgeDef> = {
   conflictOfInterest: { cost: 0, appeal: { urban_lib: .07, m40: .06, borneo_urban: .04, undi18: .03, civil: -.03 }, needs: ['graft', 1], law: true },
   defenceOversight: { cost: 1, appeal: { urban_lib: .06, m40: .04, civil: .03, undi18: .03, heartland: -.02 }, needs: ['reform', 1], law: true },
   civilReform:     { cost: 0, appeal: { urban_lib: .06, m40: .05, smallbiz: .04, borneo_urban: .03, civil: -.12 }, needs: ['reform', 1], law: true },
+  // Programmes, each with someone who loses by it.
+  childcare:       { cost: 2, appeal: { m40: .07, urban_b40: .06, gig: .05, undi18: .04, seniors: -.02, smallbiz: -.02 } },
+  railLink:        { cost: 4, appeal: { m40: .06, urban_b40: .05, borneo_native: .06, heartland: .04, agri: .03, urban_lib: .02, felda: -.02 }, needs: ['transport', 1] },
+  techFund:        { cost: 2, appeal: { undi18: .07, m40: .06, smallbiz: .05, urban_lib: .04, agri: -.03, felda: -.03 } },
+  vocational:      { cost: 2, appeal: { undi18: .07, urban_b40: .06, felda: .04, agri: .04, gig: .04, urban_lib: -.02 } },
+  floodDefence:    { cost: 3, appeal: { heartland: .06, agri: .07, felda: .05, borneo_native: .05, urban_b40: .04, m40: .02, urban_lib: -.02 } },
+  // Acts that trade something away. A targeted subsidy and a carbon levy bring money in, and anger the people who pay.
+  pressAct:        { cost: 0, appeal: { urban_lib: .08, m40: .05, undi18: .05, borneo_urban: .04, civil: -.04, heartland: -.03 }, needs: ['liberties', 1], law: true },
+  targetedSubsidy: { cost: -3, appeal: { m40: .05, urban_lib: .05, smallbiz: .04, urban_b40: -.07, gig: -.06, heartland: -.05, agri: -.04, felda: -.03 }, needs: ['subsidies', -1], law: true },
+  borneoSeats:     { cost: 0, appeal: { borneo_native: .1, borneo_urban: .09, heartland: -.03, civil: -.02 }, needs: ['federalism', 1], law: true },
+  autoRegister:    { cost: 0, appeal: { undi18: .08, urban_b40: .05, urban_lib: .05, gig: .04, civil: -.02, heartland: -.02 }, needs: ['reform', 1], law: true },
+  carbonTax:       { cost: -1, appeal: { urban_lib: .06, m40: .04, undi18: .04, felda: -.06, smallbiz: -.05, heartland: -.04, agri: -.03 }, needs: ['taxes', 1], law: true },
 };
 // Acts that change the constitution itself need two thirds of the House.
-for (const id of ['termLimit', 'fixedTerm', 'partyHopBan', 'oilRoyalty', 'localVote'] as const) PLEDGES[id].amend = true;
+for (const id of ['termLimit', 'fixedTerm', 'partyHopBan', 'oilRoyalty', 'localVote', 'borneoSeats'] as const) PLEDGES[id].amend = true;
 // The Acts that were promised before there were any others: they are laws too.
 for (const id of ['graftCommission', 'termLimit', 'repealLaws', 'minWage'] as const) PLEDGES[id].law = true;
 
