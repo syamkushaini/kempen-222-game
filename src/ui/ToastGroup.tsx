@@ -28,7 +28,7 @@ export function ToastGroup({ toasts, onDismiss }: { toasts: StringKey[]; onDismi
       </div>
       {count > 1 && (
         <div className="toast-group-expand" onClick={() => setExpanded(!expanded)}>
-          <Icon name={expanded ? 'chevron' : 'chevron'} size={14} />
+          <Icon name="chevron" size={14} />
           <span className="muted small">{expanded ? t('toast.less') : t('toast.more', { n: count - 1 })}</span>
         </div>
       )}

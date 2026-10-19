@@ -10,8 +10,10 @@ import { useFormat, useT } from './hooks';
 import { Portrait } from './Portrait';
 import { NewsLine } from './NewsTab';
 import { Icon } from './Icon';
+import { ToastGroup } from './ToastGroup';
 
-const TOAST_MS = 5000;
+/** How long a message stays before it goes by itself. It can always be closed sooner. */
+const TOAST_MS = 8000;
 
 /** The line on the title screen that opens the achievements and the gallery. */
 export function HonoursEntry() {
@@ -115,11 +117,7 @@ export function HonoursDialog({ onClose }: { onClose(): void }) {
   );
 }
 
-/** How long a message stays before it goes by itself. It can always be closed sooner. */
-const REPORT_MS = 8000;
-
-/**
- * What the last action did, as a message over whatever tab the player is on. It closes with its × or a tap, and goes by
+/** What the last action did, as a message over whatever tab the player is on. It closes with its × or a tap, and goes by
  * itself after a few seconds: nothing about an action stays on the screen for good. The News tab keeps the record.
  */
 function ActionToast() {
@@ -128,7 +126,7 @@ function ActionToast() {
   const clear = useStore((s) => s.clearReport);
   useEffect(() => {
     if (!report) return;
-    const id = setTimeout(clear, REPORT_MS);
+    const id = setTimeout(clear, TOAST_MS);
     return () => clearTimeout(id);
   }, [report, clear]);
   if (!report) return null;
@@ -146,34 +144,22 @@ function ActionToast() {
 export function ActionToasts() { return <ActionToast />; }
 
 export function Toasts() {
-  const t = useT();
-  const toasts = useStore((s) => s.toasts);
+  const toasts = useStore((s) => s.toasts as unknown as StringKey[]);
   const dismiss = useStore((s) => s.dismissToast);
   // On the result screen what was earned is listed under the verdict, so it is not announced over the verdict as well.
   const onResult = useStore((s) => { const c = s.game?.campaign; return !!c && (c.phase === 'night' || ((c.phase === 'formation' || c.phase === 'done') && (s.showNight || !c.formation))); });
-  useEffect(() => { if (onResult) toasts.forEach((id) => dismiss(id)); }, [onResult, toasts, dismiss]);
+  useEffect(() => { if (onResult) toasts.forEach((id) => dismiss(id as AchievementId)); }, [onResult, toasts, dismiss]);
   const first = onResult ? undefined : toasts[0];
 
   // One at a time, each given its moment.
   useEffect(() => {
     if (!first) return;
-    const id = setTimeout(() => dismiss(first), TOAST_MS);
+    const id = setTimeout(() => dismiss(first as AchievementId), TOAST_MS);
     return () => clearTimeout(id);
   }, [first, dismiss]);
 
   if (!first) return null;
   return (
-    <div className="toasts" role="status" aria-live="polite">
-      <div key={first} className="toast panel">
-        <span className="medal" aria-hidden="true">★</span>
-        <div className="grow">
-          <span className="dialog-from">{t('toast.achievement')}</span>
-          <span className="action-title">{t(`ach.${first}` as StringKey)}</span>
-          <span className="action-meta">{t(`ach.${first}.desc` as StringKey)}</span>
-        </div>
-        {toasts.length > 1 && <span className="muted small num toast-count">1/{toasts.length}</span>}
-        <button className="close-x" onClick={() => dismiss(first)} aria-label={t('toast.dismiss')}><Icon name="close" size={18} /></button>
-      </div>
-    </div>
+    <ToastGroup toasts={toasts} onDismiss={(id: StringKey) => dismiss(id as unknown as AchievementId)} />
   );
 }

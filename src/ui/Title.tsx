@@ -35,7 +35,7 @@ import { PlatformEditor } from './Platform';
 import { SeatPicker } from './SeatPicker';
 import { LeaderPicker, PartyCreator, type Draft } from './Setup';
 import { Jargon } from './Term';
-import { SkeletonBlock } from './Skeleton';
+import { Skeleton } from './Skeleton';
 import { Kbd } from './Kbd';
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard'];
@@ -153,7 +153,7 @@ export function Title() {
 
   const scenario = kind === 'state' ? `${stateCareer ? 'career' : 'state'}:${state}` : kind === 'byelection' ? byElectionId(seat) : SCENARIOS.find((s) => s.id === kind)!.id;
   const world = getWorld(scenario);
-  if (!world) return <SkeletonBlock width="100%" height="400px" />;
+  if (!world) return <Skeleton width="100%" height="400px" />;
   const parties = playable(world);
   const player = chosen !== null && parties.includes(chosen) ? chosen : parties[0];
   const level = difficulty ?? (kind === 'byelection' ? 'easy' : 'normal');

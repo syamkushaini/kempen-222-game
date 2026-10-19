@@ -839,6 +839,19 @@ input.error, select.error { border-color: var(--bad); }
 @keyframes toastSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 .toast { animation: toastSlideIn 0.3s ease-out; }
 
+/* Progress indicator for long-running operations. */
+.progress-container { margin: 16px 0; }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.progress-bar { width: 100%; height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
+.progress-fill { width: 0%; height: 100%; background: var(--primary); transition: width 0.3s ease; }
+
+/* Progress ring for circular progress. */
+.progress-ring { width: 48px; height: 48px; position: relative; }
+.progress-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.progress-ring-circle { fill: none; stroke: var(--panel-2); stroke-width: 6; }
+.progress-ring-fill { fill: none; stroke: var(--primary); stroke-width: 6; stroke-dasharray: 120; stroke-dashoffset: 120; animation: progress-ring-animate 1s ease forwards; }
+@keyframes progress-ring-animate { to { stroke-dashoffset: 0; } }
+
 /* Focus ring for keyboard users. */
 :focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; border-radius: 4px; }
 
@@ -860,3 +873,27 @@ input.error, select.error { border-color: var(--bad); }
 .seat-row:hover { background: var(--panel-2); }
 .seat-row:focus-visible { outline: 3px solid var(--ring); outline-offset: 0; background: var(--panel-3); }
 .seat-row .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+
+/* Mobile touch targets - minimum 44px for accessibility */
+@media (max-width: 980px) {
+  .btn, .seat-row, .role-button, .party-card, .chip, button[type="button"], button[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px 16px;
+    touch-action: manipulation;
+  }
+  .icon-btn { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  .map-seat, .seat-dot { min-width: 24px; min-height: 24px; }
+}
+
+/* Touch gesture hints */
+.touch-hint { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.touch-hint .kbd { font-size: 11px; }
+
+/* Accessibility: reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .seat-row.flash { animation: none; }
+  .toast { animation: none; }
+  .map-seat.flash { animation: none; }
+}
