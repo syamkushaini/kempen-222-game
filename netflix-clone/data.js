@@ -14,11 +14,12 @@ const TITLES = [
   { id: 13, title: "Moonlight Syndicate", type: "series", year: 2025, rating: "16+", match: 94, genres: ["Crime", "Drama"], seasons: 1, hue: 250, desc: "A courier for a secret society discovers she is the one being delivered." },
   { id: 14, title: "Paper Planes", type: "movie", year: 2022, rating: "PG", match: 87, genres: ["Family", "Adventure"], runtime: "1h 36m", hue: 195, desc: "Two siblings fold their way across a continent to bring a lost kite home." },
   { id: 15, title: "Hollow Pines", type: "series", year: 2023, rating: "16+", match: 90, genres: ["Horror", "Mystery"], seasons: 3, hue: 150, desc: "Every winter, one resident of Hollow Pines disappears. This year, the town decides to fight back." },
-  { id: 16, title: "Beat Street", type: "series", year: 2021, rating: "13+", match: 85, genres: ["Music", "Drama"], seasons: 3, hue: 310, desc: "An underground crew turns a condemned theater into the city's loudest stage." }
+  { id: 16, title: "Beat Street", type: "series", year: 2021, rating: "13+", match: 85, genres: ["Music", "Drama"], seasons: 3, hue: 310, desc: "An underground crew turns a condemned theater into the city's loudest stage." },
+  { id: 17, title: "Demi Maruah Perwira", type: "movie", year: 2026, rating: "13+", match: 98, genres: ["Drama", "Action"], runtime: "2h 05m", hue: 215, poster: "demi-maruah-perwira.jpg", desc: "Duty, honour and the weight of command, told from the cockpit to the briefing room." }
 ];
 
 const ROWS = [
-  { name: "Trending Now", ids: [9, 1, 5, 13, 8, 12, 3, 7] },
+  { name: "Trending Now", ids: [17, 9, 1, 5, 13, 8, 12, 3, 7] },
   { name: "Top Picks for You", ids: [8, 2, 15, 16, 4, 6, 11, 10] },
   { name: "Sci-Fi & Fantasy", filter: t => t.genres.some(g => ["Sci-Fi", "Fantasy"].includes(g)) },
   { name: "Thrillers & Horror", filter: t => t.genres.some(g => ["Thriller", "Horror", "Mystery", "Crime"].includes(g)) },

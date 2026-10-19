@@ -10,6 +10,7 @@ try { list = JSON.parse(localStorage.getItem("myList") || "[]"); } catch (e) {}
 
 const byId = id => TITLES.find(t => t.id === id);
 const art = t => `linear-gradient(135deg, hsl(${t.hue},70%,38%), hsl(${(t.hue + 50) % 360},60%,12%))`;
+const bg = t => t.poster ? `linear-gradient(to top, rgba(0,0,0,.7), transparent 55%), url('${t.poster}') center/cover` : art(t);
 const saveList = () => { try { localStorage.setItem("myList", JSON.stringify(list)); } catch (e) {} };
 const length = t => t.type === "series" ? `${t.seasons} Season${t.seasons > 1 ? "s" : ""}` : t.runtime;
 
@@ -32,7 +33,7 @@ function toggleList(id) {
 
 function cardHTML(t) {
   const inList = list.includes(t.id);
-  return `<div class="card" data-id="${t.id}" style="background:${art(t)}">
+  return `<div class="card${t.poster ? " has-poster" : ""}" data-id="${t.id}" style="background:${bg(t)}" aria-label="${t.title}">
     <div class="name">${t.title}</div>
     <div class="tag">${t.genres.join(" • ")}</div>
     <div class="quick">
@@ -43,7 +44,7 @@ function cardHTML(t) {
 }
 
 function heroHTML(t) {
-  return `<section class="hero" style="background:${art(t)}">
+  return `<section class="hero" style="background:${bg(t)}">
     <div class="shade"></div>
     <div class="hero-content">
       <h1>${t.title}</h1>
@@ -84,7 +85,7 @@ function render() {
 function openModal(id) {
   const t = byId(id);
   const inList = list.includes(id);
-  document.getElementById("mHero").style.background = art(t);
+  document.getElementById("mHero").style.background = bg(t);
   document.getElementById("mHero").innerHTML = `<div><h1>${t.title}</h1>
     <div class="btns"><button class="btn play" data-play="${t.id}">&#9654; Play</button>
     <button class="btn info" data-list="${t.id}">${inList ? "&#10003; In My List" : "+ My List"}</button></div></div>`;

@@ -84,3 +84,6 @@ footer { text-align:center; color:var(--muted); font-size:.8rem; padding:30px 4%
   .m-hero h1 { font-size:1.8rem; }
   .card:hover { transform:none; }
 }
+
+.card.has-poster .name { display:none; }
+.card.has-poster .tag { display:none; }
