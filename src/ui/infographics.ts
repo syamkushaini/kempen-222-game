@@ -289,7 +289,10 @@ export async function drawFrontPage(canvas: HTMLCanvasElement, d: FrontPage): Pr
   const hf = (s: number) => `900 ${s}px ${SERIF}`;
   let hs = 78;
   let lines = wrap(d.headline.toUpperCase(), W - pad * 2, measure(hf(hs)), 2);
-  while (hs > 44 && lines.some((l) => measure(hf(hs))(l) > W - pad * 2)) { hs -= 4; lines = wrap(d.headline.toUpperCase(), W - pad * 2, measure(hf(hs)), 2); }
+  // Smaller until the whole headline fits on two lines: a headline cut short with an ellipsis is worse than a smaller one.
+  while (hs > 40 && lines.some((l) => l.endsWith('…') || measure(hf(hs))(l) > W - pad * 2)) { hs -= 4; lines = wrap(d.headline.toUpperCase(), W - pad * 2, measure(hf(hs)), 2); }
+  // At the smallest size a very long headline takes a third line rather than lose its end.
+  if (lines.some((l) => l.endsWith('…'))) lines = wrap(d.headline.toUpperCase(), W - pad * 2, measure(hf(hs)), 3);
   lines.forEach((l, i) => text(l, W / 2, 246 + i * (hs + 6), hf(hs), RULE, 'center'));
   let y = 246 + (lines.length - 1) * (hs + 6) + 40;
   const sf = `italic 500 22px ${SERIF}`;
@@ -299,15 +302,16 @@ export async function drawFrontPage(canvas: HTMLCanvasElement, d: FrontPage): Pr
   y += 28;
 
   // Left column: the photograph.
-  const px = pad, pw = 340, ph = 400;
+  // The columns take the room left above the footer rule, so a long headline cannot push them into it.
+  const px = pad, pw = 340, ph = Math.max(300, Math.min(400, H - 56 - 16 - y));
   g.save(); g.beginPath(); g.rect(px, y, pw, ph); g.clip();
   g.fillStyle = '#cfc7b4'; g.fillRect(px, y, pw, ph);
-  if (d.portrait) { try { g.filter = 'grayscale(1) contrast(1.1)'; g.drawImage(await loadImage(d.portrait), px, y, pw, pw); g.filter = 'none'; } catch { g.filter = 'none'; } }
+  if (d.portrait) { try { g.filter = 'grayscale(1) contrast(1.1)'; { const img = await loadImage(d.portrait); const ih = ph - 84; const want = pw / ih; const sw = img.width, sh = img.height; const cw = sw / sh > want ? sh * want : sw, ch = sw / sh > want ? sh : sw / want; g.drawImage(img, (sw - cw) / 2, 0, cw, ch, px, y, pw, ih); } g.filter = 'none'; } catch { g.filter = 'none'; } }
   g.fillStyle = d.accent; g.globalAlpha = 0.18; g.fillRect(px, y, pw, ph); g.globalAlpha = 1;
   g.restore();
   g.strokeStyle = RULE; g.lineWidth = 2; g.strokeRect(px, y, pw, ph);
   const cf = `italic 500 15px ${SERIF}`;
-  wrap(d.caption, pw - 24, measure(cf), 3).forEach((l, i) => text(l, px + 12, y + pw + 28 + i * 21, cf, RULE));
+  wrap(d.caption, pw - 24, measure(cf), 3).forEach((l, i) => text(l, px + 12, y + ph - 56 + i * 20, cf, RULE));
 
   // Middle: a chart of the elections, in the manner of a paper's graphic.
   const mx = px + pw + 40, mw = 440;
@@ -335,8 +339,9 @@ export async function drawFrontPage(canvas: HTMLCanvasElement, d: FrontPage): Pr
   d.numbers.items.slice(0, 4).forEach((it, i) => {
     const ry = y + 40 + i * rowH;
     if (i > 0) { g.fillStyle = '#b9ae96'; g.fillRect(nx + 14, ry, nw - 28, 1); }
-    text(it.value, nx + nw / 2, ry + rowH / 2 + 12, `900 44px ${SERIF}`, RULE, 'center');
-    wrap(it.label.toUpperCase(), nw - 24, measure(`700 11px ${SERIF}`), 2).forEach((l, j) => text(l, nx + nw / 2, ry + rowH / 2 + 34 + j * 14, `700 11px ${SERIF}`, '#4a4338', 'center'));
+    const vs = rowH >= 90 ? 44 : 38;
+    text(it.value, nx + nw / 2, ry + rowH * 0.5 + 4, `900 ${vs}px ${SERIF}`, RULE, 'center');
+    wrap(it.label.toUpperCase(), nw - 24, measure(`700 11px ${SERIF}`), 2).forEach((l, j) => text(l, nx + nw / 2, ry + rowH * 0.5 + 22 + j * 13, `700 11px ${SERIF}`, '#4a4338', 'center'));
   });
 
   rule(H - 56, 2);
