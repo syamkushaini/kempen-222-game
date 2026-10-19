@@ -48,6 +48,23 @@ html { overflow-x: clip; }
 
 button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible, [role="radio"]:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
+/* Skip to content: hidden until a keyboard user tabs to it, then shown above everything. */
+.skip-link {
+  position: absolute;
+  top: -10000px;
+  left: 0;
+  right: 0;
+  margin: auto;
+  z-index: 10000;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: var(--on-primary);
+  text-decoration: none;
+  border-radius: 0 0 8px 8px;
+  font-weight: 600;
+}
+.skip-link:focus { top: 0; }
+
 /* ---------- layout ---------- */
 
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) clamp(400px, 40%, 520px); gap: 16px; align-items: start; flex: 1; }

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { PARTIES } from '../data/parties';
 import { shownAlliance } from '../state/allianceLook';
 import { scenarioInfo, world as generalWorld, worldOf } from '../data/world';
@@ -307,3 +307,47 @@ export function useCampaignDisplay(): SeatDisplay[] {
 
 export const DisplayContext = createContext<SeatDisplay[]>([]);
 export const useDisplay = () => useContext(DisplayContext);
+
+/** Trap Tab inside a dialog: when the last focusable element is reached, Tab wraps to the first (and Shift+Tab the other way). */
+export function useFocusTrap(ref: React.RefObject<HTMLElement | null>, active: boolean): void {
+  useEffect(() => {
+    if (!active || !ref.current) return;
+    const el = ref.current;
+    const focusable = el.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      } else if (document.activeElement === last || !el.contains(document.activeElement)) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
+    el.addEventListener('keydown', onKey);
+    return () => el.removeEventListener('keydown', onKey);
+  }, [active, ref]);
+}
+
+/** Open a dialog: move focus into it, and restore focus to the previously focused element when it closes. */
+export function useDialogFocus(open: boolean, onClose: () => void): { dialogRef: React.RefObject<HTMLDivElement | null> } {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const previous = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    previous.current = document.activeElement as HTMLElement | null;
+    if (ref.current) ref.current.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      if (open && previous.current) previous.current.focus();
+    };
+  }, [open, onClose]);
+
+  return { dialogRef: ref };
+}

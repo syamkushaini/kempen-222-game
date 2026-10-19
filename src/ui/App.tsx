@@ -351,18 +351,22 @@ export function App() {
   const night = phase === 'night' || ((phase === 'formation' || phase === 'done') && (showNight || !talks));
   return (
     <div className="app">
+      {/* Skip to main content: keyboard users reach what matters without tabbing through the header. */}
+      <a className="skip-link" href="#main">{t('app.skipToContent')}</a>
       <Header />
       <AsideBanner />
       {/* the screens read party colours when they draw, so a new palette starts them afresh */}
       <Fragment key={palette}>
-        {!phase && <Title />}
-        <Suspense fallback={<p className="muted">{t('app.loading')}</p>}>
-        {ended && <LegacyScreen />}
-        {!ended && (phase === 'campaign' || phase === 'term') && <CampaignScreen />}
-        {!ended && night && <ElectionNight key={loads} />}
-        {!ended && phase && phase !== 'campaign' && phase !== 'term' && !night && <FormationScreen />}
-        </Suspense>
-        {!ended && phase && !night && <SceneModal />}
+        <main id="main" tabIndex={-1}>
+          {!phase && <Title />}
+          <Suspense fallback={<p className="muted">{t('app.loading')}</p>}>
+            {ended && <LegacyScreen />}
+            {!ended && (phase === 'campaign' || phase === 'term') && <CampaignScreen />}
+            {!ended && night && <ElectionNight key={loads} />}
+            {!ended && phase && phase !== 'campaign' && phase !== 'term' && !night && <FormationScreen />}
+          </Suspense>
+          {!ended && phase && !night && <SceneModal />}
+        </main>
       </Fragment>
       <GameMenu />
       <Music />

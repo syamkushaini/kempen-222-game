@@ -1,8 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { StringKey } from '../i18n/strings';
 import { useStore, type Theme } from '../state/store';
 import { ACCENTS, SKINS, unlocked, wearing } from './cosmetics';
+import { DialogFocus } from './dialog';
 import { useT } from './hooks';
 import { Icon } from './Icon';
 import { canDraw3D } from './map3d';
@@ -78,11 +79,6 @@ function SettingsDialog({ onClose }: { onClose(): void }) {
   const t = useT();
   const s = useStore((x) => x.settings);
   const set = useStore((x) => x.setSettings);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
   const themes: Theme[] = ['system', 'light', 'dark'];
   // A skin that is worn sets the colour scheme itself.
   const profile = useStore((x) => x.profile);
@@ -90,7 +86,7 @@ function SettingsDialog({ onClose }: { onClose(): void }) {
   const forced = wornScheme !== null;
   return (
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="dialog panel settings-dialog" role="dialog" aria-modal="true" aria-label={t('settings.title')}>
+      <DialogFocus open={true} onClose={onClose} className="panel settings-dialog" role="dialog" aria-modal="true" aria-label={t('settings.title')}>
         <div className="panel-head">
           <h2>{t('settings.title')}</h2>
           <button className="btn small primary" onClick={onClose}>{t('settings.done')}</button>
@@ -120,7 +116,7 @@ function SettingsDialog({ onClose }: { onClose(): void }) {
         <Row label={t('sound.sfx')}><Switch label={t('sound.sfx')} on={s.sound} onFlip={() => set({ sound: !s.sound })} /></Row>
         <Row label={t('sound.music')}><Switch label={t('sound.music')} on={s.music} onFlip={() => set({ music: !s.music })} /></Row>
         <Row label={t('guide.show')}><Switch label={t('guide.show')} on={s.hints} onFlip={() => set({ hints: !s.hints })} /></Row>
-      </div>
+      </DialogFocus>
     </div>
   );
 }

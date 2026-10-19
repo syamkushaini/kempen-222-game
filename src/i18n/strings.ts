@@ -22,6 +22,7 @@ import { LOOK_EN, LOOK_MS, type LookKey } from './look';
 const en = {
   'app.title': 'Kempen 222',
   'app.loadingMap': 'Loading map…',
+  'app.skipToContent': 'Skip to content',
 
   'view.last': 'Last election',
   'view.result': 'Election night',
@@ -2984,6 +2985,7 @@ export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey
 const ms: Record<CoreKey, string> = {
   'app.title': 'Kempen 222',
   'app.loadingMap': 'Buka peta…',
+  'app.skipToContent': 'Lompat ke kandungan',
 
   'view.last': 'Pilihan raya lalu',
   'view.result': 'Malam keputusan',
