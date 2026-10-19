@@ -10,6 +10,7 @@ import { Icon } from './Icon';
 import { PartyMark } from './identity';
 import { Logo } from './Logo';
 import { SettingsButton } from './SettingsPanel';
+import { NotificationCenter } from './NotificationCenter';
 import { partyName, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
 import { Kbd } from './Kbd';
 
@@ -217,6 +218,7 @@ export function Header() {
         </button>
       )}
       <MenuButton />
+      <NotificationCenter />
       <SettingsButton />
     </header>
   );

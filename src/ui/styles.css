@@ -741,3 +741,51 @@ body { zoom: var(--ui-zoom, 1); }
 /* Inline form validation. */
 .field-error { color: var(--bad); font-size: 11px; margin-top: 4px; }
 input.error, select.error { border-color: var(--bad); }
+
+/* Notification bell in header. */
+.notification-bell.has-notifications { position: relative; }
+.notification-bell .count-badge { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; border-radius: 8px; background: var(--bad); color: var(--ink); font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; padding: 0 2px; }
+
+/* Notification center panel. */
+.notification-panel { width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 120px); overflow-y: auto; }
+.notification-list { margin: 0; padding: 0; list-style: none; max-height: 300px; overflow-y: auto; }
+.notification-item { padding: 12px; border-bottom: 1px solid var(--line); }
+.notification-item.read { opacity: 0.7; }
+.notification-item .muted { display: block; font-size: 11px; margin-bottom: 2px; }
+.notification-item strong { display: block; font-size: 14px; margin-bottom: 4px; }
+.notification-item p { margin: 0 0 8px 0; font-size: 13px; }
+.notification-item .link { font-size: 12px; }
+
+/* Confirm dialog for destructive actions. */
+.confirm-dialog { max-width: 420px; }
+.confirm-dialog h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.confirm-dialog p { font-size: 13px; margin-bottom: 16px; }
+.confirm-dialog .button-row { justify-content: flex-end; gap: 8px; }
+.confirm-dialog .btn.destructive { background: var(--bad); }
+.confirm-dialog .btn.destructive:hover { background: var(--bad); opacity: 0.9; }
+
+/* Loading button. */
+.btn.loading { position: relative; color: transparent !important; }
+.btn.loading::after { content: ''; position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border: 2px solid color-mix(in srgb, currentColor 50%, transparent); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Loading button. */
+.btn.loading { position: relative; color: transparent !important; }
+.btn.loading::after { content: ''; position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border: 2px solid color-mix(in srgb, currentColor 50%, transparent); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; }
+.btn-loading { display: flex; align-items: center; gap: 8px; }
+.btn-spinner { width: 16px; height: 16px; border: 2px solid color-mix(in srgb, currentColor 50%, transparent); border-top-color: currentColor; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+/* Search input for lists. */
+.search-box { position: relative; margin-bottom: 12px; }
+.search-box input { width: 100%; padding: 8px 10px 8px 32px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); color: var(--ink); font-size: 13px; }
+.search-box input:focus { border-color: var(--ring); outline: 2px solid var(--ring); outline-offset: 0; }
+.search-box::before { content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; background: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2211%22 cy=%2211%22 r=%228%22/%3E%3Cpath d=%22M21 21l-4.3-4.3%22/%3E%3C/svg%22) no-repeat center; opacity: 0.4; }
+
+/* Stronger focus ring for keyboard users. */
+:focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; border-radius: 4px; }
+
+/* Seat row hover and keyboard states. */
+.seat-row { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; padding: 7px 4px; text-align: left; border-radius: 6px; cursor: pointer; }
+.seat-row:hover { background: var(--panel-2); }
+.seat-row:focus-visible { outline: 3px solid var(--ring); outline-offset: 0; background: var(--panel-3); }
+.seat-row .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }

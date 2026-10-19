@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { actionCost, canDo } from '../sim/campaign/actions';
 import { shownWeek } from '../sim/campaign/news';
 import { playerPollCost } from '../sim/campaign/turn';
@@ -10,6 +11,7 @@ import {
 import { SeatNomination } from './Nominations';
 import { SeatEntry } from './Entries';
 import { StateVotes } from './StateVotes';
+import { SearchBar } from './SearchBar';
 
 const TARGETS = 8;
 const DEFEND = 5;
@@ -49,8 +51,10 @@ function SeatRow({ index, display, showState }: { index: number; display: SeatDi
 
 function HotSeats() {
   const t = useT();
+  const world = useWorld();
   const display = useDisplay();
   const me = useStore((s) => s.game!.campaign.player);
+  const [search, setSearch] = useState('');
   const rows = display.map((d, i) => ({ d, i })).sort((a, b) => a.d.margin - b.d.margin);
   // Seats to win are the closest ones held by someone else; seats to keep are the closest ones the player's party holds.
   const targets = rows.filter((r) => r.d.winner !== me).slice(0, TARGETS);
@@ -63,9 +67,11 @@ function HotSeats() {
         <h2>{t('hot.targets')}</h2>
         <span className="muted">{t('hot.targetsHint')}</span>
       </div>
-      {targets.length > 0
-        ? <ul className="seat-list">{targets.map(({ d, i }) => <SeatRow key={i} index={i} display={d} showState />)}</ul>
-        : <p className="muted small">{t('hot.noTargets')}</p>}
+      <SearchBar placeholder={t('search.seats')} value={search} onChange={setSearch} />
+      <ul className="seat-list">
+        {targets.filter(({ i }) => world.seats[i].name.toLowerCase().includes(search.toLowerCase())).map(({ d, i }) => <SeatRow key={i} index={i} display={d} showState />)}
+        {targets.length > 0 && targets.filter(({ i }) => world.seats[i].name.toLowerCase().includes(search.toLowerCase())).length === 0 && <p className="muted small">{t('search.noResults')}</p>}
+      </ul>
       {defend.length > 0 && (
         <>
           <div className="panel-head">
@@ -85,6 +91,7 @@ function StateList() {
   const world = useWorld();
   const display = useDisplay();
   const state = useStore((s) => s.selectedState)!;
+  const [search, setSearch] = useState('');
   const seats = world.seatsByState[state].map((i) => ({ d: display[i], i })).sort((a, b) => a.d.margin - b.d.margin);
   const tally = new Array<number>(N_PARTIES).fill(0);
   for (const { d } of seats) tally[d.winner]++;
@@ -105,8 +112,9 @@ function StateList() {
         ))}
       </p>
       <StateVotes only={state} />
+      <SearchBar placeholder={t('search.seats')} value={search} onChange={setSearch} />
+      <ul className="seat-list">{seats.filter(({ i }) => world.seats[i].name.toLowerCase().includes(search.toLowerCase())).map(({ d, i }) => <SeatRow key={i} index={i} display={d} showState={false} />)}</ul>
       <p className="muted small">{t('state.sortHint')}</p>
-      <ul className="seat-list">{seats.map(({ d, i }) => <SeatRow key={i} index={i} display={d} showState={false} />)}</ul>
     </section>
   );
 }

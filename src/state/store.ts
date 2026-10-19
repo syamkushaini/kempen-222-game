@@ -89,6 +89,16 @@ export type Theme = 'system' | 'light' | 'dark';
 export type Palette = 'standard' | 'accessible';
 export type TextSize = 'normal' | 'large';
 
+/** A notification shown in the notification center. */
+export interface NotificationItem {
+  id: string;
+  week: number;
+  title: string;
+  body: string;
+  tone: 'good' | 'bad' | 'neutral';
+  read: boolean;
+}
+
 export interface Settings {
   lang: Lang;
   theme: Theme;
@@ -188,7 +198,14 @@ interface Store {
   hiddenScene: number[];
   /** What a decision just made brought into the news, shown once as a popup. */
   decisionNews: NewsItem[] | null;
-  /** The inbox is open: the decision at its head is on screen. A new decision opens it by itself (see Inbox in App.tsx); one set aside waits in a bar until the player opens it. */
+  /** Recent notifications shown in the notification center. */
+  notifications: NotificationItem[];
+  /** Adds a notification to the center. */
+  addNotification(item: NotificationItem): void;
+  /** Removes a notification by id. */
+  dismissNotification(id: string): void;
+  /** Clears all notifications. */
+  clearNotifications(): void;
   /** When the autosave last succeeded, or null if it has not or cannot. */
   autosavedAt: number | null;
   autosaveFailed: boolean;
@@ -450,6 +467,10 @@ export const useStore = create<Store>((set, get) => {
     autosaveFailed: false,
     profile: profileStore.load(),
     toasts: [],
+    notifications: [],
+    addNotification: (item) => set((s) => ({ notifications: [item, ...s.notifications].slice(0, 50) })),
+    dismissNotification: (id) => set((s) => ({ notifications: s.notifications.filter((n) => n.id !== id) })),
+    clearNotifications: () => set({ notifications: [] }),
     loads: 0,
 
     setSettings: (patch) => {
