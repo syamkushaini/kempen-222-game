@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react';
-
 /** The drawings for the places that have nothing to show yet, in the same line weight as the icons. */
 const ART = {
   ballot: (
@@ -26,14 +24,16 @@ const ART = {
 } as const;
 export type Art = keyof typeof ART;
 
-/** What a screen says when there is nothing in it yet: a small drawing, a line, and where relevant a way to put that right. */
-export function EmptyState({ art, title, text, children }: { art: Art; title: string; text?: string; children?: ReactNode }) {
+/** What a screen says when there is nothing in it yet: a drawing, a line, and where relevant a way to put that right. */
+export function EmptyState({ art, title, text, action }: { art: Art; title: string; text?: string; action?: { label: string; onClick: () => void } }) {
   return (
     <div className="empty-state">
-      <svg width="96" height="96" viewBox="0 0 96 96" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ART[art]}</svg>
+      <svg width="120" height="120" viewBox="0 0 96 96" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ART[art]}</svg>
       <h3>{title}</h3>
       {text && <p className="muted">{text}</p>}
-      {children}
+      {action && (
+        <button className="btn primary empty-action" onClick={action.onClick}>{action.label}</button>
+      )}
     </div>
   );
 }

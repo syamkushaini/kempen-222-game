@@ -67,6 +67,16 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 
 .error-text { color: var(--bad); font-size: 11px; margin-top: 2px; display: block; }
 
+/* Empty state: what a screen says when there is nothing in it yet. */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 40px 24px; text-align: center; margin: 32px 0;
+}
+.empty-state svg { color: var(--muted); }
+.empty-state h3 { font-size: 16px; font-weight: 600; letter-spacing: -0.1px; }
+.empty-state p { max-width: 320px; }
+.empty-state .empty-action { margin-top: 8px; }
+
 /* ---------- layout ---------- */
 
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) clamp(400px, 40%, 520px); gap: 16px; align-items: start; flex: 1; }
