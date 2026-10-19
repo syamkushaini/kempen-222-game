@@ -34,7 +34,13 @@
 
 /* the press and what people say online */
 .news-views { margin-bottom: 10px; }
-.outlet .action-title .badge { margin-left: 4px; vertical-align: 1px; }
+.outlet { align-items: flex-start; }
+.outlet > .grow { display: grid; gap: 4px; min-width: 0; }
+.outlet .action-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
+.outlet .action-title .badge { margin: 0; }
+.outlet .badge.rel-neutral { border: 1px solid var(--line-2); color: var(--ink-muted); }
+.outlet .action-meta, .outlet .action-reason { display: block; }
+.action.outlet > button.btn { flex: none; align-self: flex-start; margin-top: 0; }
 .headline-quote { display: block; font: 500 14px/1.4 var(--font); margin: 4px 0 2px; }
 .feed { display: flex; flex-direction: column; gap: 8px; }
 .post { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; background: var(--panel-2); line-height: 1.4; animation: fade-up 200ms ease-out; }
