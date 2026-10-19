@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 interface TouchGesturesProps {
   children: ReactNode;
@@ -9,45 +9,64 @@ interface TouchGesturesProps {
   threshold?: number;
 }
 
+/** A swipe slower than this (in milliseconds) is a drag, not a swipe. */
+const QUICK = 600;
+/** Controls a finger is meant to work, and things that pan or scroll by themselves. */
+const OWN_GESTURE = 'input, select, textarea, button, a, label, summary, [role=slider], [role=dialog], svg, canvas, .map-frame, .chips';
+
+/** True when the touch began on something that takes a drag itself: a slider, a list scrolled sideways, the map. */
+export function ownsGesture(el: Element | null): boolean {
+  for (let n: Element | null = el; n && n !== document.body; n = n.parentElement) {
+    if (n.matches(OWN_GESTURE)) return true;
+    if (n.scrollWidth > n.clientWidth + 1) {
+      const x = getComputedStyle(n).overflowX;
+      if (x === 'auto' || x === 'scroll') return true;
+    }
+  }
+  return false;
+}
+
 export function TouchGestures({
   children,
   onSwipeLeft,
   onSwipeRight,
   onSwipeUp,
   onSwipeDown,
-  threshold = 40,
+  threshold = 60,
 }: TouchGesturesProps) {
-  const startX = useRef(0);
-  const startY = useRef(0);
-
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    startX.current = e.touches[0].clientX;
-    startY.current = e.touches[0].clientY;
-  }, []);
-
-  const handleTouchEnd = useCallback((e: TouchEvent) => {
-    const endX = e.changedTouches[0].clientX;
-    const endY = e.changedTouches[0].clientY;
-    const dx = endX - startX.current;
-    const dy = endY - startY.current;
-    const absDx = Math.abs(dx);
-    const absDy = Math.abs(dy);
-
-    if (absDx > absDy && absDx > threshold) {
-      dx > 0 ? onSwipeRight?.() : onSwipeLeft?.();
-    } else if (absDy > absDx && absDy > threshold) {
-      dy > 0 ? onSwipeDown?.() : onSwipeUp?.();
-    }
-  }, [onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, threshold]);
+  // The latest handlers, so the listeners are added once and never act on a stale screen.
+  const handlers = useRef({ onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown });
+  handlers.current = { onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown };
+  const start = useRef<{ x: number; y: number; at: number } | null>(null);
 
   useEffect(() => {
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
+    const onStart = (e: TouchEvent) => {
+      // Two fingers are a pinch, and a touch on a control or a scrolling strip is that control's own.
+      start.current = e.touches.length === 1 && !ownsGesture(e.target as Element | null)
+        ? { x: e.touches[0].clientX, y: e.touches[0].clientY, at: e.timeStamp }
+        : null;
     };
-  }, [handleTouchStart, handleTouchEnd]);
+    const onEnd = (e: TouchEvent) => {
+      const s = start.current;
+      start.current = null;
+      if (!s || e.timeStamp - s.at > QUICK || document.querySelector('[role=dialog]')) return;
+      const dx = e.changedTouches[0].clientX - s.x;
+      const dy = e.changedTouches[0].clientY - s.y;
+      const h = handlers.current;
+      // Clearly sideways or clearly up and down: a diagonal scroll of the page changes nothing.
+      if (Math.abs(dx) > threshold && Math.abs(dx) > 2 * Math.abs(dy)) (dx > 0 ? h.onSwipeRight : h.onSwipeLeft)?.();
+      else if (Math.abs(dy) > threshold && Math.abs(dy) > 2 * Math.abs(dx)) (dy > 0 ? h.onSwipeDown : h.onSwipeUp)?.();
+    };
+    const onCancel = () => { start.current = null; };
+    window.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchend', onEnd, { passive: true });
+    window.addEventListener('touchcancel', onCancel, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onStart);
+      window.removeEventListener('touchend', onEnd);
+      window.removeEventListener('touchcancel', onCancel);
+    };
+  }, [threshold]);
 
   return <>{children}</>;
 }
