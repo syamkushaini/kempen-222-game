@@ -104,6 +104,13 @@ export function Review({ campaign, result }: { campaign: Campaign; result: Elect
         </>
       )}
 
+      {data.turnout && (
+        <>
+          <h4>{t('review.turnout')}</h4>
+          <p className="small">{t('review.turnout.line', { now: f.pct(data.turnout.now), then: f.pct(data.turnout.then) })}</p>
+        </>
+      )}
+
       {data.lastPoll && (
         <p className="small">{t(data.lastPoll.ownPoll ? 'review.pollOwn' : 'review.pollPublic', { week: data.lastPoll.week, poll: f.pct(data.lastPoll.share), result: f.pct(data.finalShare) })}</p>
       )}

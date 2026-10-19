@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { stateNeeded } from '../data/world';
 import { campaignMarks } from '../sim/campaign/marks';
 import { FAMILY_COLORS, FAMILY_IDS, LAYER_IDS, LAYER_KIND, layerPins, MACHINERY_COLOR, machineryHeat, MARGINAL_COLOR, UNPOLLED_COLOR, type LayerId, type Pin } from '../sim/campaign/layers';
@@ -13,7 +13,7 @@ import type { RegionId, SeatClass } from '../sim/types';
 import { useStore } from '../state/store';
 import { canDraw3D, PATTERNS } from './map3d';
 import { FIT, holdPoint, viewTransform, zoomBy, type View } from './mapGesture';
-import { contestName, inShownAlliance, mapName, partyColor, partyShort, regionLabel, useFormat, useSpot, useT, useWorld, type SeatDisplay, useNarrow, useTablet } from './hooks';
+import { contestName, inShownAlliance, mapName, partyColor, partyShort, regionLabel, seatName, useFormat, useSpot, useT, useWorld, type SeatDisplay, useNarrow, useTablet } from './hooks';
 import { Icon } from './Icon';
 import { SeatSearch } from './SeatSearch';
 import { Term } from './Term';
@@ -93,6 +93,8 @@ function LayerLegend({ on, me }: { on: ReadonlySet<LayerId>; me: number | null }
 
 const SeatPath = memo(function SeatPath(props: {
   id: string; d: string; fill: string | undefined; opacity: number; dim: boolean; selected: boolean;
+  /** Read out to screen readers: the seat's name, or its code when the name is not known. */
+  ariaLabel?: string;
 }) {
   return (
     <path
@@ -100,6 +102,8 @@ const SeatPath = memo(function SeatPath(props: {
       d={props.d}
       fill={props.fill}
       fillOpacity={props.opacity}
+      aria-label={props.ariaLabel}
+      role="region"
       className={`seat${props.fill ? '' : ' undeclared'}${props.dim ? ' dim' : ''}${props.selected ? ' selected' : ''}`}
     />
   );
@@ -167,6 +171,8 @@ export function MapView(props: {
   const narrow = isNarrow && !isTablet;
   const viewH = props.tall && narrow && map ? Math.round(map.width * PHONE_SHAPE) : VIEW_HEIGHT;
   const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
+  /** The seat the keyboard focus is on, cycled with the arrow keys and picked with Enter or Space. */
+  const [focusedSeat, setFocusedSeat] = useState<string | null>(null);
   const frame = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -213,6 +219,11 @@ export function MapView(props: {
     const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
     return { k, transform: `translate(${W / 2 - k * cx}px, ${H / 2 - k * cy}px) scale(${k})` };
   }, [map, home, single, selectedState, viewH]);
+  /** The seats the map is showing right now, in map order: all of them for a one-seat contest, otherwise the open state's seats. */
+  const visibleSeats = useMemo(() => {
+    if (single) return world.seats.map((s) => s.id);
+    return world.seats.filter((s) => selectedState === null || s.state === selectedState).map((s) => s.id);
+  }, [world, single, selectedState]);
   /** How much larger than the whole map the map is drawn when the player has picked a state: 1 where nothing is picked, and the map is dragged only once zoomed. */
   const framed = !single && selectedState && zoom ? zoom.k : 1;
 
@@ -315,6 +326,35 @@ export function MapView(props: {
     if (single) selectSeat(id, seat.state);
     else if (seat.state !== selectedState) selectState(seat.state);
     else selectSeat(id);
+  };
+  const handleKeyDown = (e: KeyboardEvent<SVGSVGElement>) => {
+    if (!visibleSeats.length || !map) return;
+    const idx = focusedSeat === null ? -1 : visibleSeats.indexOf(focusedSeat);
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusedSeat(visibleSeats[(idx + 1) % visibleSeats.length]);
+        return;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusedSeat(visibleSeats[(idx - 1 + visibleSeats.length) % visibleSeats.length]);
+        return;
+      case 'Home':
+        e.preventDefault();
+        setFocusedSeat(visibleSeats[0]);
+        return;
+      case 'End':
+        e.preventDefault();
+        setFocusedSeat(visibleSeats[visibleSeats.length - 1]);
+        return;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        if (focusedSeat) pick(focusedSeat);
+        return;
+    }
   };
   const onClick = (e: MouseEvent) => {
     const id = seatFromEvent(e);
@@ -433,7 +473,8 @@ export function MapView(props: {
         )}
         {!use3d && map && zoom && (
           <svg
-            ref={svgRef} viewBox={`0 0 ${map.width} ${viewH}`} role="img" aria-label={contestName(t, world)} onMouseLeave={() => setHover(null)}
+            ref={svgRef} viewBox={`0 0 ${map.width} ${viewH}`} role="img" aria-label={contestName(t, world)} tabIndex={0}
+            onMouseLeave={() => setHover(null)} onKeyDown={handleKeyDown}
             className={view.k > 1 || framed > 1 ? 'zoomed' : undefined} style={{ touchAction: view.k > 1 || framed > 1 ? 'none' : 'pan-y' }}
             onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd}
             onClickCapture={(e) => { if (dragged.current) e.stopPropagation(); }}
@@ -455,6 +496,7 @@ export function MapView(props: {
                     opacity={d.winner < 0 ? 1 : d.stale ? STALE_OPACITY : CLASS_OPACITY[d.cls]}
                     dim={!single && selectedState !== null && seat.state !== selectedState}
                     selected={seat.id === selectedSeat}
+                    ariaLabel={seatName(world, seat.id)}
                   />
                 );
               })}
@@ -472,6 +514,7 @@ export function MapView(props: {
               {props.pulse && map.seats[props.pulse.id] && <path key={props.pulse.n} d={map.seats[props.pulse.id].d} className={`seat-pulse ${props.pulse.kind}`} />}
               {selectedSeat && map.seats[selectedSeat] && <path d={map.seats[selectedSeat].d} className="seat-highlight" />}
               {preview && preview !== selectedSeat && map.seats[preview] && <path d={map.seats[preview].d} className="seat-highlight preview" />}
+              {focusedSeat && map.seats[focusedSeat] && <path d={map.seats[focusedSeat].d} className="seat-focused" />}
               {marks.map((m) => {
                 const shape = map.seats[m.seat];
                 // Seen from far off only the tents show, or the map would be nothing but flags.

@@ -60,7 +60,7 @@ export function styleOf(p: number): StyleId[] {
 /** Difficulty changes how well rivals read the race and choose, never their resources. */
 const SKILL: Record<Difficulty, { noise: number; blunder: number }> = {
   easy:   { noise: 0.08, blunder: 0.4 },
-  normal: { noise: 0.04, blunder: 0.15 },
+  normal: { noise: 0.03, blunder: 0.10 },
   hard:   { noise: 0.015, blunder: 0.03 },
 };
 

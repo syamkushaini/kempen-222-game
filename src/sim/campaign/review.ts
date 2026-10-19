@@ -62,6 +62,8 @@ export interface Review {
   /** The player's share in the last national poll, and the week it was taken; null if none was taken. */
   lastPoll: { week: number; share: number; ownPoll: boolean } | null;
   finalShare: number;
+  /** National turnout this time, and at the last election (shares of the electorate). */
+  turnout: { now: number; then: number };
 }
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
@@ -158,6 +160,16 @@ function lastPoll(c: Campaign): Review['lastPoll'] {
   return null;
 }
 
+/** National turnout this time, and at the last election, as shares of the electorate. */
+function turnout(world: World, result: ElectionOutcome): Review['turnout'] {
+  let issued = 0, electorate = 0;
+  for (const seat of world.seats) {
+    issued += seat.last.turnout * seat.electorate;
+    electorate += seat.electorate;
+  }
+  return { now: result.turnout, then: electorate > 0 ? issued / electorate : 0 };
+}
+
 export function review(world: World, c: Campaign, result: ElectionOutcome): Review {
   return {
     ...closeCalls(c, result),
@@ -166,5 +178,6 @@ export function review(world: World, c: Campaign, result: ElectionOutcome): Revi
     moves: moves(c),
     lastPoll: lastPoll(c),
     finalShare: sum(result.votes) > 0 ? result.votes[c.player] / sum(result.votes) : 0,
+    turnout: turnout(world, result),
   };
 }

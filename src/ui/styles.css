@@ -116,6 +116,7 @@ h3 { font-size: 13px; font-weight: 500; letter-spacing: 0.4px; color: var(--mute
 .seat.dim { opacity: 0.28; }
 .state-outline { fill: none; stroke: var(--state-stroke); stroke-opacity: 0.55; stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
 .seat-highlight { fill: none; stroke: var(--ink); stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: none; }
+.seat-focused { fill: none; stroke: var(--primary); stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: none; }
 
 .tooltip {
   position: absolute; transform: translate(12px, 12px); pointer-events: none; z-index: 2;

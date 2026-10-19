@@ -90,4 +90,17 @@ describe('the review after polling day', () => {
     const bare = { ...result, seats: result.seats.map((o) => ({ ...o, blocs: [] })) };
     expect(review(perak, c, bare).blocs).toEqual([]);
   });
+
+  it('reports turnout this time against the last election', () => {
+    const { c, result } = played(perak, 4, true);
+    const { turnout } = review(perak, c, result);
+    expect(turnout.now).toBeGreaterThanOrEqual(0);
+    expect(turnout.now).toBeLessThanOrEqual(1);
+    expect(turnout.then).toBeGreaterThanOrEqual(0);
+    expect(turnout.then).toBeLessThanOrEqual(1);
+    // Last-election turnout is the electorate-weighted mean of per-seat last turnout.
+    let issued = 0, electorate = 0;
+    for (const seat of perak.seats) { issued += seat.last.turnout * seat.electorate; electorate += seat.electorate; }
+    expect(turnout.then).toBeCloseTo(issued / electorate, 6);
+  });
 });

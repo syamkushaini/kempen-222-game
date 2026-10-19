@@ -29,6 +29,16 @@ Other commands:
 
 Add `?dev` to the address to see the hidden true state of the race (an extra map view and a panel in each seat).
 
+## Publish it
+
+The game is a static site and builds into `dist/`. It is set up to publish to GitHub Pages:
+
+1. In the repo on GitHub, go to **Settings → Pages**, set the build source to **GitHub Actions**, and save.
+2. Go to the **Actions** tab, open the "Publish the game" workflow, and click **Run workflow**.
+3. The workflow type-checks, runs the tests, builds the site, and deploys it. The live URL shows on the workflow run and in the repo's Pages settings.
+
+The workflow is manual on purpose: pushing code does not put the game online, so you publish when you are ready. It needs no secrets unless you want the optional leaderboard (set `LEADERBOARD_URL` and `LEADERBOARD_KEY` as repository variables).
+
 ## How to play
 
 You lead one of three national parties through the last weeks before polling day. The rules are the same in every contest; money is scaled to its size, and a state or single seat has no travel time.
