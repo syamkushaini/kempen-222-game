@@ -110,6 +110,7 @@ const en = {
 
   'saves.game': 'Current game',
   'saves.name': 'Name',
+  'saves.nameBlank': 'Please enter a name',
   'saves.autosaved': 'Autosaved {time}',
   'saves.autosavedShort': 'Saved automatically',
   'saves.failedShort': 'Not saved: export the game to a file',
@@ -3073,6 +3074,7 @@ const ms: Record<CoreKey, string> = {
 
   'saves.game': 'Game semasa',
   'saves.name': 'Nama',
+  'saves.nameBlank': 'Sila masukkan nama',
   'saves.autosaved': 'Disimpan secara automatik pada {time}',
   'saves.autosavedShort': 'Disimpan secara automatik',
   'saves.failedShort': 'Tak dapat simpan. Eksport game ke fail.',

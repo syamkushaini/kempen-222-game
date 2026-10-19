@@ -65,6 +65,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 }
 .skip-link:focus { top: 0; }
 
+.error-text { color: var(--bad); font-size: 11px; margin-top: 2px; display: block; }
+
 /* ---------- layout ---------- */
 
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) clamp(400px, 40%, 520px); gap: 16px; align-items: start; flex: 1; }
