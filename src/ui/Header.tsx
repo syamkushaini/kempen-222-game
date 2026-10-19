@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { termIncome, termSpending } from '../sim/campaign/career';
 import { hasPublicMoney, treasuryOf } from '../sim/campaign/treasury';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
@@ -38,14 +38,34 @@ function EndWeekButton({ className = '' }: { className?: string }) {
 }
 
 /** The days left, funds and End week button, kept at the bottom of a phone screen so they never scroll away. */
+const BAR_KEY = 'k222.barMin';
+/** On a phone the bar at the bottom can be folded away to a small tab; the choice is remembered for the next visit. */
+function useBarMin(): [boolean, (v: boolean) => void] {
+  const [min, set] = useState(() => { try { return localStorage.getItem(BAR_KEY) === '1'; } catch { return false; } });
+  return [min, (v) => { set(v); try { localStorage.setItem(BAR_KEY, v ? '1' : '0'); } catch { /* only for this visit */ } }];
+}
+
+/** The tab that folds the bottom bar away, and brings it back. */
+function BarFold({ min, onChange }: { min: boolean; onChange: (v: boolean) => void }) {
+  const t = useT();
+  return (
+    <button className={min ? 'btn small bar-fold' : 'btn small bar-fold open'} onClick={() => onChange(!min)} aria-expanded={!min} aria-label={t(min ? 'bar.show' : 'bar.hide')} title={t(min ? 'bar.show' : 'bar.hide')}>
+      {min ? '▴' : '▾'}
+    </button>
+  );
+}
+
 export function CampaignBar() {
   const t = useT();
   const campaign = useStore((s) => s.game!.campaign);
   const narrow = useNarrow();
+  const [min, setMin] = useBarMin();
   if (campaign.phase !== 'campaign' || !narrow) return null;
   const me = campaign.parties[campaign.player]!;
+  if (min) return <div className="campaign-bar bar-min"><BarFold min onChange={setMin} /></div>;
   return (
     <div className="campaign-bar">
+      <BarFold min={false} onChange={setMin} />
       <div className="hud-item">
         <span className="hud-label">{t('hud.days')}</span>
         <strong className="num hud-value">{me.days}</strong>
@@ -150,10 +170,13 @@ export function TermBar() {
   const advance = useStore((s) => s.advance);
   const narrow = useNarrow();
   const k = campaign.career;
+  const [min, setMin] = useBarMin();
   if (campaign.phase !== 'term' || !narrow || !k || k.ending) return null;
   const waiting = campaign.inbox.length > 0;
+  if (min) return <div className="campaign-bar term-bar bar-min"><BarFold min onChange={setMin} /></div>;
   return (
     <div className="campaign-bar term-bar">
+      <BarFold min={false} onChange={setMin} />
       <MoneyButton />
       <div className="button-row tight term-buttons">
         <button className="btn small" disabled={waiting} onClick={() => advance(1)} aria-label={t('term.next')}>▸ 1</button>
