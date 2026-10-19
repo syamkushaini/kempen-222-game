@@ -687,3 +687,10 @@ body { zoom: var(--ui-zoom, 1); }
 .ledger td, .ledger th { padding: 0.15rem 0; text-align: left; }
 .ledger td:last-child, .ledger th:last-child { text-align: right; }
 .ledger tr:last-child th { border-top: 1px solid var(--line, currentColor); padding-top: 0.3rem; }
+
+.menu-shortcuts {
+  margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line);
+}
+.menu-shortcuts h4 { font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.shortcut-list { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.shortcut-list kbd { margin-right: 8px; }

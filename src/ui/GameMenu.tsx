@@ -3,6 +3,7 @@ import { useStore } from '../state/store';
 import { useT } from './hooks';
 import { Help } from './Help';
 import { ConfirmButton, SavesPanel } from './SavesTab';
+import { Kbd } from './Kbd';
 
 /**
  * The menu any game has: carry on, start this game again, save or load, set up a new game, or go back to the
@@ -36,7 +37,7 @@ export function GameMenu() {
       <div className="dialog panel game-menu" role="dialog" aria-modal="true" aria-label={t('menu.title')}>
         <h2>{t('menu.title')}</h2>
         <div className="menu-list">
-          <button className="btn primary" autoFocus onClick={() => setOpen(false)}>{t('menu.resume')}</button>
+          <button className="btn primary" autoFocus onClick={() => setOpen(false)}>{t('menu.resume')} <Kbd shortcut="Esc" /></button>
           <ConfirmButton className="btn" label={t('menu.restart')} confirmLabel={t('menu.restart.confirm')} onConfirm={leave(restart)} />
           <button className="btn" aria-expanded={saves} onClick={() => setSaves(!saves)}>{t('menu.saves')} {saves ? '▴' : '▾'}</button>
           {saves && <SavesPanel embedded />}
@@ -45,6 +46,14 @@ export function GameMenu() {
           <button className="btn" onClick={leave(quitToTitle)}>{t('menu.main')}</button>
         </div>
         <p className="muted small">{t('menu.note')}</p>
+        <div className="menu-shortcuts">
+          <h4>{t('menu.shortcuts')}</h4>
+          <div className="shortcut-list">
+            <span><Kbd shortcut="Space" /></span> {t('shortcut.endWeek')}
+            <span><Kbd shortcut="1-7" /></span> {t('shortcut.groups')}
+            <span><Kbd shortcut="Esc" /></span> {t('shortcut.close')}
+          </div>
+        </div>
       </div>
     </div>
   );
