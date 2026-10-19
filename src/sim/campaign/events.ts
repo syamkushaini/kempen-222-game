@@ -365,7 +365,13 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
         break;
       }
       case 'rival': for (const p of partiesOf(c, e.who)) for (let b = 0; b < N_BLOCS; b++) k.mood[b][p] += e.n; break;
-      case 'unity': shiftUnity(c, me, realistic(c, e.n)); break;
+      case 'unity': {
+        let change = realistic(c, e.n);
+        // A PM has more tools to hold the party together; soften unity losses, not gains.
+        if (c.career && c.career.government.pm === c.player && change < 0) change *= 0.8;
+        shiftUnity(c, me, change);
+        break;
+      }
       case 'funds': pc.funds = Math.max(0, pc.funds + Math.sign(e.n) * scaled(world, Math.abs(realistic(c, e.n)))); break;
       case 'public':
         // The public's money: the government's treasury where the party governs, and otherwise the party's own purse, as written.
@@ -374,7 +380,13 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
         break;
       case 'net': k.net = clamp((k.net ?? 0) + e.n, -100, 100); break;
       case 'cred': k.credibility = clamp(k.credibility + realistic(c, e.n), 0, 100); break;
-      case 'stability': k.government.stability = clamp(k.government.stability + realistic(c, e.n), 5, 95); break;
+      case 'stability': {
+        let change = realistic(c, e.n);
+        // A PM bears responsibility for stability but also has the tools to defend it.
+        if (c.career && c.career.government.pm === c.player && change < 0) change *= 0.75;
+        k.government.stability = clamp(k.government.stability + change, 5, 95);
+        break;
+      }
       case 'trust': k.government.trust = clamp(k.government.trust + realistic(c, e.n), 0, 100); break;
       // A blow to the machinery weakens a branch; it does not shut one that is open.
       case 'machinery': pc.machinery = pc.machinery.map((m) => (m > 0 ? clamp(m + e.n, 1, 100) : 0)); break;

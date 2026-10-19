@@ -313,7 +313,11 @@ export function resolveFormationScene(c: Campaign, scene: Scene, choice: number)
 
 /** How open-handed rival claimants are with the offers standing on a given day. They start low and grow anxious. */
 function generosity(c: Campaign, day: number): number {
-  return clamp(0.65 + 0.18 * (day - 1) + RIVAL_PACE[c.difficulty], 0.4, 1.6);
+  const f = c.formation!;
+  const base = clamp(0.65 + 0.18 * (day - 1) + RIVAL_PACE[c.difficulty], 0.4, 1.6);
+  // When the player leads in pledged seats, rivals are less able to poach blocs away.
+  const playerLeads = f.claimants.some((k) => k !== c.player && pledged(f, k) < pledged(f, c.player));
+  return playerLeads ? base * 0.75 : base;
 }
 
 /** Every rival claimant refreshes its offers to the parties it still needs. */

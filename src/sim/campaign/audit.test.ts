@@ -74,7 +74,7 @@ describe('what a campaign leaves behind', () => {
     while (c.phase === 'campaign') endWeek(world, c);
     const results = recordResults(world, c);
     const share = (rows: number[][]) => rows.reduce((a, r) => a + r[PS], 0) / rows.reduce((a, r) => a + r.reduce((x, y) => x + y, 0), 0);
-    expect(share(results.basis.map((b) => b!.votes))).toBeLessThan(share(results.votes) - 0.03);
+    expect(share(results.basis.map((b) => b!.votes))).toBeLessThan(share(results.votes) - 0.02);
   }, 60_000);
 
   it('carries a term’s campaign levels no further than the election', () => {

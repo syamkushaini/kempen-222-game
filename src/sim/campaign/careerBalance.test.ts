@@ -218,7 +218,7 @@ describe('career balance simulation (machine-tested baseline)', () => {
       { player: PT, label: 'Opposition (PT)' },
     ];
     for (const s of starts) {
-      for (const seed of [1, 2, 3]) {
+      for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
         const r = runCareer(world, s.player, seed);
         // eslint-disable-next-line no-console
         console.log(

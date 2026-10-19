@@ -459,6 +459,11 @@ export function termWeek(world: World, c: Campaign): void {
   pc.unity = clamp(pc.unity + Math.sign(65 - pc.unity) * 0.05, 0, 100);
   k.salience = k.salience.map((s) => s + (1 - s) * 0.02);
   k.government.stability = clamp(k.government.stability + rng.normal(0, k.government.pm === me ? 0.15 : 0.4), 5, 95);
+  // A PM with a growing economy slowly rebuilds stability; a PM with high credibility steadies the party.
+  if (k.government.pm === me) {
+    if (k.economy.growth > 3) k.government.stability = clamp(k.government.stability + 0.3, 5, 95);
+    if (k.credibility > 70) pc.unity = clamp(pc.unity + 0.2, 0, 100);
+  }
 
   rivalsWeek(world, c, rng);
   growFoundedParty(world, c);
