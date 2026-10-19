@@ -40,6 +40,7 @@ import { Title } from './Title';
 import { Music } from './Music';
 import { installIdentity } from './identity';
 import { ground, mix } from './shareCard';
+import { WhatsNew } from './WhatsNew';
 
 // The screens a game only reaches later (the count, the talks, the years between elections, the end of a career) are
 // fetched when they are first wanted, so that the first download, which matters most on a phone, is smaller.
@@ -371,6 +372,7 @@ export function App() {
       <GameMenu />
       <Music />
       <Toasts />
+      <WhatsNew />
       <ActionToasts />
       <footer className="footer">{t('footer.fiction')}</footer>
     </div>

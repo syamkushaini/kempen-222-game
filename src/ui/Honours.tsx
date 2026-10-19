@@ -116,7 +116,7 @@ export function HonoursDialog({ onClose }: { onClose(): void }) {
 }
 
 /** How long a message stays before it goes by itself. It can always be closed sooner. */
-const REPORT_MS = 6000;
+const REPORT_MS = 8000;
 
 /**
  * What the last action did, as a message over whatever tab the player is on. It closes with its × or a tap, and goes by
@@ -134,7 +134,10 @@ function ActionToast() {
   if (!report) return null;
   return (
     <div className="action-toast panel" role="status" aria-live="polite" key={report.week + report.key + String(report.vars?.rm ?? '')} onClick={clear}>
-      <ul className="report"><NewsLine item={report} /></ul>
+      <div className="action-toast-body">
+        <span className="action-toast-from">{t('toast.actionDone')}</span>
+        <ul className="report"><NewsLine item={report} /></ul>
+      </div>
       <button className="close-x" aria-label={t('toast.dismiss')} onClick={(e) => { e.stopPropagation(); clear(); }}><Icon name="close" size={18} /></button>
     </div>
   );

@@ -110,6 +110,8 @@ export interface Settings {
   map3d: boolean;
   /** Which extra things the map shows, ticked by the player. */
   layers: LayerId[];
+  /** The app version last seen by the player, for the "What's New" modal. */
+  lastSeenVersion: string | null;
 }
 
 const SETTINGS_KEY = 'k222.settings';
@@ -124,7 +126,7 @@ function prefers3d(): boolean {
 }
 
 function loadSettings(): Settings {
-  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', skin: 'standard', accent: 'party', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d(), layers: DEFAULT_LAYERS };
+  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', skin: 'standard', accent: 'party', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d(), layers: DEFAULT_LAYERS, lastSeenVersion: null };
   try {
     const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
     if (!raw) return fallback;
@@ -141,6 +143,7 @@ function loadSettings(): Settings {
       hints: raw.hints !== false,
       map3d: typeof raw.map3d === 'boolean' ? raw.map3d : prefers3d(),
       layers: cleanLayers(raw.layers) ?? DEFAULT_LAYERS,
+      lastSeenVersion: typeof raw.lastSeenVersion === 'string' ? raw.lastSeenVersion : null,
     };
   } catch {
     return fallback;
