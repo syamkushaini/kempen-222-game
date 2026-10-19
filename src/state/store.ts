@@ -74,6 +74,7 @@ import { setStance as setMeterStance, type StanceId } from '../sim/campaign/stan
 import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaign/econTools';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { award, hang, legacyEntry, noteAchieved, ProfileStore, recordPoints, type Profile } from './profile';
+import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
 import { pointsOf } from '../sim/campaign/scoring';
 import { finishedChallenge } from '../sim/campaign/challengePoints';
 import { isAccent, isSkin, type AccentId, type SkinId } from '../ui/cosmetics';
@@ -130,6 +131,7 @@ const SETTINGS_KEY = 'k222.settings';
 const storage = browserStorage();
 export const saveStore = new SaveStore(storage);
 const profileStore = new ProfileStore(storage);
+const partyBook = new PartyBook(storage);
 
 /** Whether a player who has not chosen starts with the 3D map: on a laptop or desktop with a mouse, unless they have asked for less motion. */
 function prefers3d(): boolean {
@@ -214,6 +216,10 @@ interface Store {
   autosaveFailed: boolean;
   /** Achievements and finished careers: the player's, not any one game's. */
   profile: Profile;
+  /** Parties the player has made, to be used again in a new game. */
+  savedParties: SavedParty[];
+  /** Takes a saved party off the list. */
+  forgetSavedParty(at: number): void;
   /** Achievements just earned, waiting to be shown. */
   toasts: AchievementId[];
   /** How many games have been loaded this session. Screens with a running count start it again when this changes. */
@@ -444,6 +450,13 @@ export const useStore = create<Store>((set, get) => {
     const hidden = (extra.hiddenScene ?? get().hiddenScene).filter((id) => g.campaign.inbox.some((x) => x.id === id));
     set({ game: g, ...extra, hiddenScene: hidden });
   };
+  /** Keeps a party the player has made, so that a later game can use it again. */
+  const keepSaved = (identity: Identity) => {
+    const next = keepParty(get().savedParties, identity, Date.now());
+    if (next === get().savedParties) return;
+    set({ savedParties: next });
+    partyBook.save(next);
+  };
 
   return {
     game: null,
@@ -469,6 +482,12 @@ export const useStore = create<Store>((set, get) => {
     autosavedAt: null,
     autosaveFailed: false,
     profile: profileStore.load(),
+    savedParties: partyBook.load(),
+    forgetSavedParty: (at) => {
+      const next = forgetParty(get().savedParties, at);
+      set({ savedParties: next });
+      partyBook.save(next);
+    },
     toasts: [],
     notifications: [],
     addNotification: (item) => set((s) => ({ notifications: [item, ...s.notifications].slice(0, 50) })),
@@ -502,6 +521,7 @@ export const useStore = create<Store>((set, get) => {
       const home = founded && base?.rules.career ? (seat && seat !== 'random' && base.seatIndex.has(seat) ? seat : base.seats[new Rng(drawn).int(base.seats.length)].id) : undefined;
       const world = founded ? (base?.rules.career ? foundedWorld(scenario, home) : newPartyWorld(scenario)) : own ? ownWorld(scenario, player) ?? base : base;
       if (!world) return;
+      if (identity) keepSaved(identity);
       const opts = { player, difficulty, seed: drawn, backstory, challenge, ...(weeks !== undefined ? { totalWeeks: weeks } : {}) };
       // Kept with the game so that it can be started again exactly as it was set up.
       const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances, ...(home ? { seat: home } : {}) } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}), ...(weeks !== undefined ? { weeks } : {}) };
@@ -632,7 +652,7 @@ export const useStore = create<Store>((set, get) => {
     revokeSafe: (seat) => mutate((c) => { revokeSafe(c, seat); }),
     forceByElection: (seat) => mutate((c, _g, world) => { forceByElection(world, c, seat); }),
     discipline: (state, how) => mutate((c, _g, world) => { discipline(world, c, state, how); }),
-    rebrand: (identity) => mutate((c, g, world) => { if (rebrand(world, c)) g.identity = identity; }),
+    rebrand: (identity) => mutate((c, g, world) => { if (rebrand(world, c)) { g.identity = identity; keepSaved(identity); } }),
     openSeat: (seat) => mutate((c, _g, world) => { openSeat(world, c, seat); }),
     standLeader: (seat) => mutate((c, _g, world) => { standLeader(world, c, seat); }),
     merge: (party) => mutate((c, _g, world) => { merge(world, c, party); }),

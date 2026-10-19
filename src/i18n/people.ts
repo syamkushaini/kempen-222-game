@@ -45,6 +45,10 @@ export const PEOPLE_EN = {
   // a party of one's own
   'creator.toggle': 'Make the party your own',
   'creator.desc': 'Give the party a new name, colours and leader. It keeps the seats, voters and branches of the party it grew out of.',
+  'creator.saved': 'Your parties',
+  'creator.saved.use': 'Use {name}',
+  'creator.saved.forget': 'Forget {name}',
+  'creator.saved.note': 'Parties you have made are kept on this device, so you can use them again in any contest. Forgetting one does not touch games already saved.',
   'creator.name': 'Party name',
   'creator.short': 'Initials',
   'creator.color': 'Colour',
@@ -308,6 +312,10 @@ export const PEOPLE_MS: Record<PeopleKey, string> = {
 
   'creator.toggle': 'Jadikan parti ini milik anda',
   'creator.desc': 'Beri parti anda nama, warna dan pemimpin baharu. Parti kekal dengan kerusi, pengundi dan cawangan parti asal.',
+  'creator.saved': 'Parti anda',
+  'creator.saved.use': 'Guna {name}',
+  'creator.saved.forget': 'Buang {name}',
+  'creator.saved.note': 'Parti yang anda dah cipta disimpan pada peranti ni, jadi boleh guna semula dalam mana-mana pilihan raya. Buang satu parti tak kacau game yang dah disimpan.',
   'creator.name': 'Nama parti',
   'creator.short': 'Singkatan',
   'creator.color': 'Warna',
