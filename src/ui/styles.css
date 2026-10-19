@@ -694,3 +694,24 @@ body { zoom: var(--ui-zoom, 1); }
 .menu-shortcuts h4 { font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
 .shortcut-list { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
 .shortcut-list kbd { margin-right: 8px; }
+
+/* Welcome back card on the title screen: quick resume of the autosaved game. */
+.welcome-back {
+  margin: 16px 0; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2);
+}
+.welcome-back h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.welcome-info { display: flex; gap: 12px; align-items: baseline; margin-bottom: 8px; }
+.welcome-info .num { color: var(--primary); }
+.welcome-back .button-row { display: flex; gap: 8px; margin-top: 12px; }
+.welcome-back .button-row .btn { flex: 1; }
+
+/* Keyboard shortcut hints inside action titles. */
+.action-title kbd { margin-left: 6px; font-size: 0.85em; opacity: 0.7; }
+
+/* Blocked actions: dimmed, with a clear reason line. */
+.action.blocked { opacity: 0.55; }
+.action.blocked .action-reason { color: var(--bad); font-size: 11px; margin-top: 4px; }
+.action.blocked .btn { opacity: 0.6; }
+
+/* The suggested group: the actions the game recommends right now. */
+.action-family.suggested > summary { display: flex; justify-content: space-between; align-items: center; }

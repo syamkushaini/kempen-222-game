@@ -13,6 +13,7 @@ import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, 
 import { Loan } from './Loan';
 import { Brief } from './Brief';
 import { Icon, type IconName } from './Icon';
+import { Kbd } from './Kbd';
 import { NominationsPanel } from './Nominations';
 import { EntriesPanel } from './Entries';
 
@@ -152,13 +153,29 @@ export function ActionsTab() {
 
   const endWeek = useStore((s) => s.endWeek);
   const setPreview = useStore((s) => s.setPreview);
+  /** Number keys 1-9 trigger the corresponding suggested action. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A|SUMMARY)$/.test(el.tagName))) return;
+      const n = Number(e.key);
+      if (Number.isInteger(n) && n >= 1 && n <= 9 && ideas[n - 1]) {
+        e.preventDefault();
+        const s = ideas[n - 1];
+        act(s.id, s.target);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ideas, act]);
   /** Opens the fundraising group and brings it into view: the way out of a blocked action that costs too much. */
   const raiseMoney = () => {
     setGroup('funds', true);
     setTimeout(() => document.getElementById('family-funds')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
   };
 
-  const row = (id: ActionId, target: ActionTarget, key: string, title: string, extra?: string, hint?: ReactNode) => {
+  const row = (id: ActionId, target: ActionTarget, key: string, title: string, extra?: string, hint?: ReactNode, shortcut?: string) => {
     const check = canDo(world, campaign, me, id, target);
     const cost = actionCost(world, campaign, me, id, target);
     const gain = target.seat ? expectedSeatGain(world, campaign, me, id, target.seat, target.segment) : null;
@@ -174,7 +191,7 @@ export function ActionsTab() {
       >
         <span className="row-icon"><Icon name={ACTION_ICON[id]} size={20} /></span>
         <div className="grow">
-          <span className="action-title">{title}</span>
+          <span className="action-title">{title}{shortcut && <Kbd shortcut={shortcut} />}</span>
           <span className="chips-line num">
             <span className="cost-chip">{f.days(cost.days)}</span>
             <span className="cost-chip">{cost.money > 0 ? f.rm(cost.money) : t('cost.free')}</span>
@@ -246,11 +263,14 @@ export function ActionsTab() {
           </summary>
           <p className="muted small action-desc">{t('suggest.note')}</p>
           <ul className="action-list">
-            {ideas.map((s) => (
-              <li key={`${s.id}-${JSON.stringify(s.target)}`} className="action-group">
-                <ul>{row(s.id, s.target, `${s.id}-${JSON.stringify(s.target)}`, titleOf(s.id, s.target), extraFor(s.id, s.target), hintFor(s))}</ul>
-              </li>
-            ))}
+            {ideas.map((s, i) => {
+              const shortcut = i < 9 ? String(i + 1) : undefined;
+              return (
+                <li key={`${s.id}-${JSON.stringify(s.target)}`} className="action-group">
+                  <ul>{row(s.id, s.target, `${s.id}-${JSON.stringify(s.target)}`, titleOf(s.id, s.target), extraFor(s.id, s.target), hintFor(s), shortcut)}</ul>
+                </li>
+              );
+            })}
           </ul>
         </details>
       )}

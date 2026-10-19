@@ -36,6 +36,7 @@ import { SeatPicker } from './SeatPicker';
 import { LeaderPicker, PartyCreator, type Draft } from './Setup';
 import { Jargon } from './Term';
 import { SkeletonBlock } from './Skeleton';
+import { Kbd } from './Kbd';
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard'];
 /** What can be started from the title screen: the single contests, and a career. */
@@ -210,11 +211,26 @@ export function Title() {
             <MenuItem icon="coffee" tone="dare" title={t('menu.support')} hint={t('menu.support.hint')} onClick={() => setSupport(true)} />
           </ul>
           <p className="muted small">{t('title.fiction')}</p>
+          {auto && (
+            <section className="welcome-back">
+              <h3>{t('title.welcomeBack')}</h3>
+              <div className="welcome-info">
+                <span className="muted small">{auto.name}</span>
+                <span className="num">{t('title.week', { week: auto.week, total: auto.totalWeeks })}</span>
+              </div>
+              <p className="muted small">{saveLine(t, auto)}</p>
+              <div className="button-row">
+                <button className="btn primary" onClick={() => { const g = saveStore.load(AUTO_SLOT); if (g) loadGame(g); }}>
+                  {t('title.continue')} <Kbd shortcut="Enter" />
+                </button>
+                <button className="btn" onClick={() => pick('load')}>{t('menu.load')}</button>
+              </div>
+            </section>
+          )}
           <div className="menu-foot"><Credits /><FeedbackLink /></div>
         </nav>
       ) : (
-      <section className="panel title-main">
-        {(mode === 'home' || mode === 'career' || mode === 'load' || mode === 'challenges') && (
+      <section className="panel title-main">  {(mode === 'home' || mode === 'career' || mode === 'load' || mode === 'challenges') && (
           <p><button className="link back-link" onClick={() => pick(mode === 'career' ? 'home' : 'menu')}><Icon name="back" size={14} /> {t(mode === 'career' ? 'title.modes.back' : 'menu.back')}</button></p>
         )}
         {mode === 'load' ? (
