@@ -113,6 +113,9 @@ function SettingsDialog({ onClose }: { onClose(): void }) {
             onPick={(v) => set({ map3d: v === 'three' })} disabled={(v) => v === 'three' && !canDraw3D()}
           />
         </Row>
+        <Row label={t('display.highContrast')}>
+          <Choice label={t('display.highContrast')} value={s.highContrast} options={[{ id: 'off', name: t('display.highContrast.off') }, { id: 'on', name: t('display.highContrast.on') }]} onPick={(hc) => set({ highContrast: hc })} />
+        </Row>
         <Row label={t('sound.sfx')}><Switch label={t('sound.sfx')} on={s.sound} onFlip={() => set({ sound: !s.sound })} /></Row>
         <Row label={t('sound.music')}><Switch label={t('sound.music')} on={s.music} onFlip={() => set({ music: !s.music })} /></Row>
         <Row label={t('guide.show')}><Switch label={t('guide.show')} on={s.hints} onFlip={() => set({ hints: !s.hints })} /></Row>

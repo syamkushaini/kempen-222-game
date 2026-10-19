@@ -13,6 +13,7 @@ import { contestName, leaderName, partyColor, partyName, useT, type Format, type
 import { mapPicture } from './map3d';
 import { missionGoal, recordAsk } from './missionText';
 import { drawCard, type CardData } from './shareCard';
+import { CopyButton } from './CopyButton';
 
 export const common = (t: T) => ({ tagline: t('share.tagline'), fiction: t('share.fiction') });
 
@@ -171,6 +172,7 @@ export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose
         <div className="button-row">
           <button className="btn primary" disabled={!file} onClick={save}>{t('share.save')}</button>
           {canShare && <button className="btn" onClick={share}>{t('share.share')}</button>}
+          <CopyButton text={data.headline} label={t('share.copy')} />
           <button className="btn" onClick={onClose}>{t('share.close')}</button>
         </div>
       </div>

@@ -41,6 +41,8 @@ import { Music } from './Music';
 import { installIdentity } from './identity';
 import { ground, mix } from './shareCard';
 import { WhatsNew } from './WhatsNew';
+import { NotificationCenter } from './NotificationCenter';
+import { KeyboardShortcuts } from './KeyboardShortcuts';
 
 // The screens a game only reaches later (the count, the talks, the years between elections, the end of a career) are
 // fetched when they are first wanted, so that the first download, which matters most on a phone, is smaller.
@@ -284,7 +286,7 @@ function CampaignScreen() {
 
 export function App() {
   const t = useT();
-  const { theme, lang, palette, textSize, density, skin, accent } = useStore((s) => s.settings);
+  const { theme, lang, palette, textSize, density, skin, accent, highContrast } = useStore((s) => s.settings);
   const player = useStore((s) => s.game?.campaign.player);
   const phase = useStore((s) => s.game?.campaign.phase);
   const talks = useStore((s) => !!s.game?.campaign.formation);
@@ -328,7 +330,8 @@ export function App() {
     // Text follows the size the browser has been told to use: a root size of 20 px, not 16, scales everything by a quarter.
     const px = parseFloat(getComputedStyle(root).fontSize) || 16;
     root.style.setProperty('--ui-zoom', String(Math.round((px / 16) * 100) / 100));
-  }, [scheme, worn.skin.id, lang, textSize, density, palette]);
+    root.dataset.highContrast = highContrast;
+  }, [scheme, worn.skin.id, lang, textSize, density, palette, highContrast]);
 
   // The player's party colour tints the buttons, the active tab, the focus ring and the mark; the title screen keeps the lavender.
   // An accent that has been earned and chosen is worn in its place, on the title screen too; the party's colour stays where it is data.
@@ -373,6 +376,8 @@ export function App() {
       <Music />
       <Toasts />
       <WhatsNew />
+      <NotificationCenter />
+      <KeyboardShortcuts />
       <ActionToasts />
       <footer className="footer">{t('footer.fiction')}</footer>
     </div>

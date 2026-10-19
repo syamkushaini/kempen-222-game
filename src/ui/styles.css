@@ -738,9 +738,52 @@ body { zoom: var(--ui-zoom, 1); }
 .progress-bar { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.3s ease; }
 .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
 
+/* High contrast mode for accessibility. */
+[data-highcontrast="on"] {
+  --bg: #000000;
+  --panel: #111111;
+  --panel-2: #222222;
+  --panel-3: #333333;
+  --panel-4: #444444;
+  --line: #ffffff;
+  --line-2: #ffffff;
+  --line-3: #ffffff;
+  --ink: #ffffff;
+  --ink-muted: #cccccc;
+  --muted: #888888;
+  --faint: #666666;
+  --primary: #ffff00;
+  --primary-hover: #ffff00;
+  --primary-focus: #ffff00;
+  --on-primary: #000000;
+  --link: #ffff00;
+  --ring: #ffff00;
+  --good: #00ff00;
+  --bad: #ff0000;
+  --sea: #000000;
+  --map-stroke: #ffffff;
+  --state-stroke: #ffffff;
+  --undeclared: #333333;
+  --edge: inset 0 1px 0 rgb(255 255 255 / 4%);
+  --scrim: rgb(0 0 0 / 80%);
+}
+
 /* Inline form validation. */
 .field-error { color: var(--bad); font-size: 11px; margin-top: 4px; }
 input.error, select.error { border-color: var(--bad); }
+
+/* Form field with inline validation. */
+.form-field { margin-bottom: 12px; }
+.field-label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 4px; color: var(--ink); }
+.field-input { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); font-size: 13px; font-family: inherit; }
+.field-input:focus { border-color: var(--ring); outline: 2px solid var(--ring); outline-offset: 0; }
+.field-input.error { border-color: var(--bad); }
+.field-input.focused { border-color: var(--primary); }
+.error-text { color: var(--bad); font-size: 11px; margin-top: 4px; }
+
+/* Toast grouping: group similar toasts together. */
+.toast-group { margin-bottom: 8px; }
+.toast-group-header { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 4px; }
 
 /* Notification bell in header. */
 .notification-bell.has-notifications { position: relative; }
@@ -781,8 +824,35 @@ input.error, select.error { border-color: var(--bad); }
 .search-box input:focus { border-color: var(--ring); outline: 2px solid var(--ring); outline-offset: 0; }
 .search-box::before { content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; background: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2211%22 cy=%2211%22 r=%228%22/%3E%3Cpath d=%22M21 21l-4.3-4.3%22/%3E%3C/svg%22) no-repeat center; opacity: 0.4; }
 
-/* Stronger focus ring for keyboard users. */
+/* Page transition animations. */
+.page-enter { opacity: 0; transform: translateY(8px); animation: pageFadeIn 0.3s ease forwards; }
+.page-exit { opacity: 0; transform: translateY(-4px); animation: pageFadeOut 0.2s ease forwards; }
+@keyframes pageFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pageFadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-4px); } }
+
+/* Seat change animation. */
+@keyframes seatFlash { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 50%, transparent); } 70% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--primary) 0%, transparent); } 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 0%, transparent); } }
+.seat-row.flash { animation: seatFlash 0.6s ease-out; }
+
+/* Toast slide animation. */
+@keyframes toastSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.toast { animation: toastSlideIn 0.3s ease-out; }
+
+/* Focus ring for keyboard users. */
 :focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; border-radius: 4px; }
+
+@media print {
+  .app { padding: 0; max-width: 100%; background: white; color: black; }
+  .header, .footer, .map-panel, .sidebar, .map-frame svg.zoomed, .campaign-bar, .term-bar, .phone-nav, .menu-shortcuts, .notification-panel {
+    display: none !important;
+  }
+  #main { display: block !important; }
+  .share-card { page-break-inside: avoid; }
+  .share-dialog { background: white !important; border: none; box-shadow: none; }
+  .share-dialog .panel { background: white; border: none; box-shadow: none; }
+  .share-dialog .overlay { background: white; position: static; }
+  body { background: white; }
+}
 
 /* Seat row hover and keyboard states. */
 .seat-row { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; padding: 7px 4px; text-align: left; border-radius: 6px; cursor: pointer; }
