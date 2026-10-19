@@ -11,6 +11,7 @@ import { PartyMark } from './identity';
 import { Logo } from './Logo';
 import { SettingsButton } from './SettingsPanel';
 import { partyName, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
+import { Kbd } from './Kbd';
 
 /** Ending the week takes one press. What would be thrown away is written on the button, so nobody does it by accident. */
 export function useEndWeek() {
@@ -28,7 +29,11 @@ export function useEndWeek() {
 function EndWeekButton({ className = '' }: { className?: string }) {
   const { onEnd, unused, label } = useEndWeek();
   const spot = useSpot();
-  return <button className={`btn primary end-week${className}${unused >= 1 ? ' unused' : ''}${spot('end-week') ? ' spot' : ''}`} onClick={onEnd}>{label}</button>;
+  return (
+    <button className={`btn primary end-week${className}${unused >= 1 ? ' unused' : ''}${spot('end-week') ? ' spot' : ''}`} onClick={onEnd}>
+      {label} <Kbd shortcut="Space" />
+    </button>
+  );
 }
 
 /** The days left, funds and End week button, kept at the bottom of a phone screen so they never scroll away. */
