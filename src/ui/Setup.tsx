@@ -5,6 +5,7 @@ import { BACKSTORY_IDS, STAT_IDS, type BackstoryId } from '../sim/campaign/types
 import { EMBLEM_IDS, fitColor, PARTY_COLORS, type EmblemId } from '../state/identity';
 import { PLAYER_LOOKS, portraitSvg } from './faces';
 import { useT } from './hooks';
+import { useStore } from '../state/store';
 import { PartyMark } from './identity';
 import { readPicture } from './pictureFile';
 import { Pips } from './TeamTab';
@@ -77,9 +78,27 @@ export function PartyCreator({ draft, career, slate = false, onChange }: { draft
   const t = useT();
   const ideologies: (IdeologyId | null)[] = [null, ...IDEOLOGY_IDS];
   const [failed, setFailed] = useState<'photo' | 'flag' | null>(null);
+  const saved = useStore((st) => st.savedParties);
+  const forget = useStore((st) => st.forgetSavedParty);
   return (
     <div className="creator">
       <p className="muted small">{t('creator.desc')}</p>
+      {saved.length > 0 && (
+        <>
+          <span className="field-label">{t('creator.saved')}</span>
+          <ul className="saved-parties">
+            {saved.map(({ at, identity: p }) => (
+              <li key={at}>
+                <button type="button" className="btn small" aria-label={t('creator.saved.use', { name: p.name })} onClick={() => onChange({ name: p.name, short: p.short, color: p.color, emblem: p.emblem, leader: p.leader, look: p.look, photo: p.photo, flag: p.flag })}>
+                  <PartyMark emblem={p.emblem} color={p.color} picture={p.flag} size={22} /> {p.name} <span className="muted">({p.short})</span>
+                </button>
+                <button type="button" className="btn small" aria-label={t('creator.saved.forget', { name: p.name })} onClick={() => forget(at)}>×</button>
+              </li>
+            ))}
+          </ul>
+          <p className="muted small">{t('creator.saved.note')}</p>
+        </>
+      )}
       <div className="creator-grid">
         <label className="field">
           <span>{t('creator.name')}</span>
