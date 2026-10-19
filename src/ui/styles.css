@@ -786,12 +786,11 @@ input.error, select.error { border-color: var(--bad); }
 .toast-group-header { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 4px; }
 
 /* Notification bell in header. */
-.notification-bell { position: relative; }
-.notification-bell.has-notifications { position: relative; }
+.notification-bell-wrapper { position: relative; display: inline-block; }
 .notification-bell .count-badge { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; border-radius: 8px; background: var(--bad); color: var(--ink); font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; padding: 0 2px; }
 
-/* Notification center panel. */
-.notification-panel { width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 120px); overflow-y: auto; position: absolute; top: calc(100% + 8px); right: 0; margin-top: 8px; }
+/* Notification center panel - positioned absolutely relative to bell icon wrapper. */
+.notification-panel { width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 120px); overflow-y: auto; position: absolute; top: calc(100% + 8px); right: 0; z-index: 60; }
 .notification-list { margin: 0; padding: 0; list-style: none; max-height: 300px; overflow-y: auto; }
 .notification-item { padding: 12px; border-bottom: 1px solid var(--line); }
 .notification-item.read { opacity: 0.7; }
