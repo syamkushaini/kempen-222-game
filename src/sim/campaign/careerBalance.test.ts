@@ -6,12 +6,66 @@ import type { Campaign, EndingKind } from './types';
 import { startCareer, skipAhead, answerEvent, nextTerm } from './career';
 import { autoPlayWeek, endWeek, closeNight, electionResult } from './turn';
 import { endDay, makeOffer, emptyOffer, mood, blocs, resolveFormationScene } from './formation';
+import type { Choice, Effect } from './events';
+import { EVENTS, gambleChance } from './events';
 
 const PS = PARTY_IDS.indexOf('ps');
 const BP = PARTY_IDS.indexOf('bp');
 const PT = PARTY_IDS.indexOf('pt');
 
-/** Answer every scene waiting on the desk with the first choice, removing it from the inbox. */
+// ---------- choice scoring ----------
+
+/** Score one effect: how good/bad it is for the player's survival. Higher = better. */
+function scoreEffect(e: Effect): number {
+  switch (e.t) {
+    case 'unity':
+      // Unity below 12 = ousted. Positive is very good, negative is very bad.
+      return e.n > 0 ? e.n * 2 : e.n * 3;
+    case 'stability':
+      // Government stability below 30 risks mid-term collapse.
+      return e.n > 0 ? e.n : e.n * 1.5;
+    case 'cred':
+      return e.n > 0 ? e.n * 0.5 : e.n * 0.8;
+    case 'trust':
+      return e.n > 0 ? e.n * 0.5 : e.n * 0.8;
+    case 'funds':
+      // Money at general-election scale; a point of funds is worth little compared to unity.
+      return e.n * 0.001;
+    case 'debt':
+      // Debt above 75% brings a downgrade and drags on growth. Positive (more debt) is bad.
+      return e.n > 0 ? -e.n * 0.5 : -e.n * 0.3;
+    case 'end':
+      return -2000; // career end: avoid at all costs
+    case 'falls':
+      return -1000; // government falls: very bad
+    case 'bankrupt':
+      return -2000; // bankruptcy: government falls
+    case 'austerity':
+      return -0.5; // forced tight budget
+    case 'machinery':
+      return e.n * 0.1;
+    case 'dossier':
+      return e.n * -0.2; // more dossier = more exposure risk
+    case 'public':
+      return e.n * 0.001;
+    case 'relation':
+      return e.n * 0.1;
+    default:
+      return 0;
+  }
+}
+
+/** Score a whole choice: sum of effect scores. For gambles, use expected value. */
+function scoreChoice(c: Campaign, ch: Choice): number {
+  const base = ch.effects.reduce((a, e) => a + scoreEffect(e), 0);
+  if (!ch.gamble) return base;
+  const chance = typeof ch.gamble.chance === 'number' ? ch.gamble.chance : gambleChance(c, ch.gamble.chance);
+  const win = ch.gamble.win.reduce((a, e) => a + scoreEffect(e), 0);
+  const lose = ch.gamble.lose.reduce((a, e) => a + scoreEffect(e), 0);
+  return chance * win + (1 - chance) * lose;
+}
+
+/** Answer every scene waiting on the desk, picking the choice with the best score. */
 function answerInbox(world: World, c: Campaign, player: number): void {
   while (c.inbox.length > 0) {
     const scene = c.inbox[0];
@@ -20,13 +74,22 @@ function answerInbox(world: World, c: Campaign, player: number): void {
     if (scene.kind === 'unityAdvice') {
       resolveFormationScene(c, scene, 0);
     } else {
-      answerEvent(world, c, scene, 0);
+      const def = scene.event ? EVENTS[scene.event] : undefined;
+      const choices = def ? def.choices : [];
+      let bestChoice = 0;
+      let bestScore = -Infinity;
+      for (let i = 0; i < choices.length; i++) {
+        const s = scoreChoice(c, choices[i]);
+        if (s > bestScore) { bestScore = s; bestChoice = i; }
+      }
+      answerEvent(world, c, scene, bestChoice);
     }
     c.inbox.shift();
   }
 }
 
-/** Auto-play one campaign (8 weeks) using the rival logic, then move to night. */
+// ---------- campaign / formation ----------
+
 function runCampaign(world: World, c: Campaign): void {
   while (c.phase === 'campaign') {
     autoPlayWeek(world, c);
@@ -35,7 +98,6 @@ function runCampaign(world: World, c: Campaign): void {
   if (c.phase === 'night') closeNight(world, c);
 }
 
-/** Auto-resolve formation talks: sound out, make reasonable offers, end each day. */
 function runFormation(world: World, c: Campaign): void {
   let days = 0;
   while (c.phase === 'formation' && days < 40) {
