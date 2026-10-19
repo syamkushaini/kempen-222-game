@@ -33,10 +33,3 @@ void Promise.allSettled(saveStore.scenarios().map(loadScenario)).then(() => {
     </StrictMode>,
   );
 });
-
-// Service worker for offline play
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {
-    // Service worker registration failed; game still works offline for cached assets
-  });
-}
