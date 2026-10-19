@@ -5,12 +5,12 @@ import type { Campaign } from './types';
 // visits have given it there, which fades week by week, so a mark is a seat
 // worked lately and it goes when the party stops coming.
 
-/** A seat boost of this much or more shows as flags; this much more, as a ceramah tent. */
-export const MARK = { flag: 0.03, tent: 0.1 };
+/** A seat boost of this much or more shows as posters; this much more, as flags; this much more, as a ceramah tent. */
+export const MARK = { poster: 0.01, flag: 0.03, tent: 0.1 };
 /** No more than this many parties are marked in one seat: the ones working it hardest. Two there is a flag war. */
 const PER_SEAT = 2;
 
-export interface Mark { seat: string; party: number; kind: 'tent' | 'flag'; /** Its place among the marks in the same seat, from 0, and how many there are. */ slot: number; of: number }
+export interface Mark { seat: string; party: number; kind: 'poster' | 'flag' | 'tent'; /** Its place among the marks in the same seat, from 0, and how many there are. */ slot: number; of: number }
 
 /** The marks to draw, the hardest-worked party first in each seat. Nothing outside a campaign. */
 export function campaignMarks(c: Campaign): Mark[] {
@@ -19,10 +19,10 @@ export function campaignMarks(c: Campaign): Mark[] {
   for (const [seat, lift] of Object.entries(c.dyn.support.seat)) {
     const working = lift
       .map((v, party) => ({ v, party }))
-      .filter((x) => x.v >= MARK.flag && !!c.parties[x.party])
+      .filter((x) => x.v >= MARK.poster && !!c.parties[x.party])
       .sort((a, b) => b.v - a.v)
       .slice(0, PER_SEAT);
-    working.forEach((x, slot) => out.push({ seat, party: x.party, kind: x.v >= MARK.tent ? 'tent' : 'flag', slot, of: working.length }));
+    working.forEach((x, slot) => out.push({ seat, party: x.party, kind: x.v >= MARK.tent ? 'tent' : x.v >= MARK.flag ? 'flag' : 'poster', slot, of: working.length }));
   }
   return out;
 }

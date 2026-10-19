@@ -258,6 +258,7 @@ const en = {
   'legend.unpolled': 'Not polled (last result)',
   'legend.tent': 'A ceramah lately',
   'legend.flag': 'Working the seat',
+  'legend.poster': 'A poster up',
   'legend.undeclared': 'Not yet declared',
 
   'actions.target': 'Target',
@@ -3219,6 +3220,7 @@ const ms: Record<CoreKey, string> = {
   'legend.unpolled': 'Belum ditinjau (keputusan lalu)',
   'legend.tent': 'Baru-baru ini ada ceramah',
   'legend.flag': 'Sedang aktif di kawasan ini',
+  'legend.poster': 'Seorang poster dilekatkan',
   'legend.undeclared': 'Keputusan belum diumumkan',
 
   'actions.target': 'Sasaran',

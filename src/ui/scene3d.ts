@@ -19,7 +19,7 @@ export interface ColumnSpec { x: number; z: number; parts: { color: string; shar
 export interface PinSpec { seat: string; kind: 'ring' | 'dot' | 'bullseye' | 'square' | 'diamond' | 'down' | 'up' | 'hex' | 'flag'; color: string; slot: number; of: number }
 /** The tint a seat takes where the player's branches are strong. */
 const HEAT_COLOR = '#14b8a6';
-export interface MarkSpec { seat: string; party: number; kind: 'tent' | 'flag'; slot: number; of: number }
+export interface MarkSpec { seat: string; party: number; kind: 'poster' | 'flag' | 'tent'; slot: number; of: number }
 
 export interface SceneOptions {
   seats: SceneSeat[];
@@ -443,6 +443,12 @@ export class MapScene3D {
       const wood = new MeshLambertMaterial({ color: '#d8d2c4' });
       this.disposables.push(paint, wood);
       if (m.kind === 'tent') { const t = new Mesh(tent, paint); t.position.y = 0.65 * u; g.add(t); }
+      else if (m.kind === 'poster') {
+        // A small flat poster stuck on the seat, visible at any zoom.
+        const post = new Mesh(new BoxGeometry(0.7 * u, 0.5 * u, 0.04 * u), paint);
+        post.position.y = 0.35 * u;
+        g.add(post);
+      }
       else {
         const p = new Mesh(pole, wood); p.position.y = u; g.add(p);
         const c = new Mesh(cloth, paint); c.position.set(0.6 * u, 1.65 * u, 0); g.add(c);

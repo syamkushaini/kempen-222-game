@@ -425,6 +425,7 @@ describe('marks on the map', () => {
       { seat: a, party: 0, kind: 'tent', slot: 0, of: 2 },
       { seat: a, party: 1, kind: 'flag', slot: 1, of: 2 }, // two parties at most: the third is left off
       { seat: b, party: 2, kind: 'flag', slot: 0, of: 1 },
+      { seat: far, party: 1, kind: 'poster', slot: 0, of: 1 }, // below flag threshold, still a poster
     ]);
     // A real week leaves real marks, and only for parties that campaign.
     const played = newCampaign(w, { player: 0, difficulty: 'normal', seed: 2 });

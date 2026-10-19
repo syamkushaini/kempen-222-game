@@ -19,17 +19,23 @@ const PT = PARTY_IDS.indexOf('pt');
 /** Where the player stands: affects how much stability vs unity matters. */
 type Standing = 'pm' | 'gov' | 'opp';
 
-/** Score one effect: how good/bad it is for the player's survival. Higher = better. */
-function scoreEffect(e: Effect, standing: Standing): number {
+/** Score one effect: how good/bad it is for the player's survival. Higher = better.
+ *  `unityNow` and `stabilityNow` are the current values, used for threshold bonuses
+ *  when the player is in danger and must prioritise survival. */
+function scoreEffect(e: Effect, standing: Standing, unityNow: number, stabilityNow: number): number {
   switch (e.t) {
     case 'unity':
       // Unity below 12 = ousted. Positive is very good, negative is very bad.
-      return e.n > 0 ? e.n * 2 : e.n * 3;
+      // Below 20, avoiding unity loss becomes the top priority.
+      const uMult = unityNow < 20 ? 5 : 1;
+      return e.n > 0 ? e.n * 2 * uMult : e.n * 3 * uMult;
     case 'stability':
       // Government stability below 30 risks mid-term collapse.
       // PMs and partners depend on stability for government survival; opposition does not.
       const mult = standing === 'opp' ? 0.3 : standing === 'gov' ? 1 : 1.5;
-      return e.n > 0 ? e.n * mult : e.n * mult * 1.5;
+      // Below 30, stability becomes the top priority for governing parties.
+      const sMult = stabilityNow < 30 ? 3 : 1;
+      return e.n > 0 ? e.n * mult * sMult : e.n * mult * 1.5 * sMult;
     case 'cred':
       return e.n > 0 ? e.n * 0.5 : e.n * 0.8;
     case 'trust':
@@ -62,12 +68,12 @@ function scoreEffect(e: Effect, standing: Standing): number {
 }
 
 /** Score a whole choice: sum of effect scores. For gambles, use expected value. */
-function scoreChoice(c: Campaign, ch: Choice, standing: Standing): number {
-  const base = ch.effects.reduce((a, e) => a + scoreEffect(e, standing), 0);
+function scoreChoice(c: Campaign, ch: Choice, standing: Standing, unityNow: number, stabilityNow: number): number {
+  const base = ch.effects.reduce((a, e) => a + scoreEffect(e, standing, unityNow, stabilityNow), 0);
   if (!ch.gamble) return base;
   const chance = typeof ch.gamble.chance === 'number' ? ch.gamble.chance : gambleChance(c, ch.gamble.chance);
-  const win = ch.gamble.win.reduce((a, e) => a + scoreEffect(e, standing), 0);
-  const lose = ch.gamble.lose.reduce((a, e) => a + scoreEffect(e, standing), 0);
+  const win = ch.gamble.win.reduce((a, e) => a + scoreEffect(e, standing, unityNow, stabilityNow), 0);
+  const lose = ch.gamble.lose.reduce((a, e) => a + scoreEffect(e, standing, unityNow, stabilityNow), 0);
   return chance * win + (1 - chance) * lose;
 }
 
@@ -87,8 +93,10 @@ function answerInbox(world: World, c: Campaign, player: number): void {
       const choices = def ? def.choices : [];
       let bestChoice = 0;
       let bestScore = -Infinity;
+      const unityNow = pc.unity;
+      const stabilityNow = c.career ? c.career.government.stability : 60;
       for (let i = 0; i < choices.length; i++) {
-        const s = scoreChoice(c, choices[i], standing);
+        const s = scoreChoice(c, choices[i], standing, unityNow, stabilityNow);
         if (s > bestScore) { bestScore = s; bestChoice = i; }
       }
       answerEvent(world, c, scene, bestChoice);

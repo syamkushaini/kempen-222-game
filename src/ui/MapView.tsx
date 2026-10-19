@@ -450,6 +450,7 @@ export function MapView(props: {
             ))}
             {anyStale && <span><i className="swatch" style={{ opacity: STALE_OPACITY }} />{t('legend.unpolled')}</span>}
             {marks.some((m) => m.kind === 'tent') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-6 4.5L0 -5.5L6 4.5Z" /></svg>{t('legend.tent')}</span>}
+            {marks.some((m) => m.kind === 'poster') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-2.6 -5.5H-1.4V4.5H-2.6Z M-1.4 -5.5L2.5 -3L-1.4 -0.5Z" /></svg>{t('legend.poster')}</span>}
             {marks.some((m) => m.kind === 'flag') && <span><svg className="mark-key" viewBox="-7 -7 14 14" aria-hidden="true"><path d="M-2.6 -5.5H-1.4V5.5H-2.6Z M-1.4 -5.5L5 -3L-1.4 -0.5Z" /></svg>{t('legend.flag')}</span>}
             {anyUndeclared && <span><i className="swatch undeclared" />{t('legend.undeclared')}</span>}
             {!single && <LayerLegend on={on} me={campaign?.player ?? null} />}
@@ -525,7 +526,9 @@ export function MapView(props: {
                     <g transform={`translate(${(m.slot - (m.of - 1) / 2) * 11} ${single ? -16 : 0})`} fill={partyColor(m.party)}>
                       {m.kind === 'tent'
                         ? <path d="M-6 4.5L0 -5.5L6 4.5Z M-1.4 4.5L0 1.2L1.4 4.5Z" fillRule="evenodd" />
-                        : <><path d="M-2.6 -5.5H-1.4V5.5H-2.6Z" className="mark-pole" /><path d="M-1.4 -5.5L5 -3L-1.4 -0.5Z" /></>}
+                        : m.kind === 'poster'
+                          ? <path d="M-2.6 -5.5H-1.4V4.5H-2.6Z M-1.4 -5.5L2.5 -3L-1.4 -0.5Z" />
+                          : <><path d="M-2.6 -5.5H-1.4V5.5H-2.6Z" className="mark-pole" /><path d="M-1.4 -5.5L5 -3L-1.4 -0.5Z" /></>}
                     </g>
                   </g>
                 );
