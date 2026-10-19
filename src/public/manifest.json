@@ -1,0 +1,20 @@
+{
+  "name": "Kempen 222",
+  "short_name": "Kempen 222",
+  "description": "A satirical Malaysian election strategy game for the browser",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#010102",
+  "theme_color": "#5e6ad2",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr"
+}

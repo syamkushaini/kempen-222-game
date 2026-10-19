@@ -43,6 +43,7 @@ import { ground, mix } from './shareCard';
 import { WhatsNew } from './WhatsNew';
 import { NotificationCenter } from './NotificationCenter';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { TouchGestures } from './TouchGestures';
 
 // The screens a game only reaches later (the count, the talks, the years between elections, the end of a career) are
 // fetched when they are first wanted, so that the first download, which matters most on a phone, is smaller.
@@ -294,6 +295,8 @@ export function App() {
   const ended = useStore((s) => !!s.game?.campaign.career?.ending);
   const loads = useStore((s) => s.loads);
   const setPendingChallenge = useStore((s) => s.setPendingChallenge);
+  const setTab = useStore((s) => s.setTab);
+  const tab = useStore((s) => s.tab);
   const upright = useTablet();
   // The stylesheet knows a tablet held upright by this mark (see ui2.css).
   useEffect(() => { const root = document.documentElement; if (upright) root.dataset.form = 'tablet'; else delete root.dataset.form; }, [upright]);
@@ -362,14 +365,27 @@ export function App() {
       {/* the screens read party colours when they draw, so a new palette starts them afresh */}
       <Fragment key={palette}>
         <main id="main" tabIndex={-1}>
-          {!phase && <Title />}
-          <Suspense fallback={<p className="muted">{t('app.loading')}</p>}>
-            {ended && <LegacyScreen />}
-            {!ended && (phase === 'campaign' || phase === 'term') && <CampaignScreen />}
-            {!ended && night && <ElectionNight key={loads} />}
-            {!ended && phase && phase !== 'campaign' && phase !== 'term' && !night && <FormationScreen />}
-          </Suspense>
-          {!ended && phase && !night && <SceneModal />}
+          <TouchGestures
+            onSwipeLeft={() => {
+              const currentIndex = GROUPS.findIndex((g) => g.tabs.some((id) => id === tab));
+              const nextIndex = (currentIndex + 1) % GROUPS.length;
+              setTab(GROUPS[nextIndex].tabs[0]);
+            }}
+            onSwipeRight={() => {
+              const currentIndex = GROUPS.findIndex((g) => g.tabs.some((id) => id === tab));
+              const nextIndex = (currentIndex - 1 + GROUPS.length) % GROUPS.length;
+              setTab(GROUPS[nextIndex].tabs[0]);
+            }}
+          >
+            {!phase && <Title />}
+            <Suspense fallback={<p className="muted">{t('app.loading')}</p>}>
+              {ended && <LegacyScreen />}
+              {!ended && (phase === 'campaign' || phase === 'term') && <CampaignScreen />}
+              {!ended && night && <ElectionNight key={loads} />}
+              {!ended && phase && phase !== 'campaign' && phase !== 'term' && !night && <FormationScreen />}
+            </Suspense>
+            {!ended && phase && !night && <SceneModal />}
+          </TouchGestures>
         </main>
       </Fragment>
       <GameMenu />
