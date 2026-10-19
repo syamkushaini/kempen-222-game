@@ -454,6 +454,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .term-bar .term-buttons { margin-left: auto; flex-wrap: nowrap; }
   .term-bar .btn { min-height: 44px; white-space: nowrap; }
   body:has(.term-bar) .app { padding-bottom: 150px; }
+  body:has(.bar-min) .app { padding-bottom: 120px; }
   /* The adviser takes less of a small screen. */
   .adviser-strip { padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); gap: 10px; }
   .adviser-strip .portrait { width: 36px; height: 36px; }
@@ -1014,3 +1015,10 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .group-menu-list kbd { color: var(--muted); font-size: 11px; border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; }
 .layout[class*="phone-"] .group-menu { display: none; }
 .metrics-detail .metric-label { white-space: normal; line-height: 1.25; }
+
+/* The bottom bar folded away on a phone: only the tab that brings it back stays, at the side, clear of the page. */
+.bar-fold { min-height: 44px; min-width: 44px; padding: 0 10px; font-size: 18px; line-height: 1; flex: none; }
+/* Open, the tab sits on the bar's top edge, so it adds nothing to the bar's height. */
+.bar-fold.open { position: absolute; top: -40px; right: 12px; min-height: 36px; min-width: 44px; border-radius: 999px; box-shadow: 0 2px 10px rgb(0 0 0 / 0.35); }
+.campaign-bar.bar-min { left: auto; right: 12px; width: auto; padding: 0; gap: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; pointer-events: none; }
+.campaign-bar.bar-min .bar-fold { pointer-events: auto; border-radius: 999px; box-shadow: 0 2px 10px rgb(0 0 0 / 0.35); }
