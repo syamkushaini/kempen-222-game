@@ -11,6 +11,10 @@ import {
 const isNum = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
 const isUint32 = (x: unknown): x is number => isNum(x) && Number.isInteger(x) && x >= 0 && x <= 0xffffffff;
 const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
+
+/** A stronghold from a save: a place named by an id, and a share of the vote between nought and one. */
+export const isStronghold = (x: unknown): x is { place: string; share: number } =>
+  isObj(x) && typeof x.place === 'string' && x.place.length > 0 && x.place.length < 40 && isNum(x.share) && x.share >= 0 && x.share <= 1;
 const isShares = (x: unknown) => Array.isArray(x) && x.length === N_PARTIES && x.every(isNum);
 
 function isValidParty(x: unknown, world: World): x is PartyCampaign {
@@ -248,7 +252,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
   if (!isObj(x)) return false;
   const election = x.election;
   return (
-    x.scenario === world.id && (x.newParty === undefined || typeof x.newParty === 'boolean') && (x.following === undefined || (isNum(x.following) && x.following >= 0 && x.following <= 1)) &&
+    x.scenario === world.id && (x.newParty === undefined || typeof x.newParty === 'boolean') && (x.following === undefined || (isNum(x.following) && x.following >= 0 && x.following <= 1)) && (x.stronghold === undefined || isStronghold(x.stronghold)) &&
     isNum(x.player) && Number.isInteger(x.player) && x.player >= 0 && x.player < N_PARTIES &&
     (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
     (x.challenge === undefined || (isObj(x.challenge) && typeof x.challenge.fog === 'boolean' && typeof x.challenge.noisy === 'boolean' && (x.challenge.lean === undefined || typeof x.challenge.lean === 'boolean') && (x.challenge.code === undefined || typeof x.challenge.code === 'string') && (x.challenge.goal === undefined || typeof x.challenge.goal === 'string') && (x.challenge.whatIf === undefined || typeof x.challenge.whatIf === 'string'))) &&

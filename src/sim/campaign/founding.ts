@@ -22,8 +22,11 @@ export const FOUNDING_SEED_SHARE = 0.005;
 export const NEW_PARTY_SHARE = { byelection: 0.25, state: 0.14, general: 0.07 } as const;
 
 /** A party carried on from one contest to the next keeps part of the vote it won, and never more than this in a seat to begin with. */
-export const MAX_FOLLOWING = 0.25;
+export const MAX_FOLLOWING = 0.3;
 export const FOLLOWING_KEPT = 0.7;
+
+/** A stronghold keeps the share of the vote the party really won there, never more than this. */
+export const MAX_STRONGHOLD = 0.55;
 
 /** The following a new party starts the next contest with, from the share of the vote it won in this one. */
 export const carriedFollowing = (voteShare: number): number => Math.min(MAX_FOLLOWING, Math.max(0, voteShare) * FOLLOWING_KEPT);
