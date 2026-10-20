@@ -1,9 +1,9 @@
 import seatFile from './generated/seats.json';
 import { seatsAfter } from '../sim/campaign/career';
-import { FOUNDED, FOUNDING_SEED_SHARE, FOUNDING_SLOT, MAX_FOLLOWING, NEW_PARTY_SHARE } from '../sim/campaign/founding';
+import { FOUNDED, FOUNDING_SEED_SHARE, FOUNDING_SLOT, MAX_FOLLOWING, MAX_STRONGHOLD, NEW_PARTY_SHARE } from '../sim/campaign/founding';
 import { inContention } from '../sim/campaign/outlook';
 import { BYELECTION_RULES, CAREER_RULES, GENERAL_RULES, HUNG_RULES, STATE_CAREER_RULES, STATE_RULES, type ContestKind } from '../sim/campaign/rules';
-import type { Campaign, SeatResults } from '../sim/campaign/types';
+import type { Campaign, SeatResults, Stronghold } from '../sim/campaign/types';
 import { createWorld, type SeatFile, type World } from '../sim/election';
 import { PARTY_IDS, type StateId } from '../sim/types';
 
@@ -219,12 +219,13 @@ function unit(text: string): number {
  * The world for a contest fought by a brand-new party: the same seats and results, with the new party on every ballot
  * and given the following a new party arrives with. It keeps the contest's own id, so maps and saves read it as the same contest.
  */
-export function newPartyWorld(id: string, following?: number): World | null {
+export function newPartyWorld(id: string, following?: number, stronghold?: Stronghold): World | null {
   const plan0 = blueprint(id);
   const base = NEW_PARTY_SHARE[plan0?.rules.kind as keyof typeof NEW_PARTY_SHARE] ?? 0;
   // A party carried on from an earlier contest starts with the following it won there, if that is more than a new party's usual.
   const share0 = Math.max(base, Math.min(following ?? 0, MAX_FOLLOWING));
-  const key = share0 > base ? `new:${id}:${Math.round(share0 * 1000)}` : `new:${id}`;
+  const home = stronghold && stronghold.share > 0 ? { place: stronghold.place, share: Math.min(stronghold.share, MAX_STRONGHOLD) } : null;
+  const key = `new:${id}${share0 > base ? `:${Math.round(share0 * 1000)}` : ''}${home ? `:${home.place}:${Math.round(home.share * 1000)}` : ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const plan = blueprint(id);
@@ -234,17 +235,23 @@ export function newPartyWorld(id: string, following?: number): World | null {
   const p = PARTY_IDS.indexOf(FOUNDING_SLOT);
   // The same share in every seat would read as a flat line across the map (14% of the old total is 12.3% of the new, in every seat). A new
   // party does better where the voters are less tied to one side, and its following is never quite the same from one seat to the next.
-  const seed = (votes: number[], seat: string) => {
+  // A place where the party really won votes starts with exactly that share: the seat itself, or the seats within it (an assembly
+  // seat names the parliamentary seat it lies in as its `state`, and a parliamentary seat names its state).
+  const seed = (votes: number[], seat: string, within: string) => {
     const total = votes.reduce((a, b) => a + b, 0);
     const out = [...votes];
+    if (home && (seat === home.place || within === home.place)) {
+      out[p] = Math.max(out[p], Math.round(((total - out[p]) * home.share) / (1 - home.share)));
+      return out;
+    }
     const open = Math.min(1.4, Math.max(0.6, (1 - Math.max(...votes) / Math.max(1, total)) / 0.4));
     out[p] = Math.max(out[p], Math.round(total * share * open * (0.85 + 0.3 * unit(`${id}:${seat}`))));
     return out;
   };
   const seats = plan.file.seats.map((s) => ({
     ...s,
-    last: { ...s.last, votes: seed(s.last.votes, s.id) },
-    ...(s.basis ? { basis: { ...s.basis, votes: seed(s.basis.votes, s.id) } } : {}),
+    last: { ...s.last, votes: seed(s.last.votes, s.id, s.state) },
+    ...(s.basis ? { basis: { ...s.basis, votes: seed(s.basis.votes, s.id, s.state) } } : {}),
   }));
   const built = createWorld({ ...plan.file, seats }, plan.rules, id);
   cache.set(key, built);
@@ -362,13 +369,13 @@ export function ownWorld(scenario: string, p: number): World | null {
 }
 
 /** The world a game is played in: its scenario's world, or for a career past its first election, one built from that election. */
-export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean; following?: number; player?: number; carried?: SeatResults }): World | null {
+export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean; following?: number; stronghold?: Stronghold; player?: number; carried?: SeatResults }): World | null {
   if (campaign.carried && !campaign.career) return stateAfter(campaign.scenario, campaign.carried) ?? getWorld(campaign.scenario);
   const results = campaign.career?.results;
   if (!results) {
     if (campaign.career?.founded) return foundedWorld(campaign.scenario, campaign.career.foundedSeat);
     if (campaign.career?.own && campaign.player !== undefined) return ownWorld(campaign.scenario, campaign.player) ?? getWorld(campaign.scenario);
-    return campaign.newParty ? newPartyWorld(campaign.scenario, campaign.following) ?? getWorld(campaign.scenario) : getWorld(campaign.scenario);
+    return campaign.newParty ? newPartyWorld(campaign.scenario, campaign.following, campaign.stronghold) ?? getWorld(campaign.scenario) : getWorld(campaign.scenario);
   }
   const key = `${campaign.scenario}:${fingerprint(results)}`;
   let built = careerWorlds.get(key);

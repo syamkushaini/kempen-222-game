@@ -6,7 +6,8 @@ import { teamFor } from '../sim/campaign/team';
 import { freshParty } from '../sim/campaign/turn';
 import { challengeById } from '../sim/campaign/challenges';
 import type { IdeologyId } from '../sim/campaign/leader';
-import type { BackstoryId, Campaign, Challenge, Difficulty } from '../sim/campaign/types';
+import type { BackstoryId, Campaign, Challenge, Difficulty, Stronghold } from '../sim/campaign/types';
+import { isStronghold } from '../sim/campaign/validate';
 import { Rng } from '../sim/rng';
 import { isMinor, N_PARTIES, PARTY_IDS, type StateId } from '../sim/types';
 import { isValidCampaign } from '../sim/campaign/validate';
@@ -66,6 +67,8 @@ export interface StartOptions {
   weeks?: number;
   /** A new party carried on from an earlier contest: the following it begins with (see `Campaign.following`). */
   following?: number;
+  /** Where that party was strongest: see `Campaign.stronghold`. */
+  stronghold?: Stronghold;
 }
 
 /**
@@ -80,7 +83,7 @@ export function startOf(game: GameState): StartOptions {
     scenario: c.scenario, player: c.player, difficulty: c.difficulty,
     ...(fixed ? { seed: fixed.seed } : {}),
     backstory: c.team.leader.backstory ?? null, ideology: null,
-    ...(c.career?.founded ? { founded: true, stances: [...c.career.stances0[c.player]], ...(c.career.foundedSeat ? { seat: c.career.foundedSeat } : {}) } : c.newParty ? { founded: true, ...(c.following ? { following: c.following } : {}) } : {}),
+    ...(c.career?.founded ? { founded: true, stances: [...c.career.stances0[c.player]], ...(c.career.foundedSeat ? { seat: c.career.foundedSeat } : {}) } : c.newParty ? { founded: true, ...(c.following ? { following: c.following } : {}), ...(c.stronghold ? { stronghold: { ...c.stronghold } } : {}) } : {}),
     ...(c.challenge ? { challenge: { ...c.challenge } } : {}),
   };
 }
@@ -96,6 +99,7 @@ function isStart(x: unknown): x is StartOptions {
     (x.founded === undefined || typeof x.founded === 'boolean') && (x.seat === undefined || typeof x.seat === 'string') && (x.realStates === undefined || typeof x.realStates === 'boolean') &&
     (x.stances === undefined || (Array.isArray(x.stances) && x.stances.every((v) => typeof v === 'number'))) &&
     (x.following === undefined || (typeof x.following === 'number' && x.following >= 0 && x.following <= 1)) &&
+    (x.stronghold === undefined || isStronghold(x.stronghold)) &&
     (x.challenge === undefined || isRecord(x.challenge))
   );
 }

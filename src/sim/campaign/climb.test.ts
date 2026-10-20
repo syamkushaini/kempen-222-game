@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { getWorld, newPartyWorld, nextContest, worldOf } from '../../data/world';
-import { lastElection } from '../election';
+import { lastElection, projectElection } from '../election';
+import { emptyDynamics } from '../dynamics';
 import { PARTY_IDS } from '../types';
-import { FOUNDING_SLOT, MAX_FOLLOWING, NEW_PARTY_SHARE, carriedFollowing } from './founding';
-import { isValidCampaign } from './validate';
+import { FOUNDING_SLOT, MAX_FOLLOWING, MAX_STRONGHOLD, NEW_PARTY_SHARE, carriedFollowing } from './founding';
+import { isStronghold, isValidCampaign } from './validate';
 import { foundForContest } from './career';
 import { newCampaign } from './turn';
 
@@ -43,5 +44,44 @@ describe('carrying a new party on from one contest to the next', () => {
     c.following = 0.2;
     expect(worldOf(c)).toBe(w);
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), worldOf(c)!)).toBe(true);
+  });
+
+  it('starts a stronghold with the vote the party really won there, and the rest with the milder following', () => {
+    const home = { place: 'P.057', share: 0.42 };
+    const w = newPartyWorld('state:perak', 0.29, home)!;
+    const plain = newPartyWorld('state:perak', 0.29)!;
+    const inside = w.seats.filter((s) => s.state === home.place);
+    expect(inside.length).toBeGreaterThan(0);
+    for (const s of inside) {
+      const total = s.last.votes.reduce((a, b) => a + b, 0);
+      expect(s.last.votes[P] / total).toBeCloseTo(home.share, 2);
+    }
+    // seats outside it are as they would have been without a stronghold
+    const outside = w.seats.findIndex((s) => s.state !== home.place);
+    expect(w.seats[outside].last.votes).toEqual(plain.seats[outside].last.votes);
+    // and the party wins the seats it really won
+    const o = projectElection(w, emptyDynamics(), {});
+    for (const s of inside) expect(o.seats[w.seatIndex.get(s.id)!].winner).toBe(P);
+  });
+
+  it('knows a stronghold by a seat\'s own id too, and does not let one share exceed the cap', () => {
+    const own = newPartyWorld('general', 0.2, { place: 'P.057', share: 0.9 })!;
+    const s = own.seats[own.seatIndex.get('P.057')!];
+    const total = s.last.votes.reduce((a, b) => a + b, 0);
+    expect(s.last.votes[P] / total).toBeCloseTo(MAX_STRONGHOLD, 2);
+  });
+
+  it('is rebuilt the same way from a save, and a damaged stronghold is refused', () => {
+    const home = { place: 'P.057', share: 0.42 };
+    const w = newPartyWorld('state:perak', 0.29, home)!;
+    const c = newCampaign(w, { player: P, difficulty: 'normal', seed: 3 });
+    foundForContest(w, c, null);
+    c.following = 0.29;
+    c.stronghold = home;
+    expect(worldOf(c)).toBe(w);
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), worldOf(c)!)).toBe(true);
+    expect(isStronghold({ place: 'P.057', share: 2 })).toBe(false);
+    expect(isStronghold({ place: '', share: 0.3 })).toBe(false);
+    expect(isStronghold({ place: 'P.057' })).toBe(false);
   });
 });

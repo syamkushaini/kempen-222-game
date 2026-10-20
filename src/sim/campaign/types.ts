@@ -848,6 +848,12 @@ export interface StateVote {
 export interface Challenge { fog: boolean; noisy: boolean; /** A lean purse: less money to begin with and less coming in (see challengeCode.ts). */ lean?: boolean; /** The code of a challenge made or taken from a link, so that the result can be sent on. */ code?: string; goal?: string; /** A change to history, for a replay of the real election with something different (see whatif.ts). */ whatIf?: string }
 
 /** A campaign in progress: everything the rules need, as plain JSON. */
+/** Where a party carried on from an earlier contest was strongest: a seat's id, or a state's, and the share of the vote it won there. */
+export interface Stronghold {
+  place: string;
+  share: number;
+}
+
 export interface Campaign {
   /** A state election fought in person inside a career: the last result of this state, which it is fitted to in place of the data's. */
   carried?: SeatResults;
@@ -912,6 +918,8 @@ export interface Campaign {
   newParty?: boolean;
   /** A new party brought on from an earlier contest: the share of the vote it had won there, which is the following it starts this one with if that beats the usual. */
   following?: number;
+  /** A place the new party won in an earlier contest, where the next one starts it with the vote it really had there. */
+  stronghold?: Stronghold;
   team: Team;
 }
 
