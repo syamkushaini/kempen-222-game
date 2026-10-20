@@ -1,3 +1,5 @@
+import { nextContest } from '../data/world';
+import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { regionLabel, useT, useWorld } from './hooks';
 
@@ -12,9 +14,21 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
   const quitToTitle = useStore((s) => s.quitToTitle);
   const doRestart = useStore((s) => s.restart);
   const finishAside = useStore((s) => s.finishAside);
+  const climb = useStore((s) => s.climb);
+  // A new party that has finished a by-election or a state election can carry on to the next contest up.
+  const next = useStore((s) => { const c = s.game?.campaign; return c && c.newParty && !c.career && !s.game?.aside && c.phase === 'done' ? nextContest(c.scenario, world) : null; });
   if (aside) {
     const next = aside.queue[0];
     return <button className="btn primary" onClick={() => void finishAside()}>{next ? t('fight.next', { state: regionLabel(t, world, next) }) : t('fight.back')} ▸</button>;
+  }
+  if (next) {
+    return (
+      <>
+        <button className="btn primary" onClick={() => void climb()}>{next === 'general' ? t('climb.general') : t('climb.state', { state: t(`state.${next.slice(6)}` as StringKey) })} ▸</button>
+        <button className="btn" onClick={quitToTitle}>{t('summary.again')}</button>
+        {restart && <button className="btn" onClick={doRestart}>{t('summary.restart')}</button>}
+      </>
+    );
   }
   return (
     <>

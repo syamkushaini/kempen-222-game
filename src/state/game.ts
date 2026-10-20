@@ -64,6 +64,8 @@ export interface StartOptions {
   challenge?: Partial<Challenge>;
   /** Weeks of campaign, where a challenge made by a player shortens or lengthens the contest's usual. */
   weeks?: number;
+  /** A new party carried on from an earlier contest: the following it begins with (see `Campaign.following`). */
+  following?: number;
 }
 
 /**
@@ -78,7 +80,7 @@ export function startOf(game: GameState): StartOptions {
     scenario: c.scenario, player: c.player, difficulty: c.difficulty,
     ...(fixed ? { seed: fixed.seed } : {}),
     backstory: c.team.leader.backstory ?? null, ideology: null,
-    ...(c.career?.founded ? { founded: true, stances: [...c.career.stances0[c.player]], ...(c.career.foundedSeat ? { seat: c.career.foundedSeat } : {}) } : c.newParty ? { founded: true } : {}),
+    ...(c.career?.founded ? { founded: true, stances: [...c.career.stances0[c.player]], ...(c.career.foundedSeat ? { seat: c.career.foundedSeat } : {}) } : c.newParty ? { founded: true, ...(c.following ? { following: c.following } : {}) } : {}),
     ...(c.challenge ? { challenge: { ...c.challenge } } : {}),
   };
 }
@@ -93,6 +95,7 @@ function isStart(x: unknown): x is StartOptions {
     (x.backstory === null || typeof x.backstory === 'string') && (x.ideology === null || typeof x.ideology === 'string') &&
     (x.founded === undefined || typeof x.founded === 'boolean') && (x.seat === undefined || typeof x.seat === 'string') && (x.realStates === undefined || typeof x.realStates === 'boolean') &&
     (x.stances === undefined || (Array.isArray(x.stances) && x.stances.every((v) => typeof v === 'number'))) &&
+    (x.following === undefined || (typeof x.following === 'number' && x.following >= 0 && x.following <= 1)) &&
     (x.challenge === undefined || isRecord(x.challenge))
   );
 }

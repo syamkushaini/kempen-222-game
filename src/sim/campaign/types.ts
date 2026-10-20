@@ -910,6 +910,8 @@ export interface Campaign {
   career: Career | null;
   /** The player leads a party founded for this contest, with a following of its own but no past. Absent in a career, where `career.founded` says so. */
   newParty?: boolean;
+  /** A new party brought on from an earlier contest: the share of the vote it had won there, which is the following it starts this one with if that beats the usual. */
+  following?: number;
   team: Team;
 }
 

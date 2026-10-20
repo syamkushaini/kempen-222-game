@@ -1373,3 +1373,11 @@ When someone else leads the government, `rivalPm.ts` makes the choices the playe
 ## What a state government can promise
 
 In a career in one state, promises and the bills a rival government tables are limited to a state's powers (`stateScope.ts`): the State and Concurrent Lists (welfare, housing, local councils and their elections, state roads and water, the state's own laws and bodies) for every state; for Sabah and Sarawak also a state sales tax, oil royalties and the MA63 share of federal revenue (the Tenth Schedule); and for Sarawak its own power grid. Petrol, wages, hospitals, schools and the like are federal and cannot be promised. Manifestos are cut to this at the start of a career and at each new term, and old saves that carry a federal promise simply never table it.
+
+## Carrying a new party up the ladder (20 Oct 2026)
+
+Suggested by a player (issue #68): after founding a party and fighting a by-election, carry on to the state election and then the general election, with a base already built.
+
+- When a **new party** (not a career) finishes a by-election or a state election, the end-of-contest buttons offer **"Sambung ke PRN {state}"** or **"Sambung ke PRU"** (`nextContest` in `data/world.ts`: a by-election leads to its state's election, a state election to the general election; a general election is the top).
+- The party keeps its name, colours, leader and difficulty, and starts the next contest with **70% of the vote it won (`FOLLOWING_KEPT`), capped at 25% (`MAX_FOLLOWING`)** in every seat, never below a new party's usual following. Saved as `Campaign.following` and `StartOptions.following` (both optional, so no save version change); `newPartyWorld(id, following)` builds the world.
+- Not done: funds, branches and seats won do not carry over (the party gets a new party's purse), and the 70% and 25% were chosen by judgement, not by simulation with the autoplayer.

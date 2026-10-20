@@ -1,6 +1,6 @@
 import seatFile from './generated/seats.json';
 import { seatsAfter } from '../sim/campaign/career';
-import { FOUNDED, FOUNDING_SEED_SHARE, FOUNDING_SLOT, NEW_PARTY_SHARE } from '../sim/campaign/founding';
+import { FOUNDED, FOUNDING_SEED_SHARE, FOUNDING_SLOT, MAX_FOLLOWING, NEW_PARTY_SHARE } from '../sim/campaign/founding';
 import { inContention } from '../sim/campaign/outlook';
 import { BYELECTION_RULES, CAREER_RULES, GENERAL_RULES, HUNG_RULES, STATE_CAREER_RULES, STATE_RULES, type ContestKind } from '../sim/campaign/rules';
 import type { Campaign, SeatResults } from '../sim/campaign/types';
@@ -190,6 +190,21 @@ export function getWorld(id: string): World | null {
 /** Whether a contest can be fought by a party the player founded: any single contest, but not a hung parliament, whose votes are already in. */
 export const canFound = (kind: ContestKind) => kind === 'byelection' || kind === 'state' || kind === 'general';
 
+/**
+ * The next rung for a party that has done well in a single contest: a by-election leads on to the state election of the state
+ * the seat is in (where there is one to play), and a state election, like a by-election with no state of its own, to the general election.
+ * A general election is the top: nothing follows.
+ */
+export function nextContest(scenario: string, world: Pick<World, 'seats'>): string | null {
+  if (scenario === 'general') return null;
+  if (scenario.startsWith('state:')) return 'general';
+  if (scenario === 'byelection' || scenario.startsWith('byelection:')) {
+    const st = stateNeeded(scenario) ?? (world.seats[0]?.state as StateId | undefined);
+    return st && STATE_SCENARIOS.includes(st) ? `state:${st}` : 'general';
+  }
+  return null;
+}
+
 /** A number from 0 to 1 that depends only on the text: the same seat always gets the same one. */
 function unit(text: string): number {
   let h = 0x811c9dc5;
@@ -204,14 +219,18 @@ function unit(text: string): number {
  * The world for a contest fought by a brand-new party: the same seats and results, with the new party on every ballot
  * and given the following a new party arrives with. It keeps the contest's own id, so maps and saves read it as the same contest.
  */
-export function newPartyWorld(id: string): World | null {
-  const key = `new:${id}`;
+export function newPartyWorld(id: string, following?: number): World | null {
+  const plan0 = blueprint(id);
+  const base = NEW_PARTY_SHARE[plan0?.rules.kind as keyof typeof NEW_PARTY_SHARE] ?? 0;
+  // A party carried on from an earlier contest starts with the following it won there, if that is more than a new party's usual.
+  const share0 = Math.max(base, Math.min(following ?? 0, MAX_FOLLOWING));
+  const key = share0 > base ? `new:${id}:${Math.round(share0 * 1000)}` : `new:${id}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const plan = blueprint(id);
   const kind = plan?.rules.kind;
   if (!plan || plan.rules.career || !kind || !canFound(kind)) return null;
-  const share = NEW_PARTY_SHARE[kind as keyof typeof NEW_PARTY_SHARE];
+  const share = share0;
   const p = PARTY_IDS.indexOf(FOUNDING_SLOT);
   // The same share in every seat would read as a flat line across the map (14% of the old total is 12.3% of the new, in every seat). A new
   // party does better where the voters are less tied to one side, and its following is never quite the same from one seat to the next.
@@ -343,13 +362,13 @@ export function ownWorld(scenario: string, p: number): World | null {
 }
 
 /** The world a game is played in: its scenario's world, or for a career past its first election, one built from that election. */
-export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean; player?: number; carried?: SeatResults }): World | null {
+export function worldOf(campaign: Pick<Campaign, 'scenario' | 'career'> & { newParty?: boolean; following?: number; player?: number; carried?: SeatResults }): World | null {
   if (campaign.carried && !campaign.career) return stateAfter(campaign.scenario, campaign.carried) ?? getWorld(campaign.scenario);
   const results = campaign.career?.results;
   if (!results) {
     if (campaign.career?.founded) return foundedWorld(campaign.scenario, campaign.career.foundedSeat);
     if (campaign.career?.own && campaign.player !== undefined) return ownWorld(campaign.scenario, campaign.player) ?? getWorld(campaign.scenario);
-    return campaign.newParty ? newPartyWorld(campaign.scenario) ?? getWorld(campaign.scenario) : getWorld(campaign.scenario);
+    return campaign.newParty ? newPartyWorld(campaign.scenario, campaign.following) ?? getWorld(campaign.scenario) : getWorld(campaign.scenario);
   }
   const key = `${campaign.scenario}:${fingerprint(results)}`;
   let built = careerWorlds.get(key);
