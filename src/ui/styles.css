@@ -494,6 +494,7 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
 .chief > .grow { flex-basis: 150px; }
 .chief.on { border-left: 2px solid var(--ink-muted); }
 .chief.here { background: var(--panel-2); }
+.chief-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .chief-name { display: block; margin: 0; color: var(--ink); text-align: left; }
 .chief-name:hover { color: var(--link); }
 @media (max-width: 520px) {
