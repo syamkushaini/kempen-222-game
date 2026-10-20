@@ -12,7 +12,7 @@ interface TouchGesturesProps {
 /** A swipe slower than this (in milliseconds) is a drag, not a swipe. */
 const QUICK = 600;
 /** Controls a finger is meant to work, and things that pan or scroll by themselves. */
-const OWN_GESTURE = 'input, select, textarea, button, a, label, summary, [role=slider], [role=dialog], svg, canvas, .map-frame, .chips';
+const OWN_GESTURE = 'input, select, textarea, button, a, label, summary, [role=slider], [role=dialog], svg, canvas, .map-frame, .chips, .issue-scale, :has(> input[type=range])';
 
 /** True when the touch began on something that takes a drag itself: a slider, a list scrolled sideways, the map. */
 export function ownsGesture(el: Element | null): boolean {

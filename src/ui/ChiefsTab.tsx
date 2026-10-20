@@ -62,7 +62,7 @@ function ChiefsTerm() {
                 </span>
                 <span className="action-meta num">{t('chiefs.term.odds', { n: Math.round(talkOdds(world, campaign, st) * 100) })}</span>
               </div>
-              <div className="stack">
+              <div className="chief-actions">
                 <button type="button" className="btn small" disabled={!!no} title={no === 'rest' ? t('chiefs.term.rest', { n: TERM_CHIEFS.court.rest }) : undefined} onClick={() => court(st)}>{t('chiefs.term.court', { rm: f.rm(TERM_CHIEFS.court.cost * world.rules.econ) })}</button>
                 <button type="button" className="btn small" disabled={!!talk} title={talk === 'rest' ? t('chiefs.term.rest', { n: TERM_CHIEFS.talk.rest }) : undefined} onClick={() => send(st)}>{t('chiefs.term.send', { rm: f.rm(TERM_CHIEFS.talk.cost * world.rules.econ) })}</button>
               </div>
