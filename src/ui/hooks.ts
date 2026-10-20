@@ -151,14 +151,15 @@ export function useWorld(): World {
   const scenario = useStore((s) => s.game?.campaign.scenario);
   const results = useStore((s) => s.game?.campaign.career?.results ?? null);
   const newParty = useStore((s) => s.game?.campaign.newParty);
+  const following = useStore((s) => s.game?.campaign.following);
   // A party the player made has a world of its own in its first term: see ownWorld.
   const own = useStore((s) => !!s.game?.campaign.career?.own);
   const founded = useStore((s) => !!s.game?.campaign.career?.founded);
   const foundedSeat = useStore((s) => s.game?.campaign.career?.foundedSeat);
   const player = useStore((s) => s.game?.campaign.player);
   return useMemo(
-    () => (scenario ? worldOf({ scenario, newParty, player, career: results || own || founded ? ({ results: results ?? undefined, own, founded, foundedSeat } as Campaign['career']) : null }) : null) ?? generalWorld,
-    [scenario, results, newParty, own, founded, foundedSeat, player],
+    () => (scenario ? worldOf({ scenario, newParty, following, player, career: results || own || founded ? ({ results: results ?? undefined, own, founded, foundedSeat } as Campaign['career']) : null }) : null) ?? generalWorld,
+    [scenario, results, newParty, following, own, founded, foundedSeat, player],
   );
 }
 

@@ -21,6 +21,13 @@ export const FOUNDING_SEED_SHARE = 0.005;
  */
 export const NEW_PARTY_SHARE = { byelection: 0.25, state: 0.14, general: 0.07 } as const;
 
+/** A party carried on from one contest to the next keeps part of the vote it won, and never more than this in a seat to begin with. */
+export const MAX_FOLLOWING = 0.25;
+export const FOLLOWING_KEPT = 0.7;
+
+/** The following a new party starts the next contest with, from the share of the vote it won in this one. */
+export const carriedFollowing = (voteShare: number): number => Math.min(MAX_FOLLOWING, Math.max(0, voteShare) * FOLLOWING_KEPT);
+
 /** What a founded party starts with in the bank, before scaling to the size of the contest: more than a rival small party, far less than a big one. */
 export const FOUNDING_FUNDS = 150_000;
 

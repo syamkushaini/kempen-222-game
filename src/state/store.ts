@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { fightWorld, foundedWorld, getWorld, loadScenario, loadState, newPartyWorld, ownWorld, worldOf } from '../data/world';
+import { fightWorld, foundedWorld, getWorld, loadScenario, loadState, newPartyWorld, nextContest, ownWorld, worldOf } from '../data/world';
 import { encodeChallenge, type ChallengeSpec } from '../sim/campaign/challengeCode';
 import { translate, type Lang } from '../i18n/strings';
 import { earned, type AchievementId } from '../sim/campaign/achievements';
@@ -32,7 +32,9 @@ import {
 import {
   backRival, claimAgain, endDay, makeOffer, requestTerms, resolveFormationScene, soundOut, type Ask, type AskReply, type OfferResult,
 } from '../sim/campaign/formation';
-import { closeNight, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
+import { carriedFollowing } from '../sim/campaign/founding';
+import { summarise } from '../sim/campaign/night';
+import { closeNight, electionResult, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
   ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
   IssueId, OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId,
@@ -245,7 +247,11 @@ interface Store {
     weeks?: number;
     /** Where a career's founded party begins: a seat's id, or 'random' (or nothing) to leave it to luck. */
     seat?: string;
+    /** A new party carried on from an earlier contest: the following it begins with. */
+    following?: number;
   }): void;
+  /** Carries the party the player founded on from a finished by-election or state election to the next contest up (see `nextContest`). */
+  climb(): Promise<void>;
   /** A challenge sent as a link, waiting for the player to say whether to play it. */
   pendingChallenge: ChallengeSpec | null;
   setPendingChallenge(spec: ChallengeSpec | null): void;
@@ -511,7 +517,7 @@ export const useStore = create<Store>((set, get) => {
       return { selectedSeat: seatId, selectedState: state ?? s.selectedState, seatReturn: s.selectedSeat === null ? s.selectedState : s.seatReturn };
     }),
 
-    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge, realStates = false, weeks, seat }) => {
+    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge, realStates = false, weeks, seat, following }) => {
       // A founded party's first term is played in a country with its name already on every ballot.
       const base = getWorld(scenario);
       // A party the player has made their own may stand in any seat of a career, at a price; it needs a world in which it is on every ballot.
@@ -519,15 +525,15 @@ export const useStore = create<Store>((set, get) => {
       const drawn = seed ?? randomSeed();
       // A party founded from nothing begins in one seat: the one chosen, or one drawn by the game's seed.
       const home = founded && base?.rules.career ? (seat && seat !== 'random' && base.seatIndex.has(seat) ? seat : base.seats[new Rng(drawn).int(base.seats.length)].id) : undefined;
-      const world = founded ? (base?.rules.career ? foundedWorld(scenario, home) : newPartyWorld(scenario)) : own ? ownWorld(scenario, player) ?? base : base;
+      const world = founded ? (base?.rules.career ? foundedWorld(scenario, home) : newPartyWorld(scenario, following)) : own ? ownWorld(scenario, player) ?? base : base;
       if (!world) return;
       if (identity) keepSaved(identity);
       const opts = { player, difficulty, seed: drawn, backstory, challenge, ...(weeks !== undefined ? { totalWeeks: weeks } : {}) };
       // Kept with the game so that it can be started again exactly as it was set up.
-      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances, ...(home ? { seat: home } : {}) } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}), ...(weeks !== undefined ? { weeks } : {}) };
+      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ideology, ...(founded ? { founded, stances, ...(home ? { seat: home } : {}), ...(following ? { following } : {}) } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}), ...(weeks !== undefined ? { weeks } : {}) };
       // A platform of its own belongs to a party of the player's own making.
       const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, realStates, own, ...(home ? { foundedSeat: home } : {}), held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
-      if (founded && !world.rules.career) foundForContest(world, campaign, backstory);
+      if (founded && !world.rules.career) { foundForContest(world, campaign, backstory); if (following) campaign.following = following; }
       // A career opens with its first missions on offer (the game draws them once for each parliament).
       if (campaign.career) offerMain(world, campaign);
       // A set challenge is for someone who has played before: no adviser walking them through it.
@@ -815,6 +821,23 @@ export const useStore = create<Store>((set, get) => {
       const g = get().game;
       if (!g) return;
       get().startCampaign({ ...startOf(g), name: g.name, identity: g.identity });
+    },
+    climb: async () => {
+      const g = get().game;
+      const c = g?.campaign;
+      if (!g || !c || g.aside || c.phase !== 'done' || !c.newParty || c.career) return;
+      const world = worldOf(c);
+      const result = world && electionResult(world, c);
+      const next = world && nextContest(c.scenario, world);
+      if (!world || !result || !next) return;
+      await loadScenario(next);
+      // The party carries on only if this is still the game that was open when the button was pressed.
+      if (get().game?.id !== g.id) return;
+      get().startCampaign({
+        name: g.name, scenario: next, player: c.player, difficulty: c.difficulty, backstory: c.team.leader.backstory ?? null, ideology: null,
+        identity: g.identity, founded: true, following: carriedFollowing(summarise(world, c, result).voteShare),
+        ...(c.challenge ? { challenge: { fog: c.challenge.fog, noisy: c.challenge.noisy } } : {}),
+      });
     },
     setupWanted: false,
     newGameSetup: () => { get().quitToTitle(); set({ setupWanted: true }); },
