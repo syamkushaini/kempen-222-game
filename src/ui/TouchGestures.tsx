@@ -26,6 +26,16 @@ export function ownsGesture(el: Element | null): boolean {
   return false;
 }
 
+/** How far from a slider (in pixels) a touch still counts as aimed at it: the track is thin, and a thumb lands beside it. */
+export const SLIDER_REACH = { x: 16, y: 56 };
+
+/** True when a touch at (x, y) is on, or close enough to, any of the sliders' boxes. */
+export function nearSlider(x: number, y: number, boxes: { left: number; right: number; top: number; bottom: number }[]): boolean {
+  return boxes.some((b) => x >= b.left - SLIDER_REACH.x && x <= b.right + SLIDER_REACH.x && y >= b.top - SLIDER_REACH.y && y <= b.bottom + SLIDER_REACH.y);
+}
+
+const nearAnySlider = (x: number, y: number) => nearSlider(x, y, [...document.querySelectorAll('input[type=range]')].map((el) => el.getBoundingClientRect()));
+
 export function TouchGestures({
   children,
   onSwipeLeft,
@@ -42,8 +52,9 @@ export function TouchGestures({
   useEffect(() => {
     const onStart = (e: TouchEvent) => {
       // Two fingers are a pinch, and a touch on a control or a scrolling strip is that control's own.
-      start.current = e.touches.length === 1 && !ownsGesture(e.target as Element | null)
-        ? { x: e.touches[0].clientX, y: e.touches[0].clientY, at: e.timeStamp }
+      const t = e.touches[0];
+      start.current = e.touches.length === 1 && !ownsGesture(e.target as Element | null) && !nearAnySlider(t.clientX, t.clientY)
+        ? { x: t.clientX, y: t.clientY, at: e.timeStamp }
         : null;
     };
     const onEnd = (e: TouchEvent) => {
