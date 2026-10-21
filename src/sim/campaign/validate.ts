@@ -13,8 +13,9 @@ const isUint32 = (x: unknown): x is number => isNum(x) && Number.isInteger(x) &&
 const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
 
 /** A stronghold from a save: a place named by an id, and a share of the vote between nought and one. */
-export const isStronghold = (x: unknown): x is { place: string; share: number } =>
-  isObj(x) && typeof x.place === 'string' && x.place.length > 0 && x.place.length < 40 && isNum(x.share) && x.share >= 0 && x.share <= 1;
+export const isStronghold = (x: unknown): x is { place: string; share: number; shares?: number[] } =>
+  isObj(x) && typeof x.place === 'string' && x.place.length > 0 && x.place.length < 40 && isNum(x.share) && x.share >= 0 && x.share <= 1 &&
+  (x.shares === undefined || (Array.isArray(x.shares) && x.shares.length === N_PARTIES && x.shares.every((v) => isNum(v) && v >= 0 && v <= 1) && Math.abs(x.shares.reduce((a: number, b: number) => a + b, 0) - 1) < 0.01));
 const isShares = (x: unknown) => Array.isArray(x) && x.length === N_PARTIES && x.every(isNum);
 
 function isValidParty(x: unknown, world: World): x is PartyCampaign {

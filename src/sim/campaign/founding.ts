@@ -28,6 +28,12 @@ export const FOLLOWING_KEPT = 0.7;
 /** A stronghold keeps the share of the vote the party really won there, never more than this. */
 export const MAX_STRONGHOLD = 0.55;
 
+/** What each party won, as shares of the votes cast: what a stronghold keeps of a by-election so that the seat reads as it ended. */
+export const voteShares = (votes: number[]): number[] => {
+  const total = votes.reduce((a, b) => a + b, 0);
+  return votes.map((v) => (total > 0 ? v / total : 0));
+};
+
 /** The following a new party starts the next contest with, from the share of the vote it won in this one. */
 export const carriedFollowing = (voteShare: number): number => Math.min(MAX_FOLLOWING, Math.max(0, voteShare) * FOLLOWING_KEPT);
 

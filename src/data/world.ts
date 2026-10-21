@@ -224,8 +224,8 @@ export function newPartyWorld(id: string, following?: number, stronghold?: Stron
   const base = NEW_PARTY_SHARE[plan0?.rules.kind as keyof typeof NEW_PARTY_SHARE] ?? 0;
   // A party carried on from an earlier contest starts with the following it won there, if that is more than a new party's usual.
   const share0 = Math.max(base, Math.min(following ?? 0, MAX_FOLLOWING));
-  const home = stronghold && stronghold.share > 0 ? { place: stronghold.place, share: Math.min(stronghold.share, MAX_STRONGHOLD) } : null;
-  const key = `new:${id}${share0 > base ? `:${Math.round(share0 * 1000)}` : ''}${home ? `:${home.place}:${Math.round(home.share * 1000)}` : ''}`;
+  const home = stronghold && stronghold.share > 0 ? { place: stronghold.place, share: Math.min(stronghold.share, MAX_STRONGHOLD), shares: stronghold.shares } : null;
+  const key = `new:${id}${share0 > base ? `:${Math.round(share0 * 1000)}` : ''}${home ? `:${home.place}:${Math.round(home.share * 1000)}${home.shares ? `:${home.shares.map((v) => Math.round(v * 1000)).join('.')}` : ''}` : ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const plan = blueprint(id);
@@ -241,7 +241,13 @@ export function newPartyWorld(id: string, following?: number, stronghold?: Stron
     const total = votes.reduce((a, b) => a + b, 0);
     const out = [...votes];
     if (home && (seat === home.place || within === home.place)) {
-      out[p] = Math.max(out[p], Math.round(((total - out[p]) * home.share) / (1 - home.share)));
+      // What every party won there, when that is known: the seat is as the contest ended, a party that lost it still losing it.
+      if (home.shares) return home.shares.map((v) => Math.round(total * v));
+      // Only the party's share is known (it carries on from a state election). The others keep their old votes, so the share is held below the
+      // leader's: a seat the party may not have won must not read as one it did.
+      const others = total - out[p];
+      const wanted = Math.round((others * home.share) / (1 - home.share));
+      out[p] = Math.max(out[p], Math.min(wanted, Math.round(Math.max(...out.filter((_, k) => k !== p)) * 0.95)));
       return out;
     }
     const open = Math.min(1.4, Math.max(0.6, (1 - Math.max(...votes) / Math.max(1, total)) / 0.4));
