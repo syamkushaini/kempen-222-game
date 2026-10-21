@@ -58,3 +58,24 @@ describe('playing a state election again from its result', () => {
     expect(store().game!.id).toBe(id);
   });
 });
+
+describe('a state election finished and saved before this existed', () => {
+  beforeEach(() => { store().quitToTitle(); });
+
+  it('can be carried on from the saved game, without playing it again', () => {
+    store().startCampaign({ name: 'Old', scenario: 'state:perlis', player: PS, difficulty: 'normal' });
+    finish();
+    const done = store().game!;
+    const result = electionResult(worldOf(done.campaign)!, done.campaign)!;
+    // A save from before carrying on: no `carried` anywhere in it.
+    const old = JSON.parse(serializeSave(done));
+    expect(old.campaign.carried).toBeUndefined();
+    store().quitToTitle();
+    const loaded = parseSave(JSON.stringify(old));
+    if (!loaded.ok) throw new Error('save not read');
+    useStore.setState({ game: loaded.state });
+    store().carryOn();
+    expect(store().game!.campaign.phase).toBe('campaign');
+    expect(lastElection(worldOf(store().game!.campaign)!).tally).toEqual(result.tally);
+  });
+});
