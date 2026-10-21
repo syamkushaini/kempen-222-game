@@ -6,7 +6,7 @@ import { teamFor } from '../sim/campaign/team';
 import { freshParty } from '../sim/campaign/turn';
 import { challengeById } from '../sim/campaign/challenges';
 import type { IdeologyId } from '../sim/campaign/leader';
-import type { BackstoryId, Campaign, Challenge, Difficulty, Stronghold } from '../sim/campaign/types';
+import type { BackstoryId, Campaign, Challenge, Difficulty, SeatResults, Stronghold } from '../sim/campaign/types';
 import { isStronghold } from '../sim/campaign/validate';
 import { Rng } from '../sim/rng';
 import { isMinor, N_PARTIES, PARTY_IDS, type StateId } from '../sim/types';
@@ -69,6 +69,8 @@ export interface StartOptions {
   following?: number;
   /** Where that party was strongest: see `Campaign.stronghold`. */
   stronghold?: Stronghold;
+  /** A state election played again: the result of the one before, which this one is fitted to (see `Campaign.carried`). */
+  carried?: SeatResults;
 }
 
 /**
@@ -100,6 +102,7 @@ function isStart(x: unknown): x is StartOptions {
     (x.stances === undefined || (Array.isArray(x.stances) && x.stances.every((v) => typeof v === 'number'))) &&
     (x.following === undefined || (typeof x.following === 'number' && x.following >= 0 && x.following <= 1)) &&
     (x.stronghold === undefined || isStronghold(x.stronghold)) &&
+    (x.carried === undefined || (isRecord(x.carried) && Array.isArray(x.carried.votes) && Array.isArray(x.carried.turnout) && Array.isArray(x.carried.basis))) &&
     (x.challenge === undefined || isRecord(x.challenge))
   );
 }
