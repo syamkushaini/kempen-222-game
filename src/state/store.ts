@@ -32,7 +32,7 @@ import {
 import {
   backRival, claimAgain, endDay, makeOffer, requestTerms, resolveFormationScene, soundOut, type Ask, type AskReply, type OfferResult,
 } from '../sim/campaign/formation';
-import { carriedFollowing } from '../sim/campaign/founding';
+import { carriedFollowing, voteShares } from '../sim/campaign/founding';
 import { summarise } from '../sim/campaign/night';
 import { closeNight, electionResult, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
@@ -840,7 +840,7 @@ export const useStore = create<Store>((set, get) => {
         name: g.name, scenario: next, player: c.player, difficulty: c.difficulty, backstory: c.team.leader.backstory ?? null, ideology: null,
         identity: g.identity, founded: true, following: carriedFollowing(share),
         // Where the party won its vote is where it is strongest in the next contest: the seat it fought, or the state.
-        ...(share > 0 ? { stronghold: { place: c.scenario.startsWith('state:') ? c.scenario.slice(6) : world.seats[0].id, share } } : {}),
+        ...(share > 0 ? { stronghold: { place: c.scenario.startsWith('state:') ? c.scenario.slice(6) : world.seats[0].id, share, ...(world.seats.length === 1 ? { shares: voteShares(result.votes) } : {}) } } : {}),
         ...(c.challenge ? { challenge: { fog: c.challenge.fog, noisy: c.challenge.noisy } } : {}),
       });
     },
