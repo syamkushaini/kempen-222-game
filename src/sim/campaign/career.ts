@@ -27,6 +27,7 @@ import { payday, staffWeek, wages } from './staff';
 import { claimsWeek, makeClaims } from './claims';
 import { termMediaWeek } from './media';
 import { openingDeal, openingFlag } from './eventListOpening';
+import { dealPartyOpening } from './eventListOpeningParty';
 import { governmentScore } from './record';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
@@ -247,6 +248,8 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
     c.career.stances0[c.player] = [...c.career.stances[c.player]];
   }
   takeOffice(c);
+  // A party that was already there opens with two stories of the place it begins in, dealt by the seed.
+  if (!opts.founded) dealPartyOpening(c);
   c.news = [];
   c.ledger = [];
   delete c.recap;

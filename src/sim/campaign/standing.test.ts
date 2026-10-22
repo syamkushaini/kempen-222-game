@@ -19,6 +19,8 @@ const world = getWorld('career')!;
 const career = (player = PS, seed = 5): Campaign => {
   const c = startCareer(world, { player, difficulty: 'normal', seed });
   c.career!.obligations = [];
+  // These tests are about the years, not the opening: the stories dealt to a new career are left for opening.test.ts.
+  c.career!.flags = c.career!.flags.filter((f) => !f.startsWith('opening:'));
   c.parties[player]!.funds = scaled(world, 5_000_000);
   c.career!.oppLeader = oppositionLeader(world, c);
   return c;

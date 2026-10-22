@@ -410,5 +410,17 @@ export const EVENT_ART: Record<string, string> = {
   startStudents: 'day: student@36, phone@56*1.2, student@70, placard@88',
   startPoll: 'room: wallroom@50, docs@34*1.3, person@60, clock@80*0.8, leader@90',
   startTreasurer: 'room: wallroom@50, table@40, docs@58*1.2, person@74, cash@88*0.8',
+  startPmHundredDays: 'room: wallroom@50, docs@34*1.3, leader@58, clock@78*0.8, person@90',
+  startPmSecretary: 'room: wallroom@50, table@40, person@58, docs@72*1.2, leader@88',
+  startPmClaimants: 'room: wallroom@50, table@44*1.2, person@30, person@60, leader@84',
+  startPmSchoolVisit: 'day: student@30, stage@52, phone@66*1.2, leader@82, crowd@90*0.8',
+  startGovRearRow: 'room: stage@50*1.2, chair@30, person@58, phone@74*1.2, leader@88',
+  startGovDeputy: 'room: wallroom@50, docs@36, person@60, chair@76, trophy@90*0.8',
+  startGovBackbench: 'room: wallroom@50, docs@36*1.3, person@52, person@66, leader@86',
+  startGovMemo: 'room: wallroom@50, docs@38*1.3, phone@60, clock@78*0.8, alarm@90',
+  startOppShadow: 'room: wallroom@50, table@42*1.2, person@62, leader@82, placard@92*0.8',
+  startOppMotion: 'room: wallroom@50, stage@40, leader@62, crowd@82*0.8, docs@92*1.1',
+  startOppLeak: 'night: docs@36*1.4, person@56, phone@72, alarm@88, moon@12',
+  startOppVacancy: 'day: kampung@26, person@52, ballot@68*1.2, leader@86',
 };
 

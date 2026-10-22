@@ -21,7 +21,12 @@ import { isValidCampaign } from './validate';
 
 const [PS, BP, PT, GBK, , LEGASI] = PARTY_IDS.map((_, i) => i);
 const base = getWorld('career')!;
-const career = (player = PS, seed = 5): Campaign => startCareer(base, { player, difficulty: 'normal', seed });
+const career = (player = PS, seed = 5): Campaign => {
+  const c = startCareer(base, { player, difficulty: 'normal', seed });
+  // These tests are about the years, not the opening: the stories dealt to a new career are left for opening.test.ts.
+  c.career!.flags = c.career!.flags.filter((f) => !f.startsWith('opening:'));
+  return c;
+};
 const issue = (id: (typeof ISSUE_IDS)[number]) => ISSUE_IDS.indexOf(id);
 const bloc = (id: (typeof BLOC_IDS)[number]) => BLOC_IDS.indexOf(id);
 /** Plays out whatever is waiting, always taking the given choice, until the term is moving again. */
