@@ -328,12 +328,23 @@ export function foundedWorld(scenario = 'career', home?: string): World {
   const homes = plan.file.seats.filter((s) => winning(s.last.votes));
   const lead = homes.length ? Math.max(1.05, homes[0].last.votes[p] / Math.max(1, Math.max(...homes[0].last.votes.filter((_, q) => q !== p)))) : 1.1;
   const moved = !!home && plan.file.seats.some((s) => s.id === home) && !homes.some((s) => s.id === home);
+  // The slot is a real party's in some seats of the data, with thousands of votes: a party founded from nothing does not inherit them.
+  // What it held goes back to the others in proportion, so no seat changes hands but the one it was winning.
+  const strip = (votes: number[]) => {
+    const total = votes.reduce((a, b) => a + b, 0);
+    const target = Math.round(total * FOUNDING_SEED_SHARE);
+    if (votes[p] <= target) return seed(votes);
+    const rest = total - votes[p];
+    const given = votes[p] - target;
+    return votes.map((v, q) => (q === p ? target : rest > 0 ? Math.round(v + (given * v) / rest) : v));
+  };
   const place = (s: { id: string }, votes: number[]) => {
-    if (!moved) return seed(votes);
+    if (!moved) return winning(votes) ? seed(votes) : strip(votes);
     const total = votes.reduce((a, b) => a + b, 0);
     const out = [...votes];
     if (s.id === home) out[p] = Math.round(Math.max(...votes.filter((_, q) => q !== p)) * lead);
     else if (winning(votes)) out[p] = Math.round(total * FOUNDING_SEED_SHARE);
+    else return strip(votes);
     return s.id === home ? out : seed(out);
   };
   const seats = plan.file.seats.map((s) => ({
