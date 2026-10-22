@@ -26,6 +26,7 @@ import { plotsWeek, resolveUltimatum } from './plots';
 import { payday, staffWeek, wages } from './staff';
 import { claimsWeek, makeClaims } from './claims';
 import { termMediaWeek } from './media';
+import { openingDeal, openingFlag } from './eventListOpening';
 import { governmentScore } from './record';
 import { closeCampaign, openCampaign } from './team';
 import { closeSlate, openNominations } from './slate';
@@ -238,6 +239,8 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
     c.career.founded = true;
     if (opts.foundedSeat) c.career.foundedSeat = opts.foundedSeat;
     c.parties[c.player]!.funds = scaled(world, FOUNDING_FUNDS);
+    // The first months bring a few small stories of their own, dealt by the game's seed so that no two founded parties meet the same ones.
+    c.career.flags.push(...openingDeal(c.rng).map(openingFlag));
   }
   if (opts.stances && opts.stances.length === N_ISSUES) {
     c.career.stances[c.player] = opts.stances.map((s) => Math.max(-2, Math.min(2, Math.round(s))));
