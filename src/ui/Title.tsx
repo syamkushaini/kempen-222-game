@@ -202,7 +202,8 @@ export function Title() {
                 onClick={() => { const g = saveStore.load(AUTO_SLOT); if (g) loadGame(g); }}
               />
             )}
-            <MenuItem primary={!auto} icon="plus" tone="new" title={t('menu.new')} hint={t('menu.new.hint')} onClick={() => pick('home')} />
+            {!auto && <MenuItem primary icon="play" tone="go" title={t('menu.play')} hint={t('menu.play.hint')} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy' })} />}
+            <MenuItem primary={false} icon="plus" tone="new" title={t('menu.new')} hint={t('menu.new.hint')} onClick={() => pick('home')} />
             <MenuItem icon="folder" tone="load" title={t('menu.load')} hint={t('menu.load.hint', { n: saved })} onClick={() => pick('load')} />
             <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.hint')} onClick={() => pick('challenges')} />
             <MenuItem icon="book" tone="learn" title={t('howto.title')} hint={t('howto.hint')} onClick={() => setHowTo(true)} />

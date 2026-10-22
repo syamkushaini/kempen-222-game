@@ -43,6 +43,8 @@ function SeatBySeat() {
   const result = useMemo(() => electionResult(world, campaign)!, [world, electionSeed]); // eslint-disable-line react-hooks/exhaustive-deps
   const order = useMemo(() => declarationOrder(world, campaign), [world, electionSeed]); // eslint-disable-line react-hooks/exhaustive-deps
   const summary = useMemo(() => summarise(world, campaign, result), [result]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The three tightest finishes of the night, whoever won them, in votes.
+  const closest = useMemo(() => result.seats.map((o, i) => ({ i, votes: Math.round(o.margin * o.valid) })).filter((x) => result.seats[x.i].winner >= 0).sort((a, b) => a.votes - b.votes).slice(0, 3), [result]);
 
   const [count, setCount] = useState(campaign.phase !== 'night' ? TOTAL : 0);
   const [playing, setPlaying] = useState(true);
@@ -186,6 +188,19 @@ function SeatBySeat() {
                 <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>
               </div>
               <AchievementsEarned campaign={campaign} />
+              {/* the night's closest finishes, in votes: the ones a party remembers */}
+              <section className="photo-finish">
+                <h3>{t('night.close.title')}</h3>
+                <ol>
+                  {closest.map(({ i, votes }) => (
+                    <li key={i}>
+                      <button className="link" onClick={() => selectSeat(world.seats[i].id, world.seats[i].state)}>{world.seats[i].name}</button>
+                      {' '}<span className="muted small">{t('night.close.line', { party: partyName(t, result.seats[i].winner), n: f.int(votes) })}</span>
+                      {result.seats[i].winner === campaign.player && <span className="badge plain"> {t('night.close.yours')}</span>}
+                    </li>
+                  ))}
+                </ol>
+              </section>
               <details className="fold" open={!narrow}>
                 <summary><h3>{t('night.more.seats')}</h3> <span className="muted num">+{summary.gained.length} · −{summary.lost.length}</span></summary>
                 <h4>{t('summary.gained', { n: summary.gained.length })}</h4>
