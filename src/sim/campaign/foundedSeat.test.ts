@@ -14,6 +14,17 @@ describe('where a party founded from nothing begins', () => {
     expect(held(w)).toHaveLength(1);
   });
 
+  it('inherits no votes of the real party that held its slot, in any seat but its own', () => {
+    for (const w of [foundedWorld('career'), foundedWorld('career', foundedWorld('career').seats.find((s) => s.state === 'penang')!.id)]) {
+      const [home] = held(w);
+      for (const seat of w.seats) {
+        if (seat.id === home) continue;
+        const total = seat.last.votes.reduce((a, b) => a + b, 0);
+        expect(seat.last.votes[P] / total, seat.id).toBeLessThan(0.01);
+      }
+    }
+  });
+
   it('can begin in any seat chosen, which it then holds and the old one does not', () => {
     const home = foundedWorld('career');
     const [old] = held(home);

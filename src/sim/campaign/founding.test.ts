@@ -119,7 +119,7 @@ describe('how a founded party grows', () => {
       w = worldOf(c)!;
       expect(c.career!.founded).toBe(true);
     }
-    expect(shares[0]).toBeGreaterThan(0.008);
+    expect(shares[0]).toBeGreaterThan(FOUNDING_SEED_SHARE * 0.9); // what it was seeded with, and no more
     expect(shares[1]).toBeGreaterThan(shares[0] * 1.5);
     expect(shares[2]).toBeGreaterThan(0.1);
     expect(shares[2]).toBeLessThan(0.45);

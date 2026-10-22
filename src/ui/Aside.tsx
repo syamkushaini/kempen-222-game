@@ -16,7 +16,7 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
   const finishAside = useStore((s) => s.finishAside);
   const climb = useStore((s) => s.climb);
   const carryOn = useStore((s) => s.carryOn);
-  // A plain state election can be played again from the result it ended with, as often as the player likes.
+  // A plain state election played again starts from the result it ended with, as often as the player likes.
   const again = useStore((s) => { const c = s.game?.campaign; return !!c && !s.game?.aside && !c.career && !c.newParty && !c.challenge && c.phase === 'done' && c.scenario.startsWith('state:'); });
   // A new party that has finished a by-election or a state election can carry on to the next contest up.
   const next = useStore((s) => { const c = s.game?.campaign; return c && c.newParty && !c.career && !s.game?.aside && c.phase === 'done' ? nextContest(c.scenario, world) : null; });
@@ -35,9 +35,8 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
   }
   return (
     <>
-      {again && <button className="btn primary" onClick={carryOn}>{t('carry.state')} ▸</button>}
-      <button className={again ? 'btn' : 'btn primary'} onClick={quitToTitle}>{t('summary.again')}{again ? '' : ' ▸'}</button>
-      {restart && <button className="btn" onClick={doRestart}>{t('summary.restart')}</button>}
+      <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>
+      {restart && <button className="btn" onClick={again ? carryOn : doRestart}>{t('summary.restart')}</button>}
     </>
   );
 }
