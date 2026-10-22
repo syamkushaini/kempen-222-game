@@ -402,5 +402,13 @@ export const EVENT_ART: Record<string, string> = {
   sarawakTimberSalesTaxTweak: 'day: port@30*1.2, truck@52, palms@70, warning@88, docs@16*1.1',
   hydroVillageTrustFund: 'dusk: longhouse@36*1.2, chiefs@60, docs@78*1.2, cash@92*0.8',
   hydroVillageTrustReturns: 'night: docs@34*1.4, chiefs@58, phone@76, alarm@90, moon@12',
+  startDonor: 'day: shophouses@30, person@52, cash@70, leader@86',
+  startViral: 'dusk: stage@30, phone@50*1.2, person@64, crowd@84*0.8',
+  startCouncillor: 'day: kampung@26, person@50, chiefs@68, leader@86',
+  startShoplot: 'day: shophouses@34*1.2, placard@58, person@72, table@88',
+  startNamesake: 'room: wallroom@50, docs@34*1.2, ballot@60*1.2, alarm@80, leader@90',
+  startStudents: 'day: student@36, phone@56*1.2, student@70, placard@88',
+  startPoll: 'room: wallroom@50, docs@34*1.3, person@60, clock@80*0.8, leader@90',
+  startTreasurer: 'room: wallroom@50, table@40, docs@58*1.2, person@74, cash@88*0.8',
 };
 

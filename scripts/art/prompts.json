@@ -1528,6 +1528,38 @@
    "title": "The Park Pavilion Deal",
    "body": "A fictional event company offers to refurbish a neglected state park pavilion in Kangar in exchange for a long concession to run cafés and weekend events. The proposal has a glossy rendering, a suspiciously neat revenue forecast and no clear cap on private bookings. Families want better facilities, while local vendors fear being pushed out. The offer expires soon."
   },
+  "startDonor": {
+   "title": "A donor with a small favour",
+   "body": "A hardware-shop owner who says he “believes in new blood” offers fifty thousand ringgit to the party. In the same breath he mentions that his nephew would make a fine candidate, and that the council has been slow with his signboard licence."
+  },
+  "startViral": {
+   "title": "A hawker’s video you did not make",
+   "body": "A satay seller in your seat has filmed himself talking about “the new party with the funny name” while fanning the charcoal. It has been shared forty thousand times, mostly by people who do not live in the seat, and some of the comments are not kind."
+  },
+  "startCouncillor": {
+   "title": "A councillor wants to join",
+   "body": "A three-term councillor from one of the large parties, passed over for the third time, asks to join you and bring his two branches with him. He knows every drain in his ward. He also has a reputation, in some quarters, for knowing a little too much about who got the contracts."
+  },
+  "startShoplot": {
+   "title": "A free shoplot, with a catch",
+   "body": "A landlord offers a first-floor shoplot rent-free for six months as the party’s office. It is in a good street. It is also directly above a stall run by a supporter of the incumbent, and the lease asks that “political activity be conducted in a respectful manner”."
+  },
+  "startNamesake": {
+   "title": "Another party with nearly your name",
+   "body": "A second new party has registered with a name that differs from yours by one word. Its leader says it is a coincidence. A member of yours says that is not what the Registrar’s letter says, and that voters in the seat will not be able to tell the two apart on the ballot."
+  },
+  "startStudents": {
+   "title": "The students who want to run your page",
+   "body": "Six university students offer to run the party’s social media for nothing, on one condition: that they decide what is posted. They are clever, they are funny, and one of them has already drafted a post about the leader that the leader has not seen."
+  },
+  "startPoll": {
+   "title": "A cheap poll that says one per cent",
+   "body": "A small polling firm offers the party a survey of your seat at a friendly price. It will almost certainly say you are on about one per cent. It would also tell you which streets, which age groups and which worries are your best, and the firm will keep it quiet if you ask."
+  },
+  "startTreasurer": {
+   "title": "A retired treasurer, very particular",
+   "body": "A retired civil servant, who audited a state agency for thirty years, offers to be the party’s treasurer. He wants receipts for every ringgit, no cash payments at all, and the books open to every member. He also says, kindly, that three of your present habits would not survive an audit."
+  },
   "kind-pactOffer": {
    "title": "An offer from another party",
    "body": "The leader of another party calls with an offer of a pact: seats to stand aside in, seats in return. Two leaders at a table with glasses of teh tarik, a handshake half offered."

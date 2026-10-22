@@ -17,6 +17,7 @@ import { SHOCK_EVENTS } from './eventListShocks';
 import { VIRAL_EVENTS } from './eventListViral';
 import { CRISIS_EVENTS } from './eventListCrisis';
 import { PENANG_STORIES, PERLIS_STORIES } from './eventListNorth';
+import { OPENING_STORIES } from './eventListOpening';
 import { FOLLOW_EVENTS, FOLLOW_UPS } from './eventListFollow';
 import { STATE_STORIES } from './eventList12';
 import { KEDAH_STORIES } from './eventList13';
@@ -46,7 +47,7 @@ import { scaleHoldings } from './party';
 import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEvent, standingOf, topicOf, type Standing } from './standing';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
 
-const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES };
+const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES, ...OPENING_STORIES };
 
 /**
  * Events whose money is the public's: relief for a flood, a bridge, a subsidy, a port. Where the player's party governs they are paid
@@ -205,6 +206,8 @@ export interface EventDef {
     unityBelow?: number;
     /** The term is more than two-thirds gone, or less than a third gone. */
     late?: boolean; early?: boolean;
+    /** The first parliament of a career, and no later one. */
+    first?: boolean;
   };
   choices: Choice[];
 }
@@ -277,6 +280,7 @@ export function eligible(c: Campaign, id: string): boolean {
   if (n.unityBelow !== undefined && c.parties[c.player]!.unity >= n.unityBelow) return false;
   if (n.late && k.week < (k.length * 2) / 3) return false;
   if (n.early && k.week > k.length / 3) return false;
+  if (n.first && k.term !== 1) return false;
   return true;
 }
 
