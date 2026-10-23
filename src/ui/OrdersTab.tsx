@@ -1,12 +1,11 @@
 import { probeChance } from '../sim/campaign/party';
 import {
-  ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, machineryTargets, ledger, termIncome, termSpending,
+  ASSET_LOT, MACHINERY_STEP, MEDIA_STEP, RESEARCH_STEP, budgetSpend, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, machineryTargets, ledger, termIncome, termSpending,
 } from '../sim/campaign/career';
 import { creditShare, divertedAt, govMoney, grantGoodwillAt, grantsCostAt, hasPublicMoney, RIVAL_CREDIT, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
 import { DONOR_CRED_COST, STATE_TRUST_COST, donorsAt } from '../sim/campaign/career';
-import { StopSlider } from './StopSlider';
 import { StepSlider } from './LineSlider';
-import { ASK_MAX, ASK_MIN } from '../sim/campaign/lineDial';
+import { ASK_MAX, ASK_MIN, BUDGET_MAX, PATRONAGE_MAX } from '../sim/campaign/lineDial';
 import { useState } from 'react';
 import { contestsState, scaled } from '../sim/campaign/actions';
 import { ROUNDS, STATE_GOVERNMENT_INCOME, statesHeld } from '../sim/campaign/contests';
@@ -19,20 +18,18 @@ import { Gauge } from './Gauge';
 import { Loan } from './Loan';
 import { Jargon, Term } from './Term';
 import { stabilityBand } from '../sim/campaign/formation';
-import { FOCUS_IDS, type Level, type Orders } from '../sim/campaign/types';
+import { FOCUS_IDS, type Orders } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import type { StringKey } from '../i18n/strings';
 import { ConfirmButton } from './SavesTab';
 import { leaderName, partyColor, partyName, partyShort, regionLabel, relationWord, useFormat, useT, useWorld } from './hooks';
 import { Brief } from './Brief';
 
-const LEVELS: Level[] = [0, 1, 2, 3];
-
 /** What a level of asking or drawing is: how far up the scale it is, what it brings in or costs each week, and what it costs besides. */
-function askReadout(t: (key: StringKey, vars?: Record<string, string | number>) => string, level: number, money: string, price?: string) {
+function askReadout(t: (key: StringKey, vars?: Record<string, string | number>) => string, level: number, money: string, price?: string, max: number = ASK_MAX) {
   return (
     <>
-      <strong>{level === 0 ? t('level.0') : t('ask.level', { n: level, max: ASK_MAX })}</strong>
+      <strong>{level === 0 ? t('level.0') : t('ask.level', { n: level, max })}</strong>
       <span className="num"> · {money}{price ? ` · ${price}` : ''}</span>
     </>
   );
@@ -81,9 +78,10 @@ export function OrdersTab() {
         <span className="action-title">{t(`orders.budget.${key}`)}</span>
         <span className="action-meta">{t(`orders.budget.${key}.desc`)}</span>
       </div>
-      <StopSlider
-        label={t(`orders.budget.${key}`)} value={o.budget[key]} onChange={(level) => setOrders({ budget: { ...o.budget, [key]: level } })}
-        stops={LEVELS.map((level) => ({ value: level, label: t(`level.${level}`), detail: level > 0 ? t('stop.perWeek', { rm: f.rm(scaled(world, BUDGET[key][level])) }) : t('cost.free') }))}
+      <StepSlider
+        label={t(`orders.budget.${key}`)} min={0} max={BUDGET_MAX} value={o.budget[key]} onChange={(level) => setOrders({ budget: { ...o.budget, [key]: level } })} t={t}
+        readout={askReadout(t, o.budget[key], o.budget[key] > 0 ? t('stop.perWeek', { rm: f.rm(scaled(world, budgetSpend(key, o.budget[key]))) }) : t('cost.free'), t(`orders.budget.${key}.step` as StringKey, { n: key === 'machinery' ? MACHINERY_STEP : key === 'media' ? (MEDIA_STEP * 100).toFixed(2) : RESEARCH_STEP }), BUDGET_MAX)}
+        scale={[t('level.0'), '', String(BUDGET_MAX)]}
       />
     </li>
   );
@@ -199,12 +197,10 @@ export function OrdersTab() {
               <span className="action-title">{t('orders.patronage')}</span>
               <span className="action-meta">{t('orders.patronage.desc', { x: PATRONAGE.mult[2] })}</span>
             </div>
-            <StopSlider
-              label={t('orders.patronage')} value={patronageOf(k)} disabled={campaign.phase !== 'term'} onChange={(level) => setPatronage(level)}
-              stops={PATRONAGE.mult.map((mult, level) => ({
-                value: level, label: t(`orders.patronage.${level}` as StringKey), detail: t('stop.patron', { x: mult }),
-                note: level > 0 ? t('stop.patron.risk', { pct: (Math.min(PATRONAGE.max, statesHeld(campaign, me) * level * PATRONAGE.risk) * 100).toFixed(1) }) : undefined,
-              }))}
+            <StepSlider
+              label={t('orders.patronage')} min={0} max={PATRONAGE_MAX} value={patronageOf(k)} disabled={campaign.phase !== 'term'} onChange={(level) => setPatronage(level)} t={t}
+              readout={askReadout(t, patronageOf(k), t('stop.patron', { x: PATRONAGE.mult[patronageOf(k)] }), patronageOf(k) > 0 ? t('stop.patron.risk', { pct: (Math.min(PATRONAGE.max, statesHeld(campaign, me) * patronageOf(k) * PATRONAGE.risk) * 100).toFixed(1) }) : undefined, PATRONAGE_MAX)}
+              scale={[t('level.0'), '', String(PATRONAGE_MAX)]}
             />
           </div>
         )}

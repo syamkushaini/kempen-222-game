@@ -308,7 +308,7 @@ export interface Orders {
   /** The leader being cultivated under the "leaders" focus. */
   courting: number | null;
   /** Weekly spending on branches, on staying in the public eye, and on digging into rivals. */
-  budget: { machinery: Level; media: Level; research: Level };
+  budget: { machinery: number; media: number; research: number };
   /** Regions where the machinery money and the leader's tours go. Up to three; none means everywhere. */
   focusStates: RegionId[];
   /** How hard the party leans on tycoons and corporate donors. */

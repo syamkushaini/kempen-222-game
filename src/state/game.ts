@@ -14,7 +14,7 @@ import { isValidCampaign } from '../sim/campaign/validate';
 import { isValidIdentity, type Identity } from './identity';
 
 /** Bump when the saved shape changes, and add a step to `migrate`. */
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 const isRecord = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
 
@@ -184,7 +184,19 @@ function migrate(raw: Record<string, unknown>): Record<string, unknown> | null {
     // Version 11 keeps a record of the player's decisions. A game from before has none.
     s = { ...s, version: 11, campaign: { ...s.campaign, ledger: [] } };
   }
+  if (s.version === 11 && isRecord(s.campaign)) {
+    // Version 12 sets the party's three standing budgets in steps of equal size: what had been level 3 is four steps.
+    s = { ...s, version: 12, campaign: withBudgetSteps(s.campaign) };
+  }
   return s;
+}
+
+/** Counts a career's standing budgets in steps of equal size: level 3 had been four of them, and levels 0 to 2 are what they were. */
+function withBudgetSteps(campaign: Record<string, unknown>): Record<string, unknown> {
+  const k = campaign.career;
+  if (!isRecord(k) || !isRecord(k.orders) || !isRecord(k.orders.budget)) return campaign;
+  const budget = Object.fromEntries(Object.entries(k.orders.budget).map(([key, v]) => [key, v === 3 ? 4 : v]));
+  return { ...campaign, career: { ...k, orders: { ...k.orders, budget } } };
 }
 
 /** Starts a campaign for each small party that would have one, as it stands on the first day. */

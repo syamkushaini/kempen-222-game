@@ -33,3 +33,8 @@ export const isStep = (x: unknown, min: number, max: number): x is number => typ
 // old Low level was (so the old Off, Low, Mid and High are 0, 1, 2 and 3, and the steps above High are new). Each step has its price.
 export const ASK_MIN = 0;
 export const ASK_MAX = 6;
+
+// The party's three standing budgets (branches, publicity, research) are set in steps of equal size, from nothing to eight; and the states'
+// patronage in steps from nothing to six. The old levels 0, 1 and 2 of each are the same steps; the old level 3 of a budget was four steps.
+export const BUDGET_MAX = 8;
+export const PATRONAGE_MAX = 6;

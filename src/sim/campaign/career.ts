@@ -27,7 +27,7 @@ import { payday, staffWeek, wages } from './staff';
 import { claimsWeek, makeClaims } from './claims';
 import { termMediaWeek } from './media';
 import { openingDeal, openingFlag } from './eventListOpening';
-import { ASK_MAX, ASK_MIN, isStep } from './lineDial';
+import { ASK_MAX, ASK_MIN, BUDGET_MAX, isStep } from './lineDial';
 import { dealPartyOpening } from './eventListOpeningParty';
 import { governmentScore } from './record';
 import { closeCampaign, openCampaign } from './team';
@@ -67,7 +67,7 @@ import {
 } from './turn';
 import {
   FOCUS_IDS, ISSUE_IDS, N_ISSUES,
-  type Campaign, type Career, type Level, type Orders, type Outcome, type Scene, type SeatResults,
+  type Campaign, type Career, type Orders, type Outcome, type Scene, type SeatResults,
 } from './types';
 
 const OTH = PARTY_IDS.indexOf('oth');
@@ -79,12 +79,14 @@ export const TERM_WEEKS = 252;
 /** A head of government may ask for a dissolution once three years have passed. */
 export const EARLIEST_DISSOLUTION = 156;
 
-/** Weekly spending at each level of effort, at general-election scale. */
-export const BUDGET: Record<keyof Orders['budget'], number[]> = {
-  machinery: [0, 6_000, 12_000, 24_000],
-  media: [0, 4_000, 8_000, 16_000],
-  research: [0, 3_000, 6_000, 12_000],
-};
+/** What one step of effort costs each week, at general-election scale: a standing budget is a number of these (see BUDGET_MAX). */
+export const BUDGET_UNIT: Record<keyof Orders['budget'], number> = { machinery: 6_000, media: 4_000, research: 3_000 };
+/** What one step of each buys in a week: points of branch strength, of the party's profile (a fraction of a logit), and of the dossier on rivals. */
+export const MACHINERY_STEP = 0.25;
+export const MEDIA_STEP = 0.0012;
+export const RESEARCH_STEP = 0.15;
+/** The weekly spending at a step of effort. */
+export const budgetSpend = (key: keyof Orders['budget'], step: number): number => BUDGET_UNIT[key] * step;
 /** Between elections, donations run at this share of what a campaign brings in. */
 const PEACETIME = 0.1;
 const DONOR_INCOME = 8_000;
@@ -307,13 +309,12 @@ export interface Spending { machinery: number; media: number; research: number; 
 /** What the standing orders cost each week. */
 export function termSpending(world: World, c: Campaign): Spending {
   const b = c.career!.orders.budget;
-  const cost = (k: keyof Orders['budget']) => (b[k] > 0 ? scaled(world, BUDGET[k][b[k]]) : 0);
+  const cost = (k: keyof Orders['budget']) => (b[k] > 0 ? scaled(world, budgetSpend(k, b[k])) : 0);
   const machinery = cost('machinery'), media = cost('media'), research = cost('research');
   const team = wages(world, c);
   return { machinery, media, research, wages: team, total: machinery + media + research + team };
 }
 
-const isLevel = (x: unknown): x is Level => x === 0 || x === 1 || x === 2 || x === 3;
 
 /** Changes the standing orders. Anything that does not make sense is ignored. */
 export function setOrders(world: World, c: Campaign, patch: Partial<Orders>): void {
@@ -322,7 +323,7 @@ export function setOrders(world: World, c: Campaign, patch: Partial<Orders>): vo
   const o = k.orders;
   if (patch.focus && FOCUS_IDS.includes(patch.focus)) o.focus = patch.focus;
   if (patch.courting !== undefined) o.courting = patch.courting !== null && c.parties[patch.courting] && patch.courting !== c.player ? patch.courting : null;
-  if (patch.budget) for (const key of ['machinery', 'media', 'research'] as const) if (isLevel(patch.budget[key])) o.budget[key] = patch.budget[key];
+  if (patch.budget) for (const key of ['machinery', 'media', 'research'] as const) if (isStep(patch.budget[key], 0, BUDGET_MAX)) o.budget[key] = patch.budget[key];
   if (patch.focusStates) {
     o.focusStates = [...new Set(patch.focusStates)].filter((st) => world.states.includes(st) && contestsState(world, c, c.player, st)).slice(0, MAX_FOCUS_STATES);
   }
@@ -406,7 +407,7 @@ export function termWeek(world: World, c: Campaign): void {
 
   // Branches wither a little every week, and grow where money and the leader's time go.
   const targets = machineryTargets(world, c);
-  const points = ((afford * plan.machinery) / scaled(world, 6_000) * 0.25 + (o.focus === 'tour' ? 0.3 : 0)) * edge(c, me, 'organisation') * (1 + 0.08 * skill(c, me, 'manager')) * (0.8 + 0.2 * Math.min(2, rollsFactor(world, c)));
+  const points = ((afford * plan.machinery) / scaled(world, BUDGET_UNIT.machinery) * MACHINERY_STEP + (o.focus === 'tour' ? 0.3 : 0)) * edge(c, me, 'organisation') * (1 + 0.08 * skill(c, me, 'manager')) * (0.8 + 0.2 * Math.min(2, rollsFactor(world, c)));
   pc.machinery = pc.machinery.map((m, i) => {
     const st = world.states[i];
     if (m <= 0) {
@@ -449,9 +450,9 @@ export function termWeek(world: World, c: Campaign): void {
   }
   trialWeek(c);
 
-  const seen = ((afford * plan.media) / scaled(world, 4_000) * 0.0012 + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
+  const seen = ((afford * plan.media) / scaled(world, BUDGET_UNIT.media) * MEDIA_STEP + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
   k.profile[me] = Math.min(PROFILE_CAP, k.profile[me] * 0.97 + seen);
-  const dug = ((afford * plan.research) / scaled(world, 3_000) * 0.15 + (o.focus === 'dirt' ? 0.5 : 0)) * edge(c, me, 'cunning') * (1 + 0.1 * skill(c, me, 'strategist'));
+  const dug = ((afford * plan.research) / scaled(world, BUDGET_UNIT.research) * RESEARCH_STEP + (o.focus === 'dirt' ? 0.5 : 0)) * edge(c, me, 'cunning') * (1 + 0.1 * skill(c, me, 'strategist'));
   k.dossier = clamp(k.dossier + dug, 0, 100);
   if (o.focus === 'policy') k.credibility = Math.min(Math.max(k.credibility, 85), k.credibility + 0.2 * edge(c, me, 'integrity'));
   // The team is on the payroll already; what is left is whether anyone's past comes out this week.

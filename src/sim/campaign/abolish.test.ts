@@ -7,7 +7,9 @@ import { setRate } from './econTools';
 import { setTax } from './econPlans';
 import { applyEffects } from './events';
 import { ASK_MAX } from './lineDial';
-import { donorsAt, setOrders } from './career';
+import { BUDGET_UNIT, budgetSpend, donorsAt, setOrders, termSpending } from './career';
+import { PATRONAGE, setPatronage } from './patronage';
+import { BUDGET_MAX, PATRONAGE_MAX } from './lineDial';
 import { Rng } from '../rng';
 import { PARTY_IDS } from '../types';
 import { startCareer } from './career';
@@ -226,5 +228,46 @@ describe('how hard the party asks donors, draws on the state and spends on grant
     const bad = JSON.parse(JSON.stringify(c));
     bad.career.orders.state = 7;
     expect(isValidCampaign(bad, world)).toBe(false);
+  });
+});
+
+describe('the party’s standing budgets and the states’ patronage', () => {
+  it('run in steps of equal size from nothing to eight, each costing a unit and buying a unit’s worth', () => {
+    const c = career();
+    expect(BUDGET_MAX).toBe(8);
+    for (const key of ['machinery', 'media', 'research'] as const) {
+      expect(budgetSpend(key, 0)).toBe(0);
+      expect(budgetSpend(key, 5)).toBe(5 * BUDGET_UNIT[key]);
+      for (const v of [0, 1, 4, 8]) { setOrders(world, c, { budget: { ...c.career!.orders.budget, [key]: v } }); expect(c.career!.orders.budget[key], `${key} ${v}`).toBe(v); }
+      for (const v of [9, -1, 2.5]) { setOrders(world, c, { budget: { ...c.career!.orders.budget, [key]: 4 } }); setOrders(world, c, { budget: { ...c.career!.orders.budget, [key]: v } }); expect(c.career!.orders.budget[key], `${key} ${v}`).toBe(4); }
+    }
+    c.career!.orders.budget = { machinery: 0, media: 0, research: 0 };
+    const none = termSpending(world, c).machinery;
+    c.career!.orders.budget.machinery = 2;
+    const two = termSpending(world, c).machinery;
+    c.career!.orders.budget.machinery = 6;
+    expect(none).toBe(0);
+    expect(termSpending(world, c).machinery).toBe(3 * two);
+  });
+
+  it('count what had been level 3 as four steps in a saved game from before, and leave the rest as they were', async () => {
+    const { parseSave, serializeSave, SAVE_VERSION } = await import('../../state/game');
+    const { useStore } = await import('../../state/store');
+    useStore.getState().quitToTitle();
+    useStore.getState().startCampaign({ name: 'x', scenario: 'career', player: PS, difficulty: 'normal' });
+    const text = JSON.parse(serializeSave(useStore.getState().game!));
+    expect(text.version).toBe(SAVE_VERSION);
+    text.version = 11;
+    text.campaign.career.orders.budget = { machinery: 3, media: 2, research: 0 };
+    const parsed = parseSave(JSON.stringify(text));
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(parsed.state.campaign.career!.orders.budget).toEqual({ machinery: 4, media: 2, research: 0 });
+  });
+
+  it('draw on the states up to six steps, each paying more and risking more, and an inquiry caps at the most it can be', () => {
+    expect(PATRONAGE.mult).toHaveLength(PATRONAGE_MAX + 1);
+    for (let i = 1; i < PATRONAGE.mult.length; i++) expect(PATRONAGE.mult[i]).toBeGreaterThan(PATRONAGE.mult[i - 1]);
+    expect(PATRONAGE.mult.slice(0, 3)).toEqual([1, 2, 3.5]);
+    expect(setPatronage(career(), 7)).toBe(false);
   });
 });
