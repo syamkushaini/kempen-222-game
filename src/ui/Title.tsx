@@ -18,6 +18,7 @@ import { saveStore, useStore } from '../state/store';
 import { LEADERS } from '../sim/campaign/cast';
 import { lastOutcome, useFormat, useT } from './hooks';
 import { ChallengeList } from './Challenges';
+import { timeLeft } from '../sim/campaign/weekly';
 import { ChallengeInvite } from './ChallengeMaker';
 import { Credits } from './Credits';
 import { FeedbackLink } from './FeedbackLink';
@@ -205,7 +206,7 @@ export function Title() {
             {!auto && <MenuItem primary icon="play" tone="go" title={t('menu.play')} hint={t('menu.play.hint')} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy' })} />}
             <MenuItem primary={false} icon="plus" tone="new" title={t('menu.new')} hint={t('menu.new.hint')} onClick={() => pick('home')} />
             <MenuItem icon="folder" tone="load" title={t('menu.load')} hint={t('menu.load.hint', { n: saved })} onClick={() => pick('load')} />
-            <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.hint')} onClick={() => pick('challenges')} />
+            <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.weekly', { n: Math.max(1, Math.ceil(timeLeft(Date.now()) / 86_400_000)) })} onClick={() => pick('challenges')} />
             <MenuItem icon="book" tone="learn" title={t('howto.title')} hint={t('howto.hint')} onClick={() => setHowTo(true)} />
             <MenuItem icon="trophy" tone="won" title={t('menu.honours')} hint={t('menu.honours.hint', { n: earnedCount, total: ACHIEVEMENT_IDS.length })} onClick={() => setHonours(true)} />
             {hasLeaderboard && <MenuItem icon="star" tone="won" title={t('lb.title')} hint={t('lb.menu.hint')} onClick={() => setBoard(true)} />}
