@@ -5,7 +5,7 @@ import { translate, type StringKey } from '../i18n/strings';
 // its line, but not for ever: these are the lengths at which each kind of label still fits at a phone's width.
 const LIMITS: { what: string; max: number; keys: StringKey[] }[] = [
   { what: 'a main menu line', max: 20, keys: ['title.continue', 'menu.new', 'menu.load', 'challenges.title', 'menu.honours', 'howto.title'] },
-  { what: 'a word under a main menu line', max: 48, keys: ['menu.new.hint', 'menu.challenges.hint', 'howto.hint'] },
+  { what: 'a word under a main menu line', max: 48, keys: ['menu.new.hint', 'menu.challenges.hint', 'menu.challenges.weekly', 'howto.hint'] },
   { what: 'a button on a result or a recap', max: 26, keys: ['verdict.go', 'recap.go', 'settings.done', 'desk.look'] },
   { what: 'a screen in the phone\'s bottom bar', max: 12, keys: ['nav.map', 'group.people', 'group.intel', 'group.run.campaign', 'group.run.term'] },
   { what: 'the name of a way to play', max: 24, keys: ['title.mode.quick', 'title.mode.custom', 'title.mode.career'] },
