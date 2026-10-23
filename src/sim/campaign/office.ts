@@ -102,17 +102,28 @@ export const DEBT_FLOOR = 0;
 
 export const RATE = { growth: -0.3, prices: -0.6, interest: 0.3 } as const;
 
-export function economyWeek(c: Campaign, rng: Rng) {
-  const k = c.career!;
+/** The share of the gap between where growth and prices are and where the budget and the rate point them that is closed each week. */
+export const ECONOMY_PULL = 0.04;
+
+/** Where the economy is heading: the growth and the prices that the budget, the rate, the taxes and what has been built point to. It gets there slowly. */
+export function economyTargets(k: Career): { growth: number; prices: number } {
   const e = k.economy;
   const loose = looseness(k);
   // Loose budgets buy growth and prices; heavy debt drags; cutting aid shows up at the till.
   const rate = k.rate ?? 0;
   const tax = taxEffects(k), built = builtEffects(k);
-  const growthTo = 4 + 0.15 * loose - Math.max(0, e.debt - 70) * 0.08 + RATE.growth * rate + tax.growth + built.growth + stanceGrowth(k);
-  const pricesTo = 2.5 + 0.3 * loose - 0.3 * lineDial(k.tabled.lines.aid) + (aidAbolished(k.tabled) ? ABOLISH_PRICES : 0) + RATE.prices * rate + tax.prices + built.prices;
-  e.growth = clamp(e.growth + (growthTo - e.growth) * 0.04 + rng.normal(0, 0.05), -6, 9);
-  e.inflation = clamp(e.inflation + (pricesTo - e.inflation) * 0.04 + rng.normal(0, 0.04), -1, 12);
+  return {
+    growth: 4 + 0.15 * loose - Math.max(0, e.debt - 70) * 0.08 + RATE.growth * rate + tax.growth + built.growth + stanceGrowth(k),
+    prices: 2.5 + 0.3 * loose - 0.3 * lineDial(k.tabled.lines.aid) + (aidAbolished(k.tabled) ? ABOLISH_PRICES : 0) + RATE.prices * rate + tax.prices + built.prices,
+  };
+}
+
+export function economyWeek(c: Campaign, rng: Rng) {
+  const k = c.career!;
+  const e = k.economy;
+  const { growth: growthTo, prices: pricesTo } = economyTargets(k);
+  e.growth = clamp(e.growth + (growthTo - e.growth) * ECONOMY_PULL + rng.normal(0, 0.05), -6, 9);
+  e.inflation = clamp(e.inflation + (pricesTo - e.inflation) * ECONOMY_PULL + rng.normal(0, 0.04), -1, 12);
   e.jobless = clamp(e.jobless + (3.5 - (e.growth - 4) * 0.35 - e.jobless) * 0.03 + rng.normal(0, 0.015), 2, 12);
   // A deficit above what growth can carry piles up as debt: the bill for this year's generosity arrives later.
   e.debt = clamp(e.debt + ((deficit(k) - 3.5) * 1.5) / 52 - (e.growth - 4) * 0.01, DEBT_FLOOR, 120);

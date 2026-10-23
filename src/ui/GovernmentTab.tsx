@@ -10,6 +10,7 @@ import { MONTH, commitmentWeekly, lineWeekly, measureWeekly, takingsWeekly } fro
 import { StopSlider, moneyStops } from './StopSlider';
 import { ABOLISH, type LineDial } from '../sim/campaign/lineDial';
 import { EconomyBook } from './EconomyBook';
+import { EconomyReality } from './EconomyReality';
 import { TreasuryCard } from './TreasuryCard';
 import { EconomyCharts } from './EconomyCharts';
 import { EconomyTools, MarketsPanel } from './EconomyTools';
@@ -115,6 +116,7 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
       </dl>
       <p className="muted small">{t(feel > 0.5 ? 'house.feel.good' : feel < -0.5 ? 'house.feel.bad' : 'house.feel.flat')} {t('house.deficit', { pct: deficit(k).toFixed(1) })}</p>
 
+      <EconomyReality />
       <TreasuryCard />
       <Fold title={t('fold.economy')}>
         <EconomyCharts />
