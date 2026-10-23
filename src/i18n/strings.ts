@@ -4963,7 +4963,7 @@ const ms: Record<CoreKey, string> = {
   'econ.hard.title': 'Kenapa ekonomi susah dikawal',
   'econ.hard.slow': 'Ia perlahan. Pertumbuhan dan harga hanya menutup {pull}% jurang ke arah yang ditunjuk bajet dan kadar anda setiap minggu: sekitar {half} minggu untuk separuh jalan, dan sekitar {most} minggu untuk hampir sampai. Pengundi menilai anda lama sebelum satu keputusan berkesan.',
   'econ.hard.world': 'Ia bukan semuanya di tangan anda. Empat sektor naik turun sendiri, dan dalam sekitar {shock} tahun daripada sepuluh, satu sektor dilanda kejutan {min} hingga {max} mata yang ambil sekitar {fade} minggu untuk reda separuh. Anda dipuji, atau dipersalahkan, untuk semuanya.',
-  'econ.hard.small': 'Tuas anda kecil. Tuas pertumbuhan yang paling kuat menambah sekitar {best} mata pertumbuhan, dan tak boleh digunakan lagi selama {wait} minggu. Setiap tuas ada harganya: wang, kepercayaan, undi atau harga.',
+  'econ.hard.small': 'Langkah yang anda ada kecil kesannya. Langkah pertumbuhan yang paling kuat menambah sekitar {best} mata pertumbuhan, dan tak boleh dibuat lagi selama {wait} minggu. Setiap langkah ada harganya: wang, kepercayaan, undi atau harga.',
   'econ.hard.steady': 'Sekarang pertumbuhan {now}% dan bajet menahannya sekitar situ.',
   'econ.hard.rising': 'Sekarang pertumbuhan {now}% dan menuju {to}%. Namun begitu, jangkakan menunggu sekitar {half} minggu untuk nampak separuh daripadanya.',
   'econ.hard.falling': 'Sekarang pertumbuhan {now}% dan menurun ke {to}%. Memulihkannya akan ambil sekitar {half} minggu untuk nampak walau separuh jalan.',
