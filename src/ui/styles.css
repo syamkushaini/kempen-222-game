@@ -903,3 +903,6 @@ input.error, select.error { border-color: var(--bad); }
 .cloud-saves { margin-top: 16px; }
 .cloud-saves h5 { margin: 12px 0 4px; }
 .storage-notice { margin: 12px 0; }
+
+/* Why the economy is hard to steer: a short list, easy to read at a glance. */
+.hard-list { margin: 0 0 8px 18px; padding: 0; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }

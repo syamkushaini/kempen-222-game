@@ -1395,3 +1395,11 @@ Players lost saves: they live in `localStorage`, which a cleared browser, a priv
 - **Finding a lost game:** a signed-in player whose cloud holds an autosave newer than the device's (or the device has none) is offered it at the top of the menu. A player in another app's browser is told once, with a button to back up (sign in, or export a file), and the notice goes once they have signed in (`src/state/environment.ts` knows the apps by their user-agent).
 - **Deleting:** a button deletes the account and every save at once, through the function `delete_my_account()` in the SQL (rows go with the user). What is kept is the e-mail address (in Supabase's own tables) and the saves.
 - **Tests:** `cloud.test.ts` runs the sign-in, renewal, push, list, pull, rotation to `prev`, delete and packing against a fake server; the whole round trip (play, send, lose the device's saves, reload, restore) was also checked in a browser against a stand-in for the service.
+
+## Telling the player the economy is hard to steer (23 Oct 2026)
+
+The designer wanted players to know that a country's economy is hard to control. The model already was (growth and prices close a fixed share of the gap to where the budget and rate point them each week; four sectors wander and are shocked on their own; every lever is small and has a price), but nothing said so.
+
+- **A card on the Economy screen** (`EconomyReality`, above the treasury): why it is slow, why it is not all yours, why the levers are small, and where growth is heading now against where it is. Collapsible, open by default.
+- **The numbers are read from the model** (`economyFacts.ts`), not written into the text: `ECONOMY_PULL` (4% a week: 17 weeks to halfway, 56 to most of the way), `SECTOR.shock` (about 3 years in 10 a sector is shocked, by 14 to 26 points, fading over about 57 weeks), and the strongest growth tool in `TOOLS` (about 0.5 points, once a year). Change the model and the words change with it.
+- **`economyTargets(k)`** was cut out of `economyWeek` (same arithmetic, same random draws) so that the card can show the growth the economy is heading for.
