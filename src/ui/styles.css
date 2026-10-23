@@ -903,3 +903,22 @@ input.error, select.error { border-color: var(--bad); }
 .cloud-saves { margin-top: 16px; }
 .cloud-saves h5 { margin: 12px 0 4px; }
 .storage-notice { margin: 12px 0; }
+
+/* A slider with a few stops, and what each stop does written under it. */
+.stop-slider { display: grid; gap: 4px; width: 100%; min-width: 0; }
+.stop-slider input[type='range'] { width: 100%; margin: 0; height: 30px; accent-color: var(--primary); background: transparent; }
+.stop-list { display: grid; list-style: none; margin: 0; padding: 0; gap: 4px; }
+.stop-list li { min-width: 0; }
+.stop-list button { all: unset; box-sizing: border-box; display: grid; gap: 1px; width: 100%; padding: 6px 8px; border-radius: 8px; text-align: center; font-size: 12px; line-height: 1.25; color: var(--muted, inherit); cursor: pointer; }
+.stop-list li:first-child button { text-align: left; }
+.stop-list li:last-child button { text-align: right; }
+.stop-list li.on button { color: inherit; background: color-mix(in srgb, var(--primary) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 40%, transparent); }
+.stop-list li.on strong { color: var(--primary); }
+.stop-list button strong { font-weight: 600; }
+.stop-list button small { font-size: 11px; opacity: 0.8; }
+.stop-list button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.stop-list button:disabled { cursor: default; opacity: 0.6; }
+
+/* A control that needs the whole width (a slider with its stops) goes under the words, not beside them. */
+.action.stacked, .rate-row.stacked { flex-direction: column; align-items: stretch; gap: 6px; }
+.action.stacked > .grow, .rate-row.stacked > .grow { flex: 0 0 auto; min-height: 0; }

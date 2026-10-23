@@ -167,18 +167,29 @@ export const treasuryCap = (world: World, c: Campaign) => baseAllocation(world, 
 
 /** What the standing orders would divert to the party this week: no more than the treasury will have. */
 export function diverted(world: World, c: Campaign): number {
+  return divertedAt(world, c, c.career?.orders.state ?? 0);
+}
+
+/** What would be diverted to the party each week if state resources were drawn on at this level. */
+export function divertedAt(world: World, c: Campaign, level: number): number {
   const k = c.career;
   if (!k || c.phase !== 'term' || !hasPublicMoney(c)) return 0;
-  const planned = scaled(world, DIVERT_STEP) * k.orders.state;
+  const planned = scaled(world, DIVERT_STEP) * level;
   return Math.min(planned, Math.min(treasuryCap(world, c), Math.max(0, treasuryOf(c) + allocation(world, c))));
 }
 
 /** What the grants would cost this week at the level chosen. */
 export function grantsCost(world: World, c: Campaign): number {
+  return grantsCostAt(world, c, c.career?.orders.grants ?? 0);
+}
+
+/** What the grants would cost each week at a level, and the points of goodwill they buy in all (shared among the target regions). */
+export function grantsCostAt(world: World, c: Campaign, level: number): number {
   const k = c.career;
   if (!k || c.phase !== 'term' || !hasPublicMoney(c)) return 0;
-  return govMoney(world, GRANT_STEP) * (k.orders.grants ?? 0);
+  return govMoney(world, GRANT_STEP) * level;
 }
+export const grantGoodwillAt = (world: World, c: Campaign, level: number): number => grantsCostAt(world, c, level) / govMoney(world, GRANT_PER_POINT);
 
 /** How much of the credit for a state's development a rival state government takes for itself. */
 export const RIVAL_CREDIT = 0.3;
