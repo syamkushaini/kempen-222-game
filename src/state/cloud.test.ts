@@ -32,6 +32,21 @@ describe('signing in with a code sent by e-mail', () => {
     expect(s.calls[0].headers.apikey).toBe('anon-key');
   });
 
+  it('tells apart what went wrong when the service answers with an error', async () => {
+    const ask = (status: number, body?: unknown) => new CloudSaves(cfg, server(() => reply(status, body)).fetchFn, memory());
+    expect(await ask(500, { msg: 'Error sending magic link email' }).requestCode('p@example.com')).toBe('server');
+    expect(await ask(401, { message: 'Invalid API key' }).requestCode('p@example.com')).toBe('config');
+    expect(await ask(404).requestCode('p@example.com')).toBe('config');
+    expect(await ask(422, { error_code: 'email_address_invalid' }).requestCode('p@example.com')).toBe('invalid');
+    expect(await ask(422, { error_code: 'signup_disabled' }).requestCode('p@example.com')).toBe('config');
+    expect(await ask(400, { error_code: 'over_email_send_rate_limit' }).requestCode('p@example.com')).toBe('limited');
+    const down = ask(500);
+    await down.requestCode('p@example.com');
+    expect(down.lastStatus).toBe(500);
+    expect(await ask(502).verify('p@example.com', '123456')).toBe('server');
+    expect(await new CloudSaves(cfg, (async () => { throw new Error('offline'); }) as typeof fetch, memory()).verify('p@example.com', '123456')).toBe('failed');
+  });
+
   it('says so when mail is being asked for too often, and when the service cannot be reached', async () => {
     expect(await new CloudSaves(cfg, server(() => reply(429)).fetchFn, memory()).requestCode('p@example.com')).toBe('limited');
     expect(await new CloudSaves(cfg, (async () => { throw new Error('offline'); }) as typeof fetch, memory()).requestCode('p@example.com')).toBe('failed');
@@ -175,7 +190,7 @@ describe('saves in the cloud', () => {
   it('is switched off when the game has no address for it', async () => {
     const off = new CloudSaves(null, server(() => reply(200)).fetchFn, memory());
     expect(off.enabled).toBe(false);
-    expect(await off.requestCode('p@example.com')).toBe('failed');
+    expect(await off.requestCode('p@example.com')).toBe('config');
     expect(await off.push('auto', game)).toBe('auth');
   });
 });

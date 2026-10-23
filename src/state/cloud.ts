@@ -76,11 +76,19 @@ export function sessionFrom(body: unknown, now: number, fallbackEmail = ''): Ses
   return { access: b.access_token, refresh: b.refresh_token, expiresAt, userId: b.user.id, email: typeof b.user.email === 'string' ? b.user.email : fallbackEmail };
 }
 
-export type CodeResult = 'sent' | 'invalid' | 'limited' | 'failed';
-export type VerifyResult = 'ok' | 'wrong' | 'failed';
+/** `server`: the service answered with an error (often the mail service behind it); `config`: the address, the key or the sign-in settings are not right. */
+export type CodeResult = 'sent' | 'invalid' | 'limited' | 'failed' | 'server' | 'config';
+export type VerifyResult = 'ok' | 'wrong' | 'failed' | 'server' | 'config';
 export type PushResult = 'ok' | 'auth' | 'failed';
 
 const json = { 'Content-Type': 'application/json' };
+/** Sending a mail can take its time, and the answer waits for it. */
+const MAIL_WAIT_MS = 25_000;
+
+/** What the sign-in service says went wrong, in its own words (`error_code`), if it says. */
+async function errorCodeOf(res: Response): Promise<string> {
+  try { const b = (await res.clone().json()) as { error_code?: unknown; code?: unknown }; return typeof b.error_code === 'string' ? b.error_code : typeof b.code === 'string' ? b.code : ''; } catch { return ''; }
+}
 
 export class CloudSaves {
   constructor(
@@ -95,25 +103,35 @@ export class CloudSaves {
 
   private anon() { return { apikey: this.cfg!.key, ...json }; }
 
+  /** The status the service last answered with (0 for no answer), for telling the player what happened. */
+  lastStatus = 0;
+
   /** Asks for a code to be mailed to the address. */
   async requestCode(email: string): Promise<CodeResult> {
-    if (!this.cfg) return 'failed';
+    if (!this.cfg) return 'config';
     const address = email.trim().toLowerCase();
     if (!EMAIL.test(address)) return 'invalid';
-    const res = await call(this.fetchFn, `${this.cfg.url}/auth/v1/otp`, { method: 'POST', headers: this.anon(), body: JSON.stringify({ email: address, create_user: true }) });
+    const res = await call(this.fetchFn, `${this.cfg.url}/auth/v1/otp`, { method: 'POST', headers: this.anon(), body: JSON.stringify({ email: address, create_user: true }) }, MAIL_WAIT_MS);
+    this.lastStatus = res?.status ?? 0;
     if (!res) return 'failed';
     if (res.ok) return 'sent';
-    return res.status === 429 ? 'limited' : res.status === 400 || res.status === 422 ? 'invalid' : 'failed';
+    const why = await errorCodeOf(res);
+    if (res.status === 429 || /rate_limit/.test(why)) return 'limited';
+    if (why === 'email_address_invalid' || why === 'validation_failed') return 'invalid';
+    if (res.status >= 500) return 'server';
+    // Signing in by e-mail switched off, new sign-ups not allowed, a wrong key, a wrong address: nothing the player can mend.
+    return res.status === 400 || res.status === 422 ? (why ? 'config' : 'invalid') : 'config';
   }
 
   /** Signs in with the code that was mailed. */
   async verify(email: string, code: string): Promise<VerifyResult> {
-    if (!this.cfg) return 'failed';
+    if (!this.cfg) return 'config';
     const address = email.trim().toLowerCase();
     if (!EMAIL.test(address) || !CODE.test(code.trim())) return 'wrong';
-    const res = await call(this.fetchFn, `${this.cfg.url}/auth/v1/verify`, { method: 'POST', headers: this.anon(), body: JSON.stringify({ type: 'email', email: address, token: code.trim() }) });
+    const res = await call(this.fetchFn, `${this.cfg.url}/auth/v1/verify`, { method: 'POST', headers: this.anon(), body: JSON.stringify({ type: 'email', email: address, token: code.trim() }) }, MAIL_WAIT_MS);
+    this.lastStatus = res?.status ?? 0;
     if (!res) return 'failed';
-    if (!res.ok) return res.status === 400 || res.status === 401 || res.status === 403 || res.status === 422 ? 'wrong' : 'failed';
+    if (!res.ok) return res.status >= 500 ? 'server' : res.status === 404 ? 'config' : 'wrong';
     let body: unknown;
     try { body = await res.json(); } catch { return 'failed'; }
     const session = sessionFrom(body, this.now(), address);

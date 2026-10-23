@@ -18,22 +18,22 @@ export function CloudSaves() {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<{ key: StringKey; bad: boolean } | null>(null);
+  const [message, setMessage] = useState<{ key: StringKey; bad: boolean; status?: number } | null>(null);
   if (!cloud.enabled) return null;
 
-  const say = (key: StringKey, bad = false) => setMessage({ key, bad });
+  const say = (key: StringKey, bad = false, status?: number) => setMessage({ key, bad, ...(status ? { status } : {}) });
   const slotName = (slot: CloudSlot) => (slot === 'auto' || slot === 'prev' ? t(`cloud.slot.${slot}` as StringKey) : t('saves.slot', { n: slot }));
 
   const ask = async () => {
     setBusy(true); setMessage(null);
     const result = await cloud.requestCode(email);
     setBusy(false);
-    if (result === 'sent') { setStep('code'); setCode(''); } else say(`cloud.error.${result}` as StringKey, true);
+    if (result === 'sent') { setStep('code'); setCode(''); } else say(`cloud.error.${result}` as StringKey, true, cloud.lastStatus);
   };
   const enter = async () => {
     setBusy(true); setMessage(null);
     const result = await cloud.verify(email, code);
-    if (result !== 'ok') { setBusy(false); say(`cloud.error.${result}` as StringKey, true); return; }
+    if (result !== 'ok') { setBusy(false); say(`cloud.error.${result}` as StringKey, true, cloud.lastStatus); return; }
     useCloud.setState({ email: cloud.session()?.email ?? null });
     await refresh();
     setBusy(false);
@@ -117,7 +117,7 @@ export function CloudSaves() {
           <p className="muted small">{t('cloud.privacy')}</p>
         </>
       )}
-      {message && <p className={message.bad ? 'note bad' : 'note good'} role="status">{t(message.key)}</p>}
+      {message && <p className={message.bad ? 'note bad' : 'note good'} role="status">{t(message.key)}{message.status ? ` (HTTP ${message.status})` : ''}</p>}
     </section>
   );
 }
