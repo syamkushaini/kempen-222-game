@@ -82,6 +82,7 @@ import { pointsOf } from '../sim/campaign/scoring';
 import { finishedChallenge } from '../sim/campaign/challengePoints';
 import { isAccent, isSkin, type AccentId, type SkinId } from '../ui/cosmetics';
 import { AUTO_SLOT, browserStorage, SaveStore } from './saves';
+import { attachCloud } from './cloudSync';
 
 /**
  * What the map shows: the last election, the player's own picture from polls,
@@ -133,6 +134,8 @@ export interface Settings {
 const SETTINGS_KEY = 'k222.settings';
 const storage = browserStorage();
 export const saveStore = new SaveStore(storage);
+// A player who has signed in has every save followed to the cloud (nothing happens without a cloud address, or without a sign-in).
+attachCloud(saveStore);
 const profileStore = new ProfileStore(storage);
 const partyBook = new PartyBook(storage);
 

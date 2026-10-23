@@ -898,3 +898,8 @@ input.error, select.error { border-color: var(--bad); }
   .toast { animation: none; }
   .map-seat.flash { animation: none; }
 }
+
+/* The cloud copy of the saves sits below the slots, with room above it. */
+.cloud-saves { margin-top: 16px; }
+.cloud-saves h5 { margin: 12px 0 4px; }
+.storage-notice { margin: 12px 0; }
