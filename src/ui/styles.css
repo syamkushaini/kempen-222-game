@@ -925,3 +925,14 @@ input.error, select.error { border-color: var(--bad); }
 
 /* Why the economy is hard to steer: a short list, easy to read at a glance. */
 .hard-list { margin: 0 0 8px 18px; padding: 0; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
+
+/* A line of the budget: what the setting is, a slider in fifths from nothing to double, and a step button at each end. */
+.line-slider { display: grid; gap: 4px; width: 100%; min-width: 0; }
+.line-now { margin: 0; font-size: 14px; line-height: 1.35; }
+.line-now strong { color: var(--primary); }
+.line-row { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 6px; }
+.line-row input[type='range'] { width: 100%; margin: 0; height: 30px; accent-color: var(--primary); background: transparent; }
+.line-row .step { all: unset; box-sizing: border-box; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; font-size: 22px; line-height: 1; cursor: pointer; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }
+.line-row .step:disabled { opacity: 0.35; cursor: default; }
+.line-row .step:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.line-scale { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.75; padding: 0 4px; }

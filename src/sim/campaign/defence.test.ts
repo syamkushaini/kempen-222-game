@@ -207,7 +207,7 @@ describe('defence', () => {
       expect(isValidCampaign(broken, world)).toBe(false);
     }
     const bogus = JSON.parse(JSON.stringify(c));
-    bogus.career.budget.lines.defence = 3;
+    bogus.career.budget.lines.defence = 6;
     expect(isValidCampaign(bogus, world)).toBe(false);
     bogus.career.budget.lines.defence = -1;
     expect(isValidCampaign(bogus, world)).toBe(true);

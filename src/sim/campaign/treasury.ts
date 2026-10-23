@@ -79,7 +79,6 @@ const LINE_WEIGHT: Record<LineId, number> = { aid: 0.3, health: 0.2, education: 
  */
 const lineWeight = (world: World, id: LineId): number =>
   !isFederalWorld(world) ? (id === 'defence' ? 0 : LINE_WEIGHT[id]) : id === 'defence' ? LINE_WEIGHT.defence : LINE_WEIGHT[id] * (1 - LINE_WEIGHT.defence);
-const LINE_STEP = 0.2;
 /** A plain budget takes in three times the allocation, and spends two: lines 1.85, interest 0.15. */
 const TAKINGS = 3;
 const LINES_SPEND = 1.85;
@@ -97,7 +96,7 @@ const TAX_SHARE = 0.4;
 /** Weeks to a month: the books are shown by the month. */
 export const MONTH = 52 / 12;
 /** What a line of the budget costs a week at a setting of its dial (-1 cut, 0 hold, 1 boost). */
-export const lineWeekly = (world: World, id: LineId, dial: number): number => govMoney(world, ALLOCATION.pm) * LINES_SPEND * lineWeight(world, id) * lineMult(dial, LINE_STEP);
+export const lineWeekly = (world: World, id: LineId, dial: number): number => govMoney(world, ALLOCATION.pm) * LINES_SPEND * lineWeight(world, id) * lineMult(dial);
 /** What one particular measure costs a week. */
 export const measureWeekly = (world: World, m: keyof typeof MEASURES): number => govMoney(world, ALLOCATION.pm) * MEASURE_UNIT * MEASURES[m].cost;
 /** What a number of units of standing commitment cost a week: a policy, a programme or a deal adds some. */
@@ -128,7 +127,7 @@ export function govBooks(world: World, c: Campaign, budget?: Budget): Books | nu
   const spend: BookFlow[] = [
     // The armed forces' line is the country's only, and costs more where they have a great say over what they buy.
     ...LINE_IDS.filter((id) => id !== 'defence' || isFederalWorld(world)).map((id) => ({
-      id, amount: unit * LINES_SPEND * lineWeight(world, id) * lineMult(b.lines[id] ?? 0, LINE_STEP) * (id === 'defence' ? procurementMult(k) : 1),
+      id, amount: unit * LINES_SPEND * lineWeight(world, id) * lineMult(b.lines[id] ?? 0) * (id === 'defence' ? procurementMult(k) : 1),
     })),
     { id: 'measures', amount: unit * MEASURE_UNIT * (b.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0) },
     { id: 'commitments', amount: unit * COMMITMENT_UNIT * Math.max(0, k.fiscal) },

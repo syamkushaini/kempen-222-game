@@ -8,7 +8,7 @@ import { isPm, lift, skillOf } from './office';
 import { isEnacted } from './policy';
 import { CONTROL_COST_TO_READINESS, stanceShift } from './stances';
 import { pestelOf } from './pestel';
-import type { Budget, Campaign, Career, DefenceFigures, Dial } from './types';
+import type { Budget, Campaign, Career, DefenceFigures } from './types';
 
 // Defence: the armed forces, for a country and not for a state. Two meters from 0 to 100, kept like the nation's figures. How ready they
 // are follows what the budget spends on them and the minister who runs them, and falls when they are starved. How much say they have in
@@ -37,7 +37,7 @@ export function shiftDefence(c: Campaign, patch: Partial<DefenceFigures>): void 
 }
 
 /** A budget's setting for the defence line: held where it has none. */
-export const defenceDial = (b: Budget): Dial => b.lines.defence ?? 0;
+export const defenceDial = (b: Budget): number => b.lines.defence ?? 0;
 
 /**
  * Where each figure is heading, given the budget in force, the minister at defence, the state of the books and the rule of law.

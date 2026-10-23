@@ -85,7 +85,7 @@ describe('the budget', () => {
     expect(setBudget(c, { tax: true, value: -1 })).toBe(true);
     expect(c.career!.budget).toEqual({ lines: { aid: 1, health: 0, education: 0, rural: 0, civil: 0 }, tax: -1 });
     expect(c.career!.tabled).toEqual(standstill()); // a plan until budget day
-    expect(setBudget(c, { line: 'aid', value: 2 as never })).toBe(false);
+    expect(setBudget(c, { line: 'aid', value: 6 as never })).toBe(false);
     expect(setBudget(c, { line: 'roads' as never, value: 1 })).toBe(false);
     expect(setBudget(career(BP), { line: 'aid', value: 1 })).toBe(false);
   });

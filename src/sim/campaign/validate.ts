@@ -2,6 +2,7 @@ import { isValidDynamics } from '../dynamics';
 import type { World } from '../election';
 import { N_PARTIES } from '../types';
 import { N_BLOCS } from '../types';
+import { isLineDial } from './lineDial';
 import {
   BACKSTORY_IDS, DEMAND_IDS, ENDORSER_IDS, FOCUS_IDS, HOPEFUL_KINDS, LEGACY_IDS, LEVER_IDS, LINE_IDS, N_ISSUES, OUTLET_IDS,
   MEASURE_IDS, MINISTER_TRAITS, MISSION_KINDS, PLEDGE_IDS, PORTFOLIO_IDS, ROLE_IDS, SENIOR_IDS, STAT_IDS,
@@ -116,7 +117,7 @@ const isVotes = (x: unknown) => isList(x, (v) => isNum(v) && v >= 0, N_PARTIES);
 
 const isUnit = (x: unknown): x is number => isNum(x) && x >= 0 && x <= 100;
 const isDial = (x: unknown) => x === -1 || x === 0 || x === 1;
-const isBudget = (x: unknown) => isObj(x) && isDial(x.tax) && (x.measures === undefined || (Array.isArray(x.measures) && x.measures.length <= 3 && x.measures.every((m) => (MEASURE_IDS as readonly unknown[]).includes(m)))) && isObj(x.lines) && LINE_IDS.every((id) => (id === 'defence' && (x.lines as Record<string, unknown>)[id] === undefined) || isDial((x.lines as Record<string, unknown>)[id]) || (id === 'aid' && (x.lines as Record<string, unknown>)[id] === -2));
+const isBudget = (x: unknown) => isObj(x) && isDial(x.tax) && (x.measures === undefined || (Array.isArray(x.measures) && x.measures.length <= 3 && x.measures.every((m) => (MEASURE_IDS as readonly unknown[]).includes(m)))) && isObj(x.lines) && LINE_IDS.every((id) => (id === 'defence' && (x.lines as Record<string, unknown>)[id] === undefined) || isLineDial((x.lines as Record<string, unknown>)[id]));
 
 const isPerson = (x: unknown) => isObj(x) && isNum(x.name) && x.name >= 0 && typeof x.skeleton === 'boolean' && typeof x.vetted === 'boolean';
 const isStaffer = (x: unknown) => isPerson(x) && isNum((x as Record<string, unknown>).skill);
