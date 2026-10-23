@@ -41,6 +41,9 @@ const key = (slot: SlotId) => `k222.save.${slot}`;
 export class SaveStore {
   constructor(private kv: KeyValueStore | null) {}
 
+  /** Told of every slot that has just been written, with the game in it: the cloud copy follows from here (see cloudSync.ts). */
+  onSave: ((slot: SlotId, state: GameState) => void) | null = null;
+
   get available(): boolean {
     return this.kv !== null;
   }
@@ -50,10 +53,11 @@ export class SaveStore {
     try {
       if (slot === AUTO_SLOT) this.rotate(state);
       this.kv.setItem(key(slot), serializeSave(state));
-      return true;
     } catch {
       return false;
     }
+    try { this.onSave?.(slot, state); } catch { /* the copy elsewhere is not the save */ }
+    return true;
   }
 
   load(slot: SlotId): GameState | null {

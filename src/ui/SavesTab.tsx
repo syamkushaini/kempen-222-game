@@ -10,6 +10,7 @@ import { saveStore, useStore } from '../state/store';
 import { downloadGame } from './download';
 import { FeedbackLink } from './FeedbackLink';
 import { EmptyState } from './EmptyState';
+import { CloudSaves } from './CloudSaves';
 import { contestName, partyColor, useFormat, useT, type T } from './hooks';
 
 /** A button that asks for a second click before doing something destructive. */
@@ -142,6 +143,7 @@ export function SaveSlots() {
         <input ref={fileInput} type="file" accept=".json,application/json" hidden onChange={(e) => importFile(e.target.files?.[0])} />
       </div>
       {message && <p className={message.bad ? 'note bad' : 'note good'} role="status">{message.text}</p>}
+      <CloudSaves />
     </>
   );
 }

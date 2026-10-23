@@ -39,6 +39,10 @@ The game is a static site and builds into `dist/`. It is set up to publish to Gi
 
 The workflow is manual on purpose: pushing code does not put the game online, so you publish when you are ready. It needs no secrets unless you want the optional leaderboard (set `LEADERBOARD_URL` and `LEADERBOARD_KEY` as repository variables).
 
+### Cloud saves (optional)
+
+With the same two variables, a player can sign in with an e-mail address (a code is mailed and typed back, no password) and keep a copy of their saves in the Supabase project, so that a cleared browser, the browser built into another app, or a new phone does not lose them. Run `supabase/cloud-saves.sql` once, switch on the Email provider, and put `{{ .Token }}` in the Magic Link e-mail template: the SQL file says exactly how. Without the variables the game keeps its saves on the device only.
+
 ## How to play
 
 You lead one of three national parties through the last weeks before polling day. The rules are the same in every contest; money is scaled to its size, and a state or single seat has no travel time.

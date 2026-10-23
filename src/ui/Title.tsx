@@ -21,6 +21,7 @@ import { ChallengeList } from './Challenges';
 import { timeLeft } from '../sim/campaign/weekly';
 import { ChallengeInvite } from './ChallengeMaker';
 import { Credits } from './Credits';
+import { StorageNotices } from './StorageNotices';
 import { FeedbackLink } from './FeedbackLink';
 import { ACHIEVEMENT_IDS } from '../sim/campaign/achievements';
 import { FitText } from './FitText';
@@ -196,6 +197,7 @@ export function Title() {
             </div>
           </div>
           <p className="title-intro">{t('title.intro')}</p>
+          <StorageNotices onBackUp={() => pick('load')} />
           <ul className="menu-list">
             {auto && (
               <MenuItem
