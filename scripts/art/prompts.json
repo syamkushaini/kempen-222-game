@@ -1560,6 +1560,54 @@
    "title": "A retired treasurer, very particular",
    "body": "A retired civil servant, who audited a state agency for thirty years, offers to be the party’s treasurer. He wants receipts for every ringgit, no cash payments at all, and the books open to every member. He also says, kindly, that three of your present habits would not survive an audit."
   },
+  "startPmHundredDays": {
+   "title": "The hundred-day list",
+   "body": "Your communications chief wants a public list of promises for the first hundred days. It would be easy to hold you to, and that is exactly the point. The finance people would rather you promised nothing that has a date on it."
+  },
+  "startPmSecretary": {
+   "title": "The secretary-general’s quiet word",
+   "body": "The most senior civil servant asks for ten minutes alone. A large project begun by your predecessor is over budget and behind schedule, he says, and every month it continues costs more to stop. He would like to know, before he signs anything, which way you lean."
+  },
+  "startPmClaimants": {
+   "title": "Two ministries, three claimants",
+   "body": "Two important ministries are still to be filled, and three of your senior people feel that one of them is theirs. One has been loyal for twenty years. One brought in a great many votes. One is simply very good, and knows it."
+  },
+  "startPmSchoolVisit": {
+   "title": "A first visit that left the script",
+   "body": "On your first official visit to a school, a nine-year-old on a stage asks, into a microphone, why her bus takes an hour and a half. Everyone in the hall has their phone out. Your staff are looking at the ceiling."
+  },
+  "startGovRearRow": {
+   "title": "A seat in the back row",
+   "body": "At the first official ceremony, your leader has been placed in the third row, behind two ministers of the senior party who are not senior to him. Someone on your team has already taken a photograph. The picture is, it must be said, a good one."
+  },
+  "startGovDeputy": {
+   "title": "The deputy minister post nobody asked for",
+   "body": "The senior party has offered your party a deputy minister’s post in a portfolio your members know little about. It comes with a car, a salary and a small staff. Two of your people want it, and a third says it is a trap."
+  },
+  "startGovBackbench": {
+   "title": "The backbenchers’ letter",
+   "body": "Fourteen of your MPs have signed a letter to the leader. They say the party is in government and the constituencies have not noticed. They want a larger share of the allocations, and a promise that the first road repaired will be theirs."
+  },
+  "startGovMemo": {
+   "title": "A memo from the prime minister’s office",
+   "body": "A memo arrives on a Friday afternoon. It asks your party to publicly endorse a policy, by Monday, before you have seen the text. The covering note says it is “a formality”. A formality, in your experience, is the thing that is not."
+  },
+  "startOppShadow": {
+   "title": "The shadow cabinet list",
+   "body": "The leader must name the shadow cabinet, and three factions have each sent a list of names, with a covering letter that is not quite a threat. There are only so many portfolios, and the cleverest people are not always the most loyal."
+  },
+  "startOppMotion": {
+   "title": "A motion that will lose",
+   "body": "A group of your MPs wants to put a motion to the House on the cost of living. It will not pass; the government has the numbers. The question is whether to make a speech of it, to hold it back for a better moment, or to find a partner who will table it with you."
+  },
+  "startOppLeak": {
+   "title": "A document nobody can verify",
+   "body": "A man you do not know has left an envelope at the party office. It appears to show that a ministry hired a company, owned by a relative of the minister, at three times the usual rate. The paper looks real. Nobody can say that it is."
+  },
+  "startOppVacancy": {
+   "title": "A rumour of a vacancy",
+   "body": "The MP for a marginal seat that your party hopes to win is said to be unwell, and a by-election may come. Nothing has been announced. Your branch there has no candidate, and three members want to be asked."
+  },
   "kind-pactOffer": {
    "title": "An offer from another party",
    "body": "The leader of another party calls with an offer of a pact: seats to stand aside in, seats in return. Two leaders at a table with glasses of teh tarik, a handshake half offered."

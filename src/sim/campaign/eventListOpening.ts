@@ -12,11 +12,11 @@ export const openingFlag = (id: string) => `opening:${id}`;
 /**
  * Eight small stories for the first months of a party founded from nothing. Each game is dealt three of them by its seed, so that two parties
  * founded one after the other do not meet the same people in the same weeks. They come in the first term only, in the opposition, and each
- * has a week of its own so that none crowds another out. Every person and place is invented. Text lives in `src/i18n/events27.ts`.
+ * waits for its own week, and comes in the first free one after it if another story has that week. Every person and place is invented. Text lives in `src/i18n/events27.ts`.
  */
 export const OPENING_STORIES: Record<string, EventDef> = {
   startDonor: {
-    role: 'opp', seats: ['lead', 'opp'], weight: 0, at: 3, topic: 'scandal', needs: { flag: openingFlag('startDonor'), first: true },
+    role: 'opp', seats: ['lead', 'opp'], weight: 0, after: 3, topic: 'scandal', needs: { flag: openingFlag('startDonor'), first: true },
     choices: [
       { effects: [eff('funds', -10_000), eff('cred', 1), mood(['heartland'], -0.01)] },
       { effects: [eff('funds', 50_000), eff('cred', -2), eff('unity', -1)] },
@@ -24,7 +24,7 @@ export const OPENING_STORIES: Record<string, EventDef> = {
     ],
   },
   startViral: {
-    role: 'opp', seats: ['lead', 'opp'], weight: 0, at: 7, topic: 'media', needs: { flag: openingFlag('startViral'), first: true },
+    role: 'opp', seats: ['lead', 'opp'], weight: 0, after: 7, topic: 'media', needs: { flag: openingFlag('startViral'), first: true },
     choices: [
       { effects: [eff('funds', -15_000), mood(['undi18', 'gig'], 0.03), eff('cred', -1)] },
       { effects: [mood(['urban_b40', 'm40'], 0.02), eff('unity', 1)] },
@@ -32,7 +32,7 @@ export const OPENING_STORIES: Record<string, EventDef> = {
     ],
   },
   startCouncillor: {
-    role: 'opp', seats: ['lead', 'opp'], weight: 0, at: 11, topic: 'party', needs: { flag: openingFlag('startCouncillor'), first: true },
+    role: 'opp', seats: ['lead', 'opp'], weight: 0, after: 11, topic: 'party', needs: { flag: openingFlag('startCouncillor'), first: true },
     choices: [
       { effects: [eff('machinery', 3), mood(['heartland', 'civil'], 0.02), eff('cred', -2), eff('unity', -1)] },
       { effects: [eff('cred', 1), eff('unity', 1)] },
@@ -40,7 +40,7 @@ export const OPENING_STORIES: Record<string, EventDef> = {
     ],
   },
   startShoplot: {
-    role: 'opp', seats: ['lead', 'opp'], weight: 0, at: 15, topic: 'local', needs: { flag: openingFlag('startShoplot'), first: true },
+    role: 'opp', seats: ['lead', 'opp'], weight: 0, after: 15, topic: 'local', needs: { flag: openingFlag('startShoplot'), first: true },
     choices: [
       { effects: [eff('machinery', 3), eff('funds', -20_000), mood(['smallbiz'], 0.02)] },
       { effects: [eff('funds', 10_000), eff('machinery', -1), eff('cred', -1)] },
@@ -48,7 +48,7 @@ export const OPENING_STORIES: Record<string, EventDef> = {
     ],
   },
   startNamesake: {
-    role: 'opp', seats: ['lead', 'opp'], weight: 0, at: 19, topic: 'party', needs: { flag: openingFlag('startNamesake'), first: true },
+    role: 'opp', seats: ['lead', 'opp'], weight: 0, after: 19, topic: 'party', needs: { flag: openingFlag('startNamesake'), first: true },
     choices: [
       { effects: [eff('unity', 2), eff('machinery', 2), eff('cred', -1)] },
       { effects: [eff('funds', -25_000), eff('cred', 2)] },
@@ -56,7 +56,7 @@ export const OPENING_STORIES: Record<string, EventDef> = {
     ],
   },
   startStudents: {
-    role: 'opp', seats: ['lead', 'opp'], weight: 0, at: 23, topic: 'party', needs: { flag: openingFlag('startStudents'), first: true },
+    role: 'opp', seats: ['lead', 'opp'], weight: 0, after: 23, topic: 'party', needs: { flag: openingFlag('startStudents'), first: true },
     choices: [
       { effects: [mood(['undi18', 'urban_lib'], 0.03), eff('machinery', 2), eff('cred', -1)] },
       { effects: [mood(['undi18'], 0.015), eff('unity', 1), eff('cred', 1)] },
@@ -64,7 +64,7 @@ export const OPENING_STORIES: Record<string, EventDef> = {
     ],
   },
   startPoll: {
-    role: 'opp', seats: ['lead', 'opp'], weight: 0, at: 27, topic: 'media', needs: { flag: openingFlag('startPoll'), first: true },
+    role: 'opp', seats: ['lead', 'opp'], weight: 0, after: 27, topic: 'media', needs: { flag: openingFlag('startPoll'), first: true },
     choices: [
       { effects: [eff('funds', -12_000), eff('cred', 2), mood(['m40', 'urban_lib'], 0.01)] },
       { effects: [eff('funds', -12_000), eff('cred', -2), eff('unity', 1)] },
@@ -72,7 +72,7 @@ export const OPENING_STORIES: Record<string, EventDef> = {
     ],
   },
   startTreasurer: {
-    role: 'opp', seats: ['lead', 'opp'], weight: 0, at: 31, topic: 'party', needs: { flag: openingFlag('startTreasurer'), first: true },
+    role: 'opp', seats: ['lead', 'opp'], weight: 0, after: 31, topic: 'party', needs: { flag: openingFlag('startTreasurer'), first: true },
     choices: [
       { effects: [eff('funds', 15_000), eff('cred', 2), eff('machinery', -1)] },
       { effects: [eff('machinery', 2), eff('cred', -2), eff('funds', -10_000)] },

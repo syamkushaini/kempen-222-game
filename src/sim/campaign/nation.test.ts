@@ -14,7 +14,12 @@ import { isValidCampaign } from './validate';
 
 const [PS, , PT] = PARTY_IDS.map((_, i) => i);
 const base = getWorld('career')!;
-const career = (player = PS, seed = 5): Campaign => startCareer(base, { player, difficulty: 'normal', seed });
+const career = (player = PS, seed = 5): Campaign => {
+  const c = startCareer(base, { player, difficulty: 'normal', seed });
+  // These tests are about the years, not the opening: the stories dealt to a new career are left for opening.test.ts.
+  c.career!.flags = c.career!.flags.filter((f) => !f.startsWith('opening:'));
+  return c;
+};
 const weeks = (c: Campaign, n: number, seed = 1) => { const rng = new Rng(seed); for (let i = 0; i < n; i++) nationWeek(c, rng); };
 
 describe('the state of the country', () => {
