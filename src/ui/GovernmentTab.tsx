@@ -7,7 +7,7 @@ import {
 } from '../sim/campaign/govern';
 import { scaled } from '../sim/campaign/actions';
 import { MONTH, commitmentWeekly, lineWeekly, measureWeekly, takingsWeekly } from '../sim/campaign/treasury';
-import { StopSlider, signed } from './StopSlider';
+import { StopSlider, moneyStops } from './StopSlider';
 import { EconomyBook } from './EconomyBook';
 import { TreasuryCard } from './TreasuryCard';
 import { EconomyCharts } from './EconomyCharts';
@@ -143,12 +143,9 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
                 </div>
                 <StopSlider
                   label={t(`line.${id}`)} value={k.budget.lines[id] ?? 0} onChange={(value) => setBudget({ line: id, value })}
-                  stops={([-1, 0, 1] as const).map((d) => ({
-                    value: d as Dial, label: t(d === -1 ? 'dial.cut' : d === 0 ? 'dial.hold' : 'dial.boost'),
-                    detail: t('stop.perMonth', { rm: f.rm(lineWeekly(world, id, d) * MONTH) }),
-                    note: d === 0 ? t('stop.base') : `${signed((lineWeekly(world, id, d) / lineWeekly(world, id, 0) - 1) * 100, 0)}%`,
-                  }))}
+                  stops={moneyStops<Dial>(t, f.rm, (d) => lineWeekly(world, id, d) * MONTH, { [-1]: t('dial.cut'), 0: t('dial.hold'), 1: t('dial.boost') })}
                 />
+                <p className="muted small">{t('stop.inForce', { rm: f.rm(lineWeekly(world, id, k.tabled.lines[id] ?? 0) * MONTH) })}</p>
               </li>
             ))}
             <li className="action measures">
@@ -181,12 +178,9 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
               </div>
               <StopSlider
                 label={t('line.tax')} value={k.budget.tax} onChange={(value) => setBudget({ tax: true, value })}
-                stops={([-1, 0, 1] as const).map((d) => ({
-                  value: d as Dial, label: t(d === -1 ? 'dial.cut' : d === 0 ? 'dial.hold' : 'dial.raise'),
-                  detail: t('stop.takesMonth', { rm: f.rm(takingsWeekly(world, campaign, d) * MONTH) }),
-                  note: d === 0 ? t('stop.base') : `${signed((takingsWeekly(world, campaign, d) / takingsWeekly(world, campaign, 0) - 1) * 100, 0)}%`,
-                }))}
+                stops={moneyStops<Dial>(t, f.rm, (d) => takingsWeekly(world, campaign, d) * MONTH, { [-1]: t('dial.cut'), 0: t('dial.hold'), 1: t('dial.raise') })}
               />
+              <p className="muted small">{t('stop.inForce', { rm: f.rm(takingsWeekly(world, campaign, k.tabled.tax) * MONTH) })}</p>
             </li>
           </ul>
           <p className="note">{t('house.budget.plan', { pct: deficit(k, k.budget).toFixed(1), now: deficit(k).toFixed(1) })}</p>

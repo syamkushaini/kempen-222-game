@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getWorld } from '../../data/world';
-import { signed } from '../../ui/StopSlider';
+import { moneyStops, signed } from '../../ui/StopSlider';
 import { PARTY_IDS } from '../types';
 import { DONOR_CRED_COST, STATE_TRUST_COST, donorsAt, startCareer, termIncome } from './career';
 import { MONTH, divertedAt, diverted, grantGoodwillAt, grantsCost, grantsCostAt, lineWeekly, takingsWeekly } from './treasury';
@@ -9,6 +9,21 @@ import { LINE_IDS } from './types';
 const PS = PARTY_IDS.indexOf('ps');
 const world = getWorld('career')!;
 const career = (seed = 5) => startCareer(world, { player: PS, difficulty: 'normal', seed });
+
+describe('what a cut, a hold and a boost say they do', () => {
+  const say = (key: string, v: Record<string, string | number> = {}) => `${key}:${Object.entries(v).map(([a, b]) => `${a}=${b}`).join(',')}`;
+  const rm = (n: number) => `RM${n}`;
+  it('give the ringgit and the per cent taken off, kept and put on, and what it comes to', () => {
+    const stops = moneyStops(say as never, rm, (d) => 100 + 20 * d, { [-1]: 'Cut', 0: 'Hold', 1: 'Boost' });
+    expect(stops.map((s) => s.label)).toEqual(['Cut', 'Hold', 'Boost']);
+    expect(stops[0].detail).toBe('stop.takes:rm=RM20,pct=−20');
+    expect(stops[0].note).toBe('stop.comesTo:rm=RM80');
+    expect(stops[1].detail).toBe('stop.keeps:rm=RM100');
+    expect(stops[1].note).toBe('stop.noChange:');
+    expect(stops[2].detail).toBe('stop.adds:rm=RM20,pct=+20');
+    expect(stops[2].note).toBe('stop.comesTo:rm=RM120');
+  });
+});
 
 describe('the figures a slider shows at each of its stops', () => {
   it('are the ones the game goes on to use, at the level that is set', () => {

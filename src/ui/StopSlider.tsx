@@ -1,3 +1,5 @@
+import type { StringKey } from '../i18n/strings';
+
 /** One place a slider can stop: what it is called, and what the player gets there (a figure, and a line on what it means). */
 export interface Stop<V extends string | number> { value: V; label: string; detail?: string; note?: string }
 
@@ -34,3 +36,26 @@ export function StopSlider<V extends string | number>({ label, stops, value, onC
 
 /** A change written with its sign, one decimal: +0.3, −0.6, and a plain 0.0 for none. */
 export const signed = (n: number, digits = 1): string => (Math.abs(n) < 0.5 * 10 ** -digits ? (0).toFixed(digits) : `${n > 0 ? '+' : '−'}${Math.abs(n).toFixed(digits)}`);
+
+/**
+ * The stops of a cut / hold / boost setting that moves an amount of money: what is taken off or put on, in ringgit and in per cent, what
+ * is kept at the middle stop, and what the whole comes to. `amountAt` is the amount (in ringgit, for the same stretch of time) at a setting.
+ */
+export function moneyStops<V extends -1 | 0 | 1>(
+  t: (key: StringKey, vars?: Record<string, string | number>) => string,
+  rm: (n: number) => string,
+  amountAt: (dial: -1 | 0 | 1) => number,
+  names: Record<-1 | 0 | 1, string>,
+): Stop<V>[] {
+  const base = amountAt(0);
+  return ([-1, 0, 1] as const).map((d) => {
+    const amount = amountAt(d);
+    const change = amount - base;
+    const pct = base > 0 ? (amount / base - 1) * 100 : 0;
+    return {
+      value: d as V, label: names[d],
+      detail: d === 0 ? t('stop.keeps', { rm: rm(amount) }) : t(d < 0 ? 'stop.takes' : 'stop.adds', { rm: rm(Math.abs(change)), pct: signed(pct, 0) }),
+      note: d === 0 ? t('stop.noChange') : t('stop.comesTo', { rm: rm(amount) }),
+    };
+  });
+}
