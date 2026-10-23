@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { getWorld } from '../../data/world';
 import { lineReadout } from '../../ui/LineSlider';
+import { BLOC_IDS } from '../types';
+import { TAX_IDS } from './econPlansData';
+import { setRate } from './econTools';
+import { setTax } from './econPlans';
 import { Rng } from '../rng';
 import { PARTY_IDS } from '../types';
 import { startCareer } from './career';
@@ -8,7 +12,7 @@ import { publicFinance } from './gdp';
 import { ABOLISH, LINE_MAX, LINE_MIN, aidAbolished, isLineDial, lineMult } from './lineDial';
 import { deficit, economyWeek, looseness, setBudget, tableBudget } from './office';
 import { pestelTargets } from './pestel';
-import { lineWeekly } from './treasury';
+import { lineWeekly, takingsWeekly } from './treasury';
 import { LINE_IDS, type Campaign } from './types';
 import { isValidCampaign } from './validate';
 
@@ -35,7 +39,7 @@ describe('a line of the budget, in fifths from nothing to double', () => {
     }
   });
 
-  it('can be set to any whole number of steps, for any line, by the head of government, and for the tax only to its three settings', () => {
+  it('can be set to any whole number of steps, for any line, by the head of government', () => {
     const c = career();
     for (const id of LINE_IDS.filter((x) => x !== 'defence')) {
       for (const v of [-5, -3, 0, 2, 5]) { expect(setBudget(c, { line: id, value: v }), `${id} ${v}`).toBe(true); expect(c.career!.budget.lines[id]).toBe(v); }
@@ -43,12 +47,7 @@ describe('a line of the budget, in fifths from nothing to double', () => {
     }
     expect(isLineDial(3)).toBe(true);
     expect(isLineDial(3.5)).toBe(false);
-    expect(setBudget(c, { tax: true, value: 1 })).toBe(true);
-    expect(setBudget(c, { tax: true, value: -1 })).toBe(true);
-    expect(setBudget(c, { tax: true, value: 2 })).toBe(false);
-    expect(setBudget(c, { tax: true, value: -5 })).toBe(false);
   });
-
   it('moves the budget’s looseness one step a step, and the deficit with it', () => {
     const c = career();
     const k = c.career!;
@@ -123,5 +122,78 @@ describe('what a setting of a line says', () => {
     expect(lineReadout(t, rm, amountAt, -2)).toEqual({ name: 'dial.cutBy:n=40', change: 'stop.takes:rm=RM40,pct=−40', total: 'stop.comesTo:rm=RM60' });
     expect(lineReadout(t, rm, amountAt, 0)).toEqual({ name: 'dial.hold:', change: 'stop.noChange:', total: 'stop.comesTo:rm=RM100' });
     expect(lineReadout(t, rm, amountAt, 3)).toEqual({ name: 'dial.boostBy:n=60', change: 'stop.adds:rm=RM60,pct=+60', total: 'stop.comesTo:rm=RM160' });
+  });
+});
+
+describe('the other settings a government makes in steps', () => {
+  it('give the tax in the budget tenths of what it takes, from half to half as much again, and move the books a step at a time', () => {
+    const c = career();
+    const k = c.career!;
+    for (const v of [-5, -1, 0, 1, 5]) { expect(setBudget(c, { tax: true, value: v }), String(v)).toBe(true); expect(k.budget.tax).toBe(v); }
+    for (const v of [-6, 6, 0.5]) expect(setBudget(c, { tax: true, value: v }), String(v)).toBe(false);
+    const hold = takingsWeekly(world, c, 0);
+    // Five tenths more of what the tax takes, and five tenths less.
+    expect(takingsWeekly(world, c, 5) / hold).toBeCloseTo(1.5, 6);
+    expect(takingsWeekly(world, c, -5) / hold).toBeCloseTo(0.5, 6);
+    expect(takingsWeekly(world, c, -5)).toBeLessThan(takingsWeekly(world, c, -1));
+    expect(takingsWeekly(world, c, -1)).toBeLessThan(hold);
+    expect(hold).toBeLessThan(takingsWeekly(world, c, 1));
+    expect(takingsWeekly(world, c, 1)).toBeLessThan(takingsWeekly(world, c, 5));
+    const at = (tax: number) => ({ ...k.budget, tax });
+    expect(looseness(k, at(5))).toBe(looseness(k, at(0)) - 10);
+    expect(looseness(k, at(-3))).toBe(looseness(k, at(0)) + 6);
+  });
+
+  it('cost the small firms and the middle class more the more tax is raised, and please them more the more it is cut', () => {
+    const shift = (tax: number) => {
+      const c = career();
+      const k = c.career!;
+      const b = ['smallbiz', 'm40'].map((x) => BLOC_IDS.indexOf(x as never));
+      const before = b.map((i) => k.mood[i][PS]);
+      tableBudget(c, { ...k.budget, tax });
+      return b.reduce((a, i, j) => a + k.mood[i][PS] - before[j], 0);
+    };
+    expect(shift(1)).toBeLessThan(0);
+    expect(shift(5)).toBeCloseTo(5 * shift(1), 6);
+    expect(shift(-4)).toBeCloseTo(4 * shift(-1), 6);
+    expect(shift(-2)).toBeGreaterThan(0);
+  });
+
+  it('give each tax of the plan up to five steps either way, and the policy rate three, where the head of government may set it', () => {
+    const c = career();
+    for (const id of TAX_IDS) {
+      for (const v of [-5, -2, 0, 3, 5]) expect(setTax(c, id, v), `${id} ${v}`).toBe(true);
+      for (const v of [-6, 6, 1.5]) expect(setTax(c, id, v), `${id} ${v}`).toBe(false);
+    }
+    // The central bank sets the rate in the federation; a state's head of government sets it.
+    expect(setRate(c, 2)).toBe(false);
+    const state = startCareer(getWorld('career:perak')!, { player: PS, difficulty: 'normal', seed: 5 });
+    state.career!.obligations = [];
+    if (state.career!.government.pm === PS) {
+      for (const v of [-3, -1, 0, 2, 3]) expect(setRate(state, v), String(v)).toBe(true);
+      for (const v of [-4, 4, 0.5]) expect(setRate(state, v), String(v)).toBe(false);
+    }
+  });
+
+  it('are valid in a saved game only within their scales', () => {
+    const c = career();
+    c.career!.budget.tax = 5;
+    c.career!.taxMix = { sales: 5, income: -5, corporate: 0, luxury: 2 };
+    c.career!.rate = -3;
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world)).toBe(true);
+    const bad = (edit: (k: Record<string, any>) => void) => { const g = JSON.parse(JSON.stringify(c)); edit(g.career); return isValidCampaign(g, world); };
+    expect(bad((k) => { k.budget.tax = 6; })).toBe(false);
+    expect(bad((k) => { k.taxMix.sales = 6; })).toBe(false);
+    expect(bad((k) => { k.rate = 4; })).toBe(false);
+  });
+
+  it('are read as what they do: the name of the setting and what it takes off or adds', () => {
+    const t = ((key: string, v: Record<string, string | number> = {}) => `${key}:${Object.entries(v).map(([a, b]) => `${a}=${b}`).join(',')}`) as never;
+    const rm = (n: number) => `RM${Math.round(n)}`;
+    const amountAt = (d: number) => 1000 * (1 + 0.1 * d);
+    const tax = { pctPerStep: 10, raiseKey: 'dial.raiseBy' } as const;
+    expect(lineReadout(t, rm, amountAt, -5, tax)).toEqual({ name: 'dial.cutBy:n=50', change: 'stop.takes:rm=RM500,pct=−50', total: 'stop.comesTo:rm=RM500' });
+    expect(lineReadout(t, rm, amountAt, 3, tax)).toEqual({ name: 'dial.raiseBy:n=30', change: 'stop.adds:rm=RM300,pct=+30', total: 'stop.comesTo:rm=RM1300' });
+    expect(lineReadout(t, rm, amountAt, 0, tax).name).toBe('dial.hold:');
   });
 });

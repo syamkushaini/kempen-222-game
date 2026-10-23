@@ -17,3 +17,14 @@ export const isLineDial = (x: unknown): x is LineDial => typeof x === 'number' &
 export const lineMult = (d: number, step: number = LINE_STEP): number => Math.max(0, 1 + step * d);
 /** Whether a budget has abolished subsidies. */
 export const aidAbolished = (b: { lines: { aid?: number } }): boolean => b.lines.aid === ABOLISH;
+
+// The other settings a government makes in steps have their own scales: the tax in the budget in tenths of what it takes (from half as
+// much to half as much again), each tax of the plan in its own steps, and the policy rate, which a state's government sets, in notches.
+export const BUDGET_TAX_MIN = -5;
+export const BUDGET_TAX_MAX = 5;
+export const PLAN_TAX_MIN = -5;
+export const PLAN_TAX_MAX = 5;
+export const RATE_MIN = -3;
+export const RATE_MAX = 3;
+/** A whole number of steps within a scale. */
+export const isStep = (x: unknown, min: number, max: number): x is number => typeof x === 'number' && Number.isInteger(x) && x >= min && x <= max;

@@ -3,7 +3,8 @@ import { isFederal } from './defence';
 import { FORCES_PROJECTS, MAX_PROJECTS_AT_ONCE, PROJECTS, TAX_MIX, TAX_IDS, builtEffects, projectOf, projectsCost, taxEffects, taxMixOf, type TaxId } from './econPlansData';
 import { lift, isPm } from './office';
 import { pushNews } from './news';
-import type { Campaign, Dial } from './types';
+import { PLAN_TAX_MAX, PLAN_TAX_MIN, isStep } from './lineDial';
+import type { Campaign } from './types';
 
 export { PROJECTS, TAX_MIX, TAX_IDS, MAX_PROJECTS_AT_ONCE, builtEffects, projectsCost, taxEffects, taxMixOf };
 export type { TaxId };
@@ -14,9 +15,9 @@ export type { TaxId };
 
 export const REPAY_MAX = 0.5;
 
-export function setTax(c: Campaign, id: TaxId, value: Dial): boolean {
+export function setTax(c: Campaign, id: TaxId, value: number): boolean {
   const k = c.career;
-  if (!k || c.phase !== 'term' || !isPm(c) || !TAX_IDS.includes(id) || ![-1, 0, 1].includes(value)) return false;
+  if (!k || c.phase !== 'term' || !isPm(c) || !TAX_IDS.includes(id) || !isStep(value, PLAN_TAX_MIN, PLAN_TAX_MAX)) return false;
   const mix = { ...taxMixOf(k), [id]: value };
   if (TAX_IDS.every((t) => mix[t] === 0)) delete k.taxMix; else k.taxMix = mix;
   return true;

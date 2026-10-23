@@ -2,7 +2,7 @@ import { isValidDynamics } from '../dynamics';
 import type { World } from '../election';
 import { N_PARTIES } from '../types';
 import { N_BLOCS } from '../types';
-import { isLineDial } from './lineDial';
+import { BUDGET_TAX_MAX, BUDGET_TAX_MIN, PLAN_TAX_MAX, PLAN_TAX_MIN, RATE_MAX, RATE_MIN, isLineDial, isStep } from './lineDial';
 import {
   BACKSTORY_IDS, DEMAND_IDS, ENDORSER_IDS, FOCUS_IDS, HOPEFUL_KINDS, LEGACY_IDS, LEVER_IDS, LINE_IDS, N_ISSUES, OUTLET_IDS,
   MEASURE_IDS, MINISTER_TRAITS, MISSION_KINDS, PLEDGE_IDS, PORTFOLIO_IDS, ROLE_IDS, SENIOR_IDS, STAT_IDS,
@@ -116,8 +116,7 @@ const isPledge = (x: unknown) => (PLEDGE_IDS as readonly unknown[]).includes(x);
 const isVotes = (x: unknown) => isList(x, (v) => isNum(v) && v >= 0, N_PARTIES);
 
 const isUnit = (x: unknown): x is number => isNum(x) && x >= 0 && x <= 100;
-const isDial = (x: unknown) => x === -1 || x === 0 || x === 1;
-const isBudget = (x: unknown) => isObj(x) && isDial(x.tax) && (x.measures === undefined || (Array.isArray(x.measures) && x.measures.length <= 3 && x.measures.every((m) => (MEASURE_IDS as readonly unknown[]).includes(m)))) && isObj(x.lines) && LINE_IDS.every((id) => (id === 'defence' && (x.lines as Record<string, unknown>)[id] === undefined) || isLineDial((x.lines as Record<string, unknown>)[id]));
+const isBudget = (x: unknown) => isObj(x) && isStep(x.tax, BUDGET_TAX_MIN, BUDGET_TAX_MAX) && (x.measures === undefined || (Array.isArray(x.measures) && x.measures.length <= 3 && x.measures.every((m) => (MEASURE_IDS as readonly unknown[]).includes(m)))) && isObj(x.lines) && LINE_IDS.every((id) => (id === 'defence' && (x.lines as Record<string, unknown>)[id] === undefined) || isLineDial((x.lines as Record<string, unknown>)[id]));
 
 const isPerson = (x: unknown) => isObj(x) && isNum(x.name) && x.name >= 0 && typeof x.skeleton === 'boolean' && typeof x.vetted === 'boolean';
 const isStaffer = (x: unknown) => isPerson(x) && isNum((x as Record<string, unknown>).skill);
@@ -149,7 +148,7 @@ function isValidOffice(x: Record<string, unknown>): boolean {
   const e = x.economy, r = x.record, end = x.ending;
   return (
     isObj(e) && isNum(e.growth) && isNum(e.inflation) && isNum(e.jobless) && isNum(e.debt) &&
-    isBudget(x.budget) && isBudget(x.tabled) && isNum(x.fiscal) && (x.snaps === undefined || isList(x.snaps, (p) => isObj(p) && isNum(p.week) && isNum(p.unity) && isNum(p.debt) && isNum(p.funds))) && (x.eventWeeks === undefined || (isObj(x.eventWeeks) && Object.values(x.eventWeeks).every(isNum))) && (x.repayShare === undefined || isNum(x.repayShare)) && (x.projects === undefined || isList(x.projects, (p) => isObj(p) && typeof p.id === 'string' && isNum(p.left))) && (x.built === undefined || isList(x.built, (p) => typeof p === 'string')) && (x.taxMix === undefined || isObj(x.taxMix)) && (x.toolsUsed === undefined || (isObj(x.toolsUsed) && Object.values(x.toolsUsed).every(isNum))) && (x.rate === undefined || x.rate === -1 || x.rate === 1) && (x.trend === undefined || isList(x.trend, (p) => isObj(p) && isNum(p.week) && isNum(p.growth) && isNum(p.debt) && Array.isArray(p.sectors))) && (x.programmes === undefined || (isObj(x.programmes) && Object.values(x.programmes).every(isNum))) &&
+    isBudget(x.budget) && isBudget(x.tabled) && isNum(x.fiscal) && (x.snaps === undefined || isList(x.snaps, (p) => isObj(p) && isNum(p.week) && isNum(p.unity) && isNum(p.debt) && isNum(p.funds))) && (x.eventWeeks === undefined || (isObj(x.eventWeeks) && Object.values(x.eventWeeks).every(isNum))) && (x.repayShare === undefined || isNum(x.repayShare)) && (x.projects === undefined || isList(x.projects, (p) => isObj(p) && typeof p.id === 'string' && isNum(p.left))) && (x.built === undefined || isList(x.built, (p) => typeof p === 'string')) && (x.taxMix === undefined || (isObj(x.taxMix) && Object.values(x.taxMix).every((v) => isStep(v, PLAN_TAX_MIN, PLAN_TAX_MAX)))) && (x.toolsUsed === undefined || (isObj(x.toolsUsed) && Object.values(x.toolsUsed).every(isNum))) && (x.rate === undefined || (isStep(x.rate, RATE_MIN, RATE_MAX) && x.rate !== 0)) && (x.trend === undefined || isList(x.trend, (p) => isObj(p) && isNum(p.week) && isNum(p.growth) && isNum(p.debt) && Array.isArray(p.sectors))) && (x.programmes === undefined || (isObj(x.programmes) && Object.values(x.programmes).every(isNum))) &&
     isList(x.cabinet, (m) => isObj(m) && (PORTFOLIO_IDS as readonly unknown[]).includes(m.portfolio) && isParty(m.party) && isNum(m.name) && isNum(m.skill) && (m.trait === undefined || (MINISTER_TRAITS as readonly unknown[]).includes(m.trait)) && (m.acting === undefined || typeof m.acting === 'boolean') && (m.done === undefined || typeof m.done === 'boolean')) &&
     (x.appointments === undefined || isList(x.appointments, (a) => isObj(a) && (PORTFOLIO_IDS as readonly unknown[]).includes(a.portfolio) && isList(a.options, (o) => isObj(o) && isNum(o.name) && isNum(o.skill) && (MINISTER_TRAITS as readonly unknown[]).includes(o.trait)))) &&
     isList(x.bills, (b) => isObj(b) && typeof b.id === 'string' && isNum(b.weeks)) &&

@@ -7,7 +7,8 @@ import { bankActs } from './markets';
 import { pushNews } from './news';
 import { RATE, isPm } from './office';
 import { treasuryOf } from './treasury';
-import type { Campaign, Dial } from './types';
+import { RATE_MAX, RATE_MIN, isStep } from './lineDial';
+import type { Campaign } from './types';
 
 // The levers a head of government can pull on the economy, apart from the budget: for the debt, for prices, for growth and jobs, and for the
 // books. Each is an act with a price (in money, trust, votes or growth) and a time before it can be done again, and each shows its effects
@@ -85,11 +86,11 @@ export function useTool(world: World, c: Campaign, id: string): boolean {
 
 export { RATE };
 /** The policy rate is a standing choice: see RATE in office.ts. */
-export const rateOf = (c: Campaign): Dial => c.career?.rate ?? 0;
+export const rateOf = (c: Campaign): number => c.career?.rate ?? 0;
 
-export function setRate(c: Campaign, value: Dial): boolean {
+export function setRate(c: Campaign, value: number): boolean {
   const k = c.career;
-  if (!k || c.phase !== 'term' || !isPm(c) || ![-1, 0, 1].includes(value) || bankActs(c)) return false;
+  if (!k || c.phase !== 'term' || !isPm(c) || !isStep(value, RATE_MIN, RATE_MAX) || bankActs(c)) return false;
   if (value === 0) delete k.rate; else k.rate = value;
   return true;
 }

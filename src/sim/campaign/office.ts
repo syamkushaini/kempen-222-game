@@ -7,7 +7,7 @@ import { builtEffects, taxEffects } from './econPlansData';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { stanceGrowth } from './stances';
 import { defenceDial, defenceShown, resentCut } from './defence';
-import { ABOLISH_PRICES, aidAbolished, isLineDial, type LineDial } from './lineDial';
+import { ABOLISH_PRICES, BUDGET_TAX_MAX, BUDGET_TAX_MIN, aidAbolished, isLineDial, isStep, type LineDial } from './lineDial';
 import { pushNews, ref } from './news';
 import { GENERAL_RULES, STATE_RULES } from './rules';
 import {
@@ -152,7 +152,7 @@ export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; va
   if (!k || c.phase !== 'term' || !isPm(c) || !('value' in patch)) return false;
   const v = patch.value;
   // The tax has its three settings; a line of the budget is set in fifths, from nothing to double.
-  if (patch.tax) { if (v !== -1 && v !== 0 && v !== 1) return false; k.budget.tax = v; return true; }
+  if (patch.tax) { if (!isStep(v, BUDGET_TAX_MIN, BUDGET_TAX_MAX)) return false; k.budget.tax = v; return true; }
   if (!isLineDial(v)) return false;
   // The defence line is the federal head of government's alone.
   if (patch.line === 'defence') { if (!defenceShown(c)) return false; k.budget.lines.defence = v; }
@@ -182,7 +182,7 @@ export function tableBudget(c: Campaign, plan: Budget): void {
     g.stability = clamp(g.stability - 3, 5, 95);
     pushNews(c, { party: g.pm, key: 'news.gov.subsidy.abolished', vars: { party: ref.party(g.pm) }, tone: 'bad' });
   }
-  if (plan.tax !== 0) lift(k, g.pm, ['smallbiz', 'm40'], plan.tax > 0 ? -0.02 : 0.015);
+  if (plan.tax !== 0) lift(k, g.pm, ['smallbiz', 'm40'], plan.tax > 0 ? -0.02 * plan.tax : -0.015 * plan.tax);
   // Partners with rural and Borneo seats, and the party of the civil service, watch their own lines.
   for (const p of g.partners) {
     const id = PARTY_IDS[p];

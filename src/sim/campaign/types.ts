@@ -343,7 +343,7 @@ export const MEASURE_IDS = [
   'cashTopUp', 'fuelPrice', 'clinics', 'hospitalBeds', 'scholarships', 'schoolRepairs', 'roads', 'farmInputs', 'civilBonus', 'pensions',
 ] as const;
 export type MeasureId = (typeof MEASURE_IDS)[number];
-export interface Budget { lines: Record<BaseLineId, LineDial> & { defence?: LineDial }; tax: Dial; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
+export interface Budget { lines: Record<BaseLineId, LineDial> & { defence?: LineDial }; tax: number; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
 
 export const PORTFOLIO_IDS = [
   'finance', 'home', 'economy', 'education', 'health', 'rural', 'works', 'defence',
@@ -750,14 +750,14 @@ export interface Career {
   /** The share (0 to 0.5) of each month's surplus that goes to the national debt. */
   repayShare?: number;
   /** The tax mix: each tax lowered, left or raised. */
-  taxMix?: { sales: Dial; income: Dial; corporate: Dial; luxury: Dial };
+  taxMix?: { sales: number; income: number; corporate: number; luxury: number };
   /** National projects under way, and those finished. */
   projects?: { id: string; left: number }[];
   built?: string[];
   /** The week each economic tool was last used (see econTools.ts). */
   toolsUsed?: Record<string, number>;
   /** The policy rate: lowered (-1), left (absent), or raised (1). */
-  rate?: Dial;
+  rate?: number;
   /** [region]: the week the player last won a state chief over, and the week one was last sent to talk to the opposition (see chiefsTerm.ts). */
   chiefWeeks?: Record<string, number>;
   chiefTalk?: number;

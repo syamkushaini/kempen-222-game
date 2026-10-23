@@ -10,7 +10,9 @@ import { STOCK_IDS } from '../sim/campaign/types';
 import { FORCES_PROJECTS } from '../sim/campaign/econPlansData';
 import { useStore } from '../state/store';
 import { Fold } from './Fold';
-import { StopSlider, signed } from './StopSlider';
+import { signed } from './StopSlider';
+import { StepSlider, stepsText } from './LineSlider';
+import { PLAN_TAX_MAX, PLAN_TAX_MIN, RATE_MAX, RATE_MIN } from '../sim/campaign/lineDial';
 import { describeEffect } from './effectText';
 import { useFormat, useT, useWorld } from './hooks';
 
@@ -31,13 +33,13 @@ export function MarketsPanel() {
           <span className="action-meta">{t(`tools.rate.${rate}` as StringKey)}</span>
           {banked && <span className="action-meta">{t('bank.independent', { n: mk ? Math.max(0, mk.next - campaign.career.week) : BANK.every })}</span>}
         </div>
-        <StopSlider
-          label={t('tools.rate')} value={rate} disabled={banked} onChange={(d) => setRate(d)}
-          stops={([-1, 0, 1] as const).map((d) => ({
-            value: d, label: t(`tools.rate.btn.${d}` as StringKey),
-            detail: d === 0 ? t('stop.none') : t('stop.rate.growth', { n: signed(RATE.growth * d) }),
-            note: d === 0 ? t('stop.base') : t('stop.rate.rest', { prices: signed(RATE.prices * d), debt: signed(RATE.interest * d) }),
-          }))}
+        <StepSlider
+          label={t('tools.rate')} min={RATE_MIN} max={RATE_MAX} value={rate} disabled={banked} onChange={(d) => setRate(d)} t={t}
+          readout={<>
+            <strong>{rate === 0 ? t('dial.hold') : `${t(rate < 0 ? 'dial.cut' : 'dial.raise')} · ${stepsText(t, Math.abs(rate))}`}</strong>
+            <span className="num"> · {rate === 0 ? t('stop.none') : `${t('stop.rate.growth', { n: signed(RATE.growth * rate) })} · ${t('stop.rate.rest', { prices: signed(RATE.prices * rate), debt: signed(RATE.interest * rate) })}`}</span>
+          </>}
+          scale={[`${t('dial.cut')} ${-RATE_MIN}`, t('dial.hold'), `${t('dial.raise')} ${RATE_MAX}`]}
         />
       </div>
       {banked && mk && (
@@ -103,13 +105,16 @@ export function EconomyTools() {
                 <span className="action-title">{t(`plan.tax.${id}` as StringKey)}</span>
                 <span className="action-meta">{t(`plan.tax.${id}.who` as StringKey)}</span>
               </div>
-              <StopSlider
-                label={t(`plan.tax.${id}` as StringKey)} value={taxMixOf(campaign.career!)[id]} onChange={(d) => setTax(id, d)}
-                stops={([-1, 0, 1] as const).map((d) => ({
-                  value: d, label: t(d === -1 ? 'dial.cut' : d === 0 ? 'dial.hold' : 'dial.raise'),
-                  detail: d === 0 ? t('stop.none') : t('stop.tax.takes', { n: signed(TAX_MIX[id].takings * 100 * d, 0) }),
-                  note: d === 0 ? t('stop.base') : t('stop.tax.rest', { prices: signed(TAX_MIX[id].prices * d, 2), growth: signed(TAX_MIX[id].growth * d, 2) }),
-                }))}
+              <StepSlider
+                label={t(`plan.tax.${id}` as StringKey)} min={PLAN_TAX_MIN} max={PLAN_TAX_MAX} value={taxMixOf(campaign.career!)[id]} onChange={(d) => setTax(id, d)} t={t}
+                readout={(() => {
+                  const v = taxMixOf(campaign.career!)[id];
+                  return (<>
+                    <strong>{v === 0 ? t('dial.hold') : `${t(v < 0 ? 'dial.cut' : 'dial.raise')} · ${stepsText(t, Math.abs(v))}`}</strong>
+                    <span className="num"> · {v === 0 ? t('stop.none') : `${t('stop.tax.takes', { n: signed(TAX_MIX[id].takings * 100 * v, 0) })} · ${t('stop.tax.rest', { prices: signed(TAX_MIX[id].prices * v, 2), growth: signed(TAX_MIX[id].growth * v, 2) })}`}</span>
+                  </>);
+                })()}
+                scale={[`${t('dial.cut')} ${-PLAN_TAX_MIN}`, t('dial.hold'), `${t('dial.raise')} ${PLAN_TAX_MAX}`]}
               />
             </li>
           ))}

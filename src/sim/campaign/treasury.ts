@@ -145,7 +145,7 @@ export function govBooks(world: World, c: Campaign, budget?: Budget): Books | nu
 }
 
 /** What the economy takes in each week with taxes at a setting of their dial (-1 cut, 0 hold, 1 raise); the head of government's books, else zero. */
-export function takingsWeekly(world: World, c: Campaign, tax: -1 | 0 | 1): number {
+export function takingsWeekly(world: World, c: Campaign, tax: number): number {
   const k = c.career;
   const books = k ? govBooks(world, c, { ...k.tabled, tax }) : null;
   return books ? books.income.filter((x) => x.id !== 'states').reduce((a, x) => a + x.amount, 0) : 0;
