@@ -5,6 +5,7 @@ import { deficit } from './office';
 import { SECTOR_IDS, SECTORS, sectorsOf, type SectorId } from './sectors';
 import { isFederalWorld } from './defence';
 import { LINE_IDS, type Campaign, type Career, type LineId, type BaseLineId } from './types';
+import { lineMult } from './lineDial';
 
 // The size of the economy in ringgit: what the country (or a state) produces in a year, and what each person's share of it is.
 // It grows with the economy's growth and its prices, and it rests on four sectors (oil, electronics, tourism and farming), each
@@ -104,7 +105,7 @@ export function publicFinance(world: World, k: Career) {
   const base = figuresOf(world, k).gdp * (world.rules.kind === 'state' ? STATE_PUBLIC : 1);
   // A state has no armed forces of its own: the defence line is the country's.
   const ids = LINE_IDS.filter((id) => id !== 'defence' || isFederalWorld(world));
-  const lines = Object.fromEntries(ids.map((id) => [id, base * LINE_SHARE[id] * (1 + LINE_NOTCH * (k.tabled.lines[id] ?? 0))])) as Record<BaseLineId, number> & { defence?: number };
+  const lines = Object.fromEntries(ids.map((id) => [id, base * LINE_SHARE[id] * lineMult(k.tabled.lines[id] ?? 0, LINE_NOTCH)])) as Record<BaseLineId, number> & { defence?: number };
   const deficitRm = (deficit(k) / 100) * base;
   const debtRm = (k.economy.debt / 100) * base;
   return { lines, deficitRm, debtRm, budgetRm: ids.reduce((a, id) => a + (lines[id] ?? 0), 0) };

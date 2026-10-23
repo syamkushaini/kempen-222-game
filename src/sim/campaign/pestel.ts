@@ -8,6 +8,7 @@ import { builtMeters } from './econPlansData';
 import { stanceShift } from './stances';
 import { isEnacted } from './policy';
 import type { Campaign, Career, Economy, PortfolioId } from './types';
+import { lineDial } from './lineDial';
 
 // PESTEL: six ways of looking at how a country, or a state, is doing. Three of them are the figures the game already kept: the
 // political (how steady and trusted the government is, and its standing), the economic (growth, prices, jobs and debt) and part of the
@@ -57,7 +58,7 @@ export function pestelTargets(k: Career, believed: number = k.credibility): Pest
   const strain = (k.projects?.length ?? 0) * 2;
   const base = {
     // People hold together when the poor are looked after, jobs and prices are tolerable, and those who look after the family and the young are good at it.
-    cohesion: clamp(55 + 8 * lines.aid + 2 * (skill(k, 'women') - 3) + 1.5 * (skill(k, 'youth') - 3) + (skill(k, 'religion') - 3)
+    cohesion: clamp(55 + 8 * Math.max(-3, lineDial(lines.aid)) + 2 * (skill(k, 'women') - 3) + 1.5 * (skill(k, 'youth') - 3) + (skill(k, 'religion') - 3)
       - 0.8 * Math.max(0, e.jobless - 4) - 0.4 * Math.max(0, e.inflation - 3) + 0.1 * (k.government.trust - 50) - squeeze, 15, 90),
     // A country goes digital on its schooling, its research and the ministers who run them, and on what has been built.
     tech: clamp(50 + 6 * lines.education + 3 * (skill(k, 'digital') - 3) + 2 * (skill(k, 'science') - 3) + (skill(k, 'comms') - 3)

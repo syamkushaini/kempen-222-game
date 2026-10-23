@@ -8,6 +8,7 @@ import {
 import { scaled } from '../sim/campaign/actions';
 import { MONTH, commitmentWeekly, lineWeekly, measureWeekly, takingsWeekly } from '../sim/campaign/treasury';
 import { StopSlider, moneyStops } from './StopSlider';
+import { ABOLISH, type LineDial } from '../sim/campaign/lineDial';
 import { EconomyBook } from './EconomyBook';
 import { TreasuryCard } from './TreasuryCard';
 import { EconomyCharts } from './EconomyCharts';
@@ -143,8 +144,9 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
                 </div>
                 <StopSlider
                   label={t(`line.${id}`)} value={k.budget.lines[id] ?? 0} onChange={(value) => setBudget({ line: id, value })}
-                  stops={moneyStops<Dial>(t, f.rm, (d) => lineWeekly(world, id, d) * MONTH, { [-1]: t('dial.cut'), 0: t('dial.hold'), 1: t('dial.boost') })}
+                  stops={moneyStops<LineDial>(t, f.rm, (d) => lineWeekly(world, id, d) * MONTH, { [-2]: t('dial.abolish'), [-1]: t('dial.cut'), 0: t('dial.hold'), 1: t('dial.boost') }, id === 'aid' ? [ABOLISH, -1, 0, 1] : [-1, 0, 1])}
                 />
+                {id === 'aid' && k.budget.lines.aid === ABOLISH && <p className="note bad" role="status">{t('stop.abolish.warn')}</p>}
                 <p className="muted small">{t('stop.inForce', { rm: f.rm(lineWeekly(world, id, k.tabled.lines[id] ?? 0) * MONTH) })}</p>
               </li>
             ))}

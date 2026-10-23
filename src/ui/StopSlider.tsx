@@ -41,19 +41,20 @@ export const signed = (n: number, digits = 1): string => (Math.abs(n) < 0.5 * 10
  * The stops of a cut / hold / boost setting that moves an amount of money: what is taken off or put on, in ringgit and in per cent, what
  * is kept at the middle stop, and what the whole comes to. `amountAt` is the amount (in ringgit, for the same stretch of time) at a setting.
  */
-export function moneyStops<V extends -1 | 0 | 1>(
+export function moneyStops<V extends number>(
   t: (key: StringKey, vars?: Record<string, string | number>) => string,
   rm: (n: number) => string,
-  amountAt: (dial: -1 | 0 | 1) => number,
-  names: Record<-1 | 0 | 1, string>,
+  amountAt: (dial: V) => number,
+  names: Record<number, string>,
+  dials: readonly V[] = [-1, 0, 1] as unknown as readonly V[],
 ): Stop<V>[] {
-  const base = amountAt(0);
-  return ([-1, 0, 1] as const).map((d) => {
+  const base = amountAt(0 as V);
+  return dials.map((d) => {
     const amount = amountAt(d);
     const change = amount - base;
     const pct = base > 0 ? (amount / base - 1) * 100 : 0;
     return {
-      value: d as V, label: names[d],
+      value: d, label: names[d],
       detail: d === 0 ? t('stop.keeps', { rm: rm(amount) }) : t(d < 0 ? 'stop.takes' : 'stop.adds', { rm: rm(Math.abs(change)), pct: signed(pct, 0) }),
       note: d === 0 ? t('stop.noChange') : t('stop.comesTo', { rm: rm(amount) }),
     };

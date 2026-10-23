@@ -1,3 +1,4 @@
+import type { LineDial } from './lineDial';
 import type { StandDowns } from '../transfer';
 import type { Dynamics, Region, RegionId } from '../types';
 import type { SegmentId } from './segments';
@@ -342,7 +343,7 @@ export const MEASURE_IDS = [
   'cashTopUp', 'fuelPrice', 'clinics', 'hospitalBeds', 'scholarships', 'schoolRepairs', 'roads', 'farmInputs', 'civilBonus', 'pensions',
 ] as const;
 export type MeasureId = (typeof MEASURE_IDS)[number];
-export interface Budget { lines: Record<BaseLineId, Dial> & { defence?: Dial }; tax: Dial; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
+export interface Budget { lines: Record<Exclude<BaseLineId, 'aid'>, Dial> & { aid: LineDial; defence?: Dial }; tax: Dial; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
 
 export const PORTFOLIO_IDS = [
   'finance', 'home', 'economy', 'education', 'health', 'rural', 'works', 'defence',

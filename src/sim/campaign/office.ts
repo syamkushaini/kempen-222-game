@@ -7,11 +7,12 @@ import { builtEffects, taxEffects } from './econPlansData';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { stanceGrowth } from './stances';
 import { defenceDial, defenceShown, resentCut } from './defence';
+import { ABOLISH, ABOLISH_PRICES, aidAbolished, lineDial, type LineDial } from './lineDial';
 import { pushNews, ref } from './news';
 import { GENERAL_RULES, STATE_RULES } from './rules';
 import {
   LINE_IDS, MINISTER_TRAITS, PORTFOLIO_IDS,
-  type Budget, type Campaign, type Candidate, type Career, type Dial, type Economy, type LineId, type MeasureId, type Minister, type MinisterTrait, type PortfolioId,
+  type Budget, type Campaign, type Candidate, type Career, type Economy, type LineId, type MeasureId, type Minister, type MinisterTrait, type PortfolioId,
 } from './types';
 
 /** Whether the player is head of government. A leader held to a term limit leads the governing party but not the government. */
@@ -82,7 +83,7 @@ export const skillOf = (k: Career, portfolio: PortfolioId) => k.cabinet.find((m)
 
 /** How far a budget loosens (positive) or tightens the purse: spending lines up, taxes down, plus standing commitments. */
 export function looseness(k: Career, budget: Budget = k.tabled): number {
-  return LINE_IDS.reduce((a, id) => a + (budget.lines[id] ?? 0), 0) - 2 * budget.tax + 0.5 * k.fiscal + (budget.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0);
+  return LINE_IDS.reduce((a, id) => a + lineDial(budget.lines[id] ?? 0), 0) - 2 * budget.tax + 0.5 * k.fiscal + (budget.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0);
 }
 
 /** The deficit a budget produces, as a share of national income. A capable finance minister shaves it. */
@@ -109,7 +110,7 @@ export function economyWeek(c: Campaign, rng: Rng) {
   const rate = k.rate ?? 0;
   const tax = taxEffects(k), built = builtEffects(k);
   const growthTo = 4 + 0.15 * loose - Math.max(0, e.debt - 70) * 0.08 + RATE.growth * rate + tax.growth + built.growth + stanceGrowth(k);
-  const pricesTo = 2.5 + 0.3 * loose - 0.3 * k.tabled.lines.aid + RATE.prices * rate + tax.prices + built.prices;
+  const pricesTo = 2.5 + 0.3 * loose - 0.3 * lineDial(k.tabled.lines.aid) + (aidAbolished(k.tabled) ? ABOLISH_PRICES : 0) + RATE.prices * rate + tax.prices + built.prices;
   e.growth = clamp(e.growth + (growthTo - e.growth) * 0.04 + rng.normal(0, 0.05), -6, 9);
   e.inflation = clamp(e.inflation + (pricesTo - e.inflation) * 0.04 + rng.normal(0, 0.04), -1, 12);
   e.jobless = clamp(e.jobless + (3.5 - (e.growth - 4) * 0.35 - e.jobless) * 0.03 + rng.normal(0, 0.015), 2, 12);
@@ -123,7 +124,7 @@ export function economyWeek(c: Campaign, rng: Rng) {
 }
 
 /** The head of government changes next year's budget plan. It takes effect when it is tabled. */
-export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; value: Dial } | { measure: MeasureId; on: boolean }): boolean {
+export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; value: LineDial } | { measure: MeasureId; on: boolean }): boolean {
   const k = c.career;
   if (k && c.phase === 'term' && isPm(c) && 'measure' in patch) {
     if (!(patch.measure in MEASURES)) return false;
@@ -137,11 +138,19 @@ export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; va
     }
     return true;
   }
-  if (!k || c.phase !== 'term' || !isPm(c) || !('value' in patch) || ![-1, 0, 1].includes(patch.value)) return false;
-  if (patch.tax) k.budget.tax = patch.value;
+  if (!k || c.phase !== 'term' || !isPm(c) || !('value' in patch)) return false;
+  const v = patch.value;
+  // Only the subsidies can be abolished outright; every other setting is a cut, a hold or a boost.
+  if (v === ABOLISH) {
+    if (patch.tax || patch.line !== 'aid') return false;
+    k.budget.lines.aid = ABOLISH;
+    return true;
+  }
+  if (v !== -1 && v !== 0 && v !== 1) return false;
+  if (patch.tax) k.budget.tax = v;
   // The defence line is the federal head of government's alone.
-  else if (patch.line === 'defence') { if (!defenceShown(c)) return false; k.budget.lines.defence = patch.value; }
-  else if (patch.line && LINE_IDS.includes(patch.line)) k.budget.lines[patch.line] = patch.value;
+  else if (patch.line === 'defence') { if (!defenceShown(c)) return false; k.budget.lines.defence = v; }
+  else if (patch.line && LINE_IDS.includes(patch.line)) k.budget.lines[patch.line] = v;
   else return false;
   return true;
 }
@@ -156,12 +165,17 @@ export function tableBudget(c: Campaign, plan: Budget): void {
     for (const [bloc, v] of Object.entries(MEASURES[m].appeal)) { lift(k, g.pm, [bloc as BlocId], v); for (const p of g.partners) lift(k, p, [bloc as BlocId], v * 0.4); }
   }
   for (const id of LINE_IDS) {
-    const dial = plan.lines[id] ?? 0;
+    const dial = lineDial(plan.lines[id] ?? 0);
     if (dial === 0) continue;
     lift(k, g.pm, LINE_BLOCS[id], 0.02 * dial);
     for (const p of g.partners) lift(k, p, LINE_BLOCS[id], 0.008 * dial);
   }
   resentCut(c, plan);
+  // Taking subsidies away altogether is felt on the shelves, in the streets and in the coalition.
+  if (aidAbolished(plan)) {
+    g.stability = clamp(g.stability - 3, 5, 95);
+    pushNews(c, { party: g.pm, key: 'news.gov.subsidy.abolished', vars: { party: ref.party(g.pm) }, tone: 'bad' });
+  }
   if (plan.tax !== 0) lift(k, g.pm, ['smallbiz', 'm40'], plan.tax > 0 ? -0.02 : 0.015);
   // Partners with rural and Borneo seats, and the party of the civil service, watch their own lines.
   for (const p of g.partners) {
