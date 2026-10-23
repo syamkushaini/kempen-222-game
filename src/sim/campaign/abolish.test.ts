@@ -5,6 +5,9 @@ import { BLOC_IDS } from '../types';
 import { TAX_IDS } from './econPlansData';
 import { setRate } from './econTools';
 import { setTax } from './econPlans';
+import { applyEffects } from './events';
+import { ASK_MAX } from './lineDial';
+import { donorsAt, setOrders } from './career';
 import { Rng } from '../rng';
 import { PARTY_IDS } from '../types';
 import { startCareer } from './career';
@@ -12,7 +15,7 @@ import { publicFinance } from './gdp';
 import { ABOLISH, LINE_MAX, LINE_MIN, aidAbolished, isLineDial, lineMult } from './lineDial';
 import { deficit, economyWeek, looseness, setBudget, tableBudget } from './office';
 import { pestelTargets } from './pestel';
-import { lineWeekly, takingsWeekly } from './treasury';
+import { divertedAt, grantsCostAt, lineWeekly, takingsWeekly } from './treasury';
 import { LINE_IDS, type Campaign } from './types';
 import { isValidCampaign } from './validate';
 
@@ -195,5 +198,33 @@ describe('the other settings a government makes in steps', () => {
     expect(lineReadout(t, rm, amountAt, -5, tax)).toEqual({ name: 'dial.cutBy:n=50', change: 'stop.takes:rm=RM500,pct=−50', total: 'stop.comesTo:rm=RM500' });
     expect(lineReadout(t, rm, amountAt, 3, tax)).toEqual({ name: 'dial.raiseBy:n=30', change: 'stop.adds:rm=RM300,pct=+30', total: 'stop.comesTo:rm=RM1300' });
     expect(lineReadout(t, rm, amountAt, 0, tax).name).toBe('dial.hold:');
+  });
+});
+
+describe('how hard the party asks donors, draws on the state and spends on grants', () => {
+  it('goes from nothing to six steps, each the size of the old Low, and each step has its price', () => {
+    const c = career();
+    expect(ASK_MAX).toBe(6);
+    for (const key of ['donors', 'state', 'grants'] as const) {
+      for (const v of [0, 1, 3, 6]) { setOrders(world, c, { [key]: v }); expect(c.career!.orders[key], `${key} ${v}`).toBe(v); }
+      for (const v of [7, -1, 2.5]) { setOrders(world, c, { [key]: 4 }); setOrders(world, c, { [key]: v }); expect(c.career!.orders[key], `${key} ${v}`).toBe(4); }
+    }
+    expect(donorsAt(world, c, 6)).toBe(6 * donorsAt(world, c, 1));
+    expect(divertedAt(world, c, 6)).toBeGreaterThanOrEqual(divertedAt(world, c, 3));
+    expect(grantsCostAt(world, c, 6)).toBeCloseTo(6 * grantsCostAt(world, c, 1));
+  });
+
+  it('is kept within the scale by what happens to the party, and in a saved game', () => {
+    const c = career();
+    c.career!.orders.donors = 5;
+    applyEffects(world, c, [{ t: 'donors', n: 9 }]);
+    expect(c.career!.orders.donors).toBe(ASK_MAX);
+    applyEffects(world, c, [{ t: 'donors', n: -20 }]);
+    expect(c.career!.orders.donors).toBe(0);
+    c.career!.orders.donors = 6; c.career!.orders.state = 4; c.career!.orders.grants = 5;
+    expect(isValidCampaign(JSON.parse(JSON.stringify(c)), world)).toBe(true);
+    const bad = JSON.parse(JSON.stringify(c));
+    bad.career.orders.state = 7;
+    expect(isValidCampaign(bad, world)).toBe(false);
   });
 });

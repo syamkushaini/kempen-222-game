@@ -28,3 +28,8 @@ export const RATE_MIN = -3;
 export const RATE_MAX = 3;
 /** A whole number of steps within a scale. */
 export const isStep = (x: unknown, min: number, max: number): x is number => typeof x === 'number' && Number.isInteger(x) && x >= min && x <= max;
+
+// How hard the party asks donors, draws on the state's money and spends on grants: whole steps from nothing to six, each of them what the
+// old Low level was (so the old Off, Low, Mid and High are 0, 1, 2 and 3, and the steps above High are new). Each step has its price.
+export const ASK_MIN = 0;
+export const ASK_MAX = 6;

@@ -27,6 +27,7 @@ import { payday, staffWeek, wages } from './staff';
 import { claimsWeek, makeClaims } from './claims';
 import { termMediaWeek } from './media';
 import { openingDeal, openingFlag } from './eventListOpening';
+import { ASK_MAX, ASK_MIN, isStep } from './lineDial';
 import { dealPartyOpening } from './eventListOpeningParty';
 import { governmentScore } from './record';
 import { closeCampaign, openCampaign } from './team';
@@ -326,9 +327,9 @@ export function setOrders(world: World, c: Campaign, patch: Partial<Orders>): vo
     o.focusStates = [...new Set(patch.focusStates)].filter((st) => world.states.includes(st) && contestsState(world, c, c.player, st)).slice(0, MAX_FOCUS_STATES);
   }
   if (patch.develop) o.develop = hasPublicMoney(c) ? [...new Set(patch.develop)].filter((st) => world.states.includes(st)).slice(0, MAX_FOCUS_STATES) : [];
-  if (isLevel(patch.donors)) o.donors = patch.donors;
-  if (isLevel(patch.state)) o.state = hasPublicMoney(c) ? patch.state : 0;
-  if (isLevel(patch.grants)) o.grants = hasPublicMoney(c) ? patch.grants : 0;
+  if (isStep(patch.donors, ASK_MIN, ASK_MAX)) o.donors = patch.donors;
+  if (isStep(patch.state, ASK_MIN, ASK_MAX)) o.state = hasPublicMoney(c) ? patch.state : 0;
+  if (isStep(patch.grants, ASK_MIN, ASK_MAX)) o.grants = hasPublicMoney(c) ? patch.grants : 0;
 }
 
 /** Buys (positive) or sells (negative) lots of party businesses, as plain property. Selling in a hurry loses a tenth. The Party tab buys and sells each kind. */

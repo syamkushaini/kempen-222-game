@@ -5,6 +5,8 @@ import {
 import { creditShare, divertedAt, govMoney, grantGoodwillAt, grantsCostAt, hasPublicMoney, RIVAL_CREDIT, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
 import { DONOR_CRED_COST, STATE_TRUST_COST, donorsAt } from '../sim/campaign/career';
 import { StopSlider } from './StopSlider';
+import { StepSlider } from './LineSlider';
+import { ASK_MAX, ASK_MIN } from '../sim/campaign/lineDial';
 import { useState } from 'react';
 import { contestsState, scaled } from '../sim/campaign/actions';
 import { ROUNDS, STATE_GOVERNMENT_INCOME, statesHeld } from '../sim/campaign/contests';
@@ -25,6 +27,16 @@ import { leaderName, partyColor, partyName, partyShort, regionLabel, relationWor
 import { Brief } from './Brief';
 
 const LEVELS: Level[] = [0, 1, 2, 3];
+
+/** What a level of asking or drawing is: how far up the scale it is, what it brings in or costs each week, and what it costs besides. */
+function askReadout(t: (key: StringKey, vars?: Record<string, string | number>) => string, level: number, money: string, price?: string) {
+  return (
+    <>
+      <strong>{level === 0 ? t('level.0') : t('ask.level', { n: level, max: ASK_MAX })}</strong>
+      <span className="num"> · {money}{price ? ` · ${price}` : ''}</span>
+    </>
+  );
+}
 
 /**
  * Standing orders for the years between elections: what the leader does with
@@ -214,13 +226,10 @@ export function OrdersTab() {
             <span className="action-title">{t('orders.source.donors')}</span>
             <span className="action-meta">{t('orders.source.donors.desc')}</span>
           </div>
-          <StopSlider
-            label={t('orders.source.donors')} value={o.donors} onChange={(level) => setOrders({ donors: level })}
-            stops={LEVELS.map((level) => ({
-              value: level, label: t(`level.${level}`),
-              detail: level > 0 ? t('stop.perWeek', { rm: f.rm(donorsAt(world, campaign, level)) }) : t('cost.free'),
-              note: level > 0 ? t('stop.donors.cost', { n: (DONOR_CRED_COST * 52 * level).toFixed(1) }) : undefined,
-            }))}
+          <StepSlider
+            label={t('orders.source.donors')} min={ASK_MIN} max={ASK_MAX} value={o.donors} onChange={(level) => setOrders({ donors: level })} t={t}
+            readout={askReadout(t, o.donors, o.donors > 0 ? t('stop.perWeek', { rm: f.rm(donorsAt(world, campaign, o.donors)) }) : t('cost.free'), o.donors > 0 ? t('stop.donors.cost', { n: (DONOR_CRED_COST * 52 * o.donors).toFixed(1) }) : undefined)}
+            scale={[t('level.0'), '', String(ASK_MAX)]}
           />
         </li>
         {income.crowd > 0 && (
@@ -237,13 +246,10 @@ export function OrdersTab() {
             <span className="action-title">{t('orders.source.state')}</span>
             <span className="action-meta">{t(governing ? 'orders.source.state.desc' : 'orders.source.state.no')}</span>
           </div>
-          <StopSlider
-            label={t('orders.source.state')} value={o.state} disabled={!governing} onChange={(level) => setOrders({ state: level })}
-            stops={LEVELS.map((level) => ({
-              value: level, label: t(`level.${level}`),
-              detail: level > 0 && governing ? t('stop.perWeek', { rm: f.rm(divertedAt(world, campaign, level)) }) : t('cost.free'),
-              note: level > 0 ? t('stop.state.cost', { n: (STATE_TRUST_COST * 52 * level).toFixed(1) }) : undefined,
-            }))}
+          <StepSlider
+            label={t('orders.source.state')} min={ASK_MIN} max={ASK_MAX} value={o.state} disabled={!governing} onChange={(level) => setOrders({ state: level })} t={t}
+            readout={askReadout(t, o.state, o.state > 0 && governing ? t('stop.perWeek', { rm: f.rm(divertedAt(world, campaign, o.state)) }) : t('cost.free'), o.state > 0 ? t('stop.state.cost', { n: (STATE_TRUST_COST * 52 * o.state).toFixed(1) }) : undefined)}
+            scale={[t('level.0'), '', String(ASK_MAX)]}
           />
         </li>
         <li className="action">
@@ -286,13 +292,10 @@ export function OrdersTab() {
                 <span className="action-title">{t('orders.gov.grants')}</span>
                 <span className="action-meta">{t('orders.gov.grants.desc')}</span>
               </div>
-              <StopSlider
-                label={t('orders.gov.grants')} value={o.grants ?? 0} onChange={(level) => setOrders({ grants: level })}
-                stops={LEVELS.map((level) => ({
-                  value: level, label: t(`level.${level}`),
-                  detail: level > 0 ? t('stop.perWeek', { rm: f.rm(grantsCostAt(world, campaign, level)) }) : t('cost.free'),
-                  note: level > 0 ? t('stop.grants.goodwill', { n: grantGoodwillAt(world, campaign, level).toFixed(1) }) : undefined,
-                }))}
+              <StepSlider
+                label={t('orders.gov.grants')} min={ASK_MIN} max={ASK_MAX} value={o.grants ?? 0} onChange={(level) => setOrders({ grants: level })} t={t}
+                readout={askReadout(t, o.grants ?? 0, (o.grants ?? 0) > 0 ? t('stop.perWeek', { rm: f.rm(grantsCostAt(world, campaign, o.grants ?? 0)) }) : t('cost.free'), (o.grants ?? 0) > 0 ? t('stop.grants.goodwill', { n: grantGoodwillAt(world, campaign, o.grants ?? 0).toFixed(1) }) : undefined)}
+                scale={[t('level.0'), '', String(ASK_MAX)]}
               />
             </li>
           </ul>

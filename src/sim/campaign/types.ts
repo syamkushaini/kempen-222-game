@@ -312,11 +312,11 @@ export interface Orders {
   /** Regions where the machinery money and the leader's tours go. Up to three; none means everywhere. */
   focusStates: RegionId[];
   /** How hard the party leans on tycoons and corporate donors. */
-  donors: Level;
+  donors: number;
   /** How hard a governing party leans on state resources: how much of the government's money it diverts to the party each week. */
-  state: Level;
+  state: number;
   /** How much of the government's money goes each week to development grants in the target regions. Absent in a game saved before the treasury existed. */
-  grants?: Level;
+  grants?: number;
   /** The states the government chooses to develop: up to three, and the grants go there, whether or not the party stands in them. None means the target states. */
   develop?: RegionId[];
 }

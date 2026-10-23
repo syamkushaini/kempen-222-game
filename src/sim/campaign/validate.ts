@@ -2,7 +2,7 @@ import { isValidDynamics } from '../dynamics';
 import type { World } from '../election';
 import { N_PARTIES } from '../types';
 import { N_BLOCS } from '../types';
-import { BUDGET_TAX_MAX, BUDGET_TAX_MIN, PLAN_TAX_MAX, PLAN_TAX_MIN, RATE_MAX, RATE_MIN, isLineDial, isStep } from './lineDial';
+import { ASK_MAX, ASK_MIN, BUDGET_TAX_MAX, BUDGET_TAX_MIN, PLAN_TAX_MAX, PLAN_TAX_MIN, RATE_MAX, RATE_MIN, isLineDial, isStep } from './lineDial';
 import {
   BACKSTORY_IDS, DEMAND_IDS, ENDORSER_IDS, FOCUS_IDS, HOPEFUL_KINDS, LEGACY_IDS, LEVER_IDS, LINE_IDS, N_ISSUES, OUTLET_IDS,
   MEASURE_IDS, MINISTER_TRAITS, MISSION_KINDS, PLEDGE_IDS, PORTFOLIO_IDS, ROLE_IDS, SENIOR_IDS, STAT_IDS,
@@ -210,7 +210,7 @@ function isValidCareer(x: unknown, world: World): boolean {
       isList(r.basis, (b) => b === null || (isObj(b) && isVotes(b.votes) && isNum(b.turnout)), seats))) &&
     isObj(o) && (FOCUS_IDS as readonly unknown[]).includes(o.focus) && isPartyOrNull(o.courting) &&
     isObj(o.budget) && isLevel(o.budget.machinery) && isLevel(o.budget.media) && isLevel(o.budget.research) &&
-    isList(o.focusStates, (st) => world.states.includes(st as string)) && isLevel(o.donors) && isLevel(o.state) && (o.grants === undefined || isLevel(o.grants)) && (o.develop === undefined || isList(o.develop, (st) => world.states.includes(st as string))) &&
+    isList(o.focusStates, (st) => world.states.includes(st as string)) && isStep(o.donors, ASK_MIN, ASK_MAX) && isStep(o.state, ASK_MIN, ASK_MAX) && (o.grants === undefined || isStep(o.grants, ASK_MIN, ASK_MAX)) && (o.develop === undefined || isList(o.develop, (st) => world.states.includes(st as string))) &&
     (x.seen === undefined || isList(x.seen, (v) => typeof v === 'string')) &&
     (x.topicWeeks === undefined || (isObj(x.topicWeeks) && Object.values(x.topicWeeks).every(isNum))) && (x.oppLeader === undefined || isNum(x.oppLeader)) &&
     (x.stateVotes === undefined || (isObj(x.stateVotes) && Object.values(x.stateVotes).every((v) => isObj(v) && isNum(v.week) && isList(v.seats, isNum, N_PARTIES) && isList(v.before, isNum, N_PARTIES) && (v.inPerson === undefined || typeof v.inPerson === 'boolean')))) &&
