@@ -61,6 +61,9 @@ export function challengeKey(c: Pick<Campaign, 'challenge'>): string | null {
 /** The link to a challenge on the page the game is served from. */
 export const challengeLink = (code: string, base: string): string => `${base.replace(/#.*$/, '')}#c=${code}`;
 
+/** What is shared with a result: the words, and below them (for a game that is a challenge) the link to play the same contest. */
+export const withInvite = (text: string, invite: string | null): string => (invite ? `${text}\n${invite}` : text);
+
 /** The code in a page address (`#c=...`), or null. */
 export function codeInAddress(hash: string): string | null {
   const m = /^#c=([^&]+)/.exec(hash);

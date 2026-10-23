@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getWorld } from '../../data/world';
 import { PARTY_IDS } from '../types';
-import { challengeLink, codeInAddress, decodeChallenge, encodeChallenge, LEAN, type ChallengeSpec } from './challengeCode';
+import { challengeLink, codeInAddress, withInvite, decodeChallenge, encodeChallenge, LEAN, type ChallengeSpec } from './challengeCode';
 import { playable } from './field';
 import { incomeBoost } from './perks';
 import { autoPlayWeek, electionResult, endWeek, newCampaign } from './turn';
@@ -71,5 +71,16 @@ describe('a challenge as it is played', () => {
     const parties = playable(perlis).map((p) => PARTY_IDS[p]);
     expect(parties.length).toBeGreaterThan(0);
     expect(parties).not.toContain('oth');
+  });
+});
+
+describe('what is shared with a result', () => {
+  it('carries the link to the same contest below the words, for a challenge, and only the words otherwise', () => {
+    const code = encodeChallenge({ scenario: 'general', party: 'ps', seed: 12345, difficulty: 'hard', fog: true, noisy: false, lean: false });
+    const link = challengeLink(code, 'https://example.org/game/#old');
+    const shared = withInvite('We won 90 seats', `Try the same contest: ${link}`);
+    expect(shared.split('\n')).toEqual(['We won 90 seats', `Try the same contest: ${link}`]);
+    expect(codeInAddress(new URL(link).hash)).toBe(code);
+    expect(withInvite('We won 90 seats', null)).toBe('We won 90 seats');
   });
 });
