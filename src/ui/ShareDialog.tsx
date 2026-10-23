@@ -14,6 +14,8 @@ import { mapPicture } from './map3d';
 import { missionGoal, recordAsk } from './missionText';
 import { drawCard, type CardData } from './shareCard';
 import { CopyButton } from './CopyButton';
+import { challengeLink, withInvite } from '../sim/campaign/challengeCode';
+import { useStore } from '../state/store';
 
 export const common = (t: T) => ({ tagline: t('share.tagline'), fiction: t('share.fiction') });
 
@@ -131,6 +133,11 @@ export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose
   const [file, setFile] = useState<File | null>(null);
   const [failed, setFailed] = useState(false);
   const [ratio, setRatio] = useState<number | null>(null);
+  // A card from a challenge carries the way to play the very same contest, so that whoever sees it can try to do better.
+  const code = useStore((s) => s.game?.campaign.challenge?.code);
+  const invite = code ? `${t('share.try')} ${challengeLink(code, location.href)}` : null;
+  const caption = 'text' in data && data.text ? data.text : data.headline;
+  const message = withInvite(caption, invite);
 
   useEffect(() => {
     let live = true;
@@ -160,7 +167,7 @@ export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const canShare = !!file && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
-  const share = () => { if (file) void navigator.share({ files: [file], title: 'Kempen 222', text: 'text' in data && data.text ? data.text : data.headline }).catch(() => undefined); };
+  const share = () => { if (file) void navigator.share({ files: [file], title: 'Kempen 222', text: message }).catch(() => undefined); };
 
   return (
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -169,10 +176,11 @@ export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose
         <p className="muted small">{t('share.hint')}</p>
         <canvas ref={canvas} className="share-card" style={ratio ? { aspectRatio: String(ratio) } : undefined} role="img" aria-label={t('share.alt', { headline: data.headline })} />
         {failed && <p className="note">{t('share.failed')}</p>}
+        {invite && <p className="muted small">{t('share.challengeNote')}</p>}
         <div className="button-row">
           <button className="btn primary" disabled={!file} onClick={save}>{t('share.save')}</button>
           {canShare && <button className="btn" onClick={share}>{t('share.share')}</button>}
-          <CopyButton text={data.headline} label={t('share.copy')} />
+          <CopyButton text={withInvite(data.headline, invite)} label={t(invite ? 'share.copyLink' : 'share.copy')} />
           <button className="btn" onClick={onClose}>{t('share.close')}</button>
         </div>
       </div>
