@@ -99,9 +99,9 @@ export function submissionOf(entry: LegacyEntry, campaign: Pick<Campaign, 'scena
 export type Fetch = typeof fetch;
 export const headers = (cfg: Config) => ({ apikey: cfg.key, Authorization: `Bearer ${cfg.key}` });
 
-export async function call(fetchFn: Fetch, url: string, init: RequestInit): Promise<Response | null> {
+export async function call(fetchFn: Fetch, url: string, init: RequestInit, waitMs = WAIT_MS): Promise<Response | null> {
   const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), WAIT_MS);
+  const timer = setTimeout(() => ctl.abort(), waitMs);
   try { return await fetchFn(url, { ...init, signal: ctl.signal }); } catch { return null; } finally { clearTimeout(timer); }
 }
 
