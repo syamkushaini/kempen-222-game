@@ -12,6 +12,7 @@ import { patronageMult } from './patronage';
 import { pushNews, ref } from './news';
 import { SECTOR_IDS, type SectorId } from './sectors';
 import { LINE_IDS, type Budget, type Campaign, type LineId } from './types';
+import { lineMult } from './lineDial';
 
 // The government's money is not the party's. Governing brings a weekly allocation into a treasury of its own: large for the
 // head of government, smaller for a partner, and a little for every state the party governs, at the centre or not. It
@@ -96,7 +97,7 @@ const TAX_SHARE = 0.4;
 /** Weeks to a month: the books are shown by the month. */
 export const MONTH = 52 / 12;
 /** What a line of the budget costs a week at a setting of its dial (-1 cut, 0 hold, 1 boost). */
-export const lineWeekly = (world: World, id: LineId, dial: number): number => govMoney(world, ALLOCATION.pm) * LINES_SPEND * lineWeight(world, id) * (1 + LINE_STEP * dial);
+export const lineWeekly = (world: World, id: LineId, dial: number): number => govMoney(world, ALLOCATION.pm) * LINES_SPEND * lineWeight(world, id) * lineMult(dial, LINE_STEP);
 /** What one particular measure costs a week. */
 export const measureWeekly = (world: World, m: keyof typeof MEASURES): number => govMoney(world, ALLOCATION.pm) * MEASURE_UNIT * MEASURES[m].cost;
 /** What a number of units of standing commitment cost a week: a policy, a programme or a deal adds some. */
@@ -127,7 +128,7 @@ export function govBooks(world: World, c: Campaign, budget?: Budget): Books | nu
   const spend: BookFlow[] = [
     // The armed forces' line is the country's only, and costs more where they have a great say over what they buy.
     ...LINE_IDS.filter((id) => id !== 'defence' || isFederalWorld(world)).map((id) => ({
-      id, amount: unit * LINES_SPEND * lineWeight(world, id) * (1 + LINE_STEP * (b.lines[id] ?? 0)) * (id === 'defence' ? procurementMult(k) : 1),
+      id, amount: unit * LINES_SPEND * lineWeight(world, id) * lineMult(b.lines[id] ?? 0, LINE_STEP) * (id === 'defence' ? procurementMult(k) : 1),
     })),
     { id: 'measures', amount: unit * MEASURE_UNIT * (b.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0) },
     { id: 'commitments', amount: unit * COMMITMENT_UNIT * Math.max(0, k.fiscal) },
@@ -167,18 +168,29 @@ export const treasuryCap = (world: World, c: Campaign) => baseAllocation(world, 
 
 /** What the standing orders would divert to the party this week: no more than the treasury will have. */
 export function diverted(world: World, c: Campaign): number {
+  return divertedAt(world, c, c.career?.orders.state ?? 0);
+}
+
+/** What would be diverted to the party each week if state resources were drawn on at this level. */
+export function divertedAt(world: World, c: Campaign, level: number): number {
   const k = c.career;
   if (!k || c.phase !== 'term' || !hasPublicMoney(c)) return 0;
-  const planned = scaled(world, DIVERT_STEP) * k.orders.state;
+  const planned = scaled(world, DIVERT_STEP) * level;
   return Math.min(planned, Math.min(treasuryCap(world, c), Math.max(0, treasuryOf(c) + allocation(world, c))));
 }
 
 /** What the grants would cost this week at the level chosen. */
 export function grantsCost(world: World, c: Campaign): number {
+  return grantsCostAt(world, c, c.career?.orders.grants ?? 0);
+}
+
+/** What the grants would cost each week at a level, and the points of goodwill they buy in all (shared among the target regions). */
+export function grantsCostAt(world: World, c: Campaign, level: number): number {
   const k = c.career;
   if (!k || c.phase !== 'term' || !hasPublicMoney(c)) return 0;
-  return govMoney(world, GRANT_STEP) * (k.orders.grants ?? 0);
+  return govMoney(world, GRANT_STEP) * level;
 }
+export const grantGoodwillAt = (world: World, c: Campaign, level: number): number => grantsCostAt(world, c, level) / govMoney(world, GRANT_PER_POINT);
 
 /** How much of the credit for a state's development a rival state government takes for itself. */
 export const RIVAL_CREDIT = 0.3;

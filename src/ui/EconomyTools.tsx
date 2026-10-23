@@ -1,5 +1,5 @@
 import type { StringKey } from '../i18n/strings';
-import { TOOLS, TOOL_GOALS, canUseTool, rateOf } from '../sim/campaign/econTools';
+import { RATE, TOOLS, TOOL_GOALS, canUseTool, rateOf } from '../sim/campaign/econTools';
 import { MAX_PROJECTS_AT_ONCE, PROJECTS, REPAY_MAX, TAX_IDS, TAX_MIX, canStartProject, taxMixOf } from '../sim/campaign/econPlans';
 import { MONTH, debtEased, govBooks, govMoney } from '../sim/campaign/treasury';
 import { ALLOCATION } from '../sim/campaign/treasury';
@@ -10,6 +10,7 @@ import { STOCK_IDS } from '../sim/campaign/types';
 import { FORCES_PROJECTS } from '../sim/campaign/econPlansData';
 import { useStore } from '../state/store';
 import { Fold } from './Fold';
+import { StopSlider, signed } from './StopSlider';
 import { describeEffect } from './effectText';
 import { useFormat, useT, useWorld } from './hooks';
 
@@ -24,17 +25,20 @@ export function MarketsPanel() {
   const mk = campaign.career.markets;
   return (
     <section className="econ-tools" aria-label={t('markets.title')}>
-      <div className="rate-row">
+      <div className="rate-row stacked">
         <div className="grow">
           <span className="action-title">{t('tools.rate')}</span>
           <span className="action-meta">{t(`tools.rate.${rate}` as StringKey)}</span>
           {banked && <span className="action-meta">{t('bank.independent', { n: mk ? Math.max(0, mk.next - campaign.career.week) : BANK.every })}</span>}
         </div>
-        <div className="segmented small" role="group" aria-label={t('tools.rate')}>
-          {([-1, 0, 1] as const).map((d) => (
-            <button key={d} type="button" className={rate === d ? 'active' : ''} aria-pressed={rate === d} disabled={banked} onClick={() => setRate(d)}>{t(`tools.rate.btn.${d}` as StringKey)}</button>
-          ))}
-        </div>
+        <StopSlider
+          label={t('tools.rate')} value={rate} disabled={banked} onChange={(d) => setRate(d)}
+          stops={([-1, 0, 1] as const).map((d) => ({
+            value: d, label: t(`tools.rate.btn.${d}` as StringKey),
+            detail: d === 0 ? t('stop.none') : t('stop.rate.growth', { n: signed(RATE.growth * d) }),
+            note: d === 0 ? t('stop.base') : t('stop.rate.rest', { prices: signed(RATE.prices * d), debt: signed(RATE.interest * d) }),
+          }))}
+        />
       </div>
       {banked && mk && (
         <div className="plan-card">
@@ -94,15 +98,19 @@ export function EconomyTools() {
         <p className="muted small">{t('plan.tax.desc')}</p>
         <ul>
           {TAX_IDS.map((id) => (
-            <li key={id} className="action">
+            <li key={id} className="action stacked">
               <div className="grow">
                 <span className="action-title">{t(`plan.tax.${id}` as StringKey)}</span>
-                <span className="action-meta num">{t('plan.tax.effect', { take: Math.round(TAX_MIX[id].takings * 100), prices: TAX_MIX[id].prices.toFixed(2), growth: TAX_MIX[id].growth.toFixed(2) })}</span>
                 <span className="action-meta">{t(`plan.tax.${id}.who` as StringKey)}</span>
               </div>
-              <div className="segmented small" role="group" aria-label={t(`plan.tax.${id}` as StringKey)}>
-                {([-1, 0, 1] as const).map((d) => <button key={d} type="button" className={taxMixOf(campaign.career!)[id] === d ? 'active' : ''} aria-pressed={taxMixOf(campaign.career!)[id] === d} onClick={() => setTax(id, d)}>{t(d === -1 ? 'dial.cut' : d === 0 ? 'dial.hold' : 'dial.raise')}</button>)}
-              </div>
+              <StopSlider
+                label={t(`plan.tax.${id}` as StringKey)} value={taxMixOf(campaign.career!)[id]} onChange={(d) => setTax(id, d)}
+                stops={([-1, 0, 1] as const).map((d) => ({
+                  value: d, label: t(d === -1 ? 'dial.cut' : d === 0 ? 'dial.hold' : 'dial.raise'),
+                  detail: d === 0 ? t('stop.none') : t('stop.tax.takes', { n: signed(TAX_MIX[id].takings * 100 * d, 0) }),
+                  note: d === 0 ? t('stop.base') : t('stop.tax.rest', { prices: signed(TAX_MIX[id].prices * d, 2), growth: signed(TAX_MIX[id].growth * d, 2) }),
+                }))}
+              />
             </li>
           ))}
         </ul>

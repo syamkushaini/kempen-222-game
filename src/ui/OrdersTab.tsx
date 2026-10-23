@@ -2,14 +2,16 @@ import { probeChance } from '../sim/campaign/party';
 import {
   ASSET_LOT, BUDGET, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, machineryTargets, ledger, termIncome, termSpending,
 } from '../sim/campaign/career';
-import { creditShare, govMoney, grantsCost, hasPublicMoney, RIVAL_CREDIT, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
+import { creditShare, divertedAt, govMoney, grantGoodwillAt, grantsCostAt, hasPublicMoney, RIVAL_CREDIT, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
+import { DONOR_CRED_COST, STATE_TRUST_COST, donorsAt } from '../sim/campaign/career';
+import { StopSlider } from './StopSlider';
 import { useState } from 'react';
 import { contestsState, scaled } from '../sim/campaign/actions';
 import { ROUNDS, STATE_GOVERNMENT_INCOME, statesHeld } from '../sim/campaign/contests';
 import { others, relation } from '../sim/campaign/diplomacy';
 import { seatOf } from '../sim/campaign/events';
 import { memberMoods, membersOf, moodWord } from '../sim/campaign/members';
-import { PATRONAGE, patronageChance, patronageOf } from '../sim/campaign/patronage';
+import { PATRONAGE, patronageOf } from '../sim/campaign/patronage';
 import { partnerMood } from '../sim/campaign/plots';
 import { Gauge } from './Gauge';
 import { Loan } from './Loan';
@@ -23,19 +25,6 @@ import { leaderName, partyColor, partyName, partyShort, regionLabel, relationWor
 import { Brief } from './Brief';
 
 const LEVELS: Level[] = [0, 1, 2, 3];
-
-function LevelSwitch(props: { value: Level; label: string; onChange(level: Level): void; disabled?: boolean }) {
-  const t = useT();
-  return (
-    <div className="segmented small" role="group" aria-label={props.label}>
-      {LEVELS.map((level) => (
-        <button key={level} className={props.value === level ? 'active' : ''} aria-pressed={props.value === level} disabled={props.disabled} onClick={() => props.onChange(level)}>
-          {t(`level.${level}`)}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 /**
  * Standing orders for the years between elections: what the leader does with
@@ -75,13 +64,15 @@ export function OrdersTab() {
   const members = membersOf(campaign), moods = memberMoods(campaign);
 
   const budgetRow = (key: keyof Orders['budget']) => (
-    <li className="action" key={key}>
+    <li className="action stacked" key={key}>
       <div className="grow">
         <span className="action-title">{t(`orders.budget.${key}`)}</span>
         <span className="action-meta">{t(`orders.budget.${key}.desc`)}</span>
-        <span className="action-meta num">{o.budget[key] > 0 ? t('orders.perWeek', { rm: f.rm(scaled(world, BUDGET[key][o.budget[key]])) }) : t('cost.free')}</span>
       </div>
-      <LevelSwitch label={t(`orders.budget.${key}`)} value={o.budget[key]} onChange={(level) => setOrders({ budget: { ...o.budget, [key]: level } })} />
+      <StopSlider
+        label={t(`orders.budget.${key}`)} value={o.budget[key]} onChange={(level) => setOrders({ budget: { ...o.budget, [key]: level } })}
+        stops={LEVELS.map((level) => ({ value: level, label: t(`level.${level}`), detail: level > 0 ? t('stop.perWeek', { rm: f.rm(scaled(world, BUDGET[key][level])) }) : t('cost.free') }))}
+      />
     </li>
   );
 
@@ -191,19 +182,18 @@ export function OrdersTab() {
           ))}
         </div>
         {Object.keys(k.states).some((st) => k.states[st] === me) && (
-          <div className="action">
+          <div className="action stacked">
             <div className="grow">
               <span className="action-title">{t('orders.patronage')}</span>
               <span className="action-meta">{t('orders.patronage.desc', { x: PATRONAGE.mult[2] })}</span>
-              {patronageOf(k) > 0 && <span className="action-meta num">{t('orders.patronage.risk', { pct: (patronageChance(campaign) * 100).toFixed(1) })}</span>}
             </div>
-            <div className="segmented small" role="group" aria-label={t('orders.patronage')}>
-              {PATRONAGE.mult.map((_, level) => (
-                <button key={level} className={patronageOf(k) === level ? 'active' : ''} aria-pressed={patronageOf(k) === level} disabled={campaign.phase !== 'term'} onClick={() => setPatronage(level)}>
-                  {t(`orders.patronage.${level}` as StringKey)}
-                </button>
-              ))}
-            </div>
+            <StopSlider
+              label={t('orders.patronage')} value={patronageOf(k)} disabled={campaign.phase !== 'term'} onChange={(level) => setPatronage(level)}
+              stops={PATRONAGE.mult.map((mult, level) => ({
+                value: level, label: t(`orders.patronage.${level}` as StringKey), detail: t('stop.patron', { x: mult }),
+                note: level > 0 ? t('stop.patron.risk', { pct: (Math.min(PATRONAGE.max, statesHeld(campaign, me) * level * PATRONAGE.risk) * 100).toFixed(1) }) : undefined,
+              }))}
+            />
           </div>
         )}
         </>
@@ -219,13 +209,19 @@ export function OrdersTab() {
           </div>
           <strong className="num">{f.rm(income.members)}</strong>
         </li>
-        <li className="action">
+        <li className="action stacked">
           <div className="grow">
             <span className="action-title">{t('orders.source.donors')}</span>
             <span className="action-meta">{t('orders.source.donors.desc')}</span>
-            <span className="action-meta num">{t('orders.perWeek', { rm: f.rm(income.donors) })}</span>
           </div>
-          <LevelSwitch label={t('orders.source.donors')} value={o.donors} onChange={(level) => setOrders({ donors: level })} />
+          <StopSlider
+            label={t('orders.source.donors')} value={o.donors} onChange={(level) => setOrders({ donors: level })}
+            stops={LEVELS.map((level) => ({
+              value: level, label: t(`level.${level}`),
+              detail: level > 0 ? t('stop.perWeek', { rm: f.rm(donorsAt(world, campaign, level)) }) : t('cost.free'),
+              note: level > 0 ? t('stop.donors.cost', { n: (DONOR_CRED_COST * 52 * level).toFixed(1) }) : undefined,
+            }))}
+          />
         </li>
         {income.crowd > 0 && (
           <li className="action">
@@ -236,13 +232,19 @@ export function OrdersTab() {
             <strong className="num">{f.rm(income.crowd)}</strong>
           </li>
         )}
-        <li className="action">
+        <li className="action stacked">
           <div className="grow">
             <span className="action-title">{t('orders.source.state')}</span>
             <span className="action-meta">{t(governing ? 'orders.source.state.desc' : 'orders.source.state.no')}</span>
-            {governing && <span className="action-meta num">{t('orders.perWeek', { rm: f.rm(income.diverted) })}</span>}
           </div>
-          <LevelSwitch label={t('orders.source.state')} value={o.state} disabled={!governing} onChange={(level) => setOrders({ state: level })} />
+          <StopSlider
+            label={t('orders.source.state')} value={o.state} disabled={!governing} onChange={(level) => setOrders({ state: level })}
+            stops={LEVELS.map((level) => ({
+              value: level, label: t(`level.${level}`),
+              detail: level > 0 && governing ? t('stop.perWeek', { rm: f.rm(divertedAt(world, campaign, level)) }) : t('cost.free'),
+              note: level > 0 ? t('stop.state.cost', { n: (STATE_TRUST_COST * 52 * level).toFixed(1) }) : undefined,
+            }))}
+          />
         </li>
         <li className="action">
           <div className="grow">
@@ -279,13 +281,19 @@ export function OrdersTab() {
               </div>
               <strong className="num">{f.rm(treasuryOf(campaign))}</strong>
             </li>
-            <li className="action">
+            <li className="action stacked">
               <div className="grow">
                 <span className="action-title">{t('orders.gov.grants')}</span>
                 <span className="action-meta">{t('orders.gov.grants.desc')}</span>
-                <span className="action-meta num">{t('orders.perWeek', { rm: f.rm(grantsCost(world, campaign)) })}</span>
               </div>
-              <LevelSwitch label={t('orders.gov.grants')} value={o.grants ?? 0} onChange={(level) => setOrders({ grants: level })} />
+              <StopSlider
+                label={t('orders.gov.grants')} value={o.grants ?? 0} onChange={(level) => setOrders({ grants: level })}
+                stops={LEVELS.map((level) => ({
+                  value: level, label: t(`level.${level}`),
+                  detail: level > 0 ? t('stop.perWeek', { rm: f.rm(grantsCostAt(world, campaign, level)) }) : t('cost.free'),
+                  note: level > 0 ? t('stop.grants.goodwill', { n: grantGoodwillAt(world, campaign, level).toFixed(1) }) : undefined,
+                }))}
+              />
             </li>
           </ul>
           {world.rules.kind !== 'state' && (

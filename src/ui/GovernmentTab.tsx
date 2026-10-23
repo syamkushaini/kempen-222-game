@@ -7,7 +7,10 @@ import {
 } from '../sim/campaign/govern';
 import { scaled } from '../sim/campaign/actions';
 import { MONTH, commitmentWeekly, lineWeekly, measureWeekly, takingsWeekly } from '../sim/campaign/treasury';
+import { StopSlider, moneyStops } from './StopSlider';
+import { ABOLISH, type LineDial } from '../sim/campaign/lineDial';
 import { EconomyBook } from './EconomyBook';
+import { EconomyReality } from './EconomyReality';
 import { TreasuryCard } from './TreasuryCard';
 import { EconomyCharts } from './EconomyCharts';
 import { EconomyTools, MarketsPanel } from './EconomyTools';
@@ -45,25 +48,11 @@ import { BragButton, hasCabinetSeat } from './BragCards';
 import { Chamber } from './Chamber';
 import { houseSeating } from './seating';
 
-const DIALS: Dial[] = [-1, 0, 1];
 
 /** A bill's name: the promise or the concession it carries out. */
 export function billName(t: T, id: string): string {
   const [kind, name] = id.split(':');
   return t(`${kind === 'pledge' ? 'pledge' : 'demand'}.${name}` as StringKey);
-}
-
-function DialSwitch(props: { value: Dial; label: string; tax?: boolean; onChange(value: Dial): void }) {
-  const t = useT();
-  return (
-    <div className="segmented small" role="group" aria-label={props.label}>
-      {DIALS.map((d) => (
-        <button key={d} className={props.value === d ? 'active' : ''} aria-pressed={props.value === d} onClick={() => props.onChange(d)}>
-          {t(`dial.${d === -1 ? 'cut' : d === 0 ? 'hold' : props.tax ? 'raise' : 'boost'}`)}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 /**
@@ -127,6 +116,7 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
       </dl>
       <p className="muted small">{t(feel > 0.5 ? 'house.feel.good' : feel < -0.5 ? 'house.feel.bad' : 'house.feel.flat')} {t('house.deficit', { pct: deficit(k).toFixed(1) })}</p>
 
+      <EconomyReality />
       <TreasuryCard />
       <Fold title={t('fold.economy')}>
         <EconomyCharts />
@@ -149,13 +139,17 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
           <p className="muted small action-desc">{t('house.budget.desc', { n: toBudget })}</p>
           <ul>
             {LINE_IDS.filter((id) => id !== 'defence' || defenceShown(campaign)).map((id) => (
-              <li key={id} className="action">
+              <li key={id} className="action stacked">
                 <div className="grow">
                   <span className="action-title">{t(`line.${id}`)}</span>
                   <span className="action-meta">{t(`line.${id}.desc`)}</span>
-                  <span className="action-meta num">{t('cost.line', { cut: f.rm(lineWeekly(world, id, -1) * MONTH), hold: f.rm(lineWeekly(world, id, 0) * MONTH), boost: f.rm(lineWeekly(world, id, 1) * MONTH) })}</span>
                 </div>
-                <DialSwitch label={t(`line.${id}`)} value={k.budget.lines[id] ?? 0} onChange={(value) => setBudget({ line: id, value })} />
+                <StopSlider
+                  label={t(`line.${id}`)} value={k.budget.lines[id] ?? 0} onChange={(value) => setBudget({ line: id, value })}
+                  stops={moneyStops<LineDial>(t, f.rm, (d) => lineWeekly(world, id, d) * MONTH, { [-2]: t('dial.abolish'), [-1]: t('dial.cut'), 0: t('dial.hold'), 1: t('dial.boost') }, id === 'aid' ? [ABOLISH, -1, 0, 1] : [-1, 0, 1])}
+                />
+                {id === 'aid' && k.budget.lines.aid === ABOLISH && <p className="note bad" role="status">{t('stop.abolish.warn')}</p>}
+                <p className="muted small">{t('stop.inForce', { rm: f.rm(lineWeekly(world, id, k.tabled.lines[id] ?? 0) * MONTH) })}</p>
               </li>
             ))}
             <li className="action measures">
@@ -181,13 +175,16 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
                 <span className="action-meta num">{t('cost.commit.now', { rm: f.rm(commitmentWeekly(world, Math.max(0, k.fiscal)) * MONTH) })}</span>
               </div>
             </li>
-            <li className="action">
+            <li className="action stacked">
               <div className="grow">
                 <span className="action-title">{t('line.tax')}</span>
                 <span className="action-meta">{t('line.tax.desc')}</span>
-                <span className="action-meta num">{t('cost.tax', { cut: f.rm(takingsWeekly(world, campaign, -1) * MONTH), hold: f.rm(takingsWeekly(world, campaign, 0) * MONTH), raise: f.rm(takingsWeekly(world, campaign, 1) * MONTH) })}</span>
               </div>
-              <DialSwitch tax label={t('line.tax')} value={k.budget.tax} onChange={(value) => setBudget({ tax: true, value })} />
+              <StopSlider
+                label={t('line.tax')} value={k.budget.tax} onChange={(value) => setBudget({ tax: true, value })}
+                stops={moneyStops<Dial>(t, f.rm, (d) => takingsWeekly(world, campaign, d) * MONTH, { [-1]: t('dial.cut'), 0: t('dial.hold'), 1: t('dial.raise') })}
+              />
+              <p className="muted small">{t('stop.inForce', { rm: f.rm(takingsWeekly(world, campaign, k.tabled.tax) * MONTH) })}</p>
             </li>
           </ul>
           <p className="note">{t('house.budget.plan', { pct: deficit(k, k.budget).toFixed(1), now: deficit(k).toFixed(1) })}</p>

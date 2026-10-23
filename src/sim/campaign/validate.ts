@@ -116,7 +116,7 @@ const isVotes = (x: unknown) => isList(x, (v) => isNum(v) && v >= 0, N_PARTIES);
 
 const isUnit = (x: unknown): x is number => isNum(x) && x >= 0 && x <= 100;
 const isDial = (x: unknown) => x === -1 || x === 0 || x === 1;
-const isBudget = (x: unknown) => isObj(x) && isDial(x.tax) && (x.measures === undefined || (Array.isArray(x.measures) && x.measures.length <= 3 && x.measures.every((m) => (MEASURE_IDS as readonly unknown[]).includes(m)))) && isObj(x.lines) && LINE_IDS.every((id) => (id === 'defence' && (x.lines as Record<string, unknown>)[id] === undefined) || isDial((x.lines as Record<string, unknown>)[id]));
+const isBudget = (x: unknown) => isObj(x) && isDial(x.tax) && (x.measures === undefined || (Array.isArray(x.measures) && x.measures.length <= 3 && x.measures.every((m) => (MEASURE_IDS as readonly unknown[]).includes(m)))) && isObj(x.lines) && LINE_IDS.every((id) => (id === 'defence' && (x.lines as Record<string, unknown>)[id] === undefined) || isDial((x.lines as Record<string, unknown>)[id]) || (id === 'aid' && (x.lines as Record<string, unknown>)[id] === -2));
 
 const isPerson = (x: unknown) => isObj(x) && isNum(x.name) && x.name >= 0 && typeof x.skeleton === 'boolean' && typeof x.vetted === 'boolean';
 const isStaffer = (x: unknown) => isPerson(x) && isNum((x as Record<string, unknown>).skill);

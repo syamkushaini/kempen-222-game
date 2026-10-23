@@ -265,13 +265,22 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
 /** What comes in each week, by source. `total` is the party's; the government's allocation is a treasury of its own (see treasury.ts). */
 export interface Income { members: number; donors: number; crowd: number; diverted: number; assets: number; total: number; allocation: number }
 
+/** What donors give each week at a level of asking, with or without a drive for funds. */
+export function donorsAt(world: World, c: Campaign, level: number): number {
+  const drive = c.career?.orders.focus === 'funds';
+  return Math.round(scaled(world, DONOR_INCOME) * level * (drive ? 1.3 : 1));
+}
+/** What each level of asking donors costs in credibility a week, and each level of drawing on the state in the government's trust a week. */
+export const DONOR_CRED_COST = 0.03;
+export const STATE_TRUST_COST = 0.05;
+
 /** What comes into the party's purse each week between elections, by source, and what the government hands its own treasury. */
 export function termIncome(world: World, c: Campaign): Income {
   const k = c.career!;
   const pc = c.parties[c.player]!;
   const drive = k.orders.focus === 'funds';
   const members = Math.round(weeklyIncome(world, c.player, c) * PEACETIME * (0.6 + 0.4 * pc.unity / 100) * (0.8 + k.credibility / 250) * (drive ? 1.6 : 1) * incomeBoost(c, c.player) * rollsFactor(world, c));
-  const donors = Math.round(scaled(world, DONOR_INCOME) * k.orders.donors * (drive ? 1.3 : 1));
+  const donors = donorsAt(world, c, k.orders.donors);
   const crowd = crowdIncome(world, c);
   // The party's share of the government's money is only what is diverted to it.
   const divert = diverted(world, c);
@@ -456,9 +465,9 @@ export function termWeek(world: World, c: Campaign): void {
   if (o.focus === 'leaders' && o.courting !== null && k.week % 4 === 0 && relation(c, me, o.courting) < 45) shiftRelation(c, me, o.courting, 2);
 
   // Easy money has a slow price as well as a sudden one.
-  k.credibility = clamp(k.credibility - 0.03 * o.donors, 0, 100);
+  k.credibility = clamp(k.credibility - DONOR_CRED_COST * o.donors, 0, 100);
   if (inGovernment(c, me)) {
-    k.government.trust = clamp(k.government.trust - 0.05 * o.state, 0, 100);
+    k.government.trust = clamp(k.government.trust - STATE_TRUST_COST * o.state, 0, 100);
     // A government that leaves state resources alone and has not leaned on an institution for half a year slowly earns some trust back.
     if (o.state === 0 && k.levers.every((w) => w === 0 || k.week - w >= TRUST_QUIET)) k.government.trust = clamp(k.government.trust + TRUST_RECOVERY * (TRUST_CEILING - k.government.trust), 0, 100);
   }

@@ -41,6 +41,7 @@ import type {
   IssueId, OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId, SeatResults, Stronghold,
 } from '../sim/campaign/types';
 import { Rng, randomSeed } from '../sim/rng';
+import type { LineDial } from '../sim/campaign/lineDial';
 import type { World } from '../sim/election';
 import { PARTY_IDS, type RegionId, type StateId } from '../sim/types';
 import { PARTIES } from '../data/parties';
@@ -375,7 +376,7 @@ interface Store {
 
   /** Sets a waiting scene aside (or brings it back with null) so the player can look around first. */
   hideScene(id: number): void;
-  setBudget(patch: { line?: LineId; tax?: boolean; value: Dial } | { measure: MeasureId; on: boolean }): void;
+  setBudget(patch: { line?: LineId; tax?: boolean; value: LineDial } | { measure: MeasureId; on: boolean }): void;
   reshuffle(portfolio: PortfolioId): void;
   appoint(portfolio: PortfolioId, option: number): void;
   fieldSeat(seatId: string): void;
