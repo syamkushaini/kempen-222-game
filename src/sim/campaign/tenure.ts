@@ -9,7 +9,7 @@ import type { Campaign, SeatResults } from './types';
 // village heads, by those who went to their funerals and weddings. That is a vote of its own, and it does not follow the
 // swing of the country. It is built in terms and lost with the member.
 
-export const TENURE = { perTerm: 0.035, max: 0.105 };
+export const TENURE = { perTerm: 0.035, max: 0.09 };
 
 /** The personal vote of a member who has held the seat for this many terms in a row, in logit units: nothing for the first. */
 export const personalVote = (terms: number): number => Math.min(TENURE.max, Math.max(0, terms - 1) * TENURE.perTerm);

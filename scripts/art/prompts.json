@@ -1560,6 +1560,38 @@
    "title": "A retired treasurer, very particular",
    "body": "A retired civil servant, who audited a state agency for thirty years, offers to be the party’s treasurer. He wants receipts for every ringgit, no cash payments at all, and the books open to every member. He also says, kindly, that three of your present habits would not survive an audit."
   },
+  "powerPartnerPortfolios": {
+   "title": "A partner who knows what it is worth",
+   "body": "The leader of your smaller partner has noticed that the government is stable and that it needs him to be. He would like two more portfolios, and he would like them before the next budget. He says it politely, and the politeness is the threat."
+  },
+  "powerPartnerProject": {
+   "title": "A project with a partner’s name on it",
+   "body": "A partner wants a very large bridge in a very small constituency. The engineers say a ferry would do. The partner says the constituency has been waiting longer than the ferry has existed, and that its members do not do well on ferries."
+  },
+  "powerDeputyCamp": {
+   "title": "The deputy’s friends",
+   "body": "Your deputy has done nothing wrong, and a great many people have noticed. They gather for lunch on Thursdays and talk about the party’s future, which is a polite way of saying yours. The party is winning, and a party that is winning has time for this."
+  },
+  "powerBackbench": {
+   "title": "Backbenchers who want their share",
+   "body": "The treasury is full, and the backbenchers have read the same figures you have. They want constituency funds, and they are not asking for the hall to be repainted. One has brought a spreadsheet, which is a bad sign."
+  },
+  "powerContractor": {
+   "title": "A very generous contractor",
+   "body": "A contractor has been giving a great deal to a great many people close to the government, and a journalist has the receipts. None of it is illegal, strictly. All of it is the sort of thing that reads badly in a headline, and it will."
+  },
+  "powerWedding": {
+   "title": "A very large wedding",
+   "body": "The child of a senior minister is married in a ceremony that closes two roads and a hotel. The guest list reads like the cabinet’s family album, and the photographs have reached people who do not usually look at that kind of thing. Several of them are cross."
+  },
+  "powerOppUnites": {
+   "title": "The opposition agrees on something",
+   "body": "After years of arguing, the opposition parties have found a single thing they can agree on: that they will not stand against each other in the seats that matter. It is not much of a platform, and it is a very good plan."
+  },
+  "powerComfort": {
+   "title": "The polls say you cannot lose",
+   "body": "The party’s own pollster says that you cannot lose the next election, and then, a minute later, that the people in your own camp now believe it. The branches are quieter than they were. A few of the volunteers have found other weekends."
+  },
   "startPmHundredDays": {
    "title": "The hundred-day list",
    "body": "Your communications chief wants a public list of promises for the first hundred days. It would be easy to hold you to, and that is exactly the point. The finance people would rather you promised nothing that has a date on it."

@@ -19,6 +19,7 @@ import { CRISIS_EVENTS } from './eventListCrisis';
 import { PENANG_STORIES, PERLIS_STORIES } from './eventListNorth';
 import { OPENING_STORIES } from './eventListOpening';
 import { PARTY_OPENING_STORIES } from './eventListOpeningParty';
+import { POWER_EVENTS } from './eventListPower';
 import { FOLLOW_EVENTS, FOLLOW_UPS } from './eventListFollow';
 import { STATE_STORIES } from './eventList12';
 import { KEDAH_STORIES } from './eventList13';
@@ -49,7 +50,7 @@ import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEv
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Scene } from './types';
 import { ASK_MAX, ASK_MIN } from './lineDial';
 
-const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES, ...OPENING_STORIES, ...PARTY_OPENING_STORIES };
+const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES, ...OPENING_STORIES, ...POWER_EVENTS, ...PARTY_OPENING_STORIES };
 
 /**
  * Events whose money is the public's: relief for a flood, a bridge, a subsidy, a port. Where the player's party governs they are paid
@@ -212,6 +213,8 @@ export interface EventDef {
     late?: boolean; early?: boolean;
     /** The first parliament of a career, and no later one. */
     first?: boolean;
+    /** A government that is steady and unthreatened: stability 65 or more, credibility 55 or more, and a debt under 60% of national income. */
+    secure?: boolean;
   };
   choices: Choice[];
 }
@@ -285,6 +288,7 @@ export function eligible(c: Campaign, id: string): boolean {
   if (n.late && k.week < (k.length * 2) / 3) return false;
   if (n.early && k.week > k.length / 3) return false;
   if (n.first && k.term !== 1) return false;
+  if (n.secure && !(k.government.stability >= 65 && k.credibility >= 55 && k.economy.debt < 60)) return false;
   return true;
 }
 
