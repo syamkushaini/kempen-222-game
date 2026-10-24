@@ -1,3 +1,4 @@
+import { careerUse, thriftFactor } from './thrift';
 import type { Campaign, EndingKind, LegacyId, PledgeId } from './types';
 
 const REFORMS: PledgeId[] = ['graftCommission', 'termLimit', 'repealLaws'];
@@ -63,7 +64,9 @@ export function legacyOf(c: Campaign): { legacy: LegacyId; score: number; laws: 
     : r.weeksGov < 100 && k.credibility >= 70 ? 'conscience'
     : best >= 85 ? 'nearly'
     : 'footnote';
-  const score = Math.max(0, Math.round(performanceOf(c, best) + LEGACY_BONUS[legacy]));
+  // A career that won on less of its money did better: its performance (not what it is remembered for) is scaled by the thrift of its campaigns.
+  const use = careerUse(r.terms);
+  const score = Math.max(0, Math.round(performanceOf(c, best) * (use === null ? 1 : thriftFactor(use)) + LEGACY_BONUS[legacy]));
   return { legacy, score, laws };
 }
 
