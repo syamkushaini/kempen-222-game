@@ -12,7 +12,7 @@ import { MapView, type PulseKind } from './MapView';
 import { GoalResult } from './Challenges';
 import { AchievementsEarned, RateGame } from './ResultExtras';
 import { GamePanel } from './SavesTab';
-import { electionCard, ShareDialog } from './ShareDialog';
+import { resultPicture, ShareDialog } from './ShareDialog';
 import { Analysis } from './Analysis';
 import { Review } from './Review';
 import { Tally } from './Tally';
@@ -113,7 +113,7 @@ function SeatBySeat() {
     else if (was === campaign.player) sound.play('seatLost');
     else if (!fast) sound.play('seat');
   }, [count]); // eslint-disable-line react-hooks/exhaustive-deps
-  const card = useMemo(() => electionCard(t, f, world, campaign, result, summary), [t, f, world, campaign, result, summary]);
+  const card = useMemo(() => resultPicture(t, f, world, campaign, result, summary), [t, f, world, campaign, result, summary]);
   const ticker = order.slice(Math.max(0, count - 8), count).reverse();
   // The seat just declared flashes on the map, and the colour says what it meant. A skip to the end flashes nothing.
   const pulse = useMemo(() => {
@@ -325,7 +325,7 @@ function ByElectionCount() {
     if (count < BOXES) sound.play('seat');
     else sound.play(seat.winner === campaign.player ? 'fanfare' : 'bad');
   }, [count]); // eslint-disable-line react-hooks/exhaustive-deps
-  const card = useMemo(() => electionCard(t, f, world, campaign, result, summary), [t, f, world, campaign, result, summary]);
+  const card = useMemo(() => resultPicture(t, f, world, campaign, result, summary), [t, f, world, campaign, result, summary]);
   const votes = count === 0 ? seat.votes.map(() => 0) : boxes[count - 1];
   const counted = votes.reduce((a, b) => a + b, 0);
   const order = seat.votes.map((v, p) => ({ p, final: v, now: votes[p] })).filter((x) => x.final > 0).sort((a, b) => b.now - a.now || b.final - a.final);
