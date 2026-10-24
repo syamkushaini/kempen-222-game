@@ -5,6 +5,7 @@ import type { Campaign } from '../sim/campaign/types';
 import { useStore } from '../state/store';
 import { useT, useWorld } from './hooks';
 import { Icon } from './Icon';
+import { SupportDialog } from './Support';
 import { ratingUrl } from './report';
 
 /** The achievements this game has earned, listed under the verdict, each with what it asks. Nothing if none. */
@@ -41,6 +42,7 @@ export function RateGame({ campaign }: { campaign: Campaign }) {
   const [rating, setRating] = useState<'up' | 'down' | null>(null);
   const [comment, setComment] = useState('');
   const [done, setDone] = useState(false);
+  const [coffee, setCoffee] = useState(false);
   if (done) return <p className="muted small rate">{t('rate.thanks')}</p>;
   const href = rating ? ratingUrl({ version: __APP_VERSION__, lang, scenario: campaign.scenario, week: campaign.week, width: typeof window === 'undefined' ? null : window.innerWidth }, rating, comment) : '';
   return (
@@ -50,6 +52,12 @@ export function RateGame({ campaign }: { campaign: Campaign }) {
         <button className={`icon-btn${rating === 'up' ? ' on' : ''}`} aria-pressed={rating === 'up'} title={t('rate.up')} aria-label={t('rate.up')} onClick={() => setRating('up')}><Icon name="thumbUp" /></button>
         <button className={`icon-btn${rating === 'down' ? ' on' : ''}`} aria-pressed={rating === 'down'} title={t('rate.down')} aria-label={t('rate.down')} onClick={() => setRating('down')}><Icon name="thumbDown" /></button>
       </div>
+      {rating === 'up' && (
+        <p className="muted small rate-thanks">
+          {t('rate.coffee')} <button className="link" onClick={() => setCoffee(true)}>☕ {t('menu.support')}</button>
+        </p>
+      )}
+      {coffee && <SupportDialog onClose={() => setCoffee(false)} />}
       {rating && (
         <div className="rate-box">
           <label className="field">

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { THANKS } from '../data/thanks';
 import { sponsorNames } from '../state/sponsors';
 import type { StringKey } from '../i18n/strings';
 import { useT } from './hooks';
+import { Icon } from './Icon';
 
 /** A way to say thank you: the maker's Touch 'n Go QR, opened from the main menu. */
 export function SupportDialog({ onClose }: { onClose(): void }) {
@@ -38,5 +40,18 @@ export function SupportDialog({ onClose }: { onClose(): void }) {
         </section>
       </div>
     </div>
+  );
+}
+
+/** The way to say thank you, as a small cup in the corner of the title screen: in sight at once, and quiet. */
+export function SupportButton() {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button className="icon-btn support-button" title={t('menu.support')} aria-label={t('menu.support')} aria-haspopup="dialog" onClick={() => setOpen(true)}><Icon name="coffee" size={20} /></button>
+      {/* The header clips what is inside it, so the dialog is hung from the page itself. */}
+      {open && createPortal(<SupportDialog onClose={() => setOpen(false)} />, document.body)}
+    </>
   );
 }
