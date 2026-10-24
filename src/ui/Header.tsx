@@ -12,6 +12,7 @@ import { Icon } from './Icon';
 import { PartyMark } from './identity';
 import { Logo } from './Logo';
 import { SettingsButton } from './SettingsPanel';
+import { SupportButton } from './Support';
 import { partyName, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
 import { Kbd } from './Kbd';
 
@@ -259,6 +260,7 @@ export function Header() {
         </button>
       )}
       <MenuButton />
+      {player === undefined && <SupportButton />}
       <SettingsButton />
     </header>
   );

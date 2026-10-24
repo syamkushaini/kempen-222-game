@@ -30,7 +30,6 @@ import { Help } from './Help';
 import { Logo } from './Logo';
 import { Icon, type IconName } from './Icon';
 import { Portrait } from './Portrait';
-import { SupportDialog } from './Support';
 import { hasLeaderboard, LeaderboardDialog } from './Leaderboard';
 import { saveLine, SaveSlots } from './SavesTab';
 import { PlatformEditor } from './Platform';
@@ -133,7 +132,6 @@ export function Title() {
   const [mode, setMode] = useState<Screen>(() => (setupWanted ? 'custom' : 'menu'));
   const [honours, setHonours] = useState(false);
   const [howTo, setHowTo] = useState(false);
-  const [support, setSupport] = useState(false);
   const [board, setBoard] = useState(false);
   const profile = useStore((s) => s.profile);
   const [art, setArt] = useState(false);
@@ -187,7 +185,6 @@ export function Title() {
       <div className={art ? 'menu-art ready' : 'menu-art'} aria-hidden="true"><img src={MENU_ART} alt="" decoding="async" ref={(el) => { if (el?.complete && el.naturalWidth > 0) setArt(true); }} onLoad={() => setArt(true)} /></div>
       {honours && <HonoursDialog onClose={() => setHonours(false)} />}
       {howTo && <Help onClose={() => setHowTo(false)} />}
-      {support && <SupportDialog onClose={() => setSupport(false)} />}
       {board && <LeaderboardDialog onClose={() => setBoard(false)} />}
       <ChallengeInvite />
       {mode === 'menu' ? (
@@ -215,7 +212,6 @@ export function Title() {
             <MenuItem icon="book" tone="learn" title={t('howto.title')} hint={t('howto.hint')} onClick={() => setHowTo(true)} />
             <MenuItem icon="trophy" tone="won" title={t('menu.honours')} hint={t('menu.honours.hint', { n: earnedCount, total: ACHIEVEMENT_IDS.length })} onClick={() => setHonours(true)} />
             {hasLeaderboard && <MenuItem icon="star" tone="won" title={t('lb.title')} hint={t('lb.menu.hint')} onClick={() => setBoard(true)} />}
-            <MenuItem icon="coffee" tone="dare" title={t('menu.support')} hint={t('menu.support.hint')} onClick={() => setSupport(true)} />
           </ul>
           <p className="muted small">{t('title.fiction')}</p>
           {auto && (
