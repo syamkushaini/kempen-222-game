@@ -10,7 +10,7 @@ import { START_PESTEL } from '../sim/campaign/pestel';
 import { hasPublicMoney, treasuryCap, treasuryOf } from '../sim/campaign/treasury';
 import { Delta } from './Delta';
 import { useGaugeColour } from './Gauge';
-import { useFormat, useT, useWorld } from './hooks';
+import { useFormat, useNarrow, useT, useWorld } from './hooks';
 
 interface Tile {
   id: string;
@@ -38,6 +38,7 @@ export function MetricsStrip() {
   const campaign = useStore((s) => s.game!.campaign);
   const setTab = useStore((s) => s.setTab);
   const colour = useGaugeColour();
+  const narrow = useNarrow();
   const [all, setAll] = useState(false);
   const k = campaign.career;
   const me = campaign.parties[campaign.player];
@@ -48,8 +49,8 @@ export function MetricsStrip() {
   const tiles: Tile[] = [
     { group: 'party' as const, id: 'unity', label: t('hint.unity'), text: String(Math.round(me.unity)), bar: me.unity, good: me.unity, delta: me.unity, tab: 'party' },
     { group: 'party' as const, id: 'credibility', label: t('hint.cred'), text: String(Math.round(k.credibility)), bar: k.credibility, good: k.credibility, delta: k.credibility, tab: 'policy' },
-    // The corruption meter shows once there is anything on it, and says plainly what it will do (see GraftCard).
-    ...(graftOf(campaign) > 0 ? [{ group: 'party' as const, id: 'graft', label: t('metrics.graft'), text: String(Math.round(graftOf(campaign))), bar: graftOf(campaign), good: 100 - graftOf(campaign), delta: graftOf(campaign), tab: 'party' as const }] : []),
+    // The corruption meter is always in view, with the other figures that decide a game; its card says plainly what it will do (see GraftCard).
+    { group: 'party' as const, id: 'graft', label: t('metrics.graft'), text: String(Math.round(graftOf(campaign))), bar: graftOf(campaign), good: 100 - graftOf(campaign), tab: 'party' as const },
     ...(governing ? [
       { group: 'gov' as const, id: 'stability', label: t('hint.stability'), text: String(Math.round(k.government.stability)), bar: k.government.stability, good: k.government.stability, delta: k.government.stability, tab: 'orders' as const },
       { group: 'gov' as const, id: 'trust', label: t('hint.trust'), text: String(Math.round(k.government.trust)), bar: k.government.trust, good: k.government.trust, delta: k.government.trust, tab: 'orders' as const },
@@ -79,7 +80,7 @@ export function MetricsStrip() {
     }) : []),
   ];
   // Six figures decide how a game goes and stay in view; a figure in danger comes up beside them by itself, and the rest are one press away.
-  const HEAD = ['unity', 'credibility', 'stability', 'trust', 'treasury', 'debt'];
+  const HEAD = ['unity', 'credibility', 'graft', 'stability', 'trust', 'treasury', 'debt'];
   const FILL = ['growth', 'inflation', 'jobless', 'health'];
   const headline = HEAD.map((id) => tiles.find((x) => x.id === id)).filter((x): x is Tile => !!x);
   for (const id of FILL) { if (headline.length >= 6) break; const x = tiles.find((y) => y.id === id); if (x) headline.push(x); }
@@ -97,6 +98,14 @@ export function MetricsStrip() {
       {(x.bar ?? x.good) !== undefined && <span className="metric-bar" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, (x.bar ?? x.good)!))}%`, background: tone(x.good) }} /></span>}
     </button>
   );
+  // On a wide screen every figure is in view at once, small, in two or three rows; a phone keeps the short list and the button that opens the rest.
+  if (!narrow) {
+    return (
+      <section className="metrics-strip" aria-label={t('metrics.title')}>
+        <div className="metrics-headline metrics-compact">{tiles.map((x) => chip(x, x.good !== undefined && x.good <= 30))}</div>
+      </section>
+    );
+  }
   return (
     <section className="metrics-strip" aria-label={t('metrics.title')}>
       <div className="metrics-headline">
