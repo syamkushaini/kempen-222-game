@@ -8,6 +8,9 @@ import { inGov, lift } from './office';
 import { isEnacted } from './policy';
 import { endCareer } from './legacy';
 import { statesHeld } from './contests';
+import { scaled } from './actions';
+import { shiftUnity } from './diplomacy';
+import type { World } from '../election';
 import { BLOC_IDS } from '../types';
 import type { Campaign, Career } from './types';
 
@@ -224,5 +227,39 @@ export function prosecute(c: Campaign, fall: Fall, term: number, salt = 0): bool
   }
   pushNews(c, { party: c.player, key: 'news.graft.jailed', tone: 'bad' });
   endCareer(c, 'jailed');
+  return true;
+}
+
+// ---------- cleaning up ----------
+
+/** An internal audit with the accounts published: the active way down. */
+export const CLEANUP = { graft: 10, money: 150_000, unity: 3, days: 1, gapWeeks: 26 };
+export type CleanRefusal = 'phase' | 'none' | 'funds' | 'days' | 'wait';
+
+export function canCleanUp(world: World, c: Campaign): { ok: true } | { ok: false; reason: CleanRefusal; weeks?: number } {
+  const pc = c.parties[c.player];
+  if (!pc || (c.phase !== 'term' && c.phase !== 'campaign') || !c.career) return { ok: false, reason: 'phase' };
+  if (graftOf(c) <= 0) return { ok: false, reason: 'none' };
+  if (pc.funds < scaled(world, CLEANUP.money)) return { ok: false, reason: 'funds' };
+  if (c.phase === 'campaign') {
+    if (pc.used.graftClean) return { ok: false, reason: 'wait', weeks: 1 };
+    if (pc.days < CLEANUP.days) return { ok: false, reason: 'days' };
+    return { ok: true };
+  }
+  const last = c.career.eventWeeks?.graftClean;
+  if (last !== undefined && c.career.week - last < CLEANUP.gapWeeks) return { ok: false, reason: 'wait', weeks: CLEANUP.gapWeeks - (c.career.week - last) };
+  return { ok: true };
+}
+
+/** Pays for an audit and publishes the books: the meter falls at once, at a cost in money and the party's peace (and a day, in a campaign). */
+export function cleanUp(world: World, c: Campaign): boolean {
+  if (!canCleanUp(world, c).ok) return false;
+  const pc = c.parties[c.player]!;
+  pc.funds -= scaled(world, CLEANUP.money);
+  pc.spent += scaled(world, CLEANUP.money);
+  shiftUnity(c, c.player, -CLEANUP.unity);
+  if (c.phase === 'campaign') { pc.days -= CLEANUP.days; pc.used.graftClean = 1; } else (c.career!.eventWeeks ??= {}).graftClean = c.career!.week;
+  pushNews(c, { party: c.player, key: 'news.graft.audit', tone: 'good' });
+  addGraft(c, -CLEANUP.graft);
   return true;
 }

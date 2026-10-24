@@ -1,8 +1,9 @@
 import type { StringKey } from '../i18n/strings';
-import { GRAFT_LEVELS, PROSECUTABLE, graftLevel, graftOf, prosecutionChance } from '../sim/campaign/graft';
+import { CLEANUP, GRAFT_LEVELS, canCleanUp, PROSECUTABLE, graftLevel, graftOf, prosecutionChance } from '../sim/campaign/graft';
 import { useStore } from '../state/store';
 import { useGaugeColour } from './Gauge';
-import { useT } from './hooks';
+import { useFormat, useT, useWorld } from './hooks';
+import { scaled } from '../sim/campaign/actions';
 
 /**
  * The corruption meter: how bad it is, what that is doing to the party now, the chance of the dock if power were lost, and what raises and
@@ -12,6 +13,9 @@ export function GraftCard() {
   const t = useT();
   const campaign = useStore((s) => s.game?.campaign);
   const colour = useGaugeColour();
+  const f = useFormat();
+  const world = useWorld();
+  const cleanUp = useStore((s) => s.cleanUp);
   if (!campaign) return null;
   const g = graftOf(campaign);
   const level = graftLevel(g);
@@ -37,6 +41,16 @@ export function GraftCard() {
           <div key={from} className={i === level ? 'now' : ''}><dt>{from}+</dt><dd>{t(`graft.level.${i}` as StringKey)}</dd></div>
         ))}
       </dl>
+      {(() => {
+        const can = canCleanUp(world, campaign);
+        return (
+          <div className="button-row">
+            <button type="button" className="btn" disabled={!can.ok} onClick={cleanUp}>{t('graft.audit', { rm: f.rm(scaled(world, CLEANUP.money)), n: CLEANUP.graft, unity: CLEANUP.unity })}</button>
+            {!can.ok && can.reason !== 'phase' && <span className="muted small">{t(`graft.audit.${can.reason}` as StringKey, { weeks: can.weeks ?? 0 })}</span>}
+          </div>
+        );
+      })()}
+      <p className="muted small">{t('graft.audit.desc', { days: CLEANUP.gapWeeks })}</p>
       <p className="small"><strong>{t('graft.raises')}.</strong> {t('graft.raises.list')}</p>
       <p className="small"><strong>{t('graft.lowers')}.</strong> {t('graft.lowers.list')}</p>
       {campaign.phase === 'campaign' && <p className="muted small">{t('graft.campaign')}</p>}

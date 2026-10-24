@@ -9,6 +9,7 @@ import {
   DRIFT, EFFECTS, GRAFT_LEVELS, JAIL, PROSECUTABLE, SCANDALS, addGraft, effectsOf, graftDrift, graftLevel, graftOf, prosecute, prosecutionChance, verdictRoll, convicted,
 } from './graft';
 import { retire } from './legacy';
+import { CLEANUP, canCleanUp, cleanUp } from './graft';
 import { isValidCampaign } from './validate';
 import type { Campaign } from './types';
 
@@ -194,5 +195,29 @@ describe('saves, the profile and the board', () => {
     expect(profile.legacies[0].kind).toBe('jailed');
     expect(submissionOf(profile.legacies[0], { scenario: 'career', difficulty: 'normal' }, 'Dock', '1.0')).toBeNull();
     expect(submissionOf({ ...profile.legacies[0], kind: 'retired' }, { scenario: 'career', difficulty: 'normal' }, 'Dock', '1.0')).not.toBeNull();
+  });
+});
+
+describe('cleaning up on purpose', () => {
+  it('an audit costs money and unity, takes 10 off, and cannot be repeated at once between elections', () => {
+    const c = career();
+    c.graft = 50; c.graftSeen = 2;
+    const funds = c.parties[PS]!.funds, unity = c.parties[PS]!.unity;
+    expect(canCleanUp(base, c).ok).toBe(true);
+    expect(cleanUp(base, c)).toBe(true);
+    expect(graftOf(c)).toBe(50 - CLEANUP.graft);
+    expect(c.parties[PS]!.funds).toBeLessThan(funds);
+    expect(c.parties[PS]!.unity).toBeLessThan(unity);
+    expect(canCleanUp(base, c)).toMatchObject({ ok: false, reason: 'wait' });
+    expect(cleanUp(base, c)).toBe(false);
+    c.career!.week += CLEANUP.gapWeeks;
+    expect(canCleanUp(base, c).ok).toBe(true);
+  });
+
+  it('is refused with nothing to clean or no money', () => {
+    const c = career();
+    expect(canCleanUp(base, c)).toMatchObject({ ok: false, reason: 'none' });
+    c.graft = 50; c.parties[PS]!.funds = 0;
+    expect(canCleanUp(base, c)).toMatchObject({ ok: false, reason: 'funds' });
   });
 });
