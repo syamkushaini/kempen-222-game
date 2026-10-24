@@ -27,7 +27,7 @@ export function KeyboardShortcuts() {
     <DialogFocus open={open} onClose={() => setOpen(false)} className="panel keyboard-overlay" role="dialog" aria-modal="true" aria-label={t('shortcuts.title')}>
       <div className="panel-head">
         <h2>{t('shortcuts.title')}</h2>
-        <button className="btn small" onClick={() => setOpen(false)}>{t('whatsNew.close')}</button>
+        <button className="btn small" onClick={() => setOpen(false)}>{t('dialog.close')}</button>
       </div>
       <div className="shortcut-grid">
         <div className="shortcut-group">
@@ -47,7 +47,7 @@ export function KeyboardShortcuts() {
         </div>
       </div>
       <div className="button-row">
-        <button className="btn primary" onClick={() => setOpen(false)}>{t('whatsNew.gotIt')} <Kbd shortcut="Esc" /></button>
+        <button className="btn primary" onClick={() => setOpen(false)}>{t('dialog.gotIt')} <Kbd shortcut="Esc" /></button>
       </div>
     </DialogFocus>
   );
