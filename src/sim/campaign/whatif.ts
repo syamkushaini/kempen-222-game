@@ -24,6 +24,8 @@ export const WHATIF = {
   recession: 0.03, scandal: 0.04, scandalUnity: 10,
   /** What a better year gives the player’s party everywhere. */
   surge: 0.03,
+  /** Perpaduan Bangsa: what standing as one lifts both sides everywhere, when the player is the third side facing them. */
+  perpaduanLift: 0.02,
 };
 
 /** The party that won the most seats last time: the one the country has in mind when it says "the government". */
@@ -54,12 +56,28 @@ export function bnPasPact(world: World): { standDowns: StandDowns; pacts: { a: n
   return { standDowns, pacts: [{ a: Math.min(big, small), b: Math.max(big, small), week: 0 }] };
 }
 
+/**
+ * Perpaduan Bangsa, the name the two sides give their pact in Melaka's "what if": while that pact stands, Barisan Pusaka leads the state
+ * government however many seats each side wins, and Perikatan Teguh is its partner. Returns the two, or null when the contest is not the
+ * "what if" or the pact has been ended (then the talks are as in any other election).
+ */
+export function perpaduan(c: Pick<Campaign, 'challenge' | 'pacts'>): { head: number; partner: number } | null {
+  if (c.challenge?.whatIf !== 'bnpas') return null;
+  const head = PARTY_IDS.indexOf(BNPAS.big), partner = PARTY_IDS.indexOf(BNPAS.partner);
+  return c.pacts.some((x) => (x.a === head && x.b === partner) || (x.a === partner && x.b === head)) ? { head, partner } : null;
+}
+
 /** Applies a "what if" to a campaign that has just been made. Does nothing for anything that is not one, or not one for this contest. */
 export function applyWhatIf(world: World, c: Campaign, id: unknown): void {
   if (!isWhatIf(id)) return;
   // The pact itself is part of how the contest opens (see `newCampaign`); here it is only written down.
   if (id === 'bnpas') {
-    if (world.id === 'state:melaka') c.challenge = { ...(c.challenge ?? { fog: false, noisy: false }), whatIf: id };
+    if (world.id !== 'state:melaka') return;
+    c.challenge = { ...(c.challenge ?? { fog: false, noisy: false }), whatIf: id };
+    // The third side takes on an alliance that stands as one: both its sides are lifted a little.
+    if (c.player === PARTY_IDS.indexOf('ps')) {
+      for (const p of [PARTY_IDS.indexOf(BNPAS.big), PARTY_IDS.indexOf(BNPAS.partner)]) for (let b = 0; b < N_BLOCS; b++) c.drift.support.nat[b][p] += WHATIF.perpaduanLift;
+    }
     return;
   }
   if (world.rules.kind !== 'general') return;
