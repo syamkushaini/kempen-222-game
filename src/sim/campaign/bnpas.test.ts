@@ -5,6 +5,7 @@ import { projectElection } from '../election';
 import { STANDS } from '../transfer';
 import { PARTY_IDS } from '../types';
 import { BNPAS, WHATIF_IDS, STATE_WHATIF_IDS, whatIfsFor } from './whatif';
+import { breakPact } from './diplomacy';
 import { endWeek, electionResult, newCampaign } from './turn';
 import { isValidCampaign } from './validate';
 
@@ -80,5 +81,26 @@ describe('Melaka with its two biggest sides standing together', () => {
     expect(r.seats).toHaveLength(melaka.seats.length);
     // the side that stood aside won no seat where it did not stand
     r.seats.forEach((seat, i) => { const sd = c.standDowns[melaka.seats[i].id]; if (sd[SMALL] === BIG) expect(seat.winner).not.toBe(SMALL); if (sd[BIG] === SMALL) expect(seat.winner).not.toBe(BIG); });
+  });
+
+  it('is the player\'s to keep or to end before nomination day: ending it puts every seat back to a contest, and costs the other leader\'s goodwill', () => {
+    for (const player of [BIG, SMALL]) {
+      const other = player === BIG ? SMALL : BIG;
+      const c = start(player, 'bnpas');
+      const before = c.relations[player][other];
+      expect(breakPact(c, other)).toBe(true);
+      expect(c.pacts).toHaveLength(0);
+      expect(Object.keys(c.standDowns)).toHaveLength(0);
+      expect(c.relations[player][other]).toBeLessThan(before);
+      const o = projectElection(melaka, emptyDynamics(), c.standDowns);
+      expect(o.seats.every((seat) => seat.votes[BIG] > 0 && seat.votes[SMALL] > 0)).toBe(true);
+    }
+  });
+
+  it('is not the third side\'s to end: it is a pact between the other two', () => {
+    const c = start(PH, 'bnpas');
+    expect(breakPact(c, BIG)).toBe(false);
+    expect(breakPact(c, SMALL)).toBe(false);
+    expect(c.pacts).toHaveLength(1);
   });
 });
