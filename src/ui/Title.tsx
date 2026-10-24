@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
-import { WHATIF_IDS } from '../sim/campaign/whatif';
+import { whatIfsFor, type WhatIfId } from '../sim/campaign/whatif';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { byElectionId, fairSeats, getWorld, HOME_PARTIES, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS } from '../data/world';
 import type { ContestKind } from '../sim/campaign/rules';
@@ -155,6 +155,9 @@ export function Title() {
 
   const scenario = kind === 'state' ? `${stateCareer ? 'career' : 'state'}:${state}` : kind === 'byelection' ? byElectionId(seat) : SCENARIOS.find((s) => s.id === kind)!.id;
   const world = getWorld(scenario);
+  // What the chosen contest lets the player change about history; a choice made for another contest is left unused.
+  const whatIfs = whatIfsFor(scenario);
+  const chosenWhatIf = whatIfs.includes(whatIf as WhatIfId) ? whatIf : '';
   if (!world) return <Skeleton width="100%" height="400px" />;
   const parties = playable(world);
   const player = chosen !== null && parties.includes(chosen) ? chosen : parties[0];
@@ -413,14 +416,14 @@ export function Title() {
             <span>{t('challenge.noisy')}</span>
           </label>
           <p className="muted small">{t('challenge.noisy.desc')}</p>
-          {kind === 'general' && (
+          {whatIfs.length > 0 && (
             <label className="field">
               <span>{t('whatif.title')}</span>
-              <select value={whatIf} onChange={(e) => setWhatIf(e.target.value)}>
+              <select value={chosenWhatIf} onChange={(e) => setWhatIf(e.target.value)}>
                 <option value="">{t('whatif.none')}</option>
-                {WHATIF_IDS.map((id) => <option key={id} value={id}>{t(`whatif.${id}` as StringKey)}</option>)}
+                {whatIfs.map((id) => <option key={id} value={id}>{t(`whatif.${id}` as StringKey)}</option>)}
               </select>
-              <span className="muted small">{whatIf ? t(`whatif.${whatIf}.desc` as StringKey) : t('whatif.desc')}</span>
+              <span className="muted small">{chosenWhatIf ? t(`whatif.${chosenWhatIf}.desc` as StringKey) : t('whatif.desc')}</span>
             </label>
           )}
           {kind === 'career' && (
@@ -444,7 +447,7 @@ export function Title() {
             {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>‹ {t('steps.back')}</button>}
             {step < STEPS.length - 1
               ? <button className="btn primary" onClick={() => setStep(step + 1)}>{t('steps.next')} ▸</button>
-              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity || name.trim().length === 0} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy, ...(kind === 'general' && whatIf ? { whatIf } : {}) }, founded: founding, ...(founding && inCareer ? { seat: foundSeat } : {}), realStates: kind === 'career' && realStates, stances: founding && inCareer ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
+              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity || name.trim().length === 0} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy, ...(chosenWhatIf ? { whatIf: chosenWhatIf } : {}) }, founded: founding, ...(founding && inCareer ? { seat: foundSeat } : {}), realStates: kind === 'career' && realStates, stances: founding && inCareer ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
             }
           </div>
           </>
