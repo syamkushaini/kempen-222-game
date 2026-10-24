@@ -38,6 +38,8 @@ export function LegacyScreen() {
           </div>
         </div>
         <p className="title-intro">{t(`legacy.${end.legacy}.text`)}</p>
+        {end.kind === 'jailed' && <img className="ending-art" src={`${import.meta.env.BASE_URL}ending-jailed.webp`} alt="" style={{ width: '100%', borderRadius: 8, margin: '0 0 12px' }} />}
+        {end.kind === 'jailed' && <p className="note neg" role="alert">{t('ending.jailed.text')} <span className="muted">{t('graft.jailed.note')}</span></p>}
         {end.laws ? <p className="muted small">{t('legacy.laws', { n: end.laws })}</p> : null}
         <dl className="facts">
           <div><dt>{t('legacy.score')}</dt><dd className="num">{total}</dd></div>

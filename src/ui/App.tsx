@@ -40,7 +40,6 @@ import { Title } from './Title';
 import { Music } from './Music';
 import { installIdentity } from './identity';
 import { ground, mix } from './shareCard';
-import { WhatsNew } from './WhatsNew';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { TouchGestures } from './TouchGestures';
 
@@ -386,7 +385,6 @@ export function App() {
       <GameMenu />
       <Music />
       <Toasts />
-      <WhatsNew />
       <KeyboardShortcuts />
       <ActionToasts />
       <footer className="footer">{t('footer.fiction')}</footer>

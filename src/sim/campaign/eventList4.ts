@@ -54,7 +54,7 @@ export const STORY_EVENTS: Record<string, EventDef> = {
     choices: [
       { effects: [eff('unity', -3), eff('cred', 3)], then: { event: 'bridgeOpening', after: 14 } },
       { effects: [eff('cred', -1)], then: { event: 'bridgeOpening', after: 14 } },
-      { effects: [eff('funds', 80_000), eff('cred', -3), flag('bridgeCut')], then: { event: 'bridgeOpening', after: 14 } },
+      { effects: [eff('funds', 80_000), eff('cred', -3), flag('bridgeCut'), { t: 'graft', n: 10 }], then: { event: 'bridgeOpening', after: 14 } },
     ],
   },
   bridgeOpening: {
@@ -86,8 +86,8 @@ export const STORY_EVENTS: Record<string, EventDef> = {
   riceInquiry: {
     role: 'gov', weight: 0,
     choices: [
-      { effects: [eff('donors', -1), eff('cred', 4), eff('trust', 3)] },
-      { effects: [eff('funds', 60_000), eff('cred', -2), eff('trust', -1)] },
+      { effects: [eff('donors', -1), eff('cred', 4), eff('trust', 3), { t: 'graft', n: -8 }] },
+      { effects: [eff('funds', 60_000), eff('cred', -2), eff('trust', -1), { t: 'graft', n: 6 }] },
       { effects: [eff('trust', -4), eff('cred', -3)] },
     ],
   },

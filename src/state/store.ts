@@ -20,6 +20,7 @@ import { switchParty } from '../sim/campaign/switching';
 import { makeMove as makeMoveOf, type MoveId } from '../sim/campaign/moves';
 import { courtChief as courtChiefOf, sendChief as sendChiefOf } from '../sim/campaign/chiefsTerm';
 import { hireTroopers, interview } from '../sim/campaign/media';
+import { cleanUp } from '../sim/campaign/graft';
 import { crossTheFloor, type CrossStake } from '../sim/campaign/crossing';
 import { claim } from '../sim/campaign/claims';
 import { dismiss, hire, vet } from '../sim/campaign/staff';
@@ -126,8 +127,6 @@ export interface Settings {
   map3d: boolean;
   /** Which extra things the map shows, ticked by the player. */
   layers: LayerId[];
-  /** The app version last seen by the player, for the "What's New" modal. */
-  lastSeenVersion: string | null;
   /** High contrast mode for accessibility. */
   highContrast: 'off' | 'on';
 }
@@ -147,7 +146,7 @@ function prefers3d(): boolean {
 }
 
 function loadSettings(): Settings {
-  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', skin: 'standard', accent: 'party', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d(), layers: DEFAULT_LAYERS, lastSeenVersion: null, highContrast: 'off' };
+  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', skin: 'standard', accent: 'party', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d(), layers: DEFAULT_LAYERS, highContrast: 'off' };
   try {
     const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
     if (!raw) return fallback;
@@ -164,7 +163,6 @@ function loadSettings(): Settings {
       hints: raw.hints !== false,
       map3d: typeof raw.map3d === 'boolean' ? raw.map3d : prefers3d(),
       layers: cleanLayers(raw.layers) ?? DEFAULT_LAYERS,
-      lastSeenVersion: typeof raw.lastSeenVersion === 'string' ? raw.lastSeenVersion : null,
       highContrast: (raw.highContrast === 'on' || raw.highContrast === 'off') ? raw.highContrast : 'off',
     };
   } catch {
@@ -427,6 +425,8 @@ interface Store {
   courtEndorser(id: EndorserId): void;
   interview(id: OutletId): void;
   hireTroopers(): void;
+  /** Pays for an audit and publishes the party's books: the corruption meter falls. */
+  cleanUp(): void;
   courtChief(state: RegionId): void;
   makeMove(id: MoveId): void;
   sendChief(state: RegionId): void;
@@ -813,6 +813,7 @@ export const useStore = create<Store>((set, get) => {
     makeMove: (id) => mutate((c, _g, world) => { makeMoveOf(world, c, id); }),
     courtChief: (st) => mutate((c, _g, world) => { courtChiefOf(world, c, st); }),
     sendChief: (st) => mutate((c, _g, world) => { sendChiefOf(world, c, st, new Rng((c.rng ^ 0x5e0d) + (c.career?.week ?? 0))); }),
+    cleanUp: () => mutate((c, _g, world) => { cleanUp(world, c); }),
     hireTroopers: () => mutate((c, _g, world) => ({ lastReport: hireTroopers(world, c) })),
     renameGame: (name) => mutate((_c, g) => { g.name = name.slice(0, 60); }),
     loadGame: (state) => set((s) => ({

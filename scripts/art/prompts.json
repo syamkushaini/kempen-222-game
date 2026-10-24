@@ -1436,6 +1436,18 @@
    "title": "A pothole is named after a minister",
    "body": "Someone has painted a minister’s face around a pothole on a busy road, and it has been photographed from every angle. It is not clear whose minister it is, and every side has decided it is the other’s."
   },
+  "graftTip": {
+   "title": "A former aide has a story",
+   "body": "Someone who used to work for you has been seen having tea with a reporter. They say they have “seen how the contracts work”. Your name has not been used yet, but your office has been asked for comment."
+  },
+  "graftLeak": {
+   "title": "A recording leaks",
+   "body": "A voice that sounds very like yours, or an aide’s, is on every phone: it is discussing “a consideration” for a licence. The netizens have already made it a ringtone."
+  },
+  "graftProbe": {
+   "title": "The agency comes asking",
+   "body": "Two polite officers from the anti-graft agency are in the lobby with a list of questions about contracts, donors and accounts. They would like to look at the books. The press is already outside."
+  },
   "constCrisis": {
    "title": "A state assembly is deadlocked",
    "body": "Two men now say they are chief minister of the same state. The Speaker has ruled one way, the other side has walked out, and everyone wants to know whether the assembly will be dissolved. The ruler has been told, and the nation is waiting, politely, for the answer."
@@ -1527,6 +1539,46 @@
   "stateParkLeaseGamble": {
    "title": "The Park Pavilion Deal",
    "body": "A fictional event company offers to refurbish a neglected state park pavilion in Kangar in exchange for a long concession to run cafés and weekend events. The proposal has a glossy rendering, a suspiciously neat revenue forecast and no clear cap on private bookings. Families want better facilities, while local vendors fear being pushed out. The offer expires soon."
+  },
+  "reliefCentreFloods": {
+   "title": "The Relief Centre That Floods First",
+   "body": "Residents of fictional Kampung Paya Selasih say the community hall used as their flood relief centre is the first building to go under. The village committee wants a new centre on higher ground; the district office says the old hall is the only one with a kitchen and a clinic room. Another week of heavy rain is forecast, and the state controls the land and the local council that run the halls."
+  },
+  "tankerAtTamanGate": {
+   "title": "The Tanker at the Taman Gate",
+   "body": "Residents of fictional Taman Seri Cempaka have had weak water pressure for nine days. The state water company blames an old main pipe and a pump that trips when demand peaks; families queue for tanker water at the junction and post photos of buckets lined up outside the surau. Replacing the main means digging up the main road during the school holidays."
+  },
+  "heritageFeeSpend": {
+   "title": "Who Gets the Heritage Fee",
+   "body": "The new visitor heritage fee has put an unexpectedly large sum in the state's heritage trust fund. Owners of old-town houses want repair grants, tour guides want signage and training, and the council wants to fix the drains and public toilets first. The fund committee must set its first priorities before the festival season."
+  },
+  "riverCruiseMooring": {
+   "title": "Mooring on the Quiet Stretch",
+   "body": "Cruise boat operators on the old town river want more moorings and later hours. Residents along fictional Lorong Teratai say engines and loudspeaker commentary now start before breakfast. The council licenses the moorings and sets quiet hours, and the operators point out that half the cafes on the bank live on their passengers."
+  },
+  "nightMarketAmbulance": {
+   "title": "The Night Market and the Ambulance",
+   "body": "On weekend nights the old town's night market spills across the road and traffic grinds to a halt. An ambulance was held up for twenty minutes last week and the video went round. Stallholders say the weekend crowds keep their families fed. The council wants a plan that works before the next long weekend."
+  },
+  "reclaimedIslandDeadline": {
+   "title": "The Island That Is Always Next Year",
+   "body": "The developer of a reclaimed island off fictional Tanjung Pasir asks for a third extension on its building deadline, promising hotels, a marina and thousands of jobs once financing is secured. The land has sat empty for years. The state can extend, cancel, or open part of the land to public use, and each choice will be read as a verdict on the whole project."
+  },
+  "emptyExcoChairs": {
+   "title": "The Empty Exco Chairs",
+   "body": "A partner party in the state government has walked out over a rule change, leaving two executive council chairs empty and committees without a head. Officers say routine approvals are piling up. The partner's local leaders say the door is still open if their concerns are heard."
+  },
+  "durianRoadsideStalls": {
+   "title": "The Durian Stalls and the Drain",
+   "body": "In durian season a row of roadside stalls near fictional Kampung Lubuk Rimba has taken over a drain cover and half the bus stop. Orchardists say these are their best three weeks of the year. The local council has had eleven complaints and one photo of a bus driving past the same stop three times."
+  },
+  "reclamationSilt": {
+   "title": "Silt on the Fishing Nets",
+   "body": "Fishers near fictional Tanjung Lumpur say silt from reclamation work clouds the water and has cut their catch. The developer says every permit condition is met. The state environment office can order monitoring, pause dredging or leave the dispute to the courts."
+  },
+  "busTerminalEmpty": {
+   "title": "The Terminal Nobody Takes the Bus To",
+   "body": "The inter-city bus terminal at fictional Bandar Seri Pantai is clean, air-conditioned and almost empty. City buses stop a kilometre away and the taxis charge a flat rate nobody can explain. Operators threaten to go back to roadside stops, and the council has money for one fix this year."
   },
   "startDonor": {
    "title": "A donor with a small favour",

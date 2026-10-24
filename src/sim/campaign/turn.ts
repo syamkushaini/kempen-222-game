@@ -22,7 +22,8 @@ import { beforeNomination, hasDiplomacy, nominationWeek, pactSeats, rivalDiploma
 import { startFormation } from './formation';
 import { now, pushNews, ref } from './news';
 import { CHIEF_NOISE, RIVAL_NOISE, hasChiefs, planChiefs, playWeek, runChiefs, type ChiefReport } from './ai';
-import { applyWhatIf } from './whatif';
+import { applyWhatIf, offerPerpaduan, perpaduanWeek } from './whatif';
+import { RISE, addGraft, graftCampaignWeek } from './graft';
 import { latestNationalPoll, pollCost, takePoll } from './polls';
 import type {
   ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Difficulty,
@@ -67,6 +68,7 @@ const ALLIED = 30;
 export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   const rng = new Rng(opts.seed);
   const parties = PARTY_IDS.map((_, p) => freshParty(world, p, p === opts.player && isOutsider(world, p)));
+  // Melaka's "what if" forms Perpaduan Bangsa in the first week, not before: it opens like any other contest.
   const opening = standingPact(world);
 
   const bare: Omit<Campaign, 'team'> = {
@@ -106,7 +108,7 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
     };
   } else if (opts.challenge?.code) c.challenge = { fog: false, noisy: false, code: opts.challenge.code };
   // The real election, played again with one thing changed.
-  if (opts.challenge?.whatIf && world.rules.kind === 'general' && !world.rules.career) applyWhatIf(world, c, opts.challenge.whatIf);
+  if (opts.challenge?.whatIf && !world.rules.career) applyWhatIf(world, c, opts.challenge.whatIf);
   // A career sets its own opening terms first, then lets the leader's past have its say.
   if (!world.rules.career) applyBackstory(c);
   // A lean purse: the party starts with less (and less comes in: see `incomeBoost`).
@@ -130,6 +132,7 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   }
   openCampaign(world, c);
   agendaIntro(world, c);
+  if (!world.rules.career && world.id === 'state:melaka') offerPerpaduan(world, c);
   publishPublicPoll(world, c);
   return c;
 }
@@ -329,6 +332,7 @@ function tycoonExposure(c: Campaign) {
     for (const row of c.dyn.support.nat) row[p] -= EFFECT.tycoonHit;
     c.dyn.turnout.party[p] -= EFFECT.tycoonMotivationHit;
     const you = p === c.player;
+    if (you) addGraft(c, RISE.tycoonLeak);
     push(c, { party: p, key: you ? 'news.tycoon.exposedYou' : 'news.tycoon.exposed', vars: { party: ref.party(p) }, tone: you ? 'bad' : 'neutral' });
   });
   c.rng = rng.state;
@@ -343,6 +347,7 @@ export function endWeek(world: World, c: Campaign): void {
   if (c.phase !== 'campaign') return;
   const player = c.parties[c.player]!;
   settleInbox(world, c);
+  perpaduanWeek(world, c);
 
   // The player's chiefs work through the week, on what the leader left undone.
   chiefNews(c, runChiefs(world, c, c.player, truth(world, c), CHIEF_NOISE));
@@ -359,6 +364,7 @@ export function endWeek(world: World, c: Campaign): void {
     rivalNews(c, p, reports);
   });
   tycoonExposure(c);
+  graftCampaignWeek(c);
   rivalDiplomacy(world, c);
   agendaWeek(world, c);
   teamWeek(world, c);

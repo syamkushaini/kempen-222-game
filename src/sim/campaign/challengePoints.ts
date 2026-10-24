@@ -2,16 +2,19 @@ import { majorityLine, type World } from '../election';
 import { challengeKey } from './challengeCode';
 import { summarise } from './night';
 import { electionResult } from './turn';
+import { thriftFactor, useOf } from './thrift';
 import type { Campaign, Difficulty } from './types';
 
 // Points for a challenge: one number for how well a campaign went, so that the results of one challenge can be ranked on
-// its board, and the points of all of them added up on the player's profile. It is worked out from the result and the rules,
-// nothing else, so that two people who face the same election are measured by the same figure.
+// its board, and the points of all of them added up on the player's profile. It is worked out from the result, the rules and the
+// share of its money the party spent, so that two people who face the same election are measured by the same figure unless one of them
+// spent more of what they had.
 //
 //   seats     up to 70 for the seats won, in proportion, reaching the full 70 at a majority; up to 10 more for a majority past the line
 //   the vote  up to 20 for the share of the vote, reaching the full 20 at half
 //   level     the rivals' level: easygoing 0.8, competent 1, ruthless 1.25
 //   rules     every rule taken on (hidden odds, noisy polls, a lean purse, a shorter campaign) adds a tenth
+//   thrift    the share of its money the party spent: from 1.10 for a party that spent nothing down to 0.80 for one that spent everything (see thrift.ts)
 
 export const POINTS_MAX = 300;
 export const LEVEL_FACTOR: Record<Difficulty, number> = { easy: 0.8, normal: 1, hard: 1.25 };
@@ -27,6 +30,8 @@ export interface Showing {
   difficulty: Difficulty;
   /** How many rules were taken on. */
   rules: number;
+  /** The share of its money the party spent, 0 to 1. Absent: no account is taken of it. */
+  use?: number;
 }
 
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
@@ -37,7 +42,7 @@ export function pointsFor(s: Showing): number {
   const spare = s.total > s.line ? clamp((s.seats - s.line) / (s.total - s.line), 0, 1) : s.seats >= s.line ? 1 : 0;
   const votePart = 20 * clamp(s.share / 0.5, 0, 1);
   const base = seatPart + 10 * spare + votePart;
-  return clamp(Math.round(base * LEVEL_FACTOR[s.difficulty] * (1 + RULE_BONUS * s.rules)), 0, POINTS_MAX);
+  return clamp(Math.round(base * LEVEL_FACTOR[s.difficulty] * (1 + RULE_BONUS * s.rules) * (s.use === undefined ? 1 : thriftFactor(s.use))), 0, POINTS_MAX);
 }
 
 /** The rules a campaign was played under, counted. */
@@ -47,8 +52,14 @@ export function rulesTaken(world: World, c: Pick<Campaign, 'challenge' | 'totalW
 }
 
 /** The points of a campaign of a challenge, given the seats and share of the vote the party finished with. */
-export function challengePoints(world: World, c: Pick<Campaign, 'challenge' | 'totalWeeks' | 'difficulty'>, seats: number, share: number): number {
-  return pointsFor({ seats, total: world.seats.length, line: majorityLine(world), share, difficulty: c.difficulty, rules: rulesTaken(world, c) });
+/** The share of its money the player's party spent in a campaign, if the campaign has its parties to say. */
+export function useOfCampaign(c: Partial<Pick<Campaign, 'parties' | 'player'>>): number | undefined {
+  const pc = c.player === undefined ? undefined : c.parties?.[c.player];
+  return pc ? useOf(pc.spent, pc.funds) : undefined;
+}
+
+export function challengePoints(world: World, c: Pick<Campaign, 'challenge' | 'totalWeeks' | 'difficulty'> & Partial<Pick<Campaign, 'parties' | 'player'>>, seats: number, share: number): number {
+  return pointsFor({ seats, total: world.seats.length, line: majorityLine(world), share, difficulty: c.difficulty, rules: rulesTaken(world, c), use: useOfCampaign(c) });
 }
 
 /** What a finished challenge came to: its key, the seats and share of the vote, and the points. Null for a game that is no challenge, or one whose votes are not yet counted. */

@@ -8,6 +8,7 @@ import { confidenceCount, openTalks } from './govern';
 import { pushNews, ref } from './news';
 import { inGov } from './office';
 import { isEnacted } from './policy';
+import { addGraft } from './graft';
 import type { Campaign } from './types';
 
 // The government of the day can be brought down without an election: an opposition that can persuade enough of the members of the parties that
@@ -32,6 +33,8 @@ export const CROSS_SLACK = 25;
 export const CROSS_STEADY = 60;
 /** What the law against changing parties does to the chance. */
 export const BAN_FACTOR = 0.4;
+/** What buying members' votes adds to the corruption meter, per step of the stake: when it works, and when it comes out (see graft.ts). */
+const CROSS_GRAFT = { works: 3, leaked: 6 };
 
 export type CrossRefusal = 'phase' | 'busy' | 'inGovernment' | 'target' | 'few' | 'steady' | 'wait' | 'funds' | 'early' | 'stake';
 
@@ -106,6 +109,8 @@ export function crossTheFloor(world: World, c: Campaign, party: number, stake: C
     shiftUnity(c, party, -4);
     shiftRelation(c, me, party, -15);
     k.credibility = clamp(k.credibility - 2, 0, 100);
+    // Money for members to change sides is money for votes, whatever it is called.
+    addGraft(c, CROSS_GRAFT.works * stake);
     if (confidenceCount(world, c) < majorityLine(world)) {
       k.record.toppled++;
       pushNews(c, { party: me, key: 'news.cross.fell', vars: { ...vars, n }, tone: 'good' });
@@ -118,6 +123,7 @@ export function crossTheFloor(world: World, c: Campaign, party: number, stake: C
   }
   if (leaked) {
     k.credibility = clamp(k.credibility - 4, 0, 100);
+    addGraft(c, CROSS_GRAFT.leaked * stake);
     shiftRelation(c, me, party, -10);
     pushNews(c, { party: me, key: 'news.cross.leaked', vars, tone: 'bad' });
     return 'leaked';

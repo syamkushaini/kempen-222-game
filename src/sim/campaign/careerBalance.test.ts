@@ -46,6 +46,8 @@ function scoreEffect(e: Effect, standing: Standing, unityNow: number, stabilityN
     case 'debt':
       // Debt above 75% brings a downgrade and drags on growth. Positive (more debt) is bad.
       return e.n > 0 ? -e.n * 0.5 : -e.n * 0.3;
+    case 'graft':
+      return -e.n * 0.5; // dubious choices are avoided, clean ones preferred
     case 'end':
       return -2000; // career end: avoid at all costs
     case 'falls':

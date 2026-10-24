@@ -13,6 +13,7 @@ import { THANKS_EN, THANKS_MS, type ThanksKey } from './thanks';
 import { MAPSHARE_EN, MAPSHARE_MS, type MapShareKey } from './mapshare';
 import { BRAG_EN, BRAG_MS, type BragKey } from './brag';
 import { CONDUCT_EN, CONDUCT_MS, type ConductKey } from './conduct';
+import { GRAFT_EN, GRAFT_MS, type GraftKey } from './graft';
 import { ADVICE_EN, ADVICE_MS, type AdviceKey } from './advice';
 import { AUTOFILL_EN, AUTOFILL_MS, type AutofillKey } from './autofill';
 import { DOCTRINES_EN, DOCTRINES_MS, type DoctrineKey } from './doctrines';
@@ -177,6 +178,7 @@ const en = {
   'rate.skip': 'No thanks',
   'rate.note': 'Nothing is sent from the game. The button opens a page on GitHub with your thumb and comment filled in; you read it and choose whether to send it.',
   'rate.thanks': 'Thank you.',
+  'rate.coffee': 'Glad you liked it! If you want to say thanks, a coffee is plenty.',
   'saves.history.note': 'The game keeps the last few weeks it autosaved. Loading one takes you back to that week.',
   'saves.error.not-json': 'That file could not be read as a Kempen 222 save. Choose a file you exported from the game (it ends in .json).',
   'saves.error.not-a-save': 'That file is not a Kempen 222 save. Choose a file you exported from the game (it ends in .json).',
@@ -370,7 +372,7 @@ const en = {
   'action.crowdfund': 'Online appeal',
   'action.crowdfund.desc': 'Small donations from supporters. Each appeal raises less.',
   'action.tycoon': 'Tycoon donation',
-  'action.tycoon.desc': 'One large cheque, once. If it leaks, it will hurt.',
+  'action.tycoon.desc': 'One large cheque, once. If it leaks, it will hurt. It raises the corruption meter.',
 
   'reason.noTarget.seat': 'Choose a seat on the map first.',
   'reason.noTarget.state': 'Choose a state on the map first.',
@@ -636,7 +638,7 @@ const en = {
   'menu.honours': 'Achievements',
   'menu.honours.hint': '{n} of {total} earned',
   'menu.support': 'Buy me a coffee',
-  'menu.support.hint': 'Support the maker of this game',
+  'menu.support.short': 'Coffee',
   'support.title': 'Buy me a coffee',
   'support.body': 'If you enjoy my work and want to support it, a cup of coffee is more than enough. ☕️ Thank you for your support!',
   'support.scan': 'Scan with any banking app or eWallet to transfer money or pay.',
@@ -935,13 +937,8 @@ const en = {
   'feedback.send': 'Send feedback or report a problem',
   'feedback.note': 'opens GitHub with the version filled in; nothing is sent until you submit',
   'toast.actionDone': 'Action complete',
-  'whatsNew.title': "What's New",
-  'whatsNew.close': 'Close',
-  'whatsNew.gotIt': "Got it",
-  'whatsNew.keyboard': 'Keyboard shortcuts: Space to end your turn, 1–7 to switch tab groups, Enter to confirm, Esc to close menus',
-  'whatsNew.welcomeBack': 'Welcome back card on the title screen: resume your autosaved game in one tap',
-  'whatsNew.shortcuts': 'Shortcut hints (Kbd) on suggested actions and in the game menu',
-  'whatsNew.emptyStates': 'Empty states now include action buttons so you always know what to do next',
+  'dialog.close': 'Close',
+  'dialog.gotIt': "Got it",
   'display.highContrast': 'High contrast',
   'display.highContrast.off': 'Off',
   'display.highContrast.on': 'On',
@@ -1602,7 +1599,7 @@ const en = {
   'orders.develop.chosen': 'Developing: {states}.',
   'orders.develop.none': 'None chosen: the grants go to your target states, or spread over every state you stand in.',
   'orders.patronage': 'Contracts and land from the states',
-  'orders.patronage.desc': 'The states the party governs can be made to pay: up to {x} times the usual from them. The more it takes, the likelier the anti-graft agency comes asking.',
+  'orders.patronage.desc': 'The states the party governs can be made to pay: up to {x} times the usual from them. The more it takes, the likelier the anti-graft agency comes asking, and every week at any level raises the corruption meter.',
   'orders.patronage.0': 'Little',
   'orders.patronage.1': 'Freely',
   'orders.patronage.2': 'Without shame',
@@ -1648,9 +1645,9 @@ const en = {
   'orders.source.members': 'Members and small donors',
   'orders.source.members.desc': 'Follows your support, unity and credibility. Clean.',
   'orders.source.donors': 'Tycoons and corporate donors',
-  'orders.source.donors.desc': 'Good money with strings. Favours get asked, lists get leaked, and credibility slowly erodes.',
+  'orders.source.donors.desc': 'Good money with strings. Favours get asked, lists get leaked, and credibility slowly erodes, and the corruption meter climbs every week.',
   'orders.source.state': 'Divert to the party',
-  'orders.source.state.desc': 'Moves some of the government’s money into the party’s purse each week, as programmes run through party branches. Lucrative, and exactly what the anti-graft agency looks for.',
+  'orders.source.state.desc': 'Moves some of the government’s money into the party’s purse each week, as programmes run through party branches. Lucrative, and exactly what the anti-graft agency looks for. It raises the corruption meter every week.',
   'orders.source.state.no': 'Only for a party in government, or one that governs a state.',
   'orders.source.assets': 'Party businesses',
   'desk.petition.title': 'The courts unseated {n} of your winners',
@@ -1840,6 +1837,17 @@ const en = {
   'whatif.scandal.desc': 'The leading party is in disgrace, and its members are in uproar.',
   'whatif.surge': 'A better year for you',
   'whatif.surge.desc': 'Your party has had a better year than it did, in every part of the country.',
+  'whatif.bnpas': 'Perpaduan Bangsa: two big sides stand together',
+  'whatif.bnpas.desc': 'Barisan Pusaka stands in 21 of the 28 seats and Perikatan Teguh in the 7 where it is strongest, and neither stands against the other. In the first week of the campaign they form Perpaduan Bangsa (as Barisan Pusaka or Perikatan Teguh you are asked to join). If it wins the House, Barisan Pusaka leads the government and Perikatan Teguh is its deputy, even if it wins fewer seats than its partner. Playing Pakatan Sinar, you face the whole alliance. The seat split is the game’s own.',
+  'news.pact.together': '{a} and {b} have formed Perpaduan Bangsa and agreed to share the seats: in each of {n} seats one of them stands and the other stands aside.',
+  'news.pact.together.mine': 'You and {party} have formed Perpaduan Bangsa and agreed to share the seats: in each of {n} seats one of you stands and the other stands aside. You can end the pact in the Pacts tab before nomination day.',
+  'scene.perpaduan.title': '{leader} proposes Perpaduan Bangsa',
+  'scene.perpaduan.body': '{party} proposes that your two sides stand as one alliance, Perpaduan Bangsa: you would stand aside in {give} seats, and they in {get}. If it wins the House, Barisan Pusaka leads the government and Perikatan Teguh is its deputy, whoever has more seats. This must be settled this week, before nomination day.',
+  'scene.perpaduan.accept': 'Form Perpaduan Bangsa',
+  'scene.perpaduan.decline': 'Go it alone',
+  'news.perpaduan.declined': 'You turn down Perpaduan Bangsa. {party} and you will fight every seat.',
+  'form.perpaduan.partner': 'Under Perpaduan Bangsa the top post goes to {head}, however many seats you won. Your side is given the deputy’s post and its share of the exco. Ending the pact before nomination day is the only way to claim it yourself.',
+  'form.perpaduan.head': 'Under Perpaduan Bangsa you lead the alliance’s government, and {partner} is promised the deputy’s post and its share of the exco.',
   'style.aggressive': 'Aggressive',
   'style.aggressive.desc': 'Goes for the throat: attacks and debates often.',
   'style.populist': 'Populist',
@@ -3123,7 +3131,7 @@ const en = {
 type CoreKey = keyof typeof en;
 /** The keys defined in this file, so that text kept elsewhere can be checked not to reuse one. */
 export const CORE_KEYS: readonly string[] = Object.keys(en);
-export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey | ThanksKey | MapShareKey | BragKey | ConductKey | AdviceKey | AutofillKey | MeterToolKey | DoctrineKey;
+export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey | ThanksKey | MapShareKey | BragKey | ConductKey | GraftKey | AdviceKey | AutofillKey | MeterToolKey | DoctrineKey;
 
 const ms: Record<CoreKey, string> = {
   'app.title': 'Kempen 222',
@@ -3283,6 +3291,7 @@ const ms: Record<CoreKey, string> = {
   'rate.skip': 'Tak, terima kasih',
   'rate.note': 'Tiada apa-apa dihantar daripada game. Butang ni buka halaman di GitHub dengan ibu jari dan komen anda dah diisi; anda baca dan pilih sama ada nak hantar.',
   'rate.thanks': 'Terima kasih.',
+  'rate.coffee': 'Seronok dengar tu! Kalau nak ucap terima kasih, belanja saya kopi pun dah cukup.',
   'saves.history.note': 'Game menyimpan beberapa minggu terakhir yang disimpan secara automatik. Memuatkannya membawa anda kembali ke minggu itu.',
   'saves.error.not-json': 'Fail itu tak dapat dibaca sebagai simpanan Kempen 222. Pilih fail yang anda eksport daripada game (berakhir .json).',
   'saves.error.not-a-save': 'Fail itu bukan simpanan Kempen 222. Pilih fail yang anda eksport daripada game (berakhir .json).',
@@ -3476,7 +3485,7 @@ const ms: Record<CoreKey, string> = {
   'action.crowdfund': 'Kutip dana dalam talian',
   'action.crowdfund.desc': 'Sumbangan kecil daripada penyokong. Setiap rayuan mengutip kurang.',
   'action.tycoon': 'Sumbangan taikun',
-  'action.tycoon.desc': 'Satu cek besar, sekali sahaja. Kalau bocor, padahnya besar.',
+  'action.tycoon.desc': 'Satu cek besar, sekali sahaja. Kalau bocor, padahnya besar. Ia menaikkan meter rasuah.',
 
   'reason.noTarget.seat': 'Pilih kawasan pada peta dahulu.',
   'reason.noTarget.state': 'Pilih negeri pada peta dahulu.',
@@ -3742,7 +3751,7 @@ const ms: Record<CoreKey, string> = {
   'menu.honours': 'Pencapaian',
   'menu.honours.hint': '{n} daripada {total} pencapaian dibuka',
   'menu.support': 'Belanja saya kopi',
-  'menu.support.hint': 'Sokong pembuat game ini',
+  'menu.support.short': 'Kopi',
   'support.title': 'Belanja saya kopi',
   'support.body': 'Kalau korang enjoy hasil kerja saya dan nak support, belanja saya secawan kopi pun dah cukup. ☕️ Terima kasih atas sokongan!',
   'support.scan': 'Imbas dengan mana-mana aplikasi perbankan atau eWallet untuk pindah wang atau bayar.',
@@ -4041,13 +4050,8 @@ const ms: Record<CoreKey, string> = {
   'feedback.send': 'Hantar maklum balas atau lapor masalah',
   'feedback.note': 'buka GitHub dengan versi yang dah diisi; tiada apa dihantar sampai anda hantar sendiri',
   'toast.actionDone': 'Tindakan siap',
-  'whatsNew.title': "Baru-baru Ini",
-  'whatsNew.close': 'Tutup',
-  'whatsNew.gotIt': "Faham",
-  'whatsNew.keyboard': 'Pintasan papan kekunci: Spacing untukakhiri giliran anda, 1–7 untukukumpulan tab, Enter untukmengesahkan, Esc untuktutup menu',
-  'whatsNew.welcomeBack': 'Kad sambutan kembali di skrin awal: lanjutkan permainan automatik anda dalam satu ketukan',
-  'whatsNew.shortcuts': 'Petunjuk pintasan (Kbd) pada tindakan disarankan dan dalam menu permainan',
-  'whatsNew.emptyStates': 'Kosongan negeri sekarang butang tindakan jadi anda sentiasa tahu apa yang perlu dilakukan seterusnya',
+  'dialog.close': 'Tutup',
+  'dialog.gotIt': "Faham",
   'notifications.title': 'Notifikasi',
   'notifications.bell': 'Notifikasi',
   'notifications.empty': 'Tiada notifikasi',
@@ -4708,7 +4712,7 @@ const ms: Record<CoreKey, string> = {
   'orders.develop.chosen': 'Dibangunkan: {states}.',
   'orders.develop.none': 'Tiada dipilih: geran ke negeri sasaran anda, atau dibahagi sama rata ke setiap negeri yang anda bertanding.',
   'orders.patronage': 'Kontrak dan tanah daripada negeri',
-  'orders.patronage.desc': 'Negeri yang diperintah parti boleh dijadikan sumber duit: sehingga {x} kali ganda biasa. Makin banyak diambil, makin besar kemungkinan agensi antirasuah datang bertanya.',
+  'orders.patronage.desc': 'Negeri yang diperintah parti boleh dijadikan sumber duit: sehingga {x} kali ganda biasa. Makin banyak diambil, makin besar kemungkinan agensi antirasuah datang bertanya, dan setiap minggu pada mana-mana tahap menaikkan meter rasuah.',
   'orders.patronage.0': 'Sedikit',
   'orders.patronage.1': 'Bebas',
   'orders.patronage.2': 'Tanpa malu',
@@ -4754,9 +4758,9 @@ const ms: Record<CoreKey, string> = {
   'orders.source.members': 'Ahli dan penderma kecil',
   'orders.source.members.desc': 'Mengikut sokongan, perpaduan dan kredibiliti anda. Bersih.',
   'orders.source.donors': 'Taikun dan penderma korporat',
-  'orders.source.donors.desc': 'Wang lumayan yang bersyarat. Hajat akan diminta, senarai akan bocor, dan kredibiliti terhakis perlahan-lahan.',
+  'orders.source.donors.desc': 'Wang lumayan yang bersyarat. Hajat akan diminta, senarai akan bocor, dan kredibiliti terhakis perlahan-lahan, dan meter rasuah naik setiap minggu.',
   'orders.source.state': 'Lencongkan ke parti',
-  'orders.source.state.desc': 'Memindahkan sebahagian wang kerajaan ke dompet parti setiap minggu, sebagai program yang disalurkan melalui cawangan parti. Lumayan, dan itulah yang dicari agensi antirasuah.',
+  'orders.source.state.desc': 'Memindahkan sebahagian wang kerajaan ke dompet parti setiap minggu, sebagai program yang disalurkan melalui cawangan parti. Lumayan, dan itulah yang dicari agensi antirasuah. Ia menaikkan meter rasuah setiap minggu.',
   'orders.source.state.no': 'Hanya untuk parti dalam kerajaan, atau yang memerintah sebuah negeri.',
   'orders.source.assets': 'Perniagaan parti',
   'desk.petition.title': 'Mahkamah batalkan {n} kemenangan anda',
@@ -4946,6 +4950,17 @@ const ms: Record<CoreKey, string> = {
   'whatif.scandal.desc': 'Parti terkemuka dalam keaiban, dan ahlinya kecoh.',
   'whatif.surge': 'Tahun yang lebih baik untuk anda',
   'whatif.surge.desc': 'Parti anda ada tahun yang lebih baik daripada sebelumnya, di setiap bahagian negara.',
+  'whatif.bnpas': 'Perpaduan Bangsa: dua pihak besar bergabung',
+  'whatif.bnpas.desc': 'Barisan Pusaka bertanding di 21 daripada 28 kerusi dan Perikatan Teguh di 7 kerusi yang paling kuat baginya, dan tiada yang menentang yang lain. Pada minggu pertama kempen mereka membentuk Perpaduan Bangsa (kalau anda Barisan Pusaka atau Perikatan Teguh, anda ditanya sama ada mahu sertai). Kalau menang Dewan, Barisan Pusaka mengetuai kerajaan dan Perikatan Teguh jadi timbalannya, walaupun kerusinya lebih sedikit daripada rakan. Kalau main sebagai Pakatan Sinar, anda lawan seluruh pakatan. Pembahagian kerusi ini rekaan permainan.',
+  'news.pact.together': '{a} dan {b} membentuk Perpaduan Bangsa dan bersetuju berkongsi kerusi: di setiap {n} kerusi, satu pihak bertanding dan satu lagi beri laluan.',
+  'news.pact.together.mine': 'Anda dan {party} membentuk Perpaduan Bangsa dan bersetuju berkongsi kerusi: di setiap {n} kerusi, satu pihak bertanding dan satu lagi beri laluan. Anda boleh tamatkan pakatan di tab Pakatan sebelum hari penamaan calon.',
+  'scene.perpaduan.title': '{leader} cadang Perpaduan Bangsa',
+  'scene.perpaduan.body': '{party} cadang dua pihak anda bertanding sebagai satu pakatan, Perpaduan Bangsa: anda beri laluan di {give} kerusi, dan mereka di {get}. Kalau menang Dewan, Barisan Pusaka mengetuai kerajaan dan Perikatan Teguh jadi timbalan, siapa pun yang lebih banyak kerusi. Putuskan minggu ini, sebelum hari penamaan calon.',
+  'scene.perpaduan.accept': 'Bentuk Perpaduan Bangsa',
+  'scene.perpaduan.decline': 'Bertanding sendiri',
+  'news.perpaduan.declined': 'Anda menolak Perpaduan Bangsa. {party} dan anda akan bertanding di setiap kerusi.',
+  'form.perpaduan.partner': 'Di bawah Perpaduan Bangsa, jawatan teratas jatuh kepada {head}, walau berapa banyak kerusi anda menang. Pihak anda dapat jawatan timbalan dan bahagian exco. Satu-satunya cara untuk menuntutnya sendiri ialah tamatkan pakatan sebelum hari penamaan calon.',
+  'form.perpaduan.head': 'Di bawah Perpaduan Bangsa, anda mengetuai kerajaan pakatan, dan {partner} dijanjikan jawatan timbalan dan bahagian exco.',
   'style.aggressive': 'Agresif',
   'style.aggressive.desc': 'Menyerang terus: kerap menyerang dan berdebat.',
   'style.populist': 'Populis',
@@ -6229,8 +6244,8 @@ const ms: Record<CoreKey, string> = {
 export type Lang = 'en' | 'ms';
 // Event text is kept in its own file and looked up by keys built from event ids.
 export const STRINGS: Record<Lang, Record<string, string>> = {
-  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...BRAG_EN, ...CONDUCT_EN, ...ADVICE_EN, ...AUTOFILL_EN, ...METERTOOLS_EN, ...DOCTRINES_EN, ...flattenEvents(EVENTS_EN), ...flattenMore(MORE_EN) },
-  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...BRAG_MS, ...CONDUCT_MS, ...ADVICE_MS, ...AUTOFILL_MS, ...METERTOOLS_MS, ...DOCTRINES_MS, ...flattenEvents(EVENTS_MS), ...flattenMore(MORE_MS) },
+  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...BRAG_EN, ...CONDUCT_EN, ...GRAFT_EN, ...ADVICE_EN, ...AUTOFILL_EN, ...METERTOOLS_EN, ...DOCTRINES_EN, ...flattenEvents(EVENTS_EN), ...flattenMore(MORE_EN) },
+  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...BRAG_MS, ...CONDUCT_MS, ...GRAFT_MS, ...ADVICE_MS, ...AUTOFILL_MS, ...METERTOOLS_MS, ...DOCTRINES_MS, ...flattenEvents(EVENTS_MS), ...flattenMore(MORE_MS) },
 };
 
 /**

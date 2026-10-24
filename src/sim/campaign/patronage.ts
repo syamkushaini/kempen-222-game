@@ -3,6 +3,7 @@ import { Rng } from '../rng';
 import { statesHeld } from './contests';
 import { shiftUnity } from './diplomacy';
 import { pushNews } from './news';
+import { addGraft } from './graft';
 import type { Campaign, Career } from './types';
 
 // A state government is a purse: contracts to give out, land to alienate. A party may draw on the states it governs more
@@ -20,6 +21,8 @@ export const PATRONAGE = {
   credibility: 8,
   unity: 4,
   mood: 0.02,
+  /** What an inquiry adds to the corruption meter (see graft.ts). */
+  graft: 10,
 };
 
 export const patronageOf = (k: Career): number => k.patronage ?? 0;
@@ -54,5 +57,6 @@ export function patronageWeek(c: Campaign, rng: Rng): void {
   shiftUnity(c, c.player, -PATRONAGE.unity);
   for (const row of k.mood) row[c.player] -= PATRONAGE.mood;
   delete k.patronage;
+  addGraft(c, PATRONAGE.graft);
   pushNews(c, { party: c.player, key: 'news.patronage', vars: { rm: `@rm:${fine}` }, tone: 'bad' });
 }

@@ -1,6 +1,8 @@
 import type { World } from '../election';
 import { lastElection } from '../election';
-import { BLOC_IDS, N_BLOCS } from '../types';
+import { BLOC_IDS, N_BLOCS, N_PARTIES, PARTY_IDS } from '../types';
+import { STANDS, type StandDowns } from '../transfer';
+import { pushNews, ref } from './news';
 import type { Campaign } from './types';
 
 // History, played again with one thing changed: the election as it was, with the economy sour, or the young turning out, or the
@@ -8,8 +10,13 @@ import type { Campaign } from './types';
 // change is the player’s "what if".
 
 export const WHATIF_IDS = ['turnout', 'recession', 'scandal', 'surge'] as const;
-export type WhatIfId = (typeof WHATIF_IDS)[number];
-export const isWhatIf = (x: unknown): x is WhatIfId => (WHATIF_IDS as readonly unknown[]).includes(x);
+/** What a state's election can offer: Melaka, with its two biggest sides standing together as they said they would in 2026. */
+export const STATE_WHATIF_IDS = ['bnpas'] as const;
+export type WhatIfId = (typeof WHATIF_IDS)[number] | (typeof STATE_WHATIF_IDS)[number];
+export const isWhatIf = (x: unknown): x is WhatIfId => (WHATIF_IDS as readonly unknown[]).includes(x) || (STATE_WHATIF_IDS as readonly unknown[]).includes(x);
+
+/** The "what if"s a contest offers: the general election's four, or the one a state has. */
+export const whatIfsFor = (scenario: string): readonly WhatIfId[] => (scenario === 'general' ? WHATIF_IDS : scenario === 'state:melaka' ? STATE_WHATIF_IDS : []);
 
 export const WHATIF = {
   /** How much more the young and gig workers turn out, in logit-like turnout units. */
@@ -18,6 +25,8 @@ export const WHATIF = {
   recession: 0.03, scandal: 0.04, scandalUnity: 10,
   /** What a better year gives the player’s party everywhere. */
   surge: 0.03,
+  /** Perpaduan Bangsa: what standing as one lifts both sides everywhere, when the player is the third side facing them. */
+  perpaduanLift: 0.02,
 };
 
 /** The party that won the most seats last time: the one the country has in mind when it says "the government". */
@@ -26,9 +35,100 @@ export function leadingParty(world: World): number {
   return tally.indexOf(Math.max(...tally));
 }
 
-/** Applies a "what if" to a campaign that has just been made. Does nothing for anything that is not one. */
+/** In Melaka's "what if": the number of seats the smaller of the two sides stands in, and the two sides. The big side stands in the rest. */
+export const BNPAS = { small: 7, big: 'bp', partner: 'pt' } as const;
+
+/**
+ * The seat-sharing of Melaka's 2026 election, as the two sides said it would be: one of them stands in 21 of the 28 seats and the other in
+ * 7, and neither stands against the other. The game's own split gives the smaller side the seats where its voters were most (the real list
+ * was not out when this was written): the seats where it won the biggest share of the votes at the last election.
+ */
+export function bnPasPact(world: World): { standDowns: StandDowns; pacts: { a: number; b: number; week: number }[] } {
+  const big = PARTY_IDS.indexOf(BNPAS.big), small = PARTY_IDS.indexOf(BNPAS.partner);
+  const share = (i: number) => { const v = world.seats[i].last.votes; return v[small] / Math.max(1, v.reduce((a, b) => a + b, 0)); };
+  const smallSeats = new Set(world.seats.map((_, i) => i).sort((x, y) => share(y) - share(x) || x - y).slice(0, BNPAS.small).map((i) => world.seats[i].id));
+  const standDowns: StandDowns = {};
+  for (const seat of world.seats) {
+    const row = new Array<number>(N_PARTIES).fill(STANDS);
+    // Where the small side stands, the big one stands aside for it, and the other way round.
+    if (smallSeats.has(seat.id)) row[big] = small; else row[small] = big;
+    standDowns[seat.id] = row;
+  }
+  return { standDowns, pacts: [{ a: Math.min(big, small), b: Math.max(big, small), week: 0 }] };
+}
+
+/**
+ * Perpaduan Bangsa, the name the two sides give their pact in Melaka's "what if": while that pact stands, Barisan Pusaka leads the state
+ * government however many seats each side wins, and Perikatan Teguh is its partner. Returns the two, or null when the contest is not the
+ * "what if" or the pact has been ended (then the talks are as in any other election).
+ */
+export function perpaduan(c: Pick<Campaign, 'challenge' | 'pacts'>): { head: number; partner: number } | null {
+  if (c.challenge?.whatIf !== 'bnpas') return null;
+  const head = PARTY_IDS.indexOf(BNPAS.big), partner = PARTY_IDS.indexOf(BNPAS.partner);
+  return c.pacts.some((x) => (x.a === head && x.b === partner) || (x.a === partner && x.b === head)) ? { head, partner } : null;
+}
+
+/** Allies are on good terms. */
+const ALLIED = 30;
+
+/**
+ * Perpaduan Bangsa is formed in the first week of the campaign, before nomination day (not before the campaign opens): the seats are
+ * shared and the pact written down. Says so in the news, to the player in it and to everyone else.
+ */
+export function formPerpaduan(world: World, c: Campaign): void {
+  const head = PARTY_IDS.indexOf(BNPAS.big), partner = PARTY_IDS.indexOf(BNPAS.partner);
+  if (c.pacts.some((x) => (x.a === head && x.b === partner) || (x.a === partner && x.b === head))) return;
+  const deal = bnPasPact(world);
+  c.standDowns = { ...c.standDowns, ...deal.standDowns };
+  for (const pact of deal.pacts) {
+    c.pacts.push({ ...pact, week: c.week });
+    c.relations[pact.a][pact.b] = c.relations[pact.b][pact.a] = Math.max(c.relations[pact.a][pact.b], ALLIED);
+    const mine = pact.a === c.player || pact.b === c.player;
+    pushNews(c, {
+      party: mine ? c.player : pact.a, key: mine ? 'news.pact.together.mine' : 'news.pact.together',
+      vars: { a: ref.party(pact.a), b: ref.party(pact.b), party: ref.party(pact.a === c.player ? pact.b : pact.a), n: Object.keys(deal.standDowns).length },
+      tone: mine ? 'good' : 'neutral',
+    });
+  }
+}
+
+/**
+ * The first week of Melaka's "what if": a player leading one of the two sides is asked whether to join (a pact offer from the other
+ * leader, answered like any other); with the third side's player the two simply announce it at the week's end (`perpaduanWeek`).
+ */
+export function offerPerpaduan(world: World, c: Campaign): void {
+  const head = PARTY_IDS.indexOf(BNPAS.big), partner = PARTY_IDS.indexOf(BNPAS.partner);
+  if (c.challenge?.whatIf !== 'bnpas' || (c.player !== head && c.player !== partner)) return;
+  const other = c.player === head ? partner : head;
+  const deal = bnPasPact(world).standDowns;
+  const ids = Object.keys(deal);
+  c.inbox.push({
+    id: c.nextScene++, kind: 'pactOffer', from: other, perpaduan: true,
+    give: ids.filter((id) => deal[id][c.player] >= 0), get: ids.filter((id) => deal[id][other] >= 0),
+  });
+}
+
+/** Week one's end: the two sides announce Perpaduan Bangsa, when the player is the third side (a player in it has had the choice). */
+export function perpaduanWeek(world: World, c: Campaign): void {
+  if (c.week !== 1 || c.challenge?.whatIf !== 'bnpas' || world.id !== 'state:melaka') return;
+  if (c.player === PARTY_IDS.indexOf(BNPAS.big) || c.player === PARTY_IDS.indexOf(BNPAS.partner)) return;
+  formPerpaduan(world, c);
+}
+
+/** Applies a "what if" to a campaign that has just been made. Does nothing for anything that is not one, or not one for this contest. */
 export function applyWhatIf(world: World, c: Campaign, id: unknown): void {
   if (!isWhatIf(id)) return;
+  // The pact itself is part of how the contest opens (see `newCampaign`); here it is only written down.
+  if (id === 'bnpas') {
+    if (world.id !== 'state:melaka') return;
+    c.challenge = { ...(c.challenge ?? { fog: false, noisy: false }), whatIf: id };
+    // The third side takes on an alliance that stands as one: both its sides are lifted a little.
+    if (c.player === PARTY_IDS.indexOf('ps')) {
+      for (const p of [PARTY_IDS.indexOf(BNPAS.big), PARTY_IDS.indexOf(BNPAS.partner)]) for (let b = 0; b < N_BLOCS; b++) c.drift.support.nat[b][p] += WHATIF.perpaduanLift;
+    }
+    return;
+  }
+  if (world.rules.kind !== 'general') return;
   const lead = leadingParty(world);
   const nat = c.drift.support.nat;
   if (id === 'turnout') {

@@ -13,6 +13,7 @@ import { contestName, leaderName, partyColor, partyName, useT, type Format, type
 import { mapPicture } from './map3d';
 import { missionGoal, recordAsk } from './missionText';
 import { drawCard, type CardData } from './shareCard';
+import { drawMelakaCard } from './melakaCard';
 import { CopyButton } from './CopyButton';
 import { challengeLink, withInvite } from '../sim/campaign/challengeCode';
 import { useStore } from '../state/store';
@@ -77,6 +78,14 @@ export function electionCard(t: T, f: Format, world: World, c: Campaign, result:
     ],
     chamber: { seats: order.flatMap(({ n, p }) => new Array<string>(n).fill(partyColor(p))), mine: result.tally[me] ?? 0 },
   };
+}
+
+/** The picture of an election night: the ordinary card, or for a state election in Melaka a card of its own, with the old town at dusk. */
+export function resultPicture(t: T, f: Format, world: World, c: Campaign, result: ElectionOutcome, summary: Summary): CardData | Drawn {
+  const card = electionCard(t, f, world, c, result, summary);
+  if (world.id !== 'state:melaka' || c.career) return card;
+  const pill = `${t('scenario.state')} · ${t('state.melaka')}`.toUpperCase();
+  return { headline: card.headline, draw: (canvas) => drawMelakaCard(canvas, card, pill) };
 }
 
 /** The card for the end of a career: the legacy, the score and the record. */

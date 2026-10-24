@@ -15,8 +15,10 @@ import { DESK_EVENTS } from './eventList11';
 import { DEBT_EVENTS } from './eventListDebt';
 import { SHOCK_EVENTS } from './eventListShocks';
 import { VIRAL_EVENTS } from './eventListViral';
+import { GRAFT_EVENTS } from './eventListGraft';
 import { CRISIS_EVENTS } from './eventListCrisis';
 import { PENANG_STORIES, PERLIS_STORIES } from './eventListNorth';
+import { MELAKA_STORIES } from './eventListMelaka';
 import { OPENING_STORIES } from './eventListOpening';
 import { PARTY_OPENING_STORIES } from './eventListOpeningParty';
 import { POWER_EVENTS } from './eventListPower';
@@ -38,6 +40,7 @@ import { shiftPestel } from './pestel';
 import { BORDER_SEA, WEAK_FORCE, defenceOf, forceWeak, isFederal, shiftDefence } from './defence';
 import { answerAdviser } from './advisers';
 import { queueEcho } from './echoes';
+import { addGraft } from './graft';
 import { KSU, replaceKsu, shiftKsu } from './ksu';
 import { endCareer } from './legacy';
 import { fightOdds } from './trial';
@@ -50,7 +53,7 @@ import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEv
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Scene } from './types';
 import { ASK_MAX, ASK_MIN } from './lineDial';
 
-const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES, ...OPENING_STORIES, ...POWER_EVENTS, ...PARTY_OPENING_STORIES };
+const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...GRAFT_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES, ...MELAKA_STORIES, ...OPENING_STORIES, ...POWER_EVENTS, ...PARTY_OPENING_STORIES };
 
 /**
  * Events whose money is the public's: relief for a flood, a bridge, a subsidy, a port. Where the player's party governs they are paid
@@ -130,6 +133,8 @@ export type Effect =
   | { t: 'rival'; who: Who; n: number }
   | { t: 'public'; n: number }
   | { t: 'unity' | 'funds' | 'cred' | 'stability' | 'trust' | 'machinery' | 'dossier' | 'donors' | 'state' | 'fiscal'; n: number }
+  /** The corruption meter moves by this much (see graft.ts): dubious choices raise it, coming clean lowers it. */
+  | { t: 'graft'; n: number }
   | { t: 'economy'; growth?: number; inflation?: number }
   /** The mood online moves by this much (see netizens.ts). */
   | { t: 'net'; n: number }
@@ -390,6 +395,7 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
         if (hasPublicMoney(c)) k.treasury = clamp(treasuryOf(c) + publicAmount(world, c, e.n), 0, Math.max(treasuryCap(world, c), treasuryOf(c)));
         else pc.funds = Math.max(0, pc.funds + Math.sign(e.n) * scaled(world, Math.abs(realistic(c, e.n))));
         break;
+      case 'graft': addGraft(c, e.n); break;
       case 'net': k.net = clamp((k.net ?? 0) + e.n, -100, 100); break;
       case 'cred': k.credibility = clamp(k.credibility + realistic(c, e.n), 0, 100); break;
       case 'stability': {

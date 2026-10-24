@@ -122,6 +122,8 @@ export interface Scene {
   /** Pact offers: seats the player would stand aside in, and seats the other party would. */
   give?: string[];
   get?: string[];
+  /** A pact offer that is Perpaduan Bangsa: the two biggest sides' alliance, put to the player in the first week. */
+  perpaduan?: boolean;
   /** Pact offers from a partner: of the seats the player would give, those the partner asks for as the price of standing together. */
   ask?: string[];
   /** Poaching: the seat whose incumbent is being courted. */
@@ -456,12 +458,12 @@ export interface CareerRecord {
   /** Governments the player brought down. */
   toppled: number;
   /** How each election went, in order: the seats won and whether the player came out heading the government. Absent in a game saved before it existed. */
-  terms?: { seats: number; pm: boolean }[];
+  terms?: { seats: number; pm: boolean; /** The share of its money the party spent in that campaign, 0 to 1 (see thrift.ts). Absent before it was kept. */ use?: number }[];
 }
 
 export const LEGACY_IDS = ['statesman', 'reformer', 'survivor', 'promiser', 'plotter', 'premier', 'kingmaker', 'conscience', 'nearly', 'footnote'] as const;
 export type LegacyId = (typeof LEGACY_IDS)[number];
-export type EndingKind = 'retired' | 'ousted' | 'wipedOut';
+export type EndingKind = 'retired' | 'ousted' | 'wipedOut' | 'jailed';
 export interface Ending { kind: EndingKind; legacy: LegacyId; score: number; /** Acts of Parliament still on the books when the career ended. */ laws?: number }
 
 /** A career: the long game across terms. Null in one-off contests. */
@@ -900,6 +902,10 @@ export interface Campaign {
 
   /** How the leaders get on: [a][b], -100 to 100, the same both ways. */
   relations: number[][];
+  /** How tainted the player's party is, 0 to 100 (see graft.ts). It lives on the campaign, not the career, so it needs no carrying across terms. Absent until something dubious is done. */
+  graft?: number;
+  /** The level of the meter last told to the player in the news, so that a crossing is reported once. */
+  graftSeen?: number;
   /** Seats where a party stands aside for a pact partner. */
   standDowns: StandDowns;
   pacts: Pact[];

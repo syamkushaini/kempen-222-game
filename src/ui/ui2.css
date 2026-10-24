@@ -828,6 +828,10 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .metrics-strip { grid-column: 1 / -1; display: block; margin: 0; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
 .metrics-headline { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 6px 16px; align-items: end; padding: 10px 14px; }
 .metrics-headline .metric.alert .metric-label::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--bad, #e5484d); vertical-align: 1px; }
+.metrics-compact { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px 12px; padding: 8px 12px; align-items: start; }
+.metrics-compact .metric-label { font-size: 10px; }
+.metrics-compact .metric-value { font-size: 14px; }
+.metrics-compact .metric-bar { height: 2px; }
 .metrics-more { justify-self: end; align-self: center; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .metrics-more:hover { color: var(--ink); background: var(--fill); }
 .metrics-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border-top: 1px solid var(--line); background: var(--line); }
@@ -1022,3 +1026,7 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .bar-fold.open { position: absolute; top: -40px; right: 12px; min-height: 36px; min-width: 44px; border-radius: 999px; box-shadow: 0 2px 10px rgb(0 0 0 / 0.35); }
 .campaign-bar.bar-min { left: auto; right: 12px; width: auto; padding: 0; gap: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; pointer-events: none; }
 .campaign-bar.bar-min .bar-fold { pointer-events: auto; border-radius: 999px; box-shadow: 0 2px 10px rgb(0 0 0 / 0.35); }
+
+/* The coffee button on the title screen: the cup with its words, a pill rather than a round icon. */
+.support-button { flex: none; width: auto; gap: 6px; padding: 0 14px 0 11px; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; color: var(--ink); }
+.support-button .support-label { line-height: 1; }

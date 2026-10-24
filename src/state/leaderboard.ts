@@ -85,6 +85,8 @@ export function submissionOf(entry: LegacyEntry, campaign: Pick<Campaign, 'scena
   const clean = cleanName(name);
   const state = stateOf(campaign.scenario);
   const isCareer = campaign.scenario === 'career' || state !== null;
+  // A convicted leader is not ranked: the board's table takes no such ending, and a prison term is not a score to beat.
+  if (entry.kind === 'jailed') return null;
   if (!isCareer || !countsForBoard(entry) || clean.length < NAME_MIN || !(LEGACY_IDS as readonly string[]).includes(entry.legacy)) return null;
   const tenth = (n: number) => Math.round(n * 10) / 10;
   const years = Math.min(150, tenth(entry.years));

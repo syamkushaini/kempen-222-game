@@ -97,7 +97,7 @@ function isValidScene(x: unknown, world: World): boolean {
   return (
     isNum(x.id) && isPartyOrNull(x.from) &&
     (x.kind === 'pactOffer' || x.kind === 'poach' || x.kind === 'summons' || x.kind === 'unityAdvice' || x.kind === 'event' || x.kind === 'vote' || x.kind === 'houseVote' || x.kind === 'agenda' || x.kind === 'partyPoll' || x.kind === 'redraw') &&
-    (x.event === undefined || typeof x.event === 'string') && (x.bill === undefined || typeof x.bill === 'string') &&
+    (x.event === undefined || typeof x.event === 'string') && (x.perpaduan === undefined || typeof x.perpaduan === 'boolean') && (x.bill === undefined || typeof x.bill === 'string') &&
     (x.give === undefined || isSeatList(x.give, world)) && (x.ask === undefined || isSeatList(x.ask, world)) && (x.get === undefined || isSeatList(x.get, world)) &&
     (x.seat === undefined || (typeof x.seat === 'string' && world.seatIndex.has(x.seat)))
   );
@@ -156,7 +156,7 @@ function isValidOffice(x: Record<string, unknown>): boolean {
     isList(x.levers, isNum, LEVER_IDS.length) && isNum(x.motion) && isNum(x.rivalBills) &&
     isObj(x.house) && Object.values(x.house).every(isParty) && isObj(x.states) && Object.values(x.states).every(isParty) && isNum(x.rounds) &&
     isObj(r) && ['elections', 'victories', 'weeksPm', 'weeksGov', 'weeksOpp', 'broken', 'bestSeats', 'falls', 'toppled'].every((key) => isNum(r[key])) && isList(r.kept, isPledge) &&
-    (end === null || (isObj(end) && (end.kind === 'retired' || end.kind === 'ousted' || end.kind === 'wipedOut') &&
+    (end === null || (isObj(end) && (end.kind === 'retired' || end.kind === 'ousted' || end.kind === 'wipedOut' || end.kind === 'jailed') &&
       (LEGACY_IDS as readonly unknown[]).includes(end.legacy) && isNum(end.score)))
   );
 }
@@ -254,6 +254,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
   return (
     x.scenario === world.id && (x.newParty === undefined || typeof x.newParty === 'boolean') && (x.following === undefined || (isNum(x.following) && x.following >= 0 && x.following <= 1)) && (x.stronghold === undefined || isStronghold(x.stronghold)) &&
     isNum(x.player) && Number.isInteger(x.player) && x.player >= 0 && x.player < N_PARTIES &&
+    (x.graft === undefined || (isNum(x.graft) && x.graft >= 0 && x.graft <= 100)) && (x.graftSeen === undefined || (isNum(x.graftSeen) && x.graftSeen >= 0 && x.graftSeen <= 4)) &&
     (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
     (x.challenge === undefined || (isObj(x.challenge) && typeof x.challenge.fog === 'boolean' && typeof x.challenge.noisy === 'boolean' && (x.challenge.lean === undefined || typeof x.challenge.lean === 'boolean') && (x.challenge.code === undefined || typeof x.challenge.code === 'string') && (x.challenge.goal === undefined || typeof x.challenge.goal === 'string') && (x.challenge.whatIf === undefined || typeof x.challenge.whatIf === 'string'))) &&
     isNum(x.totalWeeks) && isNum(x.week) && x.week >= 1 && x.week <= x.totalWeeks &&

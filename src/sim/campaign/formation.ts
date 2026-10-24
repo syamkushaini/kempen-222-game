@@ -6,6 +6,7 @@ import { scaled } from './actions';
 import { AFFINITY, DEMANDS, WANTS, consistent, dealsUnityCost, demandUnityCost, offerUnityCost } from './cast';
 import { addScene, inPact, relation, shiftRelation, shiftUnity } from './diplomacy';
 import { pushNews, ref } from './news';
+import { perpaduan } from './whatif';
 import { deliverable, demandsOpen, offerProblem, postsLeft, seniorsFree, signedWith, struck } from './offers';
 import type { Campaign, DemandId, Difficulty, Formation, Offer, Outcome, Scene } from './types';
 
@@ -132,6 +133,8 @@ function decide(world: World, c: Campaign, bloc: number): boolean {
   }
   // The player decides for their own party.
   if (bloc === c.player) return false;
+  // Perpaduan Bangsa: the partner stays with the head of the alliance.
+  if (bloc === perpaduan(c)?.partner) return false;
 
   let best = -1, bestU = -Infinity;
   for (const k of f.claimants) {
@@ -229,6 +232,7 @@ export function soundOut(c: Campaign, bloc: number): boolean {
 export function backRival(c: Campaign, k: number): boolean {
   const f = c.formation;
   const me = c.player;
+  if (perpaduan(c)?.partner === me) return false;
   if (!f || f.outcome || c.phase !== 'formation' || k === me || !f.claimants.includes(k) || !f.offers[k]?.[me]) return false;
   if (playerClaims(c)) standAside(f, me);
   f.pledge[me] = k;
@@ -296,6 +300,7 @@ export function requestTerms(world: World, c: Campaign, k: number, ask: Ask): As
 export function claimAgain(c: Campaign): boolean {
   const f = c.formation;
   const me = c.player;
+  if (perpaduan(c)?.partner === me) return false;
   if (!f || f.outcome || c.phase !== 'formation' || playerClaims(c) || f.pledge[me] !== null) return false;
   f.claimants.push(me);
   f.pledge[me] = me;
@@ -421,7 +426,10 @@ export function startFormation(world: World, c: Campaign, tally: number[]): void
   const seats = [...tally];
   const most = Math.max(...seats.filter((_, p) => p !== OTH));
   // Leaders within reach of the largest party try to form the government; the player always may.
-  const claimants = seats.map((n, p) => (p !== OTH && n > 0 && (p === me || n >= 0.6 * most) ? p : -1)).filter((p) => p >= 0);
+  // Under Perpaduan Bangsa the junior side never claims the top post, whoever plays it, and the head always does, as long as both have seats.
+  const alliance = perpaduan(c);
+  const bound = alliance && seats[alliance.head] > 0 && seats[alliance.partner] > 0 ? alliance : null;
+  const claimants = seats.map((n, p) => (p !== OTH && n > 0 && p !== bound?.partner && (p === me || p === bound?.head || n >= 0.6 * most) ? p : -1)).filter((p) => p >= 0);
   const f: Formation = {
     day: 1, deadline: r.days, extended: false, meetings: MEETINGS,
     seats, claimants,
@@ -438,16 +446,19 @@ export function startFormation(world: World, c: Campaign, tally: number[]): void
 
   // Pact partners stand by the larger partner, on the usual terms.
   for (const pact of c.pacts) {
-    const [big, small] = f.seats[pact.a] >= f.seats[pact.b] ? [pact.a, pact.b] : [pact.b, pact.a];
+    const ours = !!bound && ((pact.a === bound.head && pact.b === bound.partner) || (pact.b === bound.head && pact.a === bound.partner));
+    const [big, small] = ours ? [bound!.head, bound!.partner] : f.seats[pact.a] >= f.seats[pact.b] ? [pact.a, pact.b] : [pact.b, pact.a];
     if (!f.claimants.includes(big) || f.seats[small] <= 0 || f.pledge[small] === big) continue;
     const w = WANTS[PARTY_IDS[small]];
     const free = seniorsFree(world, f, big, small);
+    // The partner in Perpaduan Bangsa is given the deputy's post whatever its size: that is what it gets for the top job.
+    const deputy = ours && free.includes('deputy') ? 'deputy' : null;
     f.offers[big][small] = {
       posts: clamp(Math.round(fairPosts(world, f, small)), 1, Math.max(1, postsLeft(world, f, big, small))),
-      senior: f.seats[small] >= 0.08 * world.seats.length && w.senior && free.includes(w.senior) ? w.senior : null,
+      senior: deputy ?? (f.seats[small] >= 0.08 * world.seats.length && w.senior && free.includes(w.senior) ? w.senior : null),
       demands: [], cash: 0,
     };
-    if (small === me) continue;
+    if (small === me && !ours) continue;
     if (f.claimants.includes(small)) standAside(f, small);
     f.pledge[small] = big;
   }
