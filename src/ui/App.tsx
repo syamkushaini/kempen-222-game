@@ -88,6 +88,9 @@ const TAB_ICON: Record<SidebarTab, IconName> = {
   seats: 'target', polls: 'intel', voters: 'people', news: 'book', saves: 'folder',
 };
 const groupLabel = (id: GroupId, term: boolean): StringKey => (id === 'run' ? (term ? 'group.run.term' : 'group.run.campaign') : `group.${id}`) as StringKey;
+/** The word under a tab on a phone, where eight of them share the width: a short one for the two longest. */
+const navLabel = (id: GroupId, term: boolean): StringKey =>
+  (id === 'run' && term ? 'nav.short.week' : id === 'parliament' ? 'nav.short.parliament' : groupLabel(id, term)) as StringKey;
 export const groupOf = (tab: SidebarTab): GroupId | null => GROUPS.find((g) => g.tabs.includes(tab))?.id ?? null;
 
 function ViewSwitch() {
@@ -278,7 +281,7 @@ function CampaignScreen() {
             const n = g.tabs.reduce((a, id) => a + waitingFor(id), 0);
             return (
               <button key={g.id} className={`${here ? 'active' : ''}${g.tabs.some((id) => spot(`tab-${id}`)) ? ' spot' : ''}`} aria-pressed={here} onClick={() => { setScreen('panel'); if (group.id !== g.id) setTab(g.tabs[0]); }}>
-                <Icon name={g.id === 'run' && term ? 'landmark' : g.icon} size={22} /><span>{t(groupLabel(g.id, term))}</span>
+                <Icon name={g.id === 'run' && term ? 'landmark' : g.icon} size={22} /><span>{t(navLabel(g.id, term))}</span>
                 {n > 0 && !here && <span className="count-badge">{n}</span>}
               </button>
             );
