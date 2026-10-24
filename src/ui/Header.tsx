@@ -260,7 +260,7 @@ export function Header() {
         </button>
       )}
       <MenuButton />
-      {player === undefined && <SupportButton />}
+      <SupportButton short={narrow && player !== undefined} />
       <SettingsButton />
     </header>
   );

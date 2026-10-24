@@ -43,13 +43,13 @@ export function SupportDialog({ onClose }: { onClose(): void }) {
   );
 }
 
-/** The way to say thank you, as a small cup and its words in the corner of the title screen: in sight at once, and quiet. */
-export function SupportButton() {
+/** The way to say thank you, as a small cup and its words beside the settings, on every screen: in sight at once, and quiet. On a phone in a game, where the bar is crowded, the words are shorter. */
+export function SupportButton({ short = false }: { short?: boolean }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button className="icon-btn support-button" aria-haspopup="dialog" onClick={() => setOpen(true)}><Icon name="coffee" size={18} /><span className="support-label">{t('menu.support')}</span></button>
+      <button className="icon-btn support-button" aria-haspopup="dialog" aria-label={t('menu.support')} title={t('menu.support')} onClick={() => setOpen(true)}><Icon name="coffee" size={18} /><span className="support-label" aria-hidden="true">{t(short ? 'menu.support.short' : 'menu.support')}</span></button>
       {/* The header clips what is inside it, so the dialog is hung from the page itself. */}
       {open && createPortal(<SupportDialog onClose={() => setOpen(false)} />, document.body)}
     </>
