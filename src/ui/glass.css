@@ -230,6 +230,9 @@ select option { color: #11142b; background: #ffffff; }
   -webkit-backdrop-filter: var(--blur);
   backdrop-filter: var(--blur);
 }
+/* A dialog sits inside an overlay that already blurs, and Safari does not blur twice: the page behind would show through crisp. So the glass is laid over the solid base, and the dialog is opaque; the cards inside it are lifted off it the same way. */
+.dialog, .dialog.panel { background: linear-gradient(var(--glass-strong), var(--glass-strong)), var(--g-base); }
+.dialog .action, .dialog .panel .action { background: linear-gradient(var(--panel-2), var(--panel-2)), var(--g-base); }
 .overlay { background: color-mix(in srgb, var(--g-base) 45%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .overlay.fall { backdrop-filter: none; -webkit-backdrop-filter: none; }
 
