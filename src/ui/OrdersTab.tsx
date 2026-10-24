@@ -1,3 +1,4 @@
+import { caseChance } from '../sim/campaign/trial';
 import { probeChance } from '../sim/campaign/party';
 import {
   ASSET_LOT, MACHINERY_STEP, MEDIA_STEP, RESEARCH_STEP, budgetSpend, canDissolve, PALACE_WAIT, EARLIEST_DISSOLUTION, machineryTargets, ledger, termIncome, termSpending,
@@ -154,6 +155,10 @@ export function OrdersTab() {
       <h3>{t('orders.budget')}</h3>
       <ul>{(['machinery', 'media', 'research'] as const).map(budgetRow)}</ul>
       <p className="muted small"><Jargon>{t('orders.dossier', { n: Math.round(k.dossier) })}</Jargon></p>
+
+      {((k.graft ?? 0) >= 5 || caseChance(campaign) >= 0.1) && (
+        <p className="note">{t('orders.court', { n: Math.round(k.graft ?? 0), p: Math.round(caseChance(campaign) * 100) })}</p>
+      )}
 
       <h3>{t('orders.states')}</h3>
       <p className="muted small action-desc">{t('orders.states.desc')}</p>

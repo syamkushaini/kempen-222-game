@@ -178,7 +178,7 @@ describe('a case in court', () => {
     let won = 0, lost = 0;
     for (let seed = 1; seed <= 30; seed++) {
       const r = answer(0, seed);
-      if (r.c.career!.ending?.kind === 'ousted') lost++; else { won++; expect(r.c.career!.credibility).toBe(64); }
+      if (r.c.career!.ending?.kind === 'jailed') lost++; else { won++; expect(r.c.career!.credibility).toBe(64); }
     }
     expect(won).toBeGreaterThan(5);
     expect(lost).toBeGreaterThan(5);

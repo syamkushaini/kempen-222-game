@@ -46,7 +46,7 @@ export function describeEffect(t: T, f: Format, world: World, campaign: Campaign
     case 'debt': return `${e.n > 0 ? '▲' : '▼'} ${t('house.debt')} ${e.n > 0 ? '+' : '−'}${Math.abs(e.n)} ${t('hint.debt.points')}`;
     case 'austerity': return t('hint.austerity');
     case 'bankrupt': return t('hint.bankrupt');
-    case 'end': return t(e.kind === 'ousted' ? 'hint.end.ousted' : 'hint.end.retired');
+    case 'end': return t(e.kind === 'ousted' ? 'hint.end.ousted' : e.kind === 'jailed' ? 'hint.end.jailed' : 'hint.end.retired');
     case 'dossier': return arrow(e.n, t('hint.dossier'));
     case 'salience': return arrow(e.n, t('hint.salience', { issue: t(`issue.${e.issue}` as StringKey) }));
     case 'minister': return t(e.act === 'sack' ? 'hint.minister.sack' : 'hint.minister.keep');

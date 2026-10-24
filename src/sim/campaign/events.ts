@@ -149,7 +149,7 @@ export type Effect =
   | { t: 'relation'; who: Who; n: number }
   | { t: 'salience'; issue: IssueId; n: number }
   | { t: 'minister'; act: 'sack' | 'keep' }
-  | { t: 'end'; kind: 'ousted' | 'retired' }
+  | { t: 'end'; kind: 'ousted' | 'retired' | 'jailed' }
   | { t: 'ksu'; act: 'follow' | 'override' | 'replace' }
   | { t: 'adviser'; act: 'listen' | 'ignore' | 'dismiss' }
   | { t: 'flag'; id: string }

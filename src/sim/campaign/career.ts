@@ -47,7 +47,7 @@ import { allianceBonus, allianceWeek, dropMember } from './alliance';
 import { conductWeek } from './conduct';
 import { gdpWeek } from './gdp';
 import { sectorsWeek } from './sectors';
-import { trialWeek } from './trial';
+import { graftWeek, trialWeek } from './trial';
 import { advisersWeek } from './advisers';
 import { echoWeek } from './echoes';
 import { carryStamps, dropStale } from './stamps';
@@ -448,6 +448,7 @@ export function termWeek(world: World, c: Campaign): void {
     openTalks(world, c);
     return;
   }
+  graftWeek(c);
   trialWeek(c);
 
   const seen = ((afford * plan.media) / scaled(world, BUDGET_UNIT.media) * MEDIA_STEP + (o.focus === 'media' ? 0.0015 : 0)) * edge(c, me, 'charisma') * mediaBoost(c, me);
@@ -789,6 +790,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.fresh?.length ? { fresh: [...k.fresh] } : {}),
     ...(k.tenure ? { tenure: structuredClone(k.tenure) } : {}),
     ...(k.trail ? { trail: k.trail } : {}),
+    ...(k.graft ? { graft: k.graft } : {}),
     ...(k.foreign ? { foreign: k.foreign } : {}),
     ...(k.padded ? { padded: k.padded } : {}),
     ...(k.safe ? { safe: { ...k.safe } } : {}),

@@ -461,7 +461,7 @@ export interface CareerRecord {
 
 export const LEGACY_IDS = ['statesman', 'reformer', 'survivor', 'promiser', 'plotter', 'premier', 'kingmaker', 'conscience', 'nearly', 'footnote'] as const;
 export type LegacyId = (typeof LEGACY_IDS)[number];
-export type EndingKind = 'retired' | 'ousted' | 'wipedOut';
+export type EndingKind = 'retired' | 'ousted' | 'wipedOut' | 'jailed';
 export interface Ending { kind: EndingKind; legacy: LegacyId; score: number; /** Acts of Parliament still on the books when the career ended. */ laws?: number }
 
 /** A career: the long game across terms. Null in one-off contests. */
@@ -619,6 +619,8 @@ export interface Career {
   shadow?: Partial<Record<PortfolioId, { name: number; skill: number; label?: string }>>;
   /** The trail left by the defections the party has bought: investigators follow it (see party.ts). */
   trail?: number;
+  /** What the way the party is run has built up against it: state resources diverted to the party, donors leaned on hard. Eases slowly when it stops; the courts follow it (see trial.ts). */
+  graft?: number;
   /** The three advisers, what worries each and how many times they have said so (see advisers.ts). */
   advisers?: Record<'treasurer' | 'strategist' | 'conscience', { name: number; concern: string | null; count: number }>;
   /** The adviser who has asked for a word and is waiting for the answer. */

@@ -49,7 +49,7 @@ export const SEASON_EVENTS_EN: Record<string, EventText> = {
     body: 'The summons arrived at breakfast. It concerns something from before you were a leader, or something that the party has done since, and it has been carefully worded by someone who knows what the newspapers will print. The lawyers are in the hall. Your whole career is on the table.',
     options: ['Fight it, with the best lawyers money can find', 'Settle quietly, and pay', 'Step down, and take it as a private citizen'],
     results: [
-      ['The court found for you. It was a long fortnight, and you will not forget who stood outside.', 'The court did not find for you. It is over, and so is the career.'],
+      ['The court found for you. It was a long fortnight, and you will not forget who stood outside.', 'The court did not find for you. The sentence is read, the doors close, and the career ends in prison.'],
       'It was settled before it was heard. The sum was large and the story was larger.',
       'You left by the side door and said little. The party said less.',
     ],
@@ -162,7 +162,7 @@ export const SEASON_EVENTS_MS: Record<string, EventText> = {
     body: 'Saman tiba masa sarapan. Ia pasal sesuatu sebelum anda jadi pemimpin, atau sesuatu yang parti dah buat sejak tu, dan ia dirangka teliti oleh orang yang tahu apa akhbar akan cetak. Peguam di dewan. Seluruh kerjaya anda atas meja.',
     options: ['Lawan, dengan peguam terbaik yang duit boleh dapat', 'Selesaikan senyap-senyap, dan bayar', 'Letak jawatan, dan hadapi sebagai rakyat biasa'],
     results: [
-      ['Mahkamah memihak anda. Dua minggu yang panjang, dan anda tak akan lupa siapa yang berdiri di luar.', 'Mahkamah tak memihak anda. Dah selesai, kerjaya pun sama.'],
+      ['Mahkamah memihak anda. Dua minggu yang panjang, dan anda tak akan lupa siapa yang berdiri di luar.', 'Mahkamah tak memihak anda. Hukuman dibacakan, pintu ditutup, dan kerjaya tamat di penjara.'],
       'Ia diselesaikan sebelum dibicarakan. Jumlahnya besar dan ceritanya lebih besar.',
       'Anda keluar ikut pintu tepi dan cakap sikit. Parti cakap lagi sikit.',
     ],
