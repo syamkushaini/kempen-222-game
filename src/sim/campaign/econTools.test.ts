@@ -84,3 +84,40 @@ describe('the economic tools', () => {
     expect(raised.interest).toBeGreaterThan(cut.interest);
   });
 });
+
+describe('the acts for a treasury with nothing left to build', () => {
+  it('a rebate spends a full treasury to please every bloc, at the price of prices and trust', () => {
+    const c = career();
+    const k = c.career!;
+    k.treasury = 5e10;
+    const before = treasuryOf(c);
+    const inflation = k.economy.inflation;
+    const trust = k.government.trust;
+    expect(toolCost(world, c, 'rebate')).toBeGreaterThan(toolCost(world, c, 'infrastructure'));
+    expect(useTool(world, c, 'rebate')).toBe(true);
+    expect(treasuryOf(c)).toBeLessThan(before);
+    expect(k.economy.inflation).toBeGreaterThan(inflation);
+    expect(k.government.trust).toBeLessThan(trust);
+    expect(canUseTool(world, c, 'rebate').ok).toBe(false);
+  });
+
+  it('a wealth fund costs money and takes a little off the debt and the standing bill', () => {
+    const c = career();
+    const k = c.career!;
+    k.treasury = 5e10;
+    const before = treasuryOf(c);
+    const debt = k.economy.debt;
+    k.fiscal = 3;
+    expect(useTool(world, c, 'wealthFund')).toBe(true);
+    expect(treasuryOf(c)).toBeLessThan(before);
+    expect(k.economy.debt).toBeLessThan(debt);
+    expect(k.fiscal).toBeLessThan(3);
+  });
+
+  it('are refused when the treasury cannot pay', () => {
+    const c = career();
+    c.career!.treasury = 0;
+    expect(canUseTool(world, c, 'rebate')).toMatchObject({ ok: false, reason: 'money' });
+    expect(canUseTool(world, c, 'wealthFund')).toMatchObject({ ok: false, reason: 'money' });
+  });
+});

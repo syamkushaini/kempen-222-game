@@ -43,9 +43,12 @@ export const TOOLS: Tool[] = [
   { id: 'infrastructure', goal: 'growth', wait: 52, effects: [pub(-250_000), econ(0.5), eff('fiscal', 1), mood(['heartland', 'agri', 'felda'], 0.02)] },
   { id: 'investors', goal: 'growth', wait: 52, effects: [econ(0.4), eff('trust', -1), mood(['smallbiz'], -0.01), eff('fiscal', 0.5)] },
   { id: 'skills', goal: 'growth', wait: 39, effects: [pub(-100_000), econ(0.3), nat(0, 2, 0), mood(['undi18', 'gig'], 0.02)] },
+  // Somewhere to put a full treasury: the dearest act of all, for a government with nothing left to build.
+  { id: 'rebate', goal: 'growth', wait: 52, effects: [pub(-500_000), mood('all', 0.03), econ(0.2, 0.4), eff('trust', -1)] },
   // The books
   { id: 'freeze', goal: 'books', wait: 39, effects: [eff('fiscal', -1.5), mood(['civil'], -0.04), eff('cred', 1)] },
   { id: 'bonds', goal: 'books', wait: 26, effects: [pub(200_000), debt(1.5)] },
+  { id: 'wealthFund', goal: 'books', wait: 78, effects: [pub(-400_000), eff('fiscal', -1), eff('cred', 1), debt(-0.5), nat(0, 0, 1)] },
   ...METER_TOOLS,
 ];
 
