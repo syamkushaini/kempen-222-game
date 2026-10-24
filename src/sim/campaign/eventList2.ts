@@ -54,13 +54,13 @@ export const MORE_EVENTS: Record<string, EventDef> = {
   tycoonAudit: {
     role: 'any', weight: 3, needs: { backstory: 'tycoon' },
     choices: [
-      { effects: [eff('funds', -60_000), eff('cred', 5)] },
+      { effects: [eff('funds', -60_000), eff('cred', 5), { t: 'graft', n: -10 }] },
       { effects: [], gamble: { chance: 0.5, win: [mood('all', 0.01)], lose: [eff('cred', -6)] } },
     ],
   },
   tycoonFriends: {
     role: 'any', weight: 3, needs: { backstory: 'tycoon' },
-    choices: [{ effects: [eff('funds', 150_000), eff('cred', -4)] }, { effects: [eff('cred', 2), eff('donors', -1)] }],
+    choices: [{ effects: [eff('funds', 150_000), eff('cred', -4), { t: 'graft', n: 8 }] }, { effects: [eff('cred', 2), eff('donors', -1), { t: 'graft', n: -3 }] }],
   },
   fixerDebt: {
     role: 'any', weight: 3, needs: { backstory: 'fixer' },

@@ -1436,6 +1436,18 @@
    "title": "A pothole is named after a minister",
    "body": "Someone has painted a minister’s face around a pothole on a busy road, and it has been photographed from every angle. It is not clear whose minister it is, and every side has decided it is the other’s."
   },
+  "graftTip": {
+   "title": "A former aide has a story",
+   "body": "Someone who used to work for you has been seen having tea with a reporter. They say they have “seen how the contracts work”. Your name has not been used yet, but your office has been asked for comment."
+  },
+  "graftLeak": {
+   "title": "A recording leaks",
+   "body": "A voice that sounds very like yours, or an aide’s, is on every phone: it is discussing “a consideration” for a licence. The netizens have already made it a ringtone."
+  },
+  "graftProbe": {
+   "title": "The agency comes asking",
+   "body": "Two polite officers from the anti-graft agency are in the lobby with a list of questions about contracts, donors and accounts. They would like to look at the books. The press is already outside."
+  },
   "constCrisis": {
    "title": "A state assembly is deadlocked",
    "body": "Two men now say they are chief minister of the same state. The Speaker has ruled one way, the other side has walked out, and everyone wants to know whether the assembly will be dissolved. The ruler has been told, and the nation is waiting, politely, for the answer."

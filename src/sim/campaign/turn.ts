@@ -23,6 +23,7 @@ import { startFormation } from './formation';
 import { now, pushNews, ref } from './news';
 import { CHIEF_NOISE, RIVAL_NOISE, hasChiefs, planChiefs, playWeek, runChiefs, type ChiefReport } from './ai';
 import { applyWhatIf, bnPasPact } from './whatif';
+import { RISE, addGraft, graftCampaignWeek } from './graft';
 import { latestNationalPoll, pollCost, takePoll } from './polls';
 import type {
   ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Difficulty,
@@ -331,6 +332,7 @@ function tycoonExposure(c: Campaign) {
     for (const row of c.dyn.support.nat) row[p] -= EFFECT.tycoonHit;
     c.dyn.turnout.party[p] -= EFFECT.tycoonMotivationHit;
     const you = p === c.player;
+    if (you) addGraft(c, RISE.tycoonLeak);
     push(c, { party: p, key: you ? 'news.tycoon.exposedYou' : 'news.tycoon.exposed', vars: { party: ref.party(p) }, tone: you ? 'bad' : 'neutral' });
   });
   c.rng = rng.state;
@@ -361,6 +363,7 @@ export function endWeek(world: World, c: Campaign): void {
     rivalNews(c, p, reports);
   });
   tycoonExposure(c);
+  graftCampaignWeek(c);
   rivalDiplomacy(world, c);
   agendaWeek(world, c);
   teamWeek(world, c);

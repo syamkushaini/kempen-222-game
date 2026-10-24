@@ -6,6 +6,7 @@ import { scaled } from './actions';
 import { stat } from './perks';
 import { pushNews } from './news';
 import { stampOf } from './stamps';
+import { RISE, addGraft } from './graft';
 import { gaffeCut } from './perks';
 import { OUTLET_IDS, type Campaign, type OutletId } from './types';
 
@@ -126,6 +127,7 @@ export function hireTroopers(world: World, c: Campaign) {
   pc.spent += trooperCost(world);
   c.team.troopers = 1;
   c.team.media[index('viral')][me] = 2;
+  addGraft(c, RISE.troopers);
   return pushNews(c, { party: me, key: 'news.media.troopers', tone: 'neutral' });
 }
 
@@ -157,6 +159,7 @@ export function mediaWeek(world: World, c: Campaign, rng: Rng): void {
     shift(c, 'kini', me, -1);
     for (const row of c.dyn.support.nat) row[me] -= 0.03;
     if (c.career) c.career.credibility = Math.max(0, c.career.credibility - 5);
+    addGraft(c, RISE.troopersLeak);
     pushNews(c, { party: me, key: 'news.media.troopersExposed', tone: 'bad' });
   }
 }

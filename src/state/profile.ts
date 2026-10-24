@@ -56,7 +56,7 @@ const isNum = (x: unknown): x is number => typeof x === 'number' && Number.isFin
 
 function isEntry(x: unknown): x is LegacyEntry {
   return isObj(x) && typeof x.game === 'string' && isNum(x.at) && typeof x.name === 'string' &&
-    (PARTY_IDS as readonly unknown[]).includes(x.party) && (x.kind === 'retired' || x.kind === 'ousted' || x.kind === 'wipedOut') &&
+    (PARTY_IDS as readonly unknown[]).includes(x.party) && (x.kind === 'retired' || x.kind === 'ousted' || x.kind === 'wipedOut' || x.kind === 'jailed') &&
     (LEGACY_IDS as readonly unknown[]).includes(x.legacy) &&
     [x.score, x.years, x.yearsPm, x.elections, x.victories, x.kept, x.broken].every(isNum) && (x.ach === undefined || isNum(x.ach));
 }

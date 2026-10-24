@@ -28,6 +28,7 @@ export function netizenKind(key: string): NetizenKind | null {
   if (key === 'news.term.dissolved') return 'dissolved';
   if (key.startsWith('news.by.')) return 'byElection';
   if (key.startsWith('news.states.')) return 'statePolls';
+  if (/^news\.graft\.(up|press|rival|jailed)/.test(key)) return 'graft';
   if (key === 'news.echo.good') return 'echoGood';
   if (key === 'news.echo.bad') return 'echoBad';
   if (key === 'news.echo.mixed') return 'echoMixed';

@@ -13,6 +13,7 @@ import { THANKS_EN, THANKS_MS, type ThanksKey } from './thanks';
 import { MAPSHARE_EN, MAPSHARE_MS, type MapShareKey } from './mapshare';
 import { BRAG_EN, BRAG_MS, type BragKey } from './brag';
 import { CONDUCT_EN, CONDUCT_MS, type ConductKey } from './conduct';
+import { GRAFT_EN, GRAFT_MS, type GraftKey } from './graft';
 import { ADVICE_EN, ADVICE_MS, type AdviceKey } from './advice';
 import { AUTOFILL_EN, AUTOFILL_MS, type AutofillKey } from './autofill';
 import { DOCTRINES_EN, DOCTRINES_MS, type DoctrineKey } from './doctrines';
@@ -370,7 +371,7 @@ const en = {
   'action.crowdfund': 'Online appeal',
   'action.crowdfund.desc': 'Small donations from supporters. Each appeal raises less.',
   'action.tycoon': 'Tycoon donation',
-  'action.tycoon.desc': 'One large cheque, once. If it leaks, it will hurt.',
+  'action.tycoon.desc': 'One large cheque, once. If it leaks, it will hurt. It raises the corruption meter.',
 
   'reason.noTarget.seat': 'Choose a seat on the map first.',
   'reason.noTarget.state': 'Choose a state on the map first.',
@@ -1600,7 +1601,7 @@ const en = {
   'orders.develop.chosen': 'Developing: {states}.',
   'orders.develop.none': 'None chosen: the grants go to your target states, or spread over every state you stand in.',
   'orders.patronage': 'Contracts and land from the states',
-  'orders.patronage.desc': 'The states the party governs can be made to pay: up to {x} times the usual from them. The more it takes, the likelier the anti-graft agency comes asking.',
+  'orders.patronage.desc': 'The states the party governs can be made to pay: up to {x} times the usual from them. The more it takes, the likelier the anti-graft agency comes asking, and every week at any level raises the corruption meter.',
   'orders.patronage.0': 'Little',
   'orders.patronage.1': 'Freely',
   'orders.patronage.2': 'Without shame',
@@ -1646,9 +1647,9 @@ const en = {
   'orders.source.members': 'Members and small donors',
   'orders.source.members.desc': 'Follows your support, unity and credibility. Clean.',
   'orders.source.donors': 'Tycoons and corporate donors',
-  'orders.source.donors.desc': 'Good money with strings. Favours get asked, lists get leaked, and credibility slowly erodes.',
+  'orders.source.donors.desc': 'Good money with strings. Favours get asked, lists get leaked, and credibility slowly erodes, and the corruption meter climbs every week.',
   'orders.source.state': 'Divert to the party',
-  'orders.source.state.desc': 'Moves some of the government’s money into the party’s purse each week, as programmes run through party branches. Lucrative, and exactly what the anti-graft agency looks for.',
+  'orders.source.state.desc': 'Moves some of the government’s money into the party’s purse each week, as programmes run through party branches. Lucrative, and exactly what the anti-graft agency looks for. It raises the corruption meter every week.',
   'orders.source.state.no': 'Only for a party in government, or one that governs a state.',
   'orders.source.assets': 'Party businesses',
   'desk.petition.title': 'The courts unseated {n} of your winners',
@@ -3125,7 +3126,7 @@ const en = {
 type CoreKey = keyof typeof en;
 /** The keys defined in this file, so that text kept elsewhere can be checked not to reuse one. */
 export const CORE_KEYS: readonly string[] = Object.keys(en);
-export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey | ThanksKey | MapShareKey | BragKey | ConductKey | AdviceKey | AutofillKey | MeterToolKey | DoctrineKey;
+export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey | ThanksKey | MapShareKey | BragKey | ConductKey | GraftKey | AdviceKey | AutofillKey | MeterToolKey | DoctrineKey;
 
 const ms: Record<CoreKey, string> = {
   'app.title': 'Kempen 222',
@@ -3478,7 +3479,7 @@ const ms: Record<CoreKey, string> = {
   'action.crowdfund': 'Kutip dana dalam talian',
   'action.crowdfund.desc': 'Sumbangan kecil daripada penyokong. Setiap rayuan mengutip kurang.',
   'action.tycoon': 'Sumbangan taikun',
-  'action.tycoon.desc': 'Satu cek besar, sekali sahaja. Kalau bocor, padahnya besar.',
+  'action.tycoon.desc': 'Satu cek besar, sekali sahaja. Kalau bocor, padahnya besar. Ia menaikkan meter rasuah.',
 
   'reason.noTarget.seat': 'Pilih kawasan pada peta dahulu.',
   'reason.noTarget.state': 'Pilih negeri pada peta dahulu.',
@@ -4708,7 +4709,7 @@ const ms: Record<CoreKey, string> = {
   'orders.develop.chosen': 'Dibangunkan: {states}.',
   'orders.develop.none': 'Tiada dipilih: geran ke negeri sasaran anda, atau dibahagi sama rata ke setiap negeri yang anda bertanding.',
   'orders.patronage': 'Kontrak dan tanah daripada negeri',
-  'orders.patronage.desc': 'Negeri yang diperintah parti boleh dijadikan sumber duit: sehingga {x} kali ganda biasa. Makin banyak diambil, makin besar kemungkinan agensi antirasuah datang bertanya.',
+  'orders.patronage.desc': 'Negeri yang diperintah parti boleh dijadikan sumber duit: sehingga {x} kali ganda biasa. Makin banyak diambil, makin besar kemungkinan agensi antirasuah datang bertanya, dan setiap minggu pada mana-mana tahap menaikkan meter rasuah.',
   'orders.patronage.0': 'Sedikit',
   'orders.patronage.1': 'Bebas',
   'orders.patronage.2': 'Tanpa malu',
@@ -4754,9 +4755,9 @@ const ms: Record<CoreKey, string> = {
   'orders.source.members': 'Ahli dan penderma kecil',
   'orders.source.members.desc': 'Mengikut sokongan, perpaduan dan kredibiliti anda. Bersih.',
   'orders.source.donors': 'Taikun dan penderma korporat',
-  'orders.source.donors.desc': 'Wang lumayan yang bersyarat. Hajat akan diminta, senarai akan bocor, dan kredibiliti terhakis perlahan-lahan.',
+  'orders.source.donors.desc': 'Wang lumayan yang bersyarat. Hajat akan diminta, senarai akan bocor, dan kredibiliti terhakis perlahan-lahan, dan meter rasuah naik setiap minggu.',
   'orders.source.state': 'Lencongkan ke parti',
-  'orders.source.state.desc': 'Memindahkan sebahagian wang kerajaan ke dompet parti setiap minggu, sebagai program yang disalurkan melalui cawangan parti. Lumayan, dan itulah yang dicari agensi antirasuah.',
+  'orders.source.state.desc': 'Memindahkan sebahagian wang kerajaan ke dompet parti setiap minggu, sebagai program yang disalurkan melalui cawangan parti. Lumayan, dan itulah yang dicari agensi antirasuah. Ia menaikkan meter rasuah setiap minggu.',
   'orders.source.state.no': 'Hanya untuk parti dalam kerajaan, atau yang memerintah sebuah negeri.',
   'orders.source.assets': 'Perniagaan parti',
   'desk.petition.title': 'Mahkamah batalkan {n} kemenangan anda',
@@ -6233,8 +6234,8 @@ const ms: Record<CoreKey, string> = {
 export type Lang = 'en' | 'ms';
 // Event text is kept in its own file and looked up by keys built from event ids.
 export const STRINGS: Record<Lang, Record<string, string>> = {
-  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...BRAG_EN, ...CONDUCT_EN, ...ADVICE_EN, ...AUTOFILL_EN, ...METERTOOLS_EN, ...DOCTRINES_EN, ...flattenEvents(EVENTS_EN), ...flattenMore(MORE_EN) },
-  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...BRAG_MS, ...CONDUCT_MS, ...ADVICE_MS, ...AUTOFILL_MS, ...METERTOOLS_MS, ...DOCTRINES_MS, ...flattenEvents(EVENTS_MS), ...flattenMore(MORE_MS) },
+  en: { ...en, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...BRAG_EN, ...CONDUCT_EN, ...GRAFT_EN, ...ADVICE_EN, ...AUTOFILL_EN, ...METERTOOLS_EN, ...DOCTRINES_EN, ...flattenEvents(EVENTS_EN), ...flattenMore(MORE_EN) },
+  ms: { ...ms, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...BRAG_MS, ...CONDUCT_MS, ...GRAFT_MS, ...ADVICE_MS, ...AUTOFILL_MS, ...METERTOOLS_MS, ...DOCTRINES_MS, ...flattenEvents(EVENTS_MS), ...flattenMore(MORE_MS) },
 };
 
 /**

@@ -52,6 +52,7 @@ import { trialWeek } from './trial';
 import { advisersWeek } from './advisers';
 import { echoWeek } from './echoes';
 import { carryStamps, dropStale } from './stamps';
+import { fallOf, graftWeek, prosecute } from './graft';
 import { ksuWeek } from './ksu';
 import { grandWeek } from './grand';
 import { signEarlyPacts } from './earlypact';
@@ -459,6 +460,7 @@ export function termWeek(world: World, c: Campaign): void {
   // The team is on the payroll already; what is left is whether anyone's past comes out this week.
   staffWeek(world, c, new Rng((c.rng ^ 0x57aff) + k.week), false);
   conductWeek(world, c, afford);
+  graftWeek(c);
   plotsWeek(world, c);
   termMediaWeek(c);
   claimsWeek(c, new Rng((c.rng ^ 0xc1a15) + k.week));
@@ -896,6 +898,8 @@ export function nextTerm(world: World, c: Campaign): boolean {
   if (seats >= Math.ceil(LANDSLIDE * world.seats.length)) landslide(c);
   // A party left with no seats is not the end: the leader carries on from outside the House, and may retire at any quiet moment.
   if (seats === 0) pushNews(c, { party: c.player, key: 'news.wiped', vars: {}, tone: 'bad' });
+  // Power is lost, or held: the agency may bring charges against a party that has let the rot go too far (see graft.ts).
+  prosecute(c, fallOf(c, outcome.pm, outcome.partners), k.term);
   return true;
 }
 
