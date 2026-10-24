@@ -41,7 +41,6 @@ import { Music } from './Music';
 import { installIdentity } from './identity';
 import { ground, mix } from './shareCard';
 import { WhatsNew } from './WhatsNew';
-import { NotificationCenter } from './NotificationCenter';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { TouchGestures } from './TouchGestures';
 
@@ -385,7 +384,6 @@ export function App() {
       <Music />
       <Toasts />
       <WhatsNew />
-      <NotificationCenter />
       <KeyboardShortcuts />
       <ActionToasts />
       <footer className="footer">{t('footer.fiction')}</footer>
