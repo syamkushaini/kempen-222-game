@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { PARTIES } from '../data/parties';
 import { PARTY_IDS, type PartyId } from '../sim/types';
 import { BOARD_SIZE, CONFIG, NAME_MAX, countsForBoard, lastName, nameOk, cleanName, post, postedGames, rememberPosted, submissionOf, top, LEVELS, type Filter, type Level, type Row } from '../state/leaderboard';
@@ -27,7 +28,7 @@ export function LeaderboardDialog({ onClose, level: first = 'normal' }: { onClos
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dialog panel honours board" role="dialog" aria-modal="true" aria-label={t('lb.title')}>
         <div className="panel-head">
@@ -67,7 +68,8 @@ export function LeaderboardDialog({ onClose, level: first = 'normal' }: { onClos
           </ol>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
