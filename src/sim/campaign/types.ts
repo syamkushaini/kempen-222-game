@@ -122,6 +122,8 @@ export interface Scene {
   /** Pact offers: seats the player would stand aside in, and seats the other party would. */
   give?: string[];
   get?: string[];
+  /** A pact offer that is Perpaduan Bangsa: the two biggest sides' alliance, put to the player in the first week. */
+  perpaduan?: boolean;
   /** Pact offers from a partner: of the seats the player would give, those the partner asks for as the price of standing together. */
   ask?: string[];
   /** Poaching: the seat whose incumbent is being courted. */

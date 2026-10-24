@@ -65,7 +65,19 @@ function SceneCard({ scene }: { scene: Scene }) {
   const hintFor = (choice: Choice): string => choiceHint(t, f, world, campaign, choice, fog);
 
   let title = '', body: React.ReactNode = null, options: { label: string; choice: number; primary?: boolean; disabled?: boolean; hint?: string; after?(): void }[] = [];
-  if (scene.kind === 'pactOffer' && from !== null) {
+  if (scene.kind === 'pactOffer' && scene.perpaduan && from !== null) {
+    title = t('scene.perpaduan.title', { leader: leaderName(t, from) });
+    body = (
+      <>
+        <p>{t('scene.perpaduan.body', { party: partyName(t, from), give: scene.give?.length ?? 0, get: scene.get?.length ?? 0 })}</p>
+        {preview && <p className="muted small">{t('scene.pact.preview', { me: partyShort(t, me), a0: preview.a[0], a1: preview.a[1], party: partyShort(t, from), b0: preview.b[0], b1: preview.b[1] })}</p>}
+      </>
+    );
+    options = [
+      { label: t('scene.perpaduan.accept'), choice: 0, primary: true },
+      { label: t('scene.perpaduan.decline'), choice: 1 },
+    ];
+  } else if (scene.kind === 'pactOffer' && from !== null) {
     title = t('scene.pact.title', { leader: leaderName(t, from) });
     body = (
       <>

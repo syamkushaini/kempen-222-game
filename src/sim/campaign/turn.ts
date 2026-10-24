@@ -22,7 +22,7 @@ import { beforeNomination, hasDiplomacy, nominationWeek, pactSeats, rivalDiploma
 import { startFormation } from './formation';
 import { now, pushNews, ref } from './news';
 import { CHIEF_NOISE, RIVAL_NOISE, hasChiefs, planChiefs, playWeek, runChiefs, type ChiefReport } from './ai';
-import { applyWhatIf, bnPasPact } from './whatif';
+import { applyWhatIf, offerPerpaduan, perpaduanWeek } from './whatif';
 import { RISE, addGraft, graftCampaignWeek } from './graft';
 import { latestNationalPoll, pollCost, takePoll } from './polls';
 import type {
@@ -68,9 +68,8 @@ const ALLIED = 30;
 export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   const rng = new Rng(opts.seed);
   const parties = PARTY_IDS.map((_, p) => freshParty(world, p, p === opts.player && isOutsider(world, p)));
-  // Melaka's "what if" opens with its two biggest sides already sharing the seats.
-  const together = opts.challenge?.whatIf === 'bnpas' && world.id === 'state:melaka' && !world.rules.career;
-  const opening = together ? bnPasPact(world) : standingPact(world);
+  // Melaka's "what if" forms Perpaduan Bangsa in the first week, not before: it opens like any other contest.
+  const opening = standingPact(world);
 
   const bare: Omit<Campaign, 'team'> = {
     scenario: world.id,
@@ -119,7 +118,7 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
     // Said on the first day, so nobody wonders why a party is missing from most of the ballots.
     const mine = pact.a === c.player || pact.b === c.player;
     c.news.push({
-      week: 1, party: mine ? c.player : pact.a, key: together ? (mine ? 'news.pact.together.mine' : 'news.pact.together') : mine ? 'news.pact.standing.mine' : 'news.pact.standing',
+      week: 1, party: mine ? c.player : pact.a, key: mine ? 'news.pact.standing.mine' : 'news.pact.standing',
       vars: { a: ref.party(pact.a), b: ref.party(pact.b), party: ref.party(pact.a === c.player ? pact.b : pact.a), n: Object.keys(opening.standDowns).length },
       tone: 'neutral',
     });
@@ -133,6 +132,7 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   }
   openCampaign(world, c);
   agendaIntro(world, c);
+  if (!world.rules.career && world.id === 'state:melaka') offerPerpaduan(world, c);
   publishPublicPoll(world, c);
   return c;
 }
@@ -347,6 +347,7 @@ export function endWeek(world: World, c: Campaign): void {
   if (c.phase !== 'campaign') return;
   const player = c.parties[c.player]!;
   settleInbox(world, c);
+  perpaduanWeek(world, c);
 
   // The player's chiefs work through the week, on what the leader left undone.
   chiefNews(c, runChiefs(world, c, c.player, truth(world, c), CHIEF_NOISE));

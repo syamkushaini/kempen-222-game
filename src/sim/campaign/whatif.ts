@@ -2,6 +2,7 @@ import type { World } from '../election';
 import { lastElection } from '../election';
 import { BLOC_IDS, N_BLOCS, N_PARTIES, PARTY_IDS } from '../types';
 import { STANDS, type StandDowns } from '../transfer';
+import { pushNews, ref } from './news';
 import type { Campaign } from './types';
 
 // History, played again with one thing changed: the election as it was, with the economy sour, or the young turning out, or the
@@ -65,6 +66,53 @@ export function perpaduan(c: Pick<Campaign, 'challenge' | 'pacts'>): { head: num
   if (c.challenge?.whatIf !== 'bnpas') return null;
   const head = PARTY_IDS.indexOf(BNPAS.big), partner = PARTY_IDS.indexOf(BNPAS.partner);
   return c.pacts.some((x) => (x.a === head && x.b === partner) || (x.a === partner && x.b === head)) ? { head, partner } : null;
+}
+
+/** Allies are on good terms. */
+const ALLIED = 30;
+
+/**
+ * Perpaduan Bangsa is formed in the first week of the campaign, before nomination day (not before the campaign opens): the seats are
+ * shared and the pact written down. Says so in the news, to the player in it and to everyone else.
+ */
+export function formPerpaduan(world: World, c: Campaign): void {
+  const head = PARTY_IDS.indexOf(BNPAS.big), partner = PARTY_IDS.indexOf(BNPAS.partner);
+  if (c.pacts.some((x) => (x.a === head && x.b === partner) || (x.a === partner && x.b === head))) return;
+  const deal = bnPasPact(world);
+  c.standDowns = { ...c.standDowns, ...deal.standDowns };
+  for (const pact of deal.pacts) {
+    c.pacts.push({ ...pact, week: c.week });
+    c.relations[pact.a][pact.b] = c.relations[pact.b][pact.a] = Math.max(c.relations[pact.a][pact.b], ALLIED);
+    const mine = pact.a === c.player || pact.b === c.player;
+    pushNews(c, {
+      party: mine ? c.player : pact.a, key: mine ? 'news.pact.together.mine' : 'news.pact.together',
+      vars: { a: ref.party(pact.a), b: ref.party(pact.b), party: ref.party(pact.a === c.player ? pact.b : pact.a), n: Object.keys(deal.standDowns).length },
+      tone: mine ? 'good' : 'neutral',
+    });
+  }
+}
+
+/**
+ * The first week of Melaka's "what if": a player leading one of the two sides is asked whether to join (a pact offer from the other
+ * leader, answered like any other); with the third side's player the two simply announce it at the week's end (`perpaduanWeek`).
+ */
+export function offerPerpaduan(world: World, c: Campaign): void {
+  const head = PARTY_IDS.indexOf(BNPAS.big), partner = PARTY_IDS.indexOf(BNPAS.partner);
+  if (c.challenge?.whatIf !== 'bnpas' || (c.player !== head && c.player !== partner)) return;
+  const other = c.player === head ? partner : head;
+  const deal = bnPasPact(world).standDowns;
+  const ids = Object.keys(deal);
+  c.inbox.push({
+    id: c.nextScene++, kind: 'pactOffer', from: other, perpaduan: true,
+    give: ids.filter((id) => deal[id][c.player] >= 0), get: ids.filter((id) => deal[id][other] >= 0),
+  });
+}
+
+/** Week one's end: the two sides announce Perpaduan Bangsa, when the player is the third side (a player in it has had the choice). */
+export function perpaduanWeek(world: World, c: Campaign): void {
+  if (c.week !== 1 || c.challenge?.whatIf !== 'bnpas' || world.id !== 'state:melaka') return;
+  if (c.player === PARTY_IDS.indexOf(BNPAS.big) || c.player === PARTY_IDS.indexOf(BNPAS.partner)) return;
+  formPerpaduan(world, c);
 }
 
 /** Applies a "what if" to a campaign that has just been made. Does nothing for anything that is not one, or not one for this contest. */

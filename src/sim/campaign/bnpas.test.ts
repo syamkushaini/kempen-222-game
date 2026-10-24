@@ -6,14 +6,72 @@ import { STANDS } from '../transfer';
 import { N_BLOCS, PARTY_IDS } from '../types';
 import { BNPAS, WHATIF, WHATIF_IDS, STATE_WHATIF_IDS, perpaduan, whatIfsFor } from './whatif';
 import { backRival, claimAgain, playerClaims, playerRole, startFormation } from './formation';
-import { breakPact } from './diplomacy';
+import { breakPact, resolveCampaignScene } from './diplomacy';
 import { endWeek, electionResult, newCampaign } from './turn';
 import { endDay as endDayFor } from './formation';
 import { isValidCampaign } from './validate';
 
 const BIG = PARTY_IDS.indexOf(BNPAS.big), SMALL = PARTY_IDS.indexOf(BNPAS.partner), PH = PARTY_IDS.indexOf('ps');
 const melaka = getWorld('state:melaka')!;
-const start = (player: number, whatIf?: string, world = melaka, seed = 4) => newCampaign(world, { player, difficulty: 'normal', seed, ...(whatIf ? { challenge: { fog: false, noisy: false, whatIf } } : {}) });
+const raw = (player: number, whatIf?: string, world = melaka, seed = 4) => newCampaign(world, { player, difficulty: 'normal', seed, ...(whatIf ? { challenge: { fog: false, noisy: false, whatIf } } : {}) });
+/** The campaign once Perpaduan Bangsa has been formed in its first week: joined by the player in it, announced at the week's end otherwise. */
+const start = (player: number, whatIf?: string, world = melaka, seed = 4) => {
+  const c = raw(player, whatIf, world, seed);
+  if (whatIf !== 'bnpas' || world.id !== 'state:melaka') return c;
+  const offer = c.inbox.find((x) => x.perpaduan);
+  if (offer) { resolveCampaignScene(melaka, c, offer, 0); c.inbox = []; } else endWeek(melaka, c);
+  return c;
+};
+
+describe('Perpaduan Bangsa is formed in the first week', () => {
+  it('is not there when the campaign opens: every seat is a contest, and the two leaders ask the player to join', () => {
+    for (const player of [BIG, SMALL]) {
+      const c = raw(player, 'bnpas');
+      expect(c.pacts).toHaveLength(0);
+      expect(Object.keys(c.standDowns)).toHaveLength(0);
+      expect(perpaduan(c)).toBeNull();
+      const offer = c.inbox.filter((x) => x.perpaduan);
+      expect(offer).toHaveLength(1);
+      expect(offer[0].from).toBe(player === BIG ? SMALL : BIG);
+      expect(offer[0].give!.length + offer[0].get!.length).toBe(melaka.seats.length);
+    }
+    expect(raw(PH, 'bnpas').inbox.filter((x) => x.perpaduan)).toHaveLength(0);
+  });
+
+  it('is formed by joining, and then stands for the whole campaign', () => {
+    const c = raw(SMALL, 'bnpas');
+    resolveCampaignScene(melaka, c, c.inbox[0], 0);
+    expect(perpaduan(c)).not.toBeNull();
+    expect(Object.keys(c.standDowns)).toHaveLength(melaka.seats.length);
+    expect(c.pacts[0].week).toBe(1);
+  });
+
+  it('is not formed if the player goes it alone, or lets the week pass, and is not offered again', () => {
+    for (const choice of [1, 2]) {
+      const c = raw(BIG, 'bnpas');
+      const offer = c.inbox[0];
+      resolveCampaignScene(melaka, c, offer, choice);
+      c.inbox = [];
+      expect(perpaduan(c)).toBeNull();
+      expect(c.news.some((n) => n.key === 'news.perpaduan.declined')).toBe(true);
+      endWeek(melaka, c);
+      expect(c.pacts).toHaveLength(0);
+      expect(c.inbox.some((x) => x.perpaduan)).toBe(false);
+    }
+    const c = raw(SMALL, 'bnpas');
+    endWeek(melaka, c); // the offer left unanswered lapses
+    expect(c.pacts).toHaveLength(0);
+  });
+
+  it('is announced at the end of the first week when the player is the third side', () => {
+    const c = raw(PH, 'bnpas');
+    expect(c.pacts).toHaveLength(0);
+    endWeek(melaka, c);
+    expect(perpaduan(c)).not.toBeNull();
+    expect(c.news.some((n) => n.key === 'news.pact.together')).toBe(true);
+    expect(c.week).toBe(2);
+  });
+});
 
 describe('Melaka with its two biggest sides standing together', () => {
   it('is offered for Melaka and nowhere else, beside the general election\'s own four', () => {
