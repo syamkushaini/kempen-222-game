@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { termIncome, termSpending } from '../sim/campaign/career';
 import { hasPublicMoney, treasuryOf } from '../sim/campaign/treasury';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
+import { graftLevel, graftOf } from '../sim/campaign/graft';
+import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { MenuButton } from './GameMenu';
 import { MoneyButton } from './MoneySheet';
@@ -69,8 +71,24 @@ export function CampaignBar() {
         <span className="hud-label">{t('hud.days')}</span>
         <strong className="num hud-value">{me.days}</strong>
       </div>
+      <GraftChip />
       <MoneyButton />
       <EndWeekButton />
+    </div>
+  );
+}
+
+/** The corruption meter for a contest with no career, where there is no ribbon of figures: its number and level, and what it is doing as a tooltip. */
+function GraftChip() {
+  const t = useT();
+  const campaign = useStore((s) => s.game!.campaign);
+  if (campaign.career) return null;
+  const g = graftOf(campaign);
+  const level = graftLevel(g);
+  return (
+    <div className="hud-item" data-metric="graft" title={`${t('graft.desc')} ${t(`graft.effect.${level}` as StringKey)}`}>
+      <span className="hud-label">{t('metrics.graft')}</span>
+      <strong className="num hud-value" style={level >= 2 ? { color: 'var(--bad, #e5484d)' } : undefined}>{Math.round(g)} <span className="small muted">{t(`graft.level.${level}` as StringKey)}</span></strong>
     </div>
   );
 }
@@ -109,6 +127,7 @@ function Hud() {
         <span className="hud-label">{t('hud.funds')}</span>
         <strong className="num hud-value">{f.rm(me.funds)} <Delta value={me.funds} format={(n) => f.rm(Math.abs(n))} scope={scope} least={1000} /></strong>
       </div>}
+      <GraftChip />
       {/* on a phone the button lives in the bottom bar */}
       {!narrow && <EndWeekButton />}
     </div>
