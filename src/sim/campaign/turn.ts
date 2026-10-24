@@ -22,7 +22,7 @@ import { beforeNomination, hasDiplomacy, nominationWeek, pactSeats, rivalDiploma
 import { startFormation } from './formation';
 import { now, pushNews, ref } from './news';
 import { CHIEF_NOISE, RIVAL_NOISE, hasChiefs, planChiefs, playWeek, runChiefs, type ChiefReport } from './ai';
-import { applyWhatIf } from './whatif';
+import { applyWhatIf, bnPasPact } from './whatif';
 import { latestNationalPoll, pollCost, takePoll } from './polls';
 import type {
   ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Difficulty,
@@ -67,7 +67,9 @@ const ALLIED = 30;
 export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   const rng = new Rng(opts.seed);
   const parties = PARTY_IDS.map((_, p) => freshParty(world, p, p === opts.player && isOutsider(world, p)));
-  const opening = standingPact(world);
+  // Melaka's "what if" opens with its two biggest sides already sharing the seats.
+  const together = opts.challenge?.whatIf === 'bnpas' && world.id === 'state:melaka' && !world.rules.career;
+  const opening = together ? bnPasPact(world) : standingPact(world);
 
   const bare: Omit<Campaign, 'team'> = {
     scenario: world.id,
@@ -106,7 +108,7 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
     };
   } else if (opts.challenge?.code) c.challenge = { fog: false, noisy: false, code: opts.challenge.code };
   // The real election, played again with one thing changed.
-  if (opts.challenge?.whatIf && world.rules.kind === 'general' && !world.rules.career) applyWhatIf(world, c, opts.challenge.whatIf);
+  if (opts.challenge?.whatIf && !world.rules.career) applyWhatIf(world, c, opts.challenge.whatIf);
   // A career sets its own opening terms first, then lets the leader's past have its say.
   if (!world.rules.career) applyBackstory(c);
   // A lean purse: the party starts with less (and less comes in: see `incomeBoost`).
@@ -116,7 +118,7 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
     // Said on the first day, so nobody wonders why a party is missing from most of the ballots.
     const mine = pact.a === c.player || pact.b === c.player;
     c.news.push({
-      week: 1, party: mine ? c.player : pact.a, key: mine ? 'news.pact.standing.mine' : 'news.pact.standing',
+      week: 1, party: mine ? c.player : pact.a, key: together ? (mine ? 'news.pact.together.mine' : 'news.pact.together') : mine ? 'news.pact.standing.mine' : 'news.pact.standing',
       vars: { a: ref.party(pact.a), b: ref.party(pact.b), party: ref.party(pact.a === c.player ? pact.b : pact.a), n: Object.keys(opening.standDowns).length },
       tone: 'neutral',
     });

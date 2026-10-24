@@ -1379,6 +1379,14 @@ When someone else leads the government, `rivalPm.ts` makes the choices the playe
 
 In a career in one state, promises and the bills a rival government tables are limited to a state's powers (`stateScope.ts`): the State and Concurrent Lists (welfare, housing, local councils and their elections, state roads and water, the state's own laws and bodies) for every state; for Sabah and Sarawak also a state sales tax, oil royalties and the MA63 share of federal revenue (the Tenth Schedule); and for Sarawak its own power grid. Petrol, wages, hospitals, schools and the like are federal and cannot be promised. Manifestos are cut to this at the start of a career and at each new term, and old saves that carry a federal promise simply never table it.
 
+## Melaka with its two biggest sides standing together (24 Oct 2026)
+
+In the real 2026 Melaka election the two biggest Malay-led sides said they would share the seats: one stands in 21 of the 28, the other (with its friends) in 7, and neither stands against the other, while the third big side goes it alone. The Melaka world cannot show that as data (it is the 2021 election, with three sides), but the game already has seat pacts, so it is a "what if" on the state election, beside the general election's four:
+
+- **What it is:** the "Two big sides stand together" choice on the Rules step of a Melaka state election (`STATE_WHATIF_IDS`, `whatIfsFor` in `whatif.ts`; the picker in `Title.tsx` shows whichever "what if"s the contest has). It starts the campaign with `Campaign.challenge.whatIf = 'bnpas'`.
+- **How it works:** `bnPasPact` builds the opening stand-downs and one pact; `newCampaign` uses them in place of `standingPact` and says so in the first-day news (`news.pact.together`), with the two sides on good terms. The smaller side (Perikatan Teguh, 7 seats) takes the seats where it won its biggest share of the vote in 2021; the larger (Barisan Pusaka, 21) stands in the rest. **The split is the game's own**: the real lists were not out on 24 Oct. The player may be either side or the third, and may end the pact in the Pacts tab before nomination day, like any standing pact.
+- **Not done:** the real split once it is known (change `BNPAS.small` or give `bnPasPact` a list of seats), a third side to stand for the party that left the real alliance (the model has the three sides of 2021), and the 2026 electorate and result, which still wait for 14 Nov (see the note on Melaka).
+
 ## Carrying a new party up the ladder (20 Oct 2026)
 
 Suggested by a player (issue #68): after founding a party and fighting a by-election, carry on to the state election and then the general election, with a base already built.
