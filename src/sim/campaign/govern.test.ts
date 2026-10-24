@@ -311,6 +311,23 @@ describe('bills', () => {
     expect(agenda(dropped)).toContain('pledge:termLimit'); // it can come back
   });
 
+  it('are not put to a party that has no seat in the House: it has no vote to cast', () => {
+    const c = career(PT);
+    const seatsOfPt = lastElection(base).seats.flatMap((o, i) => (o.winner === PT ? [base.seats[i].id] : []));
+    expect(seatsOfPt.length).toBeGreaterThan(0);
+    c.career!.house = Object.fromEntries(seatsOfPt.map((id) => [id, PS]));
+    expect(houseTally(base, c)[PT]).toBe(0);
+    c.career!.week = 20;
+    governWeek(c, new Rng(1), base);
+    expect(c.inbox.filter((x) => x.kind === 'houseVote')).toHaveLength(0);
+    expect(c.career!.rivalBills).toBe(1);
+    // With a seat, it still is.
+    const seated = career(PT);
+    seated.career!.week = 20;
+    governWeek(seated, new Rng(1), base);
+    expect(seated.inbox[0]).toMatchObject({ kind: 'houseVote' });
+  });
+
   it('come from rival governments too, and the player must say where they stand', () => {
     const c = career(PT);
     c.career!.week = 20;
