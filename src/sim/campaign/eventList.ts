@@ -108,7 +108,7 @@ export const EVENTS: Record<string, EventDef> = {
   donorFavour: {
     role: 'any', weight: 3, needs: { donors: true, notFlag: 'owesDonor' },
     choices: [
-      { effects: [eff('funds', 120_000), flag('owesDonor'), eff('cred', -1)], then: { event: 'donorLeak', after: 20 } },
+      { effects: [eff('funds', 120_000), flag('owesDonor'), eff('cred', -1), { t: 'graft', n: 6 }], then: { event: 'donorLeak', after: 20 } },
       { effects: [eff('donors', -1)] },
       { effects: [eff('donors', -3), eff('cred', 4), mood(['urban_lib', 'm40'], 0.02)] },
     ],

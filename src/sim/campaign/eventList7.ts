@@ -68,7 +68,7 @@ export const STORY_EVENTS_2: Record<string, EventDef> = {
   portBid: {
     role: 'gov', weight: 3,
     choices: [
-      { effects: [eff('funds', 120_000), eff('cred', -2), mood(['urban_lib', 'm40'], -0.02)], then: { event: 'portProtest', after: 9 } },
+      { effects: [eff('funds', 120_000), eff('cred', -2), mood(['urban_lib', 'm40'], -0.02), { t: 'graft', n: 8 }], then: { event: 'portProtest', after: 9 } },
       { effects: [eff('cred', 2), eff('fiscal', 0.5), mood(['urban_lib', 'm40'], 0.02)], then: { event: 'portProtest', after: 9 } },
       { effects: [eff('stability', -1)] },
     ],

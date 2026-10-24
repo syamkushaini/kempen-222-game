@@ -22,6 +22,7 @@ export function describeEffect(t: T, f: Format, world: World, campaign: Campaign
     case 'assets': return arrow(e.pct, t('hint.assets'));
     // Unity is kept in whole points.
     case 'unity': return sign(Math.round(realistic(campaign, e.n)) || Math.sign(e.n), t('hint.unity'));
+    case 'graft': return sign(Math.round(e.n), t('hint.graft'));
     case 'net': return sign(Math.round(e.n), t('hint.net'));
     case 'cred': return sign(real(e.n), t('hint.cred'));
     case 'stability': return sign(real(e.n), t('hint.stability'));

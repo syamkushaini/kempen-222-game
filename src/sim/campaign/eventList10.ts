@@ -223,7 +223,7 @@ export const OPPOSITION_SEATS: Record<string, EventDef> = {
   swingVotes: {
     role: 'opp', seats: ['opp'], weight: 3,
     choices: [
-      { effects: [eff('funds', 60_000), eff('cred', -3), rel('pm', 2)] },
+      { effects: [eff('funds', 60_000), eff('cred', -3), rel('pm', 2), { t: 'graft', n: 4 }] },
       { effects: [eff('cred', 2)] },
       { effects: [eff('unity', -1)] },
     ],

@@ -10,7 +10,7 @@ export const HANDLES = [
 export const NETIZEN_KINDS = [
   'crowdGreat', 'crowdWeak', 'viral', 'flop', 'attack', 'backfire', 'tycoon', 'poll', 'pact', 'katak',
   'candidate', 'staff', 'endorser', 'fine', 'troopers', 'gaffe', 'budget', 'billPassed', 'billDefeated', 'motion',
-  'walkout', 'dissolved', 'byElection', 'statePolls', 'downturn', 'echoGood', 'echoBad', 'echoMixed',
+  'walkout', 'dissolved', 'byElection', 'statePolls', 'downturn', 'echoGood', 'echoBad', 'echoMixed', 'graft',
 ] as const;
 export type NetizenKind = (typeof NETIZEN_KINDS)[number];
 
@@ -43,6 +43,7 @@ export const NETIZENS_EN: Record<NetizenKind, string[]> = {
   echoGood: ['Funny how that decision looks better a month on.', 'Credit where it is due: that one worked.', 'Remember when everyone said it was a mistake?'],
   echoBad: ['A month later and it is still coming back to bite them.', 'They said it would be fine. It is not fine.', 'Who is going to say “I told you so” first?'],
   echoMixed: ['Some got what they wanted, some did not. Welcome to government.', 'Too early to say, too late to take back.', 'Ask me in a year.'],
+  graft: ['Every time I read about {party}’s money I need a lie down.', 'Not saying {party} is corrupt. Just saying the contracts have a lot of cousins.', 'Rasuah? Nah. “Consideration”, they call it.', 'Remember when we were angry about this? Still angry.'],
 };
 
 export const NETIZENS_MS: Record<NetizenKind, string[]> = {
@@ -74,4 +75,5 @@ export const NETIZENS_MS: Record<NetizenKind, string[]> = {
   echoGood: ['Lucu, keputusan tu nampak lebih baik sebulan kemudian.', 'Patut puji: yang tu menjadi.', 'Ingat tak masa semua orang kata ia silap?'],
   echoBad: ['Sebulan kemudian dan ia masih menggigit balik.', 'Mereka kata tak apa. Tapi ada apa-apa.', 'Siapa nak kata “aku dah cakap” dulu?'],
   echoMixed: ['Ada yang dapat apa dia nak, ada yang tidak. Selamat datang ke pemerintahan.', 'Terlalu awal nak kata, terlalu lewat nak tarik balik.', 'Tanya aku setahun lagi.'],
+  graft: ['Setiap kali baca pasal duit {party}, aku kena baring dulu.', 'Bukan cakap {party} rasuah. Cuma kontrak tu banyak sangat sepupu.', 'Rasuah? Tak lah. “Pertimbangan”, katanya.', 'Ingat lagi kita marah pasal ni dulu? Aku masih marah.'],
 };

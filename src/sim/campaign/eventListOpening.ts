@@ -19,7 +19,7 @@ export const OPENING_STORIES: Record<string, EventDef> = {
     role: 'opp', seats: ['lead', 'opp'], weight: 0, after: 3, topic: 'scandal', needs: { flag: openingFlag('startDonor'), first: true },
     choices: [
       { effects: [eff('funds', -10_000), eff('cred', 1), mood(['heartland'], -0.01)] },
-      { effects: [eff('funds', 50_000), eff('cred', -2), eff('unity', -1)] },
+      { effects: [eff('funds', 50_000), eff('cred', -2), eff('unity', -1), { t: 'graft', n: 3 }] },
       { effects: [], gamble: { chance: 'cred', win: [eff('funds', 30_000), eff('cred', 1)], lose: [eff('cred', -2)] } },
     ],
   },

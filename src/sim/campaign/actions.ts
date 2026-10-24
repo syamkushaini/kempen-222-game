@@ -14,6 +14,7 @@ import { weatherFactor } from './weather';
 import { MEDIA_AIMED, MIN_SEGMENT, addAimedPitch, aimReach, isBloc, segmentShare, type SegmentId } from './segments';
 import { stateOf } from './agenda';
 import { ISSUE_IDS, type IssueId } from './types';
+import { RISE, addGraft } from './graft';
 import type {
   ActionId, ActionReport, ActionTarget, Campaign, ChiefLevel, Family, LocalTheme, PartyCampaign, Posture, Quality, Sweep, TargetKind,
 } from './types';
@@ -749,6 +750,7 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
     case 'tycoon':
       raised = tidy(expectedYield(world, c, p, 'tycoon'));
       pc.tycoon = 1;
+      if (p === c.player) addGraft(c, RISE.tycoon);
       quality = 'ok';
       break;
   }

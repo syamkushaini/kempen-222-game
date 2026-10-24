@@ -1,4 +1,5 @@
 import { careerUse, thriftFactor } from './thrift';
+import { PROSECUTABLE, graftLevel, graftOf, prosecute } from './graft';
 import type { Campaign, EndingKind, LegacyId, PledgeId } from './types';
 
 const REFORMS: PledgeId[] = ['graftCommission', 'termLimit', 'repealLaws'];
@@ -92,13 +93,19 @@ export function endCareer(c: Campaign, kind: EndingKind): void {
   const k = c.career;
   if (!k || k.ending) return;
   const { laws, ...rest } = legacyOf(c);
-  k.ending = { kind, ...rest, ...(laws > 0 ? { laws } : {}) };
+  // A leader sent to prison is remembered for that, and for nothing else; half the points stand.
+  const jailed = kind === 'jailed';
+  k.ending = { kind, ...rest, ...(jailed ? { legacy: 'footnote' as const, score: Math.round(rest.score / 2) } : {}), ...(laws > 0 ? { laws } : {}) };
   c.inbox = [];
 }
 
 /** The player chooses to go. Possible at any quiet moment between elections. */
 export function retire(c: Campaign): boolean {
   if (!c.career || c.career.ending || c.phase !== 'term') return false;
+  // Walking away from power with the agency at the door is not an escape, only a smaller risk.
+  const g = c.career.government;
+  const fall = g.pm === c.player ? 'retired' : g.partners.includes(c.player) ? 'partner' : 'retired';
+  if (graftLevel(graftOf(c)) >= PROSECUTABLE && prosecute(c, fall, c.career.term, 1)) return true;
   endCareer(c, 'retired');
   return true;
 }
