@@ -1,3 +1,4 @@
+import { useOf } from './thrift';
 import { chiefsTermWeek } from './chiefsTerm';
 import { emptyDynamics } from '../dynamics';
 import { lastElection, majorityLine, type World } from '../election';
@@ -831,7 +832,8 @@ export function nextTerm(world: World, c: Campaign): boolean {
   r.elections++;
   r.bestSeats = Math.max(r.bestSeats, seats);
   if (outcome.pm === c.player) r.victories++;
-  r.terms = [...(r.terms ?? []), { seats, pm: outcome.pm === c.player }];
+  const mine = c.parties[c.player]!;
+  r.terms = [...(r.terms ?? []), { seats, pm: outcome.pm === c.player, use: useOf(mine.spent, mine.funds) }];
   if (!hasPublicMoney(c)) { c.career.orders.state = 0; c.career.orders.grants = 0; }
   // The campaign's bills arrive after the votes are counted: half of what was left goes on them.
   const pc = c.parties[c.player]!;

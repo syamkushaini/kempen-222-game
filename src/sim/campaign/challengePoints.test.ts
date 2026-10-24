@@ -52,7 +52,7 @@ describe('the points of a challenge', () => {
     const plain = challengePoints(world, make({}), 8, 0.4);
     expect(challengePoints(world, make({}), 8, 0.4)).toBe(plain);
     expect(challengePoints(world, make({ fog: true }), 8, 0.4)).toBeGreaterThan(plain);
-    expect(plain).toBe(pointsFor({ seats: 8, total: world.seats.length, line: majorityLine(world), share: 0.4, difficulty: 'hard', rules: 0 }));
+    expect(plain).toBe(pointsFor({ seats: 8, total: world.seats.length, line: majorityLine(world), share: 0.4, difficulty: 'hard', rules: 0, use: 0 }));
   });
 
   it('are worked out only once the votes are counted, and only for a challenge', () => {

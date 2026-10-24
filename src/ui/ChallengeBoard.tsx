@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { PARTIES } from '../data/parties';
 import type { StringKey } from '../i18n/strings';
 import { challengeById, goalResult } from '../sim/campaign/challenges';
-import { challengePoints } from '../sim/campaign/challengePoints';
+import { challengePoints, useOfCampaign } from '../sim/campaign/challengePoints';
+import { thriftFactor } from '../sim/campaign/thrift';
 import { weekEnded } from '../sim/campaign/weekly';
 import type { Summary } from '../sim/campaign/night';
 import { PARTY_IDS, type PartyId } from '../sim/types';
@@ -80,7 +81,13 @@ export function PointsLine({ summary }: { summary: Pick<Summary, 'seats' | 'vote
   if (!key) return null;
   const points = challengePoints(world, c, summary.seats, summary.voteShare);
   const best = Math.max(points, held?.[key] ?? 0);
-  return <p className="goal-result points" role="status">{t('challenge.points.line', { n: points })}{best > points ? ` · ${t('challenge.points.best', { n: best })}` : ''}</p>;
+  const use = useOfCampaign(c);
+  return (
+    <>
+      <p className="goal-result points" role="status">{t('challenge.points.line', { n: points })}{best > points ? ` · ${t('challenge.points.best', { n: best })}` : ''}</p>
+      {use !== undefined && <p className="muted small">{t('challenge.points.thrift', { use: Math.round(use * 100), factor: thriftFactor(use).toFixed(2) })}</p>}
+    </>
+  );
 }
 
 /** The player's challenge points in all, for the Challenges screen. */
