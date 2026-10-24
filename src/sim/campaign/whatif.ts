@@ -2,6 +2,7 @@ import type { World } from '../election';
 import { lastElection } from '../election';
 import { BLOC_IDS, N_BLOCS, N_PARTIES, PARTY_IDS } from '../types';
 import { STANDS, type StandDowns } from '../transfer';
+import { pushNews, ref } from './news';
 import type { Campaign } from './types';
 
 // History, played again with one thing changed: the election as it was, with the economy sour, or the young turning out, or the
@@ -24,6 +25,8 @@ export const WHATIF = {
   recession: 0.03, scandal: 0.04, scandalUnity: 10,
   /** What a better year gives the player’s party everywhere. */
   surge: 0.03,
+  /** Perpaduan Bangsa: what standing as one lifts both sides everywhere, when the player is the third side facing them. */
+  perpaduanLift: 0.02,
 };
 
 /** The party that won the most seats last time: the one the country has in mind when it says "the government". */
@@ -54,12 +57,75 @@ export function bnPasPact(world: World): { standDowns: StandDowns; pacts: { a: n
   return { standDowns, pacts: [{ a: Math.min(big, small), b: Math.max(big, small), week: 0 }] };
 }
 
+/**
+ * Perpaduan Bangsa, the name the two sides give their pact in Melaka's "what if": while that pact stands, Barisan Pusaka leads the state
+ * government however many seats each side wins, and Perikatan Teguh is its partner. Returns the two, or null when the contest is not the
+ * "what if" or the pact has been ended (then the talks are as in any other election).
+ */
+export function perpaduan(c: Pick<Campaign, 'challenge' | 'pacts'>): { head: number; partner: number } | null {
+  if (c.challenge?.whatIf !== 'bnpas') return null;
+  const head = PARTY_IDS.indexOf(BNPAS.big), partner = PARTY_IDS.indexOf(BNPAS.partner);
+  return c.pacts.some((x) => (x.a === head && x.b === partner) || (x.a === partner && x.b === head)) ? { head, partner } : null;
+}
+
+/** Allies are on good terms. */
+const ALLIED = 30;
+
+/**
+ * Perpaduan Bangsa is formed in the first week of the campaign, before nomination day (not before the campaign opens): the seats are
+ * shared and the pact written down. Says so in the news, to the player in it and to everyone else.
+ */
+export function formPerpaduan(world: World, c: Campaign): void {
+  const head = PARTY_IDS.indexOf(BNPAS.big), partner = PARTY_IDS.indexOf(BNPAS.partner);
+  if (c.pacts.some((x) => (x.a === head && x.b === partner) || (x.a === partner && x.b === head))) return;
+  const deal = bnPasPact(world);
+  c.standDowns = { ...c.standDowns, ...deal.standDowns };
+  for (const pact of deal.pacts) {
+    c.pacts.push({ ...pact, week: c.week });
+    c.relations[pact.a][pact.b] = c.relations[pact.b][pact.a] = Math.max(c.relations[pact.a][pact.b], ALLIED);
+    const mine = pact.a === c.player || pact.b === c.player;
+    pushNews(c, {
+      party: mine ? c.player : pact.a, key: mine ? 'news.pact.together.mine' : 'news.pact.together',
+      vars: { a: ref.party(pact.a), b: ref.party(pact.b), party: ref.party(pact.a === c.player ? pact.b : pact.a), n: Object.keys(deal.standDowns).length },
+      tone: mine ? 'good' : 'neutral',
+    });
+  }
+}
+
+/**
+ * The first week of Melaka's "what if": a player leading one of the two sides is asked whether to join (a pact offer from the other
+ * leader, answered like any other); with the third side's player the two simply announce it at the week's end (`perpaduanWeek`).
+ */
+export function offerPerpaduan(world: World, c: Campaign): void {
+  const head = PARTY_IDS.indexOf(BNPAS.big), partner = PARTY_IDS.indexOf(BNPAS.partner);
+  if (c.challenge?.whatIf !== 'bnpas' || (c.player !== head && c.player !== partner)) return;
+  const other = c.player === head ? partner : head;
+  const deal = bnPasPact(world).standDowns;
+  const ids = Object.keys(deal);
+  c.inbox.push({
+    id: c.nextScene++, kind: 'pactOffer', from: other, perpaduan: true,
+    give: ids.filter((id) => deal[id][c.player] >= 0), get: ids.filter((id) => deal[id][other] >= 0),
+  });
+}
+
+/** Week one's end: the two sides announce Perpaduan Bangsa, when the player is the third side (a player in it has had the choice). */
+export function perpaduanWeek(world: World, c: Campaign): void {
+  if (c.week !== 1 || c.challenge?.whatIf !== 'bnpas' || world.id !== 'state:melaka') return;
+  if (c.player === PARTY_IDS.indexOf(BNPAS.big) || c.player === PARTY_IDS.indexOf(BNPAS.partner)) return;
+  formPerpaduan(world, c);
+}
+
 /** Applies a "what if" to a campaign that has just been made. Does nothing for anything that is not one, or not one for this contest. */
 export function applyWhatIf(world: World, c: Campaign, id: unknown): void {
   if (!isWhatIf(id)) return;
   // The pact itself is part of how the contest opens (see `newCampaign`); here it is only written down.
   if (id === 'bnpas') {
-    if (world.id === 'state:melaka') c.challenge = { ...(c.challenge ?? { fog: false, noisy: false }), whatIf: id };
+    if (world.id !== 'state:melaka') return;
+    c.challenge = { ...(c.challenge ?? { fog: false, noisy: false }), whatIf: id };
+    // The third side takes on an alliance that stands as one: both its sides are lifted a little.
+    if (c.player === PARTY_IDS.indexOf('ps')) {
+      for (const p of [PARTY_IDS.indexOf(BNPAS.big), PARTY_IDS.indexOf(BNPAS.partner)]) for (let b = 0; b < N_BLOCS; b++) c.drift.support.nat[b][p] += WHATIF.perpaduanLift;
+    }
     return;
   }
   if (world.rules.kind !== 'general') return;

@@ -19,6 +19,7 @@ import { leaderName, partyColor, partyName, partyShort, relationWord, useFormat,
 import { AgainButtons } from './Aside';
 import { Chamber } from './Chamber';
 import { Portrait } from './Portrait';
+import { perpaduan } from '../sim/campaign/whatif';
 import { houseSeating, talksSeating, talksFocus } from './seating';
 import { canDraw3D } from './map3d';
 
@@ -342,6 +343,7 @@ export function FormationScreen() {
   const need = majorityLine(world);
   const done = f.outcome !== null;
   const claims = playerClaims(campaign);
+  const alliance = perpaduan(campaign);
   const others = blocs(f).filter((p) => p !== me);
   const ready = claims && pledged(f, me) >= need;
   const offersToMe = f.claimants.filter((k) => k !== me && f.offers[k][me]);
@@ -417,8 +419,9 @@ export function FormationScreen() {
               <span className="muted">{t('form.meetings', { n: f.meetings, total: MEETINGS })}</span>
             </div>
             <p className="muted small">{t(f.unityAdvice ? 'form.palace.unity' : f.extended ? 'form.palace.extended' : 'form.palace.waiting', { n: need, days: Math.max(0, f.deadline - f.day) })}</p>
+            {alliance && (alliance.partner === me || alliance.head === me) && <p className="note">{t(alliance.partner === me ? 'form.perpaduan.partner' : 'form.perpaduan.head', { head: partyName(t, alliance.head), partner: partyName(t, alliance.partner) })}</p>}
             {!claims && f.pledge[me] !== null && <p className="note">{t('form.backing', { party: partyName(t, f.pledge[me]!) })}</p>}
-            {!claims && f.pledge[me] === null && (
+            {!claims && f.pledge[me] === null && alliance?.partner !== me && (
               <p className="note">{t('form.youFree')} <button className="link inline" onClick={claimAgain}>{t('form.claimAgain')}</button></p>
             )}
             <div className="button-row">

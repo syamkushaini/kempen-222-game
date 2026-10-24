@@ -97,7 +97,7 @@ function isValidScene(x: unknown, world: World): boolean {
   return (
     isNum(x.id) && isPartyOrNull(x.from) &&
     (x.kind === 'pactOffer' || x.kind === 'poach' || x.kind === 'summons' || x.kind === 'unityAdvice' || x.kind === 'event' || x.kind === 'vote' || x.kind === 'houseVote' || x.kind === 'agenda' || x.kind === 'partyPoll' || x.kind === 'redraw') &&
-    (x.event === undefined || typeof x.event === 'string') && (x.bill === undefined || typeof x.bill === 'string') &&
+    (x.event === undefined || typeof x.event === 'string') && (x.perpaduan === undefined || typeof x.perpaduan === 'boolean') && (x.bill === undefined || typeof x.bill === 'string') &&
     (x.give === undefined || isSeatList(x.give, world)) && (x.ask === undefined || isSeatList(x.ask, world)) && (x.get === undefined || isSeatList(x.get, world)) &&
     (x.seat === undefined || (typeof x.seat === 'string' && world.seatIndex.has(x.seat)))
   );

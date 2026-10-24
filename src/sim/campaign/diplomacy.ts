@@ -10,6 +10,7 @@ import { record, standing } from './ledger';
 import { pushNews, ref } from './news';
 import { resolveAgenda } from './agenda';
 import { rivalEntries } from './entry';
+import { formPerpaduan } from './whatif';
 import type { Campaign, NewsItem, Scene } from './types';
 
 // ---------- basics ----------
@@ -488,6 +489,12 @@ function counterOffer(world: World, c: Campaign, scene: Scene): void {
  */
 export function resolveCampaignScene(world: World, c: Campaign, scene: Scene, choice: number): void {
   const me = c.player;
+  if (scene.kind === 'pactOffer' && scene.perpaduan && scene.from !== null) {
+    // Perpaduan Bangsa is joined or not: 0 joins, anything else leaves the player to go it alone.
+    if (choice === 0 && beforeNomination(c)) formPerpaduan(world, c);
+    else { shiftRelation(c, me, scene.from, -3); pushNews(c, { party: me, key: 'news.perpaduan.declined', vars: { party: ref.party(scene.from) }, tone: 'neutral' }); }
+    return;
+  }
   if (scene.kind === 'agenda') resolveAgenda(world, c, scene, choice);
   else if (scene.kind === 'pactOffer' && scene.from !== null) {
     const prop = { give: scene.give ?? [], get: scene.get ?? [] };
