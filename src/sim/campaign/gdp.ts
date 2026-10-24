@@ -48,7 +48,6 @@ const SECTOR_PULL = 0.02;
 export const STATE_PUBLIC = 0.1;
 /** What each line of the budget is of the economy's output, at the middle setting; and how far a notch moves it. */
 export const LINE_SHARE: Record<LineId, number> = { aid: 0.013, health: 0.022, education: 0.036, rural: 0.01, civil: 0.018, defence: 0.01 };
-export const LINE_NOTCH = 0.15;
 /** How many yearly reports are kept. */
 export const REPORTS = 10;
 
@@ -105,7 +104,7 @@ export function publicFinance(world: World, k: Career) {
   const base = figuresOf(world, k).gdp * (world.rules.kind === 'state' ? STATE_PUBLIC : 1);
   // A state has no armed forces of its own: the defence line is the country's.
   const ids = LINE_IDS.filter((id) => id !== 'defence' || isFederalWorld(world));
-  const lines = Object.fromEntries(ids.map((id) => [id, base * LINE_SHARE[id] * lineMult(k.tabled.lines[id] ?? 0, LINE_NOTCH)])) as Record<BaseLineId, number> & { defence?: number };
+  const lines = Object.fromEntries(ids.map((id) => [id, base * LINE_SHARE[id] * lineMult(k.tabled.lines[id] ?? 0)])) as Record<BaseLineId, number> & { defence?: number };
   const deficitRm = (deficit(k) / 100) * base;
   const debtRm = (k.economy.debt / 100) * base;
   return { lines, deficitRm, debtRm, budgetRm: ids.reduce((a, id) => a + (lines[id] ?? 0), 0) };

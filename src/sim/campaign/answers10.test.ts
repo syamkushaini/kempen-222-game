@@ -41,7 +41,7 @@ describe('the states as a purse', () => {
     expect(b).toBeGreaterThan(a);
     expect(d).toBeGreaterThan(b);
     expect(patronageMult(k)).toBe(PATRONAGE.mult[2]);
-    expect(setPatronage(c, 3)).toBe(false);
+    expect(setPatronage(c, 7)).toBe(false);
     expect(isValidCampaign(JSON.parse(JSON.stringify(c)), base)).toBe(true);
   });
   it('invite an inquiry that costs money, credibility and unity and puts the party back to little', () => {

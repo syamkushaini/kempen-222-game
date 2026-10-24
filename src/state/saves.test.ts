@@ -153,7 +153,7 @@ describe('save format', () => {
     const g = newGame('Career', startCareer(base, { player: 0, difficulty: 'normal', seed: 4 }), 5);
     for (const damage of [
       (k: any) => { k.cabinet[0].portfolio = 'sport'; },
-      (k: any) => { k.budget.lines.aid = 2; },
+      (k: any) => { k.budget.lines.aid = 6; },
       (k: any) => { k.delivery.homes = 'maybe'; },
       (k: any) => { k.ending = { kind: 'bored', legacy: 'footnote', score: 1 }; },
       (k: any) => { delete k.record.falls; },

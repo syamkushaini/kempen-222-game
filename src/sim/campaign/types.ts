@@ -308,15 +308,15 @@ export interface Orders {
   /** The leader being cultivated under the "leaders" focus. */
   courting: number | null;
   /** Weekly spending on branches, on staying in the public eye, and on digging into rivals. */
-  budget: { machinery: Level; media: Level; research: Level };
+  budget: { machinery: number; media: number; research: number };
   /** Regions where the machinery money and the leader's tours go. Up to three; none means everywhere. */
   focusStates: RegionId[];
   /** How hard the party leans on tycoons and corporate donors. */
-  donors: Level;
+  donors: number;
   /** How hard a governing party leans on state resources: how much of the government's money it diverts to the party each week. */
-  state: Level;
+  state: number;
   /** How much of the government's money goes each week to development grants in the target regions. Absent in a game saved before the treasury existed. */
-  grants?: Level;
+  grants?: number;
   /** The states the government chooses to develop: up to three, and the grants go there, whether or not the party stands in them. None means the target states. */
   develop?: RegionId[];
 }
@@ -343,7 +343,7 @@ export const MEASURE_IDS = [
   'cashTopUp', 'fuelPrice', 'clinics', 'hospitalBeds', 'scholarships', 'schoolRepairs', 'roads', 'farmInputs', 'civilBonus', 'pensions',
 ] as const;
 export type MeasureId = (typeof MEASURE_IDS)[number];
-export interface Budget { lines: Record<Exclude<BaseLineId, 'aid'>, Dial> & { aid: LineDial; defence?: Dial }; tax: Dial; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
+export interface Budget { lines: Record<BaseLineId, LineDial> & { defence?: LineDial }; tax: number; /** What the budget pays for in particular, at most three; absent in one that is only dials. */ measures?: MeasureId[] }
 
 export const PORTFOLIO_IDS = [
   'finance', 'home', 'economy', 'education', 'health', 'rural', 'works', 'defence',
@@ -750,14 +750,14 @@ export interface Career {
   /** The share (0 to 0.5) of each month's surplus that goes to the national debt. */
   repayShare?: number;
   /** The tax mix: each tax lowered, left or raised. */
-  taxMix?: { sales: Dial; income: Dial; corporate: Dial; luxury: Dial };
+  taxMix?: { sales: number; income: number; corporate: number; luxury: number };
   /** National projects under way, and those finished. */
   projects?: { id: string; left: number }[];
   built?: string[];
   /** The week each economic tool was last used (see econTools.ts). */
   toolsUsed?: Record<string, number>;
   /** The policy rate: lowered (-1), left (absent), or raised (1). */
-  rate?: Dial;
+  rate?: number;
   /** [region]: the week the player last won a state chief over, and the week one was last sent to talk to the opposition (see chiefsTerm.ts). */
   chiefWeeks?: Record<string, number>;
   chiefTalk?: number;

@@ -7,8 +7,8 @@ import {
 } from '../sim/campaign/govern';
 import { scaled } from '../sim/campaign/actions';
 import { MONTH, commitmentWeekly, lineWeekly, measureWeekly, takingsWeekly } from '../sim/campaign/treasury';
-import { StopSlider, moneyStops } from './StopSlider';
-import { ABOLISH, type LineDial } from '../sim/campaign/lineDial';
+import { LineSlider, MoneyReadout, StepSlider, lineReadout, type Scale } from './LineSlider';
+import { BUDGET_TAX_MAX, BUDGET_TAX_MIN, LINE_MIN } from '../sim/campaign/lineDial';
 import { EconomyBook } from './EconomyBook';
 import { EconomyReality } from './EconomyReality';
 import { TreasuryCard } from './TreasuryCard';
@@ -18,7 +18,7 @@ import { Fold } from './Fold';
 import { TRAIT_EFFECT } from '../sim/campaign/govern';
 import { MeterTools } from './MeterTools';
 import { defenceShown } from '../sim/campaign/defence';
-import { LEVER_IDS, LINE_IDS, MEASURE_IDS, type Dial } from '../sim/campaign/types';
+import { LEVER_IDS, LINE_IDS, MEASURE_IDS } from '../sim/campaign/types';
 import { MAX_MEASURES } from '../sim/campaign/office';
 import { SECTOR, SECTORS, SECTOR_IDS, canAid, sectorsOf } from '../sim/campaign/sectors';
 import { leverStrain } from '../sim/campaign/govern';
@@ -48,6 +48,9 @@ import { BragButton, hasCabinetSeat } from './BragCards';
 import { Chamber } from './Chamber';
 import { houseSeating } from './seating';
 
+
+/** The tax in the budget moves in tenths of what it takes. */
+const TAX_SCALE: Scale = { pctPerStep: 10, raiseKey: 'dial.raiseBy' };
 
 /** A bill's name: the promise or the concession it carries out. */
 export function billName(t: T, id: string): string {
@@ -144,11 +147,11 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
                   <span className="action-title">{t(`line.${id}`)}</span>
                   <span className="action-meta">{t(`line.${id}.desc`)}</span>
                 </div>
-                <StopSlider
+                <LineSlider
                   label={t(`line.${id}`)} value={k.budget.lines[id] ?? 0} onChange={(value) => setBudget({ line: id, value })}
-                  stops={moneyStops<LineDial>(t, f.rm, (d) => lineWeekly(world, id, d) * MONTH, { [-2]: t('dial.abolish'), [-1]: t('dial.cut'), 0: t('dial.hold'), 1: t('dial.boost') }, id === 'aid' ? [ABOLISH, -1, 0, 1] : [-1, 0, 1])}
+                  t={t} rm={f.rm} amountAt={(d) => lineWeekly(world, id, d) * MONTH}
                 />
-                {id === 'aid' && k.budget.lines.aid === ABOLISH && <p className="note bad" role="status">{t('stop.abolish.warn')}</p>}
+                {(k.budget.lines[id] ?? 0) <= LINE_MIN && <p className="note bad" role="status">{t(id === 'aid' ? 'stop.abolish.warn' : 'stop.deep.warn')}</p>}
                 <p className="muted small">{t('stop.inForce', { rm: f.rm(lineWeekly(world, id, k.tabled.lines[id] ?? 0) * MONTH) })}</p>
               </li>
             ))}
@@ -180,9 +183,10 @@ export function GovernmentTab({ part = 'house' }: { part?: GovernmentPart }) {
                 <span className="action-title">{t('line.tax')}</span>
                 <span className="action-meta">{t('line.tax.desc')}</span>
               </div>
-              <StopSlider
-                label={t('line.tax')} value={k.budget.tax} onChange={(value) => setBudget({ tax: true, value })}
-                stops={moneyStops<Dial>(t, f.rm, (d) => takingsWeekly(world, campaign, d) * MONTH, { [-1]: t('dial.cut'), 0: t('dial.hold'), 1: t('dial.raise') })}
+              <StepSlider
+                label={t('line.tax')} min={BUDGET_TAX_MIN} max={BUDGET_TAX_MAX} value={k.budget.tax} onChange={(value) => setBudget({ tax: true, value })} t={t}
+                readout={<MoneyReadout now={lineReadout(t, f.rm, (d) => takingsWeekly(world, campaign, d) * MONTH, k.budget.tax, TAX_SCALE)} />}
+                scale={[`${t('dial.cut')} −${-BUDGET_TAX_MIN * TAX_SCALE.pctPerStep}%`, t('dial.hold'), `${t('dial.raise')} +${BUDGET_TAX_MAX * TAX_SCALE.pctPerStep}%`]}
               />
               <p className="muted small">{t('stop.inForce', { rm: f.rm(takingsWeekly(world, campaign, k.tabled.tax) * MONTH) })}</p>
             </li>

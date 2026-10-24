@@ -46,7 +46,8 @@ import { pressure, recency } from './eventContext';
 import { pushNews } from './news';
 import { scaleHoldings } from './party';
 import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEvent, standingOf, topicOf, type Standing } from './standing';
-import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Level, type Scene } from './types';
+import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Scene } from './types';
+import { ASK_MAX, ASK_MIN } from './lineDial';
 
 const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES, ...OPENING_STORIES, ...PARTY_OPENING_STORIES };
 
@@ -398,8 +399,8 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
       // A blow to the machinery weakens a branch; it does not shut one that is open.
       case 'machinery': pc.machinery = pc.machinery.map((m) => (m > 0 ? clamp(m + e.n, 1, 100) : 0)); break;
       case 'dossier': k.dossier = clamp(k.dossier + e.n, 0, 100); break;
-      case 'donors': k.orders.donors = clamp(k.orders.donors + e.n, 0, 3) as Level; break;
-      case 'state': k.orders.state = clamp(k.orders.state + e.n, 0, 3) as Level; break;
+      case 'donors': k.orders.donors = clamp(k.orders.donors + e.n, ASK_MIN, ASK_MAX); break;
+      case 'state': k.orders.state = clamp(k.orders.state + e.n, ASK_MIN, ASK_MAX); break;
       case 'fiscal': k.fiscal = Math.max(0, k.fiscal + e.n); break;
       case 'debt': k.economy.debt = Math.max(DEBT_FLOOR, Math.min(120, k.economy.debt + e.n)); break;
       case 'austerity': austerity(c); break;

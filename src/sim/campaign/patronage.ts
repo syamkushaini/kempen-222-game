@@ -11,7 +11,7 @@ import type { Campaign, Career } from './types';
 
 export const PATRONAGE = {
   /** What the states' income is multiplied by, at each level. */
-  mult: [1, 2, 3.5],
+  mult: [1, 2, 3.5, 5, 6.5, 8, 9.5],
   /** The weekly chance of an inquiry, for each state governed at each level, and the most it can be. */
   risk: 0.0015,
   max: 0.04,

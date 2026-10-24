@@ -37,7 +37,7 @@ import { recordAsideResults } from '../sim/campaign/results';
 import { summarise } from '../sim/campaign/night';
 import { closeNight, electionResult, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
-  ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Dial, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
+  ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
   IssueId, OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId, SeatResults, Stronghold,
 } from '../sim/campaign/types';
 import { Rng, randomSeed } from '../sim/rng';
@@ -414,10 +414,10 @@ interface Store {
   closeDecisionNews(): void;
   /** The head of government uses an economic tool. */
   useTool(id: string): void;
-  setRate(value: Dial): void;
+  setRate(value: number): void;
   setMeterPolicy(id: StanceId, notch: number): void;
   adoptDoctrine(id: string): void;
-  setTax(id: TaxId, value: Dial): void;
+  setTax(id: TaxId, value: number): void;
   setRepayShare(share: number): void;
   startProject(id: string): void;
   stopProject(id: string): void;

@@ -7,7 +7,7 @@ import { builtEffects, taxEffects } from './econPlansData';
 import { addScene, shiftRelation, shiftUnity } from './diplomacy';
 import { stanceGrowth } from './stances';
 import { defenceDial, defenceShown, resentCut } from './defence';
-import { ABOLISH, ABOLISH_PRICES, aidAbolished, lineDial, type LineDial } from './lineDial';
+import { ABOLISH_PRICES, BUDGET_TAX_MAX, BUDGET_TAX_MIN, aidAbolished, isLineDial, isStep, type LineDial } from './lineDial';
 import { pushNews, ref } from './news';
 import { GENERAL_RULES, STATE_RULES } from './rules';
 import {
@@ -83,7 +83,7 @@ export const skillOf = (k: Career, portfolio: PortfolioId) => k.cabinet.find((m)
 
 /** How far a budget loosens (positive) or tightens the purse: spending lines up, taxes down, plus standing commitments. */
 export function looseness(k: Career, budget: Budget = k.tabled): number {
-  return LINE_IDS.reduce((a, id) => a + lineDial(budget.lines[id] ?? 0), 0) - 2 * budget.tax + 0.5 * k.fiscal + (budget.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0);
+  return LINE_IDS.reduce((a, id) => a + (budget.lines[id] ?? 0), 0) - 2 * budget.tax + 0.5 * k.fiscal + (budget.measures ?? []).reduce((a, m) => a + MEASURES[m].cost, 0);
 }
 
 /** The deficit a budget produces, as a share of national income. A capable finance minister shaves it. */
@@ -114,7 +114,7 @@ export function economyTargets(k: Career): { growth: number; prices: number } {
   const tax = taxEffects(k), built = builtEffects(k);
   return {
     growth: 4 + 0.15 * loose - Math.max(0, e.debt - 70) * 0.08 + RATE.growth * rate + tax.growth + built.growth + stanceGrowth(k),
-    prices: 2.5 + 0.3 * loose - 0.3 * lineDial(k.tabled.lines.aid) + (aidAbolished(k.tabled) ? ABOLISH_PRICES : 0) + RATE.prices * rate + tax.prices + built.prices,
+    prices: 2.5 + 0.3 * loose - 0.3 * k.tabled.lines.aid + (aidAbolished(k.tabled) ? ABOLISH_PRICES : 0) + RATE.prices * rate + tax.prices + built.prices,
   };
 }
 
@@ -151,16 +151,11 @@ export function setBudget(c: Campaign, patch: { line?: LineId; tax?: boolean; va
   }
   if (!k || c.phase !== 'term' || !isPm(c) || !('value' in patch)) return false;
   const v = patch.value;
-  // Only the subsidies can be abolished outright; every other setting is a cut, a hold or a boost.
-  if (v === ABOLISH) {
-    if (patch.tax || patch.line !== 'aid') return false;
-    k.budget.lines.aid = ABOLISH;
-    return true;
-  }
-  if (v !== -1 && v !== 0 && v !== 1) return false;
-  if (patch.tax) k.budget.tax = v;
+  // The tax has its three settings; a line of the budget is set in fifths, from nothing to double.
+  if (patch.tax) { if (!isStep(v, BUDGET_TAX_MIN, BUDGET_TAX_MAX)) return false; k.budget.tax = v; return true; }
+  if (!isLineDial(v)) return false;
   // The defence line is the federal head of government's alone.
-  else if (patch.line === 'defence') { if (!defenceShown(c)) return false; k.budget.lines.defence = v; }
+  if (patch.line === 'defence') { if (!defenceShown(c)) return false; k.budget.lines.defence = v; }
   else if (patch.line && LINE_IDS.includes(patch.line)) k.budget.lines[patch.line] = v;
   else return false;
   return true;
@@ -176,7 +171,7 @@ export function tableBudget(c: Campaign, plan: Budget): void {
     for (const [bloc, v] of Object.entries(MEASURES[m].appeal)) { lift(k, g.pm, [bloc as BlocId], v); for (const p of g.partners) lift(k, p, [bloc as BlocId], v * 0.4); }
   }
   for (const id of LINE_IDS) {
-    const dial = lineDial(plan.lines[id] ?? 0);
+    const dial = plan.lines[id] ?? 0;
     if (dial === 0) continue;
     lift(k, g.pm, LINE_BLOCS[id], 0.02 * dial);
     for (const p of g.partners) lift(k, p, LINE_BLOCS[id], 0.008 * dial);
@@ -187,12 +182,12 @@ export function tableBudget(c: Campaign, plan: Budget): void {
     g.stability = clamp(g.stability - 3, 5, 95);
     pushNews(c, { party: g.pm, key: 'news.gov.subsidy.abolished', vars: { party: ref.party(g.pm) }, tone: 'bad' });
   }
-  if (plan.tax !== 0) lift(k, g.pm, ['smallbiz', 'm40'], plan.tax > 0 ? -0.02 : 0.015);
+  if (plan.tax !== 0) lift(k, g.pm, ['smallbiz', 'm40'], plan.tax > 0 ? -0.02 * plan.tax : -0.015 * plan.tax);
   // Partners with rural and Borneo seats, and the party of the civil service, watch their own lines.
   for (const p of g.partners) {
     const id = PARTY_IDS[p];
     const cares = id === 'bp' ? 'civil' : 'rural';
-    if (plan.lines[cares] !== 0) shiftRelation(c, g.pm, p, 3 * plan.lines[cares]);
+    if (plan.lines[cares] !== 0) shiftRelation(c, g.pm, p, 3 * clamp(plan.lines[cares], -3, 3));
   }
   const loose = looseness(k);
   if (g.pm === c.player) {

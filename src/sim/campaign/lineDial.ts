@@ -1,18 +1,40 @@
-import type { Dial } from './types';
+// A line of the budget is set in steps of a fifth of its size, from taking all of it away (abolishing, -5) to doubling it (+5); the middle is
+// holding it. The tax has only the three settings it always had (see `Dial`). Taking the subsidies away altogether has a price of its own.
 
-// A line of the budget is set to cut (-1), hold (0) or boost (1), a fifth of its size either way. The line for aid and subsidies can also be
-// abolished: all of it taken away, which is five of those steps in one, and has a price of its own in prices and in the poor's goodwill.
-
-export const ABOLISH = -2 as const;
-export type LineDial = Dial | typeof ABOLISH;
-/** What abolishing stands for in the steps the model counts in (a line's whole size is five fifths). */
-export const ABOLISH_NOTCHES = -5;
+export const LINE_MIN = -5;
+export const LINE_MAX = 5;
+/** The size of one step, as a share of the line. */
+export const LINE_STEP = 0.2;
+/** A whole number of steps from LINE_MIN to LINE_MAX. */
+export type LineDial = number;
+/** Taking all of a line away. */
+export const ABOLISH = LINE_MIN;
 /** Points added to the prices the economy is heading for while subsidies are abolished: what the shelves cost without them. */
 export const ABOLISH_PRICES = 1;
 
-/** The steps a setting stands for. */
-export const lineDial = (d: number): number => (d === ABOLISH ? ABOLISH_NOTCHES : d);
+export const isLineDial = (x: unknown): x is LineDial => typeof x === 'number' && Number.isInteger(x) && x >= LINE_MIN && x <= LINE_MAX;
 /** How much of its middle size a line is at a setting, with a step of this size: none at all when it is abolished. */
-export const lineMult = (d: number, step: number): number => (d === ABOLISH ? 0 : 1 + step * d);
+export const lineMult = (d: number, step: number = LINE_STEP): number => Math.max(0, 1 + step * d);
 /** Whether a budget has abolished subsidies. */
 export const aidAbolished = (b: { lines: { aid?: number } }): boolean => b.lines.aid === ABOLISH;
+
+// The other settings a government makes in steps have their own scales: the tax in the budget in tenths of what it takes (from half as
+// much to half as much again), each tax of the plan in its own steps, and the policy rate, which a state's government sets, in notches.
+export const BUDGET_TAX_MIN = -5;
+export const BUDGET_TAX_MAX = 5;
+export const PLAN_TAX_MIN = -5;
+export const PLAN_TAX_MAX = 5;
+export const RATE_MIN = -3;
+export const RATE_MAX = 3;
+/** A whole number of steps within a scale. */
+export const isStep = (x: unknown, min: number, max: number): x is number => typeof x === 'number' && Number.isInteger(x) && x >= min && x <= max;
+
+// How hard the party asks donors, draws on the state's money and spends on grants: whole steps from nothing to six, each of them what the
+// old Low level was (so the old Off, Low, Mid and High are 0, 1, 2 and 3, and the steps above High are new). Each step has its price.
+export const ASK_MIN = 0;
+export const ASK_MAX = 6;
+
+// The party's three standing budgets (branches, publicity, research) are set in steps of equal size, from nothing to eight; and the states'
+// patronage in steps from nothing to six. The old levels 0, 1 and 2 of each are the same steps; the old level 3 of a budget was four steps.
+export const BUDGET_MAX = 8;
+export const PATRONAGE_MAX = 6;

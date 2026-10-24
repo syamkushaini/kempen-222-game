@@ -1,4 +1,4 @@
-import type { Career, Dial } from './types';
+import type { Career } from './types';
 
 // The numbers behind the debt plan, the tax mix and the national projects (see econPlans.ts).
 
@@ -47,7 +47,7 @@ export const PROJECTS: Project[] = [
 export const FORCES_PROJECTS: readonly string[] = ['forcesModernisation', 'defenceCollege'];
 export const projectOf = (id: string): Project | undefined => PROJECTS.find((p) => p.id === id);
 
-export const taxMixOf = (k: Career): Record<TaxId, Dial> => ({ sales: 0, income: 0, corporate: 0, luxury: 0, ...(k.taxMix ?? {}) });
+export const taxMixOf = (k: Career): Record<TaxId, number> => ({ sales: 0, income: 0, corporate: 0, luxury: 0, ...(k.taxMix ?? {}) });
 
 /** What the tax mix does to the takings, to prices and to growth, per week: the sum of each tax's dial. */
 export function taxEffects(k: Career): { takings: number; prices: number; growth: number } {
