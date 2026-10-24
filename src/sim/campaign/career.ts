@@ -484,7 +484,7 @@ export function termWeek(world: World, c: Campaign): void {
 
   rivalsWeek(world, c, rng);
   growFoundedParty(world, c);
-  governWeek(c, rng);
+  governWeek(c, rng, world);
   syncOpinion(c);
   missionsWeek(world, c, new Rng((c.rng ^ 0x4115) + k.week * 31 + k.term));
   // A government is a minority or not as the House now stands: seats lost one by one at by-elections and crossings count, as do seats found.

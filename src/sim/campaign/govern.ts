@@ -336,7 +336,7 @@ export function resolveVote(world: World, c: Campaign, scene: Scene, choice: num
 }
 
 /** Every so often a rival-led government puts one of its own promises to the House, and the player must say where they stand. */
-function rivalBill(c: Campaign): void {
+function rivalBill(c: Campaign, world?: World): void {
   const k = c.career!;
   const pm = k.government.pm;
   if ((pm === c.player && !k.limited) || k.week < 20 || (k.week - 20) % 40 !== 0) return;
@@ -345,6 +345,11 @@ function rivalBill(c: Campaign): void {
   const next = k.manifesto[pm][k.rivalBills];
   if (!next) return;
   k.rivalBills++;
+  // A party with no seat in the House has no vote to cast: the bill is put and decided without it, as if it had abstained.
+  if (world && (houseTally(world, c)[c.player] ?? 0) <= 0) {
+    resolveHouseVote(world, c, { id: 0, kind: 'houseVote', from: pm, bill: `pledge:${next}` }, 2);
+    return;
+  }
   addScene(c, { kind: 'houseVote', from: pm, bill: `pledge:${next}` });
 }
 
@@ -586,7 +591,7 @@ export function leaveGovernment(world: World, c: Campaign): boolean {
 // ---------- the week, and the reckoning ----------
 
 /** The governing side of a week of the term: the economy moves, bills come up, budgets and debts fall due. */
-export function governWeek(c: Campaign, rng: Rng): void {
+export function governWeek(c: Campaign, rng: Rng, world?: World): void {
   const k = c.career!;
   const me = c.player;
   economyWeek(c, rng);
@@ -625,7 +630,7 @@ export function governWeek(c: Campaign, rng: Rng): void {
   }
 
   if (!isPm(c)) {
-    rivalBill(c);
+    rivalBill(c, world);
     rivalPmWeek(c);
     if (((k.week - 1) % 52) + 1 === 40) rivalBudget(c);
   }
