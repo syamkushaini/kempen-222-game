@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { GLOSSARY, type TermId } from './glossary';
@@ -49,7 +50,7 @@ export function Help({ onClose }: { onClose(): void }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-  return (
+  return createPortal(
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dialog panel howto" role="dialog" aria-modal="true" aria-label={t('howto.title')}>
         <div className="panel-head">
@@ -124,6 +125,7 @@ export function Help({ onClose }: { onClose(): void }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

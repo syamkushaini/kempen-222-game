@@ -10,6 +10,7 @@ import { tieBetween } from '../sim/campaign/cast';
 import { ALLIANCE, ALLIANCE_MARKS, ALLIANCE_NAMES, allianceBonus, canFound, canInvite } from '../sim/campaign/alliance';
 import { CHIEF_NAMES, deputyChance, deputyOf, FACTION_IDS, WING_IDS, backing, challengeChance, factionsOf, PARTY_POLL_EVERY } from '../sim/campaign/factions';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { PARTIES } from '../data/parties';
 import { PARTY_IDS } from '../sim/types';
 import { LEADERS } from '../sim/campaign/cast';
@@ -407,7 +408,7 @@ function RebrandDialog({ onClose }: { onClose(): void }) {
     : { name: PARTIES[id].name, short: PARTIES[id].short, color: PARTY_COLORS.includes(PARTIES[id].color) ? PARTIES[id].color : PARTY_COLORS[0], emblem: DEFAULT_EMBLEMS[id], leader: LEADERS[id], look: 0, ideology: null };
   const [draft, setDraft] = useState<Draft>(start);
   const identity = makeIdentity(draft);
-  return (
+  return createPortal(
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dialog panel" role="dialog" aria-modal="true" aria-label={t('party.rebrand')}>
         <div className="dialog-head"><h2>{t('party.rebrand')}</h2></div>
@@ -417,6 +418,7 @@ function RebrandDialog({ onClose }: { onClose(): void }) {
           <button className="btn" onClick={onClose}>{t('party.rebrand.cancel')}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

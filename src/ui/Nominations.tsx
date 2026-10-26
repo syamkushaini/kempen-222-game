@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { nominationsOpen as openFor } from '../sim/campaign/slate';
 import { beforeNomination, nominationWeek } from '../sim/campaign/diplomacy';
 import { canField, fieldedSeats, isOwn, nominationCost, openSeats, slateSpent } from '../sim/campaign/slate';
@@ -89,7 +90,7 @@ export function SlateDialog({ onClose }: { onClose(): void }) {
     return byCost ? shown.sort((a, b) => costs[a.i] - costs[b.i] || a.i - b.i) : shown;
   }, [world, campaign, fielded, costs, funds, query, filter, byCost]);
 
-  return (
+  return createPortal(
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dialog panel slate-dialog" role="dialog" aria-modal="true" aria-label={t('nom.dialog.title')}>
         <div className="dialog-head">
@@ -127,7 +128,8 @@ export function SlateDialog({ onClose }: { onClose(): void }) {
           })}
         </ul>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
