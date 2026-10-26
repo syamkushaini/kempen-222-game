@@ -1,5 +1,6 @@
 import { ACHIEVEMENT_POINTS, ALL_POINTS, pointsOf } from '../sim/campaign/scoring';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { PARTIES } from '../data/parties';
 import type { StringKey } from '../i18n/strings';
 import { rewardOf } from './cosmetics';
@@ -47,7 +48,7 @@ export function HonoursDialog({ onClose }: { onClose(): void }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dialog panel honours" role="dialog" aria-modal="true" aria-label={t('honours.title')}>
         <div className="panel-head">
@@ -113,7 +114,8 @@ export function HonoursDialog({ onClose }: { onClose(): void }) {
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

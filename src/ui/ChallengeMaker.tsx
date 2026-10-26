@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { PARTIES } from '../data/parties';
 import { byElectionId, getWorld, loadScenario, STATE_SCENARIOS } from '../data/world';
 import type { StringKey } from '../i18n/strings';
@@ -159,7 +160,7 @@ export function ChallengeInvite() {
   if (!spec) return null;
   const world = state === 'ok' ? getWorld(spec.scenario) : null;
   const rules = rulesOf(t, spec);
-  return (
+  return createPortal(
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) set(null); }}>
       <div className="dialog panel" role="dialog" aria-modal="true" aria-label={t('challenge.invite.title')}>
         <h2>{t('challenge.invite.title')}</h2>
@@ -177,6 +178,7 @@ export function ChallengeInvite() {
           <button className="btn" onClick={() => set(null)}>{t('challenge.invite.later')}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

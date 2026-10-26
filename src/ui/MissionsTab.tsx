@@ -2,6 +2,7 @@ import type { StringKey } from '../i18n/strings';
 import { dearToLose, FINAL_KINDS, lapsePenaltyOf, OFFER_WARN, missionsOf, penaltyOf, progressOf, rewardOf } from '../sim/campaign/missions';
 import type { Campaign, Mission, MissionRecord } from '../sim/campaign/types';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../state/store';
 import { missionCard, ShareDialog } from './ShareDialog';
 import { describeEffect } from './effectText';
@@ -182,7 +183,7 @@ export function MissionCard() {
   // The final mission won is the end of the missions: the player is asked what comes next.
   const finale = r.kind === 'final' && r.won;
   const title = finale ? t('mission.final.won') : t(r.won ? 'mission.won' : 'mission.lost');
-  return (
+  return createPortal(
     <div className="overlay">
       <div className={finale ? 'dialog panel mission-card finale' : 'dialog panel mission-card'} role="dialog" aria-modal="true" aria-label={title}>
         <div className={r.won ? 'verdict won' : 'verdict lost'}><Icon name={r.won ? 'trophy' : 'close'} size={28} /></div>
@@ -205,6 +206,7 @@ export function MissionCard() {
         )}
         {sharing && <ShareDialog data={missionCard(t, f, campaign, r)} onClose={() => setSharing(false)} />}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

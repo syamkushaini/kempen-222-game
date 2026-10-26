@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { canEnter, enteredSeats, entriesOpen, entryCost, newSeats } from '../sim/campaign/entry';
 import { nominationWeek } from '../sim/campaign/diplomacy';
 import { isOwn } from '../sim/campaign/slate';
@@ -68,7 +69,7 @@ export function EntryDialog({ onClose }: { onClose(): void }) {
     });
   }, [world, campaign, entered, funds, query, filter]);
 
-  return (
+  return createPortal(
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dialog panel slate-dialog" role="dialog" aria-modal="true" aria-label={t('entry.dialog.title')}>
         <div className="dialog-head">
@@ -104,7 +105,8 @@ export function EntryDialog({ onClose }: { onClose(): void }) {
           {rows.length === 0 && <li className="muted small">{t('entry.none')}</li>}
         </ul>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

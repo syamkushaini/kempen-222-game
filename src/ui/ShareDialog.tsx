@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Summary } from '../sim/campaign/turn';
 import type { Campaign, MissionRecord } from '../sim/campaign/types';
 import { majorityLine, type World } from '../sim/election';
@@ -178,7 +179,7 @@ export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose
   const canShare = !!file && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
   const share = () => { if (file) void navigator.share({ files: [file], title: 'Kempen 222', text: message }).catch(() => undefined); };
 
-  return (
+  return createPortal(
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dialog panel share-dialog" role="dialog" aria-modal="true" aria-label={t('share.title')}>
         <h2>{t('share.title')}</h2>
@@ -193,6 +194,7 @@ export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose
           <button className="btn" onClick={onClose}>{t('share.close')}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
