@@ -1,4 +1,5 @@
 import type { Rng } from '../rng';
+import { chronicleConsequence } from './chronicle';
 import type { Campaign } from './types';
 
 // Every ten to fifteen years the constitution is tested. A state assembly is deadlocked, two men both say they are the chief minister, and
@@ -16,4 +17,8 @@ export function crisisWeek(c: Campaign, rng: Rng): void {
   if (k.week < k.crisis) return;
   k.crisis = k.week + gap(rng);
   k.queue.push({ event: 'constCrisis', week: k.week });
+  // An earlier floor-crossing is the sort of thing a constitutional crisis drags back into the light.
+  chronicleConsequence(c, 'crossedFloor', 'crossedFloorCrisis', 'The crisis dredges up an old crossing', () => {
+    k.credibility = Math.max(0, k.credibility - 5);
+  });
 }
