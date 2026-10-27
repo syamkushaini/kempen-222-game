@@ -23,6 +23,7 @@ import { NAT_BEATS, STATE_BEATS, STORY_EVENTS as STORYLINE_EVENTS } from './even
 import { OPENING_STORIES } from './eventListOpening';
 import { PARTY_OPENING_STORIES } from './eventListOpeningParty';
 import { POWER_EVENTS } from './eventListPower';
+import { CHRONICLE_EVENTS } from './eventListChronicle';
 import { FOLLOW_EVENTS, FOLLOW_UPS } from './eventListFollow';
 import { STATE_STORIES } from './eventList12';
 import { KEDAH_STORIES } from './eventList13';
@@ -53,8 +54,9 @@ import { scaleHoldings } from './party';
 import { COOL_FACTOR, COOL_WEEKS, forStanding, OWN_PLACE, SEEN_FACTOR, seatsOfEvent, standingOf, topicOf, type Standing } from './standing';
 import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Scene } from './types';
 import { ASK_MAX, ASK_MIN } from './lineDial';
+import { chose, logChoice } from './chronicle';
 
-const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...GRAFT_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES, ...MELAKA_STORIES, ...OPENING_STORIES, ...POWER_EVENTS, ...PARTY_OPENING_STORIES, ...STORYLINE_EVENTS };
+const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...GRAFT_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES, ...MELAKA_STORIES, ...OPENING_STORIES, ...POWER_EVENTS, ...PARTY_OPENING_STORIES, ...STORYLINE_EVENTS, ...CHRONICLE_EVENTS };
 
 /**
  * Events whose money is the public's: relief for a flood, a bridge, a subsidy, a port. Where the player's party governs they are paid
@@ -97,6 +99,7 @@ export const SOUND_CHOICE: Record<string, Record<number, Effect[]>> = {
   weekendChange: { 2: [{ t: 'unity', n: 2 }] }, riverFactory: { 0: [{ t: 'trust', n: 3 }, { t: 'cred', n: 1 }] }, fishKill: { 0: [{ t: 'trust', n: 3 }] },
   memberApp: { 0: [{ t: 'unity', n: 2 }] }, carbonRule: { 0: [{ t: 'trust', n: 2 }, { t: 'cred', n: 1 }] }, mediaBlackout: { 2: [{ t: 'cred', n: 2 }] },
   volunteerShortage: { 0: [{ t: 'unity', n: 2 }] },
+  envelopeReturns: { 0: [{ t: 'trust', n: 3 }] },
 };
 const sound = (id: string, choices: Choice[]): Choice[] => {
   const more = SOUND_CHOICE[id];
@@ -159,6 +162,8 @@ export type Effect =
   | { t: 'ksu'; act: 'follow' | 'override' | 'replace' }
   | { t: 'adviser'; act: 'listen' | 'ignore' | 'dismiss' }
   | { t: 'flag'; id: string }
+  /** Notes this choice in the Campaign Chronicle (see chronicle.ts), so a later event can tell it was made (see `needs.chronicle`). */
+  | { t: 'chronicle'; tag: string; note: string }
   | { t: 'falls' };
 
 export interface Choice {
@@ -219,6 +224,10 @@ export interface EventDef {
     late?: boolean; early?: boolean;
     /** The first parliament of a career, and no later one. */
     first?: boolean;
+    /** A choice tagged like this was logged earlier in the Campaign Chronicle (see chronicle.ts). */
+    chronicle?: string;
+    /** No choice tagged like this was logged earlier (the opposite of `chronicle`). */
+    notChronicle?: string;
     /** A government that is steady and unthreatened: stability 65 or more, credibility 55 or more, and a debt under 60% of national income. */
     secure?: boolean;
   };
@@ -295,6 +304,8 @@ export function eligible(c: Campaign, id: string): boolean {
   if (n.late && k.week < (k.length * 2) / 3) return false;
   if (n.early && k.week > k.length / 3) return false;
   if (n.first && k.term !== 1) return false;
+  if (n.chronicle && !chose(c, n.chronicle)) return false;
+  if (n.notChronicle && chose(c, n.notChronicle)) return false;
   if (n.secure && !(k.government.stability >= 65 && k.credibility >= 55 && k.economy.debt < 60)) return false;
   return true;
 }
@@ -426,6 +437,7 @@ export function applyEffects(world: World, c: Campaign, effects: Effect[]): bool
       case 'relation': for (const p of partiesOf(c, e.who)) shiftRelation(c, me, p, e.n); break;
       case 'salience': { const i = ISSUE_IDS.indexOf(e.issue); k.salience[i] = clamp(k.salience[i] + e.n, 0.5, 2); break; }
       case 'flag': if (!k.flags.includes(e.id)) k.flags.push(e.id); break;
+      case 'chronicle': logChoice(c, e.tag, e.note); break;
       case 'minister':
         // The minister at the centre of a scandal is sacked, or kept; either way it is settled.
         if (k.scandal && e.act === 'sack') dismiss(c, k.scandal);

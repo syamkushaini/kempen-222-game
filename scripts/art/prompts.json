@@ -1764,6 +1764,22 @@
    "title": "Government or Never",
    "body": "The next election is on the horizon and, for the first time, a poll has your party in the conversation: the kind of conversation where people say 'what if?'. Farid has made a spreadsheet, Kak Dewi has made an appointment, and Dato' Lazim has made his intentions known."
   },
+  "envelopeOffer": {
+   "title": "An envelope on the table",
+   "body": "A developer’s man sits across from you with an envelope and a planning map. The project needs a rezoning, he says, and he understands these things take “encouragement”. He is not in a hurry; he can wait for your answer."
+  },
+  "envelopeReturns": {
+   "title": "A columnist has questions",
+   "body": "Someone remembers the rezoning, and the developer’s name, and is asking in print why the paperwork moved so fast that year. Nobody has proof of an envelope. Yet."
+  },
+  "subsidyPledge": {
+   "title": "A promise on fuel prices",
+   "body": "A reporter asks, on camera, whether fuel prices will rise this term. The honest answer is complicated. The popular one is a flat “no”."
+  },
+  "subsidyPriceShock": {
+   "title": "The bill for a frozen promise",
+   "body": "Global oil prices have jumped, and the subsidy that keeps the pump price frozen is now eating a visible share of the budget. Economists are polite about it on the front page and less polite everywhere else."
+  },
   "kind-pactOffer": {
    "title": "An offer from another party",
    "body": "The leader of another party calls with an offer of a pact: seats to stand aside in, seats in return. Two leaders at a table with glasses of teh tarik, a handshake half offered."

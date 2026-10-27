@@ -21,7 +21,8 @@ describe('what a choice says it will do', () => {
     const kinds = new Set(allEffects().map((e) => e.t));
     expect(kinds.size).toBeGreaterThan(15);
     for (const e of allEffects()) {
-      if (e.t === 'flag' || noop(e)) continue;
+      // Flags and a chronicle note are bookkeeping for later events, not something the player needs told now.
+      if (e.t === 'flag' || e.t === 'chronicle' || noop(e)) continue;
       expect(describeEffect(en, f, world, c, e), `${e.t}`).toBeTruthy();
       expect(describeEffect(ms, f, world, c, e), `${e.t} (ms)`).toBeTruthy();
     }
