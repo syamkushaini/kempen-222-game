@@ -1,5 +1,6 @@
 import { nextContest } from '../data/world';
 import type { StringKey } from '../i18n/strings';
+import { countClick } from '../state/playWatch';
 import { useStore } from '../state/store';
 import { regionLabel, useT, useWorld } from './hooks';
 
@@ -27,16 +28,16 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
   if (next) {
     return (
       <>
-        <button className="btn primary" onClick={() => void climb()}>{next === 'general' ? t('climb.general') : t('climb.state', { state: t(`state.${next.slice(6)}` as StringKey) })} ▸</button>
-        <button className="btn" onClick={quitToTitle}>{t('summary.again')}</button>
-        {restart && <button className="btn" onClick={doRestart}>{t('summary.restart')}</button>}
+        <button className="btn primary" onClick={() => { countClick('again', 'climb'); void climb(); }}>{next === 'general' ? t('climb.general') : t('climb.state', { state: t(`state.${next.slice(6)}` as StringKey) })} ▸</button>
+        <button className="btn" onClick={() => { countClick('again', 'new'); quitToTitle(); }}>{t('summary.again')}</button>
+        {restart && <button className="btn" onClick={() => { countClick('again', 'restart'); doRestart(); }}>{t('summary.restart')}</button>}
       </>
     );
   }
   return (
     <>
-      <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>
-      {restart && <button className="btn" onClick={again ? carryOn : doRestart}>{t('summary.restart')}</button>}
+      <button className="btn primary" onClick={() => { countClick('again', 'new'); quitToTitle(); }}>{t('summary.again')} ▸</button>
+      {restart && <button className="btn" onClick={() => { countClick('again', again ? 'carry' : 'restart'); if (again) carryOn(); else doRestart(); }}>{t('summary.restart')}</button>}
     </>
   );
 }

@@ -17,6 +17,7 @@ import { drawCard, type CardData } from './shareCard';
 import { drawMelakaCard } from './melakaCard';
 import { CopyButton } from './CopyButton';
 import { challengeLink, withInvite } from '../sim/campaign/challengeCode';
+import { countClick } from '../state/playWatch';
 import { useStore } from '../state/store';
 
 export const common = (t: T) => ({ tagline: t('share.tagline'), fiction: t('share.fiction') });
@@ -148,6 +149,8 @@ export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose
   const invite = code ? `${t('share.try')} ${challengeLink(code, location.href)}` : null;
   const caption = 'text' in data && data.text ? data.text : data.headline;
   const message = withInvite(caption, invite);
+  // Counted once when the card is opened; the screen it was opened from goes with it.
+  useEffect(() => countClick('share', code ? 'challenge' : 'card'), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let live = true;

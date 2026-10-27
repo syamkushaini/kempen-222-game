@@ -129,6 +129,8 @@ export interface Settings {
   layers: LayerId[];
   /** High contrast mode for accessibility. */
   highContrast: 'off' | 'on';
+  /** Anonymous counting of how the game is played (see analytics.ts): on unless the player turns it off. */
+  analytics: boolean;
 }
 
 const SETTINGS_KEY = 'k222.settings';
@@ -146,7 +148,7 @@ function prefers3d(): boolean {
 }
 
 function loadSettings(): Settings {
-  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', skin: 'standard', accent: 'party', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d(), layers: DEFAULT_LAYERS, highContrast: 'off' };
+  const fallback: Settings = { lang: 'en', theme: 'system', sound: true, music: true, palette: 'standard', skin: 'standard', accent: 'party', textSize: 'normal', density: 'comfortable', hints: true, map3d: prefers3d(), layers: DEFAULT_LAYERS, highContrast: 'off', analytics: true };
   try {
     const raw = JSON.parse(storage?.getItem(SETTINGS_KEY) ?? 'null');
     if (!raw) return fallback;
@@ -164,6 +166,7 @@ function loadSettings(): Settings {
       map3d: typeof raw.map3d === 'boolean' ? raw.map3d : prefers3d(),
       layers: cleanLayers(raw.layers) ?? DEFAULT_LAYERS,
       highContrast: (raw.highContrast === 'on' || raw.highContrast === 'off') ? raw.highContrast : 'off',
+      analytics: raw.analytics !== false,
     };
   } catch {
     return fallback;
