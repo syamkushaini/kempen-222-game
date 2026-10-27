@@ -43,3 +43,20 @@ export class Rng {
 export function randomSeed(): number {
   return (Math.random() * 4294967296) >>> 0;
 }
+
+/**
+ * Reads a plain `?seed=` from a URL's search string, for a shareable run outside the full
+ * challenge-code system (see campaign/challengeCode.ts for that one). Undefined if there is
+ * none, or it is not a plain whole number in range.
+ */
+export function seedFromSearch(search: string): number | undefined {
+  const m = /(?:^\?|[?&])seed=(\d{1,10})(?:&|$)/.exec(search);
+  if (!m) return undefined;
+  const n = Number(m[1]);
+  return Number.isInteger(n) && n >= 0 && n <= 0xffffffff ? n : undefined;
+}
+
+/** A link that reproduces this seed: `base` with any query or hash dropped and a plain `?seed=` put in their place. */
+export function seedLink(seed: number, base: string): string {
+  return `${base.replace(/[?#].*$/, '')}?seed=${seed}`;
+}

@@ -78,7 +78,7 @@ import { adoptDoctrine as adoptMeterDoctrine } from '../sim/campaign/doctrines';
 import { setStance as setMeterStance, type StanceId } from '../sim/campaign/stances';
 import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaign/econTools';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
-import { award, hang, legacyEntry, noteAchieved, ProfileStore, recordPoints, type Profile } from './profile';
+import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
 import { pointsOf } from '../sim/campaign/scoring';
 import { finishedChallenge } from '../sim/campaign/challengePoints';
@@ -235,6 +235,8 @@ interface Store {
 
   setSettings(patch: Partial<Settings>): void;
   dismissToast(id: AchievementId): void;
+  /** Spends Legacy Points to unlock an archetype or perk, once. True if it is unlocked already or just was; false only if it can't be afforded. */
+  unlockWithPoints(id: string, cost: number): boolean;
   setView(view: MapView): void;
   setTab(tab: SidebarTab): void;
   openScene(): void;
@@ -523,6 +525,11 @@ export const useStore = create<Store>((set, get) => {
       try { storage?.setItem(SETTINGS_KEY, JSON.stringify(next)); } catch { /* settings are a convenience */ }
     },
     dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((x) => x !== id) })),
+    unlockWithPoints: (id, cost) => {
+      const { profile, ok } = unlock(get().profile, id, cost);
+      if (ok) { set({ profile }); profileStore.save(profile); }
+      return ok;
+    },
     setView: (view) => set({ view }),
     setTab: (tab) => set({ tab }),
     selectState: (state) => set({ selectedState: state, selectedSeat: null, seatReturn: undefined }),
@@ -904,7 +911,10 @@ useStore.subscribe((state, prev) => {
   const ids = earned(world, game.campaign, state.profile.legacies.map((e) => e.legacy));
   const counted = noteAchieved(state.profile, game.id, ids);
   const entry = legacyEntry(game, now, pointsOf(counted.achievedIn?.[game.id] ?? ids));
-  const hung = entry ? hang(counted, entry) : counted;
+  // A finished career also banks Political Legacy Points toward the next one's archetypes and perks (see archetypes.ts), the first time it is hung.
+  const firstHang = !!entry && !counted.legacies.some((e) => e.game === entry.game);
+  const beforeHang = entry && firstHang ? awardLegacyPoints(counted, entry) : counted;
+  const hung = entry ? hang(beforeHang, entry) : beforeHang;
   const { profile: awarded, fresh } = award(hung, ids, now);
   // A challenge finished leaves its points, at their best.
   const done = finishedChallenge(world, game.campaign);

@@ -86,3 +86,6 @@
 .thanks { margin-top: 16px; text-align: left; }
 .thanks h3 { margin: 0 0 4px; font-size: 15px; }
 .thanks-list { margin: 8px 0 0; padding-left: 1.6em; line-height: 1.7; }
+
+/* the player's progression tier and Legacy Points, shown beside their party name while a run is in progress */
+.tier-badge { display: inline-flex; align-items: baseline; gap: 4px; margin-left: 8px; font-size: 12px; font-weight: 500; vertical-align: middle; padding: 2px 8px; }

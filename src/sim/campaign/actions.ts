@@ -12,6 +12,7 @@ import { chiefHand } from './chiefs';
 import { issueEdge } from './policy';
 import { weatherFactor } from './weather';
 import { MEDIA_AIMED, MIN_SEGMENT, addAimedPitch, aimReach, isBloc, segmentShare, type SegmentId } from './segments';
+import { noteRecent, synergyFor } from './synergy';
 import { stateOf } from './agenda';
 import { ISSUE_IDS, type IssueId } from './types';
 import { RISE, addGraft } from './graft';
@@ -548,7 +549,9 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
       const s = seatSupport(c, seat.id);
       // A chief draws half the leader's crowd, more or less according to who the chief is.
       const base = (id === 'ceramah' ? EFFECT.ceramah : EFFECT.walkabout) * (chief ? CHIEF.draw * chiefHand(world, c, p, st) : 1);
-      const units = base * presence * KIND_FACTOR[id][seat.kind] * roll * room(s[p], CAP.seat);
+      // A combo with a recent action in the same seat (see synergy.ts): a townhall just held there makes the crowd warmer.
+      const combo = synergyFor(c.recentSeatActions, seat.id, id, seat.kind);
+      const units = base * presence * KIND_FACTOR[id][seat.kind] * roll * room(s[p], CAP.seat) * combo;
       // Pitched to one voter group, the lift is theirs, and goes down with groups unlike them; otherwise it is everyone's.
       s[p] += target.segment !== undefined && !chief ? addAimedPitch(c.dyn, seat, p, target.segment, units, CAP.seat * 1.5) : units;
       if (id === 'ceramah') {
@@ -556,6 +559,7 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
         t[p] += EFFECT.ceramahMotivation * (chief ? CHIEF.draw : 1) * roll * room(t[p], CAP.seatTurnout);
       }
       if (!chief && !pc.visits.includes(seat.id)) pc.visits.push(seat.id);
+      noteRecent((c.recentSeatActions ??= {}), seat.id, id);
       break;
     }
     case 'megarally': {
@@ -659,11 +663,13 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
         boostBlocs(c.dyn.support.nat, p, -EFFECT.townhallFlopNat, null, CAP.nat);
         quality = 'flop';
       } else {
-        const units = EFFECT.townhall * presence * TOWNHALL_KIND[seat.kind] * roll * room(s[p], CAP.seat);
+        const combo = synergyFor(c.recentSeatActions, seat.id, id, seat.kind);
+        const units = EFFECT.townhall * presence * TOWNHALL_KIND[seat.kind] * roll * room(s[p], CAP.seat) * combo;
         s[p] += target.segment !== undefined && !chief ? addAimedPitch(c.dyn, seat, p, target.segment, units, CAP.seat * 1.5) : units;
         quality = roll < 0.85 ? 'ok' : 'great';
       }
       if (!chief && !pc.visits.includes(seat.id)) pc.visits.push(seat.id);
+      noteRecent((c.recentSeatActions ??= {}), seat.id, id);
       break;
     }
     case 'charity': {

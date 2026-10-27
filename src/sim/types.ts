@@ -155,6 +155,10 @@ export interface SeatOutcome {
   /** Share of the electorate that has not firmly decided. */
   undecided: number;
   blocs: BlocProjection[];
+  /** Candidates (party indexes) who polled under the deposit threshold and forfeit it (see election.ts hilangDeposit). Absent until computed. */
+  forfeited?: number[];
+  /** Whether a third candidate's own vote share, on its own, would have closed the winner's margin: the classic sign of a split vote, pecah undi (see election.ts). Absent until computed. */
+  splitVote?: boolean;
 }
 
 export interface ElectionOutcome {

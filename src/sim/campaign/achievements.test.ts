@@ -55,7 +55,7 @@ describe('achievements', () => {
 
     const big = fought(general, 4, 'hard');
     closeNight(general, big);
-    expect(earned(general, big)).toEqual(expect.arrayContaining(['majority', 'landslide', 'sweep', 'ruthless', 'cleanHands']));
+    expect(earned(general, big)).toEqual(expect.arrayContaining(['majority', 'landslide', 'sweep', 'ruthless', 'cleanHands', 'giantKiller', 'zeroDeposit']));
     big.parties[PS]!.tycoon = 1;
     expect(earned(general, big)).not.toContain('cleanHands');
 
@@ -81,7 +81,7 @@ describe('achievements', () => {
     c.formation!.outcome = outcome(PS, [], { minority: true });
     expect(earned(hung, c)).toEqual(['hungRule', 'premier', 'minority']);
     c.formation!.outcome = outcome(PT, [PS]);
-    expect(earned(hung, c)).toEqual(['partner', 'bedfellows']);
+    expect(earned(hung, c)).toEqual(['partner', 'bedfellows', 'kingmaker']);
     c.formation!.outcome = outcome(PT, [BP]);
     expect(earned(hung, c)).toEqual([]);
     // A majority won at the ballot box is not a deal made at the Palace.
@@ -136,7 +136,7 @@ describe('achievements', () => {
 
   it('are listed in the order they are shown', () => {
     expect(new Set(ACHIEVEMENT_IDS).size).toBe(ACHIEVEMENT_IDS.length);
-    expect(ACHIEVEMENT_IDS).toHaveLength(53);
+    expect(ACHIEVEMENT_IDS).toHaveLength(56);
     // Every one is in a group, and shown in the group's own order.
     expect(Object.values(ACHIEVEMENT_GROUPS).flat()).toEqual([...ACHIEVEMENT_IDS]);
   });

@@ -42,12 +42,19 @@ export interface Profile {
   challengePoints?: Record<string, number>;
   /** The achievements each game has earned so far, by game: a career's score counts the ones it earned, not those of other games. */
   achievedIn?: Record<string, AchievementId[]>;
+  /** Political Legacy Points earned across every finished career, spendable on archetypes and perks (see archetypes.ts). Absent means none yet. */
+  legacyPoints?: number;
+  /** Ids of archetypes and perks bought with Legacy Points. Absent means none yet. */
+  unlocked?: string[];
 }
 
 const KEY = 'k222.profile';
 const MAX_LEGACIES = 40;
 const MAX_CHALLENGES = 200;
 const MAX_GAMES = 60;
+const MAX_UNLOCKED = 100;
+/** Legacy Points earned per point of a finished career's score. */
+export const POINTS_PER_SCORE = 0.2;
 
 export const emptyProfile = (): Profile => ({ version: 1, achievements: {}, legacies: [] });
 
@@ -86,7 +93,31 @@ export function parseProfile(text: string | null): Profile {
     const kept = Object.entries(raw.challengePoints).filter(([key, n]) => key.length >= 4 && key.length <= 80 && isNum(n) && n >= 0 && n <= POINTS_MAX).slice(0, MAX_CHALLENGES);
     if (kept.length > 0) out.challengePoints = Object.fromEntries(kept) as Record<string, number>;
   }
+  if (isNum(raw.legacyPoints) && raw.legacyPoints >= 0) out.legacyPoints = raw.legacyPoints;
+  if (Array.isArray(raw.unlocked)) {
+    const ids = [...new Set(raw.unlocked.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 40))].slice(0, MAX_UNLOCKED);
+    if (ids.length > 0) out.unlocked = ids;
+  }
   return out;
+}
+
+/** The Legacy Points a finished career's score is worth. */
+export const pointsFromEntry = (entry: LegacyEntry): number => Math.max(1, Math.round(entry.score * POINTS_PER_SCORE));
+
+/** Credits the Legacy Points a finished career earned. */
+export function awardLegacyPoints(profile: Profile, entry: LegacyEntry): Profile {
+  return { ...profile, legacyPoints: (profile.legacyPoints ?? 0) + pointsFromEntry(entry) };
+}
+
+/** Whether an archetype or perk id has already been bought. */
+export const isUnlocked = (profile: Profile, id: string): boolean => (profile.unlocked ?? []).includes(id);
+
+/** Spends Legacy Points to unlock an archetype or perk, once. False (and the same profile) if it is already unlocked or cannot be afforded. */
+export function unlock(profile: Profile, id: string, cost: number): { profile: Profile; ok: boolean } {
+  if (isUnlocked(profile, id)) return { profile, ok: true };
+  const points = profile.legacyPoints ?? 0;
+  if (points < cost) return { profile, ok: false };
+  return { profile: { ...profile, legacyPoints: points - cost, unlocked: [...(profile.unlocked ?? []), id] }, ok: true };
 }
 
 /** The gallery entry for a career that has ended, or null if the game has no ending to record. */

@@ -6,7 +6,7 @@ import { ACHIEVEMENT_IDS } from './achievements';
 
 export const ACHIEVEMENT_POINTS: Record<AchievementId, number> = {
   // what a night can bring
-  firstWin: 10, photoFinish: 25, stateWon: 25, majority: 40, cleanHands: 40, ruthless: 50, sweep: 60, landslide: 75,
+  firstWin: 10, photoFinish: 25, stateWon: 25, majority: 40, cleanHands: 40, ruthless: 50, sweep: 60, landslide: 75, giantKiller: 50, zeroDeposit: 30,
   // winning in a way of your own
   weekly: 20, challenger: 30, blindfolded: 40, brokeVictor: 40, shoestring: 50,
   // firsts
@@ -14,7 +14,7 @@ export const ACHIEVEMENT_POINTS: Record<AchievementId, number> = {
   // the country laughing at itself
   absurd: 25, pollsWrong: 30, exactMajority: 50,
   // pacts, coalitions, mergers
-  pactMaker: 15, partner: 15, premier: 25, katak: 30, bigTent: 30, alliance: 30, minority: 35, merged: 35, bedfellows: 40, rainbow: 40, unityGov: 50,
+  pactMaker: 15, partner: 15, premier: 25, katak: 30, bigTent: 30, alliance: 30, minority: 35, merged: 35, bedfellows: 40, rainbow: 40, unityGov: 50, kingmaker: 35,
   // errands taken on and finished
   firstMission: 10, hardMission: 40, tenMissions: 50, fullHouse: 60, finalMission: 75,
   // a career, and how it ends

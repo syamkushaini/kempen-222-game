@@ -6,6 +6,7 @@ import { weatherIn } from '../sim/campaign/weather';
 import { MEDIA_AIMED, resentfulOf, segmentShare, segmentsOf, type SegmentId } from '../sim/campaign/segments';
 import { PETITION_FROM, probeChance } from '../sim/campaign/spending';
 import { suggestions, type Suggestion } from '../sim/campaign/suggest';
+import { synergyFor } from '../sim/campaign/synergy';
 import type { ActionId, ActionTarget, Family } from '../sim/campaign/types';
 import { BLOC_IDS, isMinor, type BlocId, type RegionId } from '../sim/types';
 import { useStore } from '../state/store';
@@ -179,6 +180,8 @@ export function ActionsTab() {
     const check = canDo(world, campaign, me, id, target);
     const cost = actionCost(world, campaign, me, id, target);
     const gain = target.seat ? expectedSeatGain(world, campaign, me, id, target.seat, target.segment) : null;
+    const seatKind = target.seat ? world.seats[world.seatIndex.get(target.seat)!]?.kind : undefined;
+    const synergy = target.seat && seatKind ? synergyFor(campaign.recentSeatActions, target.seat, id, seatKind) : 1;
     const reason = check.ok ? null
       : check.reason === 'noTarget' ? t(`reason.noTarget.${ACTIONS[id].target === 'state' ? area : (ACTIONS[id].target as 'seat' | 'party' | 'none')}`)
       : t(`reason.${check.reason}` as StringKey);
@@ -198,6 +201,7 @@ export function ActionsTab() {
             {cost.travelDays > 0 && <span className="cost-chip">{t('cost.travel', { days: f.days(cost.travelDays) })}</span>}
             {extra && <span className="cost-chip">{extra}</span>}
             {gain !== null && gain > 0 && <span className="cost-chip gain" title={t('actions.gain.note')}>{t('actions.gain', { n: gain })}</span>}
+            {synergy > 1 && <span className="cost-chip gain" title={t('actions.synergy.note')}>{t('actions.synergy', { x: synergy.toFixed(1) })}</span>}
           </span>
           {hint && <span className="action-hint">{hint}</span>}
           {reason && (

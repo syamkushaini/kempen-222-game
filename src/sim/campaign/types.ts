@@ -2,6 +2,7 @@ import type { LineDial } from './lineDial';
 import type { StandDowns } from '../transfer';
 import type { Dynamics, Region, RegionId } from '../types';
 import type { SegmentId } from './segments';
+import type { ChronicleEntry } from './chronicle';
 
 export type Difficulty = 'easy' | 'normal' | 'hard';
 export type Phase = 'term' | 'campaign' | 'night' | 'formation' | 'done';
@@ -961,6 +962,10 @@ export interface Campaign {
   /** A place the new party won in an earlier contest, where the next one starts it with the vote it really had there. */
   stronghold?: Stronghold;
   team: Team;
+  /** A compact memory of choices made, so an early one can catch up with the player later (see chronicle.ts). Absent until something is logged. */
+  chronicle?: ChronicleEntry[];
+  /** The last few actions taken in each seat, for the synergy resolver (see synergy.ts). Absent until an action is taken in a seat. */
+  recentSeatActions?: Record<string, ActionId[]>;
 }
 
 export * from './teamTypes';

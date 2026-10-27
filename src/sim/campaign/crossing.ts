@@ -3,6 +3,7 @@ import { lastElection, majorityLine } from '../election';
 import { clamp } from '../math';
 import { Rng } from '../rng';
 import { scaled } from './actions';
+import { logChoice } from './chronicle';
 import { relation, shiftRelation, shiftUnity } from './diplomacy';
 import { confidenceCount, openTalks } from './govern';
 import { pushNews, ref } from './news';
@@ -106,6 +107,7 @@ export function crossTheFloor(world: World, c: Campaign, party: number, stake: C
     const n = crossCount(world, c, party, stake);
     const house = (k.house ??= {});
     for (const id of seatsHeldBy(world, c, party).slice(0, n)) house[id] = me;
+    logChoice(c, 'crossedFloor', `Lured ${n} members across from party ${party}`);
     shiftUnity(c, party, -4);
     shiftRelation(c, me, party, -15);
     k.credibility = clamp(k.credibility - 2, 0, 100);

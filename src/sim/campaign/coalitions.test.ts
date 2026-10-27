@@ -485,6 +485,19 @@ describe('forming a government', () => {
     expect(f.outcome!.stability).toBeLessThan(40);
   });
 
+  it('leaves a partner cold who was signed up well under its fair share of the cabinet table', () => {
+    const c = talks();
+    const f = c.formation!;
+    const before = relation(c, PS, GBK);
+    // GBK's seats would fairly earn it close to 7 posts; 3, even dressed up with a senior post and demands, is a stingy table.
+    makeOffer(hung, c, GBK, { posts: 3, senior: 'dpm', demands: ['autonomy', 'oilRoyalty'], cash: 0 });
+    makeOffer(hung, c, BP, { posts: 9, senior: 'finance', demands: ['subsidies', 'speaker', 'courtCases'], cash: 0 });
+    for (let day = 0; day < 10 && c.phase === 'formation'; day++) endDay(hung, c);
+    expect(c.phase).toBe('done');
+    expect(f.outcome!.partners).toContain(GBK);
+    expect(relation(c, PS, GBK)).toBeLessThan(before);
+  });
+
   it('starts pact partners on the side of the larger partner', () => {
     const c = start();
     signPact(world, c, PS, LEGASI, draftPact(world, c, PS, LEGASI, 'targeted', last));

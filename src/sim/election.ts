@@ -89,6 +89,25 @@ function recorded(seat: SeatData): SeatOutcome {
   return { seatId: seat.id, votes, valid, turnout: seat.last.turnout, winner, runnerUp, margin, cls: classify(margin), undecided: 0, blocs: [] };
 }
 
+/** The share of valid votes under which a candidate forfeits their deposit (Election Offences Act: one-eighth). */
+export const DEPOSIT_THRESHOLD = 0.125;
+
+/** Candidates (party indexes) who contested this seat and polled under the deposit threshold. */
+export function hilangDeposit(o: SeatOutcome): number[] {
+  if (o.valid <= 0) return [];
+  return o.votes.map((_, p) => p).filter((p) => o.votes[p] > 0 && o.votes[p] / o.valid < DEPOSIT_THRESHOLD);
+}
+
+/**
+ * Whether a third candidate's own vote share, on its own, would have closed the winner's
+ * margin: the classic sign of a split vote, pecah undi. A simple reading of the result, not a
+ * claim about who those voters would otherwise have backed.
+ */
+export function pecahUndi(o: SeatOutcome): boolean {
+  if (o.valid <= 0 || o.votes.filter((v) => v > 0).length < 3) return false;
+  return o.votes.some((v, p) => p !== o.winner && p !== o.runnerUp && v > 0 && v / o.valid > o.margin);
+}
+
 function summarise(world: World, seats: SeatOutcome[]): ElectionOutcome {
   const tally = zeros(N_PARTIES);
   const votes = zeros(N_PARTIES);
@@ -97,6 +116,8 @@ function summarise(world: World, seats: SeatOutcome[]): ElectionOutcome {
     tally[o.winner]++;
     for (let p = 0; p < N_PARTIES; p++) votes[p] += o.votes[p];
     issued += o.turnout * world.seats[i].electorate;
+    o.forfeited = hilangDeposit(o);
+    o.splitVote = pecahUndi(o);
   });
   return { seats, tally, votes, turnout: issued / world.totalElectorate };
 }

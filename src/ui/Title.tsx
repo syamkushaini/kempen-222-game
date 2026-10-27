@@ -12,6 +12,7 @@ import { FoundingSeat } from './FoundingSeat';
 import { RegionProfile } from './RegionProfile';
 import { inContention, outlook, par } from '../sim/campaign/outlook';
 import { PARTY_IDS, type FieldedId, type StateId } from '../sim/types';
+import { seedFromSearch } from '../sim/rng';
 import { AUTO_SLOT } from '../state/saves';
 import { DEFAULT_EMBLEMS, makeIdentity, PARTY_COLORS } from '../state/identity';
 import { saveStore, useStore } from '../state/store';
@@ -26,6 +27,7 @@ import { FeedbackLink } from './FeedbackLink';
 import { ACHIEVEMENT_IDS } from '../sim/campaign/achievements';
 import { FitText } from './FitText';
 import { HonoursDialog } from './Honours';
+import { HQDialog } from './HQScreen';
 import { Help } from './Help';
 import { Logo } from './Logo';
 import { Icon, type IconName } from './Icon';
@@ -131,6 +133,7 @@ export function Title() {
   const clearSetupWanted = useStore((s) => s.clearSetupWanted);
   const [mode, setMode] = useState<Screen>(() => (setupWanted ? 'custom' : 'menu'));
   const [honours, setHonours] = useState(false);
+  const [hq, setHq] = useState(false);
   const [howTo, setHowTo] = useState(false);
   const [board, setBoard] = useState(false);
   const profile = useStore((s) => s.profile);
@@ -184,6 +187,7 @@ export function Title() {
     <main className={mode === 'menu' ? 'title menu-stage' : 'title menu-stage sub'}>
       <div className={art ? 'menu-art ready' : 'menu-art'} aria-hidden="true"><img src={MENU_ART} alt="" decoding="async" ref={(el) => { if (el?.complete && el.naturalWidth > 0) setArt(true); }} onLoad={() => setArt(true)} /></div>
       {honours && <HonoursDialog onClose={() => setHonours(false)} />}
+      {hq && <HQDialog onClose={() => setHq(false)} />}
       {howTo && <Help onClose={() => setHowTo(false)} />}
       {board && <LeaderboardDialog onClose={() => setBoard(false)} />}
       <ChallengeInvite />
@@ -205,12 +209,13 @@ export function Title() {
                 onClick={() => { const g = saveStore.load(AUTO_SLOT); if (g) loadGame(g); }}
               />
             )}
-            {!auto && <MenuItem primary icon="play" tone="go" title={t('menu.play')} hint={t('menu.play.hint')} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy' })} />}
+            {!auto && <MenuItem primary icon="play" tone="go" title={t('menu.play')} hint={t('menu.play.hint')} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy', seed: seedFromSearch(window.location.search) })} />}
             <MenuItem primary={false} icon="plus" tone="new" title={t('menu.new')} hint={t('menu.new.hint')} onClick={() => pick('home')} />
             <MenuItem icon="folder" tone="load" title={t('menu.load')} hint={t('menu.load.hint', { n: saved })} onClick={() => pick('load')} />
             <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.weekly', { n: Math.max(1, Math.ceil(timeLeft(Date.now()) / 86_400_000)) })} onClick={() => pick('challenges')} />
             <MenuItem icon="book" tone="learn" title={t('howto.title')} hint={t('howto.hint')} onClick={() => setHowTo(true)} />
             <MenuItem icon="trophy" tone="won" title={t('menu.honours')} hint={t('menu.honours.hint', { n: earnedCount, total: ACHIEVEMENT_IDS.length })} onClick={() => setHonours(true)} />
+            <MenuItem icon="landmark" tone="learn" title={t('hq.title')} hint={t('hq.menu.hint', { n: profile.legacyPoints ?? 0 })} onClick={() => setHq(true)} />
             {hasLeaderboard && <MenuItem icon="star" tone="won" title={t('lb.title')} hint={t('lb.menu.hint')} onClick={() => setBoard(true)} />}
           </ul>
           <p className="muted small">{t('title.fiction')}</p>
@@ -476,7 +481,7 @@ export function Title() {
             {standing && <p className="muted small"><span className="badge plain">{t(`outlook.${standing}`)}</span> {t(`outlook.goal.${standing}`, { pct: f.pct(par(world, player) ?? 0, 0) })}</p>}
             <div className="button-row">
               {/* a returning player's one call to action is Continue */}
-              <button className={auto ? 'btn' : 'btn primary'} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy' })}>{t('quick.start')} ▸</button>
+              <button className={auto ? 'btn' : 'btn primary'} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy', seed: seedFromSearch(window.location.search) })}>{t('quick.start')} ▸</button>
               <button className="btn" onClick={() => pick('custom')}>{t('quick.customise')}</button>
             </div>
             <p className="muted small">{t('quick.later')}</p>

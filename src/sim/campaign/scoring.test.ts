@@ -16,7 +16,7 @@ describe('points for achievements', () => {
   it('has a worth for every achievement, in the four sizes the scheme uses', () => {
     for (const id of ACHIEVEMENT_IDS) expect(ACHIEVEMENT_POINTS[id], id).toBeGreaterThan(0);
     expect(Object.keys(ACHIEVEMENT_POINTS).sort()).toEqual([...ACHIEVEMENT_IDS].sort());
-    expect(ALL_POINTS).toBe(2230);
+    expect(ALL_POINTS).toBe(2345);
     expect(pointsOf(['firstWin', 'statesman'])).toBe(110);
     expect(pointsOf([])).toBe(0);
     // The rare ones are worth the most.
