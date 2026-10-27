@@ -390,6 +390,10 @@ function conclude(world: World, c: Campaign, pm: number, minority: boolean): voi
   const seats = pledged(f, pm);
   const made = deals.filter((d): d is Offer => d !== null);
 
+  // A partner given well under its fair share of the cabinet table reads as sidelined, and does not forget it: the grudge
+  // is what later lets it drift towards the door (see plots.ts), or towards whoever offers it better next time.
+  for (const p of partners) if ((deals[p]?.posts ?? 0) < fairPosts(world, f, p) * 0.6) shiftRelation(c, pm, p, -8);
+
   // What the deals cost the leading party's own people, the public's trust and the treasury.
   let trust = 60, treasury = 0;
   for (const d of made) for (const x of d.demands) { trust -= DEMANDS[x].trust; if (DEMANDS[x].treasury) treasury++; }
