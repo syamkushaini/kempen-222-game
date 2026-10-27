@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { seedFromSearch } from './rng';
+import { seedFromSearch, seedLink } from './rng';
 
 describe('seedFromSearch', () => {
   it('reads a seed from a plain query string', () => {
@@ -20,5 +20,18 @@ describe('seedFromSearch', () => {
     expect(seedFromSearch('?seed=abc')).toBeUndefined();
     expect(seedFromSearch('?seed=-5')).toBeUndefined();
     expect(seedFromSearch('?seed=1.5')).toBeUndefined();
+  });
+});
+
+describe('seedLink', () => {
+  it('drops any query or hash already on the link and puts the seed in their place', () => {
+    expect(seedLink(42, 'https://example.org/game/')).toBe('https://example.org/game/?seed=42');
+    expect(seedLink(42, 'https://example.org/game/?foo=bar')).toBe('https://example.org/game/?seed=42');
+    expect(seedLink(42, 'https://example.org/game/#c=xyz')).toBe('https://example.org/game/?seed=42');
+  });
+
+  it('round-trips through seedFromSearch', () => {
+    const url = new URL(seedLink(777, 'https://example.org/game/'));
+    expect(seedFromSearch(url.search)).toBe(777);
   });
 });

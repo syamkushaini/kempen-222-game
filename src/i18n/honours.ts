@@ -73,6 +73,8 @@ export const HONOURS_EN = {
   'card.lostBy': 'Lost by (votes)',
   'card.vsLast': 'Seats vs last time',
   'card.toGovern': 'Seats to govern',
+  'card.upset': 'Upset: {seat}',
+  'share.trySeed': 'Play the same scenario:',
 
   'ach.firstWin': 'Maiden Speech',
   'ach.firstWin.desc': 'Win a by-election.',
@@ -268,6 +270,8 @@ export const HONOURS_MS: Record<HonoursKey, string> = {
   'card.lostBy': 'Kalah dengan (undi)',
   'card.vsLast': 'Kerusi berbanding lalu',
   'card.toGovern': 'Kerusi untuk memerintah',
+  'card.upset': 'Kejutan: {seat}',
+  'share.trySeed': 'Main senario yang sama:',
 
   'ach.firstWin': 'Ucapan Sulung',
   'ach.firstWin.desc': 'Menang pilihan raya kecil.',

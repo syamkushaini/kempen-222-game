@@ -55,3 +55,8 @@ export function seedFromSearch(search: string): number | undefined {
   const n = Number(m[1]);
   return Number.isInteger(n) && n >= 0 && n <= 0xffffffff ? n : undefined;
 }
+
+/** A link that reproduces this seed: `base` with any query or hash dropped and a plain `?seed=` put in their place. */
+export function seedLink(seed: number, base: string): string {
+  return `${base.replace(/[?#].*$/, '')}?seed=${seed}`;
+}

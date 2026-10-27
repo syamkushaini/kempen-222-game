@@ -2,15 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Summary } from '../sim/campaign/turn';
 import type { Campaign, MissionRecord } from '../sim/campaign/types';
-import { majorityLine, type World } from '../sim/election';
+import { lastElection, majorityLine, type World } from '../sim/election';
 import { challengeById, goalResult } from '../sim/campaign/challenges';
-import { careerYears } from '../sim/campaign/legacy';
+import { careerYears, legacyOf } from '../sim/campaign/legacy';
 import type { StringKey } from '../i18n/strings';
 import type { ElectionOutcome } from '../sim/types';
+import { seedLink } from '../sim/rng';
 import { voiceOf } from './cardVoice';
 import { leaderPortrait } from './faces';
 import { paintedLeader } from './painted';
-import { contestName, leaderName, partyColor, partyName, useT, type Format, type T } from './hooks';
+import { contestName, leaderName, partyColor, partyName, seatName, useT, type Format, type T } from './hooks';
 import { mapPicture } from './map3d';
 import { missionGoal, recordAsk } from './missionText';
 import { drawCard, type CardData } from './shareCard';
@@ -28,12 +29,28 @@ export const face = (t: T, p: number) => ({ src: paintedLeader(p) ?? leaderPortr
 /** How the game was played, for those who want to show it off: only what is worth showing. */
 function badgesOf(t: T, c: Campaign, summary: Pick<Summary, 'seats' | 'before' | 'voteShare'>): string[] {
   const out: string[] = [];
+  // The player's own political persona: how a career like this one is remembered (see legacy.ts), read mid-career too.
+  if (c.career) out.push(t(`legacy.${legacyOf(c).legacy}` as StringKey));
   if (c.difficulty === 'hard') out.push(t('card.badge.hard'));
   if (c.challenge?.fog) out.push(t('card.badge.fog'));
   if (c.challenge?.noisy) out.push(t('card.badge.noisy'));
   const def = challengeById(c.challenge?.goal);
   if (def && goalResult(def.goal, summary).met) out.push(t('card.badge.met', { title: t(`challenges.c.${def.id}` as StringKey) }));
   return out;
+}
+
+/**
+ * The seat that most defied the odds: one the player's party won this time having lost it outright last time, picked for
+ * the widest margin it lost by then. `null` where nothing like that happened (or there is no earlier result to compare to).
+ */
+export function biggestUpset(world: World, c: Campaign, result: ElectionOutcome): string | null {
+  const me = c.player;
+  const before = lastElection(world);
+  const flipped = result.seats
+    .map((s, i) => ({ id: s.seatId, was: before.seats[i], won: s.winner === me }))
+    .filter((x): x is { id: string; was: (typeof before.seats)[number]; won: true } => x.won && !!x.was && x.was.winner !== me)
+    .sort((a, b) => b.was.margin - a.was.margin);
+  return flipped[0] ? seatName(world, flipped[0].id) : null;
 }
 
 /** The card for an election night: the verdict, the figures and the chamber as it now sits. */
@@ -69,8 +86,10 @@ export function electionCard(t: T, f: Format, world: World, c: Campaign, result:
   // The player's party sits on the left, the rest in order of size.
   const order = result.tally.map((n, p) => ({ n, p })).filter((x) => x.n > 0).sort((a, b) => (b.p === me ? 1 : 0) - (a.p === me ? 1 : 0) || b.n - a.n);
   const change = summary.seats - summary.before;
+  const upset = biggestUpset(world, c, result);
   return {
     ...base,
+    badges: [...base.badges, ...(upset ? [t('card.upset', { seat: upset })] : [])],
     hero: { value: String(summary.seats), label: t('card.hero.seats'), sub: t('card.hero.of', { total: world.seats.length }) },
     stats: [
       { label: t('card.vsLast'), value: `${change >= 0 ? '+' : '−'}${Math.abs(change)}` },
@@ -144,9 +163,11 @@ export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose
   const [file, setFile] = useState<File | null>(null);
   const [failed, setFailed] = useState(false);
   const [ratio, setRatio] = useState<number | null>(null);
-  // A card from a challenge carries the way to play the very same contest, so that whoever sees it can try to do better.
+  // A card from a challenge carries the way to play the very same contest; an ordinary career carries its plain seed instead,
+  // so that whoever sees it can start from the exact same scenario and try to beat it.
   const code = useStore((s) => s.game?.campaign.challenge?.code);
-  const invite = code ? `${t('share.try')} ${challengeLink(code, location.href)}` : null;
+  const seed = useStore((s) => s.game?.campaign.seed);
+  const invite = code ? `${t('share.try')} ${challengeLink(code, location.href)}` : seed !== undefined ? `${t('share.trySeed')} ${seedLink(seed, location.href)}` : null;
   const caption = 'text' in data && data.text ? data.text : data.headline;
   const message = withInvite(caption, invite);
   // Counted once when the card is opened; the screen it was opened from goes with it.
