@@ -28,6 +28,7 @@ import { AsideBanner } from './Aside';
 import { MapView } from './MapView';
 import { now } from '../sim/campaign/news';
 import { NewsTab } from './NewsTab';
+import { NetizenStrip } from './NetizenStrip';
 import { PollsTab } from './PollsTab';
 import { SectionJump } from './SectionJump';
 import { SeatDetail, SeatsTab } from './SeatsTab';
@@ -215,6 +216,7 @@ function CampaignScreen() {
           <MapView tall display={display} toolbar={<ViewSwitch />} marker={term ? null : campaign.parties[campaign.player]!.location} pulse={flash.seat ? { id: flash.seat, kind: 'gain', n: flash.n } : null} />
           {/* the poll sits under the map, so that the side column is all tabs: what the player works in gets the height */}
           <Standing campaign={campaign} />
+          <NetizenStrip />
         </section>
         <aside className="sidebar">
           <Inbox />
