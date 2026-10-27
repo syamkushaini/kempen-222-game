@@ -14,7 +14,7 @@ import type { Campaign, LegacyId } from './types';
  */
 export const ACHIEVEMENT_GROUPS = {
   // what a night can bring
-  wins: ['firstWin', 'photoFinish', 'stateWon', 'majority', 'landslide', 'sweep', 'ruthless', 'cleanHands'],
+  wins: ['firstWin', 'photoFinish', 'stateWon', 'majority', 'landslide', 'sweep', 'ruthless', 'cleanHands', 'giantKiller', 'zeroDeposit'],
   // winning in a way of your own
   style: ['shoestring', 'blindfolded', 'brokeVictor', 'challenger', 'weekly'],
   // firsts: what no party in the game has done before
@@ -22,7 +22,7 @@ export const ACHIEVEMENT_GROUPS = {
   // the game's sense of humour: what a joke the country is
   satire: ['pollsWrong', 'exactMajority', 'absurd'],
   // pacts, coalitions, mergers
-  together: ['pactMaker', 'katak', 'partner', 'bedfellows', 'premier', 'minority', 'bigTent', 'rainbow', 'merged', 'unityGov', 'alliance'],
+  together: ['pactMaker', 'katak', 'partner', 'bedfellows', 'premier', 'minority', 'bigTent', 'rainbow', 'merged', 'unityGov', 'alliance', 'kingmaker'],
   // errands taken on and finished
   missions: ['firstMission', 'fullHouse', 'tenMissions', 'hardMission', 'finalMission'],
   // a career, and how it ends
@@ -51,6 +51,16 @@ const SWEEP_SEATS = 8;
 export const BOW_OUT_SCORE = 150;
 /** Different legacies to have earned before the collector's badge. */
 export const COLLECTOR_LEGACIES = 5;
+/** How big the other party's lead last time has to be, in a seat just won, to call it giant-killing. */
+export const GIANT_KILLER_SWING = 0.2;
+
+/** The party that led last time in a seat, and by how much of the valid vote (0 if nobody contested). */
+function lastLead(last: { votes: number[] }): { winner: number; margin: number } {
+  const total = last.votes.reduce((a, b) => a + b, 0);
+  if (total <= 0) return { winner: -1, margin: 0 };
+  const [top, second] = [...last.votes].sort((a, b) => b - a);
+  return { winner: last.votes.indexOf(top), margin: (top - (second ?? 0)) / total };
+}
 
 // Running an election again for every change to the game would be wasteful: the result is fixed once the votes are in.
 let cached: { key: string; result: ElectionOutcome } | null = null;
@@ -127,6 +137,11 @@ export function earned(world: World, c: Campaign, legacies: LegacyId[] = []): Ac
     if ((kind === 'general' || kind === 'state') && seats === majorityLine(world)) out.add('exactMajority');
     // A seat won where the party had never stood.
     if (c.entered && Object.keys(c.entered).some((id) => result.seats[world.seatIndex.get(id) ?? -1]?.winner === me)) out.add('newGround');
+    // A seat won that somebody else led by a wide margin last time round.
+    if (result.seats.some((o, i) => o.winner === me && (() => { const l = lastLead(world.seats[i].last); return l.winner >= 0 && l.winner !== me && l.margin >= GIANT_KILLER_SWING; })())) out.add('giantKiller');
+    // Every seat the party contested kept its deposit.
+    const contested = result.seats.filter((o) => o.votes[me] > 0);
+    if (contested.length > 0 && contested.every((o) => !o.forfeited?.includes(me))) out.add('zeroDeposit');
   }
 
   const partners = new Set(c.pacts.filter((p) => p.a === me || p.b === me).map((p) => (p.a === me ? p.b : p.a)));
@@ -148,6 +163,8 @@ export function earned(world: World, c: Campaign, legacies: LegacyId[] = []): Ac
     // Firsts: a party of Sabah or Sarawak at the head of the country, and a government made from a hung parliament.
     if (made.pm === me && BORNEO.includes(me) && kind !== 'state') out.add('borneoTop');
     if (made.pm === me && kind === 'hung') out.add('hungRule');
+    // Not in the top job, but the hung parliament needed the party's seats to find one.
+    if (kind === 'hung' && made.pm !== me && made.partners.includes(me)) out.add('kingmaker');
   }
 
   if (k && pc) {
