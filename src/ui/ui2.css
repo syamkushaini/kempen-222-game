@@ -289,6 +289,14 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 .sparkline { flex: none; }
 @media (max-width: 520px) { .map-top { flex-wrap: wrap; } .state-select { max-width: none; flex: 1; } }
 
+/* what people online are saying, as a peek under the map */
+.panel.netizen-strip { padding: 0; overflow: hidden; }
+.netizen-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 14px; border: 0; background: none; color: var(--ink); cursor: pointer; text-align: left; }
+.netizen-strip-head:hover { background: var(--panel-2); }
+.netizen-strip-title { font-size: 13px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.netizen-strip .feed { padding: 0 14px 14px; }
+.netizen-strip .feed.compact .post { padding: 6px 10px; font-size: 13px; }
+
 /* ---------- the side panel: clear tabs, and rows that are cards ---------- */
 .tabs { gap: 6px; padding: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
 .tab { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 12px; border-radius: 10px; font-size: 15px; font-weight: 600; position: relative; }
