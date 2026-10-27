@@ -551,7 +551,35 @@ export interface Missions {
   free?: boolean;
 }
 
+/** Which story a career tells: the country's, a state's, or a party built from nothing (see storyline.ts). */
+export type ArcId = 'nat' | 'state' | 'founded';
+/** How a choice in a story reads: by the book, by the gamble, or by the back door. */
+export type StoryStyle = 'steady' | 'bold' | 'shady';
+export interface StoryEntry {
+  /** The chapter, by its number in the arc. */
+  ch: number;
+  /** Which of the beat's choices the player took. */
+  pick: number;
+  /** The beat that was played (a chapter may have more than one telling). */
+  beat: string;
+  /** Where in the career it closed: the parliament, and the year of the career (1 is the first). */
+  term: number;
+  year: number;
+}
+export interface StoryState {
+  arc: ArcId;
+  /** The chapter that is open, counting from 0; the arc's length once it is over. */
+  ch: number;
+  /** Weeks since the last chapter closed, so that two do not arrive together. */
+  since: number;
+  /** How many closed chapters the player has been shown. */
+  seen: number;
+  log: StoryEntry[];
+}
+
 export interface Career {
+  /** The storyline this career is telling; absent in a game saved before it existed (it is begun at the next week). */
+  story?: StoryState;
   /** Social cohesion, technology, the environment and the rule of law; absent in a game saved before they existed. */
   pestel?: PestelFigures;
   /** Absent in a game saved before it existed, and in any career but a federal one. */

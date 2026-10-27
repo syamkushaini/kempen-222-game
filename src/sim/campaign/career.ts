@@ -53,6 +53,7 @@ import { advisersWeek } from './advisers';
 import { echoWeek } from './echoes';
 import { carryStamps, dropStale } from './stamps';
 import { fallOf, graftWeek, prosecute } from './graft';
+import { beginStory, cliffhanger, closeChapter, storyWeek } from './storyline';
 import { ksuWeek } from './ksu';
 import { grandWeek } from './grand';
 import { signEarlyPacts } from './earlypact';
@@ -253,6 +254,7 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
     c.career.stances0[c.player] = [...c.career.stances[c.player]];
   }
   takeOffice(c);
+  beginStory(c);
   // A party that was already there opens with two stories of the place it begins in, dealt by the seed.
   if (!opts.founded) dealPartyOpening(c);
   c.news = [];
@@ -501,6 +503,8 @@ export function termWeek(world: World, c: Campaign): void {
   redrawWeek(c);
   if (c.inbox.length === 0 && partyPollWeek(c)) partyPoll(c, rng);
   k.oppLeader = oppositionLeader(world, c);
+  // The story's next chapter takes the desk before chance does; a chapter whose decision is answered is closed.
+  storyWeek(c);
   if (c.inbox.length === 0) rollEvent(c, rng);
   // A by-election needs a seat to be fought in.
   for (const scene of c.inbox) if (scene.event === 'byElection' && !scene.seat) scene.seat = vacantSeat(world, c, rng);
@@ -562,6 +566,7 @@ export function answerEvent(world: World, c: Campaign, scene: Scene, choice: num
       else { k.record.toppled++; governmentFalls(world, c); }
     }
   }
+  closeChapter(c);
   syncOpinion(c);
   if (c.parties[c.player]!.unity <= OUSTED_BELOW) endCareer(c, 'ousted');
 }
@@ -821,6 +826,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
     ...(k.toolsUsed ? { toolsUsed: { ...k.toolsUsed } } : {}),
     ...(k.stateResults ? { stateResults: structuredClone(k.stateResults) } : {}),
     ...(k.eventWeeks ? { eventWeeks: { ...k.eventWeeks } } : {}),
+    ...(k.story ? { story: { ...k.story, log: k.story.log.map((e) => ({ ...e })) } } : {}),
   };
   Object.assign(c.career, carry);
   // The new parliament counts its weeks from one: what was marked with a week of the old one is moved back by the term and the campaign.
@@ -880,6 +886,7 @@ export function nextTerm(world: World, c: Campaign): boolean {
   }
   if (c.career.limited && !leaderOut) pushNews(c, { party: c.player, key: 'news.term.limited', vars: { n: TERM_LIMIT }, tone: 'neutral' });
   pushNews(c, { party: null, key: 'news.term.start', vars: { party: ref.party(outcome.pm), n: outcome.seats }, tone: 'neutral' });
+  cliffhanger(c);
   // Weariness with a party long in government is a level, not a debt that is charged again in full each parliament: what is
   // taken off now is what this parliament adds to it, and a party that has left government is given back what it had lost.
   // What the parliament that ended adds depends on how the party did in it: the economy, its credibility, and the promises it kept.

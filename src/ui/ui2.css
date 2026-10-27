@@ -1030,3 +1030,19 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 /* The coffee button on the title screen: the cup with its words, a pill rather than a round icon. */
 .support-button { flex: none; width: auto; gap: 6px; padding: 0 14px 0 11px; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; color: var(--ink); }
 .support-button .support-label { line-height: 1; }
+
+/* The storyline: the card on the desk, the chapter-end card and the recap at a career's end. */
+.story-card { margin: 0 0 12px; padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--accent, var(--line-2)); }
+.story-head { display: flex; align-items: center; gap: 12px; }
+.story-head .action-title, .story-head .action-meta { display: block; }
+.story-dots { display: flex; gap: 5px; list-style: none; margin: 0; padding: 0; flex: none; }
+.story-dots li { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--muted); }
+.story-dots li.done { background: var(--accent, var(--ink)); border-color: var(--accent, var(--ink)); }
+.story-dots li.now { border-color: var(--accent, var(--ink)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, var(--ink)) 35%, transparent); }
+.story-next { margin: 8px 0 0; line-height: 1.45; }
+.story-log { margin-top: 8px; }
+.story-log summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.story-log ol, .story-log-list { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; }
+.story-modal .story-teaser { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--accent, var(--line-2)); background: color-mix(in srgb, var(--panel) 70%, transparent); font-style: italic; }
+.story-recap { margin: 16px 0; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); }
+.story-recap h3 { margin: 0 0 8px; }

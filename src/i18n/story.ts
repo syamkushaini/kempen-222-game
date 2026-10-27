@@ -1,0 +1,175 @@
+// The words around the storylines (see sim/campaign/storyline.ts): each chapter's title, the teaser that opens it, and a line for how it closed,
+// by the way the player answered; the closing words of each story; and the labels of the storyline card, the chapter-end card and the recap.
+// {state} is the state's name and {trade} what it is known for; a hook is a sentence that stands alone, as the news carries it at a term's end.
+
+type Chapter = { title: string; hook: string; steady: string; bold: string; shady: string };
+
+const chapters = (all: Record<string, Chapter>): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const [id, ch] of Object.entries(all)) {
+    out[`story.${id}.title`] = ch.title;
+    out[`story.${id}.hook`] = ch.hook;
+    for (const style of ['steady', 'bold', 'shady'] as const) out[`story.${id}.close.${style}`] = ch[style];
+  }
+  return out;
+};
+
+const CHAPTERS_EN: Record<string, Chapter> = {
+  nat1: { title: 'The Inheritance', hook: 'A new office, an old party, and a folder nobody wants to open.', steady: 'The charter was short, and people actually read it.', bold: 'Your first weeks were louder than anything the party had managed in years.', shady: 'The launch was glorious, though a few of the guests were on no list you had seen.' },
+  nat2: { title: 'The Memo', hook: 'Someone in the House is keeping a list, and your name is on it.', steady: 'You handed back the memo and kept your reputation. The list went on without you.', bold: 'You counted the heads yourself. For a while, you were the one with the list.', shady: 'Three names changed their minds on Friday. Nobody asked how, and everyone noticed.' },
+  nat3: { title: 'The Midnight Call', hook: 'An editor has been doing her sums, and they are not your sums.', steady: 'You opened the books. It hurt for a week and then it was history.', bold: 'You took the paper on live radio. The fight is still being talked about.', shady: 'The money went back quietly, but the question did not.' },
+  nat4: { title: 'The Count', hook: 'The country votes soon. After that, nothing will be quite the same.', steady: 'You set the tone for the new parliament: patient, careful, a little dull, and trusted.', bold: 'The new parliament began with a bang, and you were holding the match.', shady: 'The new parliament began with deals in corridors, and you were in most of them.' },
+  nat5: { title: 'The Last Page', hook: 'The years are shorter than the diary says, and one question remains: what did you do here?', steady: 'You left a reform behind. Years from now people will use it without knowing your name.', bold: 'You bet on the grand coalition, and the country watched.', shady: 'You looked after your friends. History looked after its notes.' },
+
+  state1: { title: 'The Keys', hook: 'A new office in {state}, three stacks of paper, and a State Secretary who is not telling you everything.', steady: 'The first list was small and the drains worked. {state} noticed.', bold: 'You promised a turnaround. Now {state} will wait to see you deliver it.', shady: 'The investor smiled for the cameras. The terms were read later.' },
+  state2: { title: 'The Envelope', hook: 'A visitor from the centre is on the way with an envelope, and a smile.', steady: 'You negotiated the terms line by line. The centre learned that {state} reads small print.', bold: 'You took the centre to the public, and {state} noticed whose side you said you were on.', shady: 'You took the grant and its conditions. The conditions are now the state\'s problem.' },
+  state3: { title: 'A Bad Season', hook: 'The trade {state} is known for is having a bad year, and people have begun to talk.', steady: 'A small fund with clear rules helped real people. It was honest.', bold: 'You let the trade write its own plan. It was a messy, hopeful meeting.', shady: 'A friend of the party ran the rescue. The accounts will need reading.' },
+  state4: { title: 'The Morning After', hook: '{state} goes to the polls. The morning after will say who you are.', steady: 'You chose patience and paper: a plan, written down, for everyone to read.', bold: 'You chose a fight, and {state} has been watching it ever since.', shady: 'You chose the back channel. Not everything in {state} is said on the record.' },
+  state5: { title: 'The Plaque', hook: 'Late in the term, a profile is being written, and a plaque is being measured.', steady: 'You told the truth about what went wrong. {state} will remember who said it.', bold: 'You said you would do it all again. {state} will decide whether that was a promise or a warning.', shady: 'A memorial bears your name. {state} has seen many names on many buildings.' },
+
+  founded1: { title: 'Seven Chairs', hook: 'Seven plastic chairs, one banner with a missing corner, and a stranger at the door.', steady: 'The first meeting was in a car park. Everyone who stayed for tea is yours.', bold: 'The launch was loud, and the party can no longer be ignored.', shady: 'The hall was free, and the favour has not been named yet.' },
+  founded2: { title: "The Big Party's Offer", hook: 'A senior figure from an established party wants to meet you for teh tarik.', steady: 'You said no, politely. The party knows its own mind.', bold: 'You made the offer public and dared them to do the same. The radio loved it.', shady: 'You made an understanding, unwritten. Everyone knows, and nobody says.' },
+  founded3: { title: 'The Cheque', hook: "The party's bank balance is thin, and someone is writing a very large cheque.", steady: 'The cheque went back and a rule went up: no donation above a limit.', bold: 'You raised the money from the many instead of the one. The party is bigger for it.', shady: 'The cheque was banked, with receipts. People read the name on the receipts.' },
+  founded4: { title: 'Counting Day', hook: 'The first election is coming. Whatever the count says, the telephone will ring.', steady: 'You chose honesty over comfort, and the party kept its name.', bold: 'You chose the bold move, and the party is watching to see whether it pays.', shady: 'You chose the quick fix. The party is safer or richer, and a little smaller.' },
+  founded5: { title: 'Government or Never', hook: "A poll has put the party in the conversation: the kind where people say 'what if?'.", steady: 'You kept the message simple and the books clean.', bold: 'You bet on the surge and went on tour.', shady: 'You handed the campaign to professionals with deep pockets and no questions.' },
+};
+
+const CHAPTERS_MS: Record<string, Chapter> = {
+  nat1: { title: 'Warisan', hook: 'Pejabat baharu, parti lama, dan satu fail yang tiada siapa mahu buka.', steady: 'Piagam itu pendek, dan orang betul-betul membacanya.', bold: 'Minggu-minggu pertama anda lebih riuh daripada apa yang parti berjaya buat bertahun-tahun.', shady: 'Majlis pelancaran itu gilang-gemilang, walaupun ada tetamu yang tiada dalam mana-mana senarai yang anda pernah lihat.' },
+  nat2: { title: 'Memo Itu', hook: 'Ada orang dalam Dewan menyimpan satu senarai, dan nama anda ada di dalamnya.', steady: 'Anda pulangkan memo itu dan kekalkan nama baik. Senarai itu terus berjalan tanpa anda.', bold: 'Anda kira kepala sendiri. Untuk seketika, andalah yang pegang senarai.', shady: 'Tiga nama tukar fikiran pada hari Jumaat. Tiada siapa tanya bagaimana, dan semua orang perasan.' },
+  nat3: { title: 'Panggilan Tengah Malam', hook: 'Seorang editor sedang membuat kira-kira, dan kira-kiranya bukan kira-kira anda.', steady: 'Anda buka buku akaun. Pedih seminggu, kemudian ia jadi sejarah.', bold: 'Anda berdepan akhbar itu di radio secara langsung. Pergaduhan itu masih diperkatakan.', shady: 'Wang itu dipulangkan senyap-senyap, tapi soalannya tidak.' },
+  nat4: { title: 'Pengiraan', hook: 'Negara akan mengundi tak lama lagi. Selepas itu, tiada apa akan sama.', steady: 'Anda tetapkan nada untuk parlimen baharu: sabar, teliti, sedikit membosankan, dan dipercayai.', bold: 'Parlimen baharu bermula dengan dentuman, dan anda yang memegang mancis.', shady: 'Parlimen baharu bermula dengan perjanjian di koridor, dan anda ada dalam kebanyakannya.' },
+  nat5: { title: 'Muka Surat Terakhir', hook: 'Tahun-tahun lebih singkat daripada yang diari kata, dan satu soalan masih tinggal: apa yang anda buat di sini?', steady: 'Anda tinggalkan satu pembaharuan. Bertahun kemudian orang akan menggunakannya tanpa tahu nama anda.', bold: 'Anda bertaruh pada gabungan besar, dan negara menonton.', shady: 'Anda menjaga kawan-kawan anda. Sejarah menjaga catatannya.' },
+
+  state1: { title: 'Kunci', hook: 'Pejabat baharu di {state}, tiga longgokan kertas, dan seorang Setiausaha Kerajaan Negeri yang tak beritahu semuanya.', steady: 'Senarai pertama kecil dan longkang berfungsi. {state} perasan.', bold: 'Anda berjanji untuk memulihkannya. Sekarang {state} menunggu anda menunaikannya.', shady: 'Pelabur tersenyum depan kamera. Syaratnya dibaca kemudian.' },
+  state2: { title: 'Sampul Surat', hook: 'Seorang tetamu dari pusat sedang dalam perjalanan dengan sampul surat, dan senyuman.', steady: 'Anda runding syarat baris demi baris. Pusat belajar bahawa {state} membaca cetakan halus.', bold: 'Anda bawa pusat kepada umum, dan {state} perasan di pihak siapa anda kata anda berdiri.', shady: 'Anda ambil geran beserta syaratnya. Syarat itu kini masalah negeri.' },
+  state3: { title: 'Musim yang Buruk', hook: 'Perdagangan yang menjadi nama {state} sedang mengalami tahun yang buruk, dan orang mula bercakap.', steady: 'Dana kecil dengan peraturan jelas membantu orang sebenar. Ia jujur.', bold: 'Anda biar perdagangan itu menulis pelannya sendiri. Satu mesyuarat yang berselerak, dan penuh harapan.', shady: 'Seorang kawan parti mengendalikan penyelamatan. Akaunnya perlu dibaca.' },
+  state4: { title: 'Pagi Selepas Itu', hook: '{state} akan mengundi. Pagi selepas itu akan menunjukkan siapa anda.', steady: 'Anda pilih sabar dan kertas: pelan, bertulis, untuk dibaca semua orang.', bold: 'Anda pilih untuk bertarung, dan {state} memerhatikannya sejak itu.', shady: 'Anda pilih saluran belakang. Bukan semua perkara di {state} disebut secara rasmi.' },
+  state5: { title: 'Plak', hook: 'Lewat penggal, sebuah profil sedang ditulis, dan sebuah plak sedang diukur.', steady: 'Anda berkata benar tentang apa yang silap. {state} akan ingat siapa yang mengatakannya.', bold: 'Anda kata anda akan buat semuanya lagi. {state} akan putuskan sama ada itu janji atau amaran.', shady: 'Sebuah tugu peringatan membawa nama anda. {state} dah banyak nampak nama atas banyak bangunan.' },
+
+  founded1: { title: 'Tujuh Kerusi', hook: 'Tujuh kerusi plastik, satu sepanduk yang koyak penjuru, dan seorang yang tak dikenali di pintu.', steady: 'Mesyuarat pertama di tempat letak kereta. Semua yang tinggal minum teh ialah milik anda.', bold: 'Pelancaran itu meriah, dan parti ini tak boleh diabaikan lagi.', shady: 'Dewan itu percuma, dan budi itu belum disebut.' },
+  founded2: { title: 'Tawaran Parti Besar', hook: 'Seorang tokoh kanan sebuah parti mapan mahu berjumpa anda untuk minum teh tarik.', steady: 'Anda kata tidak, dengan sopan. Parti ini tahu pendiriannya sendiri.', bold: 'Anda umumkan tawaran itu dan cabar mereka buat yang sama. Radio sukakannya.', shady: 'Anda buat persefahaman, tanpa tulisan. Semua orang tahu, dan tiada siapa cakap.' },
+  founded3: { title: 'Cek Itu', hook: 'Baki bank parti nipis, dan seseorang sedang menulis cek yang sangat besar.', steady: 'Cek itu dipulangkan dan satu peraturan ditetapkan: tiada derma melebihi had.', bold: 'Anda kumpul wang daripada ramai orang, bukan seorang. Parti ini lebih besar kerananya.', shady: 'Cek itu dimasukkan ke bank, dengan resit. Orang membaca nama pada resit itu.' },
+  founded4: { title: 'Hari Pengiraan', hook: 'Pilihan raya pertama semakin dekat. Apa pun yang pengiraan katakan, telefon akan berdering.', steady: 'Anda pilih kejujuran dan bukannya keselesaan, dan parti ini mengekalkan namanya.', bold: 'Anda pilih langkah berani, dan parti sedang melihat sama ada ia berbaloi.', shady: 'Anda pilih jalan pintas. Parti lebih selamat atau lebih kaya, dan sedikit lebih kecil.' },
+  founded5: { title: 'Kerajaan atau Tidak Sama Sekali', hook: "Satu tinjauan meletakkan parti dalam perbualan: jenis perbualan yang orang kata 'kalau?'.", steady: 'Anda kekalkan mesej mudah dan akaun bersih.', bold: 'Anda bertaruh pada gelombang sokongan dan jelajah seluruh negara.', shady: 'Anda serahkan kempen kepada profesional berpoket dalam tanpa soalan.' },
+};
+
+const EN_UI = {
+  'story.arc.nat.name': 'The Mandate',
+  'story.arc.nat.blurb': 'A new leader, an old party, and a country that is watching.',
+  'story.arc.state.name': 'The State House',
+  'story.arc.state.blurb': 'Keys, envelopes and a state that remembers.',
+  'story.arc.founded.name': 'From Nothing',
+  'story.arc.founded.blurb': 'Seven plastic chairs, and then whatever comes next.',
+  'story.nat.told': 'The last chapter is written. What the country makes of it is history\'s business now.',
+  'story.state.told': 'The last chapter is written. {state} will decide what goes on the plaque.',
+  'story.founded.told': 'The last chapter is written: from seven plastic chairs to wherever the party has got to.',
+  'story.nat.end.steady': 'You were the kind of leader who wrote things down and kept them. The country will remember the paper and the patience.',
+  'story.nat.end.bold': 'You were a leader who bet big and said so out loud. The country will remember the noise, and some of the wins.',
+  'story.nat.end.shady': 'You were a leader with a lot of friends. The country will remember the friends, and read the accounts.',
+  'story.state.end.steady': 'In {state} they will remember a government that wrote things down, and kept most of them.',
+  'story.state.end.bold': 'In {state} they will remember a leader who fought in public, and sometimes won.',
+  'story.state.end.shady': 'In {state} they will remember a leader who knew everyone, and could be asked for anything.',
+  'story.founded.end.steady': 'From seven plastic chairs to a party with a name that means something: built slowly, and honestly.',
+  'story.founded.end.bold': 'A party built loud and fast, with the dice deciding the rest.',
+  'story.founded.end.shady': 'A party built with other people\'s money. The receipts will tell the rest.',
+  'story.card.title': 'The storyline',
+  'story.card.chapter': 'Chapter {n} of {total}',
+  'story.card.next': 'Next',
+  'story.card.now': 'Now',
+  'story.card.now.waiting': 'Its time is coming.',
+  'story.card.now.desk': 'A decision is waiting on your desk.',
+  'story.card.past': 'What has happened',
+  'story.card.later': 'Still unwritten',
+  'story.card.unwritten': 'Chapter {n}',
+  'story.card.told': 'The story is told.',
+  'story.card.year': 'Year {n}',
+  'story.chosen': 'You chose: {option}',
+  'story.modal.title': 'Chapter {n} closes',
+  'story.modal.next': 'Next: {hook}',
+  'story.modal.last': 'That was the last chapter.',
+  'story.modal.go': 'Carry on',
+  'story.recap.title': 'The story of this career',
+  'story.recap.manner.steady': 'Told by the book',
+  'story.recap.manner.bold': 'Told by the gamble',
+  'story.recap.manner.shady': 'Told by the back door',
+  'story.recap.unwritten': 'Never reached: {title}',
+  'story.recap.none': 'No chapter was ever closed: this career ended before its story began.',
+  'story.cast': 'Puan Sri Mariam, Farid, Dato\' Lazim and Kak Dewi are invented.',
+  'story.trade.perlis': 'padi and the border trade',
+  'story.trade.kedah': 'padi',
+  'story.trade.penang': 'factories and the ferry',
+  'story.trade.perak': 'limestone and tourism',
+  'story.trade.kelantan': 'crafts and the market',
+  'story.trade.terengganu': 'fishing and the coast',
+  'story.trade.pahang': 'highland farms',
+  'story.trade.selangor': 'factories and the commute',
+  'story.trade.nsembilan': 'estates and small factories',
+  'story.trade.melaka': 'heritage tourism',
+  'story.trade.johor': 'trade across the Causeway',
+  'story.trade.sabah': 'plantations and the sea',
+  'story.trade.sarawak': 'palm oil and river trade',
+  'story.trade.default': 'its main trade',
+};
+export type StoryKey = keyof typeof EN_UI;
+
+const MS_UI: Record<StoryKey, string> = {
+  'story.arc.nat.name': 'Mandat',
+  'story.arc.nat.blurb': 'Pemimpin baharu, parti lama, dan negara yang memerhati.',
+  'story.arc.state.name': 'Rumah Negeri',
+  'story.arc.state.blurb': 'Kunci, sampul surat dan negeri yang mengingati.',
+  'story.arc.founded.name': 'Dari Sifar',
+  'story.arc.founded.blurb': 'Tujuh kerusi plastik, dan kemudian apa sahaja yang datang.',
+  'story.nat.told': 'Bab terakhir sudah ditulis. Apa negara buat dengannya kini urusan sejarah.',
+  'story.state.told': 'Bab terakhir sudah ditulis. {state} akan putuskan apa yang tertulis pada plak.',
+  'story.founded.told': 'Bab terakhir sudah ditulis: dari tujuh kerusi plastik hingga ke mana sahaja parti ini sampai.',
+  'story.nat.end.steady': 'Anda pemimpin yang menulis dan menepati. Negara akan ingat kertas dan kesabaran itu.',
+  'story.nat.end.bold': 'Anda pemimpin yang bertaruh besar dan berkata begitu lantang. Negara akan ingat riuhnya, dan beberapa kemenangan.',
+  'story.nat.end.shady': 'Anda pemimpin yang ramai kawan. Negara akan ingat kawan-kawan itu, dan membaca akaunnya.',
+  'story.state.end.steady': 'Di {state} mereka akan ingat sebuah kerajaan yang menulis perkara, dan menepati kebanyakannya.',
+  'story.state.end.bold': 'Di {state} mereka akan ingat seorang pemimpin yang bertarung di depan umum, dan kadang-kadang menang.',
+  'story.state.end.shady': 'Di {state} mereka akan ingat seorang pemimpin yang kenal semua orang, dan boleh diminta apa sahaja.',
+  'story.founded.end.steady': 'Dari tujuh kerusi plastik ke sebuah parti yang namanya bermakna: dibina perlahan-lahan, dan jujur.',
+  'story.founded.end.bold': 'Parti yang dibina dengan riuh dan pantas, dadu yang menentukan selebihnya.',
+  'story.founded.end.shady': 'Parti yang dibina dengan wang orang lain. Resit akan menceritakan selebihnya.',
+  'story.card.title': 'Jalan cerita',
+  'story.card.chapter': 'Bab {n} daripada {total}',
+  'story.card.next': 'Seterusnya',
+  'story.card.now': 'Kini',
+  'story.card.now.waiting': 'Masanya hampir tiba.',
+  'story.card.now.desk': 'Satu keputusan menunggu di meja anda.',
+  'story.card.past': 'Apa yang telah berlaku',
+  'story.card.later': 'Masih belum ditulis',
+  'story.card.unwritten': 'Bab {n}',
+  'story.card.told': 'Cerita ini sudah tamat.',
+  'story.card.year': 'Tahun {n}',
+  'story.chosen': 'Pilihan anda: {option}',
+  'story.modal.title': 'Bab {n} ditutup',
+  'story.modal.next': 'Seterusnya: {hook}',
+  'story.modal.last': 'Itulah bab yang terakhir.',
+  'story.modal.go': 'Teruskan',
+  'story.recap.title': 'Kisah kerjaya ini',
+  'story.recap.manner.steady': 'Diceritakan mengikut buku',
+  'story.recap.manner.bold': 'Diceritakan dengan bertaruh',
+  'story.recap.manner.shady': 'Diceritakan melalui pintu belakang',
+  'story.recap.unwritten': 'Tak sempat sampai: {title}',
+  'story.recap.none': 'Tiada bab yang sempat ditutup: kerjaya ini tamat sebelum ceritanya bermula.',
+  'story.cast': "Puan Sri Mariam, Farid, Dato' Lazim dan Kak Dewi ialah watak rekaan.",
+  'story.trade.perlis': 'padi dan perdagangan sempadan',
+  'story.trade.kedah': 'padi',
+  'story.trade.penang': 'kilang dan feri',
+  'story.trade.perak': 'batu kapur dan pelancongan',
+  'story.trade.kelantan': 'kraf dan pasar',
+  'story.trade.terengganu': 'nelayan dan pesisir',
+  'story.trade.pahang': 'ladang tanah tinggi',
+  'story.trade.selangor': 'kilang dan perjalanan ulang-alik',
+  'story.trade.nsembilan': 'estet dan kilang kecil',
+  'story.trade.melaka': 'pelancongan warisan',
+  'story.trade.johor': 'perdagangan merentas Tambak',
+  'story.trade.sabah': 'ladang dan laut',
+  'story.trade.sarawak': 'sawit dan perdagangan sungai',
+  'story.trade.default': 'perdagangan utamanya',
+};
+
+export const STORY_EN: Record<string, string> = { ...chapters(CHAPTERS_EN), ...EN_UI };
+export const STORY_MS: Record<string, string> = { ...chapters(CHAPTERS_MS), ...MS_UI };

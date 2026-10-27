@@ -23,6 +23,8 @@ import { Chamber } from './Chamber';
 import { divisionSeating } from './seating';
 import { ScenePicture } from './art';
 import { standingOf } from '../sim/campaign/standing';
+import { isStoryBeat } from '../sim/campaign/storyline';
+import { useStoryVars } from './StoryCard';
 
 /**
  * A scene that needs the player's answer: a call from another leader or an
@@ -41,6 +43,7 @@ function SceneCard({ scene }: { scene: Scene }) {
   const fog = useFog();
   const f = useFormat();
   const world = useWorld();
+  const storyVars = useStoryVars();
   const campaign = useStore((s) => s.game!.campaign);
   const answerScene = useStore((s) => s.answerScene);
   const playStates = useStore((s) => s.playStates);
@@ -108,14 +111,16 @@ function SceneCard({ scene }: { scene: Scene }) {
     ];
   } else if (scene.kind === 'event' && scene.event && EVENTS[scene.event]) {
     const id = scene.event;
-    title = t(`event.${id}.title` as StringKey);
+    // A chapter of a story says which state it is in, and what the state is known for.
+    const sv = isStoryBeat(id) ? storyVars : undefined;
+    title = t(`event.${id}.title` as StringKey, sv);
     const k = campaign.career!;
     // A by-election is fought in a particular seat; a round of state polls in particular states.
     const vacant = id === 'byElection' && scene.seat ? world.seatIndex.get(scene.seat) : undefined;
     const voting = id === 'statePolls' && k.rounds < ROUNDS.length ? ROUNDS[k.rounds].states.filter((st) => world.states.includes(st)) : [];
     body = (
       <>
-        <p>{t((bodyVariant(id, k.fired.filter((x) => x === id).length) > 0 ? `event.${id}.body.${bodyVariant(id, k.fired.filter((x) => x === id).length)}` : `event.${id}.body`) as StringKey)}</p>
+        <p>{t((bodyVariant(id, k.fired.filter((x) => x === id).length) > 0 ? `event.${id}.body.${bodyVariant(id, k.fired.filter((x) => x === id).length)}` : `event.${id}.body`) as StringKey, sv)}</p>
         {vacant !== undefined && (
           <p className="note">{t('scene.by.seat', { seat: world.seats[vacant].name, party: partyName(t, holderOf(world, campaign, scene.seat!)), pct: (lastOutcome(world).seats[vacant].margin * 100).toFixed(1) })}</p>
         )}

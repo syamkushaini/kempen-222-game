@@ -133,7 +133,7 @@ describe('the challenges of governing', () => {
   });
 
   it('are met across a whole term by a prime minister, and the country’s figures survive an election and a save', () => {
-    const c = career(PS, 7);
+    const c = career(PS, 8);
     c.career!.nation = { health: 35, education: 35, standing: 55 };
     c.career!.tabled.lines.health = -1;
     const seen = new Set<string>();
