@@ -295,6 +295,8 @@ interface Store {
 
   offer(party: number, offer: Offer): void;
   soundOut(party: number): void;
+  /** The player has read the chapters that closed (see storyline.ts). */
+  seeStory(): void;
   backRival(party: number): void;
   askTerms(party: number, ask: Ask): void;
   claimAgain(): void;
@@ -635,6 +637,7 @@ export const useStore = create<Store>((set, get) => {
       return result ? { offerReply: { party, result } } : {};
     }),
     soundOut: (party) => mutate((c) => { soundOut(c, party); }),
+    seeStory: () => mutate((c) => { if (c.career?.story && c.career.story.seen < c.career.story.log.length) c.career.story.seen++; }),
     askTerms: (party, ask) => mutate((c, _g, world) => {
       const reply = requestTerms(world, c, party, ask);
       return { askReply: reply ? { party, ask, reply } : null };

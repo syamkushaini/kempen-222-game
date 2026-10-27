@@ -1692,6 +1692,78 @@
    "title": "A rumour of a vacancy",
    "body": "The MP for a marginal seat that your party hopes to win is said to be unwell, and a by-election may come. Nothing has been announced. Your branch there has no candidate, and three members want to be asked."
   },
+  "natInheritance": {
+   "title": "The Inheritance",
+   "body": "Your first weeks are keys, passwords and unpaid invoices. Puan Sri Mariam, the party's eldest elder, leaves a thick folder on your desk: the debts, the promises, and a list of people who expect favours. Farid, your chief of staff, says the first thing you do will become the story of how you lead."
+  },
+  "natFirstCrack": {
+   "title": "The Memo",
+   "body": "Farid brings a folded memo that was meant for someone else: a list of names with ticks and question marks beside them. Someone in the House is counting heads for a new arrangement, and your party is on it, in the column for friends or in the column for 'to be handled'. Puan Sri Mariam says to ignore it. Dato' Lazim's people say to act first."
+  },
+  "natPaperTrail": {
+   "title": "The Midnight Call",
+   "body": "Kak Dewi, editor of Suara Pagi, rings at midnight. Her reporters have your party's donor list, and three entries do not add up: a rented hall, a consultancy fee, and a 'friend of the party' nobody has met. She gives you until Friday to answer, and she has a long memory for how people answer."
+  },
+  "natAfterGov": {
+   "title": "The Morning After",
+   "body": "The votes are counted, the oath is taken, and your party is in government. At the first meeting of the new cabinet nobody is sure who pours the tea and who carries the blame. Puan Sri Mariam wants a broad cabinet, Farid wants a small one of people you trust, and the old guard wants its turn."
+  },
+  "natAfterOpp": {
+   "title": "The Long Bench",
+   "body": "The votes are counted and your party sits on the opposition side of the House. Some of your people want to rest; others want to bring the government down by Friday. Farid has drawn two plans on a napkin, and Puan Sri Mariam looks at you and says nothing, which is her loudest advice."
+  },
+  "natLastPage": {
+   "title": "The Last Page",
+   "body": "The years have gone faster than the diary said. Farid has started writing a book and Puan Sri Mariam has started giving away her recipes, which she only does when she is thinking of leaving. The question that follows you into every room is simple: what will people say you did here? Three answers are on the table."
+  },
+  "stateKeys": {
+   "title": "The Keys",
+   "body": "The office in {state} smells of fresh paint and old files. The State Secretary lays out three stacks: the projects that are ready, the ones the last administration promised, and the two complaints about {trade} that arrive every week. Whatever you announce first, the whole state will read it as a sign of what you care about."
+  },
+  "stateHandshake": {
+   "title": "The Envelope",
+   "body": "A federal minister arrives in {state} with a thick envelope: a grant, with conditions. They are not outrageous, but they would tie the state's hands on a project you care about. Farid shrugs. The state legal adviser asks to read the small print twice."
+  },
+  "stateTrade": {
+   "title": "A Bad Season",
+   "body": "A quiet crisis in {state}: the trade everyone knows it for, {trade}, has had a bad season. Prices have dropped, a big buyer has gone elsewhere, and kopitiam talk is all about it. Kak Dewi's reporters are on their way to the district, and Dato' Lazim has already offered to 'help'."
+  },
+  "stateAfterGov": {
+   "title": "The Morning After",
+   "body": "{state} has voted, and your side governs it. The celebration is teh tarik at midnight. Now the hard part: Puan Sri Mariam says the state has trusted you for five more years; Farid says the voters have trusted you for five more months. The assembly's budget is due and the local councils are restless."
+  },
+  "stateAfterOpp": {
+   "title": "The Long Walk",
+   "body": "{state} has voted, and your party sits across the aisle. The government's numbers are thin and its partners are still counting. Some of your people want to wait for it to fall; others say voters will only reward a party that shows them how it would run things."
+  },
+  "stateKeeper": {
+   "title": "The Plaque",
+   "body": "Late in the term, {state} is quiet the way a kampung is quiet before a kenduri: everyone is busy and nobody will say what for. Puan Sri Mariam says it is time to decide what will be on the plaque when you are gone. Kak Dewi is writing a profile and wants to know, off the record, what you would do differently."
+  },
+  "foundHall": {
+   "title": "Seven Chairs",
+   "body": "Your party's first headquarters is a rented shoplot with seven plastic chairs and a banner that has already lost a corner. A stranger at the door says they have a hall that holds three hundred; the price is a small favour, to be named later. Meanwhile three volunteers, a student, a retired teacher and a lorry driver, offer to run the first meeting in the car park."
+  },
+  "foundOffer": {
+   "title": "The Big Party's Offer",
+   "body": "A senior figure from an established party invites you for teh tarik and makes a proposal: join them, and you get a safe seat and perhaps a post. Refuse, and they will not be hostile, but they will not stand aside either. Puan Sri Mariam's advice is the opposite of Farid's, which usually means both are right."
+  },
+  "foundCheque": {
+   "title": "The Cheque",
+   "body": "Dato' Lazim's cheque is the largest your party has ever seen. The card says: 'No strings. Only a seat in the room when decisions are made.' The treasurer has gone pale; the volunteers have gone quiet. Money has never been scarcer and the building fund has never been closer."
+  },
+  "foundBreakthrough": {
+   "title": "The Corner of the Table",
+   "body": "The count is over and your party has more than a handful of seats: enough that the big coalitions have started calling at odd hours. A phone rings at 2 a.m., another at 2:10. Farid is writing names on a whiteboard and Puan Sri Mariam has brought a flask of kopi."
+  },
+  "foundWall": {
+   "title": "The Wall",
+   "body": "The count is in and the numbers are thin. The student volunteer is in tears, the lorry driver has already booked the van for the next campaign, and an old friend says the party should fold into a bigger one. Puan Sri Mariam says every big party was once somebody's embarrassing small one."
+  },
+  "foundGovernment": {
+   "title": "Government or Never",
+   "body": "The next election is on the horizon and, for the first time, a poll has your party in the conversation: the kind of conversation where people say 'what if?'. Farid has made a spreadsheet, Kak Dewi has made an appointment, and Dato' Lazim has made his intentions known."
+  },
   "kind-pactOffer": {
    "title": "An offer from another party",
    "body": "The leader of another party calls with an offer of a pact: seats to stand aside in, seats in return. Two leaders at a table with glasses of teh tarik, a handshake half offered."

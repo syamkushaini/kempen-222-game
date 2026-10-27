@@ -6,6 +6,7 @@ import { seatName, useFormat, useT, useWorld } from './hooks';
 import { Icon, type IconName } from './Icon';
 import { Moves } from './Moves';
 import { NewsLine } from './NewsTab';
+import { StoryCard } from './StoryCard';
 
 function DeskCard({ icon, tone, title, children, go, onGo }: { icon: IconName; tone: string; title: string; children: React.ReactNode; go?: string; onGo?: () => void }) {
   return (
@@ -38,6 +39,7 @@ export function TermDesk() {
 
   return (
     <section className="desk">
+      <StoryCard />
       <BriefingCard />
       <Moves />
       <ul className="desk-list">

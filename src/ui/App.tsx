@@ -14,6 +14,7 @@ import { DiplomacyTab } from './DiplomacyTab';
 import { installFeedback } from './feedback';
 import { ActionToasts, Toasts } from './Honours';
 import { SceneModal } from './SceneModal';
+import { ChapterModal } from './StoryCard';
 import { CampaignBar, Header, TermBar } from './Header';
 import { GoalLine } from './Challenges';
 import { MetricsStrip } from './MetricsStrip';
@@ -267,6 +268,7 @@ function CampaignScreen() {
       {narrow && seatCard}
       <WeekRecap />
       <DecisionResult />
+      <ChapterModal />
       {campaign.career?.missions?.unseen.length ? <Suspense fallback={null}><MissionCard /></Suspense> : null}
       <CampaignBar />
       <TermBar />
