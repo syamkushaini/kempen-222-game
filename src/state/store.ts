@@ -78,7 +78,7 @@ import { adoptDoctrine as adoptMeterDoctrine } from '../sim/campaign/doctrines';
 import { setStance as setMeterStance, type StanceId } from '../sim/campaign/stances';
 import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaign/econTools';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
-import { award, hang, legacyEntry, noteAchieved, ProfileStore, recordPoints, type Profile } from './profile';
+import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordPoints, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
 import { pointsOf } from '../sim/campaign/scoring';
 import { finishedChallenge } from '../sim/campaign/challengePoints';
@@ -904,7 +904,10 @@ useStore.subscribe((state, prev) => {
   const ids = earned(world, game.campaign, state.profile.legacies.map((e) => e.legacy));
   const counted = noteAchieved(state.profile, game.id, ids);
   const entry = legacyEntry(game, now, pointsOf(counted.achievedIn?.[game.id] ?? ids));
-  const hung = entry ? hang(counted, entry) : counted;
+  // A finished career also banks Political Legacy Points toward the next one's archetypes and perks (see archetypes.ts), the first time it is hung.
+  const firstHang = !!entry && !counted.legacies.some((e) => e.game === entry.game);
+  const beforeHang = entry && firstHang ? awardLegacyPoints(counted, entry) : counted;
+  const hung = entry ? hang(beforeHang, entry) : beforeHang;
   const { profile: awarded, fresh } = award(hung, ids, now);
   // A challenge finished leaves its points, at their best.
   const done = finishedChallenge(world, game.campaign);
