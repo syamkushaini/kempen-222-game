@@ -119,6 +119,7 @@ function SettingsDialog({ onClose }: { onClose(): void }) {
         <Row label={t('sound.sfx')}><Switch label={t('sound.sfx')} on={s.sound} onFlip={() => set({ sound: !s.sound })} /></Row>
         <Row label={t('sound.music')}><Switch label={t('sound.music')} on={s.music} onFlip={() => set({ music: !s.music })} /></Row>
         <Row label={t('guide.show')}><Switch label={t('guide.show')} on={s.hints} onFlip={() => set({ hints: !s.hints })} /></Row>
+        <Row label={t('settings.analytics')} note={t('settings.analytics.note')}><Switch label={t('settings.analytics')} on={s.analytics} onFlip={() => set({ analytics: !s.analytics })} /></Row>
       </DialogFocus>
     </div>
   );

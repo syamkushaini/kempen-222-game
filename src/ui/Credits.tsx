@@ -25,6 +25,7 @@ export function Credits() {
         <li>{t('credits.tindak2')} <Out href={LINKS.tindak2}>{t('credits.link.tindak2')}</Out> · <Out href={LINKS.ccby}>CC BY 4.0</Out></li>
       </ul>
       <p>{t('credits.changes')}</p>
+      <p>{t('credits.analytics')}</p>
     </details>
   );
 }

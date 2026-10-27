@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { countClick } from '../state/playWatch';
 import { useStore } from '../state/store';
 import { useT } from './hooks';
 import { Help } from './Help';
@@ -38,7 +39,7 @@ export function GameMenu() {
         <h2>{t('menu.title')}</h2>
         <div className="menu-list">
           <button className="btn primary" autoFocus onClick={() => setOpen(false)}>{t('menu.resume')} <Kbd shortcut="Esc" /></button>
-          <ConfirmButton className="btn" label={t('menu.restart')} confirmLabel={t('menu.restart.confirm')} onConfirm={leave(restart)} />
+          <ConfirmButton className="btn" label={t('menu.restart')} confirmLabel={t('menu.restart.confirm')} onConfirm={leave(() => { countClick('again', 'menu-restart'); restart(); })} />
           <button className="btn" aria-expanded={saves} onClick={() => setSaves(!saves)}>{t('menu.saves')} {saves ? '▴' : '▾'}</button>
           {saves && <SavesPanel embedded />}
           <button className="btn" onClick={() => setHowTo(true)}>{t('howto.title')}</button>

@@ -3,6 +3,7 @@ import { careerYears } from '../sim/campaign/legacy';
 import { inGovernment } from '../sim/campaign/career';
 import { canSwitch, SWITCH_COST, takers } from '../sim/campaign/switching';
 import { worldOf } from '../data/world';
+import { countClick } from '../state/playWatch';
 import { useStore } from '../state/store';
 import { useMemo, useState } from 'react';
 import { leaderName, partyName, useT } from './hooks';
@@ -76,7 +77,7 @@ export function LegacyScreen() {
         )}
         <PostCareer />
         <div className="button-row">
-          <button className="btn primary" onClick={quitToTitle}>{t('summary.again')} ▸</button>
+          <button className="btn primary" onClick={() => { countClick('again', 'new'); quitToTitle(); }}>{t('summary.again')} ▸</button>
           <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>
         </div>
         {sharing && <ShareDialog data={card} onClose={() => setSharing(false)} />}

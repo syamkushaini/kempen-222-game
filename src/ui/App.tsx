@@ -12,6 +12,7 @@ import { ChiefsTab } from './ChiefsTab';
 import { hasDiplomacy } from '../sim/campaign/diplomacy';
 import { DiplomacyTab } from './DiplomacyTab';
 import { installFeedback } from './feedback';
+import { installAnalytics } from '../state/playWatch';
 import { ActionToasts, Toasts } from './Honours';
 import { SceneModal } from './SceneModal';
 import { ChapterModal } from './StoryCard';
@@ -362,6 +363,7 @@ export function App() {
   }, [player, palette, accentColor]);
 
   useEffect(() => installFeedback(), []);
+  useEffect(() => installAnalytics(), []);
 
   // Election night stays up until the player moves on to the talks that follow it.
   const night = phase === 'night' || ((phase === 'formation' || phase === 'done') && (showNight || !talks));
