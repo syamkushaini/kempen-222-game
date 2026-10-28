@@ -43,6 +43,18 @@ The workflow is manual on purpose: pushing code does not put the game online, so
 
 With the same two variables, a player can sign in with an e-mail address (a code is mailed and typed back, no password) and keep a copy of their saves in the Supabase project, so that a cleared browser, the browser built into another app, or a new phone does not lose them. Run `supabase/cloud-saves.sql` once, switch on the Email provider, and put `{{ .Token }}` in the Magic Link e-mail template: the SQL file says exactly how. Without the variables the game keeps its saves on the device only.
 
+## Simulator
+
+The **Simulator** on the main menu runs a whole contest with nobody at the controls: the general election, or any state's assembly election. Everything that shapes it can be set, then the contest is run from the first day of the campaign to the new government taking office, and the settings can be changed and the contest run again.
+
+- **Set-up.** The contest, the party in focus (run by the same logic as every other party), the rivals' skill, the length of the campaign, the random seed, a few quick what-ifs, and saved settings that can be exported to a file and imported again.
+- **Conditions.** The national mood for each party, the mood among each of the thirteen groups of voters and in each state, turnout, the pull on the undecided, how much each issue matters to voters, the economy, and how much luck is left (drift of opinion, surprise on polling day).
+- **Parties.** For each party: the leader's four abilities, the four people on the team, credibility, public profile, unity, funds, days a week and branches; where it stands on the twelve issues (with what each position is worth in points of support); and up to six promises.
+- **Coalitions.** Who governs as the campaign opens, how each pair of leaders feel about each other, electoral pacts signed on the first day, and whether parties may deal with each other during the campaign.
+- **Results.** The campaign plays out week by week (the seats if polling day were that day), then the count: seats and votes against the last election or against an earlier run, the trend, the government that formed and how firm it is, the chamber, how each state voted, and the seats that changed hands. **Run many** repeats the contest with different seeds, since one run includes luck, and shows the spread: mean seats and their range, how often each party wins a majority, heads the government or is in it.
+
+A change is marked wherever it is made, and can be put back with the ↺ beside it. The code is in `src/sim/campaign/simulate.ts` (headless, no browser needed) and `src/ui/Simulator.tsx`.
+
 ## How to play
 
 You lead one of three national parties through the last weeks before polling day. The rules are the same in every contest; money is scaled to its size, and a state or single seat has no travel time.

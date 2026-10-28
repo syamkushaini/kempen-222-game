@@ -1,5 +1,5 @@
 import { emptyDynamics } from '../dynamics';
-import { lastElection, runElection, type World } from '../election';
+import { lastElection, runElection, scaleNoise, type World } from '../election';
 import { Rng } from '../rng';
 import { LEAN } from './challengeCode';
 import {
@@ -418,7 +418,7 @@ export function autoPlayWeek(world: World, c: Campaign): void {
 export function electionResult(world: World, c: Campaign): ElectionOutcome | null {
   if (!c.election) return null;
   if (world.rules.kind === 'hung') return lastElection(world);
-  return runElection(world, effectiveDynamics(c), new Rng(c.election.rng), undefined, c.standDowns);
+  return runElection(world, effectiveDynamics(c), new Rng(c.election.rng), c.sim?.noise === undefined ? undefined : scaleNoise(c.sim.noise), c.standDowns);
 }
 
 /** Election night is over: on to forming a government, where the contest has one to form. */

@@ -100,6 +100,7 @@ export function Title() {
   const t = useT();
   const f = useFormat();
   const startCampaign = useStore((s) => s.startCampaign);
+  const setSimulating = useStore((s) => s.setSimulating);
   const loadGame = useStore((s) => s.loadGame);
   const [kind, setKind] = useState<Mode>('byelection');
   const [state, setState] = useState<StateId>('perak');
@@ -212,6 +213,7 @@ export function Title() {
             {!auto && <MenuItem primary icon="play" tone="go" title={t('menu.play')} hint={t('menu.play.hint')} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy', seed: seedFromSearch(window.location.search) })} />}
             <MenuItem primary={false} icon="plus" tone="new" title={t('menu.new')} hint={t('menu.new.hint')} onClick={() => pick('home')} />
             <MenuItem icon="folder" tone="load" title={t('menu.load')} hint={t('menu.load.hint', { n: saved })} onClick={() => pick('load')} />
+            <MenuItem icon="sliders" tone="learn" title={t('sim.menu')} hint={t('sim.menu.hint')} onClick={() => setSimulating(true)} />
             <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.weekly', { n: Math.max(1, Math.ceil(timeLeft(Date.now()) / 86_400_000)) })} onClick={() => pick('challenges')} />
             <MenuItem icon="book" tone="learn" title={t('howto.title')} hint={t('howto.hint')} onClick={() => setHowTo(true)} />
             <MenuItem icon="trophy" tone="won" title={t('menu.honours')} hint={t('menu.honours.hint', { n: earnedCount, total: ACHIEVEMENT_IDS.length })} onClick={() => setHonours(true)} />

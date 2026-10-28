@@ -3,6 +3,7 @@ import type { StandDowns } from '../transfer';
 import type { Dynamics, Region, RegionId } from '../types';
 import type { SegmentId } from './segments';
 import type { ChronicleEntry } from './chronicle';
+import type { RoleId } from './teamTypes';
 
 export type Difficulty = 'easy' | 'normal' | 'hard';
 export type Phase = 'term' | 'campaign' | 'night' | 'formation' | 'done';
@@ -891,6 +892,23 @@ export interface Stronghold {
   shares?: number[];
 }
 
+/**
+ * What the simulator changes about the rules (see simulate.ts). Present only in a simulated campaign, never in a game that is
+ * played: it makes the player's party an ordinary AI-run party, and sets what the cast would otherwise fix.
+ */
+export interface SimHooks {
+  /** [party]: how far voters believe a party's word, 0 to 100. 60 is the usual for a rival. */
+  credibility?: number[];
+  /** [party]: the leader's abilities, in the order of STAT_IDS. */
+  leaders?: number[][];
+  /** [party]: how good the person in each job is, 0 to 5. */
+  staff?: Partial<Record<RoleId, number>>[];
+  /** Parties make no pacts of their own once the campaign is under way. */
+  noNewPacts?: boolean;
+  /** How unpredictable polling day is, as a multiple of the usual (1 is usual, 0 a result with no surprises). */
+  noise?: number;
+}
+
 export interface Campaign {
   /** A state election fought in person inside a career: the last result of this state, which it is fitted to in place of the data's. */
   carried?: SeatResults;
@@ -966,6 +984,8 @@ export interface Campaign {
   chronicle?: ChronicleEntry[];
   /** The last few actions taken in each seat, for the synergy resolver (see synergy.ts). Absent until an action is taken in a seat. */
   recentSeatActions?: Record<string, ActionId[]>;
+  /** Simulator overrides: absent in a game that is played. */
+  sim?: SimHooks;
 }
 
 export * from './teamTypes';

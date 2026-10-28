@@ -144,6 +144,15 @@ export const DEFAULT_NOISE: ElectionNoise = {
   seatTurnout: 0.08,
 };
 
+/** Polling-day randomness at a multiple of the usual. */
+export const scaleNoise = (m: number): ElectionNoise => ({
+  nationalSupport: DEFAULT_NOISE.nationalSupport * m,
+  stateSupport: DEFAULT_NOISE.stateSupport * m,
+  seatSupport: DEFAULT_NOISE.seatSupport * m,
+  nationalTurnout: DEFAULT_NOISE.nationalTurnout * m,
+  seatTurnout: DEFAULT_NOISE.seatTurnout * m,
+});
+
 /**
  * Holds the election: the projection plus polling-day randomness that is
  * correlated nationally and within each state, so surprises come in waves

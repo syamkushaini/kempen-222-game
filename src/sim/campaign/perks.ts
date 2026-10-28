@@ -39,6 +39,8 @@ export const makeLeader = (backstory: BackstoryId | null, party?: number): Leade
 /** How good the leader of a party is at something: the player's own leader, or the rival party's as the cast gives them. */
 export function stat(c: Campaign, p: number, id: StatId): number {
   const i = STAT_IDS.indexOf(id);
+  const set = c.sim?.leaders?.[p]?.[i];
+  if (set !== undefined) return set;
   return p === c.player ? c.team.leader.stats[i] ?? 3 : LEADER_STATS[PARTY_IDS[p] as keyof typeof LEADER_STATS]?.[i] ?? 3;
 }
 
@@ -47,6 +49,8 @@ export const edge = (c: Campaign, p: number, id: StatId) => 1 + 0.08 * (stat(c, 
 
 /** How good a party's person in a job is: 0 with nobody in it. The player's is whoever they hired (nothing in a week the team went unpaid); a rival's is as the cast gives it. */
 export function skill(c: Campaign, p: number, id: RoleId): number {
+  const set = c.sim?.staff?.[p]?.[id];
+  if (set !== undefined) return set;
   if (p !== c.player) return RIVAL_STAFF[PARTY_IDS[p] as keyof typeof RIVAL_STAFF]?.[id] ?? 0;
   return c.team.unpaid ? 0 : c.team.staff[ROLE_IDS.indexOf(id)]?.skill ?? 0;
 }

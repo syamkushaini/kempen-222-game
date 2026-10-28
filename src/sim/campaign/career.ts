@@ -127,7 +127,7 @@ export function syncOpinion(c: Campaign): void {
 // ---------- starting ----------
 
 /** The government a career opens with: the largest party leading a broad coalition, as after the last real election. */
-function firstGovernment(world: World): Outcome {
+export function firstGovernment(world: World): Outcome {
   const tally = lastElection(world).tally;
   const [ps, bp, gbk, gbs, legasi] = (['ps', 'bp', 'gbk', 'gbs', 'legasi'] as const).map((id) => PARTY_IDS.indexOf(id));
   const deals: Outcome['deals'] = new Array(N_PARTIES).fill(null);
