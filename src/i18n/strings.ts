@@ -20,6 +20,7 @@ import { AUTOFILL_EN, AUTOFILL_MS, type AutofillKey } from './autofill';
 import { DOCTRINES_EN, DOCTRINES_MS, type DoctrineKey } from './doctrines';
 import { METERTOOLS_EN, METERTOOLS_MS, type MeterToolKey } from './meterTools';
 import { LOOK_EN, LOOK_MS, type LookKey } from './look';
+import { SIM_EN, SIM_MS, type SimKey } from './simulate';
 
 const en = {
   'app.title': 'Kempen 222',
@@ -3151,7 +3152,7 @@ const en = {
 type CoreKey = keyof typeof en;
 /** The keys defined in this file, so that text kept elsewhere can be checked not to reuse one. */
 export const CORE_KEYS: readonly string[] = Object.keys(en);
-export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey | ThanksKey | MapShareKey | BragKey | ConductKey | GraftKey | AdviceKey | AutofillKey | MeterToolKey | DoctrineKey | StoryKey;
+export type StringKey = CoreKey | HonoursKey | PeopleKey | MissionKey | MakerKey | LookKey | HelpKey | MoneyKey | ThanksKey | MapShareKey | BragKey | ConductKey | GraftKey | AdviceKey | AutofillKey | MeterToolKey | DoctrineKey | StoryKey | SimKey;
 
 const ms: Record<CoreKey, string> = {
   'app.title': 'Kempen 222',
@@ -6283,8 +6284,8 @@ const ms: Record<CoreKey, string> = {
 export type Lang = 'en' | 'ms';
 // Event text is kept in its own file and looked up by keys built from event ids.
 export const STRINGS: Record<Lang, Record<string, string>> = {
-  en: { ...en, ...STORY_EN, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...BRAG_EN, ...CONDUCT_EN, ...GRAFT_EN, ...ADVICE_EN, ...AUTOFILL_EN, ...METERTOOLS_EN, ...DOCTRINES_EN, ...flattenEvents(EVENTS_EN), ...flattenMore(MORE_EN) },
-  ms: { ...ms, ...STORY_MS, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...BRAG_MS, ...CONDUCT_MS, ...GRAFT_MS, ...ADVICE_MS, ...AUTOFILL_MS, ...METERTOOLS_MS, ...DOCTRINES_MS, ...flattenEvents(EVENTS_MS), ...flattenMore(MORE_MS) },
+  en: { ...en, ...STORY_EN, ...HONOURS_EN, ...PEOPLE_EN, ...MISSIONS_EN, ...MAKER_EN, ...LOOK_EN, ...HELP_EN, ...MONEY_EN, ...THANKS_EN, ...MAPSHARE_EN, ...BRAG_EN, ...CONDUCT_EN, ...GRAFT_EN, ...ADVICE_EN, ...AUTOFILL_EN, ...METERTOOLS_EN, ...DOCTRINES_EN, ...SIM_EN, ...flattenEvents(EVENTS_EN), ...flattenMore(MORE_EN) },
+  ms: { ...ms, ...STORY_MS, ...HONOURS_MS, ...PEOPLE_MS, ...MISSIONS_MS, ...MAKER_MS, ...LOOK_MS, ...HELP_MS, ...MONEY_MS, ...THANKS_MS, ...MAPSHARE_MS, ...BRAG_MS, ...CONDUCT_MS, ...GRAFT_MS, ...ADVICE_MS, ...AUTOFILL_MS, ...METERTOOLS_MS, ...DOCTRINES_MS, ...SIM_MS, ...flattenEvents(EVENTS_MS), ...flattenMore(MORE_MS) },
 };
 
 /**

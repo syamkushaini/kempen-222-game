@@ -444,6 +444,9 @@ interface Store {
   restart(): void;
   /** Leaves for the title screen with the full set-up of a new game showing. */
   newGameSetup(): void;
+  /** The simulator is open in place of the title screen (see Simulator.tsx). */
+  simulating: boolean;
+  setSimulating(on: boolean): void;
   /** Set by `newGameSetup` so the title screen opens on the set-up, and cleared once it has. */
   setupWanted: boolean;
   clearSetupWanted(): void;
@@ -842,7 +845,7 @@ export const useStore = create<Store>((set, get) => {
       // Save now: the delayed autosave would find the game already gone.
       const g = get().game;
       if (g) saveStore.save(AUTO_SLOT, g);
-      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null });
+      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null, simulating: false });
     },
     restart: () => {
       const g = get().game;
@@ -879,6 +882,8 @@ export const useStore = create<Store>((set, get) => {
       if (!kept) return;
       get().startCampaign({ ...startOf(g), name: g.name, identity: g.identity, carried: kept });
     },
+    simulating: false,
+    setSimulating: (on) => set({ simulating: on }),
     setupWanted: false,
     newGameSetup: () => { get().quitToTitle(); set({ setupWanted: true }); },
     clearSetupWanted: () => set({ setupWanted: false }),

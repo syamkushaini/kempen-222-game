@@ -57,6 +57,7 @@ const PartyTab = lazy(() => import('./PartyTab').then((m) => ({ default: m.Party
 const PolicyTab = lazy(() => import('./PolicyTab').then((m) => ({ default: m.PolicyTab })));
 const MissionsTab = lazy(() => import('./MissionsTab').then((m) => ({ default: m.MissionsTab })));
 const MissionCard = lazy(() => import('./MissionsTab').then((m) => ({ default: m.MissionCard })));
+const Simulator = lazy(() => import('./Simulator').then((m) => ({ default: m.Simulator })));
 const TermDesk = lazy(() => import('./TermDesk').then((m) => ({ default: m.TermDesk })));
 
 installIdentity();
@@ -306,6 +307,7 @@ export function App() {
   const phase = useStore((s) => s.game?.campaign.phase);
   const talks = useStore((s) => !!s.game?.campaign.formation);
   const showNight = useStore((s) => s.showNight);
+  const simulating = useStore((s) => s.simulating);
   const ended = useStore((s) => !!s.game?.campaign.career?.ending);
   const loads = useStore((s) => s.loads);
   const setPendingChallenge = useStore((s) => s.setPendingChallenge);
@@ -378,8 +380,9 @@ export function App() {
       {/* the screens read party colours when they draw, so a new palette starts them afresh */}
       <Fragment key={palette}>
         <main id="main" tabIndex={-1}>
-          {!phase && <Title />}
+          {!phase && !simulating && <Title />}
           <Suspense fallback={<p className="muted">{t('app.loading')}</p>}>
+            {!phase && simulating && <Simulator />}
             {ended && <LegacyScreen />}
             {!ended && (phase === 'campaign' || phase === 'term') && <CampaignScreen />}
             {!ended && night && <ElectionNight key={loads} />}
