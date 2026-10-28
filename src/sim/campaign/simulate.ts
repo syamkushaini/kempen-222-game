@@ -294,18 +294,28 @@ const sharesOf = (o: ElectionOutcome): number[] => {
 
 // ---------- running ----------
 
-/** Builds the campaign a config describes, ready for its first week. */
-export function buildCampaign(world: World, cfg: SimConfig): Campaign {
+/**
+ * Builds the campaign a config describes, ready for its first week. To `watch` it, every party including the one in focus is run
+ * by the game's own logic; to `play` it (the sandbox), the party in focus is the player's, with the leader and team the config gives it.
+ */
+export function buildCampaign(world: World, cfg: SimConfig, mode: 'watch' | 'play' = 'watch'): Campaign {
   const me = cfg.focus;
   const c = startCareer(world, { player: me, difficulty: cfg.difficulty, seed: cfg.seed, backstory: null });
   const k = c.career!;
+  const playing = mode === 'play';
   c.sim = {
-    credibility: cfg.parties.map((p) => p.credibility),
-    leaders: cfg.parties.map((p) => [...p.leader]),
-    staff: cfg.parties.map((p) => Object.fromEntries(ROLE_IDS.map((r, i) => [r, p.staff[i]])) as Partial<Record<RoleId, number>>),
+    // The player's own credibility, leader and team are the game's own, which the player can change in play.
+    credibility: cfg.parties.map((p, i) => (playing && i === me ? null : p.credibility)),
+    leaders: cfg.parties.map((p, i) => (playing && i === me ? null : [...p.leader])),
+    staff: cfg.parties.map((p, i) => (playing && i === me ? null : (Object.fromEntries(ROLE_IDS.map((r, j) => [r, p.staff[j]])) as Partial<Record<RoleId, number>>))),
     noNewPacts: !cfg.freePacts,
     noise: cfg.surprise,
+    ...(playing ? { sandbox: true } : { auto: true }),
   };
+  if (playing) {
+    c.team.leader = { backstory: null, stats: [...cfg.parties[me].leader] };
+    c.team.staff = ROLE_IDS.map((_, j) => (cfg.parties[me].staff[j] > 0 ? { name: j, skill: cfg.parties[me].staff[j], skeleton: false, vetted: true } : null));
+  }
 
   // Who governs as the campaign opens.
   const seats = lastElection(world).tally;
@@ -386,7 +396,7 @@ const point = (world: World, c: Campaign, week: number): TrendPoint => {
 
 /** Runs a contest from the first day of the campaign to the government taking office. */
 export function simulate(world: World, cfg: SimConfig): SimResult {
-  const c = buildCampaign(world, cfg);
+  const c = buildCampaign(world, cfg, 'watch');
   const trend: TrendPoint[] = [point(world, c, 0)];
   while (c.phase === 'campaign') {
     autoPlayWeek(world, c);

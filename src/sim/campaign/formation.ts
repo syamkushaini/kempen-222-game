@@ -132,7 +132,7 @@ function decide(world: World, c: Campaign, bloc: number): boolean {
     return changed;
   }
   // The player decides for their own party; in a simulated campaign nobody does, and the party decides like any other.
-  if (bloc === c.player && !c.sim) return false;
+  if (bloc === c.player && !c.sim?.auto) return false;
   // Perpaduan Bangsa: the partner stays with the head of the alliance.
   if (bloc === perpaduan(c)?.partner) return false;
 
@@ -330,7 +330,7 @@ function rivalOffers(world: World, c: Campaign, day: number): void {
   const f = c.formation!;
   const g = generosity(c, day);
   for (const k of f.claimants) {
-    if (k === c.player && !c.sim) continue;
+    if (k === c.player && !c.sim?.auto) continue;
     const kc = c.parties[k];
     // What can go to one party only is offered to whoever brings the most seats.
     const promised = new Set<DemandId>();
@@ -433,7 +433,7 @@ export function startFormation(world: World, c: Campaign, tally: number[]): void
   // Under Perpaduan Bangsa the junior side never claims the top post, whoever plays it, and the head always does, as long as both have seats.
   const alliance = perpaduan(c);
   const bound = alliance && seats[alliance.head] > 0 && seats[alliance.partner] > 0 ? alliance : null;
-  const claimants = seats.map((n, p) => (p !== OTH && n > 0 && p !== bound?.partner && ((p === me && !c.sim) || p === bound?.head || n >= 0.6 * most) ? p : -1)).filter((p) => p >= 0);
+  const claimants = seats.map((n, p) => (p !== OTH && n > 0 && p !== bound?.partner && ((p === me && !c.sim?.auto) || p === bound?.head || n >= 0.6 * most) ? p : -1)).filter((p) => p >= 0);
   const f: Formation = {
     day: 1, deadline: r.days, extended: false, meetings: MEETINGS,
     seats, claimants,
@@ -462,7 +462,7 @@ export function startFormation(world: World, c: Campaign, tally: number[]): void
       senior: deputy ?? (f.seats[small] >= 0.08 * world.seats.length && w.senior && free.includes(w.senior) ? w.senior : null),
       demands: [], cash: 0,
     };
-    if (small === me && !ours && !c.sim) continue;
+    if (small === me && !ours && !c.sim?.auto) continue;
     if (f.claimants.includes(small)) standAside(f, small);
     f.pledge[small] = big;
   }

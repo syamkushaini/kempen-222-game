@@ -62,6 +62,7 @@ const PRESETS: Preset[] = [
 export function Simulator() {
   const t = useT();
   const setSimulating = useStore((s) => s.setSimulating);
+  const startSandbox = useStore((s) => s.startSandbox);
   const [scenario, setScenario] = useState<string>(() => { const s = read<string>(SCENARIO_KEY); return s && SCENARIOS.includes(s) ? s : 'career'; });
   const [world, setWorld] = useState<World | null>(null);
   const [cfg, setCfg] = useState<SimConfig | null>(null);
@@ -211,6 +212,7 @@ export function Simulator() {
                 : <button type="button" className="btn small" disabled={running} onClick={runMany}>{t('sim.many.run')}</button>}
             </div>
             {busyMany && typeof busy === 'object' && busy && <progress className="sim-progress" max={busy.total} value={busy.done} aria-label={t('sim.many.progress', { done: busy.done, total: busy.total })} />}
+            <button type="button" className="btn sim-play" disabled={running} onClick={() => startSandbox(structuredClone(cfg))} title={t('sim.play.hint')}>{t('sim.play')}</button>
             <p className="small muted sim-runnote">{counts.total > 0 ? t('sim.changed', { n: counts.total }) : t('sim.unchanged')} · {t('sim.seed')} {cfg.seed}</p>
             {error && <p className="small bad" role="alert">{error}</p>}
           </div>

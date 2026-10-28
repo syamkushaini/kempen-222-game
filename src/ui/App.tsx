@@ -45,6 +45,7 @@ import { installIdentity } from './identity';
 import { ground, mix } from './shareCard';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { TouchGestures } from './TouchGestures';
+import { Sandbox } from './Sandbox';
 
 // The screens a game only reaches later (the count, the talks, the years between elections, the end of a career) are
 // fetched when they are first wanted, so that the first download, which matters most on a phone, is smaller.
@@ -392,6 +393,7 @@ export function App() {
         </main>
       </Fragment>
       <GameMenu />
+      {phase && !ended && <Sandbox />}
       <Music />
       <Toasts />
       <KeyboardShortcuts />

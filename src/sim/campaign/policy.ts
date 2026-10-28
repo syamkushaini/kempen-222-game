@@ -221,7 +221,10 @@ export function alignment(stances: number[], b: number): number {
 }
 
 /** Voters discount a leader they have stopped believing. Rival parties are taken at an average rate. */
-const belief = (c: Campaign, p: number) => (c.sim?.credibility?.[p] !== undefined ? 0.5 + c.sim.credibility[p] / 200 : p === c.player ? 0.5 + c.career!.credibility / 200 : 0.8);
+const belief = (c: Campaign, p: number) => {
+  const set = c.sim?.credibility?.[p];
+  return set !== undefined && set !== null ? 0.5 + set / 200 : p === c.player ? 0.5 + c.career!.credibility / 200 : 0.8;
+};
 
 /**
  * [bloc][party]: what each party's moves on the issues since the last election have done with each bloc. Where a party

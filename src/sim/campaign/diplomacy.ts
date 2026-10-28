@@ -536,7 +536,7 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
   const rng = new Rng(c.rng);
   const now = truth(world, c);
   // A simulated campaign has no player to deal with: every party, the one in focus too, deals as a rival does.
-  const ai = c.sim ? c.parties.map((pc, i) => (pc ? i : -1)).filter((i) => i >= 0) : others(c, me);
+  const ai = c.sim?.auto ? c.parties.map((pc, i) => (pc ? i : -1)).filter((i) => i >= 0) : others(c, me);
   const agree = (a: number, b: number, prop: PactProposal) =>
     assessPact(world, c, a, b, prop).reply === 'ok' && assessPact(world, c, b, a, { give: prop.get, get: prop.give }).reply === 'ok';
 
@@ -549,7 +549,7 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
   }
 
   // A friendly leader may put a pact to the player. One offer each.
-  for (const p of c.sim ? [] : ai) {
+  for (const p of c.sim?.auto ? [] : ai) {
     if (c.offered.includes(p) || inPact(c, me, p) || relation(c, me, p) < 15) continue;
     const prop = draftPact(world, c, me, p, 'targeted', now);
     if (prop.give.length + prop.get.length < 2 || !agree(me, p, prop) || rng.next() > 0.6) continue;
@@ -564,7 +564,7 @@ export function rivalDiplomacy(world: World, c: Campaign): void {
   // A rival with a deep purse raids more often: the richest of them adds up to fifteen points.
   const richest = Math.max(0, ...ai.map((p) => c.parties[p]!.funds));
   const purse = Math.min(0.15, 0.075 * (richest / scaled(world, 2_000_000)));
-  if (!c.sim && rng.next() < clamp(0.1 + (60 - mine.unity) / 200 + purse, 0.05, 0.5)) {
+  if (!c.sim?.auto && rng.next() < clamp(0.1 + (60 - mine.unity) / 200 + purse, 0.05, 0.5)) {
     // Whoever is closest to taking the seat does the courting.
     const suitor = (i: number) => (now.seats[i].winner !== me ? now.seats[i].winner : now.seats[i].runnerUp);
     const targets = world.seats.map((s, i) => ({ s, i })).filter(({ s, i }) =>
