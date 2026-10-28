@@ -2,62 +2,74 @@
    A phone is 390 points wide and about 844 tall. The meters, the notices and the bar at the bottom had taken most of it, and the words
    under the tabs were cut short. These rules only narrow what a phone shows; nothing here changes what the game does. */
 @media (max-width: 520px) {
+  /* The whole page, a notch smaller than a laptop: a phone screen is small, and most of the UI uses an explicit
+     px size rather than following the body's, so the sizes below are trimmed one by one to match. */
+  body { font-size: 13px; }
+
   /* The meters: four to a row, the six headline figures in two rows, the "all meters" button in the last two cells. */
   .metrics-headline { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 8px; padding: 8px 10px; align-items: start; }
-  .metrics-headline .metric-label { font-size: 10px; }
-  .metrics-headline .metric-value { font-size: 14px; }
+  .metrics-headline .metric-label { font-size: 9.5px; }
+  .metrics-headline .metric-value { font-size: 13px; }
   .metrics-headline .metric-bar { height: 2px; }
-  .metrics-more { grid-column: span 2; justify-self: stretch; padding: 4px 6px; font-size: 11px; text-align: center; }
+  .metrics-more { grid-column: span 2; justify-self: stretch; padding: 4px 6px; font-size: 10.5px; text-align: center; }
   .metrics-detail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .metric-group { padding: 8px 10px 10px; gap: 4px; }
-  .metric-group-name { font-size: 10px; }
+  .metric-group-name { font-size: 9.5px; }
   .metric-row { gap: 2px 8px; }
 
   /* Notices and tips: one short line each, with less padding. */
-  .next-step, .goal-line { padding: 6px 10px; font-size: 13px; line-height: 1.35; }
-  .reminder { padding: 5px 6px 5px 10px; gap: 8px; font-size: 13px; line-height: 1.3; }
+  .next-step, .goal-line { padding: 6px 10px; font-size: 12.5px; line-height: 1.35; }
+  .reminder { padding: 5px 6px 5px 10px; gap: 8px; font-size: 12.5px; line-height: 1.3; }
   .reminders, .reminders ul { gap: 4px; }
   .reminder .btn, .reminder button.btn { min-height: 34px; padding: 4px 12px; }
 
-  /* The bar at the bottom: the figure and the buttons on one line, without the second line of small print. */
-  .campaign-bar { gap: 8px; padding: 6px 10px calc(6px + env(safe-area-inset-bottom)); }
-  .campaign-bar .hud-item.hud-btn { flex: 1 1 auto; min-width: 0; padding: 2px 4px; gap: 0; }
-  .campaign-bar .hud-label { font-size: 10px; }
-  .campaign-bar .hud-value { font-size: 15px; line-height: 1.2; }
-  .campaign-bar .hud-value .small { font-size: 11px; white-space: nowrap; }
+  /* The header: the party name and where the campaign stands, both one line that is cut rather than wrapped. */
+  .brand h1 { font-size: 14px; }
+  .brand p { font-size: 10.5px; }
+
+  /* The bar at the bottom: the figure and the buttons on one line, without the second line of small print.
+     Every figure shrinks the same way (not just the money button) so none of them is pushed out of sight
+     behind the End week button; a key hint belongs on a keyboard, which a phone does not have. */
+  .campaign-bar { gap: 6px; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); }
+  .campaign-bar .hud-item { flex: 1 1 auto; min-width: 0; padding: 2px 4px; gap: 0; overflow: hidden; }
+  .campaign-bar .hud-label { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .campaign-bar .hud-value { font-size: 14px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+  .campaign-bar .hud-value .small { font-size: 10px; white-space: nowrap; }
   .campaign-bar .hud-sub { display: none; }
-  .campaign-bar .btn, .term-bar .btn { min-height: 40px; padding: 0 12px; font-size: 14px; }
-  .campaign-bar .end-week { min-height: 40px; padding-left: 14px; padding-right: 14px; }
+  .campaign-bar .kbd { display: none; }
+  .campaign-bar .btn, .term-bar .btn { min-height: 40px; padding: 0 10px; font-size: 13px; }
+  .campaign-bar .end-week { min-height: 40px; padding-left: 12px; padding-right: 12px; flex: 0 1 auto; min-width: 0; }
+  .campaign-bar .end-week span { overflow: hidden; text-overflow: ellipsis; }
   .term-bar .button-row.term-buttons { gap: 6px; }
   body:has(.term-bar) .app, .app { padding-bottom: 128px; }
   body:has(.bar-min) .app { padding-bottom: 104px; }
 
   /* The tabs: eight to a row, with room for the word under each. */
   .phone-nav { padding-left: 2px; padding-right: 2px; }
-  .phone-nav button { font-size: 10.5px; min-height: 50px; padding: 5px 1px; gap: 1px; letter-spacing: -0.1px; }
+  .phone-nav button { font-size: 10px; min-height: 50px; padding: 5px 1px; gap: 1px; letter-spacing: -0.1px; }
   .phone-nav button svg { width: 20px; height: 20px; }
   .campaign-bar { bottom: calc(52px + env(safe-area-inset-bottom)); }
   .bar-fold.open { top: -36px; }
 
   /* Sub-tabs and headings: a little tighter, still a thumb's width. */
-  .subtabs button { padding: 6px 10px; font-size: 13px; }
-  .tab-body h3, .panel h3 { font-size: 15px; margin: 14px 0 6px; }
+  .subtabs button { padding: 6px 10px; font-size: 12.5px; }
+  .tab-body h3, .panel h3 { font-size: 14.5px; margin: 14px 0 6px; }
   .panel, .desk-card { padding: 12px; }
   .action { padding: 8px 10px; }
-  .action-title { font-size: 14px; }
-  .action-meta { font-size: 12.5px; line-height: 1.35; }
+  .action-title { font-size: 13.5px; }
+  .action-meta { font-size: 12px; line-height: 1.35; }
 }
 
 @media (max-width: 520px) {
   /* A figure in the strip is a cell, not a padded button. */
   .metrics-headline .metric { padding: 2px 0; min-height: 0; width: auto; }
   .metrics-detail .metric { padding: 2px 0; min-height: 0; }
-  .metrics-headline .metric-label { font-size: 10.5px; letter-spacing: 0; }
+  .metrics-headline .metric-label { font-size: 10px; letter-spacing: 0; }
   /* The money in the bar: the figure, and under it what comes in a week, in small print that is cut rather than wrapped. */
-  .campaign-bar .hud-item.hud-btn { display: grid; align-content: center; text-align: left; overflow: hidden; }
+  .campaign-bar .hud-item { display: grid; align-content: center; text-align: left; overflow: hidden; }
   .campaign-bar .hud-value { display: flex; flex-direction: column; gap: 0; overflow: hidden; }
-  .campaign-bar .hud-value .small { display: block; font-size: 10.5px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0; }
-  .campaign-bar .term-buttons .btn, .campaign-bar .end-week { flex: none; }
+  .campaign-bar .hud-value .small { display: block; font-size: 10px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0; }
+  .campaign-bar .term-buttons .btn { flex: none; }
   /* The headings to jump to inside a tab: a row of small chips. */
   .section-jump button, .section-jump a { min-height: 32px; padding: 4px 12px; font-size: 13px; }
   .section-jump { padding: 4px; gap: 6px; }
