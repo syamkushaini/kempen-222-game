@@ -36,6 +36,7 @@ import {
 import { carriedFollowing, voteShares } from '../sim/campaign/founding';
 import { recordAsideResults } from '../sim/campaign/results';
 import { summarise } from '../sim/campaign/night';
+import { buildCampaign, type SimConfig } from '../sim/campaign/simulate';
 import { closeNight, electionResult, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
   ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
@@ -444,6 +445,14 @@ interface Store {
   restart(): void;
   /** Leaves for the title screen with the full set-up of a new game showing. */
   newGameSetup(): void;
+  /** Starts a sandbox game: the simulator's settings, played by the player as the party in focus. */
+  startSandbox(cfg: SimConfig): void;
+  /** Changes anything at all about a sandbox game, and puts opinion together again from the parts. */
+  sandboxEdit(fn: (c: Campaign, world: World) => void): void;
+  /** Takes back the last thing done in a sandbox game, an action or a change of settings alike. */
+  sandboxUndo(): void;
+  /** Games a sandbox player can go back to, the latest last. Never saved. */
+  undoStack: GameState[];
   /** The simulator is open in place of the title screen (see Simulator.tsx). */
   simulating: boolean;
   setSimulating(on: boolean): void;
@@ -456,6 +465,8 @@ interface Store {
 }
 
 const settings = loadSettings();
+/** How many steps back a sandbox game can go. */
+const UNDO = 40;
 
 /** The colour and name the map gives an alliance's members, taken from the game: the player's own party's colour if none was chosen. */
 export const allianceLookOf = (game: GameState | null): AllianceLook | null => {
@@ -473,6 +484,8 @@ export const useStore = create<Store>((set, get) => {
     const g = structuredClone(current);
     const extra = fn(g.campaign, g, world) ?? {};
     g.updatedAt = Date.now();
+    // A sandbox game can be taken back a step at a time.
+    if (current.campaign.sim?.sandbox) extra.undoStack = [...get().undoStack, current].slice(-UNDO);
     // Decisions come up by themselves; only the ones the player has set aside wait as a bar, and a new one is never among them.
     const hidden = (extra.hiddenScene ?? get().hiddenScene).filter((id) => g.campaign.inbox.some((x) => x.id === id));
     set({ game: g, ...extra, hiddenScene: hidden });
@@ -834,6 +847,7 @@ export const useStore = create<Store>((set, get) => {
     renameGame: (name) => mutate((_c, g) => { g.name = name.slice(0, 60); }),
     loadGame: (state) => set((s) => ({
       loads: s.loads + 1,
+      undoStack: [],
       game: state,
       view: 'last', tab: state.campaign.phase === 'term' ? 'desk' : 'actions', lastReport: null, pactReply: null, offerReply: null, selectedSeat: null,
       // A saved game reopens on the count only if it was still running, or if there is nothing after it.
@@ -845,7 +859,7 @@ export const useStore = create<Store>((set, get) => {
       // Save now: the delayed autosave would find the game already gone.
       const g = get().game;
       if (g) saveStore.save(AUTO_SLOT, g);
-      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null, simulating: false });
+      set({ game: null, selectedSeat: null, selectedState: null, lastReport: null, simulating: false, undoStack: [] });
     },
     restart: () => {
       const g = get().game;
@@ -882,6 +896,30 @@ export const useStore = create<Store>((set, get) => {
       if (!kept) return;
       get().startCampaign({ ...startOf(g), name: g.name, identity: g.identity, carried: kept });
     },
+    undoStack: [],
+    startSandbox: (cfg) => {
+      const world = getWorld(cfg.scenario);
+      if (!world) return;
+      const campaign = buildCampaign(world, cfg, 'play');
+      offerMain(world, campaign);
+      set({
+        game: newGame(translate(get().settings.lang, 'sandbox.name'), campaign, Date.now(), false, null),
+        undoStack: [], simulating: false,
+        view: 'last', tab: 'actions', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false,
+        selectedState: world.rules.kind === 'general' ? campaign.parties[cfg.focus]!.location : null,
+      });
+    },
+    sandboxEdit: (fn) => mutate((c, _g, world) => {
+      if (!c.sim?.sandbox) return;
+      fn(c, world);
+      syncOpinion(c);
+    }),
+    sandboxUndo: () => {
+      const stack = get().undoStack;
+      const back = stack[stack.length - 1];
+      if (!back) return;
+      set({ game: back, undoStack: stack.slice(0, -1), lastReport: null, pactReply: null, offerReply: null, hiddenScene: [] });
+    },
     simulating: false,
     setSimulating: (on) => set({ simulating: on }),
     setupWanted: false,
@@ -909,6 +947,7 @@ useStore.subscribe((state, prev) => {
 useStore.subscribe((state, prev) => {
   const game = state.game;
   if (!game || game === prev.game) return;
+  if (game.campaign.sim?.sandbox) return;
   const world = worldOf(game.campaign);
   if (!world) return;
   const now = Date.now();

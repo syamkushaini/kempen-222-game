@@ -898,11 +898,15 @@ export interface Stronghold {
  */
 export interface SimHooks {
   /** [party]: how far voters believe a party's word, 0 to 100. 60 is the usual for a rival. */
-  credibility?: number[];
-  /** [party]: the leader's abilities, in the order of STAT_IDS. */
-  leaders?: number[][];
-  /** [party]: how good the person in each job is, 0 to 5. */
-  staff?: Partial<Record<RoleId, number>>[];
+  credibility?: (number | null)[];
+  /** [party]: the leader's abilities, in the order of STAT_IDS; null for a party whose leader is as the game has them. */
+  leaders?: (number[] | null)[];
+  /** [party]: how good the person in each job is, 0 to 5; null for a party whose team is as the game has it. */
+  staff?: (Partial<Record<RoleId, number>> | null)[];
+  /** The player's party is run by the game's own logic, like every rival: nobody is playing (the simulator). */
+  auto?: boolean;
+  /** A game played for fun with every setting open: it earns no achievements and no place in the gallery. */
+  sandbox?: boolean;
   /** Parties make no pacts of their own once the campaign is under way. */
   noNewPacts?: boolean;
   /** How unpredictable polling day is, as a multiple of the usual (1 is usual, 0 a result with no surprises). */

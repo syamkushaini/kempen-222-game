@@ -53,6 +53,8 @@ The **Simulator** on the main menu runs a whole contest with nobody at the contr
 - **Coalitions.** Who governs as the campaign opens, how each pair of leaders feel about each other, electoral pacts signed on the first day, and whether parties may deal with each other during the campaign.
 - **Results.** The campaign plays out week by week (the seats if polling day were that day), then the count: seats and votes against the last election or against an earlier run, the trend, the government that formed and how firm it is, the chamber, how each state voted, and the seats that changed hands. **Run many** repeats the contest with different seeds, since one run includes luck, and shows the spread: mean seats and their range, how often each party wins a majority, heads the government or is in it.
 
+**Play it yourself (sandbox).** The same settings can also start a real game: **Play it yourself** takes the party in focus, with the leader, team, positions, promises, mood, money and coalitions you set, and you play the campaign, the count and the talks as in any game. A **Sandbox** button stays on screen: it opens a panel that changes anything, for any party, at any time (money and days, credibility and unity, leader and team, positions, manifesto, the mood of the country, of each voter group and of each state, who governs, how leaders feel about each other), and **Undo** takes back the last step, a move or a change alike. A sandbox game earns no achievements and no place in the gallery.
+
 A change is marked wherever it is made, and can be put back with the ↺ beside it. The code is in `src/sim/campaign/simulate.ts` (headless, no browser needed) and `src/ui/Simulator.tsx`.
 
 ## How to play

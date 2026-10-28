@@ -10,10 +10,11 @@ const sign = (v: number, digits = 1) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Ma
 export const signed = sign;
 
 /** A slider with its value beside it, a tick where it began, and a button to put it back. */
-export function Slider({ label, hint, value, def, min, max, step = 1, onChange, fmt, lo, hi, color }: {
+export interface SliderProps {
   label: ReactNode; hint?: string; value: number; def: number; min: number; max: number; step?: number;
   onChange(v: number): void; fmt?: (v: number) => string; lo?: string; hi?: string; color?: string;
-}) {
+}
+export function Slider({ label, hint, value, def, min, max, step = 1, onChange, fmt, lo, hi, color }: SliderProps) {
   const t = useT();
   const changed = value !== def;
   const show = fmt ?? ((v: number) => String(v));
