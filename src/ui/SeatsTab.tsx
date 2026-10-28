@@ -124,8 +124,14 @@ function ShareBars({ shares, votes }: { shares: number[]; votes?: number[] }) {
   const t = useT();
   const f = useFormat();
   const order = shares.map((s, p) => ({ s, p })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
+  // One line at a glance, each party's share in its own colour, before the fuller breakdown below.
+  const summary = order.map(({ s, p }) => `${partyShort(t, p)} ${f.pct(s, 0)}`).join(', ');
   return (
-    <ul className="result-bars">
+    <>
+      <div className="stack tall race-stack" role="img" aria-label={summary}>
+        {order.map(({ s, p }) => <span key={p} data-party={p} style={{ width: `${s * 100}%`, background: partyColor(p) }} />)}
+      </div>
+      <ul className="result-bars">
       {order.map(({ s, p }) => (
         <li key={p}>
           <div className="result-label">
@@ -138,7 +144,8 @@ function ShareBars({ shares, votes }: { shares: number[]; votes?: number[] }) {
           <div className="bar"><span data-party={p} style={{ width: `${s * 100}%`, background: partyColor(p) }} /></div>
         </li>
       ))}
-    </ul>
+      </ul>
+    </>
   );
 }
 
