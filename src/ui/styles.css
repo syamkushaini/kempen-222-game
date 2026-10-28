@@ -228,6 +228,8 @@ h3 { font-size: 13px; font-weight: 500; letter-spacing: 0.4px; color: var(--mute
 .bloc-table td:last-child { width: 34%; }
 .stack { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--panel-2); }
 .stack span { height: 100%; }
+/* The race at a glance, above the per-party breakdown: a little more room below it than a plain .stack.tall. */
+.race-stack { margin-bottom: 10px; }
 
 .note { font-size: 12px; line-height: 1.4; color: var(--muted); margin-top: 12px; padding: 8px 12px; background: var(--panel-2); border-radius: 8px; }
 .note.bad { color: var(--bad); }
