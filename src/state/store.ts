@@ -37,7 +37,7 @@ import { carriedFollowing, voteShares } from '../sim/campaign/founding';
 import { recordAsideResults } from '../sim/campaign/results';
 import { summarise } from '../sim/campaign/night';
 import { buildCampaign, type SimConfig } from '../sim/campaign/simulate';
-import { closeNight, electionResult, endWeek, newCampaign, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
+import { closeNight, electionResult, endWeek, newCampaign, playOut, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
   ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
   IssueId, OutletId, PledgeId, PollQuality, PollScope, PortfolioId, RoleId, SeatResults, Stronghold,
@@ -289,6 +289,8 @@ interface Store {
   endWeek(): void;
   /** Marks election night as watched, so reloading shows the final result. */
   finishNight(): void;
+  /** Hands the weeks still to come to the team, and goes to polling day. */
+  finishWithTeam(): void;
   /** Leaves election night for whatever comes after it. */
   leaveNight(): void;
   /** Goes back to look at election night once the government is settled. */
@@ -630,6 +632,10 @@ export const useStore = create<Store>((set, get) => {
         : { lastReport: null, pactReply: null, selectedSeat: null, selectedState: null, showNight: true };
     }),
     finishNight: () => mutate((c, _g, world) => closeNight(world, c)),
+    finishWithTeam: () => mutate((c, _g, world) => {
+      playOut(world, c);
+      return { lastReport: null, pactReply: null, selectedSeat: null, selectedState: null, showNight: true };
+    }),
     leaveNight: () => set({ showNight: false, selectedSeat: null, selectedState: null }),
     viewNight: () => set({ showNight: true }),
 

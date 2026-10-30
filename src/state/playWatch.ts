@@ -56,6 +56,21 @@ function verdictOf(c: Campaign): { detail: string; n: number } | null {
   } catch { return null; }
 }
 
+/** Where in the game's first minutes a player is: the title screen's own step (told by the screen), a tutorial step, and for a campaign whether anything has been done in it yet. */
+export function leaveDetail(s: Pick<Snap, 'game' | 'showNight'>, hint: string | null): string {
+  const g = s.game;
+  if (!g) return hint ?? 'menu';
+  if (g.tutorial) return `tut:${g.tutorial.step}`;
+  const c = main(g);
+  if (c.phase !== 'campaign') return 'play';
+  const me = c.parties[c.player];
+  return me && me.spent > 0 ? 'acted' : 'idle';
+}
+
+let hint: string | null = null;
+/** The title screen says which step of the set-up it is on, so that a player who leaves there is counted at that step. */
+export const watchHint = (h: string | null): void => { hint = h; };
+
 export interface Change { t: EventName; extra?: Extra }
 
 /** What changed between two moments of the store, as events. */
@@ -127,8 +142,9 @@ export function installAnalytics(store = useStore): () => void {
   const leave = (e: Event) => {
     if (e.type === 'visibilitychange' && document.visibilityState !== 'hidden') return;
     const p = place();
-    const key = `${store.getState().game?.id ?? ''}|${p.screen}|${p.week ?? ''}`;
-    if (key !== lastLeave) { lastLeave = key; tracker.track('leave', p, { n: weeks }); }
+    const detail = leaveDetail(store.getState(), hint);
+    const key = `${store.getState().game?.id ?? ''}|${p.screen}|${p.week ?? ''}|${detail}`;
+    if (key !== lastLeave) { lastLeave = key; tracker.track('leave', p, { n: weeks, detail }); }
     void tracker.flush(true);
   };
   document.addEventListener('visibilitychange', leave);

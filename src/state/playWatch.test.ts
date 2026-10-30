@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PARTY_IDS } from '../sim/types';
-import { changes, placeOf, screenOf } from './playWatch';
+import { changes, leaveDetail, placeOf, screenOf } from './playWatch';
 import { useStore } from './store';
 
 const store = () => useStore.getState();
@@ -51,5 +51,19 @@ describe('what the counting sees in the game', () => {
     over.campaign.career!.ending = { kind: 'retired', legacy: 'footnote', score: 10 };
     expect(changes({ game: later }, { game: over }, Date.now())).toEqual([{ t: 'end', extra: { detail: 'retired', n: k.term } }]);
     expect(screenOf({ game: over, showNight: false })).toBe('legacy');
+  });
+
+  it('says where in the first minutes a player was when they left', () => {
+    expect(leaveDetail(store(), null)).toBe('menu');
+    expect(leaveDetail(store(), 'setup:custom:1')).toBe('setup:custom:1');
+    store().startCampaign({ name: 'A', scenario: 'byelection', player: PT, difficulty: 'easy', backstory: null });
+    expect(leaveDetail(store(), 'setup:custom:1')).toBe('tut:0');
+    useStore.setState((s) => ({ game: { ...s.game!, tutorial: null } }));
+    expect(leaveDetail(store(), null)).toBe('idle');
+    useStore.setState((s) => {
+      const c = s.game!.campaign;
+      return { game: { ...s.game!, campaign: { ...c, parties: c.parties.map((p, i) => (i === c.player && p ? { ...p, spent: 5 } : p)) } } };
+    });
+    expect(leaveDetail(store(), null)).toBe('acted');
   });
 });
