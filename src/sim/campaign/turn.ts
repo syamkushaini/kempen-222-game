@@ -101,9 +101,9 @@ export function newCampaign(world: World, opts: CampaignOptions): Campaign {
   };
   const c: Campaign = { ...bare, team: emptyTeam(bare, opts.backstory ?? null) };
   c.rng = rng.state;
-  if (opts.challenge?.fog || opts.challenge?.noisy || opts.challenge?.lean || opts.challenge?.goal) {
+  if (opts.challenge?.fog || opts.challenge?.noisy || opts.challenge?.lean || opts.challenge?.goal || opts.challenge?.heat) {
     c.challenge = {
-      fog: !!opts.challenge.fog, noisy: !!opts.challenge.noisy, ...(opts.challenge.lean ? { lean: true } : {}),
+      fog: !!opts.challenge.fog, noisy: !!opts.challenge.noisy, ...(opts.challenge.lean ? { lean: true } : {}), ...(opts.challenge.heat ? { heat: opts.challenge.heat } : {}),
       ...(opts.challenge.code ? { code: opts.challenge.code } : {}), ...(opts.challenge.goal ? { goal: opts.challenge.goal } : {}),
     };
   } else if (opts.challenge?.code) c.challenge = { fog: false, noisy: false, code: opts.challenge.code };

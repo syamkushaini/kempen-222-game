@@ -257,7 +257,7 @@ export function Header() {
         <div>
           <h1>{player !== undefined ? partyName(t, player) : t('app.title')}{player !== undefined && !narrow && <TierBadge />}</h1>
           <p>
-            {narrow && when ? when : name ? [name, challenge?.fog && t('challenge.fog'), challenge?.noisy && t('challenge.noisy')].filter(Boolean).join(' · ') : t('app.tagline')}
+            {narrow && when ? when : name ? [name, challenge?.heat && t('heat.badge', { n: challenge.heat }), challenge?.fog && t('challenge.fog'), challenge?.noisy && t('challenge.noisy')].filter(Boolean).join(' · ') : t('app.tagline')}
             {name && saveFailed && <span className="autosave bad" role="status"> · {t('saves.failedShort')}</span>}
             {name && !saveFailed && saved && <span key={saved} className="autosave" role="status"> · ✓ {t('saves.autosavedShort')}</span>}
           </p>

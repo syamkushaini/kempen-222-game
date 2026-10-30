@@ -17,6 +17,7 @@ import { AUTO_SLOT } from '../state/saves';
 import { DEFAULT_EMBLEMS, makeIdentity, PARTY_COLORS } from '../state/identity';
 import { saveStore, useStore } from '../state/store';
 import { liveDays } from '../state/streak';
+import { HEAT_MAX, heatOpen, heatRules } from '../sim/campaign/heat';
 import { LEADERS } from '../sim/campaign/cast';
 import { lastOutcome, useFormat, useT } from './hooks';
 import { ChallengeList } from './Challenges';
@@ -126,6 +127,8 @@ export function Title() {
   const [stances, setStances] = useState<number[] | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [fog, setFog] = useState(false);
+  // The rung of the heat ladder to play on, 0 for none: it turns on rules that are also set one by one below.
+  const [heat, setHeat] = useState(0);
   // The set-up goes a step at a time: the contest, then who leads and how, then the rules.
   const [step, setStep] = useState(0);
   const [noisy, setNoisy] = useState(false);
@@ -165,7 +168,10 @@ export function Title() {
   if (!world) return <Skeleton width="100%" height="400px" />;
   const parties = playable(world);
   const player = chosen !== null && parties.includes(chosen) ? chosen : parties[0];
-  const level = difficulty ?? (kind === 'byelection' ? 'easy' : 'normal');
+  const heatUsed = kind === 'career' ? 0 : heat;
+  const rungRules = heatRules(heatUsed);
+  const level = rungRules.difficulty ?? difficulty ?? (kind === 'byelection' ? 'easy' : 'normal');
+  const playFog = fog || rungRules.fog, playNoisy = noisy || rungRules.noisy;
   const inCareer = kind === 'career' || (kind === 'state' && stateCareer);
   const founding = own && founded && kind !== 'hung';
   const playerId = (founding ? FOUNDING_SLOT : PARTY_IDS[player]) as FieldedId;
@@ -400,10 +406,21 @@ export function Title() {
           </>}
 
           {step === 2 && <>
+          {kind !== 'career' && <>
+            <h3>{t('heat.title')}</h3>
+            <div className="segmented" role="group" aria-label={t('heat.title')}>
+              {Array.from({ length: HEAT_MAX + 1 }, (_, n) => (
+                <button key={n} className={heatUsed === n ? 'active' : ''} aria-pressed={heatUsed === n} disabled={n > heatOpen(profile.heat)} onClick={() => setHeat(n)}>
+                  {n === 0 ? t('heat.off') : n > heatOpen(profile.heat) ? `🔒 ${n}` : String(n)}
+                </button>
+              ))}
+            </div>
+            <p className="muted small">{heatUsed === 0 ? t('heat.hint', { n: heatOpen(profile.heat) }) : t(`heat.rung.${heatUsed}` as StringKey)}</p>
+          </>}
           <h3>{t('title.difficulty')}</h3>
           <div className="segmented" role="group" aria-label={t('title.difficulty')}>
             {DIFFICULTIES.map((d) => (
-              <button key={d} className={level === d ? 'active' : ''} aria-pressed={level === d} onClick={() => setDifficulty(d)}>
+              <button key={d} className={level === d ? 'active' : ''} aria-pressed={level === d} disabled={rungRules.difficulty !== null} onClick={() => setDifficulty(d)}>
                 {t(`difficulty.${d}`)}
               </button>
             ))}
@@ -412,12 +429,12 @@ export function Title() {
 
           <h3>{t('challenge.title')}</h3>
           <label className="check">
-            <input type="checkbox" checked={fog} onChange={(e) => setFog(e.target.checked)} />
+            <input type="checkbox" checked={playFog} disabled={rungRules.fog} onChange={(e) => setFog(e.target.checked)} />
             <span>{t('challenge.fog')}</span>
           </label>
           <p className="muted small">{t('challenge.fog.desc')}</p>
           <label className="check">
-            <input type="checkbox" checked={noisy} onChange={(e) => setNoisy(e.target.checked)} />
+            <input type="checkbox" checked={playNoisy} disabled={rungRules.noisy} onChange={(e) => setNoisy(e.target.checked)} />
             <span>{t('challenge.noisy')}</span>
           </label>
           <p className="muted small">{t('challenge.noisy.desc')}</p>
@@ -452,7 +469,7 @@ export function Title() {
             {step > 0 && <button className="btn" onClick={() => setStep(step - 1)}>‹ {t('steps.back')}</button>}
             {step < STEPS.length - 1
               ? <button className="btn primary" onClick={() => setStep(step + 1)}>{t('steps.next')} ▸</button>
-              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity || name.trim().length === 0} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog, noisy, ...(chosenWhatIf ? { whatIf: chosenWhatIf } : {}) }, founded: founding, ...(founding && inCareer ? { seat: foundSeat } : {}), realStates: kind === 'career' && realStates, stances: founding && inCareer ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
+              : <button className={auto ? 'btn' : 'btn primary'} disabled={own && !identity || name.trim().length === 0} onClick={() => startCampaign({ name, scenario, player: founding ? PARTY_IDS.indexOf(FOUNDING_SLOT) : player, difficulty: level, backstory, ideology: founding ? null : shown.ideology, identity, challenge: { fog: playFog, noisy: playNoisy, ...(rungRules.lean ? { lean: true } : {}), ...(heatUsed ? { heat: heatUsed } : {}), ...(chosenWhatIf ? { whatIf: chosenWhatIf } : {}) }, founded: founding, ...(founding && inCareer ? { seat: foundSeat } : {}), realStates: kind === 'career' && realStates, stances: founding && inCareer ? (stances ?? newPlatform) : undefined })}>{t('title.start')} ▸</button>
             }
           </div>
           </>

@@ -261,7 +261,7 @@ export function isValidCampaign(x: unknown, world: World): x is Campaign {
     isNum(x.player) && Number.isInteger(x.player) && x.player >= 0 && x.player < N_PARTIES &&
     (x.graft === undefined || (isNum(x.graft) && x.graft >= 0 && x.graft <= 100)) && (x.graftSeen === undefined || (isNum(x.graftSeen) && x.graftSeen >= 0 && x.graftSeen <= 4)) &&
     (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
-    (x.challenge === undefined || (isObj(x.challenge) && typeof x.challenge.fog === 'boolean' && typeof x.challenge.noisy === 'boolean' && (x.challenge.lean === undefined || typeof x.challenge.lean === 'boolean') && (x.challenge.code === undefined || typeof x.challenge.code === 'string') && (x.challenge.goal === undefined || typeof x.challenge.goal === 'string') && (x.challenge.whatIf === undefined || typeof x.challenge.whatIf === 'string'))) &&
+    (x.challenge === undefined || (isObj(x.challenge) && typeof x.challenge.fog === 'boolean' && typeof x.challenge.noisy === 'boolean' && (x.challenge.lean === undefined || typeof x.challenge.lean === 'boolean') && (x.challenge.code === undefined || typeof x.challenge.code === 'string') && (x.challenge.goal === undefined || typeof x.challenge.goal === 'string') && (x.challenge.whatIf === undefined || typeof x.challenge.whatIf === 'string') && (x.challenge.heat === undefined || (typeof x.challenge.heat === 'number' && Number.isInteger(x.challenge.heat) && x.challenge.heat >= 1 && x.challenge.heat <= 4)))) &&
     isNum(x.totalWeeks) && isNum(x.week) && x.week >= 1 && x.week <= x.totalWeeks &&
     (x.phase === 'term' || x.phase === 'campaign' || x.phase === 'night' || x.phase === 'formation' || x.phase === 'done') &&
     isUint32(x.seed) && isUint32(x.rng) &&
