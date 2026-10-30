@@ -6,6 +6,7 @@ import { GLOSSARY, type TermId } from './glossary';
 import { hemicycle, pitch } from './hemicycle';
 import { partyColor, useT } from './hooks';
 import { Icon, type IconName } from './Icon';
+import { useBackClose } from './backClose';
 
 /** What each term is called where it has no word of its own to be found in running text. */
 const NAMES: Partial<Record<TermId, StringKey>> = {
@@ -42,6 +43,7 @@ const KEEP = ['credibility', 'unity', 'stability', 'trust'];
 
 /** The Help page: how to play, a career, missions, challenges, money, tips and the words. Reached from the main menu and the game's own. */
 export function Help({ onClose }: { onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const lang = useStore((s) => s.settings.lang);
   const [tab, setTab] = useState<TabId>('start');

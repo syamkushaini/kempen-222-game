@@ -39,6 +39,12 @@ The game is a static site and builds into `dist/`. It is set up to publish to Gi
 
 The workflow is manual on purpose: pushing code does not put the game online, so you publish when you are ready. It needs no secrets unless you want the optional leaderboard (set `LEADERBOARD_URL` and `LEADERBOARD_KEY` as repository variables).
 
+### Offline play and the Android app
+
+A service worker (`public/sw.js`) keeps what the game has fetched, so a game played once online opens again without a network. The page itself is fetched fresh whenever there is a connection, so a new release is never held back by an old copy. To drop the cache of an old release, change `CACHE` in that file.
+
+The Android app is a Trusted Web Activity over the published site. Android checks `/.well-known/assetlinks.json` at the **root of the site's host**, not under the repository's path: on GitHub Pages a project site (`https://<user>.github.io/kempen-222-game/`) serves `public/.well-known/assetlinks.json` at `/kempen-222-game/.well-known/assetlinks.json`, which Android never looks at. Publish the same file from a repository named `<user>.github.io` (or use a custom domain for this site) and confirm that `https://<host>/.well-known/assetlinks.json` returns it before expecting the app to open without the browser bar.
+
 ### Cloud saves (optional)
 
 With the same two variables, a player can sign in with an e-mail address (a code is mailed and typed back, no password) and keep a copy of their saves in the Supabase project, so that a cleared browser, the browser built into another app, or a new phone does not lose them. Run `supabase/cloud-saves.sql` once, switch on the Email provider, and put `{{ .Token }}` in the Magic Link e-mail template: the SQL file says exactly how. Without the variables the game keeps its saves on the device only.

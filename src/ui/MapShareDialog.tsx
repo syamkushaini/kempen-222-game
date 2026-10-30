@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useT } from './hooks';
+import { useBackClose } from './backClose';
 
 /** The picture of the map, to look at and to save or hand to the device's share sheet. Only the map: no card, no figures. */
 export function MapShareDialog({ picture, caption, onClose }: { picture: string; caption: string; onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const [file, setFile] = useState<File | null>(null);
   const [copied, setCopied] = useState(false);

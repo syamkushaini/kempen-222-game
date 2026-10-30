@@ -4,9 +4,11 @@ import { ARCHETYPES, PERKS } from '../sim/campaign/archetypes';
 import { isUnlocked } from '../state/profile';
 import { useStore } from '../state/store';
 import { useT } from './hooks';
+import { useBackClose } from './backClose';
 
 /** The HQ upgrade tree: what Legacy Points (earned at the end of a finished career, see progression.ts) can buy before the next one starts. One simple spend screen, not a design of its own. */
 export function HQDialog({ onClose }: { onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const profile = useStore((s) => s.profile);
   const unlockWithPoints = useStore((s) => s.unlockWithPoints);

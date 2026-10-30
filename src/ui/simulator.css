@@ -7,7 +7,7 @@
 .sim-layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 900px) {
   .sim-layout { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
-  .sim-side { position: sticky; top: calc(var(--header-h, 56px) + 8px); max-height: calc(100vh - var(--header-h, 56px) - 24px); overflow-y: auto; padding-right: 4px; }
+  .sim-side { position: sticky; top: calc(var(--header-h, 56px) + 8px); max-height: calc(100dvh - var(--header-h, 56px) - 24px); overflow-y: auto; padding-right: 4px; }
 }
 .sim-editor { padding: 16px; }
 .sim-tabs { display: flex; width: 100%; margin-bottom: 12px; }
@@ -186,6 +186,6 @@
 .sandbox-head p { margin: 0; }
 .sandbox-head-actions { display: inline-flex; gap: 6px; flex: none; }
 @media (max-width: 899px) {
-  .sandbox-fab { bottom: 84px; left: 10px; }
-  .sandbox-panel { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 78vh; }
+  .sandbox-fab { bottom: calc(84px + env(safe-area-inset-bottom)); left: calc(10px + env(safe-area-inset-left)); }
+  .sandbox-panel { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 78dvh; }
 }

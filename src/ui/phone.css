@@ -89,3 +89,23 @@
   .reminder > *:not(button):not(.btn) { font-size: inherit; }
   .reminder button, .reminder .btn { min-height: 34px; padding: 0 14px; font-size: 13px; }
 }
+
+/* On a touch screen every control is at least 44px tall, whatever a narrow-screen rule above squeezed it to. */
+@media (pointer: coarse) {
+  .reminder button, .reminder .btn, .reminder button.btn,
+  .section-jump button, .section-jump a,
+  .subtabs button,
+  .bar-fold.open,
+  .display-menu summary,
+  .campaign-bar .btn, .term-bar .btn, .campaign-bar .end-week { min-height: 44px; }
+  /* The smallest lines on the bars: no smaller than 11px. */
+  .brand p, .campaign-bar .hud-value .small { font-size: 11px; }
+}
+
+@media (max-width: 520px) {
+  /* The tables of voter groups and regions become a card per row: the name and the figure on a line, the bar across the full width below. */
+  .bloc-table:not(.review-table), .bloc-table:not(.review-table) tbody { display: block; }
+  .bloc-table:not(.review-table) tr { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--line); }
+  .bloc-table:not(.review-table) th, .bloc-table:not(.review-table) td { display: block; border-top: 0; padding: 2px 0; }
+  .bloc-table:not(.review-table) td:last-child { grid-column: 1 / -1; width: auto; }
+}
