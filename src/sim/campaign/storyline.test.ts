@@ -18,7 +18,7 @@ const PT = PARTY_IDS.indexOf('pt');
 const nat = getWorld('career')!;
 const natCareer = (player = PS, seed = 7): Campaign => startCareer(nat, { player, difficulty: 'normal', seed });
 const stateCareer = (st = 'melaka'): Campaign => { const w = getWorld(`career:${st}`)!; return startCareer(w, { player: playable(w)[0], difficulty: 'normal', seed: 4 }); };
-const founded = (): Campaign => startCareer(foundedWorld(), { player: PARTY_IDS.indexOf('genba' as never), difficulty: 'normal', seed: 4, founded: true });
+const founded = (): Campaign => startCareer(foundedWorld(), { player: PARTY_IDS.indexOf('genba' as never), difficulty: 'normal', seed: 5, founded: true });
 
 /** Runs weeks until the story puts its decision on the desk, setting aside what else turns up; false if it never did within a term. */
 function toBeat(c: Campaign, w = nat): boolean {

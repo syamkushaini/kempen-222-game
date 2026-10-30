@@ -214,6 +214,8 @@ export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose
         <div className="button-row">
           <button className="btn primary" disabled={!file} onClick={save}>{t('share.save')}</button>
           {canShare && <button className="btn" onClick={share}>{t('share.share')}</button>}
+          <a className="btn" href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer" onClick={() => countClick('share', 'whatsapp')}>{t('share.whatsapp')}</a>
+          <a className="btn" href={`https://t.me/share/url?url=${encodeURIComponent(invite ?? location.href)}&text=${encodeURIComponent(caption)}`} target="_blank" rel="noopener noreferrer" onClick={() => countClick('share', 'telegram')}>{t('share.telegram')}</a>
           <CopyButton text={withInvite(data.headline, invite)} label={t(invite ? 'share.copyLink' : 'share.copy')} />
           <button className="btn" onClick={onClose}>{t('share.close')}</button>
         </div>

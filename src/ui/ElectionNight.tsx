@@ -18,7 +18,7 @@ import { Review } from './Review';
 import { Tally } from './Tally';
 import { VerdictMoment } from './VerdictMoment';
 
-const STEP_MS = { normal: 210, fast: 45 };
+const STEP_MS = { normal: 210, fast: 45, tight: 520, photo: 1100 };
 const UNDECLARED: SeatDisplay = { winner: -1, margin: 0, cls: 'safe', shares: null, stale: false };
 
 export function ElectionNight() {
@@ -55,9 +55,12 @@ function SeatBySeat() {
 
   useEffect(() => {
     if (!playing || finished) return;
-    const id = setInterval(() => setCount((c) => Math.min(TOTAL, c + 1)), fast ? STEP_MS.fast : STEP_MS.normal);
-    return () => clearInterval(id);
-  }, [playing, fast, finished, TOTAL]);
+    // A photo finish holds the room: the closer the next seat, the longer the wait before it is declared.
+    const next = result.seats[order[count]];
+    const wait = fast || !next ? STEP_MS.fast : next.margin < 0.003 ? STEP_MS.photo : next.margin < 0.01 ? STEP_MS.tight : STEP_MS.normal;
+    const id = setTimeout(() => setCount((c) => Math.min(TOTAL, c + 1)), wait);
+    return () => clearTimeout(id);
+  }, [playing, fast, finished, TOTAL, count, order, result]);
 
   useEffect(() => { if (finished) finishNight(); }, [finished, finishNight]);
   // The verdict has its moment once, when the count ends before the player's eyes: not for a night looked at again later.

@@ -89,3 +89,11 @@
 
 /* the player's progression tier and Legacy Points, shown beside their party name while a run is in progress */
 .tier-badge { display: inline-flex; align-items: baseline; gap: 4px; margin-left: 8px; font-size: 12px; font-weight: 500; vertical-align: middle; padding: 2px 8px; }
+
+/* Paper falling over a good verdict. Reduced motion never renders it (see VerdictMoment). */
+.confetti { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+.confetti i { position: absolute; top: -12px; width: 8px; height: 14px; border-radius: 2px; opacity: 0; animation: confetti-fall linear forwards; }
+@keyframes confetti-fall {
+  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0); }
+  100% { opacity: 0; transform: translate3d(var(--drift), 105vh, 0) rotate(var(--spin)); }
+}
