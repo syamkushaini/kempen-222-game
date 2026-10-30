@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useBackClose } from './backClose';
 import { PARTIES } from '../data/parties';
 import { shownAlliance } from '../state/allianceLook';
 import { scenarioInfo, world as generalWorld, worldOf } from '../data/world';
@@ -339,6 +340,7 @@ export function useFocusTrap(ref: React.RefObject<HTMLElement | null>, active: b
 export function useDialogFocus(open: boolean, onClose: () => void): { dialogRef: React.RefObject<HTMLDivElement | null> } {
   const ref = useRef<HTMLDivElement | null>(null);
   const previous = useRef<HTMLElement | null>(null);
+  useBackClose(onClose, open);
 
   useEffect(() => {
     if (!open) return;
