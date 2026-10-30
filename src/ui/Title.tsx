@@ -16,6 +16,7 @@ import { seedFromSearch } from '../sim/rng';
 import { AUTO_SLOT } from '../state/saves';
 import { DEFAULT_EMBLEMS, makeIdentity, PARTY_COLORS } from '../state/identity';
 import { saveStore, useStore } from '../state/store';
+import { liveDays } from '../state/streak';
 import { LEADERS } from '../sim/campaign/cast';
 import { lastOutcome, useFormat, useT } from './hooks';
 import { ChallengeList } from './Challenges';
@@ -142,6 +143,7 @@ export function Title() {
   const [lastMode] = useState<'quick' | 'custom' | null>(() => { try { const v = localStorage.getItem(MODE_KEY); return v === 'custom' || v === 'quick' ? v : null; } catch { return null; } });
   useEffect(() => { if (setupWanted) clearSetupWanted(); }, [setupWanted, clearSetupWanted]);
   const custom = mode === 'custom';
+  const streakDays = liveDays(profile.streak, Date.now());
   const earnedCount = ACHIEVEMENT_IDS.filter((id) => profile.achievements[id] !== undefined).length;
   const pick = (value: Screen) => {
     setMode(value);
@@ -217,7 +219,7 @@ export function Title() {
             <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.weekly', { n: Math.max(1, Math.ceil(timeLeft(Date.now()) / 86_400_000)) })} onClick={() => pick('challenges')} />
             <MenuItem icon="book" tone="learn" title={t('howto.title')} hint={t('howto.hint')} onClick={() => setHowTo(true)} />
             <MenuItem icon="trophy" tone="won" title={t('menu.honours')} hint={t('menu.honours.hint', { n: earnedCount, total: ACHIEVEMENT_IDS.length })} onClick={() => setHonours(true)} />
-            <MenuItem icon="landmark" tone="learn" title={t('hq.title')} hint={t('hq.menu.hint', { n: profile.legacyPoints ?? 0 })} onClick={() => setHq(true)} />
+            <MenuItem icon="landmark" tone="learn" title={t('hq.title')} hint={t('hq.menu.hint', { n: profile.legacyPoints ?? 0 }) + (streakDays >= 2 ? ` · ${t('streak.days', { n: streakDays })}` : '')} onClick={() => setHq(true)} />
             {hasLeaderboard && <MenuItem icon="star" tone="won" title={t('lb.title')} hint={t('lb.menu.hint')} onClick={() => setBoard(true)} />}
           </ul>
           <p className="muted small">{t('title.fiction')}</p>

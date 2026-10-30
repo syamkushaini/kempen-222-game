@@ -5,6 +5,7 @@ import { LEGACY_IDS, type Campaign, type EndingKind, type LegacyId } from '../si
 import { PARTY_IDS, type PartyId } from '../sim/types';
 import type { GameState } from './game';
 import type { KeyValueStore } from './saves';
+import { parseStreak, type Streak } from './streak';
 
 /** One finished career, as it hangs in the gallery. */
 export interface LegacyEntry {
@@ -46,6 +47,8 @@ export interface Profile {
   legacyPoints?: number;
   /** Ids of archetypes and perks bought with Legacy Points. Absent means none yet. */
   unlocked?: string[];
+  /** Days played in a row, forgiving one missed day (see streak.ts). */
+  streak?: Streak;
 }
 
 const KEY = 'k222.profile';
@@ -98,6 +101,8 @@ export function parseProfile(text: string | null): Profile {
     const ids = [...new Set(raw.unlocked.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 40))].slice(0, MAX_UNLOCKED);
     if (ids.length > 0) out.unlocked = ids;
   }
+  const streak = parseStreak(raw.streak);
+  if (streak) out.streak = streak;
   return out;
 }
 

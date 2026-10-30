@@ -79,6 +79,7 @@ import { adoptDoctrine as adoptMeterDoctrine } from '../sim/campaign/doctrines';
 import { setStance as setMeterStance, type StanceId } from '../sim/campaign/stances';
 import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaign/econTools';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
+import { notePlay } from './streak';
 import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
 import { pointsOf } from '../sim/campaign/scoring';
@@ -962,7 +963,10 @@ useStore.subscribe((state, prev) => {
   const { profile: awarded, fresh } = award(hung, ids, now);
   // A challenge finished leaves its points, at their best.
   const done = finishedChallenge(world, game.campaign);
-  const profile = done ? recordPoints(awarded, done.key, done.points) : awarded;
+  const scored = done ? recordPoints(awarded, done.key, done.points) : awarded;
+  // Any play today counts toward the streak.
+  const streak = notePlay(scored.streak, now);
+  const profile = streak === scored.streak ? scored : { ...scored, streak };
   if (profile === state.profile) return;
   profileStore.save(profile);
   useStore.setState({ profile, toasts: [...state.toasts, ...fresh] });
