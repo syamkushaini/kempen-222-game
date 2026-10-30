@@ -232,5 +232,5 @@ describe('career balance simulation (machine-tested baseline)', () => {
       }
     }
     expect(true).toBe(true);
-  }, 120000);
+  }, 300000); // thirty whole careers take about 100s on a quiet machine; 120s was too close for a busy CI runner
 });
