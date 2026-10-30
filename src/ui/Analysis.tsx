@@ -9,6 +9,7 @@ import { Chamber } from './Chamber';
 import type { Bloc } from './hemicycle';
 import { leaderName, partyColor, partyName, partyShort, regionLabel, renderNews, seatName, useFormat, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
+import { useBackClose } from './backClose';
 
 const signed = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : '0');
 const pts = (x: number) => { const r = Math.round(x * 1000) / 10; return `${r > 0 ? '+' : r < 0 ? '−' : ''}${Math.abs(r).toFixed(1)}`; };
@@ -182,6 +183,7 @@ function Says({ list, title }: { list: Insight[]; title?: StringKey }) {
  * state, each group of voters, the polls against the count, and what the player's own work came to. Read from the result.
  */
 export function Analysis({ campaign, summary, result, onClose }: { campaign: Campaign; summary: Summary; result: ElectionOutcome; onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const f = useFormat();
   const world = useWorld();

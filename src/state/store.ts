@@ -189,6 +189,8 @@ interface Store {
   /** Where the player was looking (the whole country, or a state) before a seat was opened: closing the seat goes back to it. Absent when no seat is open. */
   seatReturn?: RegionId | null;
   selectedSeat: string | null;
+  /** Counts every seat picked, so that picking the seat already chosen opens its card again after it was closed. */
+  seatPicks: number;
   /** The outcome of the player's most recent action, shown above the action list. */
   lastReport: NewsItem | null;
   /** Puts away the message about the last action. It is still in the News tab. */
@@ -507,6 +509,7 @@ export const useStore = create<Store>((set, get) => {
     tab: 'actions',
     selectedState: null,
     selectedSeat: null,
+    seatPicks: 0,
     lastReport: null,
     clearReport: () => set({ lastReport: null }),
     flash: { seat: null, n: 0 },
@@ -554,7 +557,7 @@ export const useStore = create<Store>((set, get) => {
       // Closing a seat goes back to where it was opened from: the list of the whole country, or of the state that was being looked at.
       if (seatId === null) return { selectedSeat: null, ...(s.seatReturn !== undefined ? { selectedState: s.seatReturn } : {}), seatReturn: undefined };
       // The first seat opened remembers where the player was looking; going from seat to seat keeps that.
-      return { selectedSeat: seatId, selectedState: state ?? s.selectedState, seatReturn: s.selectedSeat === null ? s.selectedState : s.seatReturn };
+      return { selectedSeat: seatId, seatPicks: s.seatPicks + 1, selectedState: state ?? s.selectedState, seatReturn: s.selectedSeat === null ? s.selectedState : s.seatReturn };
     }),
 
     startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, ideology = null, identity = null, challenge, realStates = false, weeks, seat, following, stronghold, carried }) => {

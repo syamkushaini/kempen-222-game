@@ -8,6 +8,7 @@ import { useStore } from '../state/store';
 import { AutoFill } from './CandidateAuto';
 import { Icon } from './Icon';
 import { regionLabel, useFormat, useT, useWorld } from './hooks';
+import { useBackClose } from './backClose';
 
 /** How many of the cheapest seats the quick button adds. */
 const QUICK = 10;
@@ -64,6 +65,7 @@ type Filter = 'all' | 'in' | 'out' | 'afford';
 
 /** Every seat, with whether the party has a candidate there and what one would cost. */
 export function SlateDialog({ onClose }: { onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const f = useFormat();
   const { world, campaign, fielded, costs, open } = useSlate();

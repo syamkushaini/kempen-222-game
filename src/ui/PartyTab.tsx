@@ -27,6 +27,7 @@ import { ConfirmButton } from './SavesTab';
 import { Brief } from './Brief';
 import { allianceTitle as allianceTitleOf, partyColor, partyName, partyShort, regionLabel, useFormat, useT, useWorld } from './hooks';
 import { AllianceForm } from './AllianceForm';
+import { useBackClose } from './backClose';
 
 const LOT = 100_000;
 
@@ -398,6 +399,7 @@ export function PartyTab({ part = 'party' }: { part?: PartyPart }) {
 
 /** The party takes a new name, a new flag and new colours: what it says goes on the screens, and what it costs is paid when it is done. */
 function RebrandDialog({ onClose }: { onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const player = useStore((s) => s.game!.campaign.player);
   const current = useStore((s) => s.game!.identity);

@@ -5,9 +5,11 @@ import { sponsorNames } from '../state/sponsors';
 import type { StringKey } from '../i18n/strings';
 import { useT } from './hooks';
 import { Icon } from './Icon';
+import { useBackClose } from './backClose';
 
 /** A way to say thank you: the maker's Touch 'n Go QR, opened from the main menu. */
 export function SupportDialog({ onClose }: { onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   // The list built into the game is shown at once; the table in Supabase, where there is one, replaces it when it arrives.
   const [names, setNames] = useState<readonly string[]>(THANKS);
