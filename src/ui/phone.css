@@ -101,3 +101,11 @@
   /* The smallest lines on the bars: no smaller than 11px. */
   .brand p, .campaign-bar .hud-value .small { font-size: 11px; }
 }
+
+@media (max-width: 520px) {
+  /* The tables of voter groups and regions become a card per row: the name and the figure on a line, the bar across the full width below. */
+  .bloc-table:not(.review-table), .bloc-table:not(.review-table) tbody { display: block; }
+  .bloc-table:not(.review-table) tr { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--line); }
+  .bloc-table:not(.review-table) th, .bloc-table:not(.review-table) td { display: block; border-top: 0; padding: 2px 0; }
+  .bloc-table:not(.review-table) td:last-child { grid-column: 1 / -1; width: auto; }
+}
