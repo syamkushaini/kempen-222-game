@@ -80,7 +80,8 @@ import { setStance as setMeterStance, type StanceId } from '../sim/campaign/stan
 import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaign/econTools';
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { notePlay } from './streak';
-import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordPoints, unlock, type Profile } from './profile';
+import { clearedHeat } from '../sim/campaign/heat';
+import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordHeat, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
 import { pointsOf } from '../sim/campaign/scoring';
 import { finishedChallenge } from '../sim/campaign/challengePoints';
@@ -972,7 +973,10 @@ useStore.subscribe((state, prev) => {
   const { profile: awarded, fresh } = award(hung, ids, now);
   // A challenge finished leaves its points, at their best.
   const done = finishedChallenge(world, game.campaign);
-  const scored = done ? recordPoints(awarded, done.key, done.points) : awarded;
+  const points = done ? recordPoints(awarded, done.key, done.points) : awarded;
+  // A contest won on a rung of the heat ladder opens the next rung.
+  const rung = clearedHeat(world, game.campaign);
+  const scored = rung ? recordHeat(points, rung) : points;
   // Any play today counts toward the streak.
   const streak = notePlay(scored.streak, now);
   const profile = streak === scored.streak ? scored : { ...scored, streak };

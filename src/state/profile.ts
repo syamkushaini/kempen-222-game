@@ -6,6 +6,7 @@ import { PARTY_IDS, type PartyId } from '../sim/types';
 import type { GameState } from './game';
 import type { KeyValueStore } from './saves';
 import { parseStreak, type Streak } from './streak';
+import { HEAT_MAX } from '../sim/campaign/heat';
 
 /** One finished career, as it hangs in the gallery. */
 export interface LegacyEntry {
@@ -49,6 +50,8 @@ export interface Profile {
   unlocked?: string[];
   /** Days played in a row, forgiving one missed day (see streak.ts). */
   streak?: Streak;
+  /** The highest rung of the heat ladder cleared (see heat.ts). Absent means none. */
+  heat?: number;
 }
 
 const KEY = 'k222.profile';
@@ -101,6 +104,7 @@ export function parseProfile(text: string | null): Profile {
     const ids = [...new Set(raw.unlocked.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 40))].slice(0, MAX_UNLOCKED);
     if (ids.length > 0) out.unlocked = ids;
   }
+  if (isNum(raw.heat) && Number.isInteger(raw.heat) && raw.heat >= 1 && raw.heat <= HEAT_MAX) out.heat = raw.heat;
   const streak = parseStreak(raw.streak);
   if (streak) out.streak = streak;
   return out;
@@ -172,6 +176,11 @@ export function recordPoints(profile: Profile, key: string, points: number): Pro
 
 /** The points a player has won in all the challenges, each counted at its best. */
 export const totalPoints = (profile: Profile): number => Object.values(profile.challengePoints ?? {}).reduce((a, n) => a + n, 0);
+
+/** Keeps the highest rung of the heat ladder cleared. The same profile if this one is no higher. */
+export function recordHeat(profile: Profile, heat: number): Profile {
+  return (profile.heat ?? 0) >= heat ? profile : { ...profile, heat };
+}
 
 /** Hangs a finished career in the gallery, once. Returns the same profile if it is already there. */
 export function hang(profile: Profile, entry: LegacyEntry): Profile {
