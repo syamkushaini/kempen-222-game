@@ -12,6 +12,7 @@ import { Portrait } from './Portrait';
 import { NewsLine } from './NewsTab';
 import { Icon } from './Icon';
 import { ToastGroup } from './ToastGroup';
+import { useBackClose } from './backClose';
 
 /** How long a message stays before it goes by itself. It can always be closed sooner. */
 const TOAST_MS = 8000;
@@ -35,6 +36,7 @@ export function HonoursEntry() {
 }
 
 export function HonoursDialog({ onClose }: { onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const f = useFormat();
   const profile = useStore((s) => s.profile);

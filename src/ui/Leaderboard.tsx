@@ -8,6 +8,7 @@ import { useStore } from '../state/store';
 import { useT } from './hooks';
 import { Portrait } from './Portrait';
 import type { StringKey } from '../i18n/strings';
+import { useBackClose } from './backClose';
 
 /** Whether this build has a leaderboard at all: it has none until the maker gives it an address. */
 export const hasLeaderboard = CONFIG !== null;
@@ -16,6 +17,7 @@ const FILTERS: Filter[] = ['all', 'federal', 'state'];
 
 /** The best careers posted: a board for each level of difficulty, and within it a choice of whole-country or state careers. */
 export function LeaderboardDialog({ onClose, level: first = 'normal' }: { onClose(): void; level?: Level }) {
+  useBackClose(onClose);
   const t = useT();
   const [level, setLevel] = useState<Level>(first);
   const [filter, setFilter] = useState<Filter>('all');

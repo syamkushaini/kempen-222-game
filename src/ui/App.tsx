@@ -46,6 +46,7 @@ import { ground, mix } from './shareCard';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { TouchGestures } from './TouchGestures';
 import { Sandbox } from './Sandbox';
+import { useBackClose } from './backClose';
 
 // The screens a game only reaches later (the count, the talks, the years between elections, the end of a career) are
 // fetched when they are first wanted, so that the first download, which matters most on a phone, is smaller.
@@ -170,11 +171,7 @@ function CampaignScreen() {
   const [screen, setScreen] = useState<'map' | 'panel'>('panel');
   const mapWanted = spot('map');
   useEffect(() => { if (mapWanted) setScreen('map'); }, [mapWanted]);
-  const seatCard = card && (
-    <div className="seat-card panel" role="dialog" aria-label={t('seat.card')}>
-      <SeatDetail seatId={card} onClose={() => setCard(null)} />
-    </div>
-  );
+  const seatCard = card && <SeatCard seatId={card} label={t('seat.card')} onClose={() => setCard(null)} />;
 
   // The keyboard: Space ends the week (or moves a term on a week), and a number key opens a group; pressed again it
   // goes on to the next tab in that group.
@@ -399,6 +396,16 @@ export function App() {
       <KeyboardShortcuts />
       <ActionToasts />
       <footer className="footer">{t('footer.fiction')}</footer>
+    </div>
+  );
+}
+
+/** The card for a seat picked on the map. On a phone it is a sheet over the screen, and Back closes it. */
+function SeatCard({ seatId, label, onClose }: { seatId: string; label: string; onClose(): void }) {
+  useBackClose(onClose);
+  return (
+    <div className="seat-card panel" role="dialog" aria-label={label}>
+      <SeatDetail seatId={seatId} onClose={onClose} />
     </div>
   );
 }

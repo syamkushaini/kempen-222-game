@@ -20,6 +20,7 @@ import { CopyButton } from './CopyButton';
 import { challengeLink, withInvite } from '../sim/campaign/challengeCode';
 import { countClick } from '../state/playWatch';
 import { useStore } from '../state/store';
+import { useBackClose } from './backClose';
 
 export const common = (t: T) => ({ tagline: t('share.tagline'), fiction: t('share.fiction') });
 
@@ -158,6 +159,7 @@ export interface Drawn { headline: string; text?: string; draw(canvas: HTMLCanva
 
 /** Shows the result card, with buttons to save it as an image or hand it to the device's share sheet. */
 export function ShareDialog({ data, onClose }: { data: CardData | Drawn; onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const canvas = useRef<HTMLCanvasElement>(null);
   const [file, setFile] = useState<File | null>(null);
