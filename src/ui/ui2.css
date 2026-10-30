@@ -1054,3 +1054,12 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .story-modal .story-teaser { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--accent, var(--line-2)); background: color-mix(in srgb, var(--panel) 70%, transparent); font-style: italic; }
 .story-recap { margin: 16px 0; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); }
 .story-recap h3 { margin: 0 0 8px; }
+
+/* The seat finder's list: big rows under the box, so that a thumb can pick a seat the map is too small to show. */
+.seat-search { position: relative; }
+.seat-results { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50; margin: 0; padding: 4px; list-style: none; max-height: min(40dvh, 360px); overflow-y: auto; overscroll-behavior: contain; background: linear-gradient(var(--panel-2), var(--panel-2)), var(--bg); backdrop-filter: none; border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 12px 32px rgb(0 0 0 / 35%); }
+.seat-results button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 6px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.seat-results button:hover, .seat-results button.active { background: var(--fill, rgb(128 128 128 / 22%)); }
+.seat-results .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+.seat-results-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.seat-results-note { padding: 8px 10px; }
