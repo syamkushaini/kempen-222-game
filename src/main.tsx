@@ -34,3 +34,9 @@ void Promise.allSettled(saveStore.scenarios().map(loadScenario)).then(() => {
     </StrictMode>,
   );
 });
+
+// Offline play: a service worker (public/sw.js) keeps what the game has fetched. Only in a real build, where the file is served.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  const register = () => { navigator.serviceWorker.register('./sw.js').catch(() => undefined); };
+  if (document.readyState === 'complete') register(); else window.addEventListener('load', register);
+}
