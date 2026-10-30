@@ -89,3 +89,15 @@
   .reminder > *:not(button):not(.btn) { font-size: inherit; }
   .reminder button, .reminder .btn { min-height: 34px; padding: 0 14px; font-size: 13px; }
 }
+
+/* On a touch screen every control is at least 44px tall, whatever a narrow-screen rule above squeezed it to. */
+@media (pointer: coarse) {
+  .reminder button, .reminder .btn, .reminder button.btn,
+  .section-jump button, .section-jump a,
+  .subtabs button,
+  .bar-fold.open,
+  .display-menu summary,
+  .campaign-bar .btn, .term-bar .btn, .campaign-bar .end-week { min-height: 44px; }
+  /* The smallest lines on the bars: no smaller than 11px. */
+  .brand p, .campaign-bar .hud-value .small { font-size: 11px; }
+}
