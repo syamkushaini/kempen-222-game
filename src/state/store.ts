@@ -81,6 +81,7 @@ import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaig
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { notePlay } from './streak';
 import { clearedHeat } from '../sim/campaign/heat';
+import { keepSaves } from './persist';
 import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordHeat, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
 import { pointsOf } from '../sim/campaign/scoring';
@@ -950,6 +951,8 @@ useStore.subscribe((state, prev) => {
     const game = useStore.getState().game;
     if (!game) return;
     const ok = saveStore.save(AUTO_SLOT, game);
+    // The first save is the moment there is something worth keeping: ask the browser not to clear it.
+    if (ok) void keepSaves();
     useStore.setState(ok ? { autosavedAt: Date.now(), autosaveFailed: false } : { autosaveFailed: saveStore.available });
   }, 400);
 });
