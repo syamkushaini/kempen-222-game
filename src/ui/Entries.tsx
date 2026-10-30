@@ -6,6 +6,7 @@ import { isOwn } from '../sim/campaign/slate';
 import { useStore } from '../state/store';
 import { Icon } from './Icon';
 import { regionLabel, useFormat, useT, useWorld } from './hooks';
+import { useBackClose } from './backClose';
 
 /**
  * Where the player's party has never stood: on the campaign tab, a line saying so and the way to put candidates there.
@@ -45,6 +46,7 @@ type Filter = 'all' | 'mine' | 'afford';
 
 /** Every seat the party has never stood in, with what a candidate there would cost. */
 export function EntryDialog({ onClose }: { onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const f = useFormat();
   const world = useWorld();

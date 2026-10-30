@@ -10,6 +10,7 @@ import { partyName, regionLabel, useFormat, useT, useWorld } from './hooks';
 import { Icon } from './Icon';
 import { Block, Matrix, PartyChips, Slider, signed, type SliderProps } from './simControls';
 import './simulator.css';
+import { useBackClose } from './backClose';
 
 // The sandbox: a game played with every setting open. This panel changes anything about the game as it stands, for any party,
 // and every change can be taken back with Undo.
@@ -55,6 +56,7 @@ export function Sandbox() {
 }
 
 function Panel({ onClose }: { onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const [tab, setTab] = useState<Tab>('party');
   const undo = useStore((s) => s.sandboxUndo);

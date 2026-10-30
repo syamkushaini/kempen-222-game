@@ -14,6 +14,7 @@ import { useStore } from '../state/store';
 import { useFormat, useT, useWorld } from './hooks';
 import { Portrait } from './Portrait';
 import { totalPoints } from '../state/profile';
+import { useBackClose } from './backClose';
 
 /** Whether this build has challenge boards at all: they need the same address and key as the career leaderboard. */
 export const hasBoards = CONFIG !== null;
@@ -26,6 +27,7 @@ export function useChallengeName(key: string): string {
 
 /** The best results of one challenge. */
 export function ChallengeBoardDialog({ challenge, onClose }: { challenge: string; onClose(): void }) {
+  useBackClose(onClose);
   const t = useT();
   const f = useFormat();
   const name = useChallengeName(challenge);
