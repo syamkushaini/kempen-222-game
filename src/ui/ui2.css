@@ -149,7 +149,7 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 .modes .party-card { text-align: left; align-items: flex-start; }
 
 /* the 3D map */
-.map3d { width: 100%; aspect-ratio: 16 / 9; max-height: 70vh; border-radius: 8px; overflow: hidden; background: var(--panel-2); }
+.map3d { width: 100%; aspect-ratio: 16 / 9; max-height: 70dvh; border-radius: 8px; overflow: hidden; background: var(--panel-2); }
 .map3d canvas { cursor: grab; }
 .map3d-hint { margin: 6px 2px 0; }
 .map-3d-toggle.active { background: var(--primary); color: var(--bg); border-color: transparent; }
@@ -322,7 +322,7 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 .sidebar { position: sticky; }
 .seat-card { position: absolute; inset: 0; z-index: 6; overflow-y: auto; padding: 16px; box-shadow: -12px 0 32px -12px rgb(0 0 0 / 0.5); animation: card-in 240ms cubic-bezier(.2,.8,.2,1); }
 @keyframes card-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-@media (max-width: 980px) { .seat-card { position: fixed; inset: auto 0 76px 0; max-height: 70vh; border-radius: 16px 16px 0 0; animation-name: sheet-in; } .tab { font-size: 14px; padding: 8px 6px; } .seat-search { flex-basis: 100%; order: 3; } }
+@media (max-width: 980px) { .seat-card { position: fixed; inset: auto 0 76px 0; max-height: 70dvh; border-radius: 16px 16px 0 0; animation-name: sheet-in; } .tab { font-size: 14px; padding: 8px 6px; } .seat-search { flex-basis: 100%; order: 3; } }
 @keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .seat-card { animation: none; } }
 
@@ -384,7 +384,7 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 
 /* ---------- how to play ---------- */
 .tone-learn { --tone: #2aa3a3; }
-.howto { width: min(680px, 100%); max-height: 88vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.howto { width: min(680px, 100%); max-height: 88dvh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 .howto h3 { margin-top: 8px; }
 .howto-goal { display: flex; align-items: center; gap: 16px; padding: 12px; border-radius: 12px; background: var(--panel-2); }
 .howto-chamber { flex: none; width: 150px; }
@@ -593,7 +593,7 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 .layer-chips .chip [aria-hidden] { color: var(--muted); }
 @media (max-width: 980px) { .layer-chips .chip { min-height: 40px; } .layer-row { padding: 10px 6px; } }
 /* With the layers listed, the options are long: they scroll inside themselves, clear of the bars at the top and bottom. */
-.map-options-panel { max-height: min(70vh, 640px); overflow-y: auto; overscroll-behavior: contain; }
+.map-options-panel { max-height: min(70dvh, 640px); overflow-y: auto; overscroll-behavior: contain; }
 @media (max-width: 980px) { .map-options-panel { max-height: calc(100dvh - 330px); } }
 
 /* A party the player made chooses and pays for its candidates: the count, the quick buttons, and the list of every seat. */
@@ -941,7 +941,7 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .hud-btn { background: none; border: 0; padding: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; }
 .hud-btn .hud-label { text-decoration: underline dotted; text-underline-offset: 3px; white-space: nowrap; }
 .money-backdrop { position: fixed; inset: 0; z-index: 29; background: rgb(0 0 0 / 0.25); }
-.money-sheet { position: fixed; left: 12px; right: 12px; bottom: calc(132px + env(safe-area-inset-bottom)); z-index: 30; max-height: 60vh; overflow: auto; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgb(0 0 0 / 0.35); }
+.money-sheet { position: fixed; left: 12px; right: 12px; bottom: calc(132px + env(safe-area-inset-bottom)); z-index: 30; max-height: 60dvh; overflow: auto; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgb(0 0 0 / 0.35); }
 .money-sheet header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .money-sheet h3 { margin: 0; }
 .money-sheet dt { margin-top: 12px; font-weight: 600; }
