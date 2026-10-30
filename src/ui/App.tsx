@@ -23,6 +23,7 @@ import { ReminderStrip } from './ReminderStrip';
 import { GameMenu } from './GameMenu';
 import { GroupMenu } from './GroupMenu';
 import { NextStep } from './NextStep';
+import { FinishWithTeam } from './FinishWithTeam';
 import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useTablet, useWorld, useNarrow } from './hooks';
 import { AsideBanner } from './Aside';
 import { MapView } from './MapView';
@@ -209,6 +210,7 @@ function CampaignScreen() {
       <TouchGestures onSwipeLeft={() => swipe(1)} onSwipeRight={() => swipe(-1)}>
       <main className={phone ? `layout phone-${screen}` : 'layout'}>
         <NextStep />
+        <FinishWithTeam />
         <GoalLine />
         <MetricsStrip />
         <ReminderStrip />

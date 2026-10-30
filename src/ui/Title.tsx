@@ -17,6 +17,7 @@ import { AUTO_SLOT } from '../state/saves';
 import { DEFAULT_EMBLEMS, makeIdentity, PARTY_COLORS } from '../state/identity';
 import { saveStore, useStore } from '../state/store';
 import { liveDays } from '../state/streak';
+import { watchHint } from '../state/playWatch';
 import { LEADERS } from '../sim/campaign/cast';
 import { lastOutcome, useFormat, useT } from './hooks';
 import { ChallengeList } from './Challenges';
@@ -134,6 +135,8 @@ export function Title() {
   const setupWanted = useStore((s) => s.setupWanted);
   const clearSetupWanted = useStore((s) => s.clearSetupWanted);
   const [mode, setMode] = useState<Screen>(() => (setupWanted ? 'custom' : 'menu'));
+  // Told to the play counting, so that a player who leaves in the middle of the set-up is counted at the step they reached.
+  useEffect(() => { watchHint(mode === 'menu' ? 'menu' : `setup:${mode}:${step}`); return () => watchHint(null); }, [mode, step]);
   const [honours, setHonours] = useState(false);
   const [hq, setHq] = useState(false);
   const [howTo, setHowTo] = useState(false);

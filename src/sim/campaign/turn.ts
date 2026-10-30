@@ -413,6 +413,14 @@ export function autoPlayWeek(world: World, c: Campaign): void {
   planChiefs(world, c, c.player);
 }
 
+/** The team runs every week still to come, as the rivals' logic would, and polling day is reached. For a player short of time. */
+export function playOut(world: World, c: Campaign): void {
+  for (let i = 0; i < 100 && c.phase === 'campaign'; i++) {
+    autoPlayWeek(world, c);
+    endWeek(world, c);
+  }
+}
+
 // ---------- polling day ----------
 
 export function electionResult(world: World, c: Campaign): ElectionOutcome | null {
