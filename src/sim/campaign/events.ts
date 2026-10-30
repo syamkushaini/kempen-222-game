@@ -24,6 +24,7 @@ import { OPENING_STORIES } from './eventListOpening';
 import { PARTY_OPENING_STORIES } from './eventListOpeningParty';
 import { POWER_EVENTS } from './eventListPower';
 import { CHRONICLE_EVENTS } from './eventListChronicle';
+import { TRAIL_EVENTS } from './eventListTrail';
 import { FOLLOW_EVENTS, FOLLOW_UPS } from './eventListFollow';
 import { STATE_STORIES } from './eventList12';
 import { KEDAH_STORIES } from './eventList13';
@@ -56,7 +57,7 @@ import { ISSUE_IDS, type BackstoryId, type Campaign, type IssueId, type Scene } 
 import { ASK_MAX, ASK_MIN } from './lineDial';
 import { chose, logChoice } from './chronicle';
 
-const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...GRAFT_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES, ...MELAKA_STORIES, ...OPENING_STORIES, ...POWER_EVENTS, ...PARTY_OPENING_STORIES, ...STORYLINE_EVENTS, ...CHRONICLE_EVENTS };
+const ALL_EVENTS: Record<string, EventDef> = { ...CORE_EVENTS, ...MORE_EVENTS, ...GOVERNING_EVENTS, ...STORY_EVENTS, ...SEASON_EVENTS, ...FEDERATION_EVENTS, ...STORY_EVENTS_2, ...NEW_EVENTS, ...GOVERNING_SEATS, ...OPPOSITION_SEATS, ...DESK_EVENTS, ...DEBT_EVENTS, ...SHOCK_EVENTS, ...FOLLOW_EVENTS, ...STATE_STORIES, ...KEDAH_STORIES, ...SELANGOR_STORIES, ...FORCES_AND_PESTEL, ...SARAWAK_STORIES, ...VIRAL_EVENTS, ...GRAFT_EVENTS, ...CRISIS_EVENTS, ...PENANG_STORIES, ...PERLIS_STORIES, ...MELAKA_STORIES, ...OPENING_STORIES, ...POWER_EVENTS, ...PARTY_OPENING_STORIES, ...STORYLINE_EVENTS, ...CHRONICLE_EVENTS, ...TRAIL_EVENTS };
 
 /**
  * Events whose money is the public's: relief for a flood, a bridge, a subsidy, a port. Where the player's party governs they are paid

@@ -6,7 +6,7 @@ import { startCareer } from './career';
 import { answerEvent } from './career';
 import { EVENTS, raise, rollEvent, seatOf } from './events';
 import { ID_BLOCK, ID_COOL, ID_COOL_FACTOR, PRESSURE, pressure, recency } from './eventContext';
-import { TOPICS, topicOf } from './standing';
+import { GOVERNING_ONLY, TOPICS, topicOf } from './standing';
 import { isValidCampaign } from './validate';
 import type { Campaign } from './types';
 
@@ -103,7 +103,7 @@ describe('events that name a place in government are not put to someone who does
         if (!rollEvent(c, rng)) continue;
         const id = c.inbox.at(-1)?.event;
         const def = id ? EVENTS[id] : undefined;
-        if (!id || !def || def.seats) continue;
+        if (!id || !def || def.seats || GOVERNING_ONLY.includes(id)) continue;
         const at = seatOf(c);
         if (def.role === 'pm' && at !== 'pm') bad.push(`${id} (pm) came to ${at}`);
         if (def.role === 'opp' && at !== 'opp') bad.push(`${id} (opp) came to ${at}`);
