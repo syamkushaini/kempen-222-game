@@ -837,7 +837,7 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .metrics-headline { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 6px 16px; align-items: end; padding: 10px 14px; }
 .metrics-headline .metric.alert .metric-label::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--bad, #e5484d); vertical-align: 1px; }
 .metrics-compact { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px 12px; padding: 8px 12px; align-items: start; }
-.metrics-compact .metric-label { font-size: 10px; }
+.metrics-compact .metric-label { font-size: 11px; }
 .metrics-compact .metric-value { font-size: 14px; }
 .metrics-compact .metric-bar { height: 2px; }
 .metrics-more { justify-self: end; align-self: center; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
