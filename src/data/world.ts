@@ -205,6 +205,12 @@ export function nextContest(scenario: string, world: Pick<World, 'seats'>): stri
   return null;
 }
 
+/** The DUN by-election scenarios of a state, the closest three-way fights first: what the journey offers after each win. */
+export function dunByElections(st: StateId): string[] {
+  const seats = VACANCIES.filter((v) => v.kind === 'dun' && v.state === st);
+  return [...seats.filter((v) => v.close), ...seats.filter((v) => !v.close)].map((v) => byElectionId(v.key));
+}
+
 /** A number from 0 to 1 that depends only on the text: the same seat always gets the same one. */
 function unit(text: string): number {
   let h = 0x811c9dc5;

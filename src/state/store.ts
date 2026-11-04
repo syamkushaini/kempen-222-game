@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { fightWorld, foundedWorld, getWorld, loadScenario, loadState, newPartyWorld, nextContest, ownWorld, worldOf } from '../data/world';
+import { dunByElections, fightWorld, foundedWorld, getWorld, loadScenario, loadState, newPartyWorld, nextContest, ownWorld, worldOf } from '../data/world';
 import { encodeChallenge, type ChallengeSpec } from '../sim/campaign/challengeCode';
 import { translate, type Lang } from '../i18n/strings';
 import { earned, type AchievementId } from '../sim/campaign/achievements';
@@ -81,8 +81,9 @@ import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaig
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { notePlay } from './streak';
 import { clearedHeat } from '../sim/campaign/heat';
+import { emptyJourney, journeyResult, nextStep } from '../sim/campaign/journey';
 import { keepSaves } from './persist';
-import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordHeat, recordPoints, unlock, type Profile } from './profile';
+import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordHeat, recordJourney, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
 import { pointsOf } from '../sim/campaign/scoring';
 import { finishedChallenge } from '../sim/campaign/challengePoints';
@@ -884,7 +885,7 @@ export const useStore = create<Store>((set, get) => {
       if (!g || !c || g.aside || c.phase !== 'done' || !c.newParty || c.career) return;
       const world = worldOf(c);
       const result = world && electionResult(world, c);
-      const next = world && nextContest(c.scenario, world);
+      const next = world && (nextStep(get().profile.journey ?? emptyJourney(), c.scenario, dunByElections) ?? nextContest(c.scenario, world));
       if (!world || !result || !next) return;
       const share = summarise(world, c, result).voteShare;
       await loadScenario(next);
@@ -979,7 +980,10 @@ useStore.subscribe((state, prev) => {
   const points = done ? recordPoints(awarded, done.key, done.points) : awarded;
   // A contest won on a rung of the heat ladder opens the next rung.
   const rung = clearedHeat(world, game.campaign);
-  const scored = rung ? recordHeat(points, rung) : points;
+  const heated = rung ? recordHeat(points, rung) : points;
+  // A by-election won, or a state taken with a majority and the government, moves the journey on.
+  const outcome = journeyResult(world, game.campaign);
+  const scored = outcome ? recordJourney(heated, game.campaign.scenario, outcome) : heated;
   // Any play today counts toward the streak.
   const streak = notePlay(scored.streak, now);
   const profile = streak === scored.streak ? scored : { ...scored, streak };

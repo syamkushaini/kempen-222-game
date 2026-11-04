@@ -2,12 +2,14 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { whatIfsFor, type WhatIfId } from '../sim/campaign/whatif';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
-import { byElectionId, fairSeats, getWorld, HOME_PARTIES, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS } from '../data/world';
+import { byElectionId, dunByElections, fairSeats, getWorld, HOME_PARTIES, loadScenario, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS, vacancyOf } from '../data/world';
+import { FIRST_STATE, journeyLevel, resumeScenario } from '../sim/campaign/journey';
+import { lastName } from '../state/leaderboard';
 import type { ContestKind } from '../sim/campaign/rules';
 import { playable, standingPact, startingFunds } from '../sim/campaign/turn';
 import type { BackstoryId, Difficulty } from '../sim/campaign/types';
 import { startStances } from '../sim/campaign/policy';
-import { FOUNDING_SLOT } from '../sim/campaign/founding';
+import { FOUNDING_SLOT, carriedFollowing } from '../sim/campaign/founding';
 import { FoundingSeat } from './FoundingSeat';
 import { RegionProfile } from './RegionProfile';
 import { inContention, outlook, par } from '../sim/campaign/outlook';
@@ -145,6 +147,29 @@ export function Title() {
   const [howTo, setHowTo] = useState(false);
   const [board, setBoard] = useState(false);
   const profile = useStore((s) => s.profile);
+  const journey = profile.journey;
+  const journeyLv = journeyLevel(journey);
+  // The Career Campaign starts, or picks up, where the journey has got to: its first DUN by-election in Selangor, then the next seat, the state and the next state.
+  const resumeAt = () => resumeScenario(journey, dunByElections);
+  const nextLabel = (() => {
+    const at = resumeAt();
+    if (at === 'general') return t('career.next.general');
+    if (at.startsWith('state:')) return t('career.next.state', { state: t(`state.${at.slice(6)}` as StringKey) });
+    return t('career.next.dun', { seat: vacancyOf(at.slice('byelection:'.length))?.name ?? t(`state.${FIRST_STATE}` as StringKey) });
+  })();
+  const startJourney = async () => {
+    // Selangor's assembly seats are fetched first (the start needs them); a journey part-way needs its own state.
+    await loadState(journey?.state ?? FIRST_STATE);
+    const at = resumeAt();
+    await loadScenario(at);
+    const resumed = journey !== undefined && (journey.state !== null || journey.governed.length > 0);
+    // A journey picked up after a state is taken, or with its DUN seats won, starts with the following those wins earned.
+    const stage = at === 'general' || at.startsWith('state:');
+    startCampaign({
+      name: lastName(), scenario: at, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', founded: true, seed: seedFromSearch(window.location.search),
+      ...(resumed && stage ? { following: carriedFollowing(0.4) } : {}),
+    });
+  };
   const [art, setArt] = useState(false);
   const [lastMode] = useState<'quick' | 'custom' | null>(() => { try { const v = localStorage.getItem(MODE_KEY); return v === 'custom' || v === 'quick' ? v : null; } catch { return null; } });
   useEffect(() => { if (setupWanted) clearSetupWanted(); }, [setupWanted, clearSetupWanted]);
@@ -221,8 +246,11 @@ export function Title() {
                 onClick={() => { const g = saveStore.load(AUTO_SLOT); if (g) loadGame(g); }}
               />
             )}
-            {!auto && <MenuItem primary icon="play" tone="go" title={t('menu.play')} hint={t('menu.play.hint')} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy', seed: seedFromSearch(window.location.search) })} />}
-            <MenuItem primary={false} icon="plus" tone="new" title={t('menu.new')} hint={t('menu.new.hint')} onClick={() => pick('home')} />
+            <MenuItem
+              primary={!auto} icon="crown" tone="won" title={journey ? t('career.play.next', { n: journeyLv }) : t('career.play')}
+              hint={journey ? t('career.play.nextHint', { next: nextLabel }) : t('career.play.hint', { n: journeyLv })} onClick={() => void startJourney()}
+            />
+            <MenuItem primary={false} icon="plus" tone="new" title={t('menu.other')} hint={t('menu.other.hint')} onClick={() => pick('home')} />
             <MenuItem icon="folder" tone="load" title={t('menu.load')} hint={t('menu.load.hint', { n: saved })} onClick={() => pick('load')} />
             <MenuItem icon="sliders" tone="learn" title={t('sim.menu')} hint={t('sim.menu.hint')} onClick={() => setSimulating(true)} />
             <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.weekly', { n: Math.max(1, Math.ceil(timeLeft(Date.now()) / 86_400_000)) })} onClick={() => pick('challenges')} />
