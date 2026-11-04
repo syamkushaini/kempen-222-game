@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DUN_LEVELS, MAX_LEVEL, emptyJourney, journeyLevel, nextStep, record, recommendState, resumeScenario } from './journey';
+import { nextUnlock, unlockStages, DUN_LEVELS, FIRST_UNLOCK, MAX_LEVEL, MODE_UNLOCKS, emptyJourney, modeOpen, journeyLevel, nextStep, record, recommendState, resumeScenario } from './journey';
 
 const seat = (n: number) => `byelection:dun:selangor:N.0${n}`;
 const seats = () => [1, 2, 3, 4, 5].map(seat);
@@ -76,5 +76,26 @@ describe('the journey', () => {
     expect(resumeScenario(j, sel)).toBe('state:selangor');
     j = record(j, 'state:selangor', { won: true, governed: true });
     expect(resumeScenario(j, sel)).toBe('state:nsembilan');
+  });
+
+  it('keeps every other way to play locked at the start, and opens them in stages', () => {
+    for (const m of Object.keys(MODE_UNLOCKS) as (keyof typeof MODE_UNLOCKS)[]) expect(modeOpen(m, 1)).toBe(false);
+    expect(FIRST_UNLOCK).toBe(DUN_LEVELS + 1);
+    expect(modeOpen('byelection', DUN_LEVELS + 1)).toBe(true);
+    expect(modeOpen('state', DUN_LEVELS + 1)).toBe(false);
+    expect(modeOpen('state', DUN_LEVELS + 2)).toBe(true);
+    expect(modeOpen('general', 12)).toBe(false);
+    expect(modeOpen('general', 13)).toBe(true);
+    expect(modeOpen('simulator', 20)).toBe(false);
+    expect(modeOpen('simulator', MAX_LEVEL)).toBe(true);
+  });
+
+  it('lists the stages in order and names the next one to open', () => {
+    expect(unlockStages().map((x) => x.level)).toEqual([4, 5, 13, 21]);
+    expect(unlockStages().flatMap((x) => x.modes)).toHaveLength(Object.keys(MODE_UNLOCKS).length);
+    expect(nextUnlock(1)).toMatchObject({ level: 4, modes: ['byelection'] });
+    expect(nextUnlock(4)?.level).toBe(5);
+    expect(nextUnlock(13)?.level).toBe(21);
+    expect(nextUnlock(21)).toBeNull();
   });
 });

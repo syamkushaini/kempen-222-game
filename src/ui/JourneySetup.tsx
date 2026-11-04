@@ -4,6 +4,7 @@ import type { BackstoryId } from '../sim/campaign/types';
 import { DEFAULT_EMBLEMS, makeIdentity, PARTY_COLORS, type Identity } from '../state/identity';
 import { loadJourneyParty } from '../state/journeyParty';
 import { useT } from './hooks';
+import { UnlockRoadmap } from './UnlockRoadmap';
 import { LeaderPicker, PartyCreator, type Draft } from './Setup';
 
 const NAME_MAX = 24;
@@ -26,6 +27,7 @@ export function JourneySetup({ onStart }: { onStart(name: string, identity: Iden
     <div className="journey-setup">
       <h2>{t('journey.setup.title')}</h2>
       <p className="muted small">{t('journey.setup.desc')}</p>
+      <UnlockRoadmap />
       <label className="field-label" htmlFor="journey-name">{t('journey.setup.name')}</label>
       <input id="journey-name" className="text-input" value={name} maxLength={NAME_MAX} autoComplete="off" placeholder={t('journey.setup.name.ph')} onChange={(e) => setName(e.target.value)} />
       <h3>{t('journey.setup.party')}</h3>

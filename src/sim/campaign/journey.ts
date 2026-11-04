@@ -130,3 +130,37 @@ export function resumeScenario(j: Journey | undefined, seats: (st: StateId) => s
 /** The state a scenario is played in, or null (a general election). */
 export const scenarioState = (scenario: string): StateId | null =>
   scenario.startsWith('state:') ? (scenario.slice(6) as StateId) : scenario.startsWith('byelection:dun:') ? dunState(scenario) : null;
+
+/** The ways to play apart from the career campaign itself. They stay locked until the campaign has got far enough. */
+export type ModeId = 'byelection' | 'challenges' | 'state' | 'career' | 'general' | 'hung' | 'simulator';
+
+/**
+ * The level of the career campaign (see `journeyLevel`) at which each way to play opens, in stages:
+ * one state's three DUN seats (level 4) open single by-elections; the first state taken (5) opens state elections and the weekly challenges;
+ * three states (13) open the general election, the hung parliament and a career of one's own; five states (21) open the simulator.
+ */
+export const MODE_UNLOCKS: Record<ModeId, number> = {
+  byelection: DUN_LEVELS + 1,
+  state: DUN_LEVELS + 2,
+  challenges: DUN_LEVELS + 2,
+  general: 3 * (DUN_LEVELS + 1) + 1,
+  hung: 3 * (DUN_LEVELS + 1) + 1,
+  career: 3 * (DUN_LEVELS + 1) + 1,
+  simulator: 5 * (DUN_LEVELS + 1) + 1,
+};
+
+/** Whether a way to play is open at this level. */
+export const modeOpen = (mode: ModeId, level: number): boolean => level >= MODE_UNLOCKS[mode];
+
+/** The lowest level at which any other way to play opens. */
+export const FIRST_UNLOCK = Math.min(...Object.values(MODE_UNLOCKS));
+
+/** The stages at which ways to play open, lowest level first, each with the modes it opens. */
+export function unlockStages(): { level: number; modes: ModeId[] }[] {
+  const byLevel = new Map<number, ModeId[]>();
+  for (const m of Object.keys(MODE_UNLOCKS) as ModeId[]) byLevel.set(MODE_UNLOCKS[m], [...(byLevel.get(MODE_UNLOCKS[m]) ?? []), m]);
+  return [...byLevel.entries()].sort((a, b) => a[0] - b[0]).map(([level, modes]) => ({ level, modes }));
+}
+
+/** The next stage still shut at this level, or null once everything is open. */
+export const nextUnlock = (level: number): { level: number; modes: ModeId[] } | null => unlockStages().find((s) => s.level > level) ?? null;

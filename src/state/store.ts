@@ -81,7 +81,7 @@ import { setRate as setPolicyRate, useTool as useEconTool } from '../sim/campaig
 import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/campaign/aside';
 import { notePlay } from './streak';
 import { clearedHeat } from '../sim/campaign/heat';
-import { emptyJourney, journeyResult, nextStep } from '../sim/campaign/journey';
+import { emptyJourney, journeyLevel, journeyResult, modeOpen, nextStep } from '../sim/campaign/journey';
 import { keepSaves } from './persist';
 import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordHeat, recordJourney, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
@@ -598,6 +598,8 @@ export const useStore = create<Store>((set, get) => {
     pendingChallenge: null,
     setPendingChallenge: (pendingChallenge) => set({ pendingChallenge }),
     startChallenge: (spec) => {
+      // The challenges open once the career campaign has taken its first state.
+      if (!modeOpen('challenges', journeyLevel(get().profile.journey))) return;
       const lang = get().settings.lang;
       void loadScenario(spec.scenario).then(() => {
         set({ pendingChallenge: null });
@@ -934,7 +936,7 @@ export const useStore = create<Store>((set, get) => {
       set({ game: back, undoStack: stack.slice(0, -1), lastReport: null, pactReply: null, offerReply: null, hiddenScene: [] });
     },
     simulating: false,
-    setSimulating: (on) => set({ simulating: on }),
+    setSimulating: (on) => { if (on && !modeOpen('simulator', journeyLevel(get().profile.journey))) return; set({ simulating: on }); },
     setupWanted: false,
     newGameSetup: () => { get().quitToTitle(); set({ setupWanted: true }); },
     clearSetupWanted: () => set({ setupWanted: false }),
