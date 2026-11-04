@@ -93,6 +93,7 @@ export function Crowd({ n, area, colors, cheer = 0.8, seed = 1, scale = 0.5, che
     x: area[0] + rnd(seed + i * 3.1) * (area[1] - area[0]), z: area[2] + rnd(seed + i * 5.7) * (area[3] - area[2]),
     ph: rnd(seed + i * 7.3) * 6.3, sp: 4 + rnd(seed + i * 2.3) * 3, k: Math.floor(rnd(seed + i * 9.1) * colors.length),
     h: 0.85 + rnd(seed + i * 1.9) * 0.3,
+    at: rnd(seed + i * 4.4) * 0.8,
   })), [n, area, seed, colors.length]);
   const dummy = useMemo(() => new Object3D(), []);
   useLayoutEffect(() => {
@@ -104,9 +105,12 @@ export function Crowd({ n, area, colors, cheer = 0.8, seed = 1, scale = 0.5, che
     const up = ease(t, cheerFrom - 0.4, cheerFrom + 0.4);
     spots.forEach((p, i) => {
       const j = cheer * up * Math.abs(Math.sin(t * p.sp + p.ph)) * 0.3;
-      dummy.position.set(p.x, (0.97 * scale * p.h) + j, p.z); dummy.scale.set(scale, scale * p.h, scale); dummy.updateMatrix();
+      // Arriving: each person drops in and grows to full size at their own moment.
+      const k = Math.max(0.001, ease(t, p.at, p.at + 0.35));
+      const drop = (1 - k) * 0.6;
+      dummy.position.set(p.x, (0.97 * scale * p.h) * k + j + drop, p.z); dummy.scale.set(scale * k, scale * p.h * k, scale * k); dummy.updateMatrix();
       bodies.current?.setMatrixAt(i, dummy.matrix);
-      dummy.position.set(p.x, 1.6 * scale * p.h + j, p.z); dummy.scale.setScalar(scale); dummy.updateMatrix();
+      dummy.position.set(p.x, 1.6 * scale * p.h * k + j + drop, p.z); dummy.scale.setScalar(scale * k); dummy.updateMatrix();
       heads.current?.setMatrixAt(i, dummy.matrix);
     });
     if (bodies.current) bodies.current.instanceMatrix.needsUpdate = true;
@@ -121,8 +125,8 @@ export function Crowd({ n, area, colors, cheer = 0.8, seed = 1, scale = 0.5, che
 }
 
 /** The ground the scene stands on. */
-export const Ground = ({ c = '#b9c9a8', r = 11, y = 0 }: { c?: string; r?: number; y?: number }) =>
-  <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, y, 0]}><circleGeometry args={[r, 48]} /><Mat c={c} /></mesh>;
+export const Ground = ({ c = '#b9c9a8', r = 30, y = 0 }: { c?: string; r?: number; y?: number }) =>
+  <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, y, 0]} userData={{ ground: true }}><circleGeometry args={[r, 64]} /><Mat c={c} /></mesh>;
 
 /** A raised platform with steps, for a speaker. */
 export const Platform = ({ c = '#8d6e4a', w = 4.2, d = 2, ...rest }: { c?: string; w?: number; d?: number } & G) =>

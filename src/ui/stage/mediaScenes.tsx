@@ -22,8 +22,8 @@ export function Studio({ look, accent, rival, kind }: SceneProps & { kind: Studi
   return (
     <>
       <Ground c="#2f3a52" />
-      <Box s={[10, 4, 0.1]} c="#3d4a63" position={[0, 2, -3.4]} />
-      <Box s={[10, 0.16, 0.12]} c={accent} position={[0, 1.2, -3.32]} />
+      <Box s={[24, 7, 0.1]} c="#3d4a63" position={[0, 3.5, -3.4]} />
+      <Box s={[24, 0.16, 0.12]} c={accent} position={[0, 1.2, -3.32]} />
       {kind === 'tv' && (
         <>
           <Box s={[2.4, 0.95, 0.8]} c={accent} position={[0, 0.48, -1.6]} />
@@ -78,7 +78,7 @@ export function Social({ look, accent, rival, kind }: SceneProps & { kind: 'soci
     return (
       <>
         <Ground c="#dfe6f2" />
-        <Box s={[10, 4, 0.1]} c="#c9d6ee" position={[0, 2, -3.4]} />
+        <Box s={[24, 7, 0.1]} c="#c9d6ee" position={[0, 3.5, -3.4]} />
         <group position={[0, 1.7, -1.2]}>
           <Box s={[1.7, 3, 0.16]} c="#1f1f26" /><Box s={[1.5, 2.7, 0.03]} c="#dbeafe" e={0.5} position={[0, 0, 0.09]} />
           <group position={[0, 0.35, 0.12]} scale={0.34}><Bust look={look} accent={accent} calm={false} talking /></group>
@@ -95,7 +95,7 @@ export function Social({ look, accent, rival, kind }: SceneProps & { kind: 'soci
   return (
     <>
       <Ground c="#2a2f3c" />
-      <Box s={[10, 4, 0.1]} c="#1f2430" position={[0, 2, -3.4]} />
+      <Box s={[24, 7, 0.1]} c="#1f2430" position={[0, 3.5, -3.4]} />
       {Array.from({ length: 15 }, (_, i) => (
         <group key={i} position={[-4 + (i % 5) * 1.6, 0, -2.6 + Math.floor(i / 5) * 1.0]}>
           <Box s={[0.5, 0.3, 0.45]} c="#3b4252" position={[0, 0.15, 0]} />
@@ -149,7 +149,7 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
   return (
     <>
       <Ground c={kind === 'dinner' ? '#d9cbb0' : kind === 'tycoon' ? '#3a3f4d' : '#dfe6f2'} />
-      <Box s={[10, 4, 0.1]} c={kind === 'tycoon' ? '#2a2f3c' : '#e8e3d8'} position={[0, 2, -3.4]} />
+      <Box s={[24, 7, 0.1]} c={kind === 'tycoon' ? '#2a2f3c' : '#e8e3d8'} position={[0, 3.5, -3.4]} />
       {kind === 'dinner' && (
         <>
           {[[-2.6, -0.2], [0, 0.6], [2.6, -0.2]].map(([x, z], i) => (
@@ -238,7 +238,7 @@ export function Attack({ look, accent, rival }: SceneProps) {
   return (
     <>
       <Ground c="#3a3f4d" />
-      <Box s={[10, 4, 0.1]} c="#2a2f3c" position={[0, 2, -3.4]} />
+      <Box s={[24, 7, 0.1]} c="#2a2f3c" position={[0, 3.5, -3.4]} />
       <Box s={[0.9, 1.1, 0.7]} c={accent} position={[-2.4, 0.55, -1.2]} />
       <Hero look={look} accent={accent} position={[-2.4, 0, -1.7]} arms="point" />
       <Anim f={(t, g) => { g.rotation.z = Math.sin(t * 9) * 0.1 * span(t, 1.0, 1.2, 3.2, 3.5); g.position.set(2.4, 0, -1.4 + Math.sin(t * 9) * 0.05 * span(t, 1.0, 1.2, 3.2, 3.5)); }}><Hero look={rival.look} accent={rival.accent} arms="up" talking={false} scale={1.1} /></Anim>
