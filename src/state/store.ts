@@ -258,7 +258,7 @@ interface Store {
     /** A career that begins with a party the player founds from nothing, and the platform it stands on. */
     founded?: boolean;
     stances?: number[];
-    backstory?: BackstoryId | null; leaderStats?: number[]; ideology?: IdeologyId | null; identity?: Identity | null; challenge?: Partial<Challenge>; realStates?: boolean;
+    backstory?: BackstoryId | null; leaderStats?: number[]; journey?: boolean; ideology?: IdeologyId | null; identity?: Identity | null; challenge?: Partial<Challenge>; realStates?: boolean;
     /** Weeks of campaign, where a challenge made by a player does not want the contest's usual. */
     weeks?: number;
     /** Where a career's founded party begins: a seat's id, or 'random' (or nothing) to leave it to luck. */
@@ -571,7 +571,7 @@ export const useStore = create<Store>((set, get) => {
       return { selectedSeat: seatId, seatPicks: s.seatPicks + 1, selectedState: state ?? s.selectedState, seatReturn: s.selectedSeat === null ? s.selectedState : s.seatReturn };
     }),
 
-    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, leaderStats, ideology = null, identity = null, challenge, realStates = false, weeks, seat, following, stronghold, carried }) => {
+    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, leaderStats, journey = false, ideology = null, identity = null, challenge, realStates = false, weeks, seat, following, stronghold, carried }) => {
       // A founded party's first term is played in a country with its name already on every ballot.
       const base = getWorld(scenario);
       // A party the player has made their own may stand in any seat of a career, at a price; it needs a world in which it is on every ballot.
@@ -585,7 +585,7 @@ export const useStore = create<Store>((set, get) => {
       if (identity) keepSaved(identity);
       const opts = { player, difficulty, seed: drawn, backstory, challenge, ...(weeks !== undefined ? { totalWeeks: weeks } : {}) };
       // Kept with the game so that it can be started again exactly as it was set up.
-      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ...(leaderStats && validLeaderStats(leaderStats) ? { leaderStats } : {}), ideology, ...(founded ? { founded, stances, ...(home ? { seat: home } : {}), ...(following ? { following } : {}), ...(stronghold ? { stronghold } : {}) } : {}), ...(refit && carried ? { carried } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}), ...(weeks !== undefined ? { weeks } : {}) };
+      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ...(leaderStats && validLeaderStats(leaderStats) ? { leaderStats } : {}), ...(journey ? { journey: true } : {}), ideology, ...(founded ? { founded, stances, ...(home ? { seat: home } : {}), ...(following ? { following } : {}), ...(stronghold ? { stronghold } : {}) } : {}), ...(refit && carried ? { carried } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}), ...(weeks !== undefined ? { weeks } : {}) };
       // A platform of its own belongs to a party of the player's own making.
       const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, realStates, own, ...(home ? { foundedSeat: home } : {}), held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
       if (founded && !world.rules.career) { foundForContest(world, campaign, backstory); if (!backstory && validLeaderStats(leaderStats)) campaign.team.leader = { backstory: null, stats: [...leaderStats] }; if (following) campaign.following = following; if (stronghold) campaign.stronghold = stronghold; }
@@ -893,7 +893,9 @@ export const useStore = create<Store>((set, get) => {
       if (!g || !c || g.aside || c.phase !== 'done' || !c.newParty || c.career) return;
       const world = worldOf(c);
       const result = world && electionResult(world, c);
-      const next = world && (nextStep(get().profile.journey ?? emptyJourney(), c.scenario, dunByElections) ?? nextContest(c.scenario, world));
+      const step = nextStep(get().profile.journey ?? emptyJourney(), c.scenario, dunByElections);
+      // In the Career Campaign only a contest that was won leads on; elsewhere the older rule carries a party on regardless.
+      const next = world && (g.start?.journey ? step : step ?? nextContest(c.scenario, world));
       if (!world || !result || !next) return;
       const share = summarise(world, c, result).voteShare;
       await loadScenario(next);
@@ -902,6 +904,7 @@ export const useStore = create<Store>((set, get) => {
       get().startCampaign({
         name: g.name, scenario: next, player: c.player, difficulty: c.difficulty, backstory: c.team.leader.backstory ?? null, ideology: null,
         ...(c.team.leader.backstory === null && validLeaderStats(c.team.leader.stats) ? { leaderStats: [...c.team.leader.stats] } : {}),
+        ...(g.start?.journey ? { journey: true } : {}),
         identity: g.identity, founded: true, following: carriedFollowing(share),
         // Where the party won its vote is where it is strongest in the next contest: the seat it fought, or the state.
         ...(share > 0 ? { stronghold: { place: c.scenario.startsWith('state:') ? c.scenario.slice(6) : world.seats[0].id, share, ...(world.seats.length === 1 ? { shares: voteShares(result.votes) } : {}) } } : {}),

@@ -21,7 +21,8 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
   // A plain state election played again starts from the result it ended with, as often as the player likes.
   const again = useStore((s) => { const c = s.game?.campaign; return !!c && !s.game?.aside && !c.career && !c.newParty && !c.challenge && c.phase === 'done' && c.scenario.startsWith('state:'); });
   // A new party that has finished a by-election or a state election can carry on to the next contest up.
-  const next = useStore((s) => { const c = s.game?.campaign; return c && c.newParty && !c.career && !s.game?.aside && c.phase === 'done' ? nextStep(s.profile.journey ?? emptyJourney(), c.scenario, dunByElections) ?? nextContest(c.scenario, world) : null; });
+  const next = useStore((s) => { const c = s.game?.campaign; return c && c.newParty && !c.career && !s.game?.aside && c.phase === 'done' ? (s.game?.start?.journey ? nextStep(s.profile.journey ?? emptyJourney(), c.scenario, dunByElections) : nextStep(s.profile.journey ?? emptyJourney(), c.scenario, dunByElections) ?? nextContest(c.scenario, world)) : null; });
+  const inJourney = useStore((s) => !!s.game?.start?.journey && !s.game.campaign.career);
   const journey = useStore((s) => s.profile.journey);
   if (aside) {
     const next = aside.queue[0];
@@ -40,6 +41,14 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
         <button className="btn primary" onClick={() => { countClick('again', 'climb'); void climb(); }}>{label(next)} ▸</button>
         <button className="btn" onClick={() => { countClick('again', 'new'); quitToTitle(); }}>{t('summary.again')}</button>
         {restart && <button className="btn" onClick={() => { countClick('again', 'restart'); doRestart(); }}>{t('summary.restart')}</button>}
+      </>
+    );
+  }
+  if (inJourney) {
+    return (
+      <>
+        <button className="btn primary" onClick={() => { countClick('again', 'restart'); doRestart(); }}>{t('jr.retry')} ▸</button>
+        <button className="btn" onClick={() => { countClick('again', 'new'); quitToTitle(); }}>{t('jr.menu')}</button>
       </>
     );
   }

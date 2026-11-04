@@ -56,6 +56,8 @@ export interface StartOptions {
   difficulty: Difficulty;
   seed?: number;
   backstory: BackstoryId | null;
+  /** This game is part of the Career Campaign: what comes next is the journey's to say, and a contest that was not won leads nowhere. */
+  journey?: boolean;
   /** A leader the player built point by point instead of choosing a background (see `validLeaderStats`). */
   leaderStats?: number[];
   ideology: IdeologyId | null;
@@ -102,7 +104,7 @@ function isStart(x: unknown): x is StartOptions {
     (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
     (x.seed === undefined || Number.isInteger(x.seed)) &&
     (x.backstory === null || typeof x.backstory === 'string') && (x.ideology === null || typeof x.ideology === 'string') &&
-    (x.leaderStats === undefined || validLeaderStats(x.leaderStats)) &&
+    (x.leaderStats === undefined || validLeaderStats(x.leaderStats)) && (x.journey === undefined || typeof x.journey === 'boolean') &&
     (x.founded === undefined || typeof x.founded === 'boolean') && (x.seat === undefined || typeof x.seat === 'string') && (x.realStates === undefined || typeof x.realStates === 'boolean') &&
     (x.stances === undefined || (Array.isArray(x.stances) && x.stances.every((v) => typeof v === 'number'))) &&
     (x.following === undefined || (typeof x.following === 'number' && x.following >= 0 && x.following <= 1)) &&

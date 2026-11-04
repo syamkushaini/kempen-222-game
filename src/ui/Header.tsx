@@ -3,7 +3,7 @@ import { termIncome, termSpending } from '../sim/campaign/career';
 import { hasPublicMoney, treasuryOf } from '../sim/campaign/treasury';
 import { DAYS_PER_WEEK } from '../sim/campaign/types';
 import { graftLevel, graftOf } from '../sim/campaign/graft';
-import { tierForPoints } from '../sim/campaign/progression';
+import { JourneyBadge } from './JourneyResult';
 import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { MenuButton } from './GameMenu';
@@ -206,18 +206,6 @@ export function TermBar() {
   );
 }
 
-/** The player's standing outside any one run: how far Legacy Points have carried them, and the balance itself. One compact badge. */
-function TierBadge() {
-  const t = useT();
-  const points = useStore((s) => s.profile.legacyPoints ?? 0);
-  const tier = tierForPoints(points);
-  return (
-    <span className="badge tier-badge" title={t('tier.title', { tier: t(`tier.${tier.id}` as StringKey), max: tier.maxContest })}>
-      {t(`tier.${tier.id}` as StringKey)} <span className="num">· ★{points}</span>
-    </span>
-  );
-}
-
 export function Header() {
   const t = useT();
   const phase = useStore((s) => s.game?.campaign.phase);
@@ -254,7 +242,7 @@ export function Header() {
         {/* in a game the header says whose campaign this is; on the title it is the game's own mark */}
         {player !== undefined ? <PartyMark party={player} size={34} /> : <Logo size={36} />}
         <div>
-          <h1>{player !== undefined ? partyName(t, player) : t('app.title')}{player !== undefined && !narrow && <TierBadge />}</h1>
+          <h1>{player !== undefined ? partyName(t, player) : t('app.title')}{player !== undefined && !narrow && <JourneyBadge />}</h1>
           <p>
             {narrow && when ? when : name ? [name, challenge?.heat && t('heat.badge', { n: challenge.heat }), challenge?.fog && t('challenge.fog'), challenge?.noisy && t('challenge.noisy')].filter(Boolean).join(' · ') : t('app.tagline')}
             {name && saveFailed && <span className="autosave bad" role="status"> · {t('saves.failedShort')}</span>}

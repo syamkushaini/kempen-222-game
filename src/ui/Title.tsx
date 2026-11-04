@@ -175,7 +175,7 @@ export function Title() {
     // A journey picked up after a state is taken, or with its DUN seats won, starts with the following those wins earned.
     const stage = at === 'general' || at.startsWith('state:');
     startCampaign({
-      name: playerName, scenario: at, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', backstory: chosen, ...(leaderStats ? { leaderStats } : {}), identity, founded: true, seed: seedFromSearch(window.location.search),
+      name: playerName, scenario: at, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', backstory: chosen, ...(leaderStats ? { leaderStats } : {}), identity, founded: true, journey: true, seed: seedFromSearch(window.location.search),
       ...(resumed && stage ? { following: carriedFollowing(0.4) } : {}),
     });
   };
