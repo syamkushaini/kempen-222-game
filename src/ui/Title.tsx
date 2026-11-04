@@ -48,7 +48,6 @@ import { SeatPicker } from './SeatPicker';
 import { LeaderPicker, PartyCreator, type Draft } from './Setup';
 import { Jargon } from './Term';
 import { Skeleton } from './Skeleton';
-import { Kbd } from './Kbd';
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard'];
 /** What can be started from the title screen: the single contests, and a career. */
@@ -281,7 +280,7 @@ export function Title() {
               <p className="muted small">{saveLine(t, auto)}</p>
               <div className="button-row">
                 <button className="btn primary" onClick={() => { const g = saveStore.load(AUTO_SLOT); if (g) loadGame(g); }}>
-                  {t('title.continue')} <Kbd shortcut="Enter" />
+                  {t('title.continue')}
                 </button>
                 <button className="btn" onClick={() => pick('load')}>{t('menu.load')}</button>
               </div>

@@ -44,7 +44,6 @@ import { Title } from './Title';
 import { Music } from './Music';
 import { installIdentity } from './identity';
 import { ground, mix } from './shareCard';
-import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { TouchGestures } from './TouchGestures';
 import { Sandbox } from './Sandbox';
 import { useBackClose } from './backClose';
@@ -396,7 +395,6 @@ export function App() {
       {phase && !ended && <Sandbox />}
       <Music />
       <Toasts />
-      <KeyboardShortcuts />
       <ActionToasts />
       <footer className="footer">{t('footer.fiction')}</footer>
     </div>

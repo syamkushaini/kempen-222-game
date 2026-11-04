@@ -15,7 +15,6 @@ import { Logo } from './Logo';
 import { SettingsButton } from './SettingsPanel';
 import { SupportButton } from './Support';
 import { partyName, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
-import { Kbd } from './Kbd';
 
 /** Ending the week takes one press. What would be thrown away is written on the button, so nobody does it by accident. */
 export function useEndWeek() {
@@ -35,7 +34,7 @@ function EndWeekButton({ className = '' }: { className?: string }) {
   const spot = useSpot();
   return (
     <button className={`btn primary end-week${className}${unused >= 1 ? ' unused' : ''}${spot('end-week') ? ' spot' : ''}`} onClick={onEnd}>
-      {label} <Kbd shortcut="Space" />
+      {label}
     </button>
   );
 }
