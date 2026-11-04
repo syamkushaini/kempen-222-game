@@ -285,6 +285,9 @@ interface Store {
   jumpTutorial(to: number, steps: number): void;
   dismissTutorial(): void;
   act(id: ActionId, target: ActionTarget): void;
+  /** The action whose scene is playing on the map: `n` counts them so that the same action twice plays twice. */
+  stage: { id: ActionId; seat?: string; party?: number; n: number } | null;
+  clearStage(): void;
   poll(scope: PollScope, target: string | null, quality: PollQuality): void;
   /** Puts a chief in charge of the regions given (level 0 takes them back). */
   setChiefs(states: RegionId[], level: ChiefLevel | 0): void;
@@ -517,6 +520,8 @@ export const useStore = create<Store>((set, get) => {
     selectedSeat: null,
     seatPicks: 0,
     lastReport: null,
+    stage: null,
+    clearStage: () => set({ stage: null }),
     clearReport: () => set({ lastReport: null }),
     flash: { seat: null, n: 0 },
     preview: null,
@@ -622,7 +627,7 @@ export const useStore = create<Store>((set, get) => {
     act: (id, target) => mutate((c, _g, world) => {
       const report = playerAct(world, c, id, target);
       // What was worked on flashes on the map: the seat itself, or for an action on a state or the country, nothing.
-      return report ? { lastReport: report, flash: target.seat ? { seat: target.seat, n: get().flash.n + 1 } : get().flash } : { lastReport: report };
+      return report ? { lastReport: report, stage: { id, ...(target.seat ? { seat: target.seat } : {}), ...(target.party !== undefined ? { party: target.party } : {}), n: (get().stage?.n ?? 0) + 1 }, flash: target.seat ? { seat: target.seat, n: get().flash.n + 1 } : get().flash } : { lastReport: report };
     }),
     poll: (scope, target, quality) => mutate((c, _g, world) => {
       // Seeing the new numbers is the point, so switch the map to the player's picture.

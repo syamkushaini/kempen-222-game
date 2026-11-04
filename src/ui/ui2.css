@@ -1119,3 +1119,17 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .typed-size { visibility: hidden; pointer-events: none; }
 .typed-now.typing::after { content: ''; display: inline-block; width: 0.5em; height: 1em; margin-left: 2px; vertical-align: text-bottom; background: currentColor; opacity: 0.55; animation: caret 0.8s steps(1) infinite; }
 @keyframes caret { 50% { opacity: 0; } }
+
+/* A scene of the leader at work, played over the map for a few seconds. */
+.map-stage-wrap { position: relative; }
+.stage-overlay { position: absolute; inset: 0; z-index: 6; border-radius: inherit; overflow: hidden; cursor: pointer; animation: stage-life var(--stage-ms, 4200ms) ease-in-out forwards; box-shadow: 0 0 0 1px var(--line-2); }
+.stage3d { position: absolute; inset: 0; }
+.stage3d canvas { display: block; width: 100% !important; height: 100% !important; }
+.stage3d.mood-day { background: linear-gradient(#bfe0ff, #eaf5ff 70%); }
+.stage3d.mood-dusk { background: linear-gradient(#5b4b8a, #f0946a 62%, #f7c98b); }
+.stage3d.mood-night { background: linear-gradient(#0f1a38, #2a2f5e 70%, #3a3d6e); }
+.stage3d.mood-indoor { background: linear-gradient(#efe9dc, #d9d2c2); }
+.stage3d.mood-studio { background: linear-gradient(#1b2236, #36425f); }
+.stage-caption { position: absolute; left: 12px; bottom: 12px; margin: 0; padding: 6px 12px; border-radius: 999px; background: rgba(15, 18, 30, 0.72); color: #fff; font-weight: 600; font-size: 0.95rem; backdrop-filter: blur(4px); }
+.stage-skip { position: absolute; right: 12px; bottom: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(15, 18, 30, 0.5); color: #fff; font-size: 0.75rem; }
+@keyframes stage-life { 0% { opacity: 0; transform: scale(0.98); } 8% { opacity: 1; transform: scale(1); } 88% { opacity: 1; } 100% { opacity: 0; } }

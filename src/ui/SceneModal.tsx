@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Typewritten } from './Typewritten';
 import { bodyVariant } from '../i18n/eventsMore';
 import { majorityLine } from '../sim/election';
 import { scaled } from '../sim/campaign/actions';
@@ -51,10 +52,15 @@ function SceneCard({ scene }: { scene: Scene }) {
   const [fight, setFight] = useState<string[]>([]);
   const setTab = useStore((s) => s.setTab);
   const hideScene = useStore((s) => s.hideScene);
+  // Whether the one who is speaking is mid-sentence: their avatar's mouth moves while the words are typed.
+  const [talking, setTalking] = useState(false);
   const me = campaign.player;
   const from = scene.from;
   const answer = (choice: number) => (scene.event === 'statePolls' && fight.length > 0 ? void playStates(scene.id, choice, fight) : answerScene(scene.id, choice));
   const kind = world.rules.kind === 'state' ? 'state' : 'general';
+  // The minister at the centre of a scandal speaks for it.
+  const minister = scene.event === 'ministerScandal' ? campaign.career?.cabinet.find((m) => m.portfolio === campaign.career?.scandal) : undefined;
+  const speaks = !!minister || (from !== null && scene.kind !== 'event');
 
   const preview = useMemo(
     () => (scene.kind === 'pactOffer' && from !== null ? pactPreview(world, campaign, me, from, { give: scene.give ?? [], get: scene.get ?? [] }) : null),
@@ -250,8 +256,8 @@ function SceneCard({ scene }: { scene: Scene }) {
       <div className="dialog panel" role="dialog" aria-modal="true" aria-label={title}>
         <ScenePicture kind={scene.kind} event={scene.event} seed={scene.id} />
         <div className="dialog-head">
-          {scene.kind === 'event' || scene.kind === 'agenda' || scene.kind === 'partyPoll' || scene.kind === 'redraw' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
-            : from === null ? <Portrait emblem="palace" size={46} /> : <Portrait leader={from} size={46} />}
+          {scene.kind === 'event' && minister ? <Portrait minister={minister.name} party={minister.party} size={46} talking={talking} /> : scene.kind === 'event' || scene.kind === 'agenda' || scene.kind === 'partyPoll' || scene.kind === 'redraw' ? <Portrait emblem="desk" size={46} /> : desk ? <Portrait emblem="house" size={46} />
+            : from === null ? <Portrait emblem="palace" size={46} /> : <Portrait leader={from} size={46} talking={talking} />}
           <div className="grow">
             <p className={from === null && !desk ? 'dialog-from palace' : 'dialog-from'}>
               {scene.kind === 'event' ? `${t('scene.from.desk')} · ${t(`standing.${campaign.career ? standingOf(campaign) : 'opp'}` as StringKey)}` : scene.kind === 'agenda' ? t('scene.agenda.from') : desk ? t('scene.from.house') : from === null ? t('scene.from.palace') : t('scene.from.phone')}
@@ -259,7 +265,7 @@ function SceneCard({ scene }: { scene: Scene }) {
             <h2>{title}</h2>
           </div>
         </div>
-        {body}
+        {speaks ? <Typewritten onTalking={setTalking}>{body}</Typewritten> : body}
         {desk ? (
           <ul className="choices">
             {options.map((o) => (

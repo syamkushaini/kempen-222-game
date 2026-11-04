@@ -37,6 +37,7 @@ import { DecisionResult } from './DecisionResult';
 import { WeekRecap } from './WeekRecap';
 import { Standing } from './Standing';
 import { TeamTab } from './TeamTab';
+import { ActionStage } from './ActionStage';
 import { CandidatesTab } from './CandidatesTab';
 import { VotersTab } from './VotersTab';
 import { Icon, type IconName } from './Icon';
@@ -214,7 +215,10 @@ function CampaignScreen() {
         <MetricsStrip />
         <ReminderStrip />
         <section className="map-column">
+          <div className="map-stage-wrap">
           <MapView tall display={display} toolbar={<ViewSwitch />} marker={term ? null : campaign.parties[campaign.player]!.location} pulse={flash.seat ? { id: flash.seat, kind: 'gain', n: flash.n } : null} />
+          <ActionStage />
+          </div>
           {/* the poll sits under the map, so that the side column is all tabs: what the player works in gets the height */}
           <Standing campaign={campaign} />
           <NetizenStrip />
