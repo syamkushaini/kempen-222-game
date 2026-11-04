@@ -6,7 +6,7 @@ import { DEFAULT_EMBLEMS, makeIdentity, PARTY_COLORS, type Identity } from '../s
 import { loadJourneyParty } from '../state/journeyParty';
 import { useT } from './hooks';
 import { UnlockRoadmap } from './UnlockRoadmap';
-import { LeaderPicker, PartyCreator, type Draft } from './Setup';
+import { LeaderPicker, PartyCreator, StatEffects, type Draft } from './Setup';
 
 const NAME_MAX = 24;
 
@@ -37,6 +37,7 @@ export function JourneySetup({ onStart }: { onStart(name: string, identity: Iden
       <h3>{t('journey.setup.party')}</h3>
       <PartyCreator draft={draft} career={false} onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))} />
       <h3>{t('journey.setup.leader')}</h3>
+      <StatEffects />
       <LeaderPicker value={backstory} party={-1} onChange={(b) => { setMine(false); setBackstory(b); }} custom={{ active: mine, stats, onSelect: () => { setMine(true); setBackstory(null); }, onChange: setStats }} />
       <div className="button-row">
         <button className="btn primary" disabled={!ready} onClick={() => { if (identity) onStart(name.trim(), identity, mine ? null : backstory, mine ? stats : undefined); }}>{t('journey.setup.start')} ▸</button>

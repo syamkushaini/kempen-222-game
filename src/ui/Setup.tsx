@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { BACKSTORIES, LEADER_POINTS, STAT_MAX, STAT_MIN, partyLeaderStats } from '../sim/campaign/perks';
+import { BACKSTORIES, LEADER_POINTS, STAT_MAX, STAT_MIN, bonusText, partyLeaderStats, statBonus } from '../sim/campaign/perks';
 import { IDEOLOGY_IDS, type IdeologyId } from '../sim/campaign/leader';
 import { BACKSTORY_IDS, STAT_IDS, type BackstoryId } from '../sim/campaign/types';
 import { EMBLEM_IDS, fitColor, PARTY_COLORS, type EmblemId } from '../state/identity';
@@ -41,6 +41,25 @@ export function LeaderPicker({ value, party, onChange, custom }: { value: Backst
   );
 }
 
+/** What each of the four stats does, with the numbers: shown wherever a leader is chosen. */
+export function StatEffects() {
+  const t = useT();
+  return (
+    <section className="stat-effects" aria-label={t('stat.effects.title')}>
+      <h4>{t('stat.effects.title')}</h4>
+      <dl>
+        {STAT_IDS.map((s) => (
+          <div key={s}>
+            <dt>{t(`stat.${s}`)}</dt>
+            <dd className="muted small">{t(`stat.${s}.effect` as never)}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="muted small">{t('stat.effects.note')}</p>
+    </section>
+  );
+}
+
 /** The card for a leader built point by point: four stats of one to five, and exactly `LEADER_POINTS` to spend between them. */
 function CustomLeaderCard({ custom }: { custom: CustomLeader }) {
   const t = useT();
@@ -58,6 +77,7 @@ function CustomLeaderCard({ custom }: { custom: CustomLeader }) {
             <span className="muted">{t(`stat.${s}`)}</span>
             <button type="button" className="btn small" aria-label={t('leader.custom.less', { stat: t(`stat.${s}`) })} disabled={custom.stats[i] <= STAT_MIN} onClick={() => { custom.onSelect(); set(i, -1); }}>−</button>
             <Pips n={custom.stats[i]} label={`${custom.stats[i]} / ${STAT_MAX}`} />
+            <span className={`stat-bonus num${statBonus(s, custom.stats[i]) < 0 ? ' neg' : statBonus(s, custom.stats[i]) > 0 ? ' pos' : ''}`}>{bonusText(statBonus(s, custom.stats[i]))}</span>
             <button type="button" className="btn small" aria-label={t('leader.custom.more', { stat: t(`stat.${s}`) })} disabled={custom.stats[i] >= STAT_MAX || left <= 0} onClick={() => { custom.onSelect(); set(i, 1); }}>+</button>
           </span>
         ))}

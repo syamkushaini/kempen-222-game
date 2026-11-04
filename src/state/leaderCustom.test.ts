@@ -50,3 +50,28 @@ describe('a leader built with twelve points', () => {
     expect(store().game!.campaign.team.leader.stats).toEqual([5, 2, 2, 3]);
   });
 });
+
+import { STAT_PERCENT, bonusText, statBonus } from '../sim/campaign/perks';
+import { PEOPLE_EN, PEOPLE_MS } from '../i18n/people';
+import { STAT_IDS } from '../sim/campaign/teamTypes';
+
+describe('what a stat is worth', () => {
+  it('is 8% a point from ordinary for three stats and 10% for integrity, and nothing at 3', () => {
+    expect(statBonus('charisma', 5)).toBe(16);
+    expect(statBonus('organisation', 1)).toBe(-16);
+    expect(statBonus('cunning', 3)).toBe(0);
+    expect(statBonus('integrity', 4)).toBe(10);
+    expect(STAT_PERCENT.integrity).toBe(10);
+  });
+  it('is written as a signed figure', () => {
+    expect(bonusText(16)).toBe('+16%');
+    expect(bonusText(-8)).toBe('−8%');
+    expect(bonusText(0)).toBe('0%');
+  });
+  it('is explained in both languages for every stat', () => {
+    for (const id of STAT_IDS) {
+      expect((PEOPLE_EN as Record<string, string>)[`stat.${id}.effect`]).toBeTruthy();
+      expect((PEOPLE_MS as Record<string, string>)[`stat.${id}.effect`]).toBeTruthy();
+    }
+  });
+});

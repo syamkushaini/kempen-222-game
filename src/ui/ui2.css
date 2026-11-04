@@ -1086,3 +1086,14 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .custom-leader .stat-edit { display: grid; gap: 8px; margin: 6px 0; max-width: 28rem; }
 .custom-leader .stat-row { display: grid; grid-template-columns: 8em auto auto auto; justify-content: start; gap: 6px; align-items: center; }
 .custom-leader .stat-row .btn { min-width: 2rem; padding: 0 8px; }
+
+.stat-effects { margin: 8px 0 12px; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: 12px; background: color-mix(in srgb, var(--panel) 92%, transparent); }
+.stat-effects h4 { margin: 0 0 6px; }
+.stat-effects dl { margin: 0; display: grid; gap: 6px; }
+.stat-effects dt { font-weight: 600; }
+.stat-effects dd { margin: 0; }
+.custom-leader .stat-row { grid-template-columns: 8em auto auto 3.5em auto; }
+.stat-bonus { font-weight: 600; }
+.stat-bonus.pos { color: var(--good, #1a7f37); }
+.stat-bonus.neg { color: var(--bad, #b3261e); }
+.facts.stats .stat-note { grid-column: 1 / -1; margin: 0 0 6px; }

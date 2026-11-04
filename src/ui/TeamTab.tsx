@@ -1,3 +1,4 @@
+import { bonusText, statBonus } from '../sim/campaign/perks';
 import type { StringKey } from '../i18n/strings';
 import { candidateDeadline, canChoose, HOPEFUL_NAMES, HOPEFUL_TRAITS, liftIn } from '../sim/campaign/candidates';
 import { canCourtEndorser, courtChance, courtCost, ENDORSERS, hasEndorsers, holder } from '../sim/campaign/endorsers';
@@ -62,9 +63,10 @@ export function TeamTab() {
       <Gauge value={campaign.parties[me]!.unity} label={<Term id="unity">{t('term.unity')}</Term>} />
       <dl className="facts orders-facts stats">
         {STAT_IDS.map((id, i) => (
-          <div key={id} title={t(`stat.${id}.desc`)}>
+          <div key={id} title={t(`stat.${id}.effect` as never)}>
             <dt>{t(`stat.${id}`)}</dt>
-            <dd><Pips n={team.leader.stats[i]} label={`${team.leader.stats[i]} / 5`} /></dd>
+            <dd><Pips n={team.leader.stats[i]} label={`${team.leader.stats[i]} / 5`} /> <span className="muted small num">{bonusText(statBonus(id, team.leader.stats[i]))}</span></dd>
+            <dd className="muted small stat-note">{t(`stat.${id}.effect` as never)}</dd>
           </div>
         ))}
       </dl>
