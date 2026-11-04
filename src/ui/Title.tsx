@@ -4,7 +4,10 @@ import { whatIfsFor, type WhatIfId } from '../sim/campaign/whatif';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { byElectionId, dunByElections, fairSeats, getWorld, HOME_PARTIES, loadScenario, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS, vacancyOf } from '../data/world';
 import { FIRST_STATE, journeyLevel, resumeScenario } from '../sim/campaign/journey';
-import { lastName } from '../state/leaderboard';
+import { rememberName } from '../state/leaderboard';
+import { saveJourneyParty } from '../state/journeyParty';
+import type { Identity } from '../state/identity';
+import { JourneySetup } from './JourneySetup';
 import type { ContestKind } from '../sim/campaign/rules';
 import { playable, standingPact, startingFunds } from '../sim/campaign/turn';
 import type { BackstoryId, Difficulty } from '../sim/campaign/types';
@@ -83,7 +86,7 @@ const MENU_ART = `${import.meta.env.BASE_URL}menu-bg.webp`;
 const STEPS = ['steps.contest', 'steps.who', 'steps.rules'] as const;
 
 /** What the title screen is showing: the main menu, the ways to play, the two kinds of career, one of the two set-ups, the saved games or the challenges. */
-type Screen = 'menu' | 'home' | 'career' | 'quick' | 'custom' | 'load' | 'challenges';
+type Screen = 'menu' | 'home' | 'career' | 'quick' | 'custom' | 'load' | 'challenges' | 'journey';
 
 /** One line of the main menu: an icon in its own colour, a name that fits its box, and a word on what is behind it. */
 function MenuItem({ icon, tone, title, hint, primary, onClick }: { icon: IconName; tone: string; title: string; hint: string; primary?: boolean; onClick(): void }) {
@@ -157,8 +160,10 @@ export function Title() {
     if (at.startsWith('state:')) return t('career.next.state', { state: t(`state.${at.slice(6)}` as StringKey) });
     return t('career.next.dun', { seat: vacancyOf(at.slice('byelection:'.length))?.name ?? t(`state.${FIRST_STATE}` as StringKey) });
   })();
-  const startJourney = async () => {
+  const startJourney = async (playerName: string, identity: Identity, chosen: BackstoryId | null) => {
     // Selangor's assembly seats are fetched first (the start needs them); a journey part-way needs its own state.
+    saveJourneyParty({ name: playerName, identity });
+    rememberName(playerName);
     await loadState(journey?.state ?? FIRST_STATE);
     const at = resumeAt();
     await loadScenario(at);
@@ -166,7 +171,7 @@ export function Title() {
     // A journey picked up after a state is taken, or with its DUN seats won, starts with the following those wins earned.
     const stage = at === 'general' || at.startsWith('state:');
     startCampaign({
-      name: lastName(), scenario: at, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', founded: true, seed: seedFromSearch(window.location.search),
+      name: playerName, scenario: at, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', backstory: chosen, identity, founded: true, seed: seedFromSearch(window.location.search),
       ...(resumed && stage ? { following: carriedFollowing(0.4) } : {}),
     });
   };
@@ -248,7 +253,7 @@ export function Title() {
             )}
             <MenuItem
               primary={!auto} icon="crown" tone="won" title={journey ? t('career.play.next', { n: journeyLv }) : t('career.play')}
-              hint={journey ? t('career.play.nextHint', { next: nextLabel }) : t('career.play.hint', { n: journeyLv })} onClick={() => void startJourney()}
+              hint={journey ? t('career.play.nextHint', { next: nextLabel }) : t('career.play.hint', { n: journeyLv })} onClick={() => pick('journey')}
             />
             <MenuItem primary={false} icon="plus" tone="new" title={t('menu.other')} hint={t('menu.other.hint')} onClick={() => pick('home')} />
             <MenuItem icon="folder" tone="load" title={t('menu.load')} hint={t('menu.load.hint', { n: saved })} onClick={() => pick('load')} />
@@ -279,7 +284,7 @@ export function Title() {
           <div className="menu-foot"><Credits /><FeedbackLink /></div>
         </nav>
       ) : (
-      <section className="panel title-main">  {(mode === 'home' || mode === 'career' || mode === 'load' || mode === 'challenges') && (
+      <section className="panel title-main">  {(mode === 'home' || mode === 'career' || mode === 'load' || mode === 'challenges' || mode === 'journey') && (
           <p><button className="link back-link" onClick={() => pick(mode === 'career' ? 'home' : 'menu')}><Icon name="back" size={14} /> {t(mode === 'career' ? 'title.modes.back' : 'menu.back')}</button></p>
         )}
         {mode === 'load' ? (
@@ -289,7 +294,7 @@ export function Title() {
           </>
         ) : mode === 'challenges' ? <ChallengeList /> : null}
 
-        {mode === 'load' || mode === 'challenges' ? null : mode === 'career' ? (
+        {mode === 'journey' ? <JourneySetup onStart={(n, id, b) => void startJourney(n, id, b)} /> : mode === 'load' || mode === 'challenges' ? null : mode === 'career' ? (
           <div className="modes">
             <h2>{t('title.career.pick')}</h2>
             <div className="party-cards">
