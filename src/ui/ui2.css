@@ -1097,3 +1097,9 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .stat-bonus.pos { color: var(--good, #1a7f37); }
 .stat-bonus.neg { color: var(--bad, #b3261e); }
 .facts.stats .stat-note { grid-column: 1 / -1; margin: 0 0 6px; }
+
+/* A 3D bust of a manager: a round canvas on a tinted disc, like the flat portraits. */
+.bust3d { position: relative; flex: none; border-radius: 50%; overflow: hidden; }
+.bust3d canvas { display: block; width: 100% !important; height: 100% !important; }
+
+.role-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

@@ -195,6 +195,28 @@ export const MINISTER_LOOKS: Look[] = [
   m(2, 'bun', 'black', 'blouse', { glasses: true }),                  // Marina Lumat
 ];
 
+/**
+ * The people who may work for the leader, in the order of `STAFF_NAMES` (three for each job). Assigned by hand, as the ministers' are:
+ * invented people, not copies of anyone.
+ */
+export const STAFF_LOOKS: Look[] = [
+  m(1, 'bob', 'black', 'blouse', { headwear: 'scarf' }),                // Faridah Osman
+  m(0, 'short', 'black', 'suit'),                                       // Daniel Ooi
+  m(3, 'side', 'black', 'suit', { glasses: true, facial: 'moustache' }),// Suresh Nair
+  m(1, 'long', 'black', 'blouse', { headwear: 'scarf', glasses: true }),// Hazlina Aziz
+  m(0, 'swept', 'black', 'suit', { glasses: true }),                    // Kelvin Teo
+  m(1, 'short', 'black', 'suit', { facial: 'beard' }),                  // Bernard Luping
+  m(2, 'short', 'black', 'suit', { headwear: 'songkok' }),              // Aiman Rosli
+  m(0, 'bob', 'brown', 'blouse'),                                       // Michelle Khoo
+  m(3, 'bun', 'black', 'blouse', { glasses: true }),                    // Priya Menon
+  m(2, 'thin', 'grey', 'baju', { headwear: 'songkok', facial: 'moustache' }), // Salleh Mahmud
+  m(0, 'long', 'black', 'blouse', { glasses: true }),                   // Grace Lim
+  m(1, 'side', 'black', 'suit'),                                        // Raymond Jimbun
+];
+
+/** The colour that goes with each job: the background tint and the clothes, as a party's colour does for a minister. */
+export const ROLE_ACCENT = { manager: '#b7791f', strategist: '#3d6b8c', media: '#8a4a8f', treasurer: '#2f7d5b' } as const;
+
 const cache = new Map<string, string>();
 const uri = (key: string, svg: () => string) => {
   let hit = cache.get(key);
@@ -214,6 +236,12 @@ export function leaderPortrait(party: number): string | null {
   if (photos[id]) return photos[id]!;
   const look = override[id] ?? LEADER_LOOKS[id];
   return uri(`leader:${id}:${PARTIES[id].color}:${JSON.stringify(look)}`, () => portraitSvg(look, PARTIES[id].color));
+}
+
+/** A member of the leader's team as a flat picture: `name` is the index into `STAFF_NAMES`. */
+export function staffPortrait(name: number, role: keyof typeof ROLE_ACCENT): string {
+  const look = STAFF_LOOKS[name % STAFF_LOOKS.length];
+  return uri(`staff:${name}:${role}`, () => portraitSvg(look, ROLE_ACCENT[role]));
 }
 
 export function ministerPortrait(name: number, party: number): string {

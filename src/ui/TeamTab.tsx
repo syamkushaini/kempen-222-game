@@ -1,3 +1,4 @@
+import { Manager } from './Manager';
 import { bonusText, statBonus } from '../sim/campaign/perks';
 import type { StringKey } from '../i18n/strings';
 import { candidateDeadline, canChoose, HOPEFUL_NAMES, HOPEFUL_TRAITS, liftIn } from '../sim/campaign/candidates';
@@ -81,6 +82,7 @@ export function TeamTab() {
         return (
           <div key={role} className="role">
             <p className="role-head">
+              {held && <Manager who={{ staff: held.name, role }} size={44} />}
               <strong>{t(`role.${role}`)}</strong>
               <span className="muted small"> · {t(`role.${role}.does`)}</span>
             </p>
@@ -89,6 +91,7 @@ export function TeamTab() {
                 const inPost = held?.name === who.name;
                 return (
                   <li key={who.name} className={inPost ? 'action chosen' : 'action'}>
+                    <Portrait staff={who.name} role={role} size={38} />
                     <div className="grow">
                       <span className="action-title">{STAFF_NAMES[who.name]} <Pips n={who.skill} label={t('team.skill', { n: who.skill })} /></span>
                       <span className="action-meta num">

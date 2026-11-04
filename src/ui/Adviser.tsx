@@ -1,9 +1,9 @@
+import { Manager } from './Manager';
 import { useEffect, useState } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { isThreeWay } from '../data/world';
 import { lastOutcome, useSpot, useT, useWorld } from './hooks';
-import { Portrait } from './Portrait';
 import { Jargon } from './Term';
 import { atHome } from '../sim/campaign/turn';
 import { STAFF_NAMES } from '../sim/campaign/staff';
@@ -52,7 +52,7 @@ export function Adviser() {
     : step.id === 'welcome' ? `adviser.welcome${close ? '' : 'Any'}${held ? 'Held' : ''}` : `adviser.${step.id}`;
   return (
     <section className="adviser adviser-strip" aria-live="polite">
-      <Portrait adviser size={46} />
+      <Manager who={{ adviser: true }} size={46} />
       <div className="grow">
         <p className="adviser-name">{t('adviser.name')} <span className="muted">· {t('adviser.role')} · {tutorial.step + 1}/{STEPS.length}</span></p>
         <p className="adviser-text"><Jargon>{t(text as StringKey)}</Jargon></p>
@@ -94,7 +94,7 @@ function Warning() {
   if (away === key) return null;
   return (
     <section className="adviser adviser-strip danger" aria-live="polite">
-      {hired ? <span className="staff-avatar" aria-hidden="true">{STAFF_NAMES[hired.name].split(' ').map((w) => w[0]).slice(0, 2).join('')}</span> : <Portrait adviser size={46} />}
+      {hired ? <Manager who={{ staff: hired.name, role: 'manager' }} size={46} /> : <Manager who={{ adviser: true }} size={46} />}
       <div className="grow">
         <p className="adviser-name">{hired ? STAFF_NAMES[hired.name] : t('adviser.name')} <span className="muted">· {hired ? t('role.manager') : t('adviser.role')}</span></p>
         <p className="adviser-text"><Jargon>{t(`adviser.danger.${worst.id}` as StringKey, { n: Math.round(worst.value) })}</Jargon></p>
@@ -124,7 +124,7 @@ function TeamVoice() {
   const name = STAFF_NAMES[who.name];
   return (
     <section className="adviser adviser-strip" aria-live="polite">
-      <span className="staff-avatar" aria-hidden="true">{name.split(' ').map((w) => w[0]).slice(0, 2).join('')}</span>
+      <Manager who={{ staff: who.name, role: v.role }} size={46} />
       <div className="grow">
         <p className="adviser-name">{name} <span className="muted">· {t(`role.${v.role}`)}</span></p>
         <p className="adviser-text"><Jargon>{t(v.advice ? (`advice.${v.advice.id}` as StringKey) : (`chat.${v.role}.${v.line}` as StringKey))}</Jargon></p>
