@@ -22,6 +22,8 @@ export interface SaveMeta {
   scenario: string;
   /** Party index the player leads. */
   player: number;
+  /** The name of the party the player made, when it is their own: the party slot underneath is not a name worth showing. */
+  party?: string;
   /** The campaign has reached polling day. */
   finished: boolean;
   /** The game is in, or ended with, the talks to form a government. */
@@ -121,6 +123,7 @@ export class SaveStore {
     const c = s.campaign;
     return {
       slot, name: s.name, week: c.week, totalWeeks: c.totalWeeks, scenario: c.scenario, player: c.player,
+      ...(s.identity?.name ? { party: s.identity.name } : {}),
       finished: c.phase !== 'campaign' && c.phase !== 'term', talks: c.formation !== null,
       term: c.career && c.phase === 'term' ? { term: c.career.term, week: c.career.week } : null, updatedAt: s.updatedAt,
     };
