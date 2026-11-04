@@ -165,7 +165,7 @@ export function Title() {
     if (at.startsWith('state:')) return t('career.next.state', { state: t(`state.${at.slice(6)}` as StringKey) });
     return t('career.next.dun', { seat: vacancyOf(at.slice('byelection:'.length))?.name ?? t(`state.${FIRST_STATE}` as StringKey) });
   })();
-  const startJourney = async (playerName: string, identity: Identity, chosen: BackstoryId | null) => {
+  const startJourney = async (playerName: string, identity: Identity, chosen: BackstoryId | null, leaderStats?: number[]) => {
     // Selangor's assembly seats are fetched first (the start needs them); a journey part-way needs its own state.
     saveJourneyParty({ name: playerName, identity });
     rememberName(playerName);
@@ -176,7 +176,7 @@ export function Title() {
     // A journey picked up after a state is taken, or with its DUN seats won, starts with the following those wins earned.
     const stage = at === 'general' || at.startsWith('state:');
     startCampaign({
-      name: playerName, scenario: at, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', backstory: chosen, identity, founded: true, seed: seedFromSearch(window.location.search),
+      name: playerName, scenario: at, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', backstory: chosen, ...(leaderStats ? { leaderStats } : {}), identity, founded: true, seed: seedFromSearch(window.location.search),
       ...(resumed && stage ? { following: carriedFollowing(0.4) } : {}),
     });
   };
@@ -300,7 +300,7 @@ export function Title() {
           </>
         ) : mode === 'challenges' ? <ChallengeList /> : null}
 
-        {mode === 'journey' ? <JourneySetup onStart={(n, id, b) => void startJourney(n, id, b)} /> : mode === 'load' || mode === 'challenges' ? null : mode === 'career' ? (
+        {mode === 'journey' ? <JourneySetup onStart={(n, id, b, st) => void startJourney(n, id, b, st)} /> : mode === 'load' || mode === 'challenges' ? null : mode === 'career' ? (
           <div className="modes">
             <h2>{t('title.career.pick')}</h2>
             <div className="party-cards">

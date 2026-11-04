@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { BACKSTORIES, partyLeaderStats } from '../sim/campaign/perks';
+import { BACKSTORIES, LEADER_POINTS, STAT_MAX, STAT_MIN, partyLeaderStats } from '../sim/campaign/perks';
 import { IDEOLOGY_IDS, type IdeologyId } from '../sim/campaign/leader';
 import { BACKSTORY_IDS, STAT_IDS, type BackstoryId } from '../sim/campaign/types';
 import { EMBLEM_IDS, fitColor, PARTY_COLORS, type EmblemId } from '../state/identity';
@@ -11,7 +11,10 @@ import { readPicture } from './pictureFile';
 import { Pips } from './TeamTab';
 
 /** Choosing where the leader came from, and with it what they are good at. */
-export function LeaderPicker({ value, party, onChange }: { value: BackstoryId | null; party: number; onChange(value: BackstoryId | null): void }) {
+/** A leader built by hand: the stats, and how to choose and change them. The points to spend are `LEADER_POINTS`. */
+export interface CustomLeader { active: boolean; stats: number[]; onSelect(): void; onChange(stats: number[]): void }
+
+export function LeaderPicker({ value, party, onChange, custom }: { value: BackstoryId | null; party: number; onChange(value: BackstoryId | null): void; custom?: CustomLeader }) {
   const t = useT();
   const options: (BackstoryId | null)[] = [null, ...BACKSTORY_IDS];
   return (
@@ -21,7 +24,7 @@ export function LeaderPicker({ value, party, onChange }: { value: BackstoryId | 
         {options.map((id) => {
           const stats = id ? BACKSTORIES[id] : partyLeaderStats(party);
           return (
-            <button key={id ?? 'none'} role="radio" aria-checked={value === id} className={value === id ? 'party-card plain active' : 'party-card plain'} onClick={() => onChange(id)}>
+            <button key={id ?? 'none'} role="radio" aria-checked={value === id && !custom?.active} className={value === id && !custom?.active ? 'party-card plain active' : 'party-card plain'} onClick={() => onChange(id)}>
               <strong>{t(id ? `backstory.${id}` : 'backstory.none')}</strong>
               <span className="small">{t(id ? `backstory.${id}.desc` : 'backstory.none.desc')}</span>
               <span className="stat-grid small">
@@ -32,8 +35,35 @@ export function LeaderPicker({ value, party, onChange }: { value: BackstoryId | 
             </button>
           );
         })}
+        {custom && <CustomLeaderCard custom={custom} />}
       </div>
     </>
+  );
+}
+
+/** The card for a leader built point by point: four stats of one to five, and exactly `LEADER_POINTS` to spend between them. */
+function CustomLeaderCard({ custom }: { custom: CustomLeader }) {
+  const t = useT();
+  const left = LEADER_POINTS - custom.stats.reduce((a, b) => a + b, 0);
+  const set = (i: number, by: number) => custom.onChange(custom.stats.map((v, k) => (k === i ? v + by : v)));
+  return (
+    <div role="radio" aria-checked={custom.active} tabIndex={0} className={custom.active ? 'party-card plain active custom-leader' : 'party-card plain custom-leader'}
+      onClick={(e) => { if (!(e.target as Element).closest('button')) custom.onSelect(); }}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); custom.onSelect(); } }}>
+      <strong>{t('leader.custom')}</strong>
+      <span className="small">{t('leader.custom.desc', { n: LEADER_POINTS })}</span>
+      <span className="stat-edit small">
+        {STAT_IDS.map((s, i) => (
+          <span key={s} className="stat-row">
+            <span className="muted">{t(`stat.${s}`)}</span>
+            <button type="button" className="btn small" aria-label={t('leader.custom.less', { stat: t(`stat.${s}`) })} disabled={custom.stats[i] <= STAT_MIN} onClick={() => { custom.onSelect(); set(i, -1); }}>−</button>
+            <Pips n={custom.stats[i]} label={`${custom.stats[i]} / ${STAT_MAX}`} />
+            <button type="button" className="btn small" aria-label={t('leader.custom.more', { stat: t(`stat.${s}`) })} disabled={custom.stats[i] >= STAT_MAX || left <= 0} onClick={() => { custom.onSelect(); set(i, 1); }}>+</button>
+          </span>
+        ))}
+      </span>
+      <span className={left === 0 ? 'small muted' : 'small'} role="status">{t(left === 0 ? 'leader.custom.done' : 'leader.custom.left', { n: left })}</span>
+    </div>
   );
 }
 

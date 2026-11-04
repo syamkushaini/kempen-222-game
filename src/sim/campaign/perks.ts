@@ -29,6 +29,15 @@ export const BACKSTORIES: Record<BackstoryId, number[]> = {
   activist: [4, 2, 1, 5],
 };
 
+/** The points a player may spend on building a leader of their own: the same total every ready-made background adds up to. */
+export const LEADER_POINTS = 12;
+export const STAT_MIN = 1;
+export const STAT_MAX = 5;
+
+/** Whether this is a leader a player could build: one whole number from 1 to 5 for each stat, spending exactly the points there are. */
+export const validLeaderStats = (x: unknown): x is number[] =>
+  Array.isArray(x) && x.length === STAT_IDS.length && x.every((v) => Number.isInteger(v) && v >= STAT_MIN && v <= STAT_MAX) && x.reduce((a: number, b: number) => a + b, 0) === LEADER_POINTS;
+
 /** What the leader a party already has is good at: ordinary, for a party with no leader in the cast. */
 export const partyLeaderStats = (p: number): number[] => [...(LEADER_STATS[PARTY_IDS[p] as keyof typeof LEADER_STATS] ?? STAT_IDS.map(() => 3))];
 
