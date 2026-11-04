@@ -12,8 +12,23 @@ const HAIR = { black: '#22201f', brown: '#4a3526', grey: '#8e8e92', white: '#e3e
 const INK = '#1f1f26';
 const JACKET = '#2b3140';
 
+/** Where the camera stands, and what it looks at, so that a still picture and a live one frame the bust the same way. */
+export const BUST_CAMERA = { fov: 28, position: [0, 0.15, 6.0] as [number, number, number], near: 0.1, far: 30 };
+export const BUST_TARGET: [number, number, number] = [0, 0, 0];
+
+/** The three lights every bust is lit by. */
+export function BustLights() {
+  return (
+    <>
+      <ambientLight intensity={1.5} />
+      <directionalLight position={[2.5, 3.5, 5]} intensity={2.2} />
+      <directionalLight position={[-3, 1, 2]} intensity={0.6} color="#cfd8ff" />
+    </>
+  );
+}
+
 /** The head and shoulders, centred on the origin, 1 unit to the head's radius. */
-function Bust({ look, accent, calm }: { look: Look; accent: string; calm: boolean }) {
+export function Bust({ look, accent, calm }: { look: Look; accent: string; calm: boolean }) {
   const root = useRef<Group>(null);
   const eyes = useRef<Group>(null);
   const skin = SKIN[look.skin], shade = SHADE[look.skin], hair = HAIR[look.hairColor];
@@ -107,11 +122,9 @@ export default function Bust3D({ look, accent, size, calm }: { look: Look; accen
       <Canvas
         // Drawn only when something changes if the player asked for calm; otherwise a gentle animation.
         frameloop={calm ? 'demand' : 'always'} dpr={[1, 2]} gl={{ alpha: true, antialias: true, powerPreference: 'low-power' }}
-        camera={{ fov: 28, position: [0, 0.15, 6.0], near: 0.1, far: 30 }} onCreated={({ camera }) => camera.lookAt(0, 0.0, 0)}
+        camera={BUST_CAMERA} onCreated={({ camera }) => camera.lookAt(...BUST_TARGET)}
       >
-        <ambientLight intensity={1.5} />
-        <directionalLight position={[2.5, 3.5, 5]} intensity={2.2} />
-        <directionalLight position={[-3, 1, 2]} intensity={0.6} color="#cfd8ff" />
+        <BustLights />
         <Bust look={look} accent={accent} calm={calm} />
       </Canvas>
     </div>

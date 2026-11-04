@@ -244,6 +244,16 @@ export function staffPortrait(name: number, role: keyof typeof ROLE_ACCENT): str
   return uri(`staff:${name}:${role}`, () => portraitSvg(look, ROLE_ACCENT[role]));
 }
 
+/** The look and colour of a party's leader, to draw in 3D: null for the pooled independents, and for a leader whose face is a photo the player uploaded. */
+export function leaderLook(party: number): { look: Look; accent: string } | null {
+  const id = PARTY_IDS[party];
+  if (id === 'oth' || photos[id]) return null;
+  return { look: override[id] ?? LEADER_LOOKS[id], accent: PARTIES[id].color };
+}
+
+/** The look and colour of a minister, to draw in 3D: the colour is their party's. */
+export const ministerLook = (name: number, party: number): { look: Look; accent: string } => ({ look: MINISTER_LOOKS[name % MINISTER_LOOKS.length], accent: colorOf(party) });
+
 export function ministerPortrait(name: number, party: number): string {
   const look = MINISTER_LOOKS[name % MINISTER_LOOKS.length];
   return uri(`minister:${name}:${colorOf(party)}`, () => portraitSvg(look, colorOf(party)));

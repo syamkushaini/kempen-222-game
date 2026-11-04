@@ -1103,3 +1103,6 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .bust3d canvas { display: block; width: 100% !important; height: 100% !important; }
 
 .role-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.bust3d.still { display: inline-block; vertical-align: middle; }
+.bust3d.still img { display: block; width: 100%; height: 100%; }
