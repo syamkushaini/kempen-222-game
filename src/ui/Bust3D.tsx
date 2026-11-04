@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
-import type { Group } from 'three';
+import type { Group, Mesh } from 'three';
 import type { Look } from './faces';
 
 // A 3D bust of one of the game's invented people, built from the same `Look` as the flat portraits, so the two always match.
@@ -28,9 +28,13 @@ export function BustLights() {
 }
 
 /** The head and shoulders, centred on the origin, 1 unit to the head's radius. */
-export function Bust({ look, accent, calm }: { look: Look; accent: string; calm: boolean }) {
+export function Bust({ look, accent, calm, talking = false }: { look: Look; accent: string; calm: boolean; talking?: boolean }) {
   const root = useRef<Group>(null);
   const eyes = useRef<Group>(null);
+  const smile = useRef<Mesh>(null);
+  const open = useRef<Mesh>(null);
+  const speaking = useRef(talking);
+  speaking.current = talking;
   const skin = SKIN[look.skin], shade = SHADE[look.skin], hair = HAIR[look.hairColor];
   const scarf = look.headwear === 'scarf';
   const body = look.wear === 'suit' ? JACKET : accent;
@@ -45,6 +49,15 @@ export function Bust({ look, accent, calm }: { look: Look; accent: string; calm:
     root.current.rotation.x += (aimX - root.current.rotation.x) * Math.min(1, dt * 4);
     root.current.position.y = Math.sin(t * 1.4) * 0.025;
     if (eyes.current) eyes.current.scale.y = t % 4.2 > 4.05 ? 0.1 : 1;
+    // Talking: the mouth opens and closes in uneven beats, and the head nods a little with them.
+    const say = speaking.current;
+    const beat = Math.abs(Math.sin(t * 13)) * (0.55 + 0.45 * Math.sin(t * 4.7 + 1));
+    if (smile.current) smile.current.visible = !say;
+    if (open.current) { open.current.visible = say; open.current.scale.y = 0.2 + beat * 1.0; }
+    if (say) {
+      root.current.rotation.x += Math.sin(t * 7) * 0.012;
+      root.current.position.y += beat * 0.03;
+    }
   });
 
   return (
@@ -71,7 +84,8 @@ export function Bust({ look, accent, calm }: { look: Look; accent: string; calm:
       </group>
       <mesh position={[-0.33, 0.55, 0.83]} rotation={[0, 0, 0.08]} scale={[0.2, 0.035, 0.05]}><boxGeometry /><meshBasicMaterial color={INK} /></mesh>
       <mesh position={[0.33, 0.55, 0.83]} rotation={[0, 0, -0.08]} scale={[0.2, 0.035, 0.05]}><boxGeometry /><meshBasicMaterial color={INK} /></mesh>
-      <mesh position={[0, -0.22, 0.86]} rotation={[0, 0, Math.PI]}><torusGeometry args={[0.2, 0.035, 8, 20, Math.PI]} /><meshBasicMaterial color="#8a4a42" /></mesh>
+      <mesh ref={smile} position={[0, -0.22, 0.86]} rotation={[0, 0, Math.PI]}><torusGeometry args={[0.2, 0.035, 8, 20, Math.PI]} /><meshBasicMaterial color="#8a4a42" /></mesh>
+      <mesh ref={open} visible={false} position={[0, -0.27, 0.86]} scale={[1, 0.2, 1]}><sphereGeometry args={[0.17, 16, 12]} /><meshBasicMaterial color="#4a1d1d" /></mesh>
       {look.facial === 'moustache' && <mesh position={[0, -0.07, 0.92]} scale={[0.34, 0.07, 0.08]}><sphereGeometry args={[1, 12, 8]} /><meshLambertMaterial color={hair} /></mesh>}
       {look.facial === 'beard' && <mesh position={[0, 0.25, 0]} scale={[0.93, 1.11, 0.98]}><sphereGeometry args={[1.02, 32, 16, 0, Math.PI * 2, Math.PI * 0.72, Math.PI * 0.28]} /><meshLambertMaterial color={hair} /></mesh>}
       {look.glasses && (
@@ -116,7 +130,7 @@ function Scarf({ color }: { color: string }) {
 }
 
 /** One round 3D portrait: the bust on a coloured disc, the way the flat portraits are. */
-export default function Bust3D({ look, accent, size, calm }: { look: Look; accent: string; size: number; calm: boolean }) {
+export default function Bust3D({ look, accent, size, calm, talking = false }: { look: Look; accent: string; size: number; calm: boolean; talking?: boolean }) {
   return (
     <div className="bust3d" style={{ width: size, height: size, background: `color-mix(in srgb, ${accent} 26%, #e8e3d8)` }} aria-hidden="true">
       <Canvas
@@ -125,7 +139,7 @@ export default function Bust3D({ look, accent, size, calm }: { look: Look; accen
         camera={BUST_CAMERA} onCreated={({ camera }) => camera.lookAt(...BUST_TARGET)}
       >
         <BustLights />
-        <Bust look={look} accent={accent} calm={calm} />
+        <Bust look={look} accent={accent} calm={calm} talking={talking} />
       </Canvas>
     </div>
   );

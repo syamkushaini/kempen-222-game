@@ -1106,3 +1106,16 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 .bust3d.still { display: inline-block; vertical-align: middle; }
 .bust3d.still img { display: block; width: 100%; height: 100%; }
+
+/* A manager who is speaking: the flat portrait (where 3D cannot be drawn) bobs a little. */
+.portrait.talking { animation: talk-bob 0.38s ease-in-out infinite; }
+@keyframes talk-bob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { .portrait.talking { animation: none; } }
+
+/* The words of a manager as they are typed: the whole sentence is laid out unseen so that the box does not grow line by line. */
+.typed { cursor: default; }
+.typed-grid { display: grid; }
+.typed-grid > * { grid-area: 1 / 1; }
+.typed-size { visibility: hidden; pointer-events: none; }
+.typed-now.typing::after { content: ''; display: inline-block; width: 0.5em; height: 1em; margin-left: 2px; vertical-align: text-bottom; background: currentColor; opacity: 0.55; animation: caret 0.8s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
