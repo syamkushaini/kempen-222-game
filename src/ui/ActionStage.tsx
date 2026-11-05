@@ -43,6 +43,12 @@ export function ActionStage() {
   }, []);
   const playable = !!stage && canDraw3D() && !prefersCalm();
   useEffect(() => {
+    if (!stage || !playable) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') clear(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [stage, playable, clear]);
+  useEffect(() => {
     if (!stage) return;
     if (!playable) { clear(); return; }
     const timer = setTimeout(clear, STAGE_MS);

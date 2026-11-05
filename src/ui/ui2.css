@@ -21,19 +21,20 @@
 @keyframes inbox-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 60%, transparent); } 100% { box-shadow: 0 0 0 14px transparent; } }
 
 /* Kak Ros, along the bottom of the screen */
-.adviser-strip { position: fixed; left: 0; right: 0; bottom: 0; z-index: 24; display: flex; align-items: center; gap: 14px; padding: 10px max(16px, calc((100vw - 1232px) / 2)) calc(10px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--panel) 94%, transparent); border-top: 1px solid var(--line-2); backdrop-filter: blur(8px); }
+.adviser-strip { position: fixed; left: 0; right: 0; bottom: 0; z-index: 24; display: flex; align-items: center; gap: 10px; padding: 6px max(16px, calc((100vw - 1232px) / 2)) calc(6px + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line-2); }
 .adviser-strip .grow { min-width: 0; }
-.adviser-strip .adviser-text { margin: 2px 0 0; max-width: 78ch; }
-.adviser-strip .button-row { flex: none; margin-left: auto; flex-wrap: nowrap; }
-body:has(.adviser-strip) .app { padding-bottom: 116px; }
+.adviser-strip .adviser-name { font-size: 12px; }
+.adviser-strip .adviser-text { margin: 1px 0 0; max-width: 78ch; font-size: 12px; line-height: 1.4; }
+.adviser-strip .button-row { flex: none; margin: 0 0 0 auto; flex-wrap: nowrap; }
+body:has(.adviser-strip) .app { padding-bottom: 84px; }
 @media (max-width: 980px) {
   .adviser-strip { bottom: 76px; flex-wrap: wrap; }
   .adviser-strip .button-row { margin-left: 0; }
-  body:has(.adviser-strip) .app { padding-bottom: 210px; }
+  body:has(.adviser-strip) .app { padding-bottom: 168px; }
 }
 
 /* a screen with nothing in it yet */
-.empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 16px; text-align: center; color: var(--muted); }
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px 12px; text-align: center; color: var(--muted); }
 .empty-state svg { color: var(--line-3); }
 .empty-state h3 { color: var(--ink); font-size: 16px; font-weight: 500; }
 .empty-state p { max-width: 36ch; }
@@ -58,7 +59,7 @@ body:has(.adviser-strip) .app { padding-bottom: 116px; }
 /* the main actions are bigger than the rest: ending the week, Go, and the choices in a dialog */
 .end-week, .campaign-bar .end-week { min-height: 42px; padding-left: 20px; padding-right: 20px; }
 .action-list .btn { min-height: 38px; }
-.dialog .choice { min-height: 58px; }
+.dialog .choice { min-height: 44px; }
 
 /* livelier: a tab's contents rise into place, a dialog comes up, a card is lifted by the pointer */
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -181,33 +182,25 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 
 /* ---------- the main menu ---------- */
 .menu-stage { display: block; position: relative; max-width: 1100px; }
-/* the picture behind the menu: faded in when it has come, with its dark side under the menu and a shade over it so the words stay easy to read */
-.menu-art { position: fixed; inset: 0; z-index: -1; opacity: 0; transition: opacity 900ms ease; pointer-events: none; background: #0c1226; }
-.menu-art.ready { opacity: 1; }
-.menu-art img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 100% 50%; }
-.menu-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8, 12, 28, 0.78) 0%, rgba(8, 12, 28, 0.5) 34%, rgba(8, 12, 28, 0) 62%), linear-gradient(0deg, rgba(8, 12, 28, 0.55) 0%, rgba(8, 12, 28, 0) 26%); }
-/* on the pages behind the menu the picture is only a tint */
-.menu-stage.sub .menu-art.ready { opacity: 0.1; }
-/* what is written straight onto the picture is light, whatever the theme */
-.menu-stage:not(.sub) .menu-name, .menu-stage:not(.sub) .main-menu > .title-intro { color: #f5f1e8; text-shadow: 0 1px 12px rgba(8, 12, 28, 0.7); }
-.menu-stage:not(.sub) .menu-tag, .menu-stage:not(.sub) .main-menu > .muted, .menu-stage:not(.sub) .menu-foot, .menu-stage:not(.sub) .menu-foot *, body:has(.main-menu) .footer { color: #cfd0dc; text-shadow: 0 1px 10px rgba(8, 12, 28, 0.8); }
 .main-menu { max-width: 460px; padding: clamp(8px, 5vh, 56px) 0 24px; display: flex; flex-direction: column; gap: 16px; }
 .main-menu .title-intro { margin: 0; }
-.menu-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.menu-item { --tone: var(--muted); display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 12px 14px; min-height: 64px; background: color-mix(in srgb, var(--panel) 92%, transparent); color: var(--ink); border: 1px solid var(--line-2); border-left: 4px solid var(--tone); border-radius: 12px; cursor: pointer; backdrop-filter: blur(6px); transition: transform 90ms ease-out, background-color 150ms, border-color 150ms, box-shadow 150ms, filter 150ms; }
-.menu-item:hover { background: var(--panel-2); border-color: var(--tone); box-shadow: 0 6px 20px -12px var(--tone); }
-.menu-item.primary { min-height: 80px; padding: 16px; background: var(--tone); border-color: var(--tone); color: #fff; }
-.menu-item.primary:hover { filter: brightness(1.08); background: var(--tone); }
-.menu-icon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: color-mix(in srgb, var(--tone) 20%, transparent); color: var(--tone); }
-.menu-item.primary .menu-icon { width: 52px; height: 52px; background: rgba(255, 255, 255, 0.18); color: #fff; }
-.menu-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.menu-title { font-size: 18px; font-weight: 600; letter-spacing: -0.1px; }
-.menu-item.primary .menu-title { font-size: 22px; }
+.menu-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+/* the choices are plain rows with a hairline between them: a small icon, the name, one line of explanation and an arrow */
+.menu-list > li { border-bottom: 1px solid var(--line); }
+.menu-item { --tone: var(--muted); display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 10px 4px; min-height: 52px; background: transparent; color: var(--ink); border: 0; border-radius: var(--radius-field); cursor: pointer; }
+.menu-item:hover { background: var(--panel-2); }
+.menu-item.primary { background: var(--primary); color: var(--on-primary); padding: 12px 14px; min-height: 60px; margin: 0 0 10px; border-radius: var(--radius-btn); }
+.menu-item.primary:hover { background: var(--primary-hover); }
+.menu-icon { flex: none; display: grid; place-items: center; width: 28px; height: 28px; color: var(--muted); }
+.menu-item.primary .menu-icon { color: var(--on-primary); }
+.menu-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.menu-title { font-size: 15px; font-weight: 600; }
+.menu-item.primary .menu-title { font-size: 16px; }
 .menu-hint { font-size: 13px; line-height: 1.3; color: var(--muted); }
-.menu-item.primary .menu-hint { color: rgba(255, 255, 255, 0.82); }
+.menu-item.primary .menu-hint { color: color-mix(in srgb, var(--on-primary) 85%, transparent); }
 .menu-go { flex: none; color: var(--muted); transition: transform 150ms; }
-.menu-item:hover .menu-go { transform: translateX(3px); color: var(--tone); }
-.menu-item.primary .menu-go, .menu-item.primary:hover .menu-go { color: #fff; }
+.menu-item:hover .menu-go { transform: translateX(3px); color: var(--ink); }
+.menu-item.primary .menu-go, .menu-item.primary:hover .menu-go { color: var(--on-primary); }
 .menu-foot { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
 /* each choice has a colour of its own */
 .tone-go { --tone: #2f9e63; } .tone-new { --tone: var(--primary); } .tone-load { --tone: #3b82c4; } .tone-dare { --tone: #d08a2e; } .tone-won { --tone: #b06ad6; }
@@ -225,7 +218,7 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 /* ---------- pressing a button is unmistakable: it sinks, brightens for a moment, and (with sound on) clicks ---------- */
 .btn, .menu-item, .party-card, .bloc-card, .choice, .chip, .icon-btn, .seat-row, .tab, .subtabs button { -webkit-tap-highlight-color: transparent; }
 .btn:active:not(:disabled), .menu-item:active, .party-card:active, .bloc-card:active, .choice:active:not(:disabled), .chip:active, .icon-btn:active { transform: translateY(2px) scale(0.975); filter: brightness(1.22); }
-.btn:not(:disabled), .menu-item { box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); }
+.btn:not(:disabled) { box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); }
 .btn:active:not(:disabled), .menu-item:active { box-shadow: none; }
 /* a chosen card keeps a solid border and a tick, so there is never a doubt which one is picked */
 .party-card.active, .bloc-card.active, [role="radio"][aria-checked="true"].party-card { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); position: relative; }
@@ -239,10 +232,9 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 /* words in a button or a card never spill out of it */
 .btn, .party-card, .menu-item, .chip { overflow-wrap: anywhere; }
 .btn { text-wrap: balance; }
-@media (prefers-reduced-motion: reduce) { .btn:active:not(:disabled), .menu-item:active, .party-card:active { transform: none; } .menu-art { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .btn:active:not(:disabled), .menu-item:active, .party-card:active { transform: none; } }
 @media (max-width: 980px) { .main-menu { max-width: none; padding-top: 4px; } }
 /* a phone held upright sees a narrow slice of the picture: the lit side of it, under a heavier shade */
-@media (max-width: 980px) { .menu-art img { object-position: 74% 50%; } .menu-art::after { background: linear-gradient(0deg, rgba(8, 12, 28, 0.82) 0%, rgba(8, 12, 28, 0.6) 55%, rgba(8, 12, 28, 0.45) 100%); } }
 
 /* ---------- settings, all in one panel ---------- */
 /* Taller than a phone's screen: it scrolls inside itself, and its rows keep their height instead of being squeezed. */
@@ -262,9 +254,9 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 @media (min-width: 981px) {
   .layout > .map-column { position: sticky; top: calc(var(--header-h, 56px) + 16px); }
 }
-.map-panel { padding: 16px; }
+.map-panel { padding: 12px; }
 .map-top { flex-wrap: nowrap; gap: 8px; }
-.state-select, .seat-search input { min-height: 36px; padding: 6px 10px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--panel-2); color: var(--ink); font: inherit; font-size: 14px; }
+.state-select, .seat-search input { min-height: 36px; padding: 6px 10px; border: 1px solid var(--control); border-radius: 8px; background: var(--panel-2); color: var(--ink); font: inherit; font-size: 14px; }
 .state-select { font-weight: 600; max-width: 46%; }
 .map-place { font-size: 16px; font-weight: 600; margin-right: auto; }
 .seat-search { flex: 1; min-width: 0; }
@@ -322,7 +314,7 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
 .action-family summary h3 { font-size: 15px; }
 /* a seat picked on the map opens over the panel, and closes back to where the player was */
 .sidebar { position: sticky; }
-.seat-card { position: absolute; inset: 0; z-index: 6; overflow-y: auto; padding: 16px; box-shadow: -12px 0 32px -12px rgb(0 0 0 / 0.5); animation: card-in 240ms cubic-bezier(.2,.8,.2,1); }
+.seat-card { position: absolute; inset: 0; z-index: 6; overflow-y: auto; padding: 12px; box-shadow: -12px 0 32px -12px rgb(0 0 0 / 0.5); animation: card-in 240ms cubic-bezier(.2,.8,.2,1); }
 @keyframes card-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (max-width: 980px) { .seat-card { position: fixed; inset: auto 0 76px 0; max-height: 70dvh; border-radius: 16px 16px 0 0; animation-name: sheet-in; } .tab { font-size: 14px; padding: 8px 6px; } .seat-search { flex-basis: 100%; order: 3; } }
 @keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -363,7 +355,7 @@ html[data-palette="accessible"] :not(.dot)[data-party="9"] { background-image: r
   .campaign-bar { bottom: calc(60px + env(safe-area-inset-bottom)); }
   .app { padding-bottom: 150px; }
   .adviser-strip { bottom: calc(132px + env(safe-area-inset-bottom)); }
-  body:has(.adviser-strip) .app { padding-bottom: 270px; }
+  body:has(.adviser-strip) .app { padding-bottom: 228px; }
   .seat-card { inset: auto 0 calc(60px + env(safe-area-inset-bottom)) 0; z-index: 22; }
 }
 
@@ -466,9 +458,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   body:has(.term-bar) .app { padding-bottom: 150px; }
   body:has(.bar-min) .app { padding-bottom: 120px; }
   /* The adviser takes less of a small screen. */
-  .adviser-strip { padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); gap: 10px; }
-  .adviser-strip .portrait { width: 36px; height: 36px; }
-  .adviser-strip .adviser-text { font-size: 14px; line-height: 1.4; }
+  .adviser-strip { padding: 6px 12px calc(6px + env(safe-area-inset-bottom)); gap: 8px; }
+  .adviser-strip .portrait { width: 30px; height: 30px; }
+  .adviser-strip .adviser-text { font-size: 12px; line-height: 1.4; }
   /* A long tab has its headings in reach. */
   .section-jump { position: sticky; top: var(--header-h, 52px); z-index: 4; margin: 0 -4px 8px; padding: 6px 4px; background: var(--bg); border-bottom: 1px solid var(--line); scrollbar-width: none; }
   .section-jump::-webkit-scrollbar { display: none; }
@@ -738,7 +730,7 @@ nav.phone-nav button:is([aria-pressed="true"]):not(.switch):not(.swatch-btn):not
 .post-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 .post-row .field-label { flex: 1 0 100%; margin: 0; }
 .post-row .text-input { flex: 1 1 180px; min-width: 0; }
-.text-input { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-height: 44px; }
+.text-input { background: var(--panel); border: 1px solid var(--control); border-radius: 8px; padding: 8px 12px; min-height: 44px; }
 
 /* Missions: what is asked, the seats it names, what winning brings and failing costs, and the card shown when one ends. */
 .missions h3 { margin: 16px 0 6px; }
@@ -1021,7 +1013,7 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .group-menu-btn .tab-name { flex: 1; text-align: left; }
 .group-menu-chevron { color: var(--muted); }
 .group-menu-btn[aria-expanded='true'] .group-menu-chevron { transform: rotate(180deg); }
-.group-menu-list { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none; display: grid; gap: 2px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-3, var(--panel)); box-shadow: 0 12px 32px rgb(0 0 0 / 35%); backdrop-filter: blur(18px); }
+.group-menu-list { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none; display: grid; gap: 2px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-3, var(--panel)); box-shadow: 0 12px 32px rgb(0 0 0 / 35%); }
 .group-menu-list button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: 0; border-radius: 10px; background: none; color: var(--ink); font-size: 14px; text-align: left; cursor: pointer; }
 .group-menu-list button .tab-name { flex: 1; }
 .group-menu-list button:hover { background: var(--fill); }
@@ -1034,7 +1026,7 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .bar-fold { min-height: 44px; min-width: 44px; padding: 0 10px; font-size: 18px; line-height: 1; flex: none; }
 /* Open, the tab sits on the bar's top edge, so it adds nothing to the bar's height. */
 .bar-fold.open { position: absolute; top: -40px; right: 12px; min-height: 36px; min-width: 44px; border-radius: 999px; box-shadow: 0 2px 10px rgb(0 0 0 / 0.35); }
-.campaign-bar.bar-min { left: auto; right: 12px; width: auto; padding: 0; gap: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; pointer-events: none; }
+.campaign-bar.bar-min { left: auto; right: 12px; width: auto; padding: 0; gap: 0; background: none; border: 0; box-shadow: none; pointer-events: none; }
 .campaign-bar.bar-min .bar-fold { pointer-events: auto; border-radius: 999px; box-shadow: 0 2px 10px rgb(0 0 0 / 0.35); }
 
 /* The coffee button on the title screen: the cup with its words, a pill rather than a round icon. */
@@ -1059,7 +1051,7 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 /* The seat finder's list: big rows under the box, so that a thumb can pick a seat the map is too small to show. */
 .seat-search { position: relative; }
-.seat-results { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50; margin: 0; padding: 4px; list-style: none; max-height: min(40dvh, 360px); overflow-y: auto; overscroll-behavior: contain; background: linear-gradient(var(--panel-2), var(--panel-2)), var(--bg); backdrop-filter: none; border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 12px 32px rgb(0 0 0 / 35%); }
+.seat-results { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50; margin: 0; padding: 4px; list-style: none; max-height: min(40dvh, 360px); overflow-y: auto; overscroll-behavior: contain; background: linear-gradient(var(--panel-2), var(--panel-2)), var(--bg); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 12px 32px rgb(0 0 0 / 35%); }
 .seat-results button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 6px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .seat-results button:hover, .seat-results button.active { background: var(--fill, rgb(128 128 128 / 22%)); }
 .seat-results .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }
@@ -1070,7 +1062,7 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .menu-item.locked, .party-card.locked { opacity: 0.8; cursor: not-allowed; }
 .menu-item.locked .menu-icon { filter: grayscale(1); opacity: 0.7; }
 .menu-item.locked .menu-hint { font-weight: 600; }
-.menu-item.locked:hover { background: color-mix(in srgb, var(--panel) 92%, transparent); }
+.menu-item.locked:hover { background: transparent; }
 .menu-item.locked .menu-go { visibility: hidden; }
 
 .unlock-roadmap { margin: 12px 0; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: 12px; background: color-mix(in srgb, var(--panel) 92%, transparent); }
@@ -1130,7 +1122,7 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .stage3d.mood-night { background: linear-gradient(#0f1a38, #2a2f5e 70%, #3a3d6e); }
 .stage3d.mood-indoor { background: linear-gradient(#efe9dc, #d9d2c2); }
 .stage3d.mood-studio { background: linear-gradient(#1b2236, #36425f); }
-.stage-caption { position: absolute; left: 12px; bottom: 12px; margin: 0; padding: 6px 12px; border-radius: 999px; background: rgba(15, 18, 30, 0.72); color: #fff; font-weight: 600; font-size: 0.95rem; backdrop-filter: blur(4px); }
+.stage-caption { position: absolute; left: 12px; bottom: 12px; margin: 0; padding: 6px 12px; border-radius: 999px; background: rgba(15, 18, 30, 0.82); color: #fff; font-weight: 600; font-size: 0.95rem; }
 .stage-skip { position: absolute; right: 12px; bottom: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(15, 18, 30, 0.5); color: #fff; font-size: 0.75rem; }
 @keyframes stage-life { 0% { opacity: 0; transform: scale(0.98); } 8% { opacity: 1; transform: scale(1); } 88% { opacity: 1; } 100% { opacity: 0; } }
 
@@ -1139,3 +1131,6 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .journey-result.up { background: color-mix(in srgb, #16a34a 14%, var(--panel)); border-color: color-mix(in srgb, #16a34a 45%, var(--line-2)); }
 .journey-result.same { background: color-mix(in srgb, var(--panel) 92%, transparent); }
 .journey-result .unlocked { font-weight: 600; }
+
+/* the control that opens or closes the rest of a group of toasts: a button, so that the keyboard reaches it */
+.toast-group-expand { display: flex; align-items: center; gap: 6px; padding: 4px 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }

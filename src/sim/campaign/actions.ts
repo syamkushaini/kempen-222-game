@@ -56,7 +56,15 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   local:      { family: 'ground',    target: 'state', days: 1,   presence: true,  perWeek: 1 },
   troops:     { family: 'media',     target: 'party', days: 0.5, presence: false, perWeek: 1 },
   blitz:      { family: 'machinery', target: 'none',  days: 2,   presence: false, perWeek: 1 },
+  regroup:    { family: 'machinery', target: 'none',  days: 1,   presence: false, perWeek: 1 },
+  listen:     { family: 'ground',    target: 'none',  days: 1,   presence: false, perWeek: 1 },
+  scrutiny:   { family: 'media',     target: 'party', days: 1,   presence: false, perWeek: 1 },
 };
+
+/** What a beaten party can do only in the weeks it spends in opposition, rebuilding. */
+export const REBUILD_ONLY: readonly ActionId[] = ['regroup', 'listen', 'scrutiny'];
+export const rebuilding = (c: Campaign): boolean => !!c.rebuild && c.week <= c.rebuild;
+
 
 /**
  * A chief runs the ground campaign in one region without the leader: it takes
@@ -179,6 +187,7 @@ export const EFFECT = {
   billboards: 0.012,
   // The branches hang flags and banners in every area at once: each area gets this share of what its own billboards would, for this share of the price.
   blitz: 0.75, blitzPrice: 0.7,
+  regroup: 8, regroupUnity: 4, listen: 0.025, listenMotivation: 0.04, scrutiny: 0.02,
   attack: 0.025, attackMotivation: 0.03, attackBackfire: 0.02, attackBackfireChance: 0.3,
   lateSwing: 0.04,
   townhall: 0.14, townhallFlopChance: 0.2, townhallFlop: 0.04, townhallFlopNat: 0.008,
@@ -241,6 +250,7 @@ const MONEY = {
   ceramah: 30_000, walkabout: 8_000, megarally: 150_000, build: 60_000,
   tv: 350_000, social: 50_000,
   townhall: 12_000, charity: 90_000, youth: 40_000, festival: 70_000, manifesto: 120_000, conference: 40_000, local: 45_000, troops: 80_000,
+  regroup: 40_000, listen: 15_000,
 };
 
 /** An amount of money scaled to the size of the contest and rounded to a tidy figure. */
@@ -334,6 +344,7 @@ export function actionCost(world: World, c: Campaign, p: number, id: ActionId, t
   switch (id) {
     case 'ceramah': case 'walkabout': case 'megarally': case 'build': case 'tv': case 'social':
     case 'townhall': case 'charity': case 'youth': case 'festival': case 'manifesto': case 'conference': case 'local': case 'troops':
+    case 'regroup': case 'listen':
       money = scaled(world, MONEY[id]);
       break;
     case 'radio':
@@ -372,6 +383,8 @@ export function canDo(world: World, c: Campaign, p: number, id: ActionId, target
   const pc = c.parties[p];
   if (!pc || !world.rules.actions.includes(id)) return no('noCampaign');
   if (chief && !CHIEF_ACTIONS.includes(id)) return no('noCampaign');
+  // Rebuilding is for the weeks in opposition, and the work of a campaign is for the weeks of the campaign.
+  if (REBUILD_ONLY.includes(id) && !rebuilding(c)) return no('noCampaign');
   // The blitz is for a state's election, where the areas are many and the days few; it needs at least two areas to be worth the name.
   if (id === 'blitz' && (world.rules.kind !== 'state' || blitzAreas(world, c, p).length < 2)) return no('noTarget');
   // Getting the vote out works only in the last weeks, in a sweep as on its own.
@@ -634,6 +647,29 @@ export function doAction(world: World, c: Campaign, p: number, id: ActionId, tar
         quality = 'ok';
       }
       notePlay(pc, 'troops');
+      break;
+    }
+    case 'regroup': {
+      // The branches are rebuilt and the party is brought together again, in every area where it stands.
+      for (const area of world.states) {
+        if (!contestsState(world, c, p, area)) continue;
+        const i = stateIndex(world, area);
+        pc.machinery[i] = Math.min(100, pc.machinery[i] + Math.round(EFFECT.regroup * organised * roll));
+      }
+      pc.unity = Math.min(100, pc.unity + EFFECT.regroupUnity);
+      quality = 'ok';
+      break;
+    }
+    case 'listen': {
+      // A tour of the places that stopped listening: a little back among everyone, and a party that wants to try again.
+      boostBlocs(c.dyn.support.nat, p, EFFECT.listen * presence * roll, GROUND_REACH, CAP.nat);
+      c.dyn.turnout.party[p] += EFFECT.listenMotivation * roll;
+      break;
+    }
+    case 'scrutiny': {
+      // The government held to account, in the House and in the papers: it costs it a little and cannot misfire.
+      boostBlocs(c.dyn.support.nat, target.party!, -EFFECT.scrutiny * edge(c, p, 'cunning') * roll, null, CAP.nat);
+      quality = 'ok';
       break;
     }
     case 'attack': {

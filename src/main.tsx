@@ -7,14 +7,14 @@ import { ErrorBoundary } from './ui/ErrorBoundary';
 // One typeface for everything, bundled so that the game looks the same offline. The package splits it by script and the
 // browser fetches only the parts a page uses: for this game, the Latin part, about 48 kB.
 import '@fontsource-variable/inter/wght.css';
+import '@fontsource-variable/public-sans/wght.css';
 import './ui/theme.css';
 import './ui/styles.css';
 import './ui/polish.css';
 import './ui/people.css';
 import './ui/ui2.css';
-import './ui/ios.css';
 import './ui/skins.css';
-import './ui/glass.css';
+import './ui/nuxtui.css';
 import './ui/phone.css';
 
 // A saved game in a state election can only be read once that state's results are here, so they are fetched first.

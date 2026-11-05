@@ -32,7 +32,7 @@
      behind the End week button; a key hint belongs on a keyboard, which a phone does not have. */
   .campaign-bar { gap: 6px; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); }
   .campaign-bar .hud-item { flex: 1 1 auto; min-width: 0; padding: 2px 4px; gap: 0; overflow: hidden; }
-  .campaign-bar .hud-label { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .campaign-bar .hud-label { font-size: 10px; line-height: 1.15; white-space: normal; overflow-wrap: normal; }
   .campaign-bar .hud-value { font-size: 14px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
   .campaign-bar .hud-value .small { font-size: 11px; white-space: nowrap; }
   .campaign-bar .hud-sub { display: none; }

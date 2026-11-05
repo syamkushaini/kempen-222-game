@@ -70,6 +70,8 @@ export interface StartOptions {
   challenge?: Partial<Challenge>;
   /** Weeks of campaign, where a challenge made by a player shortens or lengthens the contest's usual. */
   weeks?: number;
+  /** Weeks of rebuilding in opposition at the head of a contest played again after a defeat (they are part of `weeks`). */
+  rebuild?: number;
   /** A new party carried on from an earlier contest: the following it begins with (see `Campaign.following`). */
   following?: number;
   /** Where that party was strongest: see `Campaign.stronghold`. */

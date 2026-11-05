@@ -1,0 +1,114 @@
+/*
+ * The Nuxt UI changelog template's patterns, applied across the game. Loaded last, so it overrides the older rules without touching the layout
+ * rules they carry. The template's patterns are: sections divided by hairlines instead of drawn as boxes; underline tabs; small square-cornered
+ * badges (6px, not pills); a title of text-3xl with a quiet line under it; and, on a wide screen, a title column beside the content column.
+ * The colours and the font come from theme.css; nothing here sets a colour of its own except through those tokens.
+ */
+
+/* ---------- headings ---------- */
+h1 { font-size: 30px; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; }
+h2 { font-weight: 600; letter-spacing: -0.01em; }
+.panel-head { padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.panel-head h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.menu-name { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
+.menu-name b { font-weight: 800; }
+
+/* ---------- boxes become sections ---------- */
+/* a panel is a section with a hairline under it; the ones that float (dialogs, toasts) keep their box */
+.panel:not(.dialog):not([class*='toast']):not(.map-panel) { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; padding: 16px 0; }
+.quick, .creator { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 14px 0; margin: 0 0 8px; }
+.map-panel, .party-card { background: transparent; border-radius: var(--radius); border-color: var(--line-2); }
+.dialog { background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--radius); box-shadow: 0 10px 30px rgb(2 6 23 / 25%); }
+.action, .choice { background: transparent; border-radius: var(--radius-field); }
+.action:hover, .choice:hover:not(:disabled) { background: var(--panel-2); transform: none; }
+
+/* ---------- tabs: an underline, not a pill ---------- */
+.tabs { gap: 4px; padding: 0; background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.tab { flex: 0 1 auto; min-height: 40px; padding: 8px 12px; border-radius: 0; font-size: 14px; font-weight: 500; color: var(--muted); background: transparent; box-shadow: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab:not(.active):hover { background: transparent; color: var(--ink); }
+.tab.active { background: transparent; color: var(--ink); box-shadow: none; border-bottom-color: var(--primary); }
+
+/* ---------- badges and chips: small, square-cornered, tinted ---------- */
+.badge { border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 500; background: transparent; }
+.chip { border-radius: 6px; padding: 4px 10px; background: transparent; border-color: var(--line-2); }
+.chip.active { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--ink); border-color: var(--primary); box-shadow: none; }
+.segmented { border-radius: var(--radius-btn); background: transparent; border-color: var(--line-2); }
+.segmented button { border-radius: 4px; }
+.segmented button.active { background: var(--panel-3); box-shadow: none; }
+
+/* ---------- the main menu: a title column beside the list, as in the template ---------- */
+@media (min-width: 1024px) {
+  .menu-stage:not(.sub) { max-width: 1160px; }
+  .menu-stage:not(.sub) .main-menu { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); column-gap: 72px; row-gap: 16px; align-items: start; align-content: start; padding-top: clamp(24px, 9vh, 96px); }
+  .menu-stage:not(.sub) .main-menu > * { grid-column: 1; }
+  .menu-stage:not(.sub) .main-menu > .menu-list { grid-column: 2; grid-row: 1 / span 6; align-self: start; }
+  .menu-stage:not(.sub) .menu-brand { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .menu-stage:not(.sub) .title-intro { max-width: 34ch; font-size: 16px; line-height: 1.55; color: var(--ink-muted); }
+}
+
+/* ---------- the campaign screen: no pills and no large corners, as in the template ---------- */
+.menu-button, .icon-btn, .cost-chip, .display-menu summary, .metrics-more, .next-step strong, .goal-line strong { border-radius: var(--radius-btn); }
+.next-step, .goal-line, .nominations, .state-fight, .candidate, .group-menu-btn, .group-menu-list, .money-sheet, .seat-card { border-radius: var(--radius); }
+.next-step, .goal-line { padding-top: 8px; padding-bottom: 8px; }
+.nominations, .state-fight { background: transparent; border: 1px solid var(--line); }
+.candidate { background: transparent; border: 1px solid var(--line); }
+
+/* ---------- results and recap cards: flat sections with a hairline, small corners ---------- */
+.recap-figures, .poll-result, .story-recap, .journey-result, .recap, .report, .badge-card, .verdict-moment .panel, .standing, .tally { border-radius: var(--radius); }
+.poll-result, .story-recap, .journey-result { background: transparent; }
+.poll-result { border-color: var(--line-2); }
+.seat-results { border-radius: var(--radius); background: var(--panel); box-shadow: 0 10px 30px rgb(2 6 23 / 25%); }
+.review-table th, .bloc-table th { font-weight: 500; color: var(--muted); font-size: 12px; text-transform: none; letter-spacing: 0; border-bottom: 1px solid var(--line-2); }
+.review-table td, .bloc-table td { border-bottom: 1px solid var(--line); }
+.badge-card, .honours-entry, .medal { background: transparent; border: 1px solid var(--line); }
+
+/* ---------- election night: the call, the figures, the ticker and the seat bar ---------- */
+.headline { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+.call { background: transparent; border: 1px solid var(--line); border-left: 3px solid; border-radius: var(--radius); padding: 10px 14px; }
+.commentary { background: transparent; border: 1px solid var(--line); border-left: 3px solid var(--primary); border-radius: var(--radius); }
+.facts div { background: transparent; border: 1px solid var(--line); border-radius: var(--radius); }
+.facts dt { font-weight: 500; }
+.ticker li { border-radius: var(--radius-btn); }
+.ticker li.mine { background: var(--panel-2); }
+.seatbar { border-radius: 3px; background: var(--panel-3); }
+.seatbar span:first-child { border-radius: 3px 0 0 3px; }
+.seatbar span:last-of-type { border-radius: 0 3px 3px 0; }
+.count-badge { border-radius: 6px; }
+.next-contest { padding-top: 4px; }
+
+/* ---------- formation talks and pacts: outlined cards instead of filled boxes ---------- */
+.bloc-card { background: transparent; border-radius: var(--radius); border-color: var(--line-2); }
+.bloc-card:hover { background: var(--panel-2); }
+.bloc-card.active { background: color-mix(in srgb, var(--primary) 10%, transparent); border-color: var(--primary); }
+.offer .action, .t-offers .action { background: transparent; border-radius: var(--radius); }
+.demands label, .note { background: transparent; border: 1px solid var(--line); border-radius: var(--radius); }
+.demands li:not(.blocked) label:hover { background: var(--panel-2); }
+.field select, .field input { border-color: var(--control); border-radius: var(--radius-field); }
+.stepper strong { font-weight: 600; }
+.pact-regions > li + li { border-top-color: var(--line); }
+
+/* ---------- charts and diagrams: hairline frames, thin square bars, the template's green as the default accent ---------- */
+.econ-chart { background: transparent; border-color: var(--line-2); }
+.econ-chart figcaption { color: var(--muted); font-weight: 500; }
+.bar, .gauge-track { border-radius: 3px; background: var(--panel-3); }
+.bar span { border-radius: 3px; }
+.radar { --accent: var(--primary); }
+.radar-ring, .radar-axis { stroke: var(--line-2); }
+.radar-label { fill: var(--muted); }
+.tooltip { background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--radius-btn); box-shadow: 0 10px 30px rgb(2 6 23 / 25%); }
+.legend { color: var(--muted); }
+
+/* ---------- the background: a soft green glow behind every screen, drawn in CSS (no image to load, and it follows the theme) ---------- */
+/* The glow takes the colour of the player's party while a game is on (the accent changes with it), and the faint grid is behind every screen. */
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(70% 55% at 85% 0%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 70%),
+    radial-gradient(55% 45% at 0% 100%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 70%),
+    linear-gradient(color-mix(in srgb, var(--line) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--line) 55%, transparent) 1px, transparent 1px);
+  background-size: auto, auto, 48px 48px, 48px 48px;
+  background-attachment: fixed;
+}
+.title.menu-stage:not(.sub) .main-menu .unlock-next { color: var(--muted); text-shadow: none; font-size: 0.9rem; }
+.unlock-roadmap { background: transparent; border: 1px solid var(--line); border-radius: var(--radius); }
