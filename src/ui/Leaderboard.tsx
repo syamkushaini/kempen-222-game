@@ -5,7 +5,8 @@ import { PARTY_IDS, type PartyId } from '../sim/types';
 import { journeyLevel } from '../sim/campaign/journey';
 import { BOARD_SIZE, CONFIG, LEVELS, NAME_MAX, countsForBoard, lastName, nameOk, rememberName, cleanName, post, postedGames, rememberPosted, submissionOf, top, type Filter, type Level, type Row } from '../state/leaderboard';
 import { levelSubmission, playerId, postLevel, topLevels, type LevelRow } from '../state/journeyBoard';
-import { loadJourneyParty } from '../state/journeyParty';
+import { JOURNEY_LEVELS, loadJourneyParty } from '../state/journeyParty';
+import type { Difficulty } from '../sim/campaign/types';
 import { legacyEntry } from '../state/profile';
 import { useStore } from '../state/store';
 import type { StringKey } from '../i18n/strings';
@@ -69,12 +70,14 @@ export function PostLevel({ onPosted, compact = false }: { onPosted?(): void; co
   const journey = useStore((s) => s.profile.journey);
   const mine = journeyLevel(journey);
   const [party] = useState(() => loadJourneyParty());
+  // A level is posted to the board of the difficulty the career is played at (the one chosen when it was started).
+  const level = party?.level ?? 'easy';
   const [name, setName] = useState(() => lastName() || cleanName(party?.name ?? ''));
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'failed' | 'bad'>('idle');
   if (!hasLeaderboard) return null;
   if (!party?.identity) return <p className="muted small">{t('lb.journey.noParty')}</p>;
   const send = async () => {
-    const sub = levelSubmission(playerId(), name, party.identity, mine, journey?.governed.length ?? 0, __APP_VERSION__);
+    const sub = levelSubmission(playerId(), name, party.identity, mine, journey?.governed.length ?? 0, __APP_VERSION__, level);
     if (!sub) { setState('bad'); return; }
     setState('busy');
     const result = await postLevel(sub);
@@ -85,7 +88,7 @@ export function PostLevel({ onPosted, compact = false }: { onPosted?(): void; co
     <div className={compact ? 'post-level compact' : 'post-level'}>
       {!compact && <p className="muted small">{t('lb.journey.sends')}</p>}
       <div className="post-row">
-        <span className="num">{t('lb.journey.mine', { n: mine })}</span>
+        <span className="num">{t('lb.journey.mine', { n: mine })} · {t(`journey.level.${level}` as StringKey)}</span>
         <label className="field-label" htmlFor={compact ? 'level-name-result' : 'level-name'}>{t('lb.post.name')}</label>
         <input id={compact ? 'level-name-result' : 'level-name'} className="text-input" value={name} maxLength={NAME_MAX} autoComplete="off" onChange={(e) => { setName(e.target.value); setState('idle'); }} />
         <button className="btn primary" disabled={state === 'busy'} onClick={() => void send()}>{state === 'busy' ? t('lb.post.busy') : t('lb.journey.post')}</button>
@@ -100,12 +103,19 @@ export function PostLevel({ onPosted, compact = false }: { onPosted?(): void; co
 /** The Career Campaign board: each player's highest level, the states they have taken, and the party they made. */
 function JourneyBoard() {
   const t = useT();
+  // Each level of difficulty has a board of its own, and opens on the one the player is playing at.
+  const [level, setLevel] = useState<Difficulty>(() => loadJourneyParty()?.level ?? 'easy');
   const [rows, setRows] = useState<LevelRow[] | null | 'loading'>('loading');
-  const load = useCallback(() => { setRows('loading'); void topLevels().then(setRows); }, []);
+  const load = useCallback(() => { setRows('loading'); void topLevels(level).then(setRows); }, [level]);
   useEffect(() => { load(); }, [load]);
   return (
     <>
-      <p className="muted small">{t('lb.journey.note')}</p>
+      <div className="segmented small" role="group" aria-label={t('journey.setup.level')}>
+        {JOURNEY_LEVELS.map((d) => (
+          <button key={d} aria-pressed={level === d} className={level === d ? 'active' : ''} onClick={() => setLevel(d)}>{t(`journey.level.${d}` as StringKey)}</button>
+        ))}
+      </div>
+      <p className="muted small">{t(`journey.level.${level}.hint` as StringKey)} {t('lb.journey.note')}</p>
       <PostLevel onPosted={load} />
       <BoardState rows={rows} retry={load} />
       {Array.isArray(rows) && rows.length > 0 && (
