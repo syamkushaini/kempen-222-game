@@ -73,7 +73,8 @@ Kempen 222 by the project's owner with Claude, and free of any third-party licen
 
 crowd-person.glb
 ----------------
-A low-poly cartoon person in five parts (a whole body for the crowd, and a torso, a leg, an arm and a head for the figures whose limbs move),
+A low-poly cartoon person in five parts (a whole body for the crowd, and a torso, a leg, an arm and a head with a simple face for the figures
+whose limbs move),
 modelled in Blender for Kempen 222 by the project's owner with Claude, and free of any third-party licence. The parts are painted in greys
 that multiply the shirt, trouser and skin colours given in code (src/ui/stage/people.ts).
 

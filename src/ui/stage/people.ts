@@ -1,8 +1,9 @@
 import { sharedShapes } from './shapes';
 
 // The shapes of the cartoon people, modelled in Blender for Kempen 222 (public/models/crowd-person.glb): a whole body for the crowd, and a
-// torso, a leg, an arm and a head for the figures whose limbs move. Each part is painted in greys (shirt white, trousers and shoes dark, hair
-// near black) that multiply the colour given in code, so one model serves every shirt and every skin. The file is 48 KB and is fetched once;
+// torso, a leg, an arm and a head (with eyes, eyebrows and a smile) for the figures whose limbs move. Each part is painted in greys (shirt
+// white, trousers and shoes dark, hair and face near black) that multiply the colour given in code, so one model serves every shirt and every
+// skin. The file is 66 KB and is fetched once;
 // until it arrives, or if it cannot be fetched, the people are drawn from capsules and spheres as before.
 
 const people = sharedShapes('crowd-person.glb', { crowd: 'CrowdBody', torso: 'Torso', leg: 'Leg', arm: 'Arm', head: 'Head' });

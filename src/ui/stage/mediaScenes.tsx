@@ -7,16 +7,17 @@ import { ModelBoundary } from './ModelBoundary';
 import { CameraOperator } from './CameraOperator';
 import { Reporter } from './Reporter';
 import { Prop } from './Props';
-import { useTrinkets } from './people';
+import { usePeople, useTrinkets } from './people';
 import { Anim, Ball, Banner, Box, Bubble, Coin, Crowd, ease, Figure, Flag, Ground, Heart, Hero, Mat, rnd, span, Wave, Painted } from './parts';
 import { crowdColors, type SceneProps } from './groundScenes';
 
-/** The tycoon's head under his top hat (the modelled hat with its red band, or two cylinders until it is loaded). */
+/** The tycoon's head under his top hat: the people's modelled head with its face, and the hat with its red band (a ball and two cylinders until they load). */
 function TycoonHead() {
   const shape = useTrinkets();
+  const person = usePeople();
   return (
     <group position={[0, 1.6, 0]}>
-      <Ball r={0.19} c="#c98d62" />
+      {person ? <mesh geometry={person.head}><Painted c="#c98d62" /></mesh> : <Ball r={0.19} c="#c98d62" />}
       {shape ? <mesh geometry={shape.hat}><Painted c="#ffffff" /></mesh> : (
         <><mesh position={[0, 0.22, 0]}><cylinderGeometry args={[0.13, 0.15, 0.22, 14]} /><Mat c="#15181f" /></mesh><mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.27, 0.27, 0.03, 14]} /><Mat c="#15181f" /></mesh></>
       )}
