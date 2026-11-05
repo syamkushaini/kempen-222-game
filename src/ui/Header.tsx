@@ -107,7 +107,7 @@ function Hud() {
   return (
     <div className="hud">
       <div className="hud-item">
-        <span className="hud-label">{final ? t('hud.finalWeek') : t('hud.week', { n: campaign.week, total: campaign.totalWeeks })}</span>
+        <span className="hud-label">{campaign.rebuild && campaign.week <= campaign.rebuild ? t('hud.rebuild', { n: campaign.week, total: campaign.rebuild }) : final ? t('hud.finalWeek') : t('hud.week', { n: campaign.week, total: campaign.totalWeeks })}</span>
         <div className="weeks" aria-hidden="true">
           {Array.from({ length: campaign.totalWeeks }, (_, i) => (
             <i key={i} className={i + 1 < campaign.week ? 'past' : i + 1 === campaign.week ? 'now' : ''} />
@@ -221,10 +221,11 @@ export function Header() {
   const openScene = useStore((s) => s.openScene);
   const week = useStore((s) => s.game?.campaign.week);
   const totalWeeks = useStore((s) => s.game?.campaign.totalWeeks);
+  const rebuild = useStore((s) => s.game?.campaign.rebuild);
   const career = useStore((s) => s.game?.campaign.career);
   // On a phone the bar is one line: whose campaign, and where in it. The week has no box of its own there.
   const when = phase === 'campaign' && week !== undefined && totalWeeks !== undefined
-    ? (week === totalWeeks ? t('hud.finalWeek') : t('hud.week', { n: week, total: totalWeeks }))
+    ? (rebuild && week <= rebuild ? t('hud.rebuild', { n: week, total: rebuild }) : week === totalWeeks ? t('hud.finalWeek') : t('hud.week', { n: week, total: totalWeeks }))
     : phase === 'term' && career ? t('term.date', { term: career.term, year: Math.floor((career.week - 1) / 52) + 1, week: ((career.week - 1) % 52) + 1 }) : null;
   // The sticky sidebar sits below the bar, so it needs to know how tall the bar is.
   useEffect(() => {

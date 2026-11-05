@@ -23,6 +23,8 @@ export const ACTION_IDS = [
   'local',
   // A state election's flags and banners, hung in every area at once.
   'blitz',
+  // Only in the weeks a beaten party spends in opposition rebuilding, before the election comes round again.
+  'regroup', 'listen', 'scrutiny',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 export type Family = 'ground' | 'machinery' | 'media' | 'funds';
@@ -924,6 +926,8 @@ export interface Campaign {
   /** Absent in a game played without any. */
   challenge?: Challenge;
   totalWeeks: number;
+  /** The first weeks of a contest played again after a defeat, spent as the opposition rebuilding: the election comes only after them. */
+  rebuild?: number;
   /** Current week, starting at 1. */
   week: number;
   phase: Phase;

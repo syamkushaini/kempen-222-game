@@ -176,6 +176,9 @@ function playerNews(c: Campaign, r: ActionReport): NewsItem {
     case 'radio': return item('news.me.radio', { state: ref.state(target.state!) });
     case 'blitz': return item(`news.me.blitz.${target.sweep ?? 'flags'}`, {}, 'good');
     case 'troops': return item(`news.me.troops.${quality === 'backfire' ? 'backfire' : 'ok'}`, { party: ref.party(target.party!) }, quality === 'backfire' ? 'bad' : 'neutral');
+    case 'regroup': return item('news.me.regroup', {}, 'good');
+    case 'listen': return item('news.me.listen', {}, 'good');
+    case 'scrutiny': return item('news.me.scrutiny', { party: ref.party(target.party!) }, 'good');
     case 'local': return item('news.me.local', { state: ref.state(target.state!) }, 'good');
   }
 }

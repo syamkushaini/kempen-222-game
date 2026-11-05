@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import '../data/allStates';
-import { dunByElections, getWorld, nextContest } from '../data/world';
+import { dunByElections, getWorld, nextContest, worldOf } from '../data/world';
 import { FOUNDING_SLOT } from '../sim/campaign/founding';
-import { emptyJourney, nextAfterLoss, nextStep, record } from '../sim/campaign/journey';
+import { REBUILD_WEEKS, emptyJourney, nextAfterLoss, nextStep, record } from '../sim/campaign/journey';
+import { REBUILD_ONLY, canDo, rebuilding } from '../sim/campaign/actions';
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from './store';
 
@@ -63,5 +64,44 @@ describe('a Career Campaign game', () => {
       expect(after.start?.journey).toBe(true);
       expect(j?.dunWon ?? 0).toBe(0);
     }
+  });
+});
+
+describe('the weeks of rebuilding after a loss', () => {
+  it('open a contest played again with weeks in opposition before the election, and survive a restart', () => {
+    const PS = PARTY_IDS.indexOf('ps');
+    useStore.getState().quitToTitle();
+    const base = getWorld(dun())!.rules.weeks;
+    useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: PS, difficulty: 'normal', founded: true, journey: true, rebuild: REBUILD_WEEKS, weeks: base + REBUILD_WEEKS });
+    const c = useStore.getState().game!.campaign;
+    expect(c.rebuild).toBe(REBUILD_WEEKS);
+    expect(c.totalWeeks).toBe(base + REBUILD_WEEKS);
+    useStore.getState().restart();
+    expect(useStore.getState().game!.campaign.rebuild).toBe(REBUILD_WEEKS);
+  });
+});
+
+describe('opposition actions in the weeks of rebuilding', () => {
+  it('are open only while the rebuild weeks last, and work', () => {
+    const PS = PARTY_IDS.indexOf('ps');
+    useStore.getState().quitToTitle();
+    const base = getWorld(dun())!.rules.weeks;
+    useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: PS, difficulty: 'normal', founded: true, journey: true, rebuild: REBUILD_WEEKS, weeks: base + REBUILD_WEEKS });
+    const world = () => worldOf(useStore.getState().game!.campaign)!;
+    const c = () => useStore.getState().game!.campaign;
+    const rival = PARTY_IDS.indexOf('pt');
+    for (const id of REBUILD_ONLY) expect(JSON.stringify(canDo(world(), c(), PS, id, id === 'scrutiny' ? { party: rival } : {})), id).toBe('{"ok":true}');
+    const before = c().parties[PS]!.unity;
+    useStore.getState().act('regroup', {});
+    expect(c().parties[PS]!.unity).toBeGreaterThanOrEqual(before);
+    for (let i = 0; i < REBUILD_WEEKS; i++) useStore.getState().endWeek();
+    expect(rebuilding(c())).toBe(false);
+    for (const id of REBUILD_ONLY) expect(canDo(world(), c(), PS, id, id === 'scrutiny' ? { party: rival } : {}).ok, id).toBe(false);
+  });
+  it('are not open in an ordinary contest', () => {
+    const PS = PARTY_IDS.indexOf('ps');
+    useStore.getState().quitToTitle();
+    useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: PS, difficulty: 'normal', founded: true, journey: true });
+    for (const id of REBUILD_ONLY) expect(canDo(getWorld(dun())!, useStore.getState().game!.campaign, PS, id, id === 'scrutiny' ? { party: 0 } : {}).ok, id).toBe(false);
   });
 });

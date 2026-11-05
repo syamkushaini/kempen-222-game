@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
-import { ACTIONS, PITCHED, blitzAreas, actionCost, canDo, expectedPitchGain, expectedSeatGain, debateOdds, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
+import { ACTIONS, PITCHED, REBUILD_ONLY, rebuilding, blitzAreas, actionCost, canDo, expectedPitchGain, expectedSeatGain, debateOdds, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
 import { ISSUE_IDS, LOCAL_THEMES, POSTURES, SWEEPS, type IssueId, type LocalTheme, type Posture, type Sweep } from '../sim/campaign/types';
 import { weatherIn } from '../sim/campaign/weather';
 import { MEDIA_AIMED, resentfulOf, segmentShare, segmentsOf, type SegmentId } from '../sim/campaign/segments';
@@ -18,9 +18,9 @@ import { NominationsPanel } from './Nominations';
 import { EntriesPanel } from './Entries';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
-  { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival', 'local'] },
-  { family: 'machinery', actions: ['canvass', 'gotv', 'build', 'blitz', 'conference'] },
-  { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack', 'troops'] },
+  { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival', 'local', 'listen'] },
+  { family: 'machinery', actions: ['canvass', 'gotv', 'build', 'blitz', 'conference', 'regroup'] },
+  { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack', 'troops', 'scrutiny'] },
   { family: 'funds', actions: ['dinner', 'crowdfund', 'tycoon'] },
 ];
 
@@ -28,7 +28,7 @@ const FAMILIES: { family: Family; actions: ActionId[] }[] = [
 const ACTION_ICON: Record<ActionId, IconName> = {
   ceramah: 'megaphone', walkabout: 'walk', megarally: 'flag', canvass: 'home', gotv: 'ballot', build: 'tool',
   tv: 'tv', social: 'phone', billboards: 'board', attack: 'bolt', dinner: 'coins', crowdfund: 'heart', tycoon: 'crown',
-  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic', local: 'flag', troops: 'bolt', blitz: 'board',
+  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic', local: 'flag', troops: 'bolt', blitz: 'board', regroup: 'people', listen: 'walk', scrutiny: 'chat',
 };
 
 const GROUPS_KEY = 'k222.groups';
@@ -278,7 +278,7 @@ export function ActionsTab() {
       )}
       <p className={`muted small weather weather-${weatherIn(world, campaign, state)}`}>{t(`weather.${weatherIn(world, campaign, state)}` as StringKey, { state: regionLabel(t, world, state) })}</p>
       {FAMILIES.map(({ family, actions: all }) => {
-        const actions = all.filter((id) => world.rules.actions.includes(id));
+        const actions = all.filter((id) => world.rules.actions.includes(id) && (!REBUILD_ONLY.includes(id) || rebuilding(campaign)));
         if (actions.length === 0) return null;
         return (
           <details key={family} id={`family-${family}`} className="action-family" open={guided || open[family]} onToggle={(e) => { if (!guided) setGroup(family, e.currentTarget.open); }}>
