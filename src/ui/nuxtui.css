@@ -97,3 +97,17 @@ h2 { font-weight: 600; letter-spacing: -0.01em; }
 .radar-label { fill: var(--muted); }
 .tooltip { background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--radius-btn); box-shadow: 0 10px 30px rgb(2 6 23 / 25%); }
 .legend { color: var(--muted); }
+
+/* ---------- the background: a soft green glow behind every screen, drawn in CSS (no image to load, and it follows the theme) ---------- */
+/* The glow takes the colour of the player's party while a game is on (the accent changes with it), and the faint grid is behind every screen. */
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(70% 55% at 85% 0%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 70%),
+    radial-gradient(55% 45% at 0% 100%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 70%),
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: auto, auto, 48px 48px, 48px 48px;
+  background-attachment: fixed;
+}
+.title.menu-stage:not(.sub) .main-menu .unlock-next { color: var(--muted); text-shadow: none; font-size: 0.9rem; }
