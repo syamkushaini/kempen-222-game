@@ -84,6 +84,19 @@ describe('the voting booth model', () => {
   });
 });
 
+describe.each([['tv-camera.glb', 60_000], ['studio-mic.glb', 40_000], ['lectern.glb', 40_000]])('the studio prop in %s', (file, max) => {
+  it('is one small model, listed in the credits file', () => {
+    expect(readFileSync(join(process.cwd(), 'public/models', file)).length).toBeLessThan(max);
+    glbJson(`public/models/${file}`);
+    expect(readFileSync(join(process.cwd(), 'public/models/CREDITS.txt'), 'utf8')).toContain(file);
+  });
+});
+
+it('keeps the lectern panel material that takes the party colour', () => {
+  const mats = ((glbJson('public/models/lectern.glb') as unknown as { materials: { name: string }[] }).materials).map((m) => m.name);
+  expect(mats).toContain('Panel');
+});
+
 describe('which model stands for whom', () => {
   const look = (wear: Look['wear'], extra: Partial<Look> = {}): Look => ({ skin: 1, hair: 'short', hairColor: 'black', wear, ...extra });
   it('puts the player’s leader in the model that matches what they wear', () => {
