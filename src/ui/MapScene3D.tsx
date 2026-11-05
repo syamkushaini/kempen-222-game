@@ -472,7 +472,8 @@ export default function MapScene3DView(props: MapScene3DProps) {
     <>
       <div className="map3d" role="img" aria-label={props.label}>
         <Canvas
-          frameloop="demand" dpr={[1, 2]} style={{ touchAction: 'none' }}
+          // flat: no tone mapping, as the map had before it moved to react-three-fiber, so the party colours come out as chosen
+          flat frameloop="demand" dpr={[1, 2]} style={{ touchAction: 'none' }}
           gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
           camera={{ fov: FOV, near: 0.01, far: 100000 }}
         >
