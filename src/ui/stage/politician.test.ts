@@ -84,7 +84,7 @@ describe('the voting booth model', () => {
   });
 });
 
-describe.each([['tv-camera.glb', 60_000], ['studio-mic.glb', 40_000], ['lectern.glb', 40_000]])('the studio prop in %s', (file, max) => {
+describe.each([['tv-camera.glb', 60_000], ['studio-mic.glb', 40_000], ['lectern.glb', 40_000], ['rally-stage.glb', 40_000], ['truss.glb', 60_000], ['lamp-post.glb', 30_000], ['market-stall.glb', 40_000], ['terrace-house.glb', 40_000], ['kampung-house.glb', 60_000], ['tree.glb', 30_000], ['palm.glb', 50_000], ['billboard-frame.glb', 40_000]])('the prop in %s', (file, max) => {
   it('is one small model, listed in the credits file', () => {
     expect(readFileSync(join(process.cwd(), 'public/models', file)).length).toBeLessThan(max);
     glbJson(`public/models/${file}`);
@@ -92,9 +92,19 @@ describe.each([['tv-camera.glb', 60_000], ['studio-mic.glb', 40_000], ['lectern.
   });
 });
 
-it('keeps the lectern panel material that takes the party colour', () => {
-  const mats = ((glbJson('public/models/lectern.glb') as unknown as { materials: { name: string }[] }).materials).map((m) => m.name);
-  expect(mats).toContain('Panel');
+it.each([['lectern.glb', 'Panel'], ['rally-stage.glb', 'Deck'], ['market-stall.glb', 'Canopy'], ['terrace-house.glb', 'Roof'], ['kampung-house.glb', 'Roof']])('keeps in %s the material %s that takes a colour', (file, name) => {
+  const mats = ((glbJson(`public/models/${file}`) as unknown as { materials: { name: string }[] }).materials).map((m) => m.name);
+  expect(mats).toContain(name);
+});
+
+describe('the crowd person model', () => {
+  const g = glbJson('public/models/crowd-person.glb') as unknown as { nodes: { name?: string }[]; meshes: { primitives: { attributes: Record<string, number> }[] }[] };
+  it('has the five parts the people are drawn from, each one painted with vertex colours, and is small', () => {
+    expect(g.nodes.map((n) => n.name).sort()).toEqual(['Arm', 'CrowdBody', 'Head', 'Leg', 'Torso']);
+    for (const m of g.meshes) { expect(m.primitives).toHaveLength(1); expect(m.primitives[0].attributes).toHaveProperty('COLOR_0'); }
+    expect(readFileSync(join(process.cwd(), 'public/models/crowd-person.glb')).length).toBeLessThan(80_000);
+    expect(readFileSync(join(process.cwd(), 'public/models/CREDITS.txt'), 'utf8')).toContain('crowd-person.glb');
+  });
 });
 
 describe('which model stands for whom', () => {

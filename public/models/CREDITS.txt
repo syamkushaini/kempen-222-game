@@ -56,4 +56,23 @@ tv-camera.glb, studio-mic.glb, lectern.glb
 ------------------------------------------
 Three low-poly studio props (a television camera on a tripod, a desk microphone, a lectern) modelled in Blender for Kempen 222 by the
 project's owner with Claude, and free of any third-party licence. The lectern's front panel takes the party's colour in code
-(src/ui/stage/StudioProps.tsx).
+(src/ui/stage/Props.tsx).
+
+rally-stage.glb, truss.glb, lamp-post.glb, market-stall.glb
+-----------------------------------------------------------
+Four low-poly rally props (a plank stage with steps and handrails, an aluminium truss frame with two stage lamps, a ceramah lamp post and a
+festival market stall) modelled in Blender for Kempen 222 by the project's owner with Claude, and free of any third-party licence. The
+stage's planks and the stall's canopy take a colour in code (src/ui/stage/Props.tsx).
+
+terrace-house.glb, kampung-house.glb, tree.glb, palm.glb, billboard-frame.glb
+-----------------------------------------------------------------------------
+Five low-poly street props (a terrace house with a dark doorway for the door that swings open in code, a timber kampung house on stilts
+with crossed gable finials, a shade tree, a coconut palm and a steel billboard frame with a catwalk and lamps) modelled in Blender for
+Kempen 222 by the project's owner with Claude, and free of any third-party licence. The roofs of the two houses take a colour in code
+(src/ui/stage/Props.tsx).
+
+crowd-person.glb
+----------------
+A low-poly cartoon person in five parts (a whole body for the crowd, and a torso, a leg, an arm and a head for the figures whose limbs move),
+modelled in Blender for Kempen 222 by the project's owner with Claude, and free of any third-party licence. The parts are painted in greys
+that multiply the shirt, trouser and skin colours given in code (src/ui/stage/people.ts).
