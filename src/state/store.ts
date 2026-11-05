@@ -897,7 +897,7 @@ export const useStore = create<Store>((set, get) => {
       const step = nextStep(journey, c.scenario, dunByElections);
       // In the Career Campaign a contest that was won leads on, and one that was not may be moved on from to the next election up (the
       // level does not rise for it); elsewhere the older rule carries a party on regardless.
-      const next = world && (g.start?.journey ? step ?? nextAfterLoss(journey, c.scenario, dunByElections) : step ?? nextContest(c.scenario, world));
+      const next = world && (g.start?.journey ? step ?? nextAfterLoss(journey, c.scenario) : step ?? nextContest(c.scenario, world));
       if (!world || !result || !next) return;
       const share = summarise(world, c, result).voteShare;
       await loadScenario(next);

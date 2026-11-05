@@ -23,8 +23,8 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
   // A new party that has finished a by-election or a state election can carry on to the next contest up.
   const next = useStore((s) => { const c = s.game?.campaign; return c && c.newParty && !c.career && !s.game?.aside && c.phase === 'done' ? (s.game?.start?.journey ? nextStep(s.profile.journey ?? emptyJourney(), c.scenario, dunByElections) : nextStep(s.profile.journey ?? emptyJourney(), c.scenario, dunByElections) ?? nextContest(c.scenario, world)) : null; });
   const inJourney = useStore((s) => !!s.game?.start?.journey && !s.game.campaign.career);
-  // A Career Campaign contest that was not won can also be moved on from: the next election up, without the level rising for this one.
-  const skip = useStore((s) => { const c = s.game?.campaign; return c && c.newParty && !c.career && !s.game?.aside && c.phase === 'done' && s.game?.start?.journey ? nextAfterLoss(s.profile.journey ?? emptyJourney(), c.scenario, dunByElections) : null; });
+  // A Career Campaign contest that was not won can be carried on: the same contest again at the next election, from the result just had.
+  const skip = useStore((s) => { const c = s.game?.campaign; return c && c.newParty && !c.career && !s.game?.aside && c.phase === 'done' && s.game?.start?.journey ? nextAfterLoss(s.profile.journey ?? emptyJourney(), c.scenario) : null; });
   const journey = useStore((s) => s.profile.journey);
   if (aside) {
     const next = aside.queue[0];
@@ -50,7 +50,7 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
     return (
       <>
         <button className="btn primary" onClick={() => { countClick('again', 'restart'); doRestart(); }}>{t('jr.retry')} ▸</button>
-        {skip && <button className="btn" onClick={() => { countClick('again', 'climb'); void climb(); }}>{t('jr.skip', { next: label(skip) })} ▸</button>}
+        {skip && <button className="btn" onClick={() => { countClick('again', 'climb'); void climb(); }}>{t('jr.carry', { place: skip.startsWith('state:') ? t(`state.${skip.slice(6)}` as StringKey) : vacancyOf(skip.slice('byelection:'.length))?.name ?? '' })} ▸</button>}
         <button className="btn" onClick={() => { countClick('again', 'new'); quitToTitle(); }}>{t('jr.menu')}</button>
       </>
     );

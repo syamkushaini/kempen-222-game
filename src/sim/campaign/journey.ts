@@ -100,26 +100,15 @@ export function nextStep(j: Journey, scenario: string, seats: (st: StateId) => s
 }
 
 /**
- * Where a player who did not win this contest can carry on to instead of trying it again, or null if there is nowhere else to go. The level
- * is not touched (see `record`): this only offers the next election up, so that a player is not held at one contest until it is won.
- * A lost DUN by-election goes to the next by-election seat of the state that is not yet won (round to the first again), and when no other
- * seat is left, to the state's election. A state election that did not take the state goes to the next state on the route that is not yet taken.
+ * The contest a player who did not win this one can carry on to, or null if there is none: the same contest again, at the next election
+ * (the same DUN seat, the same state), so that the player keeps fighting it until it is won. It starts from the result just had (the vote
+ * won becomes the party's following and stronghold, as when a win leads on), where "try this again" starts from nothing. The level is
+ * not touched (see `record`): it rises only for a contest won. A general election or a state already taken has nothing to carry on to.
  */
-export function nextAfterLoss(j: Journey, scenario: string, seats: (st: StateId) => string[]): string | null {
-  if (isDun(scenario)) {
-    const st = dunState(scenario);
-    const all = seats(st);
-    const open = (s: string) => s !== scenario && !(j.state === st && j.fought.includes(s));
-    const at = all.indexOf(scenario);
-    const after = all.slice(at + 1).find(open) ?? all.find(open);
-    return after ?? `state:${st}`;
-  }
+export function nextAfterLoss(j: Journey, scenario: string): string | null {
+  if (isDun(scenario)) return scenario;
   const st = stateOf(scenario);
-  if (!st || j.governed.includes(st)) return null;
-  const at = STATE_ROUTE.indexOf(st);
-  const route = [...STATE_ROUTE.slice(at + 1), ...STATE_ROUTE.slice(0, at)];
-  const next = route.find((s) => !j.governed.includes(s));
-  return next ? `state:${next}` : null;
+  return st && !j.governed.includes(st) ? scenario : null;
 }
 
 /** How the contest that has just ended went for the journey, or null while it is not over (as `clearedHeat` does for the heat ladder). */
