@@ -1,7 +1,8 @@
 import { isValidIdentity, type Identity } from './identity';
 
 // The party a player made for the Career Campaign: the name they play under and the party, logo and leader they chose. It is kept in
-// this browser so that the next visit starts from it (the player can change anything); nothing about it is sent anywhere.
+// this browser so that the next visit starts from it (the player can change anything). It is sent only if the player posts their level to
+// the Career Campaign board, and then only the party's name, short name, colour and logo (see journeyBoard.ts), never their pictures.
 
 export interface JourneyParty { name: string; identity: Identity | null }
 
