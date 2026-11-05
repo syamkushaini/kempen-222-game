@@ -29,9 +29,17 @@ describe('the level board', () => {
     expect(cleanPartyShort('p.h-r 1')).toBe('PHR1');
     expect(cleanPartyShort('---')).toBe('');
   });
-  it('posts with an upsert and reports failure without throwing', async () => {
+  it('posts through the post_level function and reports failure without throwing', async () => {
     const sub = levelSubmission('player-1234', 'Aina', party, 2, 0, '1')!;
-    expect(await postLevel(sub, cfg, reply(201))).toBe('ok');
+    let seen: { url: string; body: Record<string, unknown> } | null = null;
+    const spy = (async (url: string, init: RequestInit) => { seen = { url, body: JSON.parse(String(init.body)) }; return new Response(null, { status: 204 }); }) as unknown as typeof fetch;
+    expect(await postLevel(sub, cfg, spy)).toBe('ok');
+    expect(seen!.url).toBe('https://x.supabase.co/rest/v1/rpc/post_level');
+    expect(seen!.body).toEqual({
+      p_player: 'player-1234', p_name: 'Aina', p_party_name: 'Parti Harapan Rakyat', p_party_short: 'PHR', p_party_color: '#2f6fb0', p_emblem: 'paddy',
+      p_level: 2, p_governed: 0, p_version: '1',
+    });
+    expect(await postLevel(sub, cfg, reply(200))).toBe('ok');
     expect(await postLevel(sub, cfg, reply(500))).toBe('failed');
     expect(await postLevel(sub, null, reply(201))).toBe('failed');
   });

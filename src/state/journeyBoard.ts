@@ -62,13 +62,21 @@ export function levelSubmission(player: string, name: string, party: Identity | 
 }
 
 export type LevelPost = 'ok' | 'failed';
-/** Posts a level, or raises the one already posted. Nothing is thrown. */
+/**
+ * Posts a level, or raises the one already posted. Nothing is thrown. The table cannot be written to directly with the public key (it
+ * could not even see the player column that tells one row from another), so the post goes through a function in the database,
+ * `post_level` (supabase/journey.sql), which adds the row or raises it, and never lowers it.
+ */
 export async function postLevel(sub: LevelSubmission, cfg: Config | null = CONFIG, fetchFn: Fetch = fetch): Promise<LevelPost> {
   if (!cfg) return 'failed';
-  const res = await call(fetchFn, `${cfg.url}/rest/v1/journey_levels?on_conflict=player`, {
-    method: 'POST', headers: { ...headers(cfg), 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(sub),
+  const body = {
+    p_player: sub.player, p_name: sub.name, p_party_name: sub.party_name, p_party_short: sub.party_short, p_party_color: sub.party_color,
+    p_emblem: sub.emblem, p_level: sub.level, p_governed: sub.governed, p_version: sub.version,
+  };
+  const res = await call(fetchFn, `${cfg.url}/rest/v1/rpc/post_level`, {
+    method: 'POST', headers: { ...headers(cfg), 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   });
-  return res && (res.status === 201 || res.status === 200 || res.status === 204) ? 'ok' : 'failed';
+  return res && (res.status === 200 || res.status === 204) ? 'ok' : 'failed';
 }
 
 const isRow = (x: unknown): x is LevelRow => {

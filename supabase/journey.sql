@@ -43,7 +43,22 @@ create policy "anyone can post a level" on public.journey_levels for insert to a
 drop policy if exists "a level can be raised" on public.journey_levels;
 create policy "a level can be raised" on public.journey_levels for update to anon using (true) with check (true);
 
--- The player column is never read back by the game, so a row can be raised only by whoever holds that id.
+-- The player column is never read back by the game, so a row can be raised only by whoever holds that id. For the same reason the public
+-- key cannot write to the table itself (an "add or raise" needs to see that column): it posts through post_level below instead.
 revoke all on public.journey_levels from anon;
 grant select (id, created_at, updated_at, name, party_name, party_short, party_color, emblem, level, governed) on public.journey_levels to anon;
-grant insert, update on public.journey_levels to anon;
+
+-- Adds a player's row, or raises it if the player is already on the board. It never lowers a level or the states governed: a lower number
+-- sent later is ignored. The table's own checks still refuse anything that is not a valid row, and the function runs as the table's owner.
+create or replace function public.post_level(
+  p_player text, p_name text, p_party_name text, p_party_short text, p_party_color text, p_emblem text, p_level int, p_governed int, p_version text
+) returns void language sql security definer set search_path = public as $$
+  insert into public.journey_levels as j (player, name, party_name, party_short, party_color, emblem, level, governed, version)
+  values (p_player, p_name, p_party_name, p_party_short, p_party_color, p_emblem, p_level, p_governed, p_version)
+  on conflict (player) do update set
+    name = excluded.name, party_name = excluded.party_name, party_short = excluded.party_short, party_color = excluded.party_color,
+    emblem = excluded.emblem, version = excluded.version,
+    level = greatest(j.level, excluded.level), governed = greatest(j.governed, excluded.governed);
+$$;
+revoke all on function public.post_level(text, text, text, text, text, text, int, int, text) from public;
+grant execute on function public.post_level(text, text, text, text, text, text, int, int, text) to anon;
