@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { ADVISER_LOOK, isMaleLook, leaderLook, ministerLook } from './faces';
+import { ADVISER_LOOK, leaderLook, ministerLook, modelFor } from './faces';
 import { useStore } from '../state/store';
 import { PARTY_IDS } from '../sim/types';
 import { PARTIES } from '../data/parties';
@@ -24,14 +24,17 @@ export function ActionStage() {
   const clear = useStore((s) => s.clearStage);
   const player = useStore((s) => s.game?.campaign.player ?? 0);
   const n = stage?.n;
-  // A man leading the party is drawn as the modelled politician: start fetching him while the player is still looking at the map.
+  // The leader is drawn as a modelled person, by what they wear: start fetching that model, the rival's and the neighbours' while the player is still on the map.
   const mine = leaderLook(player);
-  const male = !!mine && isMaleLook(mine.look);
+  const mineKey = mine ? JSON.stringify(modelFor(mine.look, true)) : '';
   useEffect(() => {
-    if (!male || !canDraw3D() || prefersCalm()) return;
+    if (!canDraw3D() || prefersCalm()) return;
     const later = (window as unknown as { requestIdleCallback?: (f: () => void) => number }).requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 1500));
-    later(() => { void import('./stage/Politician').then((m) => m.preloadPolitician()).catch(() => undefined); });
-  }, [male]);
+    later(() => {
+      void import('./stage/Politician').then((m) => { if (mineKey.includes('"rig"')) m.preloadPolitician(JSON.parse(mineKey).id); m.preloadPolitician('rival'); }).catch(() => undefined);
+      void import('./stage/StaticFigure').then((m) => { m.preloadStatic('baju'); m.preloadStatic('tudung'); }).catch(() => undefined);
+    });
+  }, [mineKey]);
   // the ballot box and the voting booth are 12 KB and 42 KB: they are fetched for everyone
   useEffect(() => {
     if (!canDraw3D() || prefersCalm()) return;

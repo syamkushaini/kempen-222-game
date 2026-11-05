@@ -248,6 +248,14 @@ export function staffPortrait(name: number, role: keyof typeof ROLE_ACCENT): str
  * Whether a look is a man's. The game's people carry no gender of their own, only how they dress: a suit is a man's, a blouse a woman's,
  * and the baju (which both wear) is a man's only with a songkok or facial hair.
  */
+/** The modelled people who can stand on the stage: three rigged ones that can be posed and two that come in a single piece. */
+export type RigModel = 'male' | 'female' | 'rival';
+export type StaticModel = 'baju' | 'tudung';
+/** Which model stands for this person, by what they wear: the player's own leader, or someone on the other side. */
+export function modelFor(look: Look, player: boolean): { kind: 'rig'; id: RigModel } | { kind: 'static'; id: StaticModel } {
+  if (isMaleLook(look)) return !player ? { kind: 'rig', id: 'rival' } : look.wear === 'baju' ? { kind: 'static', id: 'baju' } : { kind: 'rig', id: 'male' };
+  return look.headwear === 'scarf' ? { kind: 'static', id: 'tudung' } : { kind: 'rig', id: 'female' };
+}
 export const isMaleLook = (look: Look): boolean => look.wear === 'suit' || (look.wear === 'baju' && (!!look.facial || look.headwear === 'songkok'));
 
 /** The look and colour of a party's leader, to draw in 3D: null for the pooled independents, and for a leader whose face is a photo the player uploaded. */
