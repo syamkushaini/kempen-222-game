@@ -121,8 +121,6 @@ export function Help({ onClose }: { onClose(): void }) {
                   </div>
                 ))}
               </dl>
-              <h3>{t('help.words.keys')}</h3>
-              <p className="muted small">{t('help.words.keys.x')}</p>
             </>
           )}
         </div>

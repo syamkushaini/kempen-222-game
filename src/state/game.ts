@@ -2,6 +2,7 @@ import { STATE_SCENARIOS, worldOf } from '../data/world';
 import { START_UNITY, startRelations } from '../sim/campaign/cast';
 import { formCabinet, makeObligations, standstill, startEconomy } from '../sim/campaign/govern';
 import { ROUNDS, startStates } from '../sim/campaign/contests';
+import { validLeaderStats } from '../sim/campaign/perks';
 import { teamFor } from '../sim/campaign/team';
 import { freshParty } from '../sim/campaign/turn';
 import { challengeById } from '../sim/campaign/challenges';
@@ -55,6 +56,10 @@ export interface StartOptions {
   difficulty: Difficulty;
   seed?: number;
   backstory: BackstoryId | null;
+  /** This game is part of the Career Campaign: what comes next is the journey's to say, and a contest that was not won leads nowhere. */
+  journey?: boolean;
+  /** A leader the player built point by point instead of choosing a background (see `validLeaderStats`). */
+  leaderStats?: number[];
   ideology: IdeologyId | null;
   founded?: boolean;
   stances?: number[];
@@ -85,6 +90,7 @@ export function startOf(game: GameState): StartOptions {
     scenario: c.scenario, player: c.player, difficulty: c.difficulty,
     ...(fixed ? { seed: fixed.seed } : {}),
     backstory: c.team.leader.backstory ?? null, ideology: null,
+    ...(c.newParty && c.team.leader.backstory === null && validLeaderStats(c.team.leader.stats) ? { leaderStats: [...c.team.leader.stats] } : {}),
     ...(c.career?.founded ? { founded: true, stances: [...c.career.stances0[c.player]], ...(c.career.foundedSeat ? { seat: c.career.foundedSeat } : {}) } : c.newParty ? { founded: true, ...(c.following ? { following: c.following } : {}), ...(c.stronghold ? { stronghold: { ...c.stronghold } } : {}) } : {}),
     ...(c.challenge ? { challenge: { ...c.challenge } } : {}),
   };
@@ -98,6 +104,7 @@ function isStart(x: unknown): x is StartOptions {
     (x.difficulty === 'easy' || x.difficulty === 'normal' || x.difficulty === 'hard') &&
     (x.seed === undefined || Number.isInteger(x.seed)) &&
     (x.backstory === null || typeof x.backstory === 'string') && (x.ideology === null || typeof x.ideology === 'string') &&
+    (x.leaderStats === undefined || validLeaderStats(x.leaderStats)) && (x.journey === undefined || typeof x.journey === 'boolean') &&
     (x.founded === undefined || typeof x.founded === 'boolean') && (x.seat === undefined || typeof x.seat === 'string') && (x.realStates === undefined || typeof x.realStates === 'boolean') &&
     (x.stances === undefined || (Array.isArray(x.stances) && x.stances.every((v) => typeof v === 'number'))) &&
     (x.following === undefined || (typeof x.following === 'number' && x.following >= 0 && x.following <= 1)) &&

@@ -7,6 +7,7 @@ import { N_PARTIES, PARTY_IDS, type StateId } from '../sim/types';
 import { useStore } from '../state/store';
 import { lastOutcome, partyColor, partyName, partyShort, regionLabel, seatName, useFormat, useT, useWorld, type SeatDisplay, useNarrow } from './hooks';
 import { AgainButtons } from './Aside';
+import { JourneyResult } from './JourneyResult';
 import { sound } from './audio';
 import { MapView, type PulseKind } from './MapView';
 import { GoalResult } from './Challenges';
@@ -400,6 +401,7 @@ function ByElectionCount() {
           <section className="summary">
             <h2>{t('summary.title')}</h2>
             <p className={`verdict ${summary.verdict}`}>{t(`summary.verdict.${summary.verdict}`)}</p>
+            <JourneyResult />
             <GoalResult summary={summary} />
             <dl className="facts">
               <div><dt>{t('summary.voteShare')}</dt><dd className="num">{f.pct(summary.voteShare)}</dd></div>
@@ -411,7 +413,7 @@ function ByElectionCount() {
               <AgainButtons restart />
               <button className="btn" onClick={() => setSharing(true)}>{t('share.button')}</button>
             </div>
-            <NextContest />
+            {!campaign.newParty && <NextContest />}
             <AchievementsEarned campaign={campaign} />
             <Review campaign={campaign} result={result} />
             <RateGame campaign={campaign} />

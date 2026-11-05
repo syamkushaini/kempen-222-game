@@ -7,6 +7,7 @@ import type { GameState } from './game';
 import type { KeyValueStore } from './saves';
 import { parseStreak, type Streak } from './streak';
 import { HEAT_MAX } from '../sim/campaign/heat';
+import { emptyJourney, record as recordJourneyContest, STATE_ROUTE, type Journey, type Result } from '../sim/campaign/journey';
 
 /** One finished career, as it hangs in the gallery. */
 export interface LegacyEntry {
@@ -52,6 +53,8 @@ export interface Profile {
   streak?: Streak;
   /** The highest rung of the heat ladder cleared (see heat.ts). Absent means none. */
   heat?: number;
+  /** Progress along the journey of a new party: DUN by-elections won, and states taken (see journey.ts). Absent means none yet. */
+  journey?: Journey;
 }
 
 const KEY = 'k222.profile';
@@ -105,9 +108,31 @@ export function parseProfile(text: string | null): Profile {
     if (ids.length > 0) out.unlocked = ids;
   }
   if (isNum(raw.heat) && Number.isInteger(raw.heat) && raw.heat >= 1 && raw.heat <= HEAT_MAX) out.heat = raw.heat;
+  const journey = parseJourney(raw.journey);
+  if (journey) out.journey = journey;
   const streak = parseStreak(raw.streak);
   if (streak) out.streak = streak;
   return out;
+}
+
+const isState = (v: unknown): v is Journey['governed'][number] => typeof v === 'string' && (STATE_ROUTE as string[]).includes(v);
+
+/** A journey read back from storage, or null if there is none worth keeping. */
+function parseJourney(raw: unknown): Journey | null {
+  if (!isObj(raw)) return null;
+  const governed = Array.isArray(raw.governed) ? [...new Set(raw.governed.filter(isState))] : [];
+  const state = isState(raw.state) ? raw.state : null;
+  const fought = Array.isArray(raw.fought) ? raw.fought.filter((x): x is string => typeof x === 'string' && x.startsWith('byelection:dun:') && x.length <= 40).slice(0, 100) : [];
+  const dunWon = isNum(raw.dunWon) && Number.isInteger(raw.dunWon) && raw.dunWon >= 0 ? Math.min(raw.dunWon, 100) : 0;
+  if (!state && governed.length === 0) return null;
+  return { state, dunWon, fought, governed };
+}
+
+/** Adds a finished contest to the journey. The same profile if it changes nothing. */
+export function recordJourney(profile: Profile, scenario: string, result: Result): Profile {
+  const before = profile.journey ?? emptyJourney();
+  const after = recordJourneyContest(before, scenario, result);
+  return after === before ? profile : { ...profile, journey: after };
 }
 
 /** The Legacy Points a finished career's score is worth. */

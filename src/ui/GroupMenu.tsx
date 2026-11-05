@@ -30,13 +30,12 @@ export function GroupMenu({ groups, current, onPick, label }: { groups: GroupEnt
       </button>
       {open && (
         <ul className="group-menu-list" role="menu">
-          {groups.map((g, n) => (
+          {groups.map((g) => (
             <li key={g.id} role="none">
               <button type="button" role="menuitem" className={`${g.id === here.id ? 'active' : ''}${g.spot ? ' spot' : ''}`} onClick={() => { setOpen(false); if (g.id !== here.id) onPick(g.id); }}>
                 <Icon name={g.icon} size={18} />
                 <span className="tab-name">{g.label}</span>
                 {g.waiting > 0 && g.id !== here.id && <span className="count-badge" aria-label={g.waitingLabel}>{g.waiting}</span>}
-                <kbd>{n + 1}</kbd>
               </button>
             </li>
           ))}

@@ -5,6 +5,8 @@ const LINKS = {
   tindak: 'https://github.com/TindakMalaysia/GE15-Dataset-ARCHIVED-',
   tindak2: 'https://github.com/TindakMalaysia/HISTORICAL-ELECTION-RESULTS',
   ccby: 'https://creativecommons.org/licenses/by/4.0/',
+  model: 'https://sketchfab.com/3d-models/indian-man-in-suit-985dd9756d89464b9380414b5b12d8aa',
+  author: 'https://sketchfab.com/ar.jethin',
 };
 
 const Out = ({ href, children }: { href: string; children: string }) => (
@@ -25,6 +27,7 @@ export function Credits() {
         <li>{t('credits.tindak2')} <Out href={LINKS.tindak2}>{t('credits.link.tindak2')}</Out> · <Out href={LINKS.ccby}>CC BY 4.0</Out></li>
       </ul>
       <p>{t('credits.changes')}</p>
+      <p>{t('credits.model')} <Out href={LINKS.model}>{t('credits.link.model')}</Out> · <Out href={LINKS.author}>Pixel_Monster</Out> · <Out href={LINKS.ccby}>CC BY 4.0</Out></p>
       <p>{t('credits.analytics')}</p>
     </details>
   );

@@ -1,34 +1,42 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { PARTIES } from '../data/parties';
 import { PARTY_IDS, type PartyId } from '../sim/types';
-import { BOARD_SIZE, CONFIG, NAME_MAX, countsForBoard, lastName, nameOk, cleanName, post, postedGames, rememberPosted, submissionOf, top, LEVELS, type Filter, type Level, type Row } from '../state/leaderboard';
+import { journeyLevel } from '../sim/campaign/journey';
+import { BOARD_SIZE, CONFIG, NAME_MAX, countsForBoard, lastName, nameOk, rememberName, cleanName, post, postedGames, rememberPosted, submissionOf, type Level } from '../state/leaderboard';
+import { levelSubmission, playerId, postLevel, topLevels, type LevelRow } from '../state/journeyBoard';
 import { legacyEntry } from '../state/profile';
 import { useStore } from '../state/store';
 import { useT } from './hooks';
 import { Portrait } from './Portrait';
-import type { StringKey } from '../i18n/strings';
 import { useBackClose } from './backClose';
 
 /** Whether this build has a leaderboard at all: it has none until the maker gives it an address. */
 export const hasLeaderboard = CONFIG !== null;
 
-const FILTERS: Filter[] = ['all', 'federal', 'state'];
-
-/** The best careers posted: a board for each level of difficulty, and within it a choice of whole-country or state careers. */
-export function LeaderboardDialog({ onClose, level: first = 'normal' }: { onClose(): void; level?: Level }) {
+/** The Career Campaign board: each player's highest level, and the states they have taken. */
+export function LeaderboardDialog({ onClose }: { onClose(): void; level?: Level }) {
   useBackClose(onClose);
   const t = useT();
-  const [level, setLevel] = useState<Level>(first);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [rows, setRows] = useState<Row[] | null | 'loading'>('loading');
-  const load = useCallback((l: Level, f: Filter) => { setRows('loading'); void top(l, f).then(setRows); }, []);
-  useEffect(() => { load(level, filter); }, [level, filter, load]);
+  const journey = useStore((s) => s.profile.journey);
+  const mine = journeyLevel(journey);
+  const [rows, setRows] = useState<LevelRow[] | null | 'loading'>('loading');
+  const [name, setName] = useState(() => lastName());
+  const [state, setState] = useState<'idle' | 'busy' | 'done' | 'failed' | 'bad'>('idle');
+  const load = useCallback(() => { setRows('loading'); void topLevels().then(setRows); }, []);
+  useEffect(() => { load(); }, [load]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+  const send = async () => {
+    const sub = levelSubmission(playerId(), name, mine, journey?.governed.length ?? 0, __APP_VERSION__);
+    if (!sub) { setState('bad'); return; }
+    setState('busy');
+    const result = await postLevel(sub);
+    if (result === 'ok') { rememberName(sub.name); load(); }
+    setState(result === 'ok' ? 'done' : 'failed');
+  };
 
   return createPortal(
     <div className="overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -37,20 +45,19 @@ export function LeaderboardDialog({ onClose, level: first = 'normal' }: { onClos
           <h2>{t('lb.title')}</h2>
           <button className="btn small" onClick={onClose}>{t('lb.close')}</button>
         </div>
-        <div className="tabs" role="tablist" aria-label={t('lb.level.label')}>
-          {LEVELS.map((id) => (
-            <button key={id} role="tab" aria-selected={level === id} className={level === id ? 'tab active' : 'tab'} onClick={() => setLevel(id)}>{t(`difficulty.${id}` as StringKey)}</button>
-          ))}
+        <p className="muted small">{t('lb.journey.note')}</p>
+        <div className="post-row">
+          <span className="num">{t('lb.journey.mine', { n: mine })}</span>
+          <label className="field-label" htmlFor="level-name">{t('lb.post.name')}</label>
+          <input id="level-name" className="text-input" value={name} maxLength={NAME_MAX} autoComplete="off" onChange={(e) => { setName(e.target.value); setState('idle'); }} />
+          <button className="btn primary" disabled={state === 'busy'} onClick={() => void send()}>{state === 'busy' ? t('lb.post.busy') : t('lb.journey.post')}</button>
         </div>
-        <div className="segmented small" role="group" aria-label={t('lb.filter.label')}>
-          {FILTERS.map((id) => (
-            <button key={id} aria-pressed={filter === id} className={filter === id ? 'active' : ''} onClick={() => setFilter(id)}>{t(`lb.filter.${id}` as StringKey)}</button>
-          ))}
-        </div>
-        <p className="muted small">{t(`difficulty.${level}.hint` as StringKey)} {t('lb.note')}</p>
+        {state === 'bad' && <p className="note" role="alert">{t('lb.post.badname')}</p>}
+        {state === 'failed' && <p className="note" role="alert">{t('lb.post.failed')}</p>}
+        {state === 'done' && <p role="status">{t('lb.journey.posted')}</p>}
         {rows === 'loading' && <p className="muted" role="status">{t('lb.loading')}</p>}
         {rows === null && (
-          <p role="alert">{t('lb.error')} <button className="btn small" onClick={() => load(level, filter)}>{t('lb.retry')}</button></p>
+          <p role="alert">{t('lb.error')} <button className="btn small" onClick={load}>{t('lb.retry')}</button></p>
         )}
         {Array.isArray(rows) && rows.length === 0 && <p className="muted">{t('lb.empty')}</p>}
         {Array.isArray(rows) && rows.length > 0 && (
@@ -60,11 +67,10 @@ export function LeaderboardDialog({ onClose, level: first = 'normal' }: { onClos
                 <span className="rank num" aria-label={t('lb.rank', { n: i + 1 })}>{i + 1}</span>
                 <Portrait leader={Math.max(0, PARTY_IDS.indexOf(r.party as PartyId))} size={44} />
                 <div className="grow">
-                  <span className="action-title">{r.name} <span className="muted small">· {t(`legacy.${r.legacy}` as StringKey)}</span></span>
-                  <span className="action-meta num">{t('lb.line', { party: PARTIES[r.party as PartyId]?.name ?? r.party, years: r.years.toFixed(1), pm: r.years_pm.toFixed(1), won: r.victories, elections: r.elections })}</span>
-                  <span className="action-meta">{r.mode === 'state' && r.state ? t(`state.${r.state}` as StringKey) : t('lb.mode.federal')}</span>
+                  <span className="action-title">{r.name}</span>
+                  <span className="action-meta num">{t('lb.journey.row', { n: r.governed })}</span>
                 </div>
-                <span className="score num" aria-label={t('lb.row.score', { n: r.score })}>{r.score}</span>
+                <span className="score num" aria-label={t('lb.journey.level', { n: r.level })}>{t('lb.journey.levelShort', { n: r.level })}</span>
               </li>
             ))}
           </ol>

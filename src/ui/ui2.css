@@ -1065,3 +1065,77 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .seat-results .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }
 .seat-results-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .seat-results-note { padding: 8px 10px; }
+
+/* A way to play that the career campaign has not yet opened. */
+.menu-item.locked, .party-card.locked { opacity: 0.8; cursor: not-allowed; }
+.menu-item.locked .menu-icon { filter: grayscale(1); opacity: 0.7; }
+.menu-item.locked .menu-hint { font-weight: 600; }
+.menu-item.locked:hover { background: color-mix(in srgb, var(--panel) 92%, transparent); }
+.menu-item.locked .menu-go { visibility: hidden; }
+
+.unlock-roadmap { margin: 12px 0; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: 12px; background: color-mix(in srgb, var(--panel) 92%, transparent); }
+.unlock-roadmap h3 { margin: 0 0 4px; }
+.unlock-list { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
+.unlock-list li { display: grid; grid-template-columns: 1.5em 5.5em 1fr; gap: 8px; align-items: baseline; }
+.unlock-list li.shut { color: var(--muted); }
+.unlock-list li.open { color: var(--ink); font-weight: 600; }
+.unlock-next { margin: 4px 0 10px; font-weight: 600; }
+.title.menu-stage:not(.sub) .main-menu .unlock-next { color: #fff; opacity: 1; font-size: 0.95rem; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85), 0 0 14px rgba(0, 0, 0, 0.6); }
+
+.custom-leader { grid-column: 1 / -1; }
+.custom-leader .stat-edit { display: grid; gap: 8px; margin: 6px 0; max-width: 28rem; }
+.custom-leader .stat-row { display: grid; grid-template-columns: 8em auto auto auto; justify-content: start; gap: 6px; align-items: center; }
+.custom-leader .stat-row .btn { min-width: 2rem; padding: 0 8px; }
+
+.stat-effects { margin: 8px 0 12px; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: 12px; background: color-mix(in srgb, var(--panel) 92%, transparent); }
+.stat-effects h4 { margin: 0 0 6px; }
+.stat-effects dl { margin: 0; display: grid; gap: 6px; }
+.stat-effects dt { font-weight: 600; }
+.stat-effects dd { margin: 0; }
+.custom-leader .stat-row { grid-template-columns: 8em auto auto 3.5em auto; }
+.stat-bonus { font-weight: 600; }
+.stat-bonus.pos { color: var(--good, #1a7f37); }
+.stat-bonus.neg { color: var(--bad, #b3261e); }
+.facts.stats .stat-note { grid-column: 1 / -1; margin: 0 0 6px; }
+
+/* A 3D bust of a manager: a round canvas on a tinted disc, like the flat portraits. */
+.bust3d { position: relative; flex: none; border-radius: 50%; overflow: hidden; }
+.bust3d canvas { display: block; width: 100% !important; height: 100% !important; }
+
+.role-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.bust3d.still { display: inline-block; vertical-align: middle; }
+.bust3d.still img { display: block; width: 100%; height: 100%; }
+
+/* A manager who is speaking: the flat portrait (where 3D cannot be drawn) bobs a little. */
+.portrait.talking { animation: talk-bob 0.38s ease-in-out infinite; }
+@keyframes talk-bob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { .portrait.talking { animation: none; } }
+
+/* The words of a manager as they are typed: the whole sentence is laid out unseen so that the box does not grow line by line. */
+.typed { cursor: default; }
+.typed-grid { display: grid; }
+.typed-grid > * { grid-area: 1 / 1; }
+.typed-size { visibility: hidden; pointer-events: none; }
+.typed-now.typing::after { content: ''; display: inline-block; width: 0.5em; height: 1em; margin-left: 2px; vertical-align: text-bottom; background: currentColor; opacity: 0.55; animation: caret 0.8s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+
+/* A scene of the leader at work, played over the map for a few seconds. */
+.map-stage-wrap { position: relative; }
+.stage-overlay { position: absolute; inset: 0; z-index: 6; border-radius: inherit; overflow: hidden; cursor: pointer; animation: stage-life var(--stage-ms, 4200ms) ease-in-out forwards; box-shadow: 0 0 0 1px var(--line-2); }
+.stage3d { position: absolute; inset: 0; }
+.stage3d canvas { display: block; width: 100% !important; height: 100% !important; }
+.stage3d.mood-day { background: linear-gradient(#bfe0ff, #eaf5ff 70%); }
+.stage3d.mood-dusk { background: linear-gradient(#5b4b8a, #f0946a 62%, #f7c98b); }
+.stage3d.mood-night { background: linear-gradient(#0f1a38, #2a2f5e 70%, #3a3d6e); }
+.stage3d.mood-indoor { background: linear-gradient(#efe9dc, #d9d2c2); }
+.stage3d.mood-studio { background: linear-gradient(#1b2236, #36425f); }
+.stage-caption { position: absolute; left: 12px; bottom: 12px; margin: 0; padding: 6px 12px; border-radius: 999px; background: rgba(15, 18, 30, 0.72); color: #fff; font-weight: 600; font-size: 0.95rem; backdrop-filter: blur(4px); }
+.stage-skip { position: absolute; right: 12px; bottom: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(15, 18, 30, 0.5); color: #fff; font-size: 0.75rem; }
+@keyframes stage-life { 0% { opacity: 0; transform: scale(0.98); } 8% { opacity: 1; transform: scale(1); } 88% { opacity: 1; } 100% { opacity: 0; } }
+
+/* Where the player stands on the Career Campaign, after a contest. */
+.journey-result { display: grid; gap: 4px; margin: 10px 0; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line-2); }
+.journey-result.up { background: color-mix(in srgb, #16a34a 14%, var(--panel)); border-color: color-mix(in srgb, #16a34a 45%, var(--line-2)); }
+.journey-result.same { background: color-mix(in srgb, var(--panel) 92%, transparent); }
+.journey-result .unlocked { font-weight: 600; }

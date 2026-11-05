@@ -9,6 +9,7 @@ import type { Difficulty } from '../sim/campaign/types';
 import { PARTY_IDS } from '../sim/types';
 import { randomSeed } from '../sim/rng';
 import { useStore } from '../state/store';
+import { MODE_UNLOCKS, journeyLevel, modeOpen } from '../sim/campaign/journey';
 import { BoardButton } from './ChallengeBoard';
 import { contestName, partyName, useT, type T } from './hooks';
 
@@ -145,6 +146,7 @@ export function ChallengeInvite() {
   const set = useStore((s) => s.setPendingChallenge);
   const start = useStore((s) => s.startChallenge);
   const [state, setState] = useState<'loading' | 'ok' | 'bad'>('loading');
+  const journeyLv = journeyLevel(useStore((s) => s.profile.journey));
   useEffect(() => {
     if (!spec) return;
     let live = true;
@@ -158,6 +160,7 @@ export function ChallengeInvite() {
     return () => window.removeEventListener('keydown', onKey);
   }, [set]);
   if (!spec) return null;
+  const unlocked = modeOpen('challenges', journeyLv);
   const world = state === 'ok' ? getWorld(spec.scenario) : null;
   const rules = rulesOf(t, spec);
   return createPortal(
@@ -173,7 +176,8 @@ export function ChallengeInvite() {
           </>
         )}
         <div className="mission-buttons">
-          {state === 'ok' && <button className="btn primary" autoFocus onClick={() => start(spec)}>{t('challenge.invite.play')} ▸</button>}
+          {state === 'ok' && !unlocked && <p className="muted" role="status">🔒 {t('unlock.hint', { n: MODE_UNLOCKS.challenges })}</p>}
+          {state === 'ok' && unlocked && <button className="btn primary" autoFocus onClick={() => start(spec)}>{t('challenge.invite.play')} ▸</button>}
           {state === 'ok' && <BoardButton challenge={encodeChallenge(spec)} label={t('challenge.board.see')} />}
           <button className="btn" onClick={() => set(null)}>{t('challenge.invite.later')}</button>
         </div>
