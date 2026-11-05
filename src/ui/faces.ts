@@ -244,6 +244,12 @@ export function staffPortrait(name: number, role: keyof typeof ROLE_ACCENT): str
   return uri(`staff:${name}:${role}`, () => portraitSvg(look, ROLE_ACCENT[role]));
 }
 
+/**
+ * Whether a look is a man's. The game's people carry no gender of their own, only how they dress: a suit is a man's, a blouse a woman's,
+ * and the baju (which both wear) is a man's only with a songkok or facial hair.
+ */
+export const isMaleLook = (look: Look): boolean => look.wear === 'suit' || (look.wear === 'baju' && (!!look.facial || look.headwear === 'songkok'));
+
 /** The look and colour of a party's leader, to draw in 3D: null for the pooled independents, and for a leader whose face is a photo the player uploaded. */
 export function leaderLook(party: number): { look: Look; accent: string } | null {
   const id = PARTY_IDS[party];

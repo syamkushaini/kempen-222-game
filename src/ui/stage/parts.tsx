@@ -1,25 +1,16 @@
 import { useFrame, type ThreeElements } from '@react-three/fiber';
-import { createContext, useContext, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
+import { Suspense, useContext, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Color, Object3D, type Group, type InstancedMesh } from 'three';
 import { Bust } from '../Bust3D';
-import type { Look } from '../faces';
+import { isMaleLook, type Look } from '../faces';
+import { ModelBoundary, Politician } from './Politician';
 
 // The pieces the action scenes are built from: people, a crowd, a platform, flags, coins and the like. Everything is a plain low-poly shape
 // with one flat colour, and everything moves from one clock, so a scene is a handful of these set out and given a script.
 
-/** The scene's clock: normally the time since it began; a gallery or a test may hold it still at one moment (`freeze`). */
-export interface StageTime { freeze: number | null }
-export const Offset = createContext<StageTime>({ freeze: null });
-/** The time in seconds into the scene. */
-export const now = (elapsed: number, o: StageTime): number => o.freeze ?? elapsed;
-
-export const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-/** A smooth rise from 0 at `a` to 1 at `b`. */
-export const ease = (t: number, a: number, b: number) => { const x = clamp01((t - a) / (b - a)); return x * x * (3 - 2 * x); };
-/** A rise and fall: 0 before `a`, 1 between `b` and `c`, 0 after `d`. */
-export const span = (t: number, a: number, b: number, c: number, d: number) => ease(t, a, b) * (1 - ease(t, c, d));
-/** A number from 0 to 1 that depends only on the seed. */
-export const rnd = (n: number) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+import { clamp01, ease, now, Offset, rnd, span, type ArmPose, type StageTime } from './clock';
+export { clamp01, ease, now, Offset, rnd, span };
+export type { ArmPose, StageTime };
 
 type G = ThreeElements['group'];
 
@@ -38,8 +29,6 @@ export const Box = ({ s, c, e, op, ...rest }: { s: [number, number, number]; c: 
   <mesh {...rest}><boxGeometry args={s} /><Mat c={c} e={e} op={op} /></mesh>;
 export const Ball = ({ r, c, e, op, ...rest }: { r: number; c: string; e?: number; op?: number } & ThreeElements['mesh']) =>
   <mesh {...rest}><sphereGeometry args={[r, 14, 10]} /><Mat c={c} e={e} op={op} /></mesh>;
-
-export type ArmPose = 'down' | 'wave' | 'up' | 'point' | 'clap';
 
 /** A person: legs, a body, arms and a head (or whatever `head` is). 1.8 units tall at scale 1. */
 export function Figure({ color = '#3b82f6', skin = '#e2b088', pants = '#2b3140', arms = 'down', walk = 0, cheer = 0, phase = 0, head, headY = 1.62, scale = 1, ...rest }:
@@ -74,14 +63,27 @@ export function Figure({ color = '#3b82f6', skin = '#e2b088', pants = '#2b3140',
   );
 }
 
-/** The player's leader on the stage: a full figure with the 3D head the game draws everywhere else, talking while the scene runs. */
-export function Hero({ look, accent, talking = true, arms = 'wave', scale = 1.15, walk = 0, ...rest }: { look: Look; accent: string; talking?: boolean; arms?: ArmPose; scale?: number; walk?: number } & G) {
-  return (
+/**
+ * The player's leader on the stage: a full figure, talking while the scene runs. A man (see `isMaleLook`) who is the player's own leader is the
+ * modelled politician, in a suit with the party's rosette on the lapel; anyone else is the game's own figure with the 3D head it draws everywhere.
+ * If the model is still coming or cannot be had, the game's own figure stands in.
+ */
+export function Hero({ look, accent, talking = true, arms = 'wave', scale = 1.15, walk = 0, player = false, ...rest }:
+  { look: Look; accent: string; talking?: boolean; arms?: ArmPose; scale?: number; walk?: number; player?: boolean } & G) {
+  const figure = (
     <Figure
       color={look.wear === 'suit' ? '#2b3140' : accent} arms={arms} scale={scale} walk={walk}
       head={<group position={[0, 1.55, 0]} scale={0.205}><Bust look={look} accent={accent} calm={false} talking={talking} /></group>}
       {...rest}
     />
+  );
+  if (!player || !isMaleLook(look)) return figure;
+  return (
+    <ModelBoundary fallback={figure}>
+      <Suspense fallback={figure}>
+        <Politician pose={arms} walk={walk} talking={talking} accent={accent} scale={scale} {...rest} />
+      </Suspense>
+    </ModelBoundary>
   );
 }
 

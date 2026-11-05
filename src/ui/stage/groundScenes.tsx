@@ -40,7 +40,7 @@ export function Rally({ look, accent, kind }: SceneProps & { kind: RallyKind }) 
       <Ground c={kind === 'ceramah' ? '#8a9a7c' : '#b9c9a8'} />
       <Platform position={[0, 0, -2.6]} c={kind === 'festival' ? '#c98d3d' : '#8d6e4a'} w={big ? 5.6 : 4.2} />
       <Banner c={accent} position={[0, 0.3, -3.6]} w={big ? 5.6 : 4.2} h={big ? 2 : 1.5} />
-      <Hero look={look} accent={accent} position={[0, 0.3, -2.6]} arms="wave" />
+      <Hero look={look} accent={accent} player position={[0, 0.3, -2.6]} arms="wave" />
       <Anim f={(t, g) => { g.visible = t > 0.6; }} position={[0.7, 2.1, -2.2]}><Wave c={accent} count={3} max={kind === 'ceramah' ? 2.4 : 1.6} /></Anim>
       <Crowd n={kind === 'ceramah' ? 38 : big ? 110 : kind === 'local' ? 22 : kind === 'charity' ? 16 : 56} area={big ? [-5.5, 5.5, -0.6, 3.6] : [-3.6, 3.6, -0.6, 3.4]} colors={cols} seed={kind.length * 7} cheer={kind === 'charity' ? 0.2 : 0.9} />
       {kind === 'ceramah' && [-4.2, -2.1, 2.1, 4.2].map((x, i) => (
@@ -86,7 +86,7 @@ export function Walk({ look, accent, kind }: SceneProps & { kind: WalkKind }) {
       <Tree position={[-6.6, 0, -1.4]} /><Tree position={[6.2, 0, -1.6]} />
       {kind === 'walkabout' && [[-3.4, 1.7], [-1.2, 1.9], [1.4, 1.8], [3.6, 1.7]].map(([x, z], i) => <Figure key={i} color={cols[i + 1]} position={[x, 0, z]} arms="wave" cheer={0.4} phase={i} scale={0.85} />)}
       <Anim f={(t, g) => { g.position.set(-5 + ease(t, 0.2, 3.4) * (stop + 5), 0, 0.5); }}>
-        <Hero look={look} accent={accent} arms="wave" walk={1} scale={1.1} />
+        <Hero look={look} accent={accent} player arms="wave" walk={1} scale={1.1} />
         {[1, 2, 3, kind === 'blitz' ? 4 : 3.5].map((k, i) => <Figure key={i} color={cols[(i + 2) % cols.length]} walk={1} arms={i % 2 ? 'wave' : 'down'} phase={i * 2} scale={0.85} position={[-k * 0.75, 0, 0.35 * ((i % 3) - 1)]} />)}
       </Anim>
       {kind === 'canvass' && (
@@ -117,7 +117,7 @@ export function Hall({ look, accent, kind }: SceneProps & { kind: 'townhall' | '
           <Box s={[0.06, 1.1, 0.06]} c="#6b4a2f" position={[-0.7, 0.55, 0]} /><Box s={[0.06, 1.1, 0.06]} c="#6b4a2f" position={[0.7, 0.55, 0]} />
           {[0.35, 0.6, 0.9, 1.15].map((h, i) => <Anim key={i} f={(t, g) => { g.scale.y = Math.max(0.001, ease(t, 0.5 + i * 0.35, 1.1 + i * 0.35)); }} position={[-0.6 + i * 0.4, 1.15, 0.04]}><Box s={[0.26, h, 0.04]} c={i % 2 ? accent : '#3d6b8c'} position={[0, h / 2, 0]} /></Anim>)}
         </group>
-        <Hero look={look} accent={accent} position={[1.5, 0, -1.2]} arms="point" />
+        <Hero look={look} accent={accent} player position={[1.5, 0, -1.2]} arms="point" />
         <Anim f={(t, g) => { g.position.y = 2.7 + Math.sin(t * 2) * 0.05; g.visible = t > 0.8; }} position={[-0.8, 2.7, -0.4]}><Bubble mark="!" /></Anim>
       </>
     );
@@ -129,7 +129,7 @@ export function Hall({ look, accent, kind }: SceneProps & { kind: 'townhall' | '
       <Banner c={accent} position={[0, 0.9, -3.5]} w={5} h={1.8} />
       <Crowd n={34} area={[-3.8, 3.8, 0.4, 3.2]} colors={cols} cheer={0.15} seed={4} />
       {[[-2.2, 0.4], [-0.4, 0.6], [1.9, 0.5], [3.1, 1.2]].map(([x, z], i) => <Anim key={i} f={(t, g) => { g.visible = t > 0.9 + i * 0.5; }} position={[x, 0, z]}><Figure color={cols[i + 1]} arms="up" scale={0.55} /></Anim>)}
-      <Hero look={look} accent={accent} position={[0, 0, -1.2]} arms="point" />
+      <Hero look={look} accent={accent} player position={[0, 0, -1.2]} arms="point" />
       <Box s={[0.05, 0.9, 0.05]} c="#2a2a33" position={[0.55, 0.45, -0.9]} /><Ball r={0.07} c="#2a2a33" position={[0.55, 0.95, -0.9]} />
       {[[-2.2, 0.4], [-0.4, 0.6], [1.9, 0.5], [3.1, 1.2]].map(([x], i) => <Anim key={i} f={(t, g) => { g.visible = t > 1.3 + i * 0.55 && t < 3.9; g.position.set(x, 2.1 + ease(t, 1.3 + i * 0.55, 1.9 + i * 0.55) * 0.5, 0.5); g.scale.setScalar(0.7); }}><Bubble mark={i % 2 ? '!' : '?'} /></Anim>)}
     </>

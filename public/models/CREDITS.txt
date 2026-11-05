@@ -1,0 +1,9 @@
+politician.glb
+--------------
+"Indian Man in suit" by Pixel_Monster (https://sketchfab.com/ar.jethin)
+Source:  https://sketchfab.com/3d-models/indian-man-in-suit-985dd9756d89464b9380414b5b12d8aa
+Licence: Creative Commons Attribution 4.0 (CC BY 4.0), http://creativecommons.org/licenses/by/4.0/
+
+Changes made for Kempen 222: made smaller for the web (textures reduced to 1024 px WebP, mesh simplified and
+compressed with meshopt, teeth and the single-frame animation removed). It is posed and animated in code
+(src/ui/stage/Politician.tsx). The author and licence are also kept inside the file.

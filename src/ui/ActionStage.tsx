@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { ADVISER_LOOK, leaderLook, ministerLook } from './faces';
+import { ADVISER_LOOK, isMaleLook, leaderLook, ministerLook } from './faces';
 import { useStore } from '../state/store';
 import { PARTY_IDS } from '../sim/types';
 import { PARTIES } from '../data/parties';
@@ -24,6 +24,14 @@ export function ActionStage() {
   const clear = useStore((s) => s.clearStage);
   const player = useStore((s) => s.game?.campaign.player ?? 0);
   const n = stage?.n;
+  // A man leading the party is drawn as the modelled politician: start fetching him while the player is still looking at the map.
+  const mine = leaderLook(player);
+  const male = !!mine && isMaleLook(mine.look);
+  useEffect(() => {
+    if (!male || !canDraw3D() || prefersCalm()) return;
+    const later = (window as unknown as { requestIdleCallback?: (f: () => void) => number }).requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 1500));
+    later(() => { void import('./stage/Politician').then((m) => m.preloadPolitician()).catch(() => undefined); });
+  }, [male]);
   const playable = !!stage && canDraw3D() && !prefersCalm();
   useEffect(() => {
     if (!stage) return;

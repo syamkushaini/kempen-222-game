@@ -27,7 +27,7 @@ export function Studio({ look, accent, rival, kind }: SceneProps & { kind: Studi
       {kind === 'tv' && (
         <>
           <Box s={[2.4, 0.95, 0.8]} c={accent} position={[0, 0.48, -1.6]} />
-          <Hero look={look} accent={accent} position={[0, 0.2, -1.9]} arms="down" scale={1.1} />
+          <Hero look={look} accent={accent} player position={[0, 0.2, -1.9]} arms="down" scale={1.1} />
           <Camera x={-2.2} z={1.2} ry={0.35} /><Camera x={2.4} z={1.6} ry={-0.4} />
           <Anim f={(t, g) => { g.visible = t > 0.4 && Math.sin(t * 5) > -0.8; }} position={[0, 3.3, -3.2]}><Box s={[1.6, 0.5, 0.1]} c="#e11d2f" e={0.8} /></Anim>
           {[-3.4, 3.4].map((x) => <group key={x} position={[x, 0, -2]}><Box s={[0.05, 2.6, 0.05]} c="#2a2a33" position={[0, 1.3, 0]} /><Box s={[1.0, 0.7, 0.06]} c="#fff6d8" e={0.8} position={[0, 2.7, 0]} rotation={[0.3, 0, 0]} /></group>)}
@@ -36,7 +36,7 @@ export function Studio({ look, accent, rival, kind }: SceneProps & { kind: Studi
       {kind === 'radio' && (
         <>
           <Box s={[2.2, 0.8, 0.9]} c="#6b4a2f" position={[0, 0.4, -1.5]} />
-          <Hero look={look} accent={accent} position={[0, 0.1, -2]} arms="down" scale={1.1} />
+          <Hero look={look} accent={accent} player position={[0, 0.1, -2]} arms="down" scale={1.1} />
           <Box s={[0.05, 0.6, 0.05]} c="#2a2a33" position={[0.5, 1.1, -1.35]} /><Ball r={0.13} c="#2a2a33" position={[0.5, 1.45, -1.35]} />
           <Wave position={[0.5, 1.45, -1.3]} c="#ffffff" count={3} max={0.9} />
           <group position={[3.2, 0, -1.5]}><mesh position={[0, 1.5, 0]}><coneGeometry args={[0.5, 3, 4]} /><Mat c="#9aa3b2" /></mesh><Wave position={[0, 3.1, 0]} c={accent} count={3} max={1.5} every={1.6} /></group>
@@ -46,7 +46,7 @@ export function Studio({ look, accent, rival, kind }: SceneProps & { kind: Studi
       {kind === 'debate' && (
         <>
           <Box s={[0.9, 1.1, 0.7]} c={accent} position={[-1.7, 0.55, -1.2]} />
-          <Hero look={look} accent={accent} position={[-1.7, 0, -1.7]} arms="point" scale={1.05} />
+          <Hero look={look} accent={accent} player position={[-1.7, 0, -1.7]} arms="point" scale={1.05} />
           <Box s={[0.9, 1.1, 0.7]} c={rival.accent} position={[1.7, 0.55, -1.2]} />
           <Hero look={rival.look} accent={rival.accent} position={[1.7, 0, -1.7]} arms="up" scale={1.05} />
           <Anim f={(t, g) => { const mine = Math.floor(t / 0.9) % 2 === 0; g.position.set(mine ? -1.4 : 1.4, 2.8 + Math.sin(t * 3) * 0.05, -1.4); g.visible = t > 0.3; }}><Bubble mark="!" /></Anim>
@@ -60,7 +60,7 @@ export function Studio({ look, accent, rival, kind }: SceneProps & { kind: Studi
         <>
           <Box s={[1.1, 1.0, 0.6]} c="#8d6e4a" position={[0, 0.5, -1.6]} />
           <Banner c={accent} position={[0, 0, -3.2]} w={4.6} h={2} />
-          <Hero look={look} accent={accent} position={[0, 0, -2.1]} arms="up" />
+          <Hero look={look} accent={accent} player position={[0, 0, -2.1]} arms="up" />
           <Box s={[0.5, 0.04, 0.38]} c="#ffffff" position={[0, 1.02, -1.55]} rotation={[-0.3, 0, 0]} />
           {Array.from({ length: 16 }, (_, i) => (
             <Anim key={i} f={(t, g) => { const x = ((t - 0.5 - i * 0.12) / 1.6); g.visible = x > 0 && x < 1.2; g.position.set((rnd(i) - 0.5) * 5 * x, 1.2 + x * 2.2, -1.2 + rnd(i + 3) * 2.2 * x); g.rotation.set(x * 4, x * 3, 0.3); }}><Box s={[0.5, 0.03, 0.66]} c="#fffdf5" /></Anim>
@@ -87,7 +87,7 @@ export function Social({ look, accent, rival, kind }: SceneProps & { kind: 'soci
         {Array.from({ length: 18 }, (_, i) => (
           <Anim key={i} f={(t, g) => { const x = ((t - 0.5 - i * 0.18) / 1.5); g.visible = x > 0 && x < 1; g.position.set(-0.6 + rnd(i) * 1.2 + Math.sin(x * 5 + i) * 0.4, 1.4 + x * 3, -0.9 + rnd(i + 2) * 0.8); g.scale.setScalar(1.6 * (1 - x * 0.4)); }}><Heart c={i % 3 ? '#ec4899' : '#ef4444'} /></Anim>
         ))}
-        <Hero look={look} accent={accent} position={[-2.8, 0, 0.2]} arms="point" />
+        <Hero look={look} accent={accent} player position={[-2.8, 0, 0.2]} arms="point" />
         {[0, 1, 2, 3].map((i) => <Anim key={i} f={(t, g) => { g.visible = t > 0.9 + i * 0.4; g.scale.setScalar(ease(t, 0.9 + i * 0.4, 1.2 + i * 0.4)); }} position={[2 + (i % 2) * 0.7, 1.2 + i * 0.5, -0.4]}><Ball r={0.22} c="#ef4444" e={0.5} /></Anim>)}
       </>
     );
@@ -158,7 +158,7 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
               {[0, 1, 2, 3].map((k) => <Figure key={k} color={cols[(i + k) % cols.length]} scale={0.55} arms={k % 2 ? 'up' : 'down'} cheer={0.15} phase={k + i} position={[Math.cos(k * 1.57) * 1.1, 0, Math.sin(k * 1.57) * 1.1]} />)}
             </group>
           ))}
-          <Hero look={look} accent={accent} position={[0, 0, -2.3]} arms="up" />
+          <Hero look={look} accent={accent} player position={[0, 0, -2.3]} arms="up" />
           {tray(3.3, 0.2)}
           {Array.from({ length: 14 }, (_, i) => <Anim key={i} f={(t, g) => { const x = ((t - 0.5 - i * 0.2) / 1.0); g.visible = x > 0 && x < 1; const sx = [-2.6, 0, 2.6][i % 3]; g.position.set(sx + (3.3 - sx) * x, 1 + Math.sin(x * Math.PI) * 1.6, 0.2 + (0.2 - 0.2) * x); g.rotation.y = t * 6; }}><Coin /></Anim>)}
         </>
@@ -171,12 +171,12 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
             <Anim f={(t, g) => { g.scale.y = Math.max(0.001, ease(t, 0.8, 3.6)); }}><Box s={[1.4, 1.2, 1.0]} c="#f2c230" e={0.25} position={[0, 0.6, 0]} /></Anim>
           </group>
           {Array.from({ length: 22 }, (_, i) => <Anim key={i} f={(t, g) => { const x = ((t - 0.4 - i * 0.14) / 0.9); const a = (i % 16) / 16 * Math.PI * 2; g.visible = x > 0 && x < 1; g.position.set(Math.cos(a) * 3.2 * (1 - x), 1.3 + Math.sin(x * Math.PI) * 1.7, 0.3 + (Math.sin(a) * 2) * (1 - x)); g.rotation.y = t * 7; }}><Coin /></Anim>)}
-          <Hero look={look} accent={accent} position={[0, 0, -2.4]} arms="up" />
+          <Hero look={look} accent={accent} player position={[0, 0, -2.4]} arms="up" />
         </>
       )}
       {kind === 'tycoon' && (
         <>
-          <Hero look={look} accent={accent} position={[-1.1, 0, -1]} arms="point" />
+          <Hero look={look} accent={accent} player position={[-1.1, 0, -1]} arms="point" />
           <Figure color="#15181f" pants="#15181f" position={[1.1, 0, -1]} arms="point" scale={1.15} head={<group position={[0, 1.6, 0]}><Ball r={0.19} c="#c98d62" /><mesh position={[0, 0.22, 0]}><cylinderGeometry args={[0.13, 0.15, 0.22, 14]} /><Mat c="#15181f" /></mesh><mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.27, 0.27, 0.03, 14]} /><Mat c="#15181f" /></mesh></group>} />
           <Box s={[1.5, 0.12, 0.8]} c="#6b4a2f" position={[0, 0.75, 0.3]} /><Box s={[0.12, 0.75, 0.6]} c="#6b4a2f" position={[-0.6, 0.38, 0.3]} /><Box s={[0.12, 0.75, 0.6]} c="#6b4a2f" position={[0.6, 0.38, 0.3]} />
           <group position={[0, 0.85, 0.3]}>
@@ -204,7 +204,7 @@ export function Build({ look, accent, kind }: SceneProps & { kind: 'build' | 'go
         </Anim>
         <Flag c={accent} position={[2.2, 0, -0.9]} />
         {[0, 1, 2, 3].map((i) => <Anim key={i} f={(t, g) => { const x = ((t * 0.7 + i * 0.4) % 2.2); g.position.set(-3.6 + x * 2.2, 0, 0.2 + (i % 2) * 0.6); }}><Figure color={cols[i + 1]} walk={1} scale={0.8} arms="down" /></Anim>)}
-        <Hero look={look} accent={accent} position={[-1.8, 0, 0.5]} arms="point" />
+        <Hero look={look} accent={accent} player position={[-1.8, 0, 0.5]} arms="point" />
         <Anim f={(t, g) => { g.visible = t > 2.2; }}><Crowd n={14} area={[-1.6, 1.6, -0.2, 0.9]} colors={cols} cheer={0.6} seed={21} cheerFrom={2.4} /></Anim>
       </>
     );
@@ -228,7 +228,7 @@ export function Build({ look, accent, kind }: SceneProps & { kind: 'build' | 'go
           <Box s={[0.14, 0.5, 0.06]} c="#16a34a" e={0.6} position={[0.12, 0.05, 0]} rotation={[0, 0, -0.7]} /><Box s={[0.14, 0.28, 0.06]} c="#16a34a" e={0.6} position={[-0.12, -0.05, 0]} rotation={[0, 0, 0.7]} />
         </Anim>
       </group>
-      <Hero look={look} accent={accent} position={[-4, 0, -1.7]} arms="wave" />
+      <Hero look={look} accent={accent} player position={[-4, 0, -1.7]} arms="wave" />
     </>
   );
 }
@@ -240,7 +240,7 @@ export function Attack({ look, accent, rival }: SceneProps) {
       <Ground c="#3a3f4d" />
       <Box s={[24, 7, 0.1]} c="#2a2f3c" position={[0, 3.5, -3.4]} />
       <Box s={[0.9, 1.1, 0.7]} c={accent} position={[-2.4, 0.55, -1.2]} />
-      <Hero look={look} accent={accent} position={[-2.4, 0, -1.7]} arms="point" />
+      <Hero look={look} accent={accent} player position={[-2.4, 0, -1.7]} arms="point" />
       <Anim f={(t, g) => { g.rotation.z = Math.sin(t * 9) * 0.1 * span(t, 1.0, 1.2, 3.2, 3.5); g.position.set(2.4, 0, -1.4 + Math.sin(t * 9) * 0.05 * span(t, 1.0, 1.2, 3.2, 3.5)); }}><Hero look={rival.look} accent={rival.accent} arms="up" talking={false} scale={1.1} /></Anim>
       {Array.from({ length: 12 }, (_, i) => (
         <Anim key={i} f={(t, g) => { const x = ((t - 0.5 - i * 0.22) / 0.8); g.visible = x > 0 && x < 1; g.position.set(-1.9 + x * 4.2, 1.5 + Math.sin(x * Math.PI) * 0.5, -1.4); g.rotation.z = x * 4; }}>{i % 3 === 0 ? <Bubble mark="!" c="#fecaca" /> : i % 3 === 1 ? <Ball r={0.13} c="#4a3526" /> : <Box s={[0.34, 0.02, 0.44]} c="#fffdf5" />}</Anim>
