@@ -1,20 +1,25 @@
 import { MAX_LEVEL } from '../sim/campaign/journey';
+import type { Difficulty } from '../sim/campaign/types';
 import { EMBLEM_IDS, type EmblemId, type Identity } from './identity';
+import { JOURNEY_LEVELS } from './journeyParty';
 import { BOARD_SIZE, CONFIG, NAME_MIN, blocked, call, cleanName, headers, nameOk, type Config, type Fetch } from './leaderboard';
 
 // The Career Campaign leaderboard: each player's highest level, posted on the player's say-so (see supabase/journey.sql).
-// One row for each player, told apart by a random id kept in this browser; it is sent, never read back, and raises the row in place.
+// There is a board for each of the three levels of difficulty (Easy, Normal, Realistic): a player has one row on each board they post to,
+// told apart by a random id kept in this browser; it is sent, never read back, and raises the row in place.
 // A row carries the party the player made (its name, short name, colour and logo), so the board shows each player's own party.
 // The party's own picture or flag, if the player uploaded one, is never sent: the board shows the chosen logo on the chosen colour.
 
 export interface LevelSubmission {
   player: string; name: string;
   party_name: string; party_short: string; party_color: string; emblem: EmblemId;
+  /** The level of difficulty the career was played at: which board the row is on. */
+  difficulty: Difficulty;
   level: number; governed: number; version: string;
 }
 export interface LevelRow {
   id: number; created_at: string; name: string;
-  party_name: string; party_short: string; party_color: string; emblem: EmblemId;
+  party_name: string; party_short: string; party_color: string; emblem: EmblemId; difficulty: Difficulty;
   level: number; governed: number;
 }
 
@@ -49,14 +54,14 @@ export function cleanPartyShort(raw: string): string {
  * The row to send for a level reached, or null if there is nothing the board can take: a name that is not allowed, no party made yet,
  * a party whose name the board refuses, or no level to rank.
  */
-export function levelSubmission(player: string, name: string, party: Identity | null, level: number, governed: number, version: string): LevelSubmission | null {
+export function levelSubmission(player: string, name: string, party: Identity | null, level: number, governed: number, version: string, difficulty: Difficulty = 'easy'): LevelSubmission | null {
   const clean = cleanName(name);
-  if (!nameOk(clean) || clean.length < NAME_MIN || !Number.isInteger(level) || level < 1 || !party) return null;
+  if (!nameOk(clean) || clean.length < NAME_MIN || !Number.isInteger(level) || level < 1 || !party || !JOURNEY_LEVELS.includes(difficulty)) return null;
   const partyName = cleanPartyName(party.name), partyShort = cleanPartyShort(party.short);
   const color = party.color.toLowerCase();
   if (!partyName || !partyShort || !COLOR.test(color) || !(EMBLEM_IDS as readonly string[]).includes(party.emblem)) return null;
   return {
-    player, name: clean, party_name: partyName, party_short: partyShort, party_color: color, emblem: party.emblem,
+    player, name: clean, party_name: partyName, party_short: partyShort, party_color: color, emblem: party.emblem, difficulty,
     level: Math.min(MAX_LEVEL, level), governed: Math.max(0, Math.min(13, governed)), version: version.slice(0, 32),
   };
 }
@@ -71,7 +76,7 @@ export async function postLevel(sub: LevelSubmission, cfg: Config | null = CONFI
   if (!cfg) return 'failed';
   const body = {
     p_player: sub.player, p_name: sub.name, p_party_name: sub.party_name, p_party_short: sub.party_short, p_party_color: sub.party_color,
-    p_emblem: sub.emblem, p_level: sub.level, p_governed: sub.governed, p_version: sub.version,
+    p_emblem: sub.emblem, p_difficulty: sub.difficulty, p_level: sub.level, p_governed: sub.governed, p_version: sub.version,
   };
   const res = await call(fetchFn, `${cfg.url}/rest/v1/rpc/post_level`, {
     method: 'POST', headers: { ...headers(cfg), 'Content-Type': 'application/json' }, body: JSON.stringify(body),
@@ -83,15 +88,15 @@ const isRow = (x: unknown): x is LevelRow => {
   if (typeof x !== 'object' || x === null) return false;
   const r = x as Record<string, unknown>;
   return typeof r.id === 'number' && typeof r.name === 'string' && typeof r.party_name === 'string' && typeof r.party_short === 'string'
-    && typeof r.party_color === 'string' && COLOR.test(r.party_color) && (EMBLEM_IDS as readonly unknown[]).includes(r.emblem)
+    && typeof r.party_color === 'string' && COLOR.test(r.party_color) && (EMBLEM_IDS as readonly unknown[]).includes(r.emblem) && (JOURNEY_LEVELS as readonly unknown[]).includes(r.difficulty)
     && [r.level, r.governed].every((n) => typeof n === 'number' && Number.isFinite(n));
 };
 
-const LEVEL_COLUMNS = 'id,created_at,name,party_name,party_short,party_color,emblem,level,governed';
-/** The highest levels, highest first, then by states governed, then whoever got there first. null if the board cannot be reached. */
-export async function topLevels(cfg: Config | null = CONFIG, fetchFn: Fetch = fetch): Promise<LevelRow[] | null> {
-  if (!cfg) return null;
-  const q = `select=${LEVEL_COLUMNS}&order=level.desc,governed.desc,updated_at.asc&limit=${BOARD_SIZE}`;
+const LEVEL_COLUMNS = 'id,created_at,name,party_name,party_short,party_color,emblem,difficulty,level,governed';
+/** The highest levels at one level of difficulty, highest first, then by states governed, then whoever got there first. null if the board cannot be reached. */
+export async function topLevels(difficulty: Difficulty, cfg: Config | null = CONFIG, fetchFn: Fetch = fetch): Promise<LevelRow[] | null> {
+  if (!cfg || !JOURNEY_LEVELS.includes(difficulty)) return null;
+  const q = `select=${LEVEL_COLUMNS}&difficulty=eq.${difficulty}&order=level.desc,governed.desc,updated_at.asc&limit=${BOARD_SIZE}`;
   const res = await call(fetchFn, `${cfg.url}/rest/v1/journey_levels?${q}`, { headers: headers(cfg) });
   if (!res?.ok) return null;
   try { const body: unknown = await res.json(); return Array.isArray(body) ? body.filter(isRow) : null; } catch { return null; }
