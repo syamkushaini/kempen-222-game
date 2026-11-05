@@ -71,3 +71,15 @@ describe('the ballot box model', () => {
     expect(credits).toContain('ballot-box.glb');
   });
 });
+
+describe('the voting booth model', () => {
+  const g = glbJson('public/models/voting-booth.glb');
+  it('is one small model with its table, screen, pencil, ballot paper and stamp', () => {
+    expect(readFileSync(join(process.cwd(), 'public/models/voting-booth.glb')).length).toBeLessThan(100_000);
+    const mats = ((g as unknown as { materials: { name: string }[] }).materials).map((m) => m.name);
+    for (const name of ['table_top', 'cardboard', 'pencil_wood', 'ballot_paper', 'stamp_base', 'stamp_handle']) expect(mats, name).toContain(name);
+  });
+  it('is listed in the credits file', () => {
+    expect(readFileSync(join(process.cwd(), 'public/models/CREDITS.txt'), 'utf8')).toContain('voting-booth.glb');
+  });
+});

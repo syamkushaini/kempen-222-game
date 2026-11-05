@@ -12,3 +12,9 @@ ballot-box.glb
 --------------
 A low-poly Malaysian ballot box (clear plastic body, slotted lid, label and seal strap), supplied by the project's owner for Kempen 222.
 It is used as it was supplied; the ballots that fill it are made in code (src/ui/stage/BallotBox.tsx).
+
+voting-booth.glb
+----------------
+A low-poly polling table with a three-sided cardboard screen, a pencil on a string, a ballot paper and a stamp, supplied by the project's
+owner for Kempen 222. It is used as it was supplied, except that the stamp takes the party's colour and moves in code
+(src/ui/stage/VotingBooth.tsx).
