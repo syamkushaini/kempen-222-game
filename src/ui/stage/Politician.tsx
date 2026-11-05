@@ -1,5 +1,5 @@
 import { useFrame, useLoader, type ThreeElements } from '@react-three/fiber';
-import { Component, useContext, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useContext, useLayoutEffect, useMemo, useRef } from 'react';
 import { Group, Mesh, MeshPhysicalMaterial, Quaternion, Raycaster, SphereGeometry, Vector3, type Bone, type Object3D } from 'three';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -198,12 +198,4 @@ export function Politician({ pose: armPose = 'down', walk = 0, talking = true, a
       </group>
     </group>
   );
-}
-
-/** If the model cannot be fetched or read, whatever stands in for it is shown and the scene goes on. */
-export class ModelBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch() { /* nothing to report: the cartoon figure stands in */ }
-  render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }

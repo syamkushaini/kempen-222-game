@@ -32,6 +32,12 @@ export function ActionStage() {
     const later = (window as unknown as { requestIdleCallback?: (f: () => void) => number }).requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 1500));
     later(() => { void import('./stage/Politician').then((m) => m.preloadPolitician()).catch(() => undefined); });
   }, [male]);
+  // the ballot box is 12 KB: it is fetched for everyone
+  useEffect(() => {
+    if (!canDraw3D() || prefersCalm()) return;
+    const later = (window as unknown as { requestIdleCallback?: (f: () => void) => number }).requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 2500));
+    later(() => { void import('./stage/BallotBox').then((m) => m.preloadBallotBox()).catch(() => undefined); });
+  }, []);
   const playable = !!stage && canDraw3D() && !prefersCalm();
   useEffect(() => {
     if (!stage) return;

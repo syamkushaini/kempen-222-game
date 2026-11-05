@@ -3,7 +3,8 @@ import { Suspense, useContext, useLayoutEffect, useMemo, useRef, type ReactNode 
 import { Color, Object3D, type Group, type InstancedMesh } from 'three';
 import { Bust } from '../Bust3D';
 import { isMaleLook, type Look } from '../faces';
-import { ModelBoundary, Politician } from './Politician';
+import { ModelBoundary } from './ModelBoundary';
+import { Politician } from './Politician';
 
 // The pieces the action scenes are built from: people, a crowd, a platform, flags, coins and the like. Everything is a plain low-poly shape
 // with one flat colour, and everything moves from one clock, so a scene is a handful of these set out and given a script.

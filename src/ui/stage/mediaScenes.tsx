@@ -1,4 +1,7 @@
 import { Bust } from '../Bust3D';
+import { Suspense } from 'react';
+import { BallotBoxModel } from './BallotBox';
+import { ModelBoundary } from './ModelBoundary';
 import { Anim, Ball, Banner, Box, Bubble, Coin, Crowd, ease, Figure, Flag, Ground, Heart, Hero, Mat, rnd, span, Wave } from './parts';
 import { crowdColors, type SceneProps } from './groundScenes';
 
@@ -193,6 +196,11 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
 /** A branch office going up and filling, and the vans that take people to vote. */
 export function Build({ look, accent, kind }: SceneProps & { kind: 'build' | 'gotv' }) {
   const cols = crowdColors(accent);
+  const plainBox = (
+    <group>
+      <Box s={[0.9, 1.1, 0.7]} c="#e8e3d8" position={[0, 0.55, 0]} /><Box s={[0.92, 0.1, 0.72]} c={accent} position={[0, 1.15, 0]} /><Box s={[0.4, 0.03, 0.04]} c="#1f1f26" position={[0, 1.22, 0.2]} />
+    </group>
+  );
   if (kind === 'build') {
     return (
       <>
@@ -220,11 +228,14 @@ export function Build({ look, accent, kind }: SceneProps & { kind: 'build' | 'go
         </Anim>
       ))}
       {Array.from({ length: 10 }, (_, i) => (
-        <Anim key={i} f={(t, g) => { const x = ease(t, 1.4 + i * 0.12, 3.4 + i * 0.05); g.position.set(-2.6 + (i % 2) * 1.4 + x * (3.4 - (-2.6 + (i % 2) * 1.4)), 0, -0.9 + x * 0.1); g.visible = t > 1.4 + i * 0.12; }}><Figure color={cols[i % cols.length]} walk={1} scale={0.7} phase={i} arms="down" /></Anim>
+        <Anim key={i} f={(t, g) => { const x = ease(t, 1.4 + i * 0.12, 3.4 + i * 0.05); g.position.set(-2.6 + (i % 2) * 1.4 + x * (-0.1 + (i % 5) * 0.4 - (-2.6 + (i % 2) * 1.4)), 0, -0.9 + x * (0.35 + (i % 3) * 0.28)); g.visible = t > 1.4 + i * 0.12; }}><Figure color={cols[i % cols.length]} walk={1} scale={0.7} phase={i} arms="down" /></Anim>
       ))}
-      <group position={[3.4, 0, -0.9]}>
-        <Box s={[0.9, 1.1, 0.7]} c="#e8e3d8" position={[0, 0.55, 0]} /><Box s={[0.92, 0.1, 0.72]} c={accent} position={[0, 1.15, 0]} /><Box s={[0.4, 0.03, 0.04]} c="#1f1f26" position={[0, 1.22, 0.2]} />
-        <Anim f={(t, g) => { g.visible = t > 3.0; g.scale.setScalar(ease(t, 3.0, 3.4)); }} position={[0, 2.1, 0]}>
+      <group position={[2.6, 0, -0.9]}>
+        {/* the ballot box: the modelled one, and the plain box that stands in while it loads or if it cannot be had */}
+        <ModelBoundary fallback={plainBox}>
+          <Suspense fallback={plainBox}><BallotBoxModel accent={accent} scale={2.8} /></Suspense>
+        </ModelBoundary>
+        <Anim f={(t, g) => { g.visible = t > 3.4; g.scale.setScalar(ease(t, 3.4, 3.8)); }} position={[0, 1.95, 0]}>
           <Box s={[0.14, 0.5, 0.06]} c="#16a34a" e={0.6} position={[0.12, 0.05, 0]} rotation={[0, 0, -0.7]} /><Box s={[0.14, 0.28, 0.06]} c="#16a34a" e={0.6} position={[-0.12, -0.05, 0]} rotation={[0, 0, 0.7]} />
         </Anim>
       </group>

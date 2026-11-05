@@ -56,3 +56,18 @@ describe('the model of the male politician', () => {
     expect(Object.keys(PEOPLE_EN).length).toBeGreaterThan(0);
   });
 });
+
+describe('the ballot box model', () => {
+  const g = glbJson('public/models/ballot-box.glb');
+  it('is one small model, with its body, lid, label and seal', () => {
+    expect(readFileSync(join(process.cwd(), 'public/models/ballot-box.glb')).length).toBeLessThan(100_000);
+    expect(g.nodes).toHaveLength(1);
+    expect((g as unknown as { meshes: { name: string; primitives: unknown[] }[] }).meshes[0].name).toBe('MalaysianBallotBox');
+    expect((g as unknown as { meshes: { primitives: unknown[] }[] }).meshes[0].primitives.length).toBeGreaterThanOrEqual(9);
+  });
+  it('is listed in the credits file, with the politician', () => {
+    const credits = readFileSync(join(process.cwd(), 'public/models/CREDITS.txt'), 'utf8');
+    expect(credits).toContain('politician.glb');
+    expect(credits).toContain('ballot-box.glb');
+  });
+});
