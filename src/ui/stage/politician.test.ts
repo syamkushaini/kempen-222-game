@@ -84,7 +84,7 @@ describe('the voting booth model', () => {
   });
 });
 
-describe.each([['tv-camera.glb', 60_000], ['studio-mic.glb', 40_000], ['lectern.glb', 40_000], ['rally-stage.glb', 40_000], ['truss.glb', 60_000], ['lamp-post.glb', 30_000], ['market-stall.glb', 40_000], ['terrace-house.glb', 40_000], ['kampung-house.glb', 60_000], ['tree.glb', 30_000], ['palm.glb', 50_000], ['billboard-frame.glb', 40_000]])('the prop in %s', (file, max) => {
+describe.each([['tv-camera.glb', 60_000], ['studio-mic.glb', 40_000], ['lectern.glb', 40_000], ['rally-stage.glb', 40_000], ['truss.glb', 60_000], ['lamp-post.glb', 30_000], ['market-stall.glb', 40_000], ['terrace-house.glb', 40_000], ['kampung-house.glb', 60_000], ['tree.glb', 30_000], ['palm.glb', 50_000], ['billboard-frame.glb', 40_000], ['dinner-table.glb', 70_000], ['money-pile.glb', 60_000], ['counter.glb', 20_000], ['donation-box.glb', 30_000], ['desk.glb', 30_000], ['car.glb', 50_000], ['van.glb', 60_000], ['flag-pole.glb', 20_000], ['conference-table.glb', 60_000], ['presentation-stand.glb', 30_000], ['mic-stand.glb', 30_000], ['phone.glb', 60_000], ['workstation.glb', 30_000], ['newspaper.glb', 30_000], ['press-mics.glb', 60_000], ['floodlight.glb', 30_000]])('the prop in %s', (file, max) => {
   it('is one small model, listed in the credits file', () => {
     expect(readFileSync(join(process.cwd(), 'public/models', file)).length).toBeLessThan(max);
     glbJson(`public/models/${file}`);
@@ -92,7 +92,7 @@ describe.each([['tv-camera.glb', 60_000], ['studio-mic.glb', 40_000], ['lectern.
   });
 });
 
-it.each([['lectern.glb', 'Panel'], ['rally-stage.glb', 'Deck'], ['market-stall.glb', 'Canopy'], ['terrace-house.glb', 'Roof'], ['kampung-house.glb', 'Roof']])('keeps in %s the material %s that takes a colour', (file, name) => {
+it.each([['lectern.glb', 'Panel'], ['rally-stage.glb', 'Deck'], ['market-stall.glb', 'Canopy'], ['terrace-house.glb', 'Roof'], ['kampung-house.glb', 'Roof'], ['dinner-table.glb', 'Sash'], ['counter.glb', 'Sash'], ['donation-box.glb', 'Label'], ['car.glb', 'Paint'], ['van.glb', 'Stripe']])('keeps in %s the material %s that takes a colour', (file, name) => {
   const mats = ((glbJson(`public/models/${file}`) as unknown as { materials: { name: string }[] }).materials).map((m) => m.name);
   expect(mats).toContain(name);
 });

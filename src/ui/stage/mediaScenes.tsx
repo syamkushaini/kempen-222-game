@@ -99,7 +99,7 @@ export function Social({ look, accent, rival, kind }: SceneProps & { kind: 'soci
         <Ground c="#dfe6f2" />
         <Box s={[24, 7, 0.1]} c="#c9d6ee" position={[0, 3.5, -3.4]} />
         <group position={[0, 1.7, -1.2]}>
-          <Box s={[1.7, 3, 0.16]} c="#1f1f26" /><Box s={[1.5, 2.7, 0.03]} c="#dbeafe" e={0.5} position={[0, 0, 0.09]} />
+          <Prop kind="phone" fallback={<Box s={[1.7, 3, 0.16]} c="#1f1f26" />} /><Box s={[1.5, 2.7, 0.03]} c="#dbeafe" e={0.5} position={[0, 0, 0.09]} />
           <group position={[0, 0.35, 0.12]} scale={0.34}><Bust look={look} accent={accent} calm={false} talking /></group>
           <Box s={[1.3, 0.1, 0.02]} c="#93c5fd" position={[0, -0.6, 0.11]} /><Box s={[0.9, 0.1, 0.02]} c="#93c5fd" position={[-0.2, -0.82, 0.11]} />
         </group>
@@ -117,8 +117,7 @@ export function Social({ look, accent, rival, kind }: SceneProps & { kind: 'soci
       <Box s={[24, 7, 0.1]} c="#1f2430" position={[0, 3.5, -3.4]} />
       {Array.from({ length: 15 }, (_, i) => (
         <group key={i} position={[-4 + (i % 5) * 1.6, 0, -2.6 + Math.floor(i / 5) * 1.0]}>
-          <Box s={[0.5, 0.3, 0.45]} c="#3b4252" position={[0, 0.15, 0]} />
-          <Box s={[0.3, 0.45, 0.04]} c="#7dd3fc" e={0.7} position={[0, 0.55, 0.1]} rotation={[-0.2, 0, 0]} />
+          <Prop kind="workstation" fallback={<><Box s={[0.5, 0.3, 0.45]} c="#3b4252" position={[0, 0.15, 0]} /><Box s={[0.3, 0.45, 0.04]} c="#7dd3fc" e={0.7} position={[0, 0.55, 0.1]} rotation={[-0.2, 0, 0]} /></>} />
           <Box s={[0.1, 0.1, 0.1]} c="#e11d2f" e={0.6} position={[0.22, 0.34, 0.2]} />
         </group>
       ))}
@@ -147,7 +146,7 @@ export function Billboards({ look, accent }: SceneProps) {
         </Anim>
       ))}
       {[['#d64b4b', 0], ['#3d6b8c', 1], ['#d09a3a', 2]].map(([c, i]) => (
-        <Anim key={c as string} f={(t, g) => { g.position.set(-8 + ((t * 2.4 + (i as number) * 5) % 16), 0.2, 1.4 + ((i as number) % 2) * 0.4); }}><Box s={[1.0, 0.35, 0.5]} c={c as string} position={[0, 0.2, 0]} /><Box s={[0.55, 0.28, 0.46]} c="#bcd9ea" position={[-0.05, 0.5, 0]} /></Anim>
+        <Anim key={c as string} f={(t, g) => { g.position.set(-8 + ((t * 2.4 + (i as number) * 5) % 16), 0.2, 1.4 + ((i as number) % 2) * 0.4); }}><Prop kind="car" tint={c as string} position={[0, -0.2, 0]} fallback={<><Box s={[1.0, 0.35, 0.5]} c={c as string} position={[0, 0.2, 0]} /><Box s={[0.55, 0.28, 0.46]} c="#bcd9ea" position={[-0.05, 0.5, 0]} /></>} /></Anim>
       ))}
       {[-5.6, 5.6].map((x, i) => <Flag key={x} c={accent} phase={i} position={[x, 0, -0.6]} />)}
     </>
@@ -161,8 +160,8 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
   const cols = crowdColors(accent);
   const tray = (x: number, z: number) => (
     <group position={[x, 0, z]}>
-      <Box s={[1.1, 0.9, 0.7]} c="#e8dcc4" position={[0, 0.45, 0]} />
-      <Anim f={(t, g) => { g.scale.y = Math.max(0.001, ease(t, 0.8, 3.6)); }} position={[0, 0.9, 0]}><Box s={[0.9, 0.9, 0.5]} c="#f2c230" e={0.25} position={[0, 0.45, 0]} /></Anim>
+      <Prop kind="counter" tint={accent} fallback={<Box s={[1.1, 0.9, 0.7]} c="#e8dcc4" position={[0, 0.45, 0]} />} />
+      <Anim f={(t, g) => { g.scale.y = Math.max(0.001, ease(t, 0.8, 3.6)); }} position={[0, 0.9, 0]}><Prop kind="pile" fallback={<Box s={[0.9, 0.9, 0.5]} c="#f2c230" e={0.25} position={[0, 0.45, 0]} />} /></Anim>
     </group>
   );
   return (
@@ -173,7 +172,7 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
         <>
           {[[-2.6, -0.2], [0, 0.6], [2.6, -0.2]].map(([x, z], i) => (
             <group key={i} position={[x, 0, z]}>
-              <mesh position={[0, 0.7, 0]}><cylinderGeometry args={[0.8, 0.8, 0.08, 20]} /><Mat c="#f3efe6" /></mesh><Box s={[0.1, 0.7, 0.1]} c="#6b4a2f" position={[0, 0.35, 0]} />
+              <Prop kind="table" tint={accent} rotation={[0, i, 0]} fallback={<><mesh position={[0, 0.7, 0]}><cylinderGeometry args={[0.8, 0.8, 0.08, 20]} /><Mat c="#f3efe6" /></mesh><Box s={[0.1, 0.7, 0.1]} c="#6b4a2f" position={[0, 0.35, 0]} /></>} />
               {[0, 1, 2, 3].map((k) => <Figure key={k} color={cols[(i + k) % cols.length]} scale={0.55} arms={k % 2 ? 'up' : 'down'} cheer={0.15} phase={k + i} position={[Math.cos(k * 1.57) * 1.1, 0, Math.sin(k * 1.57) * 1.1]} />)}
             </group>
           ))}
@@ -186,8 +185,8 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
         <>
           {Array.from({ length: 16 }, (_, i) => { const a = (i / 16) * Math.PI * 2; return <Figure key={i} color={cols[i % cols.length]} scale={0.6} arms="up" phase={i} cheer={0.3} position={[Math.cos(a) * 3.2, 0, Math.sin(a) * 2 + 0.3]} />; })}
           <group position={[0, 0, 0.3]}>
-            <Box s={[1.6, 1.4, 1.2]} c="#dbeafe" op={0.45} position={[0, 0.7, 0]} />
-            <Anim f={(t, g) => { g.scale.y = Math.max(0.001, ease(t, 0.8, 3.6)); }}><Box s={[1.4, 1.2, 1.0]} c="#f2c230" e={0.25} position={[0, 0.6, 0]} /></Anim>
+            <Anim f={(t, g) => { g.scale.y = Math.max(0.001, ease(t, 0.8, 3.6)); }}><Prop kind="pile" scale={[1.4 / 0.9, 1.2 / 0.9, 1.0 / 0.5]} fallback={<Box s={[1.4, 1.2, 1.0]} c="#f2c230" e={0.25} position={[0, 0.6, 0]} />} /></Anim>
+            <Prop kind="donation" tint={accent} fallback={<Box s={[1.6, 1.4, 1.2]} c="#dbeafe" op={0.45} position={[0, 0.7, 0]} />} />
           </group>
           {Array.from({ length: 22 }, (_, i) => <Anim key={i} f={(t, g) => { const x = ((t - 0.4 - i * 0.14) / 0.9); const a = (i % 16) / 16 * Math.PI * 2; g.visible = x > 0 && x < 1; g.position.set(Math.cos(a) * 3.2 * (1 - x), 1.3 + Math.sin(x * Math.PI) * 1.7, 0.3 + (Math.sin(a) * 2) * (1 - x)); g.rotation.y = t * 7; }}><Coin /></Anim>)}
           <Hero look={look} accent={accent} player position={[0, 0, -2.4]} arms="up" />
@@ -197,7 +196,7 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
         <>
           <Hero look={look} accent={accent} player position={[-1.1, 0, -1]} arms="point" />
           <Figure color="#15181f" pants="#15181f" position={[1.1, 0, -1]} arms="point" scale={1.15} head={<group position={[0, 1.6, 0]}><Ball r={0.19} c="#c98d62" /><mesh position={[0, 0.22, 0]}><cylinderGeometry args={[0.13, 0.15, 0.22, 14]} /><Mat c="#15181f" /></mesh><mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.27, 0.27, 0.03, 14]} /><Mat c="#15181f" /></mesh></group>} />
-          <Box s={[1.5, 0.12, 0.8]} c="#6b4a2f" position={[0, 0.75, 0.3]} /><Box s={[0.12, 0.75, 0.6]} c="#6b4a2f" position={[-0.6, 0.38, 0.3]} /><Box s={[0.12, 0.75, 0.6]} c="#6b4a2f" position={[0.6, 0.38, 0.3]} />
+          <Prop kind="desk" position={[0, 0, 0.3]} fallback={<><Box s={[1.5, 0.12, 0.8]} c="#6b4a2f" position={[0, 0.75, 0.3]} /><Box s={[0.12, 0.75, 0.6]} c="#6b4a2f" position={[-0.6, 0.38, 0.3]} /><Box s={[0.12, 0.75, 0.6]} c="#6b4a2f" position={[0.6, 0.38, 0.3]} /></>} />
           <group position={[0, 0.85, 0.3]}>
             <Box s={[0.7, 0.22, 0.46]} c="#2a2a33" position={[0, 0.11, 0]} />
             <Anim f={(t, g) => { g.rotation.x = -ease(t, 1.0, 1.6) * 1.8; }} position={[0, 0.22, -0.23]}><Box s={[0.7, 0.05, 0.46]} c="#3a3a44" position={[0, 0, 0.23]} /></Anim>
@@ -251,8 +250,10 @@ export function Build({ look, accent, kind }: SceneProps & { kind: 'build' | 'go
       <Box s={[18, 0.03, 2.2]} c="#58606c" position={[0, 0.02, 0.5]} />
       {[0, 1].map((i) => (
         <Anim key={i} f={(t, g) => { g.position.set(-8 + ease(t, 0.2 + i * 0.4, 1.4 + i * 0.4) * (4.4 + i * 1.6), 0, 0.5 + i * 0.1); }}>
-          <Box s={[1.8, 0.9, 0.8]} c="#f3efe6" position={[0, 0.65, 0]} /><Box s={[1.82, 0.2, 0.82]} c={accent} position={[0, 0.7, 0]} />
-          {[-0.6, 0.6].map((x) => <mesh key={x} position={[x, 0.2, 0.42]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.2, 0.2, 0.1, 12]} /><Mat c="#2a2a33" /></mesh>)}
+          <Prop kind="van" tint={accent} fallback={<>
+            <Box s={[1.8, 0.9, 0.8]} c="#f3efe6" position={[0, 0.65, 0]} /><Box s={[1.82, 0.2, 0.82]} c={accent} position={[0, 0.7, 0]} />
+            {[-0.6, 0.6].map((x) => <mesh key={x} position={[x, 0.2, 0.42]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.2, 0.2, 0.1, 12]} /><Mat c="#2a2a33" /></mesh>)}
+          </>} />
         </Anim>
       ))}
       {/* the voting booth: the voters stand in front of its cardboard screen to mark their ballots, and stamp them in the party's colour */}
@@ -292,11 +293,15 @@ export function Attack({ look, accent, rival }: SceneProps) {
       <Ground c="#3a3f4d" />
       <Reporter accent={accent} position={[0, 0, 0.5]} rotation={[0, 0.1, 0]} scale={1.05} />
       <Box s={[24, 7, 0.1]} c="#2a2f3c" position={[0, 3.5, -3.4]} />
-      <Box s={[0.9, 1.1, 0.7]} c={accent} position={[-2.4, 0.55, -1.2]} />
+      <Prop kind="lectern" tint={accent} position={[-2.4, 0, -1.2]} scale={0.9} fallback={<Box s={[0.9, 1.1, 0.7]} c={accent} position={[-2.4, 0.55, -1.2]} />} />
       <Hero look={look} accent={accent} player position={[-2.4, 0, -1.7]} arms="point" />
+      {/* the rival is caught by the press under floodlights */}
+      <Prop kind="pressmics" position={[2.4, 0, -0.75]} fallback={null} />
+      <Prop kind="floodlight" position={[-4.3, 0, -0.3]} rotation={[0, 1.85, 0]} fallback={null} />
+      <Prop kind="floodlight" position={[4.3, 0, -0.3]} rotation={[0, -1.85, 0]} fallback={null} />
       <Anim f={(t, g) => { g.rotation.z = Math.sin(t * 9) * 0.1 * span(t, 1.0, 1.2, 3.2, 3.5); g.position.set(2.4, 0, -1.4 + Math.sin(t * 9) * 0.05 * span(t, 1.0, 1.2, 3.2, 3.5)); }}><Hero look={rival.look} accent={rival.accent} arms="up" talking={false} scale={1.1} /></Anim>
       {Array.from({ length: 12 }, (_, i) => (
-        <Anim key={i} f={(t, g) => { const x = ((t - 0.5 - i * 0.22) / 0.8); g.visible = x > 0 && x < 1; g.position.set(-1.9 + x * 4.2, 1.5 + Math.sin(x * Math.PI) * 0.5, -1.4); g.rotation.z = x * 4; }}>{i % 3 === 0 ? <Bubble mark="!" c="#fecaca" /> : i % 3 === 1 ? <Ball r={0.13} c="#4a3526" /> : <Box s={[0.34, 0.02, 0.44]} c="#fffdf5" />}</Anim>
+        <Anim key={i} f={(t, g) => { const x = ((t - 0.5 - i * 0.22) / 0.8); g.visible = x > 0 && x < 1; g.position.set(-1.9 + x * 4.2, 1.5 + Math.sin(x * Math.PI) * 0.5, -1.4); g.rotation.z = x * 4; }}>{i % 3 === 0 ? <Bubble mark="!" c="#fecaca" /> : i % 3 === 1 ? <Ball r={0.13} c="#4a3526" /> : <Prop kind="newspaper" fallback={<Box s={[0.34, 0.02, 0.44]} c="#fffdf5" />} />}</Anim>
       ))}
       <Anim f={(t, g) => { g.visible = t > 1.1; g.position.y = 3 + Math.sin(t * 3) * 0.05; }} position={[2.4, 3, -1.4]}><Bubble mark="?" /></Anim>
     </>

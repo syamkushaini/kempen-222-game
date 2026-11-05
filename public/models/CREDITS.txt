@@ -76,3 +76,29 @@ crowd-person.glb
 A low-poly cartoon person in five parts (a whole body for the crowd, and a torso, a leg, an arm and a head for the figures whose limbs move),
 modelled in Blender for Kempen 222 by the project's owner with Claude, and free of any third-party licence. The parts are painted in greys
 that multiply the shirt, trouser and skin colours given in code (src/ui/stage/people.ts).
+
+dinner-table.glb, money-pile.glb, counter.glb, donation-box.glb, desk.glb
+--------------------------------------------------------------------------
+Five low-poly props for the fundraising scenes (a banquet table with place settings and a centrepiece, a pile of banknote bundles and
+coins that grows in code, a skirted collection counter, a clear acrylic crowdfund box and an executive desk) modelled in Blender for
+Kempen 222 by the project's owner with Claude, and free of any third-party licence. The table's sash, the counter's sash and the box's label
+take the party's colour in code (src/ui/stage/Props.tsx).
+
+car.glb, van.glb, flag-pole.glb
+-------------------------------
+A low-poly car, a campaign van with a party stripe and loudspeakers on its roof, and a flag pole on a weighted base, modelled in Blender
+for Kempen 222 by the project's owner with Claude, and free of any third-party licence. The car's paint and the van's stripe take a colour
+in code, and the flag itself is cloth drawn and rippled in code (src/ui/stage/Props.tsx, src/ui/stage/parts.tsx).
+
+conference-table.glb, presentation-stand.glb, mic-stand.glb, phone.glb, workstation.glb
+---------------------------------------------------------------------------------------
+Five low-poly props for the hall and online scenes (a conference table with two open laptops, water bottles and microphones, a whiteboard
+presentation stand, a floor microphone, a giant phone and a cyber trooper's desk with a glowing monitor) modelled in Blender for
+Kempen 222 by the project's owner with Claude, and free of any third-party licence. The chart, the phone's screen and the leader on it are
+drawn in code (src/ui/stage/groundScenes.tsx, src/ui/stage/mediaScenes.tsx).
+
+newspaper.glb, press-mics.glb, floodlight.glb
+---------------------------------------------
+Three low-poly props for the night attack scene (a folded tabloid with a red masthead and a big headline, a stand of six reporters'
+microphones with coloured station flags, and a floodlight on a tripod) modelled in Blender for Kempen 222 by the project's owner with
+Claude, and free of any third-party licence.

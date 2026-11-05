@@ -117,12 +117,10 @@ export function Hall({ look, accent, kind }: SceneProps & { kind: 'townhall' | '
       <>
         <Ground c="#d9d2c2" />
         <Box s={[24, 7, 0.1]} c="#e8e3d8" position={[0, 3.5, -3.4]} />
-        <Box s={[4.4, 0.12, 1.5]} c="#8d6e4a" position={[-0.8, 0.78, -0.4]} />
+        <Prop kind="boardroom" position={[-0.8, 0, -0.4]} fallback={<><Box s={[4.4, 0.12, 1.5]} c="#8d6e4a" position={[-0.8, 0.78, -0.4]} />{[[-2.4, -0.4], [-0.8, -0.4]].map(([x, z], i) => <Box key={i} s={[0.5, 0.04, 0.35]} c="#1f1f26" position={[x, 0.86, z]} />)}</>} />
         {[[-2.4, -1], [-1.2, -1], [0, -1], [-2.4, 0.2], [-1.2, 0.2], [0, 0.2]].map(([x, z], i) => <Figure key={i} color={cols[i % cols.length]} position={[x, 0.05, z]} scale={0.7} arms={i % 3 === 0 ? 'wave' : 'down'} phase={i} />)}
-        {[[-2.4, -0.4], [-0.8, -0.4]].map(([x, z], i) => <Box key={i} s={[0.5, 0.04, 0.35]} c="#1f1f26" position={[x, 0.86, z]} />)}
         <group position={[2.6, 0, -1.6]}>
-          <Box s={[1.8, 1.3, 0.06]} c="#ffffff" position={[0, 1.7, 0]} />
-          <Box s={[0.06, 1.1, 0.06]} c="#6b4a2f" position={[-0.7, 0.55, 0]} /><Box s={[0.06, 1.1, 0.06]} c="#6b4a2f" position={[0.7, 0.55, 0]} />
+          <Prop kind="chart" fallback={<><Box s={[1.8, 1.3, 0.06]} c="#ffffff" position={[0, 1.7, 0]} /><Box s={[0.06, 1.1, 0.06]} c="#6b4a2f" position={[-0.7, 0.55, 0]} /><Box s={[0.06, 1.1, 0.06]} c="#6b4a2f" position={[0.7, 0.55, 0]} /></>} />
           {[0.35, 0.6, 0.9, 1.15].map((h, i) => <Anim key={i} f={(t, g) => { g.scale.y = Math.max(0.001, ease(t, 0.5 + i * 0.35, 1.1 + i * 0.35)); }} position={[-0.6 + i * 0.4, 1.15, 0.04]}><Box s={[0.26, h, 0.04]} c={i % 2 ? accent : '#3d6b8c'} position={[0, h / 2, 0]} /></Anim>)}
         </group>
         <Hero look={look} accent={accent} player position={[1.5, 0, -1.2]} arms="point" />
@@ -138,7 +136,7 @@ export function Hall({ look, accent, kind }: SceneProps & { kind: 'townhall' | '
       <Crowd n={34} area={[-3.8, 3.8, 0.4, 3.2]} colors={cols} cheer={0.15} seed={4} />
       {[[-2.2, 0.4], [-0.4, 0.6], [1.9, 0.5], [3.1, 1.2]].map(([x, z], i) => <Anim key={i} f={(t, g) => { g.visible = t > 0.9 + i * 0.5; }} position={[x, 0, z]}><Figure color={cols[i + 1]} arms="up" scale={0.55} /></Anim>)}
       <Hero look={look} accent={accent} player position={[0, 0, -1.2]} arms="point" />
-      <Box s={[0.05, 0.9, 0.05]} c="#2a2a33" position={[0.55, 0.45, -0.9]} /><Ball r={0.07} c="#2a2a33" position={[0.55, 0.95, -0.9]} />
+      <Prop kind="standmic" position={[0.55, 0, -0.9]} rotation={[0, Math.PI - 0.5, 0]} fallback={<><Box s={[0.05, 0.9, 0.05]} c="#2a2a33" position={[0.55, 0.45, -0.9]} /><Ball r={0.07} c="#2a2a33" position={[0.55, 0.95, -0.9]} /></>} />
       {[[-2.2, 0.4], [-0.4, 0.6], [1.9, 0.5], [3.1, 1.2]].map(([x], i) => <Anim key={i} f={(t, g) => { g.visible = t > 1.3 + i * 0.55 && t < 3.9; g.position.set(x, 2.1 + ease(t, 1.3 + i * 0.55, 1.9 + i * 0.55) * 0.5, 0.5); g.scale.setScalar(0.7); }}><Bubble mark={i % 2 ? '!' : '?'} /></Anim>)}
     </>
   );
