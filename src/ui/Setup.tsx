@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { applyAccent, isDark } from './accent';
 import { BACKSTORIES, LEADER_POINTS, STAT_MAX, STAT_MIN, bonusText, partyLeaderStats, statBonus } from '../sim/campaign/perks';
 import { IDEOLOGY_IDS, type IdeologyId } from '../sim/campaign/leader';
 import { BACKSTORY_IDS, STAT_IDS, type BackstoryId } from '../sim/campaign/types';
@@ -130,6 +131,9 @@ export function PartyCreator({ draft, career, slate = false, onChange }: { draft
   const [failed, setFailed] = useState<'photo' | 'flag' | null>(null);
   const saved = useStore((st) => st.savedParties);
   const forget = useStore((st) => st.forgetSavedParty);
+  const scheme = useStore((st) => st.settings.theme);
+  // While the party is being made the interface takes its colour, the glow behind the screen with it; a game that follows sets its own.
+  useEffect(() => { applyAccent(draft.color, isDark(scheme === 'system' ? null : scheme), draft.color); return () => applyAccent(null, false); }, [draft.color, scheme]);
   return (
     <div className="creator">
       <p className="muted small">{t('creator.desc')}</p>
