@@ -1,13 +1,46 @@
 import { Bust } from '../Bust3D';
-import { Suspense } from 'react';
+import { Suspense, useLayoutEffect, useMemo, useRef } from 'react';
+import { Object3D, type SpotLight } from 'three';
 import { BallotBoxModel } from './BallotBox';
 import { VotingBoothModel } from './VotingBooth';
 import { ModelBoundary } from './ModelBoundary';
 import { CameraOperator } from './CameraOperator';
 import { Reporter } from './Reporter';
 import { Prop } from './Props';
-import { Anim, Ball, Banner, Box, Bubble, Coin, Crowd, ease, Figure, Flag, Ground, Heart, Hero, Mat, rnd, span, Wave } from './parts';
+import { useTrinkets } from './people';
+import { Anim, Ball, Banner, Box, Bubble, Coin, Crowd, ease, Figure, Flag, Ground, Heart, Hero, Mat, rnd, span, Wave, Painted } from './parts';
 import { crowdColors, type SceneProps } from './groundScenes';
+
+/** The tycoon's head under his top hat (the modelled hat with its red band, or two cylinders until it is loaded). */
+function TycoonHead() {
+  const shape = useTrinkets();
+  return (
+    <group position={[0, 1.6, 0]}>
+      <Ball r={0.19} c="#c98d62" />
+      {shape ? <mesh geometry={shape.hat}><Painted c="#ffffff" /></mesh> : (
+        <><mesh position={[0, 0.22, 0]}><cylinderGeometry args={[0.13, 0.15, 0.22, 14]} /><Mat c="#15181f" /></mesh><mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.27, 0.27, 0.03, 14]} /><Mat c="#15181f" /></mesh></>
+      )}
+    </group>
+  );
+}
+
+/** The beam of a floodlight: a soft-edged spot from the lamp head at `from` onto the point `to`. It casts no shadow, to stay cheap. */
+function Beam({ from, to, color = '#fff2d6' }: { from: [number, number, number]; to: [number, number, number]; color?: string }) {
+  const light = useRef<SpotLight>(null);
+  const target = useMemo(() => new Object3D(), []);
+  const [tx, ty, tz] = to;
+  useLayoutEffect(() => {
+    target.position.set(tx, ty, tz);
+    target.updateMatrixWorld();
+    if (light.current) light.current.target = target;
+  }, [target, tx, ty, tz]);
+  return (
+    <>
+      <primitive object={target} />
+      <spotLight ref={light} position={from} angle={0.42} penumbra={0.65} intensity={34} distance={14} decay={1.5} color={color} />
+    </>
+  );
+}
 
 /** The camera that films the leader, with its red light and a sign that says it is live. */
 function Camera({ x, z, ry = 0 }: { x: number; z: number; ry?: number }) {
@@ -195,7 +228,7 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
       {kind === 'tycoon' && (
         <>
           <Hero look={look} accent={accent} player position={[-1.1, 0, -1]} arms="point" />
-          <Figure color="#15181f" pants="#15181f" position={[1.1, 0, -1]} arms="point" scale={1.15} head={<group position={[0, 1.6, 0]}><Ball r={0.19} c="#c98d62" /><mesh position={[0, 0.22, 0]}><cylinderGeometry args={[0.13, 0.15, 0.22, 14]} /><Mat c="#15181f" /></mesh><mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.27, 0.27, 0.03, 14]} /><Mat c="#15181f" /></mesh></group>} />
+          <Figure color="#15181f" pants="#15181f" position={[1.1, 0, -1]} arms="point" scale={1.15} head={<TycoonHead />} />
           <Prop kind="desk" position={[0, 0, 0.3]} fallback={<><Box s={[1.5, 0.12, 0.8]} c="#6b4a2f" position={[0, 0.75, 0.3]} /><Box s={[0.12, 0.75, 0.6]} c="#6b4a2f" position={[-0.6, 0.38, 0.3]} /><Box s={[0.12, 0.75, 0.6]} c="#6b4a2f" position={[0.6, 0.38, 0.3]} /></>} />
           <group position={[0, 0.85, 0.3]}>
             <Box s={[0.7, 0.22, 0.46]} c="#2a2a33" position={[0, 0.11, 0]} />
@@ -299,6 +332,8 @@ export function Attack({ look, accent, rival }: SceneProps) {
       <Prop kind="pressmics" position={[2.4, 0, -0.75]} fallback={null} />
       <Prop kind="floodlight" position={[-4.3, 0, -0.3]} rotation={[0, 1.85, 0]} fallback={null} />
       <Prop kind="floodlight" position={[4.3, 0, -0.3]} rotation={[0, -1.85, 0]} fallback={null} />
+      <Beam from={[-4.15, 2.3, -0.25]} to={[1.6, 1.0, -1.3]} />
+      <Beam from={[4.15, 2.3, -0.25]} to={[2.0, 1.0, -1.4]} />
       <Anim f={(t, g) => { g.rotation.z = Math.sin(t * 9) * 0.1 * span(t, 1.0, 1.2, 3.2, 3.5); g.position.set(2.4, 0, -1.4 + Math.sin(t * 9) * 0.05 * span(t, 1.0, 1.2, 3.2, 3.5)); }}><Hero look={rival.look} accent={rival.accent} arms="up" talking={false} scale={1.1} /></Anim>
       {Array.from({ length: 12 }, (_, i) => (
         <Anim key={i} f={(t, g) => { const x = ((t - 0.5 - i * 0.22) / 0.8); g.visible = x > 0 && x < 1; g.position.set(-1.9 + x * 4.2, 1.5 + Math.sin(x * Math.PI) * 0.5, -1.4); g.rotation.z = x * 4; }}>{i % 3 === 0 ? <Bubble mark="!" c="#fecaca" /> : i % 3 === 1 ? <Ball r={0.13} c="#4a3526" /> : <Prop kind="newspaper" fallback={<Box s={[0.34, 0.02, 0.44]} c="#fffdf5" />} />}</Anim>

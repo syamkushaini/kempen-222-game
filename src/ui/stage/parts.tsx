@@ -1,6 +1,6 @@
 import { useFrame, type ThreeElements } from '@react-three/fiber';
 import { Prop } from './Props';
-import { usePeople } from './people';
+import { usePeople, useTrinkets } from './people';
 import { Suspense, useContext, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Color, Object3D, type Group, type InstancedMesh } from 'three';
 import { Bust } from '../Bust3D';
@@ -30,7 +30,7 @@ export const Mat = ({ c, e = 0, op = 1 }: { c: string; e?: number; op?: number }
   <meshLambertMaterial color={c} emissive={e ? c : '#000000'} emissiveIntensity={e} transparent={op < 1} opacity={op} />;
 
 /** A flat colour that multiplies the greys painted on a modelled part (see people.ts). */
-const Painted = ({ c }: { c: string }) => <meshLambertMaterial color={c} vertexColors />;
+export const Painted = ({ c, e = 0 }: { c: string; e?: number }) => <meshLambertMaterial color={c} vertexColors emissive={e ? c : '#000000'} emissiveIntensity={e} />;
 
 export const Box = ({ s, c, e, op, ...rest }: { s: [number, number, number]; c: string; e?: number; op?: number } & ThreeElements['mesh']) =>
   <mesh {...rest}><boxGeometry args={s} /><Mat c={c} e={e} op={op} /></mesh>;
@@ -203,10 +203,15 @@ export function Wave({ c = '#ffffff', every = 1.2, count = 3, max = 2.6, ...rest
 
 /** A speech bubble: an oval with a tail, and a mark inside it ("!" or "?") made of two shapes. */
 export function Bubble({ mark = '!', c = '#ffffff', ink = '#1f1f26', ...rest }: { mark?: '!' | '?'; c?: string; ink?: string } & G) {
+  const shape = useTrinkets();
   return (
     <group {...rest}>
-      <mesh scale={[1.25, 0.9, 0.3]}><sphereGeometry args={[0.32, 18, 12]} /><Mat c={c} /></mesh>
-      <mesh position={[-0.18, -0.34, 0]} rotation={[0, 0, 0.6]} scale={[1, 1, 0.3]}><coneGeometry args={[0.1, 0.22, 3]} /><Mat c={c} /></mesh>
+      {shape ? <mesh geometry={shape.bubble}><Painted c={c} /></mesh> : (
+        <>
+          <mesh scale={[1.25, 0.9, 0.3]}><sphereGeometry args={[0.32, 18, 12]} /><Mat c={c} /></mesh>
+          <mesh position={[-0.18, -0.34, 0]} rotation={[0, 0, 0.6]} scale={[1, 1, 0.3]}><coneGeometry args={[0.1, 0.22, 3]} /><Mat c={c} /></mesh>
+        </>
+      )}
       {mark === '!' ? (
         <>
           <Box s={[0.07, 0.26, 0.08]} c={ink} position={[0, 0.05, 0.1]} />
@@ -223,12 +228,19 @@ export function Bubble({ mark = '!', c = '#ffffff', ink = '#1f1f26', ...rest }: 
 }
 
 /** A coin, standing on its edge. */
-export const Coin = (p: G) => <group {...p}><mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.1, 0.1, 0.03, 16]} /><Mat c="#f2c230" e={0.25} /></mesh></group>;
+export function Coin(p: G) {
+  const shape = useTrinkets();
+  return <group {...p}>{shape ? <mesh geometry={shape.coin}><Painted c="#f2c230" e={0.25} /></mesh> : <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.1, 0.1, 0.03, 16]} /><Mat c="#f2c230" e={0.25} /></mesh>}</group>;
+}
 
-/** A heart, made of two balls and a cone. */
-export const Heart = ({ c = '#ec4899', ...p }: { c?: string } & G) => (
+/** A heart: the modelled one, or two balls and a cone until it is loaded. */
+export function Heart({ c = '#ec4899', ...p }: { c?: string } & G) {
+  const shape = useTrinkets();
+  if (shape) return <group {...p}><mesh geometry={shape.heart}><Painted c={c} /></mesh></group>;
+  return (
   <group {...p}><Ball r={0.07} c={c} position={[-0.055, 0.03, 0]} /><Ball r={0.07} c={c} position={[0.055, 0.03, 0]} /><mesh position={[0, -0.04, 0]} rotation={[0, 0, Math.PI]}><coneGeometry args={[0.115, 0.14, 4]} /><Mat c={c} /></mesh></group>
-);
+  );
+}
 
 /** A house: walls, a roof, a door and a window. `open` swings the door. */
 export function House({ c = '#e8dcc4', roof = '#a24b3a', open, ...rest }: { c?: string; roof?: string; open?: (t: number) => number } & G) {
