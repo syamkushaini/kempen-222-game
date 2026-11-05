@@ -107,6 +107,16 @@ describe('the crowd person model', () => {
   });
 });
 
+describe('the small shapes model', () => {
+  const g = glbJson('public/models/trinkets.glb') as unknown as { nodes: { name?: string }[]; meshes: { primitives: { attributes: Record<string, number> }[] }[] };
+  it('has the coin, heart, speech balloon, pennant and top hat, each painted with vertex colours, and is small', () => {
+    expect(g.nodes.map((n) => n.name).sort()).toEqual(['Bubble', 'Coin', 'Heart', 'Pennant', 'TopHat']);
+    for (const m of g.meshes) { expect(m.primitives).toHaveLength(1); expect(m.primitives[0].attributes).toHaveProperty('COLOR_0'); }
+    expect(readFileSync(join(process.cwd(), 'public/models/trinkets.glb')).length).toBeLessThan(90_000);
+    expect(readFileSync(join(process.cwd(), 'public/models/CREDITS.txt'), 'utf8')).toContain('trinkets.glb');
+  });
+});
+
 describe('which model stands for whom', () => {
   const look = (wear: Look['wear'], extra: Partial<Look> = {}): Look => ({ skin: 1, hair: 'short', hairColor: 'black', wear, ...extra });
   it('puts the player’s leader in the model that matches what they wear', () => {

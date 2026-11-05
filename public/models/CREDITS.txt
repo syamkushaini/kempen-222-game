@@ -102,3 +102,9 @@ newspaper.glb, press-mics.glb, floodlight.glb
 Three low-poly props for the night attack scene (a folded tabloid with a red masthead and a big headline, a stand of six reporters'
 microphones with coloured station flags, and a floodlight on a tripod) modelled in Blender for Kempen 222 by the project's owner with
 Claude, and free of any third-party licence.
+
+trinkets.glb
+------------
+Five small low-poly shapes in one file (a coin with a struck star, a heart, a comic speech balloon, a bunting pennant and a top hat with a red
+band), modelled in Blender for Kempen 222 by the project's owner with Claude, and free of any third-party licence. They are painted in greys
+that multiply the colours given in code (src/ui/stage/people.ts).

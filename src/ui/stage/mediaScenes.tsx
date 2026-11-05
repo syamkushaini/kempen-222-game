@@ -7,8 +7,22 @@ import { ModelBoundary } from './ModelBoundary';
 import { CameraOperator } from './CameraOperator';
 import { Reporter } from './Reporter';
 import { Prop } from './Props';
-import { Anim, Ball, Banner, Box, Bubble, Coin, Crowd, ease, Figure, Flag, Ground, Heart, Hero, Mat, rnd, span, Wave } from './parts';
+import { useTrinkets } from './people';
+import { Anim, Ball, Banner, Box, Bubble, Coin, Crowd, ease, Figure, Flag, Ground, Heart, Hero, Mat, rnd, span, Wave, Painted } from './parts';
 import { crowdColors, type SceneProps } from './groundScenes';
+
+/** The tycoon's head under his top hat (the modelled hat with its red band, or two cylinders until it is loaded). */
+function TycoonHead() {
+  const shape = useTrinkets();
+  return (
+    <group position={[0, 1.6, 0]}>
+      <Ball r={0.19} c="#c98d62" />
+      {shape ? <mesh geometry={shape.hat}><Painted c="#ffffff" /></mesh> : (
+        <><mesh position={[0, 0.22, 0]}><cylinderGeometry args={[0.13, 0.15, 0.22, 14]} /><Mat c="#15181f" /></mesh><mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.27, 0.27, 0.03, 14]} /><Mat c="#15181f" /></mesh></>
+      )}
+    </group>
+  );
+}
 
 /** The beam of a floodlight: a soft-edged spot from the lamp head at `from` onto the point `to`. It casts no shadow, to stay cheap. */
 function Beam({ from, to, color = '#fff2d6' }: { from: [number, number, number]; to: [number, number, number]; color?: string }) {
@@ -214,7 +228,7 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
       {kind === 'tycoon' && (
         <>
           <Hero look={look} accent={accent} player position={[-1.1, 0, -1]} arms="point" />
-          <Figure color="#15181f" pants="#15181f" position={[1.1, 0, -1]} arms="point" scale={1.15} head={<group position={[0, 1.6, 0]}><Ball r={0.19} c="#c98d62" /><mesh position={[0, 0.22, 0]}><cylinderGeometry args={[0.13, 0.15, 0.22, 14]} /><Mat c="#15181f" /></mesh><mesh position={[0, 0.12, 0]}><cylinderGeometry args={[0.27, 0.27, 0.03, 14]} /><Mat c="#15181f" /></mesh></group>} />
+          <Figure color="#15181f" pants="#15181f" position={[1.1, 0, -1]} arms="point" scale={1.15} head={<TycoonHead />} />
           <Prop kind="desk" position={[0, 0, 0.3]} fallback={<><Box s={[1.5, 0.12, 0.8]} c="#6b4a2f" position={[0, 0.75, 0.3]} /><Box s={[0.12, 0.75, 0.6]} c="#6b4a2f" position={[-0.6, 0.38, 0.3]} /><Box s={[0.12, 0.75, 0.6]} c="#6b4a2f" position={[0.6, 0.38, 0.3]} /></>} />
           <group position={[0, 0.85, 0.3]}>
             <Box s={[0.7, 0.22, 0.46]} c="#2a2a33" position={[0, 0.11, 0]} />

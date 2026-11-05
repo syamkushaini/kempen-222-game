@@ -1,6 +1,7 @@
 import type { Look } from '../faces';
 import { Prop } from './Props';
-import { Anim, Ball, Banner, Box, Crowd, ease, Figure, Flag, Ground, Hero, House, Neighbour, Palm, Platform, rnd, span, Tree, Wave, Bubble, Mat } from './parts';
+import { useTrinkets } from './people';
+import { Anim, Ball, Banner, Box, Crowd, ease, Figure, Flag, Ground, Hero, House, Neighbour, Palm, Platform, rnd, span, Tree, Wave, Bubble, Mat, Painted } from './parts';
 
 export interface SceneProps { look: Look; accent: string; rival: { look: Look; accent: string } }
 export const crowdColors = (accent: string) => [accent, '#f3efe6', '#3d6b8c', '#a35a8f', '#2f7d5b', '#d09a3a'];
@@ -20,11 +21,17 @@ function Confetti({ n = 30, area = 6, colors }: { n?: number; area?: number; col
 
 /** A string of lights or bunting between two poles. */
 function Bunting({ y = 3, w = 8, n = 12, colors }: { y?: number; w?: number; n?: number; colors: string[] }) {
+  const shape = useTrinkets();
   return (
     <group position={[0, y, -1]}>
       {Array.from({ length: n }, (_, i) => {
         const x = -w / 2 + (w * (i + 0.5)) / n;
-        return <mesh key={i} position={[x, -Math.sin((i + 0.5) / n * Math.PI) * 0.45, 0]} rotation={[0, 0, Math.PI]}><coneGeometry args={[0.18, 0.32, 3]} /><Mat c={colors[i % colors.length]} /></mesh>;
+        const at: [number, number, number] = [x, -Math.sin((i + 0.5) / n * Math.PI) * 0.45, 0];
+        // the pennants hang along the sagging string, each tipped to follow it
+        const tilt = -Math.atan((Math.PI * 0.45 / w) * Math.cos((i + 0.5) / n * Math.PI));
+        return shape
+          ? <mesh key={i} geometry={shape.pennant} position={at} rotation={[0, 0, tilt]}><Painted c={colors[i % colors.length]} /></mesh>
+          : <mesh key={i} position={at} rotation={[0, 0, Math.PI]}><coneGeometry args={[0.18, 0.32, 3]} /><Mat c={colors[i % colors.length]} /></mesh>;
       })}
     </group>
   );
