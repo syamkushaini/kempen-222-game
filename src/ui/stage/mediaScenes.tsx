@@ -3,6 +3,8 @@ import { Suspense } from 'react';
 import { BallotBoxModel } from './BallotBox';
 import { VotingBoothModel } from './VotingBooth';
 import { ModelBoundary } from './ModelBoundary';
+import { CameraOperator } from './CameraOperator';
+import { Reporter } from './Reporter';
 import { Anim, Ball, Banner, Box, Bubble, Coin, Crowd, ease, Figure, Flag, Ground, Heart, Hero, Mat, rnd, span, Wave } from './parts';
 import { crowdColors, type SceneProps } from './groundScenes';
 
@@ -32,6 +34,8 @@ export function Studio({ look, accent, rival, kind }: SceneProps & { kind: Studi
         <>
           <Box s={[2.4, 0.95, 0.8]} c={accent} position={[0, 0.48, -1.6]} />
           <Hero look={look} accent={accent} player position={[0, 0.2, -1.9]} arms="down" scale={1.1} />
+          <Reporter accent={accent} position={[2.1, 0, -1.2]} rotation={[0, -0.15, 0]} />
+          <CameraOperator position={[-1.3, 0, 0.7]} rotation={[0, Math.PI - 0.45, 0]} />
           <Camera x={-2.2} z={1.2} ry={0.35} /><Camera x={2.4} z={1.6} ry={-0.4} />
           <Anim f={(t, g) => { g.visible = t > 0.4 && Math.sin(t * 5) > -0.8; }} position={[0, 3.3, -3.2]}><Box s={[1.6, 0.5, 0.1]} c="#e11d2f" e={0.8} /></Anim>
           {[-3.4, 3.4].map((x) => <group key={x} position={[x, 0, -2]}><Box s={[0.05, 2.6, 0.05]} c="#2a2a33" position={[0, 1.3, 0]} /><Box s={[1.0, 0.7, 0.06]} c="#fff6d8" e={0.8} position={[0, 2.7, 0]} rotation={[0.3, 0, 0]} /></group>)}
@@ -41,6 +45,7 @@ export function Studio({ look, accent, rival, kind }: SceneProps & { kind: Studi
         <>
           <Box s={[2.2, 0.8, 0.9]} c="#6b4a2f" position={[0, 0.4, -1.5]} />
           <Hero look={look} accent={accent} player position={[0, 0.1, -2]} arms="down" scale={1.1} />
+          <Reporter accent={accent} position={[2, 0, -1.4]} rotation={[0, -0.15, 0]} />
           <Box s={[0.05, 0.6, 0.05]} c="#2a2a33" position={[0.5, 1.1, -1.35]} /><Ball r={0.13} c="#2a2a33" position={[0.5, 1.45, -1.35]} />
           <Wave position={[0.5, 1.45, -1.3]} c="#ffffff" count={3} max={0.9} />
           <group position={[3.2, 0, -1.5]}><mesh position={[0, 1.5, 0]}><coneGeometry args={[0.5, 3, 4]} /><Mat c="#9aa3b2" /></mesh><Wave position={[0, 3.1, 0]} c={accent} count={3} max={1.5} every={1.6} /></group>
@@ -56,6 +61,8 @@ export function Studio({ look, accent, rival, kind }: SceneProps & { kind: Studi
           <Anim f={(t, g) => { const mine = Math.floor(t / 0.9) % 2 === 0; g.position.set(mine ? -1.4 : 1.4, 2.8 + Math.sin(t * 3) * 0.05, -1.4); g.visible = t > 0.3; }}><Bubble mark="!" /></Anim>
           <Anim f={(t, g) => { const mine = Math.floor(t / 0.9) % 2 === 0; g.position.set(mine ? 1.4 : -1.4, 2.5, -1.4); g.visible = t > 1.0; g.scale.setScalar(0.6); }}><Bubble mark="?" /></Anim>
           <Box s={[1.8, 0.7, 0.5]} c="#6b4a2f" position={[0, 0.35, -2.8]} />
+          <Reporter accent={accent} position={[0, 0, -2.1]} scale={1} />
+          <CameraOperator position={[-2.6, 0, 0.5]} rotation={[0, Math.PI - 0.5, 0]} />
           <Crowd n={22} area={[-3.5, 3.5, 1, 3.2]} colors={cols} cheer={0.2} seed={11} />
           <Camera x={0} z={2.4} />
         </>
@@ -65,6 +72,8 @@ export function Studio({ look, accent, rival, kind }: SceneProps & { kind: Studi
           <Box s={[1.1, 1.0, 0.6]} c="#8d6e4a" position={[0, 0.5, -1.6]} />
           <Banner c={accent} position={[0, 0, -3.2]} w={4.6} h={2} />
           <Hero look={look} accent={accent} player position={[0, 0, -2.1]} arms="up" />
+          <Reporter accent={accent} position={[2.9, 0, -1.2]} rotation={[0, -0.15, 0]} />
+          <CameraOperator position={[-2.9, 0, -0.5]} rotation={[0, Math.PI - 0.6, 0]} />
           <Box s={[0.5, 0.04, 0.38]} c="#ffffff" position={[0, 1.02, -1.55]} rotation={[-0.3, 0, 0]} />
           {Array.from({ length: 16 }, (_, i) => (
             <Anim key={i} f={(t, g) => { const x = ((t - 0.5 - i * 0.12) / 1.6); g.visible = x > 0 && x < 1.2; g.position.set((rnd(i) - 0.5) * 5 * x, 1.2 + x * 2.2, -1.2 + rnd(i + 3) * 2.2 * x); g.rotation.set(x * 4, x * 3, 0.3); }}><Box s={[0.5, 0.03, 0.66]} c="#fffdf5" /></Anim>

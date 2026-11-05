@@ -28,7 +28,7 @@ export function BustLights() {
 }
 
 /** The head and shoulders, centred on the origin, 1 unit to the head's radius. */
-export function Bust({ look, accent, calm, talking = false }: { look: Look; accent: string; calm: boolean; talking?: boolean }) {
+export function Bust({ look, accent, calm, talking = false, shoulders = true }: { look: Look; accent: string; calm: boolean; talking?: boolean; shoulders?: boolean }) {
   const root = useRef<Group>(null);
   const eyes = useRef<Group>(null);
   const smile = useRef<Mesh>(null);
@@ -63,7 +63,7 @@ export function Bust({ look, accent, calm, talking = false }: { look: Look; acce
   return (
     <group ref={root}>
       {/* shoulders and what is worn on them */}
-      <mesh position={[0, -1.75, 0]} scale={[1.75, 0.95, 0.95]}><sphereGeometry args={[1, 32, 16]} /><meshLambertMaterial color={body} /></mesh>
+      {shoulders && <mesh position={[0, -1.75, 0]} scale={[1.75, 0.95, 0.95]}><sphereGeometry args={[1, 32, 16]} /><meshLambertMaterial color={body} /></mesh>}
       {look.wear === 'suit' && <mesh position={[0, -1.02, 0.78]} rotation={[0.25, 0, Math.PI]} scale={[0.5, 0.55, 0.08]}><coneGeometry args={[1, 1, 3]} /><meshLambertMaterial color="#f5f2ea" /></mesh>}
       {look.wear === 'suit' && <mesh position={[0, -1.1, 0.84]} scale={[0.1, 0.55, 0.05]}><boxGeometry /><meshLambertMaterial color={accent} /></mesh>}
       {/* neck */}
