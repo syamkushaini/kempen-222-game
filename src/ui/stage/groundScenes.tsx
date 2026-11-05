@@ -1,5 +1,5 @@
 import type { Look } from '../faces';
-import { Anim, Ball, Banner, Box, Crowd, ease, Figure, Flag, Ground, Hero, House, Platform, rnd, span, Tree, Wave, Bubble, Mat } from './parts';
+import { Anim, Ball, Banner, Box, Crowd, ease, Figure, Flag, Ground, Hero, House, Neighbour, Platform, rnd, span, Tree, Wave, Bubble, Mat } from './parts';
 
 export interface SceneProps { look: Look; accent: string; rival: { look: Look; accent: string } }
 export const crowdColors = (accent: string) => [accent, '#f3efe6', '#3d6b8c', '#a35a8f', '#2f7d5b', '#d09a3a'];
@@ -43,6 +43,9 @@ export function Rally({ look, accent, kind }: SceneProps & { kind: RallyKind }) 
       <Hero look={look} accent={accent} player position={[0, 0.3, -2.6]} arms="wave" />
       <Anim f={(t, g) => { g.visible = t > 0.6; }} position={[0.7, 2.1, -2.2]}><Wave c={accent} count={3} max={kind === 'ceramah' ? 2.4 : 1.6} /></Anim>
       <Crowd n={kind === 'ceramah' ? 38 : big ? 110 : kind === 'local' ? 22 : kind === 'charity' ? 16 : 56} area={big ? [-5.5, 5.5, -0.6, 3.6] : [-3.6, 3.6, -0.6, 3.4]} colors={cols} seed={kind.length * 7} cheer={kind === 'charity' ? 0.2 : 0.9} />
+      {/* neighbours at the front: a man in a baju Melayu and a woman in a tudung */}
+      <Neighbour model="baju" accent={accent} position={[-1.3, 0, 0.5]} rotation={[0, 0.25, 0]} arms="up" phase={1} />
+      <Neighbour model="tudung" accent={accent} position={[1.2, 0, 0.7]} rotation={[0, -0.25, 0]} arms="up" phase={2.4} />
       {kind === 'ceramah' && [-4.2, -2.1, 2.1, 4.2].map((x, i) => (
         <group key={x} position={[x, 0, -1.4]}><Box s={[0.06, 2.4, 0.06]} c="#6b4a2f" position={[0, 1.2, 0]} /><Anim f={(t, g) => { g.scale.setScalar(1 + Math.sin(t * 4 + i) * 0.08); }} position={[0, 2.55, 0]}><Ball r={0.22} c="#ffcf6b" e={0.9} /></Anim></group>
       ))}
@@ -85,6 +88,8 @@ export function Walk({ look, accent, kind }: SceneProps & { kind: WalkKind }) {
       ))}
       <Tree position={[-6.6, 0, -1.4]} /><Tree position={[6.2, 0, -1.6]} />
       {kind === 'walkabout' && [[-3.4, 1.7], [-1.2, 1.9], [1.4, 1.8], [3.6, 1.7]].map(([x, z], i) => <Figure key={i} color={cols[i + 1]} position={[x, 0, z]} arms="wave" cheer={0.4} phase={i} scale={0.85} />)}
+      {kind !== 'blitz' && <Neighbour model="tudung" accent={accent} position={[-0.1, 0, 2]} rotation={[0, 0.2, 0]} arms="up" phase={0.7} />}
+      {kind !== 'blitz' && <Neighbour model="baju" accent={accent} position={[2.5, 0, 2.1]} rotation={[0, -0.3, 0]} arms="up" phase={1.9} />}
       <Anim f={(t, g) => { g.position.set(-5 + ease(t, 0.2, 3.4) * (stop + 5), 0, 0.5); }}>
         <Hero look={look} accent={accent} player arms="wave" walk={1} scale={1.1} />
         {[1, 2, 3, kind === 'blitz' ? 4 : 3.5].map((k, i) => <Figure key={i} color={cols[(i + 2) % cols.length]} walk={1} arms={i % 2 ? 'wave' : 'down'} phase={i * 2} scale={0.85} position={[-k * 0.75, 0, 0.35 * ((i % 3) - 1)]} />)}

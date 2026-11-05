@@ -1,4 +1,8 @@
 import { Bust } from '../Bust3D';
+import { Suspense } from 'react';
+import { BallotBoxModel } from './BallotBox';
+import { VotingBoothModel } from './VotingBooth';
+import { ModelBoundary } from './ModelBoundary';
 import { Anim, Ball, Banner, Box, Bubble, Coin, Crowd, ease, Figure, Flag, Ground, Heart, Hero, Mat, rnd, span, Wave } from './parts';
 import { crowdColors, type SceneProps } from './groundScenes';
 
@@ -190,9 +194,26 @@ export function Money({ look, accent, kind }: SceneProps & { kind: MoneyKind }) 
   );
 }
 
+/** The voters of the polling scene, when each steps off a van, and the way each walks: to the booth, a pause behind its screen, then to the ballot box. */
+const VOTERS = [0, 1, 2, 3, 4, 5];
+const voterAt = (i: number) => 0.7 + i * 0.3;
+function voterPath(i: number, t: number): { x: number; z: number } {
+  const a = t - voterAt(i);
+  const from = { x: -2.7 + (i % 2) * 1.3, z: 0.05 };
+  const booth = { x: 0.1 + (i % 2) * 0.8, z: -0.35 };
+  const box = { x: 1.3 + (i % 3) * 0.5, z: -0.1 + (i % 2) * 0.55 };
+  const k1 = ease(a, 0, 0.9), k2 = ease(a, 1.55, 2.2);
+  return { x: from.x + (booth.x - from.x) * k1 + (box.x - booth.x) * k2, z: from.z + (booth.z - from.z) * k1 + (box.z - booth.z) * k2 };
+}
+
 /** A branch office going up and filling, and the vans that take people to vote. */
 export function Build({ look, accent, kind }: SceneProps & { kind: 'build' | 'gotv' }) {
   const cols = crowdColors(accent);
+  const plainBox = (
+    <group>
+      <Box s={[0.9, 1.1, 0.7]} c="#e8e3d8" position={[0, 0.55, 0]} /><Box s={[0.92, 0.1, 0.72]} c={accent} position={[0, 1.15, 0]} /><Box s={[0.4, 0.03, 0.04]} c="#1f1f26" position={[0, 1.22, 0.2]} />
+    </group>
+  );
   if (kind === 'build') {
     return (
       <>
@@ -219,12 +240,28 @@ export function Build({ look, accent, kind }: SceneProps & { kind: 'build' | 'go
           {[-0.6, 0.6].map((x) => <mesh key={x} position={[x, 0.2, 0.42]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.2, 0.2, 0.1, 12]} /><Mat c="#2a2a33" /></mesh>)}
         </Anim>
       ))}
-      {Array.from({ length: 10 }, (_, i) => (
-        <Anim key={i} f={(t, g) => { const x = ease(t, 1.4 + i * 0.12, 3.4 + i * 0.05); g.position.set(-2.6 + (i % 2) * 1.4 + x * (3.4 - (-2.6 + (i % 2) * 1.4)), 0, -0.9 + x * 0.1); g.visible = t > 1.4 + i * 0.12; }}><Figure color={cols[i % cols.length]} walk={1} scale={0.7} phase={i} arms="down" /></Anim>
+      {/* the voting booth: the voters stand in front of its cardboard screen to mark their ballots, and stamp them in the party's colour */}
+      <group position={[0.5, 0, -1.2]}>
+        <ModelBoundary fallback={null}>
+          <Suspense fallback={null}><VotingBoothModel accent={accent} scale={1.5} marks={VOTERS.map((i) => voterAt(i) + 1.05)} /></Suspense>
+        </ModelBoundary>
+      </group>
+      {VOTERS.map((i) => (
+        <Anim key={i} f={(t, g) => {
+          const p = voterPath(i, t), q = voterPath(i, t + 0.06);
+          g.visible = t >= voterAt(i);
+          g.position.set(p.x, 0, p.z);
+          // facing the way they are going; at the booth, towards its screen
+          const at = t - voterAt(i), marking = at > 0.9 && at < 1.55;
+          g.rotation.y = marking ? Math.PI : Math.atan2(q.x - p.x, q.z - p.z);
+        }}><Figure color={cols[i % cols.length]} walk={0.8} scale={0.7} phase={i} arms="down" /></Anim>
       ))}
-      <group position={[3.4, 0, -0.9]}>
-        <Box s={[0.9, 1.1, 0.7]} c="#e8e3d8" position={[0, 0.55, 0]} /><Box s={[0.92, 0.1, 0.72]} c={accent} position={[0, 1.15, 0]} /><Box s={[0.4, 0.03, 0.04]} c="#1f1f26" position={[0, 1.22, 0.2]} />
-        <Anim f={(t, g) => { g.visible = t > 3.0; g.scale.setScalar(ease(t, 3.0, 3.4)); }} position={[0, 2.1, 0]}>
+      <group position={[2.9, 0, -0.9]}>
+        {/* the ballot box: the modelled one, and the plain box that stands in while it loads or if it cannot be had */}
+        <ModelBoundary fallback={plainBox}>
+          <Suspense fallback={plainBox}><BallotBoxModel accent={accent} scale={2.6} papers={VOTERS.length} first={voterAt(0) + 2.35} gap={0.24} /></Suspense>
+        </ModelBoundary>
+        <Anim f={(t, g) => { g.visible = t > 3.9; g.scale.setScalar(ease(t, 3.9, 4.2)); }} position={[0, 1.85, 0]}>
           <Box s={[0.14, 0.5, 0.06]} c="#16a34a" e={0.6} position={[0.12, 0.05, 0]} rotation={[0, 0, -0.7]} /><Box s={[0.14, 0.28, 0.06]} c="#16a34a" e={0.6} position={[-0.12, -0.05, 0]} rotation={[0, 0, 0.7]} />
         </Anim>
       </group>

@@ -2,8 +2,10 @@ import { useFrame, type ThreeElements } from '@react-three/fiber';
 import { Suspense, useContext, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Color, Object3D, type Group, type InstancedMesh } from 'three';
 import { Bust } from '../Bust3D';
-import { isMaleLook, type Look } from '../faces';
-import { ModelBoundary, Politician } from './Politician';
+import { modelFor, type Look } from '../faces';
+import { ModelBoundary } from './ModelBoundary';
+import { Politician } from './Politician';
+import { StaticFigure, type StaticId } from './StaticFigure';
 
 // The pieces the action scenes are built from: people, a crowd, a platform, flags, coins and the like. Everything is a plain low-poly shape
 // with one flat colour, and everything moves from one clock, so a scene is a handful of these set out and given a script.
@@ -64,9 +66,10 @@ export function Figure({ color = '#3b82f6', skin = '#e2b088', pants = '#2b3140',
 }
 
 /**
- * The player's leader on the stage: a full figure, talking while the scene runs. A man (see `isMaleLook`) who is the player's own leader is the
- * modelled politician, in a suit with the party's rosette on the lapel; anyone else is the game's own figure with the 3D head it draws everywhere.
- * If the model is still coming or cannot be had, the game's own figure stands in.
+ * A leader on the stage: a full figure, talking while the scene runs. The player's own leader and the rival are modelled people, chosen by what
+ * they wear (see `modelFor`): a man in a suit, a man in a baju Melayu and songkok, a woman in a trouser suit, a woman in a tudung, and for the
+ * other side a man in a three-piece. Each has the party's rosette on the chest. If the model is still coming or cannot be had, the game's own
+ * figure stands in, with the 3D head it draws everywhere.
  */
 export function Hero({ look, accent, talking = true, arms = 'wave', scale = 1.15, walk = 0, player = false, ...rest }:
   { look: Look; accent: string; talking?: boolean; arms?: ArmPose; scale?: number; walk?: number; player?: boolean } & G) {
@@ -77,12 +80,24 @@ export function Hero({ look, accent, talking = true, arms = 'wave', scale = 1.15
       {...rest}
     />
   );
-  if (!player || !isMaleLook(look)) return figure;
+  const m = modelFor(look, player);
   return (
     <ModelBoundary fallback={figure}>
       <Suspense fallback={figure}>
-        <Politician pose={arms} walk={walk} talking={talking} accent={accent} scale={scale} {...rest} />
+        {m.kind === 'rig'
+          ? <Politician model={m.id} pose={arms} walk={walk} talking={talking} accent={accent} scale={scale} {...rest} />
+          : <StaticFigure model={m.id} pose={arms} walk={walk} talking={talking} accent={accent} scale={scale} {...rest} />}
       </Suspense>
+    </ModelBoundary>
+  );
+}
+
+/** A person from the neighbourhood standing among the crowd: a man in a baju Melayu or a woman in a tudung, in a colour of the party's palette. */
+export function Neighbour({ model, accent, ...rest }: { model: StaticId; accent: string; arms?: ArmPose; phase?: number; scale?: number } & G) {
+  const { arms = 'up', phase = 0, scale = 1.05, ...pos } = rest;
+  return (
+    <ModelBoundary fallback={null}>
+      <Suspense fallback={null}><StaticFigure model={model} pose={arms} accent={accent} phase={phase} scale={scale} talking={false} {...pos} /></Suspense>
     </ModelBoundary>
   );
 }
