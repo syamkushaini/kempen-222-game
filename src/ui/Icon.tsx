@@ -1,58 +1,114 @@
-/** The small line icons the interface uses, drawn on a 24-point grid. They are never the only label: a word or a name goes with each. */
-const PATHS = {
-  flag: 'M5 21V4 M5 4h11l-2 4 2 4H5',
-  landmark: 'M3 10l9-6 9 6 M5 10v8 M9 10v8 M15 10v8 M19 10v8 M3 21h18',
-  people: 'M9 11a3 3 0 100-6 3 3 0 000 6z M3 20c0-3 3-5 6-5s6 2 6 5 M16 11a3 3 0 100-6 M17 15c2.5.4 4 2.2 4 5',
-  intel: 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
-  sun: 'M12 16a4 4 0 100-8 4 4 0 000 8z M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4',
-  moon: 'M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z',
-  auto: 'M12 3a9 9 0 100 18 9 9 0 000-18z M12 3v18',
-  sliders: 'M4 7h9 M17 7h3 M4 12h3 M11 12h9 M4 17h11 M19 17h1 M15 5v4 M9 10v4 M17 15v4',
-  speaker: 'M4 9v6h4l5 4V5L8 9H4z M16.5 9a4 4 0 010 6 M19 6.5a8 8 0 010 11',
-  muted: 'M4 9v6h4l5 4V5L8 9H4z M17 9l5 6 M22 9l-5 6',
-  music: 'M9 18V5l11-2v13 M9 18a3 3 0 11-3-3 3 3 0 013 3z M20 16a3 3 0 11-3-3 3 3 0 013 3z',
-  inbox: 'M3 13l3-8h12l3 8 M3 13v6h18v-6 M3 13h5l1 2h6l1-2h5',
-  thumbUp: 'M7 11v9H4v-9h3z M7 11l4-7c1.5 0 2.5 1 2.5 2.5V9h5a2 2 0 012 2.3l-1 6A2 2 0 0117.5 19H7',
-  thumbDown: 'M7 13V4H4v9h3z M7 13l4 7c1.5 0 2.5-1 2.5-2.5V15h5a2 2 0 002-2.3l-1-6A2 2 0 0017.5 5H7',
-  ballot: 'M3 14h18v6H3z M7 14V9l5-5 5 5v5 M10 9h4',
-  megaphone: 'M3 10v4h3l8 4V6L6 10H3z M17 9a4 4 0 010 6',
-  compass: 'M12 21a9 9 0 100-18 9 9 0 000 18z M15.5 8.5l-2 5-5 2 2-5 5-2z',
-  play: 'M7 4.5v15l12-7.5-12-7.5z',
-  plus: 'M12 5v14 M5 12h14',
-  folder: 'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z',
-  trophy: 'M8 4h8v5a4 4 0 01-8 0V4z M8 6H5a3 3 0 003 4 M16 6h3a3 3 0 01-3 4 M12 13v4 M8 20h8 M10 17h4',
-  target: 'M12 21a9 9 0 100-18 9 9 0 000 18z M12 16a4 4 0 100-8 4 4 0 000 8z M12 12h.01',
-  book: 'M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z M4 19a2 2 0 012-2h13 M9 7h6',
+import {
+  AdjustmentsHorizontalIcon,
+  ArchiveBoxIcon,
+  BanknotesIcon,
+  BellIcon,
+  BoltIcon,
+  BookOpenIcon,
+  BuildingLibraryIcon,
+  ChartBarIcon,
+  ChatBubbleLeftIcon,
+  CheckIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Cog6ToothIcon,
+  ComputerDesktopIcon,
+  DevicePhoneMobileIcon,
+  DocumentTextIcon,
+  FlagIcon,
+  FolderIcon,
+  HandThumbDownIcon,
+  HandThumbUpIcon,
+  HeartIcon,
+  HomeIcon,
+  InboxIcon,
+  LockClosedIcon,
+  MapIcon,
+  MapPinIcon,
+  MegaphoneIcon,
+  MicrophoneIcon,
+  MoonIcon,
+  MusicalNoteIcon,
+  PlayIcon,
+  PlusIcon,
+  PresentationChartBarIcon,
+  SpeakerWaveIcon,
+  SpeakerXMarkIcon,
+  StarIcon,
+  SunIcon,
+  TrophyIcon,
+  TvIcon,
+  UsersIcon,
+  ViewfinderCircleIcon,
+  WrenchScrewdriverIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
+import type { ComponentType, SVGProps } from 'react';
+
+/**
+ * The small line icons the interface uses. Most are Heroicons (outline, 24-point grid, MIT licence: tailwindlabs/heroicons). Heroicons has no
+ * crown or coffee cup, so those two are drawn here on the same grid with the same stroke. They are never the only label: a word or a name goes with each.
+ */
+const HERO = {
+  flag: FlagIcon,
+  landmark: BuildingLibraryIcon,
+  people: UsersIcon,
+  intel: ChartBarIcon,
+  sun: SunIcon,
+  moon: MoonIcon,
+  auto: ComputerDesktopIcon,
+  sliders: AdjustmentsHorizontalIcon,
+  speaker: SpeakerWaveIcon,
+  muted: SpeakerXMarkIcon,
+  music: MusicalNoteIcon,
+  inbox: InboxIcon,
+  thumbUp: HandThumbUpIcon,
+  thumbDown: HandThumbDownIcon,
+  ballot: ArchiveBoxIcon,
+  megaphone: MegaphoneIcon,
+  compass: MapIcon,
+  play: PlayIcon,
+  plus: PlusIcon,
+  folder: FolderIcon,
+  trophy: TrophyIcon,
+  target: ViewfinderCircleIcon,
+  book: BookOpenIcon,
+  gear: Cog6ToothIcon,
+  lock: LockClosedIcon,
+  back: ChevronLeftIcon,
+  check: CheckIcon,
+  chevron: ChevronRightIcon,
+  tv: TvIcon,
+  phone: DevicePhoneMobileIcon,
+  board: PresentationChartBarIcon,
+  bolt: BoltIcon,
+  coins: BanknotesIcon,
+  home: HomeIcon,
+  mic: MicrophoneIcon,
+  heart: HeartIcon,
+  star: StarIcon,
+  doc: DocumentTextIcon,
+  tool: WrenchScrewdriverIcon,
+  chat: ChatBubbleLeftIcon,
+  walk: MapPinIcon,
+  close: XMarkIcon,
+  bell: BellIcon,
+} satisfies Record<string, ComponentType<SVGProps<SVGSVGElement>>>;
+
+const OWN = {
   crown: 'M4 18h16 M4 18L3 8l5 4 4-7 4 7 5-4-1 10',
-  gear: 'M12 15a3 3 0 100-6 3 3 0 000 6z M19 12a7 7 0 00-.1-1.3l2-1.5-2-3.4-2.3 1a7 7 0 00-2.3-1.3L14 3h-4l-.3 2.5a7 7 0 00-2.3 1.3l-2.3-1-2 3.4 2 1.5a7 7 0 000 2.6l-2 1.5 2 3.4 2.3-1a7 7 0 002.3 1.3L10 21h4l.3-2.5a7 7 0 002.3-1.3l2.3 1 2-3.4-2-1.5A7 7 0 0019 12z',
-  lock: 'M6 11h12v9H6z M8 11V8a4 4 0 018 0v3 M12 15v2',
-  back: 'M15 5l-7 7 7 7',
-  check: 'M5 12.5l4.5 4.5L19 7.5',
-  chevron: 'M9 5l7 7-7 7',
-  tv: 'M3 6h18v11H3z M8 21h8 M12 17v4',
-  phone: 'M8 3h8a1 1 0 011 1v16a1 1 0 01-1 1H8a1 1 0 01-1-1V4a1 1 0 011-1z M11 18h2',
-  board: 'M3 5h18v9H3z M7 14v6 M17 14v6',
-  bolt: 'M13 3L5 13h6l-1 8 8-10h-6l1-8z',
-  coins: 'M12 8c4.4 0 8-1.3 8-3s-3.6-3-8-3-8 1.3-8 3 3.6 3 8 3z M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5 M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6',
-  home: 'M4 11l8-7 8 7 M6 10v10h12V10 M10 20v-6h4v6',
-  mic: 'M12 3a3 3 0 00-3 3v5a3 3 0 006 0V6a3 3 0 00-3-3z M6 11a6 6 0 0012 0 M12 17v4',
   coffee: 'M5 9h11v5a5 5 0 01-5 5h-1a5 5 0 01-5-5V9z M16 10h2a2 2 0 010 4h-2 M8 3v3 M12 3v3',
-  heart: 'M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z',
-  star: 'M12 3l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 17l-5.6 3 1.3-6.2L3 9.5l6.3-.7L12 3z',
-  doc: 'M6 3h9l4 4v14H6z M14 3v5h5 M9 13h7 M9 17h5',
-  tool: 'M14 6a4 4 0 00-5 5L3 17l4 4 6-6a4 4 0 005-5l-3 3-2-2 3-3a4 4 0 00-2-2z',
-  chat: 'M4 5h16v11H9l-5 4V5z',
-  walk: 'M13 5a2 2 0 100-4 2 2 0 000 4z M9 22l2-7-2-3 1-5 4 2 3 2 M11 15l3 2 1 5 M10 7L6 10v3',
-  close: 'M6 6l12 12 M18 6L6 18',
-  bell: 'M12 4c-4.4 0-8 3.6-8 8 0 4.6 5.5 8.2 8 8v2v-2c0-4.4-4.4-8-8-8v-4h16v4c0-4.4-4.4-8-8-8z M12 18h2c0-2.2 2.2-4 4-4h4c-2.2 0-4-1.8-4-4h-2c0-3.3-2.7-6-6-6s-6 2.7-6 6h-2c0 2.2 1.8 4 4 4h4c-2.2 0-4 1.8-4 4z M6 8a4 4 0 014-4h4a4 4 0 014 4c0 2-1.5 3-3 3H9c-1.5 0-3-1-3-3z',
 } as const;
 
-export type IconName = keyof typeof PATHS;
+export type IconName = keyof typeof HERO | keyof typeof OWN;
+export const ICON_NAMES = [...Object.keys(HERO), ...Object.keys(OWN)] as IconName[];
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
+  const Hero: ComponentType<SVGProps<SVGSVGElement>> | undefined = (HERO as Record<string, ComponentType<SVGProps<SVGSVGElement>>>)[name];
+  if (Hero) return <Hero className="icon" width={size} height={size} aria-hidden="true" />;
   return (
-    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {PATHS[name].split(' M').map((d, i) => <path key={i} d={i === 0 ? d : `M${d}`} />)}
+    <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {OWN[name as keyof typeof OWN].split(' M').map((d, i) => <path key={i} d={i === 0 ? d : `M${d}`} />)}
     </svg>
   );
 }

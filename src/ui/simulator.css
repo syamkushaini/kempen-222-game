@@ -54,7 +54,7 @@
 .sim-scale .pos { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-3); background: var(--panel); cursor: pointer; padding: 0; flex: none; }
 .sim-scale .pos.began { border-color: var(--faint); box-shadow: inset 0 0 0 3px var(--panel-2); background: var(--faint); }
 .sim-scale .pos.here { background: var(--primary); border-color: var(--primary-hover); box-shadow: none; }
-.sim-scale .pos:focus-visible { outline: 2px solid var(--primary-hover); outline-offset: 2px; }
+.sim-scale .pos:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 /* party chips */
 .sim-chips { display: flex; flex-wrap: wrap; gap: 6px; }

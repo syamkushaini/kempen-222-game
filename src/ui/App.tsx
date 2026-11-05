@@ -383,7 +383,7 @@ export function App() {
       <AsideBanner />
       {/* the screens read party colours when they draw, so a new palette starts them afresh */}
       <Fragment key={palette}>
-        <main id="main" tabIndex={-1}>
+        <div id="main" tabIndex={-1}>
           {!phase && !simulating && <Title />}
           <Suspense fallback={<p className="muted">{t('app.loading')}</p>}>
             {!phase && simulating && <Simulator />}
@@ -393,7 +393,7 @@ export function App() {
             {!ended && phase && phase !== 'campaign' && phase !== 'term' && !night && <FormationScreen />}
           </Suspense>
           {!ended && phase && !night && <SceneModal />}
-        </main>
+        </div>
       </Fragment>
       <GameMenu />
       {phase && !ended && <Sandbox />}

@@ -81,9 +81,6 @@ function RadioCard({ checked, className, style, locked, onSelect, children }: { 
   );
 }
 
-// The picture behind the menu: a rally at dusk below the seat of government. Its left side is dark, and the menu stands there.
-const MENU_ART = `${import.meta.env.BASE_URL}menu-bg.webp`;
-
 const STEPS = ['steps.contest', 'steps.who', 'steps.rules'] as const;
 
 /** What the title screen is showing: the main menu, the ways to play, the two kinds of career, one of the two set-ups, the saved games or the challenges. */
@@ -179,7 +176,6 @@ export function Title() {
       ...(resumed && stage ? { following: carriedFollowing(0.4) } : {}),
     });
   };
-  const [art, setArt] = useState(false);
   const [lastMode] = useState<'quick' | 'custom' | null>(() => { try { const v = localStorage.getItem(MODE_KEY); return v === 'custom' || v === 'quick' ? v : null; } catch { return null; } });
   useEffect(() => { if (setupWanted) clearSetupWanted(); }, [setupWanted, clearSetupWanted]);
   const custom = mode === 'custom';
@@ -231,7 +227,6 @@ export function Title() {
 
   return (
     <main className={mode === 'menu' ? 'title menu-stage' : 'title menu-stage sub'}>
-      <div className={art ? 'menu-art ready' : 'menu-art'} aria-hidden="true"><img src={MENU_ART} alt="" decoding="async" ref={(el) => { if (el?.complete && el.naturalWidth > 0) setArt(true); }} onLoad={() => setArt(true)} /></div>
       {honours && <HonoursDialog onClose={() => setHonours(false)} />}
       {hq && <HQDialog onClose={() => setHq(false)} />}
       {howTo && <Help onClose={() => setHowTo(false)} />}

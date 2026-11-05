@@ -27,10 +27,10 @@ export function ToastGroup({ toasts, onDismiss }: { toasts: StringKey[]; onDismi
         </button>
       </div>
       {count > 1 && (
-        <div className="toast-group-expand" onClick={() => setExpanded(!expanded)}>
+        <button type="button" className="toast-group-expand" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
           <Icon name="chevron" size={14} />
           <span className="muted small">{expanded ? t('toast.less') : t('toast.more', { n: count - 1 })}</span>
-        </div>
+        </button>
       )}
       {expanded && rest.map((id, i) => (
         <div key={i} className="toast-group-item">
