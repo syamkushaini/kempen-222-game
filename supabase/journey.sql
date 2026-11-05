@@ -1,21 +1,27 @@
 -- The Career Campaign leaderboard: each player's highest level. Run once: Supabase dashboard -> SQL Editor -> New query -> paste -> Run.
 -- It uses the same project, address and public key as the other tables (see leaderboard.sql). One row for each player (a random id kept
 -- in the player's browser); the game updates the row as the level rises, and the table refuses a lower level, so a row never goes down.
+-- A row carries the party the player made for the Career Campaign: its name, short name, colour and logo (one of the game's emblems).
+-- The player's own uploaded pictures are never sent. Running this again is safe: it changes nothing that is already there.
 
 create table if not exists public.journey_levels (
-  id          bigint generated always as identity primary key,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now(),
-  player      text not null unique check (char_length(player) between 8 and 64),
-  name        text not null check (char_length(name) between 2 and 24),
-  party       text not null default 'genba' check (party in ('ps', 'bp', 'pt', 'gbk', 'gbs', 'legasi', 'oth', 'genba', 'cahaya', 'suara')),
-  level       int not null check (level between 1 and 53),
-  governed    int not null check (governed between 0 and 13),
-  version     text check (version is null or char_length(version) <= 32)
+  id           bigint generated always as identity primary key,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+  player       text not null unique check (char_length(player) between 8 and 64),
+  name         text not null check (char_length(name) between 2 and 24),
+  party_name   text not null check (char_length(party_name) between 2 and 40),
+  party_short  text not null check (char_length(party_short) between 1 and 6),
+  party_color  text not null check (party_color ~ '^#[0-9a-f]{6}$'),
+  emblem       text not null check (emblem in ('sun', 'torch', 'mountain', 'wave', 'paddy', 'star', 'tree', 'bridge')),
+  level        int not null check (level between 1 and 53),
+  governed     int not null check (governed between 0 and 13),
+  version      text check (version is null or char_length(version) <= 32)
 );
 
 create index if not exists journey_levels_rank on public.journey_levels (level desc, governed desc, updated_at asc);
 
+-- A level only goes up. The party may change (a player can rename their party), but the row keeps its first posting time.
 create or replace function public.journey_levels_only_up() returns trigger language plpgsql as $$
 begin
   if new.level < old.level or new.governed < old.governed then
@@ -39,5 +45,5 @@ create policy "a level can be raised" on public.journey_levels for update to ano
 
 -- The player column is never read back by the game, so a row can be raised only by whoever holds that id.
 revoke all on public.journey_levels from anon;
-grant select (id, created_at, updated_at, name, party, level, governed) on public.journey_levels to anon;
+grant select (id, created_at, updated_at, name, party_name, party_short, party_color, emblem, level, governed) on public.journey_levels to anon;
 grant insert, update on public.journey_levels to anon;

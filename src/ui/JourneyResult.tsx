@@ -2,6 +2,7 @@ import type { StringKey } from '../i18n/strings';
 import { dunByElections, vacancyOf } from '../data/world';
 import { DUN_LEVELS, MODE_UNLOCKS, emptyJourney, journeyLevel, nextStep, scenarioState, type ModeId } from '../sim/campaign/journey';
 import { useStore } from '../state/store';
+import { PostLevel } from './Leaderboard';
 import { useT } from './hooks';
 
 /** The place the journey has reached, in a few words: the state and how many of its three DUN seats are won, or what comes next. */
@@ -59,6 +60,8 @@ export function JourneyResult() {
       {!isState && j.state && <span className="small">{t('jr.dun', { state: t(`state.${j.state}` as StringKey), won: j.dunWon, total: DUN_LEVELS })}</span>}
       {nextText && <span className="small">{t('jr.next', { next: nextText })}</span>}
       {opened.length > 0 && <span className="small unlocked">🔓 {t('jr.unlocked', { modes: opened.map((m) => t(`unlock.mode.${m}` as StringKey)).join(', ') })}</span>}
+      {/* the level rose: the player may put it on the Career Campaign board straight away */}
+      <PostLevel compact />
     </div>
   );
 }
