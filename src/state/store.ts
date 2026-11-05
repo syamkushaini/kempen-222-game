@@ -82,7 +82,7 @@ import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/c
 import { notePlay } from './streak';
 import { clearedHeat } from '../sim/campaign/heat';
 import { validLeaderStats } from '../sim/campaign/perks';
-import { emptyJourney, journeyLevel, journeyResult, modeOpen, nextStep } from '../sim/campaign/journey';
+import { emptyJourney, journeyLevel, journeyResult, modeOpen, nextAfterLoss, nextStep } from '../sim/campaign/journey';
 import { keepSaves } from './persist';
 import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordHeat, recordJourney, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
@@ -893,9 +893,11 @@ export const useStore = create<Store>((set, get) => {
       if (!g || !c || g.aside || c.phase !== 'done' || !c.newParty || c.career) return;
       const world = worldOf(c);
       const result = world && electionResult(world, c);
-      const step = nextStep(get().profile.journey ?? emptyJourney(), c.scenario, dunByElections);
-      // In the Career Campaign only a contest that was won leads on; elsewhere the older rule carries a party on regardless.
-      const next = world && (g.start?.journey ? step : step ?? nextContest(c.scenario, world));
+      const journey = get().profile.journey ?? emptyJourney();
+      const step = nextStep(journey, c.scenario, dunByElections);
+      // In the Career Campaign a contest that was won leads on, and one that was not may be moved on from to the next election up (the
+      // level does not rise for it); elsewhere the older rule carries a party on regardless.
+      const next = world && (g.start?.journey ? step ?? nextAfterLoss(journey, c.scenario, dunByElections) : step ?? nextContest(c.scenario, world));
       if (!world || !result || !next) return;
       const share = summarise(world, c, result).voteShare;
       await loadScenario(next);

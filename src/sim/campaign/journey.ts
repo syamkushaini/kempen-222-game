@@ -99,6 +99,29 @@ export function nextStep(j: Journey, scenario: string, seats: (st: StateId) => s
   return null;
 }
 
+/**
+ * Where a player who did not win this contest can carry on to instead of trying it again, or null if there is nowhere else to go. The level
+ * is not touched (see `record`): this only offers the next election up, so that a player is not held at one contest until it is won.
+ * A lost DUN by-election goes to the next by-election seat of the state that is not yet won (round to the first again), and when no other
+ * seat is left, to the state's election. A state election that did not take the state goes to the next state on the route that is not yet taken.
+ */
+export function nextAfterLoss(j: Journey, scenario: string, seats: (st: StateId) => string[]): string | null {
+  if (isDun(scenario)) {
+    const st = dunState(scenario);
+    const all = seats(st);
+    const open = (s: string) => s !== scenario && !(j.state === st && j.fought.includes(s));
+    const at = all.indexOf(scenario);
+    const after = all.slice(at + 1).find(open) ?? all.find(open);
+    return after ?? `state:${st}`;
+  }
+  const st = stateOf(scenario);
+  if (!st || j.governed.includes(st)) return null;
+  const at = STATE_ROUTE.indexOf(st);
+  const route = [...STATE_ROUTE.slice(at + 1), ...STATE_ROUTE.slice(0, at)];
+  const next = route.find((s) => !j.governed.includes(s));
+  return next ? `state:${next}` : null;
+}
+
 /** How the contest that has just ended went for the journey, or null while it is not over (as `clearedHeat` does for the heat ladder). */
 export function journeyResult(world: World, c: Campaign): Result | null {
   if (!c.newParty || c.career || (c.phase !== 'formation' && c.phase !== 'done') || !c.election) return null;
