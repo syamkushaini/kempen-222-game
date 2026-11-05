@@ -186,7 +186,7 @@ export function Banner({ c, w = 4.2, h = 1.5, ...rest }: { c: string; w?: number
 export function Flag({ c, phase = 0, ...rest }: { c: string; phase?: number } & G) {
   return (
     <group {...rest}>
-      <Box s={[0.05, 1.5, 0.05]} c="#e8e3d8" position={[0, 0.75, 0]} />
+      <Prop kind="flagpole" fallback={<Box s={[0.05, 1.5, 0.05]} c="#e8e3d8" position={[0, 0.75, 0]} />} />
       <Anim f={(t, g) => { g.rotation.y = Math.sin(t * 6 + phase) * 0.25; }} position={[0.02, 1.25, 0]}><Box s={[0.7, 0.42, 0.03]} c={c} position={[0.35, 0, 0]} /></Anim>
     </group>
   );
@@ -250,7 +250,7 @@ export function House({ c = '#e8dcc4', roof = '#a24b3a', open, ...rest }: { c?: 
 
 /** A little tree. */
 export const Tree = (p: G) => (
-  <Prop kind="tree" fallback={<group><Box s={[0.18, 0.8, 0.18]} c="#6b4a2f" position={[0, 0.4, 0]} /><Ball r={0.55} c="#4f8a4a" position={[0, 1.1, 0]} /><Ball r={0.38} c="#5da158" position={[0.25, 1.4, 0.1]} /></group>} {...p} />
+  <Prop kind="tree" fallback={<group {...p}><Box s={[0.18, 0.8, 0.18]} c="#6b4a2f" position={[0, 0.4, 0]} /><Ball r={0.55} c="#4f8a4a" position={[0, 1.1, 0]} /><Ball r={0.38} c="#5da158" position={[0.25, 1.4, 0.1]} /></group>} {...p} />
 );
 
 /** A coconut palm; nothing stands in for it if its model cannot be loaded. */
