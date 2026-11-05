@@ -1,0 +1,30 @@
+name: Redirect the old link
+
+# Manual. Replaces the GitHub Pages site with a single page that sends visitors
+# to https://kempen222.pages.dev/. Run it only once the new site is live.
+# To put the game back on GitHub Pages, run "Publish the game" again.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  redirect:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: redirect
+      - id: deployment
+        uses: actions/deploy-pages@v5
