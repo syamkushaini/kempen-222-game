@@ -284,6 +284,7 @@ export function Attack({ look, accent, rival }: SceneProps) {
   return (
     <>
       <Ground c="#3a3f4d" />
+      <Reporter accent={accent} position={[0, 0, 0.5]} rotation={[0, 0.1, 0]} scale={1.05} />
       <Box s={[24, 7, 0.1]} c="#2a2f3c" position={[0, 3.5, -3.4]} />
       <Box s={[0.9, 1.1, 0.7]} c={accent} position={[-2.4, 0.55, -1.2]} />
       <Hero look={look} accent={accent} player position={[-2.4, 0, -1.7]} arms="point" />
