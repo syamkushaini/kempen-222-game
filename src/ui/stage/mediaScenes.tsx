@@ -1,5 +1,6 @@
 import { Bust } from '../Bust3D';
-import { Suspense } from 'react';
+import { Suspense, useLayoutEffect, useMemo, useRef } from 'react';
+import { Object3D, type SpotLight } from 'three';
 import { BallotBoxModel } from './BallotBox';
 import { VotingBoothModel } from './VotingBooth';
 import { ModelBoundary } from './ModelBoundary';
@@ -8,6 +9,24 @@ import { Reporter } from './Reporter';
 import { Prop } from './Props';
 import { Anim, Ball, Banner, Box, Bubble, Coin, Crowd, ease, Figure, Flag, Ground, Heart, Hero, Mat, rnd, span, Wave } from './parts';
 import { crowdColors, type SceneProps } from './groundScenes';
+
+/** The beam of a floodlight: a soft-edged spot from the lamp head at `from` onto the point `to`. It casts no shadow, to stay cheap. */
+function Beam({ from, to, color = '#fff2d6' }: { from: [number, number, number]; to: [number, number, number]; color?: string }) {
+  const light = useRef<SpotLight>(null);
+  const target = useMemo(() => new Object3D(), []);
+  const [tx, ty, tz] = to;
+  useLayoutEffect(() => {
+    target.position.set(tx, ty, tz);
+    target.updateMatrixWorld();
+    if (light.current) light.current.target = target;
+  }, [target, tx, ty, tz]);
+  return (
+    <>
+      <primitive object={target} />
+      <spotLight ref={light} position={from} angle={0.42} penumbra={0.65} intensity={34} distance={14} decay={1.5} color={color} />
+    </>
+  );
+}
 
 /** The camera that films the leader, with its red light and a sign that says it is live. */
 function Camera({ x, z, ry = 0 }: { x: number; z: number; ry?: number }) {
@@ -299,6 +318,8 @@ export function Attack({ look, accent, rival }: SceneProps) {
       <Prop kind="pressmics" position={[2.4, 0, -0.75]} fallback={null} />
       <Prop kind="floodlight" position={[-4.3, 0, -0.3]} rotation={[0, 1.85, 0]} fallback={null} />
       <Prop kind="floodlight" position={[4.3, 0, -0.3]} rotation={[0, -1.85, 0]} fallback={null} />
+      <Beam from={[-4.15, 2.3, -0.25]} to={[1.6, 1.0, -1.3]} />
+      <Beam from={[4.15, 2.3, -0.25]} to={[2.0, 1.0, -1.4]} />
       <Anim f={(t, g) => { g.rotation.z = Math.sin(t * 9) * 0.1 * span(t, 1.0, 1.2, 3.2, 3.5); g.position.set(2.4, 0, -1.4 + Math.sin(t * 9) * 0.05 * span(t, 1.0, 1.2, 3.2, 3.5)); }}><Hero look={rival.look} accent={rival.accent} arms="up" talking={false} scale={1.1} /></Anim>
       {Array.from({ length: 12 }, (_, i) => (
         <Anim key={i} f={(t, g) => { const x = ((t - 0.5 - i * 0.22) / 0.8); g.visible = x > 0 && x < 1; g.position.set(-1.9 + x * 4.2, 1.5 + Math.sin(x * Math.PI) * 0.5, -1.4); g.rotation.z = x * 4; }}>{i % 3 === 0 ? <Bubble mark="!" c="#fecaca" /> : i % 3 === 1 ? <Ball r={0.13} c="#4a3526" /> : <Prop kind="newspaper" fallback={<Box s={[0.34, 0.02, 0.44]} c="#fffdf5" />} />}</Anim>
