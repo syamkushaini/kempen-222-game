@@ -14,7 +14,6 @@ import { partyColor, partyShort, regionLabel, useFog, useFormat, useSpot, useT, 
 import { Loan } from './Loan';
 import { Brief } from './Brief';
 import { Icon, type IconName } from './Icon';
-import { Kbd } from './Kbd';
 import { NominationsPanel } from './Nominations';
 import { EntriesPanel } from './Entries';
 
@@ -176,7 +175,7 @@ export function ActionsTab() {
     setTimeout(() => document.getElementById('family-funds')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
   };
 
-  const row = (id: ActionId, target: ActionTarget, key: string, title: string, extra?: string, hint?: ReactNode, shortcut?: string) => {
+  const row = (id: ActionId, target: ActionTarget, key: string, title: string, extra?: string, hint?: ReactNode) => {
     const check = canDo(world, campaign, me, id, target);
     const cost = actionCost(world, campaign, me, id, target);
     const gain = target.seat ? expectedSeatGain(world, campaign, me, id, target.seat, target.segment) : null;
@@ -194,7 +193,7 @@ export function ActionsTab() {
       >
         <span className="row-icon"><Icon name={ACTION_ICON[id]} size={20} /></span>
         <div className="grow">
-          <span className="action-title">{title}{shortcut && <Kbd shortcut={shortcut} />}</span>
+          <span className="action-title">{title}</span>
           <span className="chips-line num">
             <span className="cost-chip">{f.days(cost.days)}</span>
             <span className="cost-chip">{cost.money > 0 ? f.rm(cost.money) : t('cost.free')}</span>
@@ -267,11 +266,10 @@ export function ActionsTab() {
           </summary>
           <p className="muted small action-desc">{t('suggest.note')}</p>
           <ul className="action-list">
-            {ideas.map((s, i) => {
-              const shortcut = i < 9 ? String(i + 1) : undefined;
+            {ideas.map((s) => {
               return (
                 <li key={`${s.id}-${JSON.stringify(s.target)}`} className="action-group">
-                  <ul>{row(s.id, s.target, `${s.id}-${JSON.stringify(s.target)}`, titleOf(s.id, s.target), extraFor(s.id, s.target), hintFor(s), shortcut)}</ul>
+                  <ul>{row(s.id, s.target, `${s.id}-${JSON.stringify(s.target)}`, titleOf(s.id, s.target), extraFor(s.id, s.target), hintFor(s))}</ul>
                 </li>
               );
             })}

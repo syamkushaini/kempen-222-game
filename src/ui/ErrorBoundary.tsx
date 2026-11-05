@@ -2,7 +2,6 @@ import { Component, type ReactNode } from 'react';
 import { translate, type StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { downloadGame } from './download';
-import { Kbd } from './Kbd';
 
 /** What the player sees if the screen breaks. The game is autosaved, so the
  * worst case is a reload; the export button is there in case the autosave is
@@ -32,7 +31,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
           <h2>{isNetwork ? t('error.network') : t('error.title')}</h2>
           <p>{isNetwork ? t('error.networkBody') : t('error.body')}</p>
           <div className="button-row">
-            <button className="btn primary" onClick={() => this.retry()}>{t('error.reload')} <Kbd shortcut="R" /></button>
+            <button className="btn primary" onClick={() => this.retry()}>{t('error.reload')}</button>
             {game && <button className="btn" onClick={() => downloadGame(game)}>{t('error.export')}</button>}
           </div>
           {this.state.retryCount > 0 && (

@@ -128,7 +128,7 @@ export const HELP_MS: Record<keyof typeof HELP_EN, string> = {
   'help.tab.challenges': 'Cabaran',
   'help.tab.money': 'Wang',
   'help.tab.tips': 'Tip',
-  'help.tab.words': 'Istilah dan shortcut',
+  'help.tab.words': 'Istilah',
   'help.start.pick.t': 'Cara bermain',
   'help.start.pick.x': 'Belajar sambil bermain ialah pilihan raya kecil yang singkat dengan penasihat di sisi anda. Pilih pertandingan untuk satu pilihan raya: satu kerusi, sebuah negeri, seluruh negara atau Parlimen tergantung. Kerjaya pula pilihan raya demi pilihan raya, dengan tempoh memerintah di antaranya. Cabaran beri anda pilihan raya dan matlamat tertentu untuk dicapai.',
   'help.start.map.t': 'Membaca peta',

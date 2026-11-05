@@ -2,12 +2,18 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
 import { whatIfsFor, type WhatIfId } from '../sim/campaign/whatif';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
-import { byElectionId, fairSeats, getWorld, HOME_PARTIES, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS } from '../data/world';
+import { byElectionId, dunByElections, fairSeats, getWorld, HOME_PARTIES, loadScenario, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS, vacancyOf } from '../data/world';
+import { FIRST_STATE, FIRST_UNLOCK, MODE_UNLOCKS, journeyLevel, modeOpen, resumeScenario, type ModeId } from '../sim/campaign/journey';
+import { rememberName } from '../state/leaderboard';
+import { saveJourneyParty } from '../state/journeyParty';
+import type { Identity } from '../state/identity';
+import { JourneySetup } from './JourneySetup';
+import { UnlockRoadmap } from './UnlockRoadmap';
 import type { ContestKind } from '../sim/campaign/rules';
 import { playable, standingPact, startingFunds } from '../sim/campaign/turn';
 import type { BackstoryId, Difficulty } from '../sim/campaign/types';
 import { startStances } from '../sim/campaign/policy';
-import { FOUNDING_SLOT } from '../sim/campaign/founding';
+import { FOUNDING_SLOT, carriedFollowing } from '../sim/campaign/founding';
 import { FoundingSeat } from './FoundingSeat';
 import { RegionProfile } from './RegionProfile';
 import { inContention, outlook, par } from '../sim/campaign/outlook';
@@ -42,7 +48,6 @@ import { SeatPicker } from './SeatPicker';
 import { LeaderPicker, PartyCreator, type Draft } from './Setup';
 import { Jargon } from './Term';
 import { Skeleton } from './Skeleton';
-import { Kbd } from './Kbd';
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard'];
 /** What can be started from the title screen: the single contests, and a career. */
@@ -62,7 +67,8 @@ const drawSeat = (party: number, not?: string) => {
 };
 
 /** One choice of a radio group, as a card. Not a <button>, because a word in its text that explains itself is a button of its own. */
-function RadioCard({ checked, className, style, onSelect, children }: { checked: boolean; className: string; style?: CSSProperties; onSelect: () => void; children: ReactNode }) {
+function RadioCard({ checked, className, style, locked, onSelect, children }: { checked: boolean; className: string; style?: CSSProperties; locked?: boolean; onSelect: () => void; children: ReactNode }) {
+  if (locked) return <div role="radio" aria-checked={false} aria-disabled className={`${className} locked`} style={style}>{children}</div>;
   return (
     <div
       role="radio" aria-checked={checked} tabIndex={0} className={checked ? `${className} active` : className} style={style}
@@ -81,14 +87,14 @@ const MENU_ART = `${import.meta.env.BASE_URL}menu-bg.webp`;
 const STEPS = ['steps.contest', 'steps.who', 'steps.rules'] as const;
 
 /** What the title screen is showing: the main menu, the ways to play, the two kinds of career, one of the two set-ups, the saved games or the challenges. */
-type Screen = 'menu' | 'home' | 'career' | 'quick' | 'custom' | 'load' | 'challenges';
+type Screen = 'menu' | 'home' | 'career' | 'quick' | 'custom' | 'load' | 'challenges' | 'journey';
 
 /** One line of the main menu: an icon in its own colour, a name that fits its box, and a word on what is behind it. */
-function MenuItem({ icon, tone, title, hint, primary, onClick }: { icon: IconName; tone: string; title: string; hint: string; primary?: boolean; onClick(): void }) {
+function MenuItem({ icon, tone, title, hint, primary, locked, onClick }: { icon: IconName; tone: string; title: string; hint: string; primary?: boolean; locked?: boolean; onClick(): void }) {
   return (
     <li>
-      <button className={`menu-item tone-${tone}${primary ? ' primary' : ''}`} onClick={onClick}>
-        <span className="menu-icon"><Icon name={icon} size={primary ? 26 : 22} /></span>
+      <button className={`menu-item tone-${tone}${primary ? ' primary' : ''}${locked ? ' locked' : ''}`} disabled={locked} aria-disabled={locked || undefined} onClick={onClick}>
+        <span className="menu-icon"><Icon name={locked ? 'lock' : icon} size={primary ? 26 : 22} /></span>
         <span className="menu-text">
           <FitText className="menu-title">{title}</FitText>
           <span className="menu-hint">{hint}</span>
@@ -137,7 +143,7 @@ export function Title() {
   // The screen opens on a choice of how to play; the one chosen last time is marked. "New game" from the menu lands straight on the set-up.
   const setupWanted = useStore((s) => s.setupWanted);
   const clearSetupWanted = useStore((s) => s.clearSetupWanted);
-  const [mode, setMode] = useState<Screen>(() => (setupWanted ? 'custom' : 'menu'));
+  const [mode, setMode] = useState<Screen>(() => (setupWanted ? (modeOpen('byelection', journeyLevel(useStore.getState().profile.journey)) ? 'custom' : 'journey') : 'menu'));
   // Told to the play counting, so that a player who leaves in the middle of the set-up is counted at the step they reached.
   useEffect(() => { watchHint(mode === 'menu' ? 'menu' : `setup:${mode}:${step}`); return () => watchHint(null); }, [mode, step]);
   const [honours, setHonours] = useState(false);
@@ -145,6 +151,34 @@ export function Title() {
   const [howTo, setHowTo] = useState(false);
   const [board, setBoard] = useState(false);
   const profile = useStore((s) => s.profile);
+  const journey = profile.journey;
+  const journeyLv = journeyLevel(journey);
+  // Every way to play besides the career campaign opens in stages as its levels are passed.
+  const open = (m: ModeId) => modeOpen(m, journeyLv);
+  const lockHint = (m: ModeId) => t('unlock.hint', { n: MODE_UNLOCKS[m] });
+  // The Career Campaign starts, or picks up, where the journey has got to: its first DUN by-election in Selangor, then the next seat, the state and the next state.
+  const resumeAt = () => resumeScenario(journey, dunByElections);
+  const nextLabel = (() => {
+    const at = resumeAt();
+    if (at === 'general') return t('career.next.general');
+    if (at.startsWith('state:')) return t('career.next.state', { state: t(`state.${at.slice(6)}` as StringKey) });
+    return t('career.next.dun', { seat: vacancyOf(at.slice('byelection:'.length))?.name ?? t(`state.${FIRST_STATE}` as StringKey) });
+  })();
+  const startJourney = async (playerName: string, identity: Identity, chosen: BackstoryId | null, leaderStats?: number[]) => {
+    // Selangor's assembly seats are fetched first (the start needs them); a journey part-way needs its own state.
+    saveJourneyParty({ name: playerName, identity });
+    rememberName(playerName);
+    await loadState(journey?.state ?? FIRST_STATE);
+    const at = resumeAt();
+    await loadScenario(at);
+    const resumed = journey !== undefined && (journey.state !== null || journey.governed.length > 0);
+    // A journey picked up after a state is taken, or with its DUN seats won, starts with the following those wins earned.
+    const stage = at === 'general' || at.startsWith('state:');
+    startCampaign({
+      name: playerName, scenario: at, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', backstory: chosen, ...(leaderStats ? { leaderStats } : {}), identity, founded: true, journey: true, seed: seedFromSearch(window.location.search),
+      ...(resumed && stage ? { following: carriedFollowing(0.4) } : {}),
+    });
+  };
   const [art, setArt] = useState(false);
   const [lastMode] = useState<'quick' | 'custom' | null>(() => { try { const v = localStorage.getItem(MODE_KEY); return v === 'custom' || v === 'quick' ? v : null; } catch { return null; } });
   useEffect(() => { if (setupWanted) clearSetupWanted(); }, [setupWanted, clearSetupWanted]);
@@ -214,6 +248,7 @@ export function Title() {
           </div>
           <p className="title-intro">{t('title.intro')}</p>
           <StorageNotices onBackUp={() => pick('load')} />
+          <UnlockRoadmap compact />
           <ul className="menu-list">
             {auto && (
               <MenuItem
@@ -221,11 +256,14 @@ export function Title() {
                 onClick={() => { const g = saveStore.load(AUTO_SLOT); if (g) loadGame(g); }}
               />
             )}
-            {!auto && <MenuItem primary icon="play" tone="go" title={t('menu.play')} hint={t('menu.play.hint')} onClick={() => startCampaign({ name: '', scenario, player, difficulty: 'easy', seed: seedFromSearch(window.location.search) })} />}
-            <MenuItem primary={false} icon="plus" tone="new" title={t('menu.new')} hint={t('menu.new.hint')} onClick={() => pick('home')} />
+            <MenuItem
+              primary={!auto} icon="crown" tone="won" title={journey ? t('career.play.next', { n: journeyLv }) : t('career.play')}
+              hint={journey ? t('career.play.nextHint', { next: nextLabel }) : t('career.play.hint', { n: journeyLv })} onClick={() => pick('journey')}
+            />
+            <MenuItem primary={false} icon="plus" tone="new" locked={journeyLv < FIRST_UNLOCK} title={t('menu.other')} hint={journeyLv < FIRST_UNLOCK ? t('unlock.hint', { n: FIRST_UNLOCK }) : t('menu.other.hint')} onClick={() => pick('home')} />
             <MenuItem icon="folder" tone="load" title={t('menu.load')} hint={t('menu.load.hint', { n: saved })} onClick={() => pick('load')} />
-            <MenuItem icon="sliders" tone="learn" title={t('sim.menu')} hint={t('sim.menu.hint')} onClick={() => setSimulating(true)} />
-            <MenuItem icon="target" tone="dare" title={t('challenges.title')} hint={t('menu.challenges.weekly', { n: Math.max(1, Math.ceil(timeLeft(Date.now()) / 86_400_000)) })} onClick={() => pick('challenges')} />
+            <MenuItem icon="sliders" tone="learn" locked={!open('simulator')} title={t('sim.menu')} hint={open('simulator') ? t('sim.menu.hint') : lockHint('simulator')} onClick={() => setSimulating(true)} />
+            <MenuItem icon="target" tone="dare" locked={!open('challenges')} title={t('challenges.title')} hint={open('challenges') ? t('menu.challenges.weekly', { n: Math.max(1, Math.ceil(timeLeft(Date.now()) / 86_400_000)) }) : lockHint('challenges')} onClick={() => pick('challenges')} />
             <MenuItem icon="book" tone="learn" title={t('howto.title')} hint={t('howto.hint')} onClick={() => setHowTo(true)} />
             <MenuItem icon="trophy" tone="won" title={t('menu.honours')} hint={t('menu.honours.hint', { n: earnedCount, total: ACHIEVEMENT_IDS.length })} onClick={() => setHonours(true)} />
             <MenuItem icon="landmark" tone="learn" title={t('hq.title')} hint={t('hq.menu.hint', { n: profile.legacyPoints ?? 0 }) + (streakDays >= 2 ? ` · ${t('streak.days', { n: streakDays })}` : '')} onClick={() => setHq(true)} />
@@ -242,7 +280,7 @@ export function Title() {
               <p className="muted small">{saveLine(t, auto)}</p>
               <div className="button-row">
                 <button className="btn primary" onClick={() => { const g = saveStore.load(AUTO_SLOT); if (g) loadGame(g); }}>
-                  {t('title.continue')} <Kbd shortcut="Enter" />
+                  {t('title.continue')}
                 </button>
                 <button className="btn" onClick={() => pick('load')}>{t('menu.load')}</button>
               </div>
@@ -251,7 +289,7 @@ export function Title() {
           <div className="menu-foot"><Credits /><FeedbackLink /></div>
         </nav>
       ) : (
-      <section className="panel title-main">  {(mode === 'home' || mode === 'career' || mode === 'load' || mode === 'challenges') && (
+      <section className="panel title-main">  {(mode === 'home' || mode === 'career' || mode === 'load' || mode === 'challenges' || mode === 'journey') && (
           <p><button className="link back-link" onClick={() => pick(mode === 'career' ? 'home' : 'menu')}><Icon name="back" size={14} /> {t(mode === 'career' ? 'title.modes.back' : 'menu.back')}</button></p>
         )}
         {mode === 'load' ? (
@@ -261,16 +299,16 @@ export function Title() {
           </>
         ) : mode === 'challenges' ? <ChallengeList /> : null}
 
-        {mode === 'load' || mode === 'challenges' ? null : mode === 'career' ? (
+        {mode === 'journey' ? <JourneySetup onStart={(n, id, b, st) => void startJourney(n, id, b, st)} /> : mode === 'load' || mode === 'challenges' ? null : mode === 'career' ? (
           <div className="modes">
             <h2>{t('title.career.pick')}</h2>
             <div className="party-cards">
-              <button className="party-card plain mode-card tone-won" onClick={() => { pick('custom'); setViaCareer(false); setStateCareer(false); pickKind('career'); setStep(1); }}>
+              <button className="party-card plain mode-card tone-won" disabled={!open('career')} onClick={() => { pick('custom'); setViaCareer(false); setStateCareer(false); pickKind('career'); setStep(1); }}>
                 <span className="mode-icon"><Icon name="landmark" size={22} /></span>
                 <strong><FitText>{t('title.career.federal')}</FitText></strong>
                 <span className="small">{t('title.career.federal.desc')}</span>
               </button>
-              <button className="party-card plain mode-card tone-new" onClick={() => { pick('custom'); setViaCareer(true); setStateCareer(true); setFounded(false); setDraft(null); pickKind('state'); setStep(0); }}>
+              <button className="party-card plain mode-card tone-new" disabled={!open('career')} onClick={() => { pick('custom'); setViaCareer(true); setStateCareer(true); setFounded(false); setDraft(null); pickKind('state'); setStep(0); }}>
                 <span className="mode-icon"><Icon name="flag" size={22} /></span>
                 <strong><FitText>{t('title.career.state')}</FitText></strong>
                 <span className="small">{t('title.career.state.desc')}</span>
@@ -281,23 +319,26 @@ export function Title() {
           <div className="modes">
             <h2>{t('title.modes')}</h2>
             <div className="party-cards three">
-              <button className="party-card plain mode-card tone-go" onClick={() => pick('quick')}>
+              <button className={`party-card plain mode-card tone-go${open('byelection') ? '' : ' locked'}`} disabled={!open('byelection')} onClick={() => pick('quick')}>
                 <span className="mode-icon"><Icon name="book" size={22} /></span>
                 <strong><FitText>{t('title.mode.quick')}</FitText></strong>
                 <span className="small">{t('title.mode.quick.desc')}</span>
-                {!auto && lastMode === null && <span className="badge leaning start-here">{t('title.startHere')}</span>}
+                {!auto && lastMode === null && open('byelection') && <span className="badge leaning start-here">{t('title.startHere')}</span>}
+                {!open('byelection') && <span className="badge plain">🔒 {lockHint('byelection')}</span>}
                 {lastMode === 'quick' && <span className="badge plain">{t('title.mode.last')}</span>}
               </button>
-              <button className="party-card plain mode-card tone-new" onClick={() => { pick('custom'); setViaCareer(false); }}>
+              <button className={`party-card plain mode-card tone-new${open('byelection') ? '' : ' locked'}`} disabled={!open('byelection')} onClick={() => { pick('custom'); setViaCareer(false); }}>
                 <span className="mode-icon"><Icon name="ballot" size={22} /></span>
                 <strong><FitText>{t('title.mode.custom')}</FitText></strong>
                 <span className="small">{t('title.mode.custom.desc')}</span>
-                {lastMode === 'custom' && <span className="badge plain">{t('title.mode.last')}</span>}
+                {lastMode === 'custom' && open('byelection') && <span className="badge plain">{t('title.mode.last')}</span>}
+                {!open('byelection') && <span className="badge plain">🔒 {lockHint('byelection')}</span>}
               </button>
-              <button className="party-card plain mode-card tone-won" onClick={() => pick('career')}>
+              <button className={`party-card plain mode-card tone-won${open('career') ? '' : ' locked'}`} disabled={!open('career')} onClick={() => pick('career')}>
                 <span className="mode-icon"><Icon name="crown" size={22} /></span>
                 <strong><FitText>{t('title.mode.career')}</FitText></strong>
                 <span className="small">{t('title.mode.career.desc')}</span>
+                {!open('career') && <span className="badge plain">🔒 {lockHint('career')}</span>}
               </button>
             </div>
           </div>
@@ -315,10 +356,11 @@ export function Title() {
           {viaCareer ? <h3>{t('title.career.which')}</h3> : <h3>{t('title.contest')}</h3>}
           {!viaCareer && <div className="party-cards four" role="radiogroup" aria-label={t('title.contest')}>
             {KINDS.map((k) => (
-              <RadioCard key={k} checked={kind === k} className="party-card plain" onSelect={() => pickKind(k)}>
+              <RadioCard key={k} checked={kind === k} locked={!open(k === 'career' ? 'career' : k)} className="party-card plain" onSelect={() => pickKind(k)}>
                 <strong>{t(`scenario.${k}`)}</strong>
                 <span className="small"><Jargon>{t(`scenario.${k}.blurb`)}</Jargon></span>
-                {k === 'byelection' && <span className="badge leaning start-here">{t('title.startHere')}</span>}
+                {k === 'byelection' && open('byelection') && <span className="badge leaning start-here">{t('title.startHere')}</span>}
+                {!open(k) && <span className="badge plain">🔒 {lockHint(k)}</span>}
               </RadioCard>
             ))}
           </div>}

@@ -1,15 +1,40 @@
-import { useEffect, useState } from 'react';
+import { Manager } from './Manager';
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
+import { useTypewriter } from './useTypewriter';
 import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { isThreeWay } from '../data/world';
 import { lastOutcome, useSpot, useT, useWorld } from './hooks';
-import { Portrait } from './Portrait';
 import { Jargon } from './Term';
 import { atHome } from '../sim/campaign/turn';
 import { STAFF_NAMES } from '../sim/campaign/staff';
 import { voice } from '../sim/campaign/advice';
 import { ROLE_IDS } from '../sim/campaign/types';
 import { STEPS, stepFor } from './tutorial';
+
+/**
+ * One manager speaking: their avatar, their name, and their words typed out a letter at a time while the avatar talks. A press on the words
+ * shows the rest at once. Screen readers get the whole sentence at once; the typing is only for the eye.
+ */
+function Strip({ who, name, text, className = '', children }: { who: ComponentProps<typeof Manager>['who']; name: ReactNode; text: string; className?: string; children: ReactNode }) {
+  const typing = useTypewriter(text);
+  return (
+    <section className={`adviser adviser-strip${className ? ` ${className}` : ''}`} aria-live="polite">
+      <Manager who={who} size={46} talking={typing.talking} />
+      <div className="grow">
+        <p className="adviser-name">{name}</p>
+        <p className="adviser-text typed" onClick={typing.skip}>
+          <span className="sr-only">{text}</span>
+          <span className="typed-grid" aria-hidden="true">
+            <span className="typed-size"><Jargon>{text}</Jargon></span>
+            <span className={typing.done ? 'typed-now' : 'typed-now typing'}><Jargon>{typing.shown}</Jargon></span>
+          </span>
+        </p>
+        <div className="button-row tight">{children}</div>
+      </div>
+    </section>
+  );
+}
 
 /** The steps at which the adviser has something of its own to say to a party on its home ground. */
 const HOME_LINES = new Set(['funds', 'rivals', 'middle']);
@@ -51,18 +76,11 @@ export function Adviser() {
     : home && HOME_LINES.has(step.id) ? `adviser.home.${step.id}`
     : step.id === 'welcome' ? `adviser.welcome${close ? '' : 'Any'}${held ? 'Held' : ''}` : `adviser.${step.id}`;
   return (
-    <section className="adviser adviser-strip" aria-live="polite">
-      <Portrait adviser size={46} />
-      <div className="grow">
-        <p className="adviser-name">{t('adviser.name')} <span className="muted">· {t('adviser.role')} · {tutorial.step + 1}/{STEPS.length}</span></p>
-        <p className="adviser-text"><Jargon>{t(text as StringKey)}</Jargon></p>
-        <div className="button-row tight">
-          {!step.done && <button className={`btn small primary${spot('next') ? ' spot' : ''}`} onClick={() => advance(STEPS.length)}>{t('adviser.next')}</button>}
-          {pointsAway && <button className="btn small" onClick={show}>{t('adviser.show')}</button>}
-          <button className="btn small" onClick={dismiss}>{t('adviser.skip')}</button>
-        </div>
-      </div>
-    </section>
+    <Strip who={{ adviser: true }} name={<>{t('adviser.name')} <span className="muted">· {t('adviser.role')} · {tutorial.step + 1}/{STEPS.length}</span></>} text={t(text as StringKey)}>
+      {!step.done && <button className={`btn small primary${spot('next') ? ' spot' : ''}`} onClick={() => advance(STEPS.length)}>{t('adviser.next')}</button>}
+      {pointsAway && <button className="btn small" onClick={show}>{t('adviser.show')}</button>}
+      <button className="btn small" onClick={dismiss}>{t('adviser.skip')}</button>
+    </Strip>
   );
 }
 
@@ -93,17 +111,10 @@ function Warning() {
   const key = `${worst.id}|${k.term}|${k.week}`;
   if (away === key) return null;
   return (
-    <section className="adviser adviser-strip danger" aria-live="polite">
-      {hired ? <span className="staff-avatar" aria-hidden="true">{STAFF_NAMES[hired.name].split(' ').map((w) => w[0]).slice(0, 2).join('')}</span> : <Portrait adviser size={46} />}
-      <div className="grow">
-        <p className="adviser-name">{hired ? STAFF_NAMES[hired.name] : t('adviser.name')} <span className="muted">· {hired ? t('role.manager') : t('adviser.role')}</span></p>
-        <p className="adviser-text"><Jargon>{t(`adviser.danger.${worst.id}` as StringKey, { n: Math.round(worst.value) })}</Jargon></p>
-        <div className="button-row tight">
-          <button className="btn small primary" onClick={() => setTab(worst.tab)}>{t('adviser.danger.go')}</button>
-          <button className="btn small" onClick={() => setAway(key)}>{t('adviser.danger.later')}</button>
-        </div>
-      </div>
-    </section>
+    <Strip className="danger" who={hired ? { staff: hired.name, role: 'manager' } : { adviser: true }} name={<>{hired ? STAFF_NAMES[hired.name] : t('adviser.name')} <span className="muted">· {hired ? t('role.manager') : t('adviser.role')}</span></>} text={t(`adviser.danger.${worst.id}` as StringKey, { n: Math.round(worst.value) })}>
+      <button className="btn small primary" onClick={() => setTab(worst.tab)}>{t('adviser.danger.go')}</button>
+      <button className="btn small" onClick={() => setAway(key)}>{t('adviser.danger.later')}</button>
+    </Strip>
   );
 }
 
@@ -123,16 +134,9 @@ function TeamVoice() {
   const who = campaign.team.staff[ROLE_IDS.indexOf(v.role)]!;
   const name = STAFF_NAMES[who.name];
   return (
-    <section className="adviser adviser-strip" aria-live="polite">
-      <span className="staff-avatar" aria-hidden="true">{name.split(' ').map((w) => w[0]).slice(0, 2).join('')}</span>
-      <div className="grow">
-        <p className="adviser-name">{name} <span className="muted">· {t(`role.${v.role}`)}</span></p>
-        <p className="adviser-text"><Jargon>{t(v.advice ? (`advice.${v.advice.id}` as StringKey) : (`chat.${v.role}.${v.line}` as StringKey))}</Jargon></p>
-        <div className="button-row tight">
-          {v.advice && <button className="btn small primary" onClick={() => follow(v.role)}>{t('chat.follow')}</button>}
-          <button className="btn small" onClick={() => setAway(week)}>{t('adviser.danger.later')}</button>
-        </div>
-      </div>
-    </section>
+    <Strip who={{ staff: who.name, role: v.role }} name={<>{name} <span className="muted">· {t(`role.${v.role}`)}</span></>} text={t(v.advice ? (`advice.${v.advice.id}` as StringKey) : (`chat.${v.role}.${v.line}` as StringKey))}>
+      {v.advice && <button className="btn small primary" onClick={() => follow(v.role)}>{t('chat.follow')}</button>}
+      <button className="btn small" onClick={() => setAway(week)}>{t('adviser.danger.later')}</button>
+    </Strip>
   );
 }

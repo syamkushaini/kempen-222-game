@@ -149,6 +149,7 @@ export function postedGames(kv: Pick<Storage, 'getItem'> | null = safeStorage())
 export function rememberPosted(game: string, name: string, kv: Pick<Storage, 'getItem' | 'setItem'> | null = safeStorage()): void {
   try { kv?.setItem(POSTED_KEY, JSON.stringify([game, ...postedGames(kv).filter((g) => g !== game)].slice(0, 100))); kv?.setItem(NAME_KEY, name); } catch { /* it is only a convenience */ }
 }
+export function rememberName(name: string, kv: Pick<Storage, 'setItem'> | null = safeStorage()): void { try { kv?.setItem(NAME_KEY, name); } catch { /* it is only a convenience */ } }
 export const lastName = (kv: Pick<Storage, 'getItem'> | null = safeStorage()): string => { try { return cleanName(kv?.getItem(NAME_KEY) ?? ''); } catch { return ''; } };
 
 function safeStorage(): Storage | null { try { return typeof localStorage === 'undefined' ? null : localStorage; } catch { return null; } }

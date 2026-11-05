@@ -29,6 +29,24 @@ export const BACKSTORIES: Record<BackstoryId, number[]> = {
   activist: [4, 2, 1, 5],
 };
 
+/** The points a player may spend on building a leader of their own: the same total every ready-made background adds up to. */
+export const LEADER_POINTS = 12;
+export const STAT_MIN = 1;
+export const STAT_MAX = 5;
+
+/** Whether this is a leader a player could build: one whole number from 1 to 5 for each stat, spending exactly the points there are. */
+export const validLeaderStats = (x: unknown): x is number[] =>
+  Array.isArray(x) && x.length === STAT_IDS.length && x.every((v) => Number.isInteger(v) && v >= STAT_MIN && v <= STAT_MAX) && x.reduce((a: number, b: number) => a + b, 0) === LEADER_POINTS;
+
+/** What one point above (or below) the ordinary 3 is worth, in per cent, for each stat: 8% on what the stat touches, 10% for integrity's shield. */
+export const STAT_PERCENT: Record<(typeof STAT_IDS)[number], number> = { charisma: 8, organisation: 8, cunning: 8, integrity: 10 };
+
+/** The bonus (or penalty, if negative) in per cent a stat of this size gives, against an ordinary 3. */
+export const statBonus = (id: (typeof STAT_IDS)[number], value: number): number => STAT_PERCENT[id] * (value - 3);
+
+/** A bonus in per cent as a signed figure: +16%, −8%, or 0%. */
+export const bonusText = (n: number): string => (n > 0 ? `+${n}%` : n < 0 ? `−${-n}%` : '0%');
+
 /** What the leader a party already has is good at: ordinary, for a party with no leader in the cast. */
 export const partyLeaderStats = (p: number): number[] => [...(LEADER_STATS[PARTY_IDS[p] as keyof typeof LEADER_STATS] ?? STAT_IDS.map(() => 3))];
 

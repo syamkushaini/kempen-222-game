@@ -195,6 +195,28 @@ export const MINISTER_LOOKS: Look[] = [
   m(2, 'bun', 'black', 'blouse', { glasses: true }),                  // Marina Lumat
 ];
 
+/**
+ * The people who may work for the leader, in the order of `STAFF_NAMES` (three for each job). Assigned by hand, as the ministers' are:
+ * invented people, not copies of anyone.
+ */
+export const STAFF_LOOKS: Look[] = [
+  m(1, 'bob', 'black', 'blouse', { headwear: 'scarf' }),                // Faridah Osman
+  m(0, 'short', 'black', 'suit'),                                       // Daniel Ooi
+  m(3, 'side', 'black', 'suit', { glasses: true, facial: 'moustache' }),// Suresh Nair
+  m(1, 'long', 'black', 'blouse', { headwear: 'scarf', glasses: true }),// Hazlina Aziz
+  m(0, 'swept', 'black', 'suit', { glasses: true }),                    // Kelvin Teo
+  m(1, 'short', 'black', 'suit', { facial: 'beard' }),                  // Bernard Luping
+  m(2, 'short', 'black', 'suit', { headwear: 'songkok' }),              // Aiman Rosli
+  m(0, 'bob', 'brown', 'blouse'),                                       // Michelle Khoo
+  m(3, 'bun', 'black', 'blouse', { glasses: true }),                    // Priya Menon
+  m(2, 'thin', 'grey', 'baju', { headwear: 'songkok', facial: 'moustache' }), // Salleh Mahmud
+  m(0, 'long', 'black', 'blouse', { glasses: true }),                   // Grace Lim
+  m(1, 'side', 'black', 'suit'),                                        // Raymond Jimbun
+];
+
+/** The colour that goes with each job: the background tint and the clothes, as a party's colour does for a minister. */
+export const ROLE_ACCENT = { manager: '#b7791f', strategist: '#3d6b8c', media: '#8a4a8f', treasurer: '#2f7d5b' } as const;
+
 const cache = new Map<string, string>();
 const uri = (key: string, svg: () => string) => {
   let hit = cache.get(key);
@@ -215,6 +237,36 @@ export function leaderPortrait(party: number): string | null {
   const look = override[id] ?? LEADER_LOOKS[id];
   return uri(`leader:${id}:${PARTIES[id].color}:${JSON.stringify(look)}`, () => portraitSvg(look, PARTIES[id].color));
 }
+
+/** A member of the leader's team as a flat picture: `name` is the index into `STAFF_NAMES`. */
+export function staffPortrait(name: number, role: keyof typeof ROLE_ACCENT): string {
+  const look = STAFF_LOOKS[name % STAFF_LOOKS.length];
+  return uri(`staff:${name}:${role}`, () => portraitSvg(look, ROLE_ACCENT[role]));
+}
+
+/**
+ * Whether a look is a man's. The game's people carry no gender of their own, only how they dress: a suit is a man's, a blouse a woman's,
+ * and the baju (which both wear) is a man's only with a songkok or facial hair.
+ */
+/** The modelled people who can stand on the stage: three rigged ones that can be posed and two that come in a single piece. */
+export type RigModel = 'male' | 'female' | 'rival';
+export type StaticModel = 'baju' | 'tudung';
+/** Which model stands for this person, by what they wear: the player's own leader, or someone on the other side. */
+export function modelFor(look: Look, player: boolean): { kind: 'rig'; id: RigModel } | { kind: 'static'; id: StaticModel } {
+  if (isMaleLook(look)) return !player ? { kind: 'rig', id: 'rival' } : look.wear === 'baju' ? { kind: 'static', id: 'baju' } : { kind: 'rig', id: 'male' };
+  return look.headwear === 'scarf' ? { kind: 'static', id: 'tudung' } : { kind: 'rig', id: 'female' };
+}
+export const isMaleLook = (look: Look): boolean => look.wear === 'suit' || (look.wear === 'baju' && (!!look.facial || look.headwear === 'songkok'));
+
+/** The look and colour of a party's leader, to draw in 3D: null for the pooled independents, and for a leader whose face is a photo the player uploaded. */
+export function leaderLook(party: number): { look: Look; accent: string } | null {
+  const id = PARTY_IDS[party];
+  if (id === 'oth' || photos[id]) return null;
+  return { look: override[id] ?? LEADER_LOOKS[id], accent: PARTIES[id].color };
+}
+
+/** The look and colour of a minister, to draw in 3D: the colour is their party's. */
+export const ministerLook = (name: number, party: number): { look: Look; accent: string } => ({ look: MINISTER_LOOKS[name % MINISTER_LOOKS.length], accent: colorOf(party) });
 
 export function ministerPortrait(name: number, party: number): string {
   const look = MINISTER_LOOKS[name % MINISTER_LOOKS.length];
