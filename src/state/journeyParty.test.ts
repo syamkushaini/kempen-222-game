@@ -12,6 +12,13 @@ describe('the party made for the career campaign', () => {
     saveJourneyParty({ name: 'Aina', identity }, kv);
     expect(loadJourneyParty(kv)).toEqual({ name: 'Aina', identity });
   });
+  it('remembers the level played, and ignores one that is not a level', () => {
+    const kv = store();
+    saveJourneyParty({ name: 'Aina', identity, level: 'hard' }, kv);
+    expect(loadJourneyParty(kv)?.level).toBe('hard');
+    kv.setItem('k222.journey.party', JSON.stringify({ name: 'Aina', identity, level: 'ruthless' }));
+    expect(loadJourneyParty(kv)).toEqual({ name: 'Aina', identity });
+  });
   it('is ignored when nothing was saved or what was saved is not a usable party', () => {
     expect(loadJourneyParty(store())).toBeNull();
     const kv = store();
