@@ -1,5 +1,6 @@
 import type { Look } from '../faces';
-import { Anim, Ball, Banner, Box, Crowd, ease, Figure, Flag, Ground, Hero, House, Neighbour, Platform, rnd, span, Tree, Wave, Bubble, Mat } from './parts';
+import { Prop } from './Props';
+import { Anim, Ball, Banner, Box, Crowd, ease, Figure, Flag, Ground, Hero, House, Neighbour, Palm, Platform, rnd, span, Tree, Wave, Bubble, Mat } from './parts';
 
 export interface SceneProps { look: Look; accent: string; rival: { look: Look; accent: string } }
 export const crowdColors = (accent: string) => [accent, '#f3efe6', '#3d6b8c', '#a35a8f', '#2f7d5b', '#d09a3a'];
@@ -38,7 +39,9 @@ export function Rally({ look, accent, kind }: SceneProps & { kind: RallyKind }) 
   return (
     <>
       <Ground c={kind === 'ceramah' ? '#8a9a7c' : '#b9c9a8'} />
-      <Platform position={[0, 0, -2.6]} c={kind === 'festival' ? '#c98d3d' : '#8d6e4a'} w={big ? 5.6 : 4.2} />
+      {/* the modelled stage and the truss that holds the banner are 4.2 m wide, and are stretched for the mega rally */}
+      <Prop kind="stage" tint={kind === 'festival' ? '#c98d3d' : undefined} position={[0, 0, -2.6]} scale={[big ? 5.6 / 4.2 : 1, 1, 1]} fallback={<Platform position={[0, 0, -2.6]} c={kind === 'festival' ? '#c98d3d' : '#8d6e4a'} w={big ? 5.6 : 4.2} />} />
+      <Prop kind="truss" position={[0, 0, -3.7]} scale={[big ? 5.6 / 4.2 : 1, 1, 1]} fallback={null} />
       <Banner c={accent} position={[0, 0.3, -3.6]} w={big ? 5.6 : 4.2} h={big ? 2 : 1.5} />
       <Hero look={look} accent={accent} player position={[0, 0.3, -2.6]} arms="wave" />
       <Anim f={(t, g) => { g.visible = t > 0.6; }} position={[0.7, 2.1, -2.2]}><Wave c={accent} count={3} max={kind === 'ceramah' ? 2.4 : 1.6} /></Anim>
@@ -47,21 +50,21 @@ export function Rally({ look, accent, kind }: SceneProps & { kind: RallyKind }) 
       <Neighbour model="baju" accent={accent} position={[-1.3, 0, 0.5]} rotation={[0, 0.25, 0]} arms="up" phase={1} />
       <Neighbour model="tudung" accent={accent} position={[1.2, 0, 0.7]} rotation={[0, -0.25, 0]} arms="up" phase={2.4} />
       {kind === 'ceramah' && [-4.2, -2.1, 2.1, 4.2].map((x, i) => (
-        <group key={x} position={[x, 0, -1.4]}><Box s={[0.06, 2.4, 0.06]} c="#6b4a2f" position={[0, 1.2, 0]} /><Anim f={(t, g) => { g.scale.setScalar(1 + Math.sin(t * 4 + i) * 0.08); }} position={[0, 2.55, 0]}><Ball r={0.22} c="#ffcf6b" e={0.9} /></Anim></group>
+        <group key={x} position={[x, 0, -1.4]}><Prop kind="lamp" fallback={<Box s={[0.06, 2.4, 0.06]} c="#6b4a2f" position={[0, 1.2, 0]} />} /><Anim f={(t, g) => { g.scale.setScalar(1 + Math.sin(t * 4 + i) * 0.08); }} position={[0, 2.55, 0]}><Ball r={0.22} c="#ffcf6b" e={0.9} /></Anim></group>
       ))}
       {big && Array.from({ length: 16 }, (_, i) => <Flag key={i} c={i % 2 ? accent : '#f3efe6'} phase={i} position={[-5 + (i % 8) * 1.4, 0, 0.4 + Math.floor(i / 8) * 1.6]} />)}
       {big && <Confetti colors={cols} />}
       {kind === 'festival' && (
         <>
           <Bunting colors={cols} />
-          {[-4.2, 4.2].map((x) => <group key={x} position={[x, 0, -1]}><Box s={[1.4, 0.8, 0.9]} c="#e8dcc4" position={[0, 0.4, 0]} /><Box s={[1.6, 0.12, 1.1]} c={x < 0 ? '#d64b4b' : '#3d6b8c'} position={[0, 1.7, 0]} /><Box s={[0.06, 1.7, 0.06]} c="#6b4a2f" position={[-0.65, 0.85, 0.4]} /><Box s={[0.06, 1.7, 0.06]} c="#6b4a2f" position={[0.65, 0.85, 0.4]} /></group>)}
+          {[-4.2, 4.2].map((x) => <group key={x} position={[x, 0, -1]}><Prop kind="stall" tint={x < 0 ? '#d64b4b' : '#3d6b8c'} fallback={<><Box s={[1.4, 0.8, 0.9]} c="#e8dcc4" position={[0, 0.4, 0]} /><Box s={[1.6, 0.12, 1.1]} c={x < 0 ? '#d64b4b' : '#3d6b8c'} position={[0, 1.7, 0]} /><Box s={[0.06, 1.7, 0.06]} c="#6b4a2f" position={[-0.65, 0.85, 0.4]} /><Box s={[0.06, 1.7, 0.06]} c="#6b4a2f" position={[0.65, 0.85, 0.4]} /></>} /></group>)}
           <Confetti n={18} area={5} colors={cols} />
         </>
       )}
       {kind === 'youth' && Array.from({ length: 18 }, (_, i) => (
         <Anim key={i} f={(t, g) => { g.position.set(-3.4 + rnd(i) * 6.8, 1.6 + Math.sin(t * 3 + i) * 0.12, 0.2 + rnd(i + 4) * 2.8); g.visible = t > 0.9; }}><Box s={[0.1, 0.17, 0.02]} c="#fffbe0" e={1} /></Anim>
       ))}
-      {kind === 'local' && (<><House position={[-3.4, 0, -3]} /><Tree position={[3.6, 0, -2.6]} /><Tree position={[-5, 0, -1.2]} /></>)}
+      {kind === 'local' && (<><Prop kind="kampung" position={[-3.6, 0, -3.1]} rotation={[0, 0.3, 0]} fallback={<House position={[-3.4, 0, -3]} />} /><Tree position={[3.6, 0, -2.6]} /><Palm position={[-5.2, 0, -1.2]} /></>)}
       {kind === 'charity' && (
         <>
           <group position={[3.2, 0, -1.4]}>{[0, 1, 2].map((i) => <Box key={i} s={[0.6, 0.5, 0.6]} c={['#d09a3a', '#2f7d5b', '#3d6b8c'][i]} position={[(i - 1) * 0.65, 0.25, 0]} />)}<Box s={[1.3, 0.4, 0.6]} c="#e8dcc4" position={[0, 0.7, 0]} /></group>
@@ -86,7 +89,7 @@ export function Walk({ look, accent, kind }: SceneProps & { kind: WalkKind }) {
       {[-5.4, -3, -0.6, 1.8, 4.2].map((x, i) => (
         <House key={x} position={[x, 0, -2.4]} roof={['#a24b3a', '#3d6b8c', '#8a6b3a', '#6b8a4a', '#a24b3a'][i]} open={i === 2 && kind !== 'walkabout' ? (t) => span(t, 1.4, 1.9, 3.2, 3.6) : i === 3 && kind === 'blitz' ? (t) => span(t, 1.9, 2.3, 3.4, 3.8) : undefined} />
       ))}
-      <Tree position={[-6.6, 0, -1.4]} /><Tree position={[6.2, 0, -1.6]} />
+      <Palm position={[-6.6, 0, -1.6]} /><Tree position={[6.2, 0, -1.6]} /><Palm position={[6.9, 0, -2.6]} rotation={[0, 2.2, 0]} />
       {kind === 'walkabout' && [[-3.4, 1.7], [-1.2, 1.9], [1.4, 1.8], [3.6, 1.7]].map(([x, z], i) => <Figure key={i} color={cols[i + 1]} position={[x, 0, z]} arms="wave" cheer={0.4} phase={i} scale={0.85} />)}
       {kind !== 'blitz' && <Neighbour model="tudung" accent={accent} position={[-0.1, 0, 2]} rotation={[0, 0.2, 0]} arms="up" phase={0.7} />}
       {kind !== 'blitz' && <Neighbour model="baju" accent={accent} position={[2.5, 0, 2.1]} rotation={[0, -0.3, 0]} arms="up" phase={1.9} />}

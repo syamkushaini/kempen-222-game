@@ -39,7 +39,7 @@ export function ActionStage() {
   useEffect(() => {
     if (!canDraw3D() || prefersCalm()) return;
     const later = (window as unknown as { requestIdleCallback?: (f: () => void) => number }).requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 2500));
-    later(() => { void import('./stage/BallotBox').then((m) => m.preloadBallotBox()).catch(() => undefined); void import('./stage/VotingBooth').then((m) => m.preloadVotingBooth()).catch(() => undefined); });
+    later(() => { void import('./stage/BallotBox').then((m) => m.preloadBallotBox()).catch(() => undefined); void import('./stage/VotingBooth').then((m) => m.preloadVotingBooth()).catch(() => undefined); void import('./stage/Props').then((m) => m.preloadProps()).catch(() => undefined); void import('./stage/people').then((m) => m.loadPeople()).catch(() => undefined); });
   }, []);
   const playable = !!stage && canDraw3D() && !prefersCalm();
   useEffect(() => {

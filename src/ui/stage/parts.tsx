@@ -1,4 +1,6 @@
 import { useFrame, type ThreeElements } from '@react-three/fiber';
+import { Prop } from './Props';
+import { usePeople } from './people';
 import { Suspense, useContext, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Color, Object3D, type Group, type InstancedMesh } from 'three';
 import { Bust } from '../Bust3D';
@@ -27,6 +29,9 @@ export function Anim({ f, children, ...rest }: { f(t: number, g: Group): void; c
 export const Mat = ({ c, e = 0, op = 1 }: { c: string; e?: number; op?: number }) =>
   <meshLambertMaterial color={c} emissive={e ? c : '#000000'} emissiveIntensity={e} transparent={op < 1} opacity={op} />;
 
+/** A flat colour that multiplies the greys painted on a modelled part (see people.ts). */
+const Painted = ({ c }: { c: string }) => <meshLambertMaterial color={c} vertexColors />;
+
 export const Box = ({ s, c, e, op, ...rest }: { s: [number, number, number]; c: string; e?: number; op?: number } & ThreeElements['mesh']) =>
   <mesh {...rest}><boxGeometry args={s} /><Mat c={c} e={e} op={op} /></mesh>;
 export const Ball = ({ r, c, e, op, ...rest }: { r: number; c: string; e?: number; op?: number } & ThreeElements['mesh']) =>
@@ -37,6 +42,7 @@ export function Figure({ color = '#3b82f6', skin = '#e2b088', pants = '#2b3140',
   { color?: string; skin?: string; pants?: string; arms?: ArmPose; walk?: number; cheer?: number; phase?: number; head?: ReactNode; headY?: number; scale?: number } & G) {
   const legL = useRef<Group>(null), legR = useRef<Group>(null), armL = useRef<Group>(null), armR = useRef<Group>(null), root = useRef<Group>(null);
   const off = useContext(Offset);
+  const shape = usePeople();
   useFrame((s) => {
     const t = now(s.clock.elapsedTime, off) + phase;
     const w = Math.sin(t * 7) * 0.7 * walk;
@@ -54,12 +60,16 @@ export function Figure({ color = '#3b82f6', skin = '#e2b088', pants = '#2b3140',
   return (
     <group scale={scale} {...rest}>
       <group ref={root}>
-        <group ref={legL} position={[-0.1, 0.52, 0]}><Box s={[0.15, 0.52, 0.15]} c={pants} position={[0, -0.26, 0]} /></group>
-        <group ref={legR} position={[0.1, 0.52, 0]}><Box s={[0.15, 0.52, 0.15]} c={pants} position={[0, -0.26, 0]} /></group>
-        <mesh position={[0, 0.97, 0]}><capsuleGeometry args={[0.2, 0.5, 4, 10]} /><Mat c={color} /></mesh>
-        <group ref={armL} position={[-0.27, 1.3, 0]}><mesh position={[0, -0.22, 0]}><capsuleGeometry args={[0.06, 0.34, 3, 8]} /><Mat c={color} /></mesh><Ball r={0.07} c={skin} position={[0, -0.48, 0]} /></group>
-        <group ref={armR} position={[0.27, 1.3, 0]}><mesh position={[0, -0.22, 0]}><capsuleGeometry args={[0.06, 0.34, 3, 8]} /><Mat c={color} /></mesh><Ball r={0.07} c={skin} position={[0, -0.48, 0]} /></group>
-        {head ?? <Ball r={0.19} c={skin} position={[0, headY, 0]} />}
+        <group ref={legL} position={[-0.1, 0.52, 0]}>{shape ? <mesh geometry={shape.leg}><Painted c={pants} /></mesh> : <Box s={[0.15, 0.52, 0.15]} c={pants} position={[0, -0.26, 0]} />}</group>
+        <group ref={legR} position={[0.1, 0.52, 0]}>{shape ? <mesh geometry={shape.leg}><Painted c={pants} /></mesh> : <Box s={[0.15, 0.52, 0.15]} c={pants} position={[0, -0.26, 0]} />}</group>
+        {shape ? <mesh geometry={shape.torso} position={[0, 0.97, 0]}><Painted c={color} /></mesh> : <mesh position={[0, 0.97, 0]}><capsuleGeometry args={[0.2, 0.5, 4, 10]} /><Mat c={color} /></mesh>}
+        {([[armL, -0.27], [armR, 0.27]] as const).map(([ref, x]) => (
+          <group key={x} ref={ref} position={[x, 1.3, 0]}>
+            {shape ? <mesh geometry={shape.arm}><Painted c={color} /></mesh> : <mesh position={[0, -0.22, 0]}><capsuleGeometry args={[0.06, 0.34, 3, 8]} /><Mat c={color} /></mesh>}
+            <Ball r={0.07} c={skin} position={[0, -0.48, 0]} />
+          </group>
+        ))}
+        {head ?? (shape ? <mesh geometry={shape.head} position={[0, headY, 0]}><Painted c={skin} /></mesh> : <Ball r={0.19} c={skin} position={[0, headY, 0]} />)}
       </group>
     </group>
   );
@@ -106,17 +116,19 @@ export function Neighbour({ model, accent, ...rest }: { model: StaticId; accent:
 export function Crowd({ n, area, colors, cheer = 0.8, seed = 1, scale = 0.5, cheerFrom = 0.8 }: { n: number; area: [number, number, number, number]; colors: string[]; cheer?: number; seed?: number; scale?: number; cheerFrom?: number }) {
   const bodies = useRef<InstancedMesh>(null), heads = useRef<InstancedMesh>(null);
   const off = useContext(Offset);
+  const shape = usePeople();
   const spots = useMemo(() => Array.from({ length: n }, (_, i) => ({
     x: area[0] + rnd(seed + i * 3.1) * (area[1] - area[0]), z: area[2] + rnd(seed + i * 5.7) * (area[3] - area[2]),
     ph: rnd(seed + i * 7.3) * 6.3, sp: 4 + rnd(seed + i * 2.3) * 3, k: Math.floor(rnd(seed + i * 9.1) * colors.length),
     h: 0.85 + rnd(seed + i * 1.9) * 0.3,
     at: rnd(seed + i * 4.4) * 0.8,
   })), [n, area, seed, colors.length]);
-  const dummy = useMemo(() => new Object3D(), []);
+  // The modelled people face the front; a crowd watches the stage behind it, so each is turned round.
+  const dummy = useMemo(() => { const d = new Object3D(); d.rotation.y = Math.PI; return d; }, []);
   useLayoutEffect(() => {
     spots.forEach((p, i) => { bodies.current?.setColorAt(i, new Color(colors[p.k])); heads.current?.setColorAt(i, new Color(['#e2b088', '#c98d62', '#f1cda8', '#9c6644'][i % 4])); });
     for (const m of [bodies.current, heads.current]) if (m?.instanceColor) m.instanceColor.needsUpdate = true;
-  }, [spots, colors]);
+  }, [spots, colors, shape]);
   useFrame((s) => {
     const t = now(s.clock.elapsedTime, off);
     const up = ease(t, cheerFrom - 0.4, cheerFrom + 0.4);
@@ -125,7 +137,8 @@ export function Crowd({ n, area, colors, cheer = 0.8, seed = 1, scale = 0.5, che
       // Arriving: each person drops in and grows to full size at their own moment.
       const k = Math.max(0.001, ease(t, p.at, p.at + 0.35));
       const drop = (1 - k) * 0.6;
-      dummy.position.set(p.x, (0.97 * scale * p.h) * k + j + drop, p.z); dummy.scale.set(scale * k, scale * p.h * k, scale * k); dummy.updateMatrix();
+      // the modelled body stands on its feet; the capsule is placed by its middle
+      dummy.position.set(p.x, (shape ? 0 : 0.97 * scale * p.h) * k + j + drop, p.z); dummy.scale.set(scale * k, scale * p.h * k, scale * k); dummy.updateMatrix();
       bodies.current?.setMatrixAt(i, dummy.matrix);
       dummy.position.set(p.x, 1.6 * scale * p.h * k + j + drop, p.z); dummy.scale.setScalar(scale * k); dummy.updateMatrix();
       heads.current?.setMatrixAt(i, dummy.matrix);
@@ -135,8 +148,17 @@ export function Crowd({ n, area, colors, cheer = 0.8, seed = 1, scale = 0.5, che
   });
   return (
     <>
-      <instancedMesh ref={bodies} args={[undefined, undefined, n]}><capsuleGeometry args={[0.2, 0.5, 3, 8]} /><meshLambertMaterial color="#ffffff" /></instancedMesh>
-      <instancedMesh ref={heads} args={[undefined, undefined, n]}><sphereGeometry args={[0.19, 10, 8]} /><meshLambertMaterial color="#ffffff" /></instancedMesh>
+      {shape ? (
+        <>
+          <instancedMesh key="model" ref={bodies} args={[shape.crowd, undefined, n]}><meshLambertMaterial color="#ffffff" vertexColors /></instancedMesh>
+          <instancedMesh key="model-head" ref={heads} args={[shape.head, undefined, n]}><meshLambertMaterial color="#ffffff" vertexColors /></instancedMesh>
+        </>
+      ) : (
+        <>
+          <instancedMesh key="plain" ref={bodies} args={[undefined, undefined, n]}><capsuleGeometry args={[0.2, 0.5, 3, 8]} /><meshLambertMaterial color="#ffffff" /></instancedMesh>
+          <instancedMesh key="plain-head" ref={heads} args={[undefined, undefined, n]}><sphereGeometry args={[0.19, 10, 8]} /><meshLambertMaterial color="#ffffff" /></instancedMesh>
+        </>
+      )}
     </>
   );
 }
@@ -210,15 +232,26 @@ export const Heart = ({ c = '#ec4899', ...p }: { c?: string } & G) => (
 
 /** A house: walls, a roof, a door and a window. `open` swings the door. */
 export function House({ c = '#e8dcc4', roof = '#a24b3a', open, ...rest }: { c?: string; roof?: string; open?: (t: number) => number } & G) {
-  return (
-    <group {...rest}>
+  // The modelled house has a dark doorway where the door is; the door itself is drawn here, so that it can swing open.
+  const plain = (
+    <>
       <Box s={[1.5, 1.1, 1.2]} c={c} position={[0, 0.55, 0]} />
       <mesh position={[0, 1.4, 0]} rotation={[0, Math.PI / 4, 0]} scale={[1.2, 1, 0.95]}><coneGeometry args={[1.1, 0.6, 4]} /><Mat c={roof} /></mesh>
       <Box s={[0.3, 0.3, 0.05]} c="#bcd9ea" position={[0.45, 0.65, 0.61]} />
+    </>
+  );
+  return (
+    <group {...rest}>
+      <Prop kind="house" tint={roof} fallback={plain} />
       <Anim f={(t, g) => { g.rotation.y = -(open?.(t) ?? 0) * 1.3; }} position={[-0.2, 0, 0.61]}><Box s={[0.34, 0.7, 0.05]} c="#7b5a3a" position={[0.17, 0.35, 0]} /></Anim>
     </group>
   );
 }
 
 /** A little tree. */
-export const Tree = (p: G) => <group {...p}><Box s={[0.18, 0.8, 0.18]} c="#6b4a2f" position={[0, 0.4, 0]} /><Ball r={0.55} c="#4f8a4a" position={[0, 1.1, 0]} /><Ball r={0.38} c="#5da158" position={[0.25, 1.4, 0.1]} /></group>;
+export const Tree = (p: G) => (
+  <Prop kind="tree" fallback={<group><Box s={[0.18, 0.8, 0.18]} c="#6b4a2f" position={[0, 0.4, 0]} /><Ball r={0.55} c="#4f8a4a" position={[0, 1.1, 0]} /><Ball r={0.38} c="#5da158" position={[0.25, 1.4, 0.1]} /></group>} {...p} />
+);
+
+/** A coconut palm; nothing stands in for it if its model cannot be loaded. */
+export const Palm = (p: G) => <Prop kind="palm" fallback={null} {...p} />;
