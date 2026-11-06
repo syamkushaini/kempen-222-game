@@ -112,3 +112,33 @@ describe('pulling candidates out in a Career Campaign state election', () => {
     expect(slate.picksSeats(worldOf(store().game!.campaign)!, store().game!.campaign)).toBe(false);
   });
 });
+
+describe('Chapter 4: the nation', () => {
+  it('starts the general election after Sabah, and opens a federal term from it with the party in government', async () => {
+    const { recordAsideResults } = await import('../sim/campaign/results');
+    const { enterTerm, inGovernment } = await import('../sim/campaign/career');
+    const { journeyResult, STEPS } = await import('../sim/campaign/journey');
+    const { worldOf } = await import('../data/world');
+    const player = PARTY_IDS.indexOf(FOUNDING_SLOT);
+    store().quitToTitle();
+    store().startCampaign({ name: 'T', scenario: dunByElections('selangor')[0], player, difficulty: 'easy', backstory: null, founded: true, journey: true });
+    useStore.setState((s) => ({ profile: { ...s.profile, journey: { ...emptyJourney(), step: STEPS.findIndex((x) => x.id === 'generalElection') } } }));
+    await store().playLevel();
+    expect(store().game!.campaign.scenario).toBe('general');
+    useStore.setState((s) => ({ game: { ...s.game!, tutorial: null } }));
+    store().finishWithTeam();
+    const ge = store().game!.campaign;
+    const world = worldOf(ge)!;
+    const results = recordAsideResults(world, ge)!;
+    const rival = PARTY_IDS.findIndex((_, p) => p !== player && ge.parties[p]);
+    const outcome = { pm: rival, partners: [player], seats: 120, minority: false, stability: 60, trust: 60, deals: new Array(PARTY_IDS.length).fill(null), day: 0 };
+    store().startCampaign({ name: 'T', scenario: 'career', player, difficulty: 'easy', backstory: null, founded: true, journey: true });
+    const term = structuredClone(store().game!.campaign);
+    term.career!.results = results;
+    enterTerm(worldOf(term)!, term, outcome as never);
+    expect(inGovernment(term, player)).toBe(true);
+    const at = { ...emptyJourney(), step: STEPS.findIndex((x) => x.id === 'governCountry') };
+    term.phase = 'campaign';
+    expect(journeyResult(worldOf(term)!, term, at, dunByElections)).toBe(1);
+  }, 120000);
+});

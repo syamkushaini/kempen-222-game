@@ -3,7 +3,7 @@ import type { StringKey } from '../i18n/strings';
 import { whatIfsFor, type WhatIfId } from '../sim/campaign/whatif';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { byElectionId, dunByElections, fairSeats, getWorld, HOME_PARTIES, loadScenario, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS, vacancyOf } from '../data/world';
-import { FIRST_STATE, FIRST_UNLOCK, MODE_UNLOCKS, STEPS as LEVELS, emptyJourney, journeyLevel, journeyStep, modeOpen, resumeScenario, scenarioState, type ModeId } from '../sim/campaign/journey';
+import { FIRST_STATE, FIRST_UNLOCK, MODE_UNLOCKS, STEPS as LEVELS, emptyJourney, journeyLevel, journeyStep, modeOpen, resumeScenario, scenarioState, termLeadIn, type ModeId } from '../sim/campaign/journey';
 import { rememberName } from '../state/leaderboard';
 import { saveJourneyParty } from '../state/journeyParty';
 import type { Identity } from '../state/identity';
@@ -170,7 +170,7 @@ export function Title() {
     await loadState(FIRST_STATE);
     // A term of government needs the state election that leads into it: resumed from the menu, that election is played again first.
     const resumedAt = resumeAt();
-    const at = resumedAt.startsWith('career:') ? `state:${resumedAt.slice(7)}` : resumedAt;
+    const at = termLeadIn(resumedAt);
     // A level away from Selangor needs its own state's seats.
     const atState = scenarioState(at);
     if (atState) await loadState(atState);

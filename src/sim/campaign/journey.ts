@@ -14,7 +14,7 @@ import type { Campaign } from './types';
  */
 
 /** Levels in the chapters built so far (the length of `STEPS`). */
-const STEPS_COUNT = 9;
+const STEPS_COUNT = 12;
 
 /** DUN by-elections to win in a state before its state election is offered. */
 export const DUN_LEVELS = 3;
@@ -100,7 +100,7 @@ export function journeyResult(world: World, c: Campaign, j: Journey | undefined,
   if (!result) return null;
   let k = journeyStep(j ?? emptyJourney());
   let cleared = 0;
-  while (k < STEPS.length && stepScenario(k, seats) === c.scenario && goalMet(world, c, STEPS[k].goal, result.tally)) { cleared++; k++; }
+  while (k < STEPS.length && stepScenario(k, seats) === c.scenario && goalMet(world, c, STEPS[k], result.tally)) { cleared++; k++; }
   return cleared;
 }
 
@@ -122,13 +122,14 @@ function termResult(c: Campaign, from: number, seats: (st: StateId) => string[])
 }
 
 /** Whether a goal was met in a finished contest. */
-function goalMet(world: World, c: Campaign, goal: Goal, tally: number[]): boolean {
+function goalMet(world: World, c: Campaign, step: StepDef, tally: number[]): boolean {
+  const goal = step.goal;
   const p = c.player;
   if (goal === 'win' || goal === 'winShoestring') {
     const won = summarise(world, c, electionResult(world, c)!).verdict === 'won';
     return won && (goal === 'win' || c.parties[p]!.spent <= spendingLimit(world) / 2);
   }
-  if (goal === 'seatsOrShare') return tally[p] >= stateSeatsNeeded(world.seats.length) || summarise(world, c, electionResult(world, c)!).voteShare >= SHARE_NEEDED;
+  if (goal === 'seatsOrShare') return tally[p] >= (step.need ?? stateSeatsNeeded(world.seats.length)) || summarise(world, c, electionResult(world, c)!).voteShare >= (step.share ?? SHARE_NEEDED);
   if (goal === 'kingmaker') return tally[p] >= stateSeatsNeeded(world.seats.length) && Math.max(...tally) < majorityLine(world);
   // A place in the government: heading it or a partner in it once the talks are over, or a majority of one's own.
   if (tally[p] >= majorityLine(world)) return true;
@@ -194,14 +195,17 @@ export const nextUnlock = (level: number): { level: number; modes: ModeId[] } | 
 export type Goal = 'win' | 'winShoestring' | 'kingmaker' | 'inGovernment' | 'serveTerm' | 'reElected' | 'seatsOrShare';
 
 export interface StepDef {
-  id: 'firstSeat' | 'stronghold' | 'shoestring' | 'kingmaker' | 'intoGovt' | 'govern' | 'defend' | 'secondFront' | 'borneoBlind';
+  id: 'firstSeat' | 'stronghold' | 'shoestring' | 'kingmaker' | 'intoGovt' | 'govern' | 'defend' | 'secondFront' | 'borneoBlind' | 'generalElection' | 'hungParliament' | 'governCountry';
   chapter: number;
   goal: Goal;
   /** The contest: a DUN by-election of Selangor (the closest fight, the safest seat, or the second closest), or Selangor's state election. */
-  contest: 'closest' | 'safest' | 'second' | 'state' | 'career';
+  contest: 'closest' | 'safest' | 'second' | 'state' | 'career' | 'general' | 'federal';
   /** The state of a state election away from Selangor, and how many seats its assembly has. */
   state?: StateId;
   seats?: number;
+  /** A seats-or-share level's own bar, where it is not the usual (see `stateSeatsNeeded` and `SHARE_NEEDED`). */
+  need?: number;
+  share?: number;
   /** A twist on the contest: polls whose chances are hidden (fog) and whose errors are doubled (noisy). */
   twist?: { fog: boolean; noisy: boolean };
 }
@@ -219,6 +223,10 @@ export const STEPS: readonly StepDef[] = [
   // Chapter 3, Beyond Selangor: a state where the party is unknown, then Borneo with polls that cannot be trusted.
   { id: 'secondFront', chapter: 3, goal: 'seatsOrShare', contest: 'state', state: 'perak', seats: 59 },
   { id: 'borneoBlind', chapter: 3, goal: 'seatsOrShare', contest: 'state', state: 'sabah', seats: 73, twist: { fog: true, noisy: true } },
+  // Chapter 4, The nation: the general election, the talks of a hung parliament, and a term in the federal government.
+  { id: 'generalElection', chapter: 4, goal: 'seatsOrShare', contest: 'general', seats: 222, need: 20, share: 0.2 },
+  { id: 'hungParliament', chapter: 4, goal: 'inGovernment', contest: 'general' },
+  { id: 'governCountry', chapter: 4, goal: 'serveTerm', contest: 'federal' },
 ];
 
 /** The vote share that clears a seats-or-share level in place of the seats: what a new party that is heard everywhere and wins little gets. */
@@ -229,6 +237,8 @@ export function stepScenario(i: number, seats: (st: StateId) => string[]): strin
   const step = STEPS[Math.max(0, Math.min(i, STEPS.length - 1))];
   const dun = seats(FIRST_STATE);
   if (step.contest === 'career') return `career:${FIRST_STATE}`;
+  if (step.contest === 'general') return 'general';
+  if (step.contest === 'federal') return 'career';
   if (step.contest === 'state' || dun.length === 0) return `state:${step.state ?? FIRST_STATE}`;
   if (step.contest === 'closest') return dun[0];
   if (step.contest === 'safest') return dun[dun.length - 1];
@@ -240,3 +250,8 @@ export function journeyStep(j: Journey): number {
   if (j.step !== undefined) return Math.max(0, Math.min(STEPS.length, j.step));
   return j.governed.length > 0 ? STEPS.length : Math.min(3, j.dunWon);
 }
+
+/** The contest that leads into a term of government: a state's election for a state's term, the general election for the federal one. */
+export const termLeadIn = (scenario: string): string => (scenario === 'career' ? 'general' : scenario.startsWith('career:') ? `state:${scenario.slice(7)}` : scenario);
+/** Whether a scenario is a term of government (a career), entered from the talks. */
+export const isTerm = (scenario: string): boolean => scenario === 'career' || scenario.startsWith('career:');
