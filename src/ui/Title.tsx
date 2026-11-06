@@ -3,7 +3,7 @@ import type { StringKey } from '../i18n/strings';
 import { whatIfsFor, type WhatIfId } from '../sim/campaign/whatif';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { byElectionId, dunByElections, fairSeats, getWorld, HOME_PARTIES, loadScenario, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS, vacancyOf } from '../data/world';
-import { FIRST_LEVEL_FOLLOWING, FIRST_STATE, FIRST_UNLOCK, MODE_UNLOCKS, STEPS as LEVELS, emptyJourney, journeyLevel, journeyStep, modeOpen, resumeScenario, scenarioState, termLeadIn, type ModeId } from '../sim/campaign/journey';
+import { FIRST_STATE, FIRST_UNLOCK, MODE_UNLOCKS, STEPS as LEVELS, emptyJourney, journeyLevel, journeyStep, levelFollowing, modeOpen, resumeScenario, scenarioState, termLeadIn, type ModeId } from '../sim/campaign/journey';
 import { rememberName } from '../state/leaderboard';
 import { saveJourneyParty } from '../state/journeyParty';
 import type { Identity } from '../state/identity';
@@ -181,8 +181,8 @@ export function Title() {
     const stage = at === 'general' || at.startsWith('state:');
     startCampaign({
       name: playerName, scenario: at, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: level, backstory: chosen, ...(leaderStats ? { leaderStats } : {}), identity, founded: true, journey: true, seed: seedFromSearch(window.location.search),
-      // Level 1 starts the new party a little stronger, so the first game can be won while it is being learned.
-      ...(resumed && stage ? { following: carriedFollowing(0.4) } : journeyStep(journey ?? emptyJourney()) === 0 ? { following: FIRST_LEVEL_FOLLOWING } : {}),
+      // Levels 1 and 2 start the new party a little stronger, so the first games can be won while they are being learned.
+      ...(resumed && stage ? { following: carriedFollowing(0.4) } : levelFollowing(journeyStep(journey ?? emptyJourney())) !== undefined ? { following: levelFollowing(journeyStep(journey ?? emptyJourney())) } : {}),
       ...(step?.twist && step.state && at === `state:${step.state}` ? { challenge: step.twist } : {}),
     });
   };

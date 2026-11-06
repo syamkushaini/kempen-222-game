@@ -82,7 +82,7 @@ import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/c
 import { notePlay } from './streak';
 import { clearedHeat } from '../sim/campaign/heat';
 import { validLeaderStats } from '../sim/campaign/perks';
-import { STEPS, emptyJourney, isTerm, journeyLevel, journeyResult, journeyStep, modeOpen, nextStep, scenarioState, stepScenario } from '../sim/campaign/journey';
+import { STEPS, emptyJourney, isTerm, journeyLevel, journeyResult, journeyStep, levelFollowing, modeOpen, nextStep, scenarioState, stepScenario } from '../sim/campaign/journey';
 import { keepSaves } from './persist';
 import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordHeat, recordJourney, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
@@ -913,7 +913,7 @@ export const useStore = create<Store>((set, get) => {
       get().startCampaign({
         name: g.name, scenario, player: c.player, difficulty: c.difficulty, backstory: c.team.leader.backstory ?? null, ideology: null,
         ...(c.team.leader.backstory === null && validLeaderStats(c.team.leader.stats) ? { leaderStats: [...c.team.leader.stats] } : {}),
-        journey: true, identity: g.identity, founded: true, following: carriedFollowing(0.4),
+        journey: true, identity: g.identity, founded: true, following: Math.max(carriedFollowing(0.4), levelFollowing(k) ?? 0),
         ...(step.twist ? { challenge: { ...step.twist } } : {}),
       });
     },
@@ -963,7 +963,9 @@ export const useStore = create<Store>((set, get) => {
         name: g.name, scenario: next, player: c.player, difficulty: c.difficulty, backstory: c.team.leader.backstory ?? null, ideology: null,
         ...(c.team.leader.backstory === null && validLeaderStats(c.team.leader.stats) ? { leaderStats: [...c.team.leader.stats] } : {}),
         ...(g.start?.journey ? { journey: true } : {}),
-        identity: g.identity, founded: true, following: carriedFollowing(share),
+        identity: g.identity, founded: true,
+        // A level that gives a following of its own (Level 2) starts with at least that much.
+        following: g.start?.journey ? Math.max(carriedFollowing(share), levelFollowing(journeyStep(journey)) ?? 0) : carriedFollowing(share),
         // Where the party won its vote is where it is strongest in the next contest: the seat it fought, or the state.
         ...(share > 0 ? { stronghold: { place: c.scenario.startsWith('state:') ? c.scenario.slice(6) : world.seats[0].id, share, ...(world.seats.length === 1 ? { shares: voteShares(result.votes) } : {}) } } : {}),
         ...(c.challenge ? { challenge: { fog: c.challenge.fog, noisy: c.challenge.noisy } } : {}),

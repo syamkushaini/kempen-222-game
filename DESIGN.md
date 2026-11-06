@@ -1487,6 +1487,10 @@ Melawati (55-63%), Level 2 Sekinchan, renamed Second seat (40-48%; the safest se
 money, a seat held by about 11 points (about 33%), Level 4 renamed Breakthrough, six of Selangor's seats with no need for a hung assembly
 (about 25%; a hung Selangor almost never came), Perak 9 seats or 24% of the vote, Sabah 18 or 25%, the general election 22 or 24% (about 20%
 each; the old bars of 15-20% of the vote were cleared nearly every time). A game begun in a DUN level's old seat still counts.
+Level 2 was then found too hard: measured over whole play-throughs (Level 1 won, then Level 2 on what it carried, about 27%), Sekinchan was
+cleared in only about 35% of games, nearly as few as Level 3. Level 2 now starts the party on a following of at least 28.5%, which clears it in
+about 48% of games: still a step harder than Level 1 (about 54% over the same play-throughs) and easier than Level 3. At 29% it was as easy as
+Level 1, so the step is kept below that.
 Level 1 is fought in Bukit Melawati (N.10), not the closest fight (Sungai Air Tawar): the team playing alone at a 30% following won it in
 about 58% of games against about 15% there (a game begun in Sungai Air Tawar still counts). Level 1 starts the new party on a 30% following, not the 25% of a single by-election, so a first game can be won while it is being learned (the
 team playing alone won about 1 game in 14 at 25% and about 1 in 5 at 30%; more money made no difference). A loss offers "Try this again" or "Rebuild the party and try again" (back to the set-up with the party filled in); the opposition years that
