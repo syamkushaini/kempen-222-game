@@ -77,6 +77,18 @@ describe('Level 1', () => {
   });
 });
 
+describe('Level 2', () => {
+  it('starts a new party with a little less following than Level 1, and later levels with what they carry', async () => {
+    const { FIRST_LEVEL_FOLLOWING, SECOND_LEVEL_FOLLOWING, levelFollowing } = await import('./journey');
+    const { NEW_PARTY_SHARE } = await import('./founding');
+    expect(levelFollowing(0)).toBe(FIRST_LEVEL_FOLLOWING);
+    expect(levelFollowing(1)).toBe(SECOND_LEVEL_FOLLOWING);
+    expect(SECOND_LEVEL_FOLLOWING).toBeLessThan(FIRST_LEVEL_FOLLOWING);
+    expect(SECOND_LEVEL_FOLLOWING).toBeGreaterThan(NEW_PARTY_SHARE.byelection);
+    for (let i = 2; i < STEPS.length; i++) expect(levelFollowing(i)).toBeUndefined();
+  });
+});
+
 describe('the seats of the DUN levels', () => {
   it('are Bukit Melawati, Sekinchan and Paya Jaras where the state offers them, and the closest fight otherwise', () => {
     const melawati = 'byelection:dun:selangor:N.10';

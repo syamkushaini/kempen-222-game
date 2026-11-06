@@ -233,8 +233,8 @@ export interface StepDef {
 
 /** The levels of the chapters, in order. Chapter 1 is Selangor. */
 export const STEPS: readonly StepDef[] = [
-  // Each level is a little harder than the one before. Played by the team alone on Easy, a new party clears about: Bukit Melawati 55-63% of
-  // the time, Sekinchan 40-48%, Paya Jaras (held by a wide margin, and on half the money) about 33%, six seats in the state election about 25%;
+  // Each level is a little harder than the one before. Played by the team alone on Easy, a new party clears about: Bukit Melawati about 54% of
+  // the time, Sekinchan about 48% (on a following of at least 28.5%), Paya Jaras (held by a wide margin, and on half the money) about 33%, six seats in the state election about 25%;
   // a place in Selangor's government takes more (a pact, or a hung assembly); then Perak, Sabah and the general election about 20% each, with
   // the polls in Sabah not to be trusted. A player who plays the weeks does better than the team alone.
   { id: 'firstSeat', chapter: 1, goal: 'win', contest: 'dun', seat: 'N.10', was: 'closest' },
@@ -276,6 +276,18 @@ export const SHARE_NEEDED = 0.15;
  * win while learning. At the cap a carried following may have (see `MAX_FOLLOWING`); the team playing on its own wins about one game in five.
  */
 export const FIRST_LEVEL_FOLLOWING = 0.3;
+
+/**
+ * The least following a new party starts Level 2 (Sekinchan) with. On what Level 1 carries over (about 27%) the team playing Levels 1 and 2
+ * through on its own cleared it in only about 35% of games, nearly as few as Level 3; at 28.5% it is about 48%: still a little harder than
+ * Level 1 (about 54%), and easier than Level 3 (about 33%).
+ */
+export const SECOND_LEVEL_FOLLOWING = 0.285;
+
+/** The least following a new party starts a level with, if that level gives one (the first two DUN seats), whatever it carries over. */
+export function levelFollowing(i: number): number | undefined {
+  return i === 0 ? FIRST_LEVEL_FOLLOWING : i === 1 ? SECOND_LEVEL_FOLLOWING : undefined;
+}
 
 /** The contest of a level. */
 export function stepScenario(i: number, seats: (st: StateId) => string[]): string {
