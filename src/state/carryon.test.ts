@@ -58,3 +58,20 @@ describe('playing a state election again from its result', () => {
     expect(store().game!.id).toBe(id);
   });
 });
+
+describe('a game saved in the years of opposition (since removed)', () => {
+  it('loads as an ordinary contest, without the rebuilding weeks', () => {
+    useStore.getState().quitToTitle();
+    useStore.getState().startCampaign({ name: 'T', scenario: 'general', player: 0, difficulty: 'normal' });
+    const g = useStore.getState().game!;
+    const raw = JSON.parse(serializeSave(g));
+    raw.campaign.rebuild = 52; raw.campaign.totalWeeks += 52; raw.campaign.week += 10; raw.campaign.opposition = { govt: 1 };
+    const back = parseSave(JSON.stringify(raw));
+    expect(back.ok).toBe(true);
+    if (back.ok) {
+      expect((back.state.campaign as { rebuild?: number }).rebuild).toBeUndefined();
+      expect(back.state.campaign.totalWeeks).toBe(g.campaign.totalWeeks);
+      expect(back.state.campaign.week).toBe(Math.max(1, g.campaign.week + 10 - 52));
+    }
+  });
+});

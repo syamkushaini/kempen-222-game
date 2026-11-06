@@ -1,101 +1,56 @@
 import { describe, expect, it } from 'vitest';
-import { nextUnlock, unlockStages, DUN_LEVELS, FIRST_UNLOCK, MAX_LEVEL, MODE_UNLOCKS, emptyJourney, modeOpen, journeyLevel, nextStep, record, recommendState, resumeScenario } from './journey';
+import { nextUnlock, unlockStages, FIRST_UNLOCK, MAX_LEVEL, MODE_UNLOCKS, STEPS, emptyJourney, journeyLevel, journeyStep, modeOpen, nextStep, record, resumeScenario, stepScenario } from './journey';
 
 const seat = (n: number) => `byelection:dun:selangor:N.0${n}`;
 const seats = () => [1, 2, 3, 4, 5].map(seat);
-const win = { won: true, governed: false };
-const loss = { won: false, governed: false };
 
-describe('the journey', () => {
-  it('counts each DUN by-election won once, and not a lost one', () => {
-    let j = record(emptyJourney(), seat(1), win);
-    expect(j).toMatchObject({ state: 'selangor', dunWon: 1 });
-    expect(record(j, seat(1), win)).toBe(j);
-    expect(record(j, seat(2), loss)).toBe(j);
-    j = record(j, seat(2), win);
-    expect(j.dunWon).toBe(2);
+describe('the chapters of the journey', () => {
+  it('runs Chapter 1 in Selangor: the closest seat, the safest, the second closest, then the state election twice', () => {
+    expect(STEPS.map((s) => s.id)).toEqual(['firstSeat', 'stronghold', 'shoestring', 'kingmaker', 'intoGovt']);
+    expect([0, 1, 2, 3, 4].map((i) => stepScenario(i, seats))).toEqual([seat(1), seat(5), seat(2), 'state:selangor', 'state:selangor']);
   });
-
-  it('offers another DUN by-election until three are won, then the state election', () => {
-    let j = emptyJourney();
-    for (let n = 1; n < DUN_LEVELS; n++) {
-      j = record(j, seat(n), win);
-      const next = nextStep(j, seat(n), seats);
-      expect(next).toMatch(/^byelection:dun:selangor:/);
-      expect(j.fought).not.toContain(next);
-    }
-    j = record(j, seat(DUN_LEVELS), win);
-    expect(nextStep(j, seat(DUN_LEVELS), seats)).toBe('state:selangor');
+  it('records the levels a contest cleared, and nothing for none', () => {
+    expect(record(emptyJourney(), 0)).toEqual(emptyJourney());
+    expect(journeyStep(record(emptyJourney(), 1))).toBe(1);
+    expect(journeyStep(record({ ...emptyJourney(), step: 3 }, 2))).toBe(5);
+    expect(journeyStep(record({ ...emptyJourney(), step: 4 }, 9))).toBe(STEPS.length);
   });
-
-  it('leaves a by-election that was not won to the usual rule', () => {
-    const j = record(emptyJourney(), seat(1), win);
-    expect(nextStep(j, seat(2), seats)).toBeNull();
+  it('offers the next level only after this one was cleared, and nothing once the chapters are done', () => {
+    expect(nextStep(emptyJourney(), seat(1), seats)).toBeNull();
+    expect(nextStep({ ...emptyJourney(), step: 1 }, seat(1), seats)).toBe(seat(5));
+    expect(nextStep({ ...emptyJourney(), step: 4 }, 'state:selangor', seats)).toBe('state:selangor');
+    expect(nextStep({ ...emptyJourney(), step: STEPS.length }, 'state:selangor', seats)).toBeNull();
   });
-
-  it('starts again when the first win is in another state', () => {
-    const j = record(record(emptyJourney(), seat(1), win), 'byelection:dun:perak:A.01', win);
-    expect(j).toMatchObject({ state: 'perak', dunWon: 1 });
-  });
-
-  it('takes a state only with a majority and the government, and then recommends a neighbour', () => {
-    const j0 = emptyJourney();
-    expect(record(j0, 'state:selangor', { won: true, governed: false })).toBe(j0);
-    const j = record(j0, 'state:selangor', { won: true, governed: true });
-    expect(j).toMatchObject({ state: null, dunWon: 0, governed: ['selangor'] });
-    expect(nextStep(j, 'state:selangor', seats)).toBe('state:nsembilan');
-    expect(record(j, 'state:selangor', { won: true, governed: true })).toBe(j);
-  });
-
-  it('recommends Selangor first, never a state already taken, and the general election at the end', () => {
-    expect(recommendState([])).toBe('selangor');
-    expect(recommendState(['selangor', 'nsembilan'])).not.toBe('selangor');
-    const all = ['selangor', 'nsembilan', 'melaka', 'johor', 'pahang', 'perak', 'penang', 'kedah', 'perlis', 'terengganu', 'kelantan', 'sabah', 'sarawak'] as const;
-    expect(recommendState(all)).toBeNull();
-    expect(nextStep({ state: null, dunWon: 0, fought: [], governed: [...all] }, 'state:sarawak', seats)).toBe('general');
-  });
-
-  it('counts levels: one to begin, one for each DUN win, one more for each state taken', () => {
+  it('counts levels from one, and resumes at the level reached', () => {
     expect(journeyLevel(undefined)).toBe(1);
-    let j = record(emptyJourney(), seat(1), win);
-    expect(journeyLevel(j)).toBe(2);
-    j = record(record(j, seat(2), win), seat(3), win);
-    expect(journeyLevel(j)).toBe(DUN_LEVELS + 1);
-    j = record(j, 'state:selangor', { won: true, governed: true });
-    expect(journeyLevel(j)).toBe(DUN_LEVELS + 2);
-    expect(MAX_LEVEL).toBe(13 * (DUN_LEVELS + 1) + 1);
-  });
-
-  it('resumes at the first DUN of Selangor, then the next seat, the state election, and the recommended state', () => {
+    expect(journeyLevel({ ...emptyJourney(), step: 3 })).toBe(4);
+    expect(journeyLevel({ ...emptyJourney(), step: 99 })).toBe(MAX_LEVEL);
     expect(resumeScenario(undefined, seats)).toBe(seat(1));
-    // the seats offered are those of Selangor, whatever the state asked for
-    const sel = (st: string) => (st === 'selangor' ? seats() : []);
-    let j = record(emptyJourney(), seat(1), win);
-    expect(resumeScenario(j, sel)).toBe(seat(2));
-    j = record(record(j, seat(2), win), seat(3), win);
-    expect(resumeScenario(j, sel)).toBe('state:selangor');
-    j = record(j, 'state:selangor', { won: true, governed: true });
-    expect(resumeScenario(j, sel)).toBe('state:nsembilan');
+    expect(resumeScenario({ ...emptyJourney(), step: 2 }, seats)).toBe(seat(2));
+    expect(resumeScenario({ ...emptyJourney(), step: STEPS.length }, seats)).toBe('state:selangor');
   });
-
-  it('keeps every other way to play locked at the start, and opens them in stages', () => {
-    for (const m of Object.keys(MODE_UNLOCKS) as (keyof typeof MODE_UNLOCKS)[]) expect(modeOpen(m, 1)).toBe(false);
-    expect(FIRST_UNLOCK).toBe(DUN_LEVELS + 1);
-    expect(modeOpen('byelection', DUN_LEVELS + 1)).toBe(true);
-    expect(modeOpen('state', DUN_LEVELS + 1)).toBe(false);
-    expect(modeOpen('state', DUN_LEVELS + 2)).toBe(true);
-    expect(modeOpen('general', 12)).toBe(false);
-    expect(modeOpen('general', 13)).toBe(true);
-    expect(modeOpen('simulator', 20)).toBe(false);
-    expect(modeOpen('simulator', MAX_LEVEL)).toBe(true);
+  it('keeps a journey saved before the chapters: DUN seats won carry over, and a state taken finishes Chapter 1', () => {
+    expect(journeyStep({ state: 'selangor', dunWon: 2, fought: [], governed: [] })).toBe(2);
+    expect(journeyStep({ state: 'selangor', dunWon: 3, fought: [], governed: [] })).toBe(3);
+    expect(journeyStep({ state: null, dunWon: 0, fought: [], governed: ['selangor'] })).toBe(STEPS.length);
   });
+  it('keeps every other way to play locked at the start, opens single by-elections at level 4 and the rest when Chapter 1 is done', () => {
+    expect(FIRST_UNLOCK).toBe(4);
+    expect(modeOpen('byelection', 3)).toBe(false);
+    expect(modeOpen('byelection', 4)).toBe(true);
+    for (const m of Object.keys(MODE_UNLOCKS) as (keyof typeof MODE_UNLOCKS)[]) expect(modeOpen(m, MAX_LEVEL)).toBe(true);
+    expect(unlockStages().map((s) => s.level)).toEqual([4, 6]);
+    expect(nextUnlock(1)?.level).toBe(4);
+    expect(nextUnlock(MAX_LEVEL)).toBeNull();
+  });
+});
 
-  it('lists the stages in order and names the next one to open', () => {
-    expect(unlockStages().map((x) => x.level)).toEqual([4, 5, 13, 21]);
-    expect(unlockStages().flatMap((x) => x.modes)).toHaveLength(Object.keys(MODE_UNLOCKS).length);
-    expect(nextUnlock(1)).toMatchObject({ level: 4, modes: ['byelection'] });
-    expect(nextUnlock(4)?.level).toBe(5);
-    expect(nextUnlock(13)?.level).toBe(21);
-    expect(nextUnlock(21)).toBeNull();
+describe('what takes a state', () => {
+  it('is 8% of its seats, and never fewer than 3', async () => {
+    const { stateSeatsNeeded } = await import('./journey');
+    expect(stateSeatsNeeded(56)).toBe(5);
+    expect(stateSeatsNeeded(15)).toBe(3);
+    expect(stateSeatsNeeded(73)).toBe(6);
+    expect(stateSeatsNeeded(5)).toBe(3);
   });
 });

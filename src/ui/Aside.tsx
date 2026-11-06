@@ -1,5 +1,6 @@
 import { dunByElections, nextContest, vacancyOf } from '../data/world';
-import { DUN_LEVELS, emptyJourney, nextAfterLoss, nextStep } from '../sim/campaign/journey';
+import { DUN_LEVELS, STEPS, emptyJourney, journeyStep, nextStep } from '../sim/campaign/journey';
+import { stepTitle } from './JourneyResult';
 import type { StringKey } from '../i18n/strings';
 import { countClick } from '../state/playWatch';
 import { useStore } from '../state/store';
@@ -17,25 +18,24 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
   const doRestart = useStore((s) => s.restart);
   const finishAside = useStore((s) => s.finishAside);
   const climb = useStore((s) => s.climb);
+  const reshape = useStore((s) => s.reshapeParty);
   const carryOn = useStore((s) => s.carryOn);
   // A plain state election played again starts from the result it ended with, as often as the player likes.
   const again = useStore((s) => { const c = s.game?.campaign; return !!c && !s.game?.aside && !c.career && !c.newParty && !c.challenge && c.phase === 'done' && c.scenario.startsWith('state:'); });
   // A new party that has finished a by-election or a state election can carry on to the next contest up.
   const next = useStore((s) => { const c = s.game?.campaign; return c && c.newParty && !c.career && !s.game?.aside && c.phase === 'done' ? (s.game?.start?.journey ? nextStep(s.profile.journey ?? emptyJourney(), c.scenario, dunByElections) : nextStep(s.profile.journey ?? emptyJourney(), c.scenario, dunByElections) ?? nextContest(c.scenario, world)) : null; });
   const inJourney = useStore((s) => !!s.game?.start?.journey && !s.game.campaign.career);
-  // A Career Campaign contest that was not won can be carried on: the same contest again at the next election, from the result just had.
-  const skip = useStore((s) => { const c = s.game?.campaign; return c && c.newParty && !c.career && !s.game?.aside && c.phase === 'done' && s.game?.start?.journey ? nextAfterLoss(s.profile.journey ?? emptyJourney(), c.scenario) : null; });
   const journey = useStore((s) => s.profile.journey);
   if (aside) {
     const next = aside.queue[0];
     return <button className="btn primary" onClick={() => void finishAside()}>{next ? t('fight.next', { state: regionLabel(t, world, next) }) : t('fight.back')} ▸</button>;
   }
+  // In the Career Campaign the next contest is the next level: it goes by the level's name.
   const label = (to: string): string => {
+    if (inJourney) { const k = journeyStep(journey ?? emptyJourney()); if (k < STEPS.length) return t('journey.next.step', { title: stepTitle(t, k) }); }
     if (to === 'general') return t('climb.general');
     if (to.startsWith('byelection:')) return t('journey.nextDun', { seat: vacancyOf(to.slice('byelection:'.length))?.name ?? '', n: (journey?.dunWon ?? 0) + 1, total: DUN_LEVELS });
-    const state = t(`state.${to.slice(6)}` as StringKey);
-    // A state taken with a majority and the government: the next state is a recommendation, not just the next rung.
-    return journey?.state === null && journey.governed.length > 0 ? t('journey.nextState', { state, taken: t(`state.${journey.governed[journey.governed.length - 1]}` as StringKey) }) : t('climb.state', { state });
+    return t('climb.state', { state: t(`state.${to.slice(6)}` as StringKey) });
   };
   if (next) {
     return (
@@ -50,7 +50,7 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
     return (
       <>
         <button className="btn primary" onClick={() => { countClick('again', 'restart'); doRestart(); }}>{t('jr.retry')} ▸</button>
-        {skip && <button className="btn" onClick={() => { countClick('again', 'climb'); void climb(); }}>{t('jr.rebuild')} ▸</button>}
+        <button className="btn" onClick={() => { countClick('again', 'reshape'); reshape(); }}>{t('jr.reshape')} ▸</button>
         <button className="btn" onClick={() => { countClick('again', 'new'); quitToTitle(); }}>{t('jr.menu')}</button>
       </>
     );

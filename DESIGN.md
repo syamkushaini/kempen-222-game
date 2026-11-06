@@ -1473,3 +1473,15 @@ The designer asked for a corruption meter: too corrupt and the media, the voters
 **Rules kept.** Every beat leaves a choice that costs no money and one that earns credibility or unity; effects are within the sizes events use; beats of the country's story are `COUNTRY_ONLY`, a state's `STATE_ONLY`; all people are invented (Puan Sri Mariam, Farid, Dato' Lazim and Kak Dewi turn up in every story, so they feel like a cast), no community, religion or the monarchy is the target of anything. The storyline is on `Career.story`, carried by the `carry` list in `nextTerm`, validated in `validate.ts`, and begun (skipping chapters whose time is long gone) the first week of a game saved before stories.
 
 **Left for later.** A different cast and tone for each of the thirteen states (all use the same five beats and a `{trade}` token for now); a fourth story for a career played from the opposition benches only; Palace audiences as a beat (kept out to be sure they are written with care); a sixth chapter for careers that run past three parliaments; stories for single contests (by-election, state election); recaps in the share card; and a sound for the chapter card.
+
+## The Career Campaign in chapters (7 Nov 2026)
+
+The old ladder (three DUN by-elections then a state election, thirteen times over) was all election weeks and repeated itself. It is being
+rebuilt as chapters whose levels each ask something different. Chapter 1 (Grassroots, Selangor) is built: First seat (win the closest DUN
+fight), Flip a stronghold (win the seat held most safely), On a shoestring (win a DUN spending at most half the legal limit), Kingmaker (in the
+state election win at least 5 seats with no party holding a majority) and Into government (be in Selangor's government after the talks, or win a
+majority). Planned next: Chapter 2 (govern Selangor for a term, then defend it), Chapter 3 (a hung state, then different ground with a twist),
+Chapter 4 (general election, hung parliament, a term as PM or opposition leader), with optional stars and difficulty-set targets.
+A loss offers "Try this again" or "Rebuild the party and try again" (back to the set-up with the party filled in); the opposition years that
+were tried for a few days were removed. Until the later chapters exist, finishing Chapter 1 (level 6) opens every other way to play. Journeys
+saved before the chapters keep their DUN wins (up to three), and a state taken counts as Chapter 1 done.
