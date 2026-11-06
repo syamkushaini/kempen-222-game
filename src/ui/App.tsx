@@ -357,11 +357,16 @@ export function App() {
   // The player's party colour tints the buttons, the active tab, the focus ring and the mark; the title screen keeps the lavender.
   // An accent that has been earned and chosen is worn in its place, on the title screen too; the party's colour stays where it is data.
   const accentColor = worn.accent.color;
+  // Read on every render, so that a party made again in the same place (same slot, a new colour) is noticed: the slot alone does not change.
+  const partyHex = player === undefined ? null : partyColor(player);
+  // The colour last chosen is kept, so the main menu wears it too; with none chosen yet the menu is the template's green.
   useEffect(() => {
-    if (player === undefined && !accentColor) { applyAccent(null, false); return; }
-    const party = player === undefined ? null : partyColor(player);
-    applyAccent(accentColor ?? party, isDark(scheme), party);
-  }, [player, palette, accentColor, scheme]);
+    let remembered: string | null = null;
+    try { if (partyHex) localStorage.setItem('k222.party-colour', partyHex); else remembered = localStorage.getItem('k222.party-colour'); } catch { /* private window: the menu stays green */ }
+    const color = accentColor ?? partyHex ?? remembered;
+    if (!color) { applyAccent(null, false); return; }
+    applyAccent(color, isDark(scheme), partyHex);
+  }, [partyHex, palette, accentColor, scheme]);
 
   useEffect(() => installFeedback(), []);
   useEffect(() => installAnalytics(), []);

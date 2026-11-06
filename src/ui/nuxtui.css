@@ -15,7 +15,7 @@ h2 { font-weight: 600; letter-spacing: -0.01em; }
 
 /* ---------- boxes become sections ---------- */
 /* a panel is a section with a hairline under it; the ones that float (dialogs, toasts) keep their box */
-.panel:not(.dialog):not([class*='toast']):not(.map-panel) { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; padding: 16px 0; }
+.panel:not(.dialog):not([class*='toast']):not(.map-panel):not([role='dialog']) { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; padding: 16px 0; }
 .quick, .creator { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 14px 0; margin: 0 0 8px; }
 .map-panel, .party-card { background: transparent; border-radius: var(--radius); border-color: var(--line-2); }
 .dialog { background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--radius); box-shadow: 0 10px 30px rgb(2 6 23 / 25%); }
@@ -112,3 +112,9 @@ body {
 }
 .title.menu-stage:not(.sub) .main-menu .unlock-next { color: var(--muted); text-shadow: none; font-size: 0.9rem; }
 .unlock-roadmap { background: transparent; border: 1px solid var(--line); border-radius: var(--radius); }
+
+/* ---------- anything that floats over the screen is solid, never see-through: the settings, confirmations and other dialogs ---------- */
+.overlay > .panel, .panel[role='dialog'], .settings-dialog, .confirm-dialog {
+  background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--radius); box-shadow: 0 10px 30px rgb(2 6 23 / 40%); padding: 16px;
+}
+.settings-dialog .panel-head { position: sticky; top: -16px; z-index: 1; margin: -16px -16px 4px; padding: 16px 16px 10px; background: var(--panel); }

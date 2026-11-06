@@ -9,7 +9,11 @@ const contrast = (a: string, b: string): number => {
 const NAMES = ['--primary', '--primary-hover', '--primary-focus', '--on-primary', '--link', '--ring', '--party'];
 
 /** Whether the screen is drawn dark: the theme the player chose, or the one the system asks for. */
-export const isDark = (scheme: string | null): boolean => scheme === 'dark' || (scheme !== 'light' && typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches);
+export const isDark = (scheme: string | null): boolean => {
+  const set = typeof document === 'undefined' ? undefined : document.documentElement.dataset.theme;
+  if (set === 'dark' || set === 'light') return set === 'dark';
+  return scheme === 'dark' || (scheme !== 'light' && typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches);
+};
 
 /**
  * Makes a colour the colour of the interface: the buttons, the active tab, the focus ring and, through them, the glow behind every screen. On a dark
