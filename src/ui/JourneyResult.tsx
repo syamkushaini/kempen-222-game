@@ -2,6 +2,7 @@ import type { StringKey } from '../i18n/strings';
 import { dunByElections } from '../data/world';
 import { MODE_UNLOCKS, STEPS, emptyJourney, journeyLevel, journeyStep, nextStep, stateSeatsNeeded, stepScenario, type ModeId } from '../sim/campaign/journey';
 import { spendingLimit } from '../sim/campaign/actions';
+import { inGovernment } from '../sim/campaign/career';
 import { useStore } from '../state/store';
 import { PostLevel } from './Leaderboard';
 import { useFormat, useT, useWorld } from './hooks';
@@ -19,7 +20,7 @@ export const stepGoal = (t: T, i: number): string => t(`step.${STEPS[i].id}.goal
 export function useJourneyPlace(): string {
   const t = useT();
   const k = journeyStep(useStore((s) => s.profile.journey) ?? emptyJourney());
-  return k >= STEPS.length ? t('chapter.1') : t('jr.badge.step', { title: stepTitle(t, k) });
+  return k >= STEPS.length ? t('chapter.all') : t('jr.badge.step', { title: stepTitle(t, k) });
 }
 
 /** The level in the header while playing: where the player is on the Career Campaign. */
@@ -42,14 +43,32 @@ export function JourneyGoal() {
   const c = useStore((s) => s.game?.campaign);
   const journey = useStore((s) => s.game?.start?.journey);
   const j = useStore((s) => s.profile.journey) ?? emptyJourney();
-  if (!c || !journey || c.phase !== 'campaign') return null;
+  const restart = useStore((s) => s.restart);
+  const canRetry = useStore((s) => !!s.game?.checkpoint);
+  if (!c || !journey || (c.phase !== 'campaign' && c.phase !== 'term')) return null;
   const k = journeyStep(j);
-  if (k >= STEPS.length || stepScenario(k, dunByElections) !== c.scenario) return null;
-  const shoestring = STEPS[k].goal === 'winShoestring';
+  // In a term of government: the levels of it already cleared, as well as the one being played.
+  const done = c.career ? STEPS.map((_, i) => i).filter((i) => i < k && stepScenario(i, dunByElections) === c.scenario) : [];
+  const current = k < STEPS.length && stepScenario(k, dunByElections) === c.scenario;
+  // A term level resumed from the menu: the state election is played again first, to get back into the government the term needs.
+  if (!current && !c.career && k < STEPS.length && STEPS[k].contest === 'career' && c.scenario === `state:${stepScenario(k, dunByElections).slice(7)}`) {
+    return (
+      <p className="goal-line journey-goal" role="status">
+        <strong>{t('jgoal.line', { n: k + 1, title: stepTitle(t, k) })}</strong>
+        <span>{t('jgoal.setup')}</span>
+      </p>
+    );
+  }
+  if (!current && done.length === 0) return null;
+  const shoestring = current && STEPS[k].goal === 'winShoestring';
+  // A term level is lost once the party is out of the government it has to stay in: it is tried again from the start of the term.
+  const out = current && !!c.career && (STEPS[k].goal === 'serveTerm' ? c.career.term === 1 : c.career.term >= 2 && c.phase === 'term') && !inGovernment(c, c.player);
   return (
     <p className="goal-line journey-goal" role="status">
-      <strong>{t('jgoal.line', { n: k + 1, title: stepTitle(t, k) })}</strong>
-      <span>{stepGoal(t, k)}{shoestring ? ` (${f.rm(Math.round(spendingLimit(world) / 2))})` : ''}</span>
+      {done.map((i) => <span key={i} className="badge">{t('jr.step.done', { title: stepTitle(t, i) })}</span>)}
+      {current && <strong>{t('jgoal.line', { n: k + 1, title: stepTitle(t, k) })}</strong>}
+      {current && <span>{out ? t('jgoal.out') : stepGoal(t, k)}{shoestring ? ` (${f.rm(Math.round(spendingLimit(world) / 2))})` : ''}</span>}
+      {out && canRetry && <button className="btn small" onClick={() => restart()}>{t('jgoal.retry')}</button>}
     </p>
   );
 }

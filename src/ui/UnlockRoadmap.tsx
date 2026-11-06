@@ -19,16 +19,20 @@ export function UnlockRoadmap({ compact = false }: { compact?: boolean }) {
     <section className="unlock-roadmap" aria-label={t('unlock.title')}>
       <h3>{t('unlock.title')}</h3>
       <p className="muted small">{t('unlock.chapter')}</p>
-      <h4>{t('chapter.1')}</h4>
-      <ol className="unlock-list chapter-list">
-        {STEPS.map((s, i) => (
-          <li key={s.id} className={done > i ? 'open' : 'shut'}>
-            <span aria-hidden="true">{done > i ? '✓' : i === done ? '▸' : '·'}</span>
-            <span className="num">{t('unlock.level', { n: i + 2 })}</span>
-            <span><strong>{stepTitle(t, i)}</strong> <span className="muted small">{stepGoal(t, i)}</span></span>
-          </li>
-        ))}
-      </ol>
+      {[...new Set(STEPS.map((s) => s.chapter))].map((ch) => (
+        <div key={ch}>
+          <h4>{t(`chapter.${ch}` as StringKey)}</h4>
+          <ol className="unlock-list chapter-list">
+            {STEPS.map((s, i) => ({ s, i })).filter(({ s }) => s.chapter === ch).map(({ s, i }) => (
+              <li key={s.id} className={done > i ? 'open' : 'shut'}>
+                <span aria-hidden="true">{done > i ? '✓' : i === done ? '▸' : '·'}</span>
+                <span className="num">{t('unlock.level', { n: i + 2 })}</span>
+                <span><strong>{stepTitle(t, i)}</strong> <span className="muted small">{stepGoal(t, i)}</span></span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))}
       <ul className="unlock-list">
         {unlockStages().map((s) => (
           <li key={s.level} className={level >= s.level ? 'open' : 'shut'}>

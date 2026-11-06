@@ -1485,3 +1485,10 @@ Chapter 4 (general election, hung parliament, a term as PM or opposition leader)
 A loss offers "Try this again" or "Rebuild the party and try again" (back to the set-up with the party filled in); the opposition years that
 were tried for a few days were removed. Until the later chapters exist, finishing Chapter 1 (level 6) opens every other way to play. Journeys
 saved before the chapters keep their DUN wins (up to three), and a state taken counts as Chapter 1 done.
+
+Chapter 2 (In charge) is built on the state career: Govern Selangor (still in the government when the next state election is called) and
+Defend it (in the government again after that election). Into government leads straight into the term: the career opens on Selangor's seats
+as the state election left them, with the government the talks made and the party's seats held. A term level lost (the party out of the
+government) is tried again from the start of the term (the game keeps a copy of it). A journey resumed from the menu at a term level plays the
+Selangor state election again first, since the term needs it. State elections and the challenges open at level 6; the general election, the
+hung parliament, a career of one's own and the simulator at level 8, when Chapter 2 is done.

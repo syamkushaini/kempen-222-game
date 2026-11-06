@@ -4,7 +4,7 @@ import { encodeChallenge, type ChallengeSpec } from '../sim/campaign/challengeCo
 import { translate, type Lang } from '../i18n/strings';
 import { earned, type AchievementId } from '../sim/campaign/achievements';
 import {
-  answerEvent, dissolve, foundForContest, invest, nextTerm, resumeTerm, setOrders, skipAhead, startCareer, syncOpinion,
+  answerEvent, dissolve, foundForContest, invest, nextTerm, resumeTerm, setOrders, skipAhead, startCareer, syncOpinion, enterTerm,
 } from '../sim/campaign/career';
 import {
   appoint, cancelProgramme, deliver, leaveGovernment, repeal, pullLever, reshuffle, setBudget, tableBill, tableMotion,
@@ -888,6 +888,11 @@ export const useStore = create<Store>((set, get) => {
     restart: () => {
       const g = get().game;
       if (!g) return;
+      // A term of the Career Campaign starts again from how it began.
+      if (g.checkpoint) {
+        set({ game: { ...g, campaign: structuredClone(g.checkpoint), updatedAt: Date.now() }, view: 'last', tab: 'desk', selectedSeat: null, lastReport: null, pactReply: null, offerReply: null, showNight: false, undoStack: [] });
+        return;
+      }
       get().startCampaign({ ...startOf(g), name: g.name, identity: g.identity });
     },
     climb: async () => {
@@ -902,6 +907,26 @@ export const useStore = create<Store>((set, get) => {
       // level does not rise for it); elsewhere the older rule carries a party on regardless.
       const next = world && (g.start?.journey ? step : step ?? nextContest(c.scenario, world));
       if (!world || !result || !next) return;
+      // Chapter 2: the party goes from the talks into Selangor's government, for a term.
+      if (g.start?.journey && next.startsWith('career:')) {
+        const results = recordAsideResults(world, c);
+        const outcome = c.formation?.outcome;
+        if (!results || !outcome) return;
+        get().startCampaign({
+          name: g.name, scenario: next, player: c.player, difficulty: c.difficulty, backstory: c.team.leader.backstory ?? null, ideology: null,
+          ...(c.team.leader.backstory === null && validLeaderStats(c.team.leader.stats) ? { leaderStats: [...c.team.leader.stats] } : {}),
+          journey: true, identity: g.identity, founded: true,
+        });
+        const ng = get().game;
+        if (!ng || ng.id === g.id || !ng.campaign.career) return;
+        const term = structuredClone(ng.campaign);
+        term.career!.results = results;
+        const termWorld = worldOf(term);
+        if (!termWorld) return;
+        enterTerm(termWorld, term, outcome);
+        set({ game: { ...ng, campaign: term, checkpoint: structuredClone(term) }, tab: 'desk' });
+        return;
+      }
       const share = summarise(world, c, result).voteShare;
       await loadScenario(next);
       // The party carries on only if this is still the game that was open when the button was pressed.
@@ -1001,7 +1026,8 @@ useStore.subscribe((state, prev) => {
   const rung = clearedHeat(world, game.campaign);
   const heated = rung ? recordHeat(points, rung) : points;
   // A by-election won, or a state taken with a majority and the government, moves the journey on.
-  const outcome = journeyResult(world, game.campaign, heated.journey, dunByElections);
+  // Only a game of the Career Campaign moves it on (a career of one's own in the same state does not).
+  const outcome = game.start?.journey ? journeyResult(world, game.campaign, heated.journey, dunByElections) : null;
   const scored = outcome ? recordJourney(heated, outcome) : heated;
   // Any play today counts toward the streak.
   const streak = notePlay(scored.streak, now);

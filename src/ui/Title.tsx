@@ -168,7 +168,9 @@ export function Title() {
     rememberName(playerName);
     // Chapter 1 is played in Selangor; its assembly seats are fetched first.
     await loadState(FIRST_STATE);
-    const at = resumeAt();
+    // A term of government needs the state election that leads into it: resumed from the menu, that election is played again first.
+    const resumedAt = resumeAt();
+    const at = resumedAt.startsWith('career:') ? `state:${resumedAt.slice(7)}` : resumedAt;
     await loadScenario(at);
     const resumed = journey !== undefined && journeyStep(journey) > 0;
     // A journey picked up after a state is taken, or with its DUN seats won, starts with the following those wins earned.

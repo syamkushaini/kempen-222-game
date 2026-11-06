@@ -2,6 +2,7 @@ import type { World } from '../election';
 import type { StateId } from '../types';
 import { majorityLine } from '../election';
 import { spendingLimit } from './actions';
+import { inGovernment } from './career';
 import { summarise } from './night';
 import { electionResult } from './turn';
 import type { Campaign } from './types';
@@ -13,7 +14,7 @@ import type { Campaign } from './types';
  */
 
 /** Levels in the chapters built so far (the length of `STEPS`). */
-const STEPS_COUNT = 5;
+const STEPS_COUNT = 7;
 
 /** DUN by-elections to win in a state before its state election is offered. */
 export const DUN_LEVELS = 3;
@@ -93,12 +94,30 @@ export function nextStep(j: Journey, scenario: string, seats: (st: StateId) => s
  * government can come in the same state election). Null while it is not over, or if it is not this level's contest.
  */
 export function journeyResult(world: World, c: Campaign, j: Journey | undefined, seats: (st: StateId) => string[]): number | null {
-  if (!c.newParty || c.career || (c.phase !== 'formation' && c.phase !== 'done') || !c.election) return null;
+  if (c.career) return termResult(c, journeyStep(j ?? emptyJourney()), seats);
+  if (!c.newParty || (c.phase !== 'formation' && c.phase !== 'done') || !c.election) return null;
   const result = electionResult(world, c);
   if (!result) return null;
   let k = journeyStep(j ?? emptyJourney());
   let cleared = 0;
   while (k < STEPS.length && stepScenario(k, seats) === c.scenario && goalMet(world, c, STEPS[k].goal, result.tally)) { cleared++; k++; }
+  return cleared;
+}
+
+/**
+ * A term of government in the Career Campaign: served when the election at its end begins with the party still in the government (the
+ * term's own), and defended when the next term opens with the party in the government again. Null while neither has come.
+ */
+function termResult(c: Campaign, from: number, seats: (st: StateId) => string[]): number | null {
+  const k = c.career!;
+  if (!k.founded || k.ending) return null;
+  let i = from;
+  let cleared = 0;
+  const met = (goal: Goal) =>
+    goal === 'serveTerm' ? k.term === 1 && c.phase !== 'term' && inGovernment(c, c.player)
+    : goal === 'reElected' ? k.term === 2 && c.phase === 'term' && inGovernment(c, c.player)
+    : false;
+  while (i < STEPS.length && stepScenario(i, seats) === c.scenario && met(STEPS[i].goal)) { cleared++; i++; }
   return cleared;
 }
 
@@ -139,16 +158,17 @@ export type ModeId = 'byelection' | 'challenges' | 'state' | 'career' | 'general
 
 /**
  * The level of the career campaign (see `journeyLevel`) at which each way to play opens: three Selangor seats won (level 4) open single
- * by-elections; Chapter 1 finished (level 6) opens the rest. They will move up as the later chapters are built.
+ * by-elections; Chapter 1 finished (level 6) opens state elections and the challenges; Chapter 2 finished (level 8) opens the rest. They will
+ * move up as the later chapters are built.
  */
 export const MODE_UNLOCKS: Record<ModeId, number> = {
   byelection: 4,
   state: 6,
   challenges: 6,
-  general: 6,
-  hung: 6,
-  career: 6,
-  simulator: 6,
+  general: 8,
+  hung: 8,
+  career: 8,
+  simulator: 8,
 };
 
 /** Whether a way to play is open at this level. */
@@ -170,14 +190,14 @@ export const nextUnlock = (level: number): { level: number; modes: ModeId[] } | 
 // ---------- the chapters ----------
 
 /** What a level asks: to win the seat, to win it spending at most half the legal limit, to be kingmaker in a hung assembly, or to be in government. */
-export type Goal = 'win' | 'winShoestring' | 'kingmaker' | 'inGovernment';
+export type Goal = 'win' | 'winShoestring' | 'kingmaker' | 'inGovernment' | 'serveTerm' | 'reElected';
 
 export interface StepDef {
-  id: 'firstSeat' | 'stronghold' | 'shoestring' | 'kingmaker' | 'intoGovt';
+  id: 'firstSeat' | 'stronghold' | 'shoestring' | 'kingmaker' | 'intoGovt' | 'govern' | 'defend';
   chapter: number;
   goal: Goal;
   /** The contest: a DUN by-election of Selangor (the closest fight, the safest seat, or the second closest), or Selangor's state election. */
-  contest: 'closest' | 'safest' | 'second' | 'state';
+  contest: 'closest' | 'safest' | 'second' | 'state' | 'career';
 }
 
 /** The levels of the chapters, in order. Chapter 1 is Selangor. */
@@ -187,12 +207,16 @@ export const STEPS: readonly StepDef[] = [
   { id: 'shoestring', chapter: 1, goal: 'winShoestring', contest: 'second' },
   { id: 'kingmaker', chapter: 1, goal: 'kingmaker', contest: 'state' },
   { id: 'intoGovt', chapter: 1, goal: 'inGovernment', contest: 'state' },
+  // Chapter 2, In charge: a term in Selangor's government, then the election at the end of it.
+  { id: 'govern', chapter: 2, goal: 'serveTerm', contest: 'career' },
+  { id: 'defend', chapter: 2, goal: 'reElected', contest: 'career' },
 ];
 
 /** The contest of a level. */
 export function stepScenario(i: number, seats: (st: StateId) => string[]): string {
   const step = STEPS[Math.max(0, Math.min(i, STEPS.length - 1))];
   const dun = seats(FIRST_STATE);
+  if (step.contest === 'career') return `career:${FIRST_STATE}`;
   if (step.contest === 'state' || dun.length === 0) return `state:${FIRST_STATE}`;
   if (step.contest === 'closest') return dun[0];
   if (step.contest === 'safest') return dun[dun.length - 1];
