@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { nominationsOpen as openFor } from '../sim/campaign/slate';
+import { picksSeats, pullsOpen } from '../sim/campaign/slate';
 import { beforeNomination, nominationWeek } from '../sim/campaign/diplomacy';
 import { canField, fieldedSeats, isOwn, nominationCost, openSeats, slateSpent } from '../sim/campaign/slate';
 import { STANDS } from '../sim/transfer';
@@ -19,8 +19,9 @@ function useSlate() {
   const campaign = useStore((s) => s.game!.campaign);
   return useMemo(() => {
     const fielded = new Set(fieldedSeats(world, campaign));
-    const costs = world.seats.map((_, i) => nominationCost(world, i));
-    return { world, campaign, fielded, costs, open: openFor(campaign) };
+    // A new party's state election charges nothing for a candidate: the list is for pulling them out and putting them back.
+    const costs = world.seats.map((_, i) => (picksSeats(world, campaign) ? 0 : nominationCost(world, i)));
+    return { world, campaign, fielded, costs, open: pullsOpen(world, campaign) };
   }, [world, campaign]);
 }
 
@@ -31,7 +32,19 @@ export function NominationsPanel() {
   const { world, campaign, fielded, costs, open } = useSlate();
   const fieldCheapest = useStore((s) => s.fieldCheapest);
   const [list, setList] = useState(false);
-  if (!isOwn(campaign) || campaign.phase !== 'campaign') return null;
+  const picks = picksSeats(world, campaign);
+  if ((!isOwn(campaign) && !picks) || campaign.phase !== 'campaign') return null;
+  if (picks) {
+    return (
+      <section className="nominations" aria-label={t('nom.title')}>
+        <div className="panel-head"><h3>{t('nom.title')}</h3></div>
+        <p className="nom-count">{t('nom.count', { n: fielded.size, total: world.seats.length })}</p>
+        <p className="muted small">{open ? t('nom.pick.open', { week: nominationWeek(campaign) }) : t('nom.closed')}</p>
+        <div className="button-row"><button className="btn small primary" onClick={() => setList(true)}>{t('nom.choose')}</button></div>
+        {list && <SlateDialog onClose={() => setList(false)} />}
+      </section>
+    );
+  }
   const funds = campaign.parties[campaign.player]!.funds;
   const left = openSeats(world, campaign);
   const affordable = left.filter((i) => costs[i] <= funds).length;
@@ -78,7 +91,8 @@ export function SlateDialog({ onClose }: { onClose(): void }) {
   const me = campaign.player;
   const funds = campaign.parties[me]!.funds;
   const added = campaign.career?.slate?.added ?? {};
-  const held = new Set(campaign.career?.slate?.held ?? []);
+  const picks = picksSeats(world, campaign);
+  const held = new Set(picks ? world.seats.filter((_, i) => fielded.has(i)).map((x) => x.id) : campaign.career?.slate?.held ?? []);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -121,10 +135,10 @@ export function SlateDialog({ onClose }: { onClose(): void }) {
               <li key={seat.id} className={has ? 'slate-row in' : 'slate-row'}>
                 <div className="grow">
                   <span className="action-title">{seat.name}</span>
-                  <span className="action-meta">{regionLabel(t, world, seat.state)} · {has ? t('nom.status.in') : pact ? t('nom.status.pact') : t('nom.status.out')}{!has && !pact && <> · {f.rm(cost)}</>}</span>
+                  <span className="action-meta">{regionLabel(t, world, seat.state)} · {has ? t('nom.status.in') : pact ? t('nom.status.pact') : t('nom.status.out')}{!has && !pact && !picks && <> · {f.rm(cost)}</>}</span>
                 </div>
                 <button className="link small" onClick={() => { selectSeat(seat.id, seat.state); onClose(); }}>{t('nom.map')}</button>
-                {open && !has && !pact && <button className="btn small" disabled={cost > funds} onClick={() => fieldSeat(seat.id)}>{t('nom.field')}</button>}
+                {open && !has && !pact && <button className="btn small" disabled={cost > funds} onClick={() => fieldSeat(seat.id)}>{t(picks ? 'nom.putback' : 'nom.field')}</button>}
                 {open && has && (mine || held.has(seat.id)) && <button className="btn small" title={mine ? undefined : t('nom.pullout.hint')} onClick={() => withdrawSeat(seat.id)}>{t(mine ? 'nom.withdraw' : 'nom.pullout')}</button>}
               </li>
             );
@@ -144,19 +158,20 @@ export function SeatNomination({ seatId }: { seatId: string }) {
   const campaign = useStore((s) => s.game!.campaign);
   const fieldSeat = useStore((s) => s.fieldSeat);
   const withdrawSeat = useStore((s) => s.withdrawSeat);
-  if (!isOwn(campaign) || campaign.phase !== 'campaign') return null;
+  const picks = picksSeats(world, campaign);
+  if ((!isOwn(campaign) && !picks) || campaign.phase !== 'campaign') return null;
   const i = world.seatIndex.get(seatId)!;
   const me = campaign.player;
   const funds = campaign.parties[me]!.funds;
   const has = (campaign.standDowns[seatId]?.[me] ?? STANDS) === STANDS && world.baseline.contesting[i][me];
   const cost = nominationCost(world, i);
-  const open = openFor(campaign) && beforeNomination(campaign);
-  const mine = seatId in (campaign.career?.slate?.added ?? {});
-  const pull = has && !mine && !!campaign.career?.slate?.held.includes(seatId);
+  const open = pullsOpen(world, campaign) && beforeNomination(campaign);
+  const mine = !picks && seatId in (campaign.career?.slate?.added ?? {});
+  const pull = has && !mine && (picks || !!campaign.career?.slate?.held.includes(seatId));
   return (
     <p className="seat-nomination small">
       <strong>{has ? t('nom.status.in') : t('nom.status.out')}</strong>
-      {open && !has && canField(world, campaign, i) && <> <button className="btn small" disabled={cost > funds} onClick={() => fieldSeat(seatId)}>{t('nom.seat.field', { rm: f.rm(cost) })}</button></>}
+      {open && !has && canField(world, campaign, i) && <> <button className="btn small" disabled={!picks && cost > funds} onClick={() => fieldSeat(seatId)}>{picks ? t('nom.putback') : t('nom.seat.field', { rm: f.rm(cost) })}</button></>}
       {open && has && (mine || pull) && <> <button className="btn small" title={mine ? undefined : t('nom.pullout.hint')} onClick={() => withdrawSeat(seatId)}>{t(mine ? 'nom.withdraw' : 'nom.pullout')}</button></>}
     </p>
   );
