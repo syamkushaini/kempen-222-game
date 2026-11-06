@@ -23,8 +23,6 @@ export const ACTION_IDS = [
   'local',
   // A state election's flags and banners, hung in every area at once.
   'blitz',
-  // Only in the weeks a beaten party spends in opposition rebuilding, before the election comes round again.
-  'regroup', 'listen', 'scrutiny',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 export type Family = 'ground' | 'machinery' | 'media' | 'funds';
@@ -926,10 +924,6 @@ export interface Campaign {
   /** Absent in a game played without any. */
   challenge?: Challenge;
   totalWeeks: number;
-  /** The first weeks of a contest played again after a defeat, spent as the opposition rebuilding: the election comes only after them. */
-  rebuild?: number;
-  /** The opposition's own affairs in the years of rebuilding: a government to oppose, a cabinet in waiting and what has been dug up. */
-  opposition?: Opposition;
   /** Current week, starting at 1. */
   week: number;
   phase: Phase;
@@ -1000,29 +994,3 @@ export interface Campaign {
 
 export * from './teamTypes';
 import type { Team } from './teamTypes';
-
-/** The affairs of a party in opposition in the years of rebuilding, where there is no career to hold them (see opposition.ts). */
-export interface Opposition {
-  /** The party that governs: the one that won the contest. */
-  govt: number;
-  /** Policies of that government that can be challenged. */
-  policies: PledgeId[];
-  /** Someone to shadow each of the main posts. */
-  shadow: Partial<Record<PortfolioId, { name: number; skill: number }>>;
-  /** What has been dug up on the government (spent by challenges), and how far the opposition is believed (0 to 100). */
-  dossier: number;
-  credibility: number;
-  /** Policies already challenged, the week of the last challenge, and what has been done this week. */
-  challenged: PledgeId[];
-  lastChallenge: number;
-  used: string[];
-  /** Cabinet milestones already rewarded. */
-  flags: string[];
-  /** Challenges that carried and challenges that did not. */
-  won: number;
-  lost: number;
-  /** Set when something has happened that the player should see before the weeks go on: the end of a quarter, or an opening against the government. */
-  pause?: boolean;
-  /** What the years brought the next campaign, set when they end. */
-  result?: { bonus: number; unity: number; credibility: number; shadow: number; won: number; lost: number };
-}

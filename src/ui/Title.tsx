@@ -140,7 +140,8 @@ export function Title() {
   // The screen opens on a choice of how to play; the one chosen last time is marked. "New game" from the menu lands straight on the set-up.
   const setupWanted = useStore((s) => s.setupWanted);
   const clearSetupWanted = useStore((s) => s.clearSetupWanted);
-  const [mode, setMode] = useState<Screen>(() => (setupWanted ? (modeOpen('byelection', journeyLevel(useStore.getState().profile.journey)) ? 'custom' : 'journey') : 'menu'));
+  const journeyWanted = useStore((s) => s.journeyWanted);
+  const [mode, setMode] = useState<Screen>(() => (useStore.getState().journeyWanted ? 'journey' : setupWanted ? (modeOpen('byelection', journeyLevel(useStore.getState().profile.journey)) ? 'custom' : 'journey') : 'menu'));
   // Told to the play counting, so that a player who leaves in the middle of the set-up is counted at the step they reached.
   useEffect(() => { watchHint(mode === 'menu' ? 'menu' : `setup:${mode}:${step}`); return () => watchHint(null); }, [mode, step]);
   const [honours, setHonours] = useState(false);
@@ -178,6 +179,7 @@ export function Title() {
   };
   const [lastMode] = useState<'quick' | 'custom' | null>(() => { try { const v = localStorage.getItem(MODE_KEY); return v === 'custom' || v === 'quick' ? v : null; } catch { return null; } });
   useEffect(() => { if (setupWanted) clearSetupWanted(); }, [setupWanted, clearSetupWanted]);
+  useEffect(() => { if (journeyWanted) useStore.setState({ journeyWanted: false }); }, [journeyWanted]);
   const custom = mode === 'custom';
   const streakDays = liveDays(profile.streak, Date.now());
   const earnedCount = ACHIEVEMENT_IDS.filter((id) => profile.achievements[id] !== undefined).length;

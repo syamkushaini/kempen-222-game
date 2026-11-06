@@ -3,7 +3,7 @@ import { Rng } from '../rng';
 import { N_PARTIES, PARTY_IDS, isMinor, type ElectionOutcome, type FieldedId, type RegionId, type SeatKind } from '../types';
 import {
   CAP, CHARITY_REACH, CHIEF, CHIEF_OPS, DECAY, EFFECT, MANIFESTO_REACH, RADIO_REACH, TOWNHALL_KIND, TV_REACH, YOUTH_REACH,
-  actionCost, canDo, contests, contestsState, doAction, expectedYield, gotvWeeks, campaignWeeks,
+  actionCost, canDo, contests, contestsState, doAction, expectedYield, gotvWeeks,
 } from './actions';
 import { stat } from './perks';
 import { bestAim } from './segments';
@@ -166,7 +166,7 @@ export function rankOptions(world: World, c: Campaign, p: number, reading: Readi
     consider('radio', { state: st }, ground * EFFECT.radio * mean(RADIO_REACH), profile.media);
   }
   // National media pays off late, when it no longer has time to fade.
-  const lateness = weeksLeft <= campaignWeeks(c) / 2.5 ? 1 : 0.4;
+  const lateness = weeksLeft <= c.totalWeeks / 2.5 ? 1 : 0.4;
   consider('tv', {}, totalValue * EFFECT.tv * 0.8 * lateness, profile.media);
   consider('social', {}, totalValue * EFFECT.social * 0.7 * lateness, profile.media);
   if (world.rules.kind !== 'byelection') consider('manifesto', {}, totalValue * EFFECT.manifesto * mean(MANIFESTO_REACH) * lateness, profile.media);

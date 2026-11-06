@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { StringKey } from '../i18n/strings';
-import { ACTIONS, PITCHED, REBUILD_ONLY, rebuilding, blitzAreas, actionCost, canDo, expectedPitchGain, expectedSeatGain, debateOdds, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
+import { ACTIONS, PITCHED, blitzAreas, actionCost, canDo, expectedPitchGain, expectedSeatGain, debateOdds, expectedYield, hasLocal, localPlace, spendingLimit } from '../sim/campaign/actions';
 import { ISSUE_IDS, LOCAL_THEMES, POSTURES, SWEEPS, type IssueId, type LocalTheme, type Posture, type Sweep } from '../sim/campaign/types';
 import { weatherIn } from '../sim/campaign/weather';
 import { MEDIA_AIMED, resentfulOf, segmentShare, segmentsOf, type SegmentId } from '../sim/campaign/segments';
@@ -18,20 +18,17 @@ import { NominationsPanel } from './Nominations';
 import { EntriesPanel } from './Entries';
 
 const FAMILIES: { family: Family; actions: ActionId[] }[] = [
-  { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival', 'local', 'listen'] },
-  { family: 'machinery', actions: ['canvass', 'gotv', 'build', 'blitz', 'conference', 'regroup'] },
-  { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack', 'troops', 'scrutiny'] },
+  { family: 'ground', actions: ['ceramah', 'walkabout', 'megarally', 'townhall', 'charity', 'youth', 'festival', 'local'] },
+  { family: 'machinery', actions: ['canvass', 'gotv', 'build', 'blitz', 'conference'] },
+  { family: 'media', actions: ['tv', 'social', 'billboards', 'radio', 'debate', 'manifesto', 'attack', 'troops'] },
   { family: 'funds', actions: ['dinner', 'crowdfund', 'tycoon'] },
 ];
-
-/** What an opposition does in the years between elections: mend the party, listen, hold the government to account, and keep the money coming. No rallies. */
-const OPPOSITION_ROUTINE: readonly ActionId[] = ['regroup', 'listen', 'scrutiny', 'conference', 'build', 'social', 'crowdfund', 'dinner'];
 
 /** The picture that goes with each thing a party can do. Always beside its name, never instead of it. */
 const ACTION_ICON: Record<ActionId, IconName> = {
   ceramah: 'megaphone', walkabout: 'walk', megarally: 'flag', canvass: 'home', gotv: 'ballot', build: 'tool',
   tv: 'tv', social: 'phone', billboards: 'board', attack: 'bolt', dinner: 'coins', crowdfund: 'heart', tycoon: 'crown',
-  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic', local: 'flag', troops: 'bolt', blitz: 'board', regroup: 'people', listen: 'walk', scrutiny: 'chat',
+  townhall: 'mic', charity: 'heart', youth: 'star', festival: 'star', conference: 'people', debate: 'chat', manifesto: 'doc', radio: 'mic', local: 'flag', troops: 'bolt', blitz: 'board',
 };
 
 const GROUPS_KEY = 'k222.groups';
@@ -152,9 +149,7 @@ export function ActionsTab() {
   };
 
   // Not while the adviser is guiding: her steps name what to do.
-  // In the years of opposition the screen is the routine of an opposition, not a campaign: no suggestions for the week, no target, no candidates.
-  const oppo = rebuilding(campaign);
-  const ideas = guided || oppo ? [] : suggestions(world, campaign);
+  const ideas = guided ? [] : suggestions(world, campaign);
 
   const endWeek = useStore((s) => s.endWeek);
   const setPreview = useStore((s) => s.setPreview);
@@ -249,20 +244,20 @@ export function ActionsTab() {
 
   return (
     <section className="actions">
-      {!oppo && <NominationsPanel />}
-      {!oppo && <EntriesPanel />}
-      {!oppo && <p className="target-line">
+      <NominationsPanel />
+      <EntriesPanel />
+      <p className="target-line">
         <span className="muted">{t('actions.target')}:</span>{' '}
         <i className="dot" data-party={me} style={{ background: partyColor(me) }} />
         <strong>{seat && world.seats.length > 1 ? `${seat.name}, ` : ''}{regionLabel(t, world, state)}</strong>
         {pc.chiefs[state] && <span className="badge plain">{t('chiefs.badge', { level: t(`chiefs.level.${pc.chiefs[state]}`) })}</span>}
-      </p>}
-      {!oppo && <p className={`muted small spend ${pc.spent > spendingLimit(world) ? 'over' : ''}`}>
+      </p>
+      <p className={`muted small spend ${pc.spent > spendingLimit(world) ? 'over' : ''}`}>
         {t('spend.line', { spent: f.rm(pc.spent), limit: f.rm(spendingLimit(world)) })}
         {pc.fined ? ` ${t('spend.fined')}` : pc.spent > spendingLimit(world) ? ` ${fog ? t('spend.over.fog') : t('spend.over', { pct: f.pct(probeChance(world, campaign, me), 0) })}` : ''}
         {pc.spent > spendingLimit(world) && ` ${t('spend.petition', { rm: f.rm(Math.round(spendingLimit(world) * PETITION_FROM)) })}`}
-      </p>}
-      {!oppo && seat && contesting && <PitchPicker seatId={seat.id} segment={segment} onPick={setSegment} />}
+      </p>
+      {seat && contesting && <PitchPicker seatId={seat.id} segment={segment} onPick={setSegment} />}
       {ideas.length > 0 && (
         <details className="action-family suggested" open={open.suggested} onToggle={(e) => setGroup('suggested', e.currentTarget.open)}>
           <summary>
@@ -281,9 +276,9 @@ export function ActionsTab() {
           </ul>
         </details>
       )}
-      {!oppo && <p className={`muted small weather weather-${weatherIn(world, campaign, state)}`}>{t(`weather.${weatherIn(world, campaign, state)}` as StringKey, { state: regionLabel(t, world, state) })}</p>}
+      <p className={`muted small weather weather-${weatherIn(world, campaign, state)}`}>{t(`weather.${weatherIn(world, campaign, state)}` as StringKey, { state: regionLabel(t, world, state) })}</p>
       {FAMILIES.map(({ family, actions: all }) => {
-        const actions = all.filter((id) => world.rules.actions.includes(id) && (oppo ? OPPOSITION_ROUTINE.includes(id) : !REBUILD_ONLY.includes(id)));
+        const actions = all.filter((id) => world.rules.actions.includes(id));
         if (actions.length === 0) return null;
         return (
           <details key={family} id={`family-${family}`} className="action-family" open={guided || open[family]} onToggle={(e) => { if (!guided) setGroup(family, e.currentTarget.open); }}>

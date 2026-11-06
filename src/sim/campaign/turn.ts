@@ -10,8 +10,7 @@ import { agendaIntro, agendaWeek } from './agenda';
 import { freshParty, isOutsider, standingPact, weeklyIncome } from './field';
 import { record, standing } from './ledger';
 import { makeRecap } from './recap';
-import { closeOpposition, oppositionWeek } from './opposition';
-import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, rebuilding, truth } from './actions';
+import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, truth } from './actions';
 import { applyBackstory } from './leader';
 import { pressReacts } from './media';
 import { incomeBoost, managerDays, pollDiscount, pollPrecision } from './perks';
@@ -177,9 +176,6 @@ function playerNews(c: Campaign, r: ActionReport): NewsItem {
     case 'radio': return item('news.me.radio', { state: ref.state(target.state!) });
     case 'blitz': return item(`news.me.blitz.${target.sweep ?? 'flags'}`, {}, 'good');
     case 'troops': return item(`news.me.troops.${quality === 'backfire' ? 'backfire' : 'ok'}`, { party: ref.party(target.party!) }, quality === 'backfire' ? 'bad' : 'neutral');
-    case 'regroup': return item('news.me.regroup', {}, 'good');
-    case 'listen': return item('news.me.listen', {}, 'good');
-    case 'scrutiny': return item('news.me.scrutiny', { party: ref.party(target.party!) }, 'good');
     case 'local': return item('news.me.local', { state: ref.state(target.state!) }, 'good');
   }
 }
@@ -386,16 +382,13 @@ export function endWeek(world: World, c: Campaign): void {
   }
 
   c.recap = makeRecap(world, c);
-  // In the years of rebuilding, what was done lasts four times as long: the weeks are quiet, and only a month's work now and then is news.
-  oppositionWeek(c);
-  if (rebuilding(c) && c.week === c.rebuild) closeOpposition(c);
-  if (!rebuilding(c) || c.week % 4 === 0) decay(c.dyn);
+  decay(c.dyn);
   c.week++;
   // What came in for the player, and what of it a lender took before it reached the party.
   let income = 0, lent = 0;
   c.parties.forEach((pc, p) => {
     if (!pc) return;
-    const due = Math.round(weeklyIncome(world, p, c) * incomeBoost(c, p) * (p === c.player && rebuilding(c) ? REBUILD_INCOME : 1));
+    const due = Math.round(weeklyIncome(world, p, c) * incomeBoost(c, p));
     const kept = afterLender(c, pc, due);
     if (p === c.player) { income = due; lent = due - kept; }
     pc.funds += kept;
@@ -408,9 +401,6 @@ export function endWeek(world: World, c: Campaign): void {
     : { party: c.player, key: 'news.income', vars: { rm: ref.rm(income) }, tone: 'neutral' });
   publishPublicPoll(world, c);
 }
-
-/** In the years in opposition a party's money comes in at this share of what it is in a campaign: fewer donors give to a party that lost. */
-const REBUILD_INCOME = 0.25;
 
 /** How much of its money the autoplayer spends on candidates. */
 const AUTO_SLATE_SHARE = 0.3;

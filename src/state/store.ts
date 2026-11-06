@@ -37,8 +37,6 @@ import { carriedFollowing, voteShares } from '../sim/campaign/founding';
 import { recordAsideResults } from '../sim/campaign/results';
 import { summarise } from '../sim/campaign/night';
 import { buildCampaign, type SimConfig } from '../sim/campaign/simulate';
-import { rebuilding } from '../sim/campaign/actions';
-import { challengeHere, committeeHere, nameShadowHere, startOpposition } from '../sim/campaign/opposition';
 import { closeNight, electionResult, endWeek, newCampaign, playOut, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
   ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
@@ -84,7 +82,7 @@ import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/c
 import { notePlay } from './streak';
 import { clearedHeat } from '../sim/campaign/heat';
 import { validLeaderStats } from '../sim/campaign/perks';
-import { REBUILD_WEEKS, emptyJourney, journeyLevel, journeyResult, modeOpen, nextAfterLoss, nextStep } from '../sim/campaign/journey';
+import { emptyJourney, journeyLevel, journeyResult, modeOpen, nextAfterLoss, nextStep } from '../sim/campaign/journey';
 import { keepSaves } from './persist';
 import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordHeat, recordJourney, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
@@ -263,8 +261,6 @@ interface Store {
     backstory?: BackstoryId | null; leaderStats?: number[]; journey?: boolean; ideology?: IdeologyId | null; identity?: Identity | null; challenge?: Partial<Challenge>; realStates?: boolean;
     /** Weeks of campaign, where a challenge made by a player does not want the contest's usual. */
     weeks?: number;
-    /** Weeks of rebuilding in opposition before a contest played again after a defeat (counted in the total). */
-    rebuild?: number;
     /** Where a career's founded party begins: a seat's id, or 'random' (or nothing) to leave it to luck. */
     seat?: string;
     /** A new party carried on from an earlier contest: the following it begins with. */
@@ -297,12 +293,6 @@ interface Store {
   setChiefs(states: RegionId[], level: ChiefLevel | 0): void;
   setChiefFloor(amount: number): void;
   endWeek(): void;
-  /** In the years of rebuilding in opposition: runs up to this many weeks, stopping when something needs the leader's answer or the campaign begins. */
-  skipRebuild(weeks: number, past?: boolean): void;
-  /** In opposition after a defeat: names someone to shadow a post, calls a minister before a committee, challenges a policy of the government. */
-  oppShadow(post: PortfolioId): void;
-  oppCommittee(): void;
-  oppChallenge(id: PledgeId, method: Method): void;
   /** Marks election night as watched, so reloading shows the final result. */
   finishNight(): void;
   /** Hands the weeks still to come to the team, and goes to polling day. */
@@ -467,6 +457,9 @@ interface Store {
   restart(): void;
   /** Leaves for the title screen with the full set-up of a new game showing. */
   newGameSetup(): void;
+  /** After a loss in the Career Campaign: back to its set-up, with the party as it was, to change its name, look and leader before trying again. */
+  reshapeParty(): void;
+  journeyWanted: boolean;
   /** Starts a sandbox game: the simulator's settings, played by the player as the party in focus. */
   startSandbox(cfg: SimConfig): void;
   /** Changes anything at all about a sandbox game, and puts opinion together again from the parts. */
@@ -581,7 +574,7 @@ export const useStore = create<Store>((set, get) => {
       return { selectedSeat: seatId, seatPicks: s.seatPicks + 1, selectedState: state ?? s.selectedState, seatReturn: s.selectedSeat === null ? s.selectedState : s.seatReturn };
     }),
 
-    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, leaderStats, journey = false, ideology = null, identity = null, challenge, realStates = false, weeks, rebuild, seat, following, stronghold, carried }) => {
+    startCampaign: ({ name, scenario, player, difficulty, seed, founded = false, stances, backstory = null, leaderStats, journey = false, ideology = null, identity = null, challenge, realStates = false, weeks, seat, following, stronghold, carried }) => {
       // A founded party's first term is played in a country with its name already on every ballot.
       const base = getWorld(scenario);
       // A party the player has made their own may stand in any seat of a career, at a price; it needs a world in which it is on every ballot.
@@ -595,12 +588,11 @@ export const useStore = create<Store>((set, get) => {
       if (identity) keepSaved(identity);
       const opts = { player, difficulty, seed: drawn, backstory, challenge, ...(weeks !== undefined ? { totalWeeks: weeks } : {}) };
       // Kept with the game so that it can be started again exactly as it was set up.
-      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ...(leaderStats && validLeaderStats(leaderStats) ? { leaderStats } : {}), ...(journey ? { journey: true } : {}), ideology, ...(founded ? { founded, stances, ...(home ? { seat: home } : {}), ...(following ? { following } : {}), ...(stronghold ? { stronghold } : {}) } : {}), ...(refit && carried ? { carried } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}), ...(weeks !== undefined ? { weeks } : {}), ...(rebuild ? { rebuild } : {}) };
+      const start: StartOptions = { scenario, player, difficulty, ...(seed !== undefined ? { seed } : {}), backstory, ...(leaderStats && validLeaderStats(leaderStats) ? { leaderStats } : {}), ...(journey ? { journey: true } : {}), ideology, ...(founded ? { founded, stances, ...(home ? { seat: home } : {}), ...(following ? { following } : {}), ...(stronghold ? { stronghold } : {}) } : {}), ...(refit && carried ? { carried } : {}), ...(realStates ? { realStates } : {}), ...(challenge ? { challenge } : {}), ...(weeks !== undefined ? { weeks } : {}) };
       // A platform of its own belongs to a party of the player's own making.
       const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, realStates, own, ...(home ? { foundedSeat: home } : {}), held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
       if (founded && !world.rules.career) { foundForContest(world, campaign, backstory); if (!backstory && validLeaderStats(leaderStats)) campaign.team.leader = { backstory: null, stats: [...leaderStats] }; if (following) campaign.following = following; if (stronghold) campaign.stronghold = stronghold; }
       if (refit && carried) campaign.carried = structuredClone(carried);
-      if (rebuild) { campaign.rebuild = rebuild; startOpposition(world, campaign); }
       // A career opens with its first missions on offer (the game draws them once for each parliament).
       if (campaign.career) offerMain(world, campaign);
       // A set challenge is for someone who has played before: no adviser walking them through it.
@@ -651,18 +643,6 @@ export const useStore = create<Store>((set, get) => {
       return c.phase === 'campaign'
         ? { lastReport: null, pactReply: null, tab: 'news' }
         : { lastReport: null, pactReply: null, selectedSeat: null, selectedState: null, showNight: true };
-    }),
-    oppShadow: (post) => mutate((c, _g, world) => { nameShadowHere(world, c, post); }),
-    oppCommittee: () => mutate((c) => { committeeHere(c); }),
-    oppChallenge: (id, method) => mutate((c, _g, world) => { challengeHere(world, c, id, method); }),
-    // The quiet weeks pass by themselves, up to the next thing that matters: a decision waiting, a quarter's end, or an opening against the government.
-    // With `past` set only a decision waiting stops them, and the years run to the campaign.
-    skipRebuild: (weeks, past = false) => mutate((c, _g, world) => {
-      for (let i = 0; i < weeks && rebuilding(c) && c.phase === 'campaign' && c.inbox.length === 0; i++) {
-        endWeek(world, c);
-        if (c.opposition?.pause) { c.opposition.pause = false; if (!past) break; }
-      }
-      return { lastReport: null, pactReply: null, tab: 'news' };
     }),
     finishNight: () => mutate((c, _g, world) => closeNight(world, c)),
     finishWithTeam: () => mutate((c, _g, world) => {
@@ -930,15 +910,11 @@ export const useStore = create<Store>((set, get) => {
         name: g.name, scenario: next, player: c.player, difficulty: c.difficulty, backstory: c.team.leader.backstory ?? null, ideology: null,
         ...(c.team.leader.backstory === null && validLeaderStats(c.team.leader.stats) ? { leaderStats: [...c.team.leader.stats] } : {}),
         ...(g.start?.journey ? { journey: true } : {}),
-        // A contest lost and played again opens with weeks in opposition, to repair the party before the election comes.
-        ...(g.start?.journey && !step ? { rebuild: REBUILD_WEEKS, weeks: (getWorld(next)?.rules.weeks ?? 3) + REBUILD_WEEKS } : {}),
         identity: g.identity, founded: true, following: carriedFollowing(share),
         // Where the party won its vote is where it is strongest in the next contest: the seat it fought, or the state.
         ...(share > 0 ? { stronghold: { place: c.scenario.startsWith('state:') ? c.scenario.slice(6) : world.seats[0].id, share, ...(world.seats.length === 1 ? { shares: voteShares(result.votes) } : {}) } } : {}),
         ...(c.challenge ? { challenge: { fog: c.challenge.fog, noisy: c.challenge.noisy } } : {}),
       });
-      // The years in opposition begin: the quiet weeks pass by themselves, up to the first thing that needs the leader.
-      if (get().game?.campaign.rebuild) get().skipRebuild(9999);
     },
     carryOn: () => {
       const g = get().game;
@@ -978,6 +954,8 @@ export const useStore = create<Store>((set, get) => {
     setSimulating: (on) => { if (on && !modeOpen('simulator', journeyLevel(get().profile.journey))) return; set({ simulating: on }); },
     setupWanted: false,
     newGameSetup: () => { get().quitToTitle(); set({ setupWanted: true }); },
+    reshapeParty: () => { get().quitToTitle(); set({ journeyWanted: true }); },
+    journeyWanted: false,
     clearSetupWanted: () => set({ setupWanted: false }),
     menuOpen: false,
     setMenuOpen: (menuOpen) => set({ menuOpen }),
