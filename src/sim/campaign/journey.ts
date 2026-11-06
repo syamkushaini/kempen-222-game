@@ -14,7 +14,7 @@ import type { Campaign } from './types';
  */
 
 /** Levels in the chapters built so far (the length of `STEPS`). */
-const STEPS_COUNT = 12;
+const STEPS_COUNT = 19;
 
 /** DUN by-elections to win in a state before its state election is offered. */
 export const DUN_LEVELS = 3;
@@ -94,7 +94,7 @@ export function nextStep(j: Journey, scenario: string, seats: (st: StateId) => s
  * government can come in the same state election). Null while it is not over, or if it is not this level's contest.
  */
 export function journeyResult(world: World, c: Campaign, j: Journey | undefined, seats: (st: StateId) => string[]): number | null {
-  if (c.career) return termResult(c, journeyStep(j ?? emptyJourney()), seats);
+  if (c.career) return termResult(world, c, journeyStep(j ?? emptyJourney()), seats);
   if (!c.newParty || (c.phase !== 'formation' && c.phase !== 'done') || !c.election) return null;
   const result = electionResult(world, c);
   if (!result) return null;
@@ -108,15 +108,30 @@ export function journeyResult(world: World, c: Campaign, j: Journey | undefined,
  * A term of government in the Career Campaign: served when the election at its end begins with the party still in the government (the
  * term's own), and defended when the next term opens with the party in the government again. Null while neither has come.
  */
-function termResult(c: Campaign, from: number, seats: (st: StateId) => string[]): number | null {
+function termResult(world: World, c: Campaign, from: number, seats: (st: StateId) => string[]): number | null {
   const k = c.career!;
-  if (!k.founded || k.ending) return null;
+  if (!k.founded) return null;
+  const p = c.player;
+  const pm = k.government.pm === p;
+  // The party's own seats in the House as the last election left them.
+  const own = () => (k.results ? k.results.votes.filter((row) => row.indexOf(Math.max(...row)) === p).length : 0);
+  const met = (goal: Goal): boolean => {
+    // A career that has ended counts only for leaving office well.
+    if (k.ending) return goal === 'retire' && k.ending.kind === 'retired';
+    switch (goal) {
+      case 'serveTerm': return k.term === 1 && c.phase !== 'term' && inGovernment(c, p);
+      case 'reElected': return k.term === 2 && c.phase === 'term' && inGovernment(c, p);
+      case 'headGovt': return pm;
+      case 'yearAsPm': return k.record.weeksPm >= PM_WEEKS.year;
+      case 'fullTermPm': return pm && c.phase !== 'term' && k.record.weeksPm >= PM_WEEKS.term;
+      case 'winAsPm': return k.record.victories >= 1 && pm && c.phase === 'term';
+      case 'ownMajority': return c.phase === 'term' && own() >= majorityLine(world);
+      case 'promises': return k.record.kept.length >= PROMISES_KEPT && k.record.kept.length > k.record.broken;
+      default: return false;
+    }
+  };
   let i = from;
   let cleared = 0;
-  const met = (goal: Goal) =>
-    goal === 'serveTerm' ? k.term === 1 && c.phase !== 'term' && inGovernment(c, c.player)
-    : goal === 'reElected' ? k.term === 2 && c.phase === 'term' && inGovernment(c, c.player)
-    : false;
   while (i < STEPS.length && stepScenario(i, seats) === c.scenario && met(STEPS[i].goal)) { cleared++; i++; }
   return cleared;
 }
@@ -192,10 +207,12 @@ export const nextUnlock = (level: number): { level: number; modes: ModeId[] } | 
 // ---------- the chapters ----------
 
 /** What a level asks: to win the seat, to win it spending at most half the legal limit, to be kingmaker in a hung assembly, or to be in government. */
-export type Goal = 'win' | 'winShoestring' | 'kingmaker' | 'inGovernment' | 'serveTerm' | 'reElected' | 'seatsOrShare';
+export type Goal = 'win' | 'winShoestring' | 'kingmaker' | 'inGovernment' | 'serveTerm' | 'reElected' | 'seatsOrShare'
+  | 'headGovt' | 'yearAsPm' | 'fullTermPm' | 'winAsPm' | 'ownMajority' | 'promises' | 'retire';
 
 export interface StepDef {
-  id: 'firstSeat' | 'stronghold' | 'shoestring' | 'kingmaker' | 'intoGovt' | 'govern' | 'defend' | 'secondFront' | 'borneoBlind' | 'generalElection' | 'hungParliament' | 'governCountry';
+  id: 'firstSeat' | 'stronghold' | 'shoestring' | 'kingmaker' | 'intoGovt' | 'govern' | 'defend' | 'secondFront' | 'borneoBlind' | 'generalElection' | 'hungParliament' | 'governCountry'
+    | 'primeMinister' | 'firstYear' | 'fullTerm' | 'secondTerm' | 'ownMajority' | 'promisesKept' | 'retireWell';
   chapter: number;
   goal: Goal;
   /** The contest: a DUN by-election of Selangor (the closest fight, the safest seat, or the second closest), or Selangor's state election. */
@@ -227,7 +244,21 @@ export const STEPS: readonly StepDef[] = [
   { id: 'generalElection', chapter: 4, goal: 'seatsOrShare', contest: 'general', seats: 222, need: 20, share: 0.2 },
   { id: 'hungParliament', chapter: 4, goal: 'inGovernment', contest: 'general' },
   { id: 'governCountry', chapter: 4, goal: 'serveTerm', contest: 'federal' },
+  // Chapter 5, Prime Minister: head the government, a year in charge, a whole term at the top. All in the federal career that goes on from Chapter 4.
+  { id: 'primeMinister', chapter: 5, goal: 'headGovt', contest: 'federal' },
+  { id: 'firstYear', chapter: 5, goal: 'yearAsPm', contest: 'federal' },
+  { id: 'fullTerm', chapter: 5, goal: 'fullTermPm', contest: 'federal' },
+  // Chapter 6, Second term: win a general election as Prime Minister, then one with a majority of the party's own.
+  { id: 'secondTerm', chapter: 6, goal: 'winAsPm', contest: 'federal' },
+  { id: 'ownMajority', chapter: 6, goal: 'ownMajority', contest: 'federal' },
+  // Chapter 7, Legacy: keep the promises, and leave office on the party's own terms.
+  { id: 'promisesKept', chapter: 7, goal: 'promises', contest: 'federal' },
+  { id: 'retireWell', chapter: 7, goal: 'retire', contest: 'federal' },
 ];
+
+/** What the later chapters ask in numbers: weeks at the head of the government (a year, then three), and promises kept. */
+export const PM_WEEKS = { year: 52, term: 156 };
+export const PROMISES_KEPT = 5;
 
 /** The vote share that clears a seats-or-share level in place of the seats: what a new party that is heard everywhere and wins little gets. */
 export const SHARE_NEEDED = 0.15;
@@ -245,10 +276,12 @@ export function stepScenario(i: number, seats: (st: StateId) => string[]): strin
   return dun[Math.min(1, dun.length - 1)];
 }
 
-/** Levels cleared: as saved, or, for a journey saved before the chapters, worked out from it (a state taken finished Chapter 1). */
+/** Levels cleared: as saved, or, for a journey saved before the chapters, worked out from it. */
 export function journeyStep(j: Journey): number {
   if (j.step !== undefined) return Math.max(0, Math.min(STEPS.length, j.step));
-  return j.governed.length > 0 ? STEPS.length : Math.min(3, j.dunWon);
+  // One state or two finished Chapter 1; three (which opened everything else under the old ladder) finished Chapter 2, so nothing locks again.
+  if (j.governed.length >= 3) return STEPS.findIndex((s) => s.chapter === 3);
+  return j.governed.length > 0 ? STEPS.findIndex((s) => s.chapter === 2) : Math.min(3, j.dunWon);
 }
 
 /** The contest that leads into a term of government: a state's election for a state's term, the general election for the federal one. */

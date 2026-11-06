@@ -142,3 +142,34 @@ describe('Chapter 4: the nation', () => {
     expect(journeyResult(worldOf(term)!, term, at, dunByElections)).toBe(1);
   }, 120000);
 });
+
+describe('Chapters 5 to 7: Prime Minister, a second term, a legacy', () => {
+  it('counts heading the government, a year and a term at the top, a win as PM, promises kept and a good retirement', async () => {
+    const { journeyResult, STEPS, PM_WEEKS, PROMISES_KEPT } = await import('../sim/campaign/journey');
+    const { worldOf } = await import('../data/world');
+    const player = PARTY_IDS.indexOf(FOUNDING_SLOT);
+    store().quitToTitle();
+    store().startCampaign({ name: 'T', scenario: 'career', player, difficulty: 'easy', backstory: null, founded: true, journey: true });
+    const c = structuredClone(store().game!.campaign);
+    const w = worldOf(c)!;
+    const at = (id: string) => ({ ...emptyJourney(), step: STEPS.findIndex((s) => s.id === id) });
+    expect(journeyResult(w, c, at('primeMinister'), dunByElections)).toBe(0);
+    c.career!.government = { ...c.career!.government, pm: player, partners: [] };
+    expect(journeyResult(w, c, at('primeMinister'), dunByElections)).toBe(1);
+    c.career!.record.weeksPm = PM_WEEKS.year;
+    expect(journeyResult(w, c, at('primeMinister'), dunByElections)).toBe(2);
+    c.career!.record.weeksPm = PM_WEEKS.term;
+    c.phase = 'campaign';
+    expect(journeyResult(w, c, at('primeMinister'), dunByElections)).toBe(3);
+    c.phase = 'term';
+    c.career!.record.victories = 1;
+    expect(journeyResult(w, c, at('secondTerm'), dunByElections)).toBeGreaterThanOrEqual(1);
+    c.career!.record.kept = new Array(PROMISES_KEPT).fill('cashAid');
+    c.career!.record.broken = 1;
+    expect(journeyResult(w, c, at('promisesKept'), dunByElections)).toBe(1);
+    c.career!.ending = { kind: 'retired', legacy: c.career!.ending?.legacy ?? ('statesman' as never), score: 1 };
+    expect(journeyResult(w, c, at('retireWell'), dunByElections)).toBe(1);
+    c.career!.ending = { kind: 'ousted', legacy: 'statesman' as never, score: 1 };
+    expect(journeyResult(w, c, at('retireWell'), dunByElections)).toBe(0);
+  }, 120000);
+});
