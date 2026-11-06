@@ -7,7 +7,7 @@ import type { GameState } from './game';
 import type { KeyValueStore } from './saves';
 import { parseStreak, type Streak } from './streak';
 import { HEAT_MAX } from '../sim/campaign/heat';
-import { emptyJourney, record as recordJourneyContest, STATE_ROUTE, type Journey, type Result } from '../sim/campaign/journey';
+import { emptyJourney, record as recordJourneyContest, STATE_ROUTE, STEPS, type Journey } from '../sim/campaign/journey';
 
 /** One finished career, as it hangs in the gallery. */
 export interface LegacyEntry {
@@ -124,14 +124,15 @@ function parseJourney(raw: unknown): Journey | null {
   const state = isState(raw.state) ? raw.state : null;
   const fought = Array.isArray(raw.fought) ? raw.fought.filter((x): x is string => typeof x === 'string' && x.startsWith('byelection:dun:') && x.length <= 40).slice(0, 100) : [];
   const dunWon = isNum(raw.dunWon) && Number.isInteger(raw.dunWon) && raw.dunWon >= 0 ? Math.min(raw.dunWon, 100) : 0;
-  if (!state && governed.length === 0) return null;
-  return { state, dunWon, fought, governed };
+  const step = isNum(raw.step) && Number.isInteger(raw.step) && raw.step >= 0 ? Math.min(raw.step, STEPS.length) : undefined;
+  if (!state && governed.length === 0 && !step) return null;
+  return { state, dunWon, fought, governed, ...(step !== undefined ? { step } : {}) };
 }
 
 /** Adds a finished contest to the journey. The same profile if it changes nothing. */
-export function recordJourney(profile: Profile, scenario: string, result: Result): Profile {
+export function recordJourney(profile: Profile, steps: number): Profile {
   const before = profile.journey ?? emptyJourney();
-  const after = recordJourneyContest(before, scenario, result);
+  const after = recordJourneyContest(before, steps);
   return after === before ? profile : { ...profile, journey: after };
 }
 

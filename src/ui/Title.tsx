@@ -3,7 +3,7 @@ import type { StringKey } from '../i18n/strings';
 import { whatIfsFor, type WhatIfId } from '../sim/campaign/whatif';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { byElectionId, dunByElections, fairSeats, getWorld, HOME_PARTIES, loadScenario, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS, vacancyOf } from '../data/world';
-import { FIRST_STATE, FIRST_UNLOCK, MODE_UNLOCKS, journeyLevel, modeOpen, resumeScenario, type ModeId } from '../sim/campaign/journey';
+import { FIRST_STATE, FIRST_UNLOCK, MODE_UNLOCKS, journeyLevel, journeyStep, modeOpen, resumeScenario, type ModeId } from '../sim/campaign/journey';
 import { rememberName } from '../state/leaderboard';
 import { saveJourneyParty } from '../state/journeyParty';
 import type { Identity } from '../state/identity';
@@ -166,10 +166,11 @@ export function Title() {
     // Selangor's assembly seats are fetched first (the start needs them); a journey part-way needs its own state.
     saveJourneyParty({ name: playerName, identity, level });
     rememberName(playerName);
-    await loadState(journey?.state ?? FIRST_STATE);
+    // Chapter 1 is played in Selangor; its assembly seats are fetched first.
+    await loadState(FIRST_STATE);
     const at = resumeAt();
     await loadScenario(at);
-    const resumed = journey !== undefined && (journey.state !== null || journey.governed.length > 0);
+    const resumed = journey !== undefined && journeyStep(journey) > 0;
     // A journey picked up after a state is taken, or with its DUN seats won, starts with the following those wins earned.
     const stage = at === 'general' || at.startsWith('state:');
     startCampaign({

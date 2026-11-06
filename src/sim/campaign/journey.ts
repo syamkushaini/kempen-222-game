@@ -1,14 +1,19 @@
 import type { World } from '../election';
 import type { StateId } from '../types';
+import { majorityLine } from '../election';
+import { spendingLimit } from './actions';
 import { summarise } from './night';
 import { electionResult } from './turn';
 import type { Campaign } from './types';
 
 /**
- * The journey: a new party starts small, wins a few assembly (DUN) by-elections in one state, then fights that state's election.
- * Win a majority and head the government, and the game recommends the next state to take on, starting with Selangor. It only
- * chooses what to offer next: every contest is the ordinary one, and nothing here changes a rule of play.
+ * The journey (the Career Campaign): a new party climbs a ladder of levels grouped in chapters, each level a contest with a goal of its own (see
+ * `STEPS`). Chapter 1 is Selangor: a first seat, a stronghold, a seat won on a shoestring, kingmaker in the state election, and a place in its
+ * government. Every contest is the ordinary one; the goals only say what counts.
  */
+
+/** Levels in the chapters built so far (the length of `STEPS`). */
+const STEPS_COUNT = 5;
 
 /** DUN by-elections to win in a state before its state election is offered. */
 export const DUN_LEVELS = 3;
@@ -45,15 +50,15 @@ export interface Journey {
   dunWon: number;
   /** The by-election scenarios already won in that state, so that none is offered twice and none counts twice. */
   fought: string[];
-  /** The states whose government the player has headed after a majority, in the order they were taken. */
+  /** The states the player has taken, by winning enough of their seats, in the order they were taken. */
   governed: StateId[];
+  /** Levels of the chapters cleared (see `STEPS`). Absent in a journey saved before the chapters: worked out from the fields above. */
+  step?: number;
 }
 
 export const emptyJourney = (): Journey => ({ state: null, dunWon: 0, fought: [], governed: [] });
 
-const isDun = (scenario: string): boolean => scenario.startsWith('byelection:dun:');
 const dunState = (scenario: string): StateId => scenario.split(':')[2] as StateId;
-const stateOf = (scenario: string): StateId | null => (scenario.startsWith('state:') ? (scenario.slice(6) as StateId) : null);
 
 /** The state to recommend next: an untaken neighbour of the last state governed, else the first untaken on the route. Null when every state is taken. */
 export function recommendState(governed: readonly StateId[]): StateId | null {
@@ -65,78 +70,64 @@ export function recommendState(governed: readonly StateId[]): StateId | null {
 /** What a finished contest was worth to the journey. */
 export interface Result { won: boolean; governed: boolean }
 
-/** The journey after a contest: a won DUN by-election counts once, and a state election won with the player heading the government takes the state. */
-export function record(j: Journey, scenario: string, r: Result): Journey {
-  if (isDun(scenario) && r.won) {
-    const st = dunState(scenario);
-    const base: Journey = j.state === st ? j : { ...j, state: st, dunWon: 0, fought: [] };
-    if (base.fought.includes(scenario)) return base === j ? j : base;
-    return { ...base, dunWon: base.dunWon + 1, fought: [...base.fought, scenario] };
-  }
-  const st = stateOf(scenario);
-  if (st && r.governed && !j.governed.includes(st)) return { state: null, dunWon: 0, fought: [], governed: [...j.governed, st] };
-  return j;
+/** The journey after a contest that cleared `steps` levels. The same journey if it cleared none. */
+export function record(j: Journey, steps: number): Journey {
+  if (steps <= 0) return j;
+  return { ...j, step: Math.min(STEPS.length, journeyStep(j) + steps) };
 }
 
 /**
- * What to offer after this contest, or null to leave it to the usual rule (`nextContest`):
- * another DUN by-election in the same state until `DUN_LEVELS` are won, then that state's election; after a state taken, the
- * recommended state's election, or the general election once every state is taken.
- * `seats` are the DUN by-election scenarios of the state, best fights first.
+ * What to offer after this contest: the next level's contest, if this one cleared a level and the chapters have more. Null otherwise (a contest
+ * not cleared is tried again, or rebuilt; see Aside). `seats` are the DUN by-election scenarios of a state, closest fights first.
  */
 export function nextStep(j: Journey, scenario: string, seats: (st: StateId) => string[]): string | null {
-  if (isDun(scenario)) {
-    const st = dunState(scenario);
-    if (j.state !== st || !j.fought.includes(scenario)) return null;
-    if (j.dunWon >= DUN_LEVELS) return `state:${st}`;
-    return seats(st).find((s) => !j.fought.includes(s)) ?? `state:${st}`;
-  }
-  const st = stateOf(scenario);
-  if (st && j.governed.includes(st)) {
-    const next = recommendState(j.governed);
-    return next ? `state:${next}` : 'general';
-  }
-  return null;
+  const k = journeyStep(j);
+  if (k >= STEPS.length) return null;
+  const clearedHere = STEPS.some((_, i) => i < k && stepScenario(i, seats) === scenario);
+  return clearedHere ? stepScenario(k, seats) : null;
 }
+
 
 /**
- * The contest a player who did not win this one can carry on to, or null if there is none: the same contest again, at the next election
- * (the same DUN seat, the same state), so that the player keeps fighting it until it is won. It starts from the result just had (the vote
- * won becomes the party's following and stronghold, as when a win leads on), where "try this again" starts from nothing. The level is
- * not touched (see `record`): it rises only for a contest won. A general election or a state already taken has nothing to carry on to.
+ * How many levels the contest that has just ended cleared, from the level the journey is on: none, one, or two (kingmaker and a place in the
+ * government can come in the same state election). Null while it is not over, or if it is not this level's contest.
  */
-export function nextAfterLoss(j: Journey, scenario: string): string | null {
-  if (isDun(scenario)) return scenario;
-  const st = stateOf(scenario);
-  return st && !j.governed.includes(st) ? scenario : null;
-}
-
-/** How the contest that has just ended went for the journey, or null while it is not over (as `clearedHeat` does for the heat ladder). */
-export function journeyResult(world: World, c: Campaign): Result | null {
+export function journeyResult(world: World, c: Campaign, j: Journey | undefined, seats: (st: StateId) => string[]): number | null {
   if (!c.newParty || c.career || (c.phase !== 'formation' && c.phase !== 'done') || !c.election) return null;
   const result = electionResult(world, c);
   if (!result) return null;
-  const verdict = summarise(world, c, result).verdict;
-  if (world.rules.kind === 'byelection') return { won: verdict === 'won', governed: false };
-  // A state is taken only when the party has a majority of its own and heads the government that comes out of the talks.
-  return { won: verdict === 'majority', governed: verdict === 'majority' && c.phase === 'done' && c.formation?.outcome?.pm === c.player };
+  let k = journeyStep(j ?? emptyJourney());
+  let cleared = 0;
+  while (k < STEPS.length && stepScenario(k, seats) === c.scenario && goalMet(world, c, STEPS[k].goal, result.tally)) { cleared++; k++; }
+  return cleared;
 }
 
-/** The most levels a journey can reach: four for each of the thirteen states (three DUN by-elections and the state election), and the first. */
-export const MAX_LEVEL = STATE_ROUTE.length * (DUN_LEVELS + 1) + 1;
+/** Whether a goal was met in a finished contest. */
+function goalMet(world: World, c: Campaign, goal: Goal, tally: number[]): boolean {
+  const p = c.player;
+  if (goal === 'win' || goal === 'winShoestring') {
+    const won = summarise(world, c, electionResult(world, c)!).verdict === 'won';
+    return won && (goal === 'win' || c.parties[p]!.spent <= spendingLimit(world) / 2);
+  }
+  if (goal === 'kingmaker') return tally[p] >= stateSeatsNeeded(world.seats.length) && Math.max(...tally) < majorityLine(world);
+  // A place in the government: heading it or a partner in it once the talks are over, or a majority of one's own.
+  if (tally[p] >= majorityLine(world)) return true;
+  const o = c.formation?.outcome;
+  return c.phase === 'done' && !!o && (o.pm === p || o.partners.includes(p));
+}
 
-/** The level the player is on: 1 at the start, one more for each DUN by-election won, and a further one for each state taken. */
-export const journeyLevel = (j: Journey | undefined): number => {
-  const k = j ?? emptyJourney();
-  return Math.min(MAX_LEVEL, k.governed.length * (DUN_LEVELS + 1) + k.dunWon + 1);
-};
+/** The seats a new party must win in a state election to take the state: 8% of them (5 of Selangor's 56), and never fewer than 3. */
+export const stateSeatsNeeded = (seats: number): number => Math.max(3, Math.ceil(seats * 0.08));
 
-/** The contest a career campaign starts or resumes with: the first DUN by-election of Selangor, then wherever the journey has got to. */
+/** The most levels a journey can reach: one for each level of the chapters, and the first. */
+export const MAX_LEVEL = STEPS_COUNT + 1;
+
+/** The level the player is on: 1 at the start, one more for each level of the chapters cleared. */
+export const journeyLevel = (j: Journey | undefined): number => Math.min(MAX_LEVEL, journeyStep(j ?? emptyJourney()) + 1);
+
+/** The contest a career campaign starts or resumes with: the level the journey is on, or the last one once the chapters are done. */
 export function resumeScenario(j: Journey | undefined, seats: (st: StateId) => string[]): string {
-  const k = j ?? emptyJourney();
-  if (k.state) return k.dunWon >= DUN_LEVELS ? `state:${k.state}` : seats(k.state).find((s) => !k.fought.includes(s)) ?? `state:${k.state}`;
-  if (k.governed.length > 0) { const next = recommendState(k.governed); return next ? `state:${next}` : 'general'; }
-  return seats(FIRST_STATE)[0] ?? `state:${FIRST_STATE}`;
+  return stepScenario(Math.min(journeyStep(j ?? emptyJourney()), STEPS.length - 1), seats);
 }
 
 /** The state a scenario is played in, or null (a general election). */
@@ -147,18 +138,17 @@ export const scenarioState = (scenario: string): StateId | null =>
 export type ModeId = 'byelection' | 'challenges' | 'state' | 'career' | 'general' | 'hung' | 'simulator';
 
 /**
- * The level of the career campaign (see `journeyLevel`) at which each way to play opens, in stages:
- * one state's three DUN seats (level 4) open single by-elections; the first state taken (5) opens state elections and the weekly challenges;
- * three states (13) open the general election, the hung parliament and a career of one's own; five states (21) open the simulator.
+ * The level of the career campaign (see `journeyLevel`) at which each way to play opens: three Selangor seats won (level 4) open single
+ * by-elections; Chapter 1 finished (level 6) opens the rest. They will move up as the later chapters are built.
  */
 export const MODE_UNLOCKS: Record<ModeId, number> = {
-  byelection: DUN_LEVELS + 1,
-  state: DUN_LEVELS + 2,
-  challenges: DUN_LEVELS + 2,
-  general: 3 * (DUN_LEVELS + 1) + 1,
-  hung: 3 * (DUN_LEVELS + 1) + 1,
-  career: 3 * (DUN_LEVELS + 1) + 1,
-  simulator: 5 * (DUN_LEVELS + 1) + 1,
+  byelection: 4,
+  state: 6,
+  challenges: 6,
+  general: 6,
+  hung: 6,
+  career: 6,
+  simulator: 6,
 };
 
 /** Whether a way to play is open at this level. */
@@ -176,3 +166,41 @@ export function unlockStages(): { level: number; modes: ModeId[] }[] {
 
 /** The next stage still shut at this level, or null once everything is open. */
 export const nextUnlock = (level: number): { level: number; modes: ModeId[] } | null => unlockStages().find((s) => s.level > level) ?? null;
+
+// ---------- the chapters ----------
+
+/** What a level asks: to win the seat, to win it spending at most half the legal limit, to be kingmaker in a hung assembly, or to be in government. */
+export type Goal = 'win' | 'winShoestring' | 'kingmaker' | 'inGovernment';
+
+export interface StepDef {
+  id: 'firstSeat' | 'stronghold' | 'shoestring' | 'kingmaker' | 'intoGovt';
+  chapter: number;
+  goal: Goal;
+  /** The contest: a DUN by-election of Selangor (the closest fight, the safest seat, or the second closest), or Selangor's state election. */
+  contest: 'closest' | 'safest' | 'second' | 'state';
+}
+
+/** The levels of the chapters, in order. Chapter 1 is Selangor. */
+export const STEPS: readonly StepDef[] = [
+  { id: 'firstSeat', chapter: 1, goal: 'win', contest: 'closest' },
+  { id: 'stronghold', chapter: 1, goal: 'win', contest: 'safest' },
+  { id: 'shoestring', chapter: 1, goal: 'winShoestring', contest: 'second' },
+  { id: 'kingmaker', chapter: 1, goal: 'kingmaker', contest: 'state' },
+  { id: 'intoGovt', chapter: 1, goal: 'inGovernment', contest: 'state' },
+];
+
+/** The contest of a level. */
+export function stepScenario(i: number, seats: (st: StateId) => string[]): string {
+  const step = STEPS[Math.max(0, Math.min(i, STEPS.length - 1))];
+  const dun = seats(FIRST_STATE);
+  if (step.contest === 'state' || dun.length === 0) return `state:${FIRST_STATE}`;
+  if (step.contest === 'closest') return dun[0];
+  if (step.contest === 'safest') return dun[dun.length - 1];
+  return dun[Math.min(1, dun.length - 1)];
+}
+
+/** Levels cleared: as saved, or, for a journey saved before the chapters, worked out from it (a state taken finished Chapter 1). */
+export function journeyStep(j: Journey): number {
+  if (j.step !== undefined) return Math.max(0, Math.min(STEPS.length, j.step));
+  return j.governed.length > 0 ? STEPS.length : Math.min(3, j.dunWon);
+}

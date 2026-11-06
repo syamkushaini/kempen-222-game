@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Identity } from './identity';
+import { MAX_LEVEL } from '../sim/campaign/journey';
 import { cleanPartyName, cleanPartyShort, levelSubmission, postLevel, topLevels } from './journeyBoard';
 
 const cfg = { url: 'https://x.supabase.co', key: 'k' };
@@ -14,7 +15,7 @@ describe('the level board', () => {
       level: 5, governed: 1, version: '1.0',
     });
     expect(levelSubmission('player-1234', 'Aina', party, 5, 1, '1.0', 'hard')?.difficulty).toBe('hard');
-    expect(levelSubmission('player-1234', 'Aina', party, 999, 99, '1')).toMatchObject({ level: 53, governed: 13 });
+    expect(levelSubmission('player-1234', 'Aina', party, 999, 99, '1')).toMatchObject({ level: MAX_LEVEL, governed: 13 });
   });
   it('refuses a bad name, no party, a level below one, or a party the board cannot show', () => {
     expect(levelSubmission('player-1234', 'x', party, 5, 1, '1')).toBeNull();

@@ -1,5 +1,6 @@
 import { dunByElections, nextContest, vacancyOf } from '../data/world';
-import { DUN_LEVELS, emptyJourney, nextStep } from '../sim/campaign/journey';
+import { DUN_LEVELS, STEPS, emptyJourney, journeyStep, nextStep } from '../sim/campaign/journey';
+import { stepTitle } from './JourneyResult';
 import type { StringKey } from '../i18n/strings';
 import { countClick } from '../state/playWatch';
 import { useStore } from '../state/store';
@@ -29,12 +30,12 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
     const next = aside.queue[0];
     return <button className="btn primary" onClick={() => void finishAside()}>{next ? t('fight.next', { state: regionLabel(t, world, next) }) : t('fight.back')} ▸</button>;
   }
+  // In the Career Campaign the next contest is the next level: it goes by the level's name.
   const label = (to: string): string => {
+    if (inJourney) { const k = journeyStep(journey ?? emptyJourney()); if (k < STEPS.length) return t('journey.next.step', { title: stepTitle(t, k) }); }
     if (to === 'general') return t('climb.general');
     if (to.startsWith('byelection:')) return t('journey.nextDun', { seat: vacancyOf(to.slice('byelection:'.length))?.name ?? '', n: (journey?.dunWon ?? 0) + 1, total: DUN_LEVELS });
-    const state = t(`state.${to.slice(6)}` as StringKey);
-    // A state taken with a majority and the government: the next state is a recommendation, not just the next rung.
-    return journey?.state === null && journey.governed.length > 0 ? t('journey.nextState', { state, taken: t(`state.${journey.governed[journey.governed.length - 1]}` as StringKey) }) : t('climb.state', { state });
+    return t('climb.state', { state: t(`state.${to.slice(6)}` as StringKey) });
   };
   if (next) {
     return (
