@@ -928,6 +928,8 @@ export interface Campaign {
   totalWeeks: number;
   /** The first weeks of a contest played again after a defeat, spent as the opposition rebuilding: the election comes only after them. */
   rebuild?: number;
+  /** The opposition's own affairs in the years of rebuilding: a government to oppose, a cabinet in waiting and what has been dug up. */
+  opposition?: Opposition;
   /** Current week, starting at 1. */
   week: number;
   phase: Phase;
@@ -998,3 +1000,22 @@ export interface Campaign {
 
 export * from './teamTypes';
 import type { Team } from './teamTypes';
+
+/** The affairs of a party in opposition in the years of rebuilding, where there is no career to hold them (see opposition.ts). */
+export interface Opposition {
+  /** The party that governs: the one that won the contest. */
+  govt: number;
+  /** Policies of that government that can be challenged. */
+  policies: PledgeId[];
+  /** Someone to shadow each of the main posts. */
+  shadow: Partial<Record<PortfolioId, { name: number; skill: number }>>;
+  /** What has been dug up on the government (spent by challenges), and how far the opposition is believed (0 to 100). */
+  dossier: number;
+  credibility: number;
+  /** Policies already challenged, the week of the last challenge, and what has been done this week. */
+  challenged: PledgeId[];
+  lastChallenge: number;
+  used: string[];
+  /** Cabinet milestones already rewarded. */
+  flags: string[];
+}

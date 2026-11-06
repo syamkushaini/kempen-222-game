@@ -23,6 +23,7 @@ import { ReminderStrip } from './ReminderStrip';
 import { GameMenu } from './GameMenu';
 import { GroupMenu } from './GroupMenu';
 import { NextStep } from './NextStep';
+import { OppositionDesk } from './OppositionDesk';
 import { FinishWithTeam } from './FinishWithTeam';
 import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useTablet, useWorld, useNarrow } from './hooks';
 import { AsideBanner } from './Aside';
@@ -313,6 +314,8 @@ export function App() {
   const showNight = useStore((s) => s.showNight);
   const simulating = useStore((s) => s.simulating);
   const ended = useStore((s) => !!s.game?.campaign.career?.ending);
+  // The years in opposition after a defeat have a desk of their own, until the election campaign begins.
+  const oppo = useStore((s) => { const c = s.game?.campaign; return !!c && c.phase === 'campaign' && !!c.rebuild && c.week <= c.rebuild; });
   const loads = useStore((s) => s.loads);
   const setPendingChallenge = useStore((s) => s.setPendingChallenge);
   const upright = useTablet();
@@ -386,7 +389,7 @@ export function App() {
           <Suspense fallback={<p className="muted">{t('app.loading')}</p>}>
             {!phase && simulating && <Simulator />}
             {ended && <LegacyScreen />}
-            {!ended && (phase === 'campaign' || phase === 'term') && <CampaignScreen />}
+            {!ended && (phase === 'campaign' || phase === 'term') && (oppo ? <OppositionDesk /> : <CampaignScreen />)}
             {!ended && night && <ElectionNight key={loads} />}
             {!ended && phase && phase !== 'campaign' && phase !== 'term' && !night && <FormationScreen />}
           </Suspense>

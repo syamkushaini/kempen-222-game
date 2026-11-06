@@ -38,6 +38,7 @@ import { recordAsideResults } from '../sim/campaign/results';
 import { summarise } from '../sim/campaign/night';
 import { buildCampaign, type SimConfig } from '../sim/campaign/simulate';
 import { rebuilding } from '../sim/campaign/actions';
+import { challengeHere, committeeHere, nameShadowHere, startOpposition } from '../sim/campaign/opposition';
 import { closeNight, electionResult, endWeek, newCampaign, playOut, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
   ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
@@ -298,6 +299,10 @@ interface Store {
   endWeek(): void;
   /** In the years of rebuilding in opposition: runs up to this many weeks, stopping when something needs the leader's answer or the campaign begins. */
   skipRebuild(weeks: number): void;
+  /** In opposition after a defeat: names someone to shadow a post, calls a minister before a committee, challenges a policy of the government. */
+  oppShadow(post: PortfolioId): void;
+  oppCommittee(): void;
+  oppChallenge(id: PledgeId, method: Method): void;
   /** Marks election night as watched, so reloading shows the final result. */
   finishNight(): void;
   /** Hands the weeks still to come to the team, and goes to polling day. */
@@ -595,7 +600,7 @@ export const useStore = create<Store>((set, get) => {
       const campaign = world.rules.career ? startCareer(world, { ...opts, ideology: identity ? ideology : null, founded, stances, realStates, own, ...(home ? { foundedSeat: home } : {}), held: own && base ? base.seats.filter((_, i) => base.baseline.contesting[i][player]).map((s) => s.id) : undefined }) : newCampaign(world, opts);
       if (founded && !world.rules.career) { foundForContest(world, campaign, backstory); if (!backstory && validLeaderStats(leaderStats)) campaign.team.leader = { backstory: null, stats: [...leaderStats] }; if (following) campaign.following = following; if (stronghold) campaign.stronghold = stronghold; }
       if (refit && carried) campaign.carried = structuredClone(carried);
-      if (rebuild) campaign.rebuild = rebuild;
+      if (rebuild) { campaign.rebuild = rebuild; startOpposition(world, campaign); }
       // A career opens with its first missions on offer (the game draws them once for each parliament).
       if (campaign.career) offerMain(world, campaign);
       // A set challenge is for someone who has played before: no adviser walking them through it.
@@ -647,6 +652,9 @@ export const useStore = create<Store>((set, get) => {
         ? { lastReport: null, pactReply: null, tab: 'news' }
         : { lastReport: null, pactReply: null, selectedSeat: null, selectedState: null, showNight: true };
     }),
+    oppShadow: (post) => mutate((c, _g, world) => { nameShadowHere(world, c, post); }),
+    oppCommittee: () => mutate((c) => { committeeHere(c); }),
+    oppChallenge: (id, method) => mutate((c, _g, world) => { challengeHere(world, c, id, method); }),
     skipRebuild: (weeks) => mutate((c, _g, world) => {
       for (let i = 0; i < weeks && rebuilding(c) && c.phase === 'campaign' && c.inbox.length === 0; i++) endWeek(world, c);
       return { lastReport: null, pactReply: null, tab: 'news' };

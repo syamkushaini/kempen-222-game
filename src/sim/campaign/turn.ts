@@ -10,6 +10,7 @@ import { agendaIntro, agendaWeek } from './agenda';
 import { freshParty, isOutsider, standingPact, weeklyIncome } from './field';
 import { record, standing } from './ledger';
 import { makeRecap } from './recap';
+import { oppositionWeek } from './opposition';
 import { DECAY, EFFECT, canDo, contestsState, doAction, effectiveDynamics, rebuilding, truth } from './actions';
 import { applyBackstory } from './leader';
 import { pressReacts } from './media';
@@ -386,6 +387,7 @@ export function endWeek(world: World, c: Campaign): void {
 
   c.recap = makeRecap(world, c);
   // In the years of rebuilding, what was done lasts four times as long: the weeks are quiet, and only a month's work now and then is news.
+  oppositionWeek(c);
   if (!rebuilding(c) || c.week % 4 === 0) decay(c.dyn);
   c.week++;
   // What came in for the player, and what of it a lender took before it reached the party.

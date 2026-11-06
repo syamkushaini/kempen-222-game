@@ -4,6 +4,7 @@ import { dunByElections, getWorld, nextContest, worldOf } from '../data/world';
 import { FOUNDING_SLOT } from '../sim/campaign/founding';
 import { REBUILD_WEEKS, emptyJourney, nextAfterLoss, nextStep, record } from '../sim/campaign/journey';
 import { REBUILD_ONLY, canDo, rebuilding } from '../sim/campaign/actions';
+import { SHADOW_POSTS } from '../sim/campaign/opposition';
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from './store';
 
@@ -104,5 +105,44 @@ describe('opposition actions in the weeks of rebuilding', () => {
     useStore.getState().quitToTitle();
     useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: PS, difficulty: 'normal', founded: true, journey: true });
     for (const id of REBUILD_ONLY) expect(canDo(getWorld(dun())!, useStore.getState().game!.campaign, PS, id, id === 'scrutiny' ? { party: 0 } : {}).ok, id).toBe(false);
+  });
+});
+
+describe('the opposition in the years of rebuilding', () => {
+  const begin = () => {
+    useStore.getState().quitToTitle();
+    const base = getWorld(dun())!.rules.weeks;
+    useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: PARTY_IDS.indexOf('ps'), difficulty: 'normal', founded: true, journey: true, rebuild: REBUILD_WEEKS, weeks: base + REBUILD_WEEKS });
+    return () => useStore.getState().game!.campaign;
+  };
+  it('has a government to oppose, and a cabinet in waiting that costs money', () => {
+    const c = begin();
+    const o = c().opposition!;
+    expect(o.govt).not.toBe(PARTY_IDS.indexOf('ps'));
+    expect(o.policies).toHaveLength(4);
+    const funds = c().parties[PARTY_IDS.indexOf('ps')]!.funds;
+    useStore.getState().oppShadow(SHADOW_POSTS[0]);
+    expect(c().opposition!.shadow[SHADOW_POSTS[0]]).toBeDefined();
+    expect(c().parties[PARTY_IDS.indexOf('ps')]!.funds).toBeLessThan(funds);
+  });
+  it('digs a dossier up at a committee, once a week, and spends it on a challenge', () => {
+    const c = begin();
+    useStore.getState().oppCommittee();
+    expect(c().opposition!.dossier).toBeGreaterThan(0);
+    useStore.getState().oppCommittee();
+    expect(c().opposition!.used.filter((x) => x === 'committee')).toHaveLength(1);
+    const id = c().opposition!.policies[0];
+    const before = c().opposition!.dossier;
+    useStore.getState().oppChallenge(id, 'debate');
+    expect(c().opposition!.challenged).toContain(id);
+    expect(c().opposition!.dossier).toBeLessThan(before);
+    // each policy once, and not again so soon
+    useStore.getState().oppChallenge(c().opposition!.policies[1], 'debate');
+    expect(c().opposition!.challenged).toHaveLength(1);
+  });
+  it('is not there in an ordinary contest', () => {
+    useStore.getState().quitToTitle();
+    useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: PARTY_IDS.indexOf('ps'), difficulty: 'normal', founded: true, journey: true });
+    expect(useStore.getState().game!.campaign.opposition).toBeUndefined();
   });
 });
