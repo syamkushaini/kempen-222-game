@@ -1,0 +1,23 @@
+/*
+ * Tailwind, for new pieces only: its theme and utilities, without its reset (preflight), so the game's own styles stay as they are.
+ * The colours are the game's tokens (theme.css), so a utility like bg-panel or text-muted follows the theme and the party's colour.
+ */
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-primary: var(--primary);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+  --radius-card: var(--radius);
+  --font-sans: var(--font);
+}

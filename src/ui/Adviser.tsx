@@ -20,7 +20,8 @@ function Strip({ who, name, text, className = '', children }: { who: ComponentPr
   const typing = useTypewriter(text);
   return (
     <section className={`adviser adviser-strip${className ? ` ${className}` : ''}`} aria-live="polite">
-      <Manager who={who} size={34} talking={typing.talking} />
+      {/* the speaker stands out of the card, cut out against the page */}
+      <div className="adviser-avatar"><Manager who={who} size={76} talking={typing.talking} /></div>
       <div className="grow">
         <p className="adviser-name">{name}</p>
         <p className="adviser-text typed" onClick={typing.skip}>

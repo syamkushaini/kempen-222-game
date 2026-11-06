@@ -109,3 +109,46 @@
   .bloc-table:not(.review-table) th, .bloc-table:not(.review-table) td { display: block; border-top: 0; padding: 2px 0; }
   .bloc-table:not(.review-table) td:last-child { grid-column: 1 / -1; width: auto; }
 }
+
+/* ---------- floating bars and a floating adviser ----------
+   The adviser's card floats above the page with the speaker standing out of it, cut out against the page; on a phone the bar of figures
+   and the tabs float too, detached from the edges, with rounded corners and a shadow. */
+.adviser-strip {
+  left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); max-width: 980px; margin: 0 auto;
+  padding: 10px 14px 10px 112px; border: 1px solid var(--line-2); border-radius: 16px; background: var(--panel);
+  box-shadow: 0 12px 36px rgb(2 6 23 / 45%); overflow: visible; min-height: 64px;
+}
+.adviser-strip .adviser-avatar { position: absolute; left: 6px; bottom: 0; width: 100px; height: 100px; pointer-events: none; filter: drop-shadow(0 8px 14px rgb(2 6 23 / 55%)); }
+/* No disc behind the speaker: the bust is drawn on a clear canvas, so it stands out of the card's top edge. */
+.adviser-strip .adviser-avatar .bust3d { background: transparent !important; border-radius: 0 !important; box-shadow: none !important; overflow: visible !important; }
+.adviser-strip .adviser-avatar .portrait { border-radius: 0; background: none; box-shadow: none; }
+.adviser-strip .adviser-avatar > * { width: 100%; height: 100%; display: block; }
+.adviser-strip.danger { border-color: var(--bad); }
+body:has(.adviser-strip) .app { padding-bottom: 104px; }
+
+@media (max-width: 980px) {
+  .phone-nav {
+    left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); padding: 4px;
+    border: 1px solid var(--line-2); border-radius: 18px; box-shadow: 0 12px 32px rgb(2 6 23 / 50%);
+  }
+  .campaign-bar {
+    left: 10px; right: 10px; bottom: calc(78px + env(safe-area-inset-bottom)); padding: 6px 8px;
+    border: 1px solid var(--line-2); border-radius: 16px; box-shadow: 0 12px 32px rgb(2 6 23 / 45%);
+  }
+  .adviser-strip { bottom: calc(150px + env(safe-area-inset-bottom)); left: 10px; right: 10px; padding-left: 92px; }
+  /* The speaker stands on the card's top edge, not beside the buttons. */
+  .adviser-strip .adviser-avatar { width: 84px; height: 84px; left: 4px; top: -34px; bottom: auto; }
+  .app { padding-bottom: 170px; }
+  body:has(.adviser-strip) .app { padding-bottom: 260px; }
+  .seat-card { inset: auto 10px calc(78px + env(safe-area-inset-bottom)) 10px; border-radius: 16px; }
+}
+@media (max-width: 520px) {
+  .campaign-bar { bottom: calc(74px + env(safe-area-inset-bottom)); }
+  .adviser-strip { bottom: calc(148px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 520px) {
+  /* The floating bar is a little narrower: the figures share it evenly so that no label is cut. */
+  .campaign-bar .hud-item { flex: 1 1 0; padding: 2px 2px; }
+  .campaign-bar .hud-label { font-size: 9.5px; letter-spacing: -0.1px; }
+  .campaign-bar .end-week { flex: 0 0 38%; white-space: normal; line-height: 1.2; }
+}
