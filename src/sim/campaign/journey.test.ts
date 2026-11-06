@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { nextUnlock, unlockStages, FIRST_UNLOCK, MAX_LEVEL, MODE_UNLOCKS, STEPS, emptyJourney, journeyLevel, journeyStep, modeOpen, nextStep, record, resumeScenario, stepScenario } from './journey';
 
-const seat = (n: number) => `byelection:dun:selangor:N.0${n}`;
+const seat = (n: number) => `byelection:dun:selangor:N.9${n}`;
 const seats = () => [1, 2, 3, 4, 5].map(seat);
 
 describe('the chapters of the journey', () => {
-  it('runs Chapter 1 in Selangor: the closest seat, the safest, the second closest, then the state election twice', () => {
+  it('runs Chapter 1 in Selangor: three DUN seats (the closest, safest and second closest where its own are missing), then the state election twice', () => {
     expect(STEPS.map((s) => s.id)).toEqual(['firstSeat', 'stronghold', 'shoestring', 'kingmaker', 'intoGovt', 'govern', 'defend', 'secondFront', 'borneoBlind', 'generalElection', 'hungParliament', 'governCountry', 'primeMinister', 'firstYear', 'fullTerm', 'secondTerm', 'ownMajority', 'promisesKept', 'retireWell']);
     expect(STEPS.map((_, i) => stepScenario(i, seats))).toEqual([seat(1), seat(5), seat(2), 'state:selangor', 'state:selangor', 'career:selangor', 'career:selangor', 'state:perak', 'state:sabah', 'general', 'general', 'career', 'career', 'career', 'career', 'career', 'career', 'career', 'career']);
     expect(STEPS.find((s) => s.id === 'borneoBlind')?.twist).toEqual({ fog: true, noisy: true });
@@ -65,5 +65,55 @@ describe('leading into a term', () => {
     expect(termLeadIn('state:perak')).toBe('state:perak');
     expect(isTerm('career')).toBe(true);
     expect(isTerm('general')).toBe(false);
+  });
+});
+
+describe('Level 1', () => {
+  it('starts a new party stronger than a single by-election does, within what a carried following may be', async () => {
+    const { FIRST_LEVEL_FOLLOWING } = await import('./journey');
+    const { MAX_FOLLOWING, NEW_PARTY_SHARE } = await import('./founding');
+    expect(FIRST_LEVEL_FOLLOWING).toBeGreaterThan(NEW_PARTY_SHARE.byelection);
+    expect(FIRST_LEVEL_FOLLOWING).toBeLessThanOrEqual(MAX_FOLLOWING);
+  });
+});
+
+describe('the seats of the DUN levels', () => {
+  it('are Bukit Melawati, Sekinchan and Paya Jaras where the state offers them, and the closest fight otherwise', () => {
+    const melawati = 'byelection:dun:selangor:N.10';
+    expect(stepScenario(0, () => [seat(1), melawati, seat(2)])).toBe(melawati);
+    expect(stepScenario(0, seats)).toBe(seat(1));
+  });
+  it('are real Selangor by-elections, each a different seat', async () => {
+    const { dunByElections } = await import('../../data/world');
+    const dun = dunByElections('selangor');
+    const picked = [0, 1, 2].map((i) => stepScenario(i, dunByElections));
+    expect(picked.map((id) => id.split(':')[3])).toEqual(['N.10', 'N.04', 'N.38']);
+    for (const id of picked) expect(dun).toContain(id);
+    expect(new Set(picked).size).toBe(3);
+  });
+  it('still count a game begun in a level\'s old seat, unless that seat is now another level\'s', async () => {
+    const { isStepContest } = await import('./journey');
+    const { dunByElections } = await import('../../data/world');
+    const dun = dunByElections('selangor');
+    expect(isStepContest(0, dun[0], dunByElections)).toBe(true);
+    expect(isStepContest(1, dun[dun.length - 1], dunByElections)).toBe(true);
+    // Sekinchan was the third level's seat and is now the second's: it clears the second only.
+    expect(dun[1]).toBe('byelection:dun:selangor:N.04');
+    expect(isStepContest(1, dun[1], dunByElections)).toBe(true);
+    expect(isStepContest(2, dun[1], dunByElections)).toBe(false);
+    expect(isStepContest(0, dun[dun.length - 1], dunByElections)).toBe(false);
+  });
+});
+
+describe('the bars of the levels', () => {
+  it('ask for more as the chapters go on', () => {
+    const at = (id: string) => STEPS.find((s) => s.id === id)!;
+    expect(at('kingmaker')).toMatchObject({ goal: 'seats', need: 6 });
+    expect(at('secondFront')).toMatchObject({ need: 9, share: 0.24 });
+    expect(at('borneoBlind')).toMatchObject({ need: 18, share: 0.25 });
+    expect(at('generalElection')).toMatchObject({ need: 22, share: 0.24 });
+    // Each later state asks for a larger share of its seats than the one before, or as much.
+    const part = (id: string) => at(id).need! / at(id).seats!;
+    expect(part('borneoBlind')).toBeGreaterThanOrEqual(part('secondFront'));
   });
 });

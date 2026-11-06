@@ -1482,7 +1482,14 @@ fight), Flip a stronghold (win the seat held most safely), On a shoestring (win 
 state election win at least 5 seats with no party holding a majority) and Into government (be in Selangor's government after the talks, or win a
 majority). Planned next: Chapter 2 (govern Selangor for a term, then defend it), Chapter 3 (a hung state, then different ground with a twist),
 Chapter 4 (general election, hung parliament, a term as PM or opposition leader), with optional stars and difficulty-set targets.
-A loss offers "Try this again" or "Rebuild the party and try again" (back to the set-up with the party filled in); the opposition years that
+The levels were later set to grow harder step by step (measured with the team playing alone on Easy, on a following of 27%): Level 1 Bukit
+Melawati (55-63%), Level 2 Sekinchan, renamed Second seat (40-48%; the safest seat, Morib, was never won), Level 3 Paya Jaras on half the
+money, a seat held by about 11 points (about 33%), Level 4 renamed Breakthrough, six of Selangor's seats with no need for a hung assembly
+(about 25%; a hung Selangor almost never came), Perak 9 seats or 24% of the vote, Sabah 18 or 25%, the general election 22 or 24% (about 20%
+each; the old bars of 15-20% of the vote were cleared nearly every time). A game begun in a DUN level's old seat still counts.
+Level 1 is fought in Bukit Melawati (N.10), not the closest fight (Sungai Air Tawar): the team playing alone at a 30% following won it in
+about 58% of games against about 15% there (a game begun in Sungai Air Tawar still counts). Level 1 starts the new party on a 30% following, not the 25% of a single by-election, so a first game can be won while it is being learned (the
+team playing alone won about 1 game in 14 at 25% and about 1 in 5 at 30%; more money made no difference). A loss offers "Try this again" or "Rebuild the party and try again" (back to the set-up with the party filled in); the opposition years that
 were tried for a few days were removed. Until the later chapters exist, finishing Chapter 1 (level 6) opens every other way to play. Journeys
 saved before the chapters keep their DUN wins (up to three), and a state taken counts as Chapter 1 done.
 

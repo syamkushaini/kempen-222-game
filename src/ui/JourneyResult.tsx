@@ -1,6 +1,6 @@
 import type { StringKey } from '../i18n/strings';
 import { dunByElections } from '../data/world';
-import { MODE_UNLOCKS, SHARE_NEEDED, STEPS, isTerm, termLeadIn, emptyJourney, journeyLevel, journeyStep, nextStep, stateSeatsNeeded, stepScenario, type ModeId } from '../sim/campaign/journey';
+import { MODE_UNLOCKS, SHARE_NEEDED, STEPS, isTerm, termLeadIn, emptyJourney, journeyLevel, journeyStep, isStepContest, nextStep, stateSeatsNeeded, stepScenario, type ModeId } from '../sim/campaign/journey';
 import { spendingLimit } from '../sim/campaign/actions';
 import { inGovernment } from '../sim/campaign/career';
 import { useStore } from '../state/store';
@@ -49,8 +49,8 @@ export function JourneyGoal() {
   if (!c || !journey || (c.phase !== 'campaign' && c.phase !== 'term')) return null;
   const k = journeyStep(j);
   // In a term of government: the levels of it already cleared, as well as the one being played.
-  const done = c.career ? STEPS.map((_, i) => i).filter((i) => i < k && stepScenario(i, dunByElections) === c.scenario) : [];
-  const current = k < STEPS.length && stepScenario(k, dunByElections) === c.scenario;
+  const done = c.career ? STEPS.map((_, i) => i).filter((i) => i < k && isStepContest(i, c.scenario, dunByElections)) : [];
+  const current = k < STEPS.length && isStepContest(k, c.scenario, dunByElections);
   // A term level resumed from the menu: the state election is played again first, to get back into the government the term needs.
   if (!current && !c.career && k < STEPS.length && isTerm(stepScenario(k, dunByElections)) && c.scenario === termLeadIn(stepScenario(k, dunByElections))) {
     return (
@@ -95,7 +95,7 @@ export function JourneyResult() {
   // A place in the government is known only once the talks are over.
   if (c.scenario.startsWith('state:') && c.phase !== 'done') return null;
   const k = journeyStep(j);
-  const here = STEPS.map((_, i) => i).filter((i) => stepScenario(i, dunByElections) === c.scenario);
+  const here = STEPS.map((_, i) => i).filter((i) => isStepContest(i, c.scenario, dunByElections));
   if (here.length === 0) return null;
   const cleared = here.filter((i) => i < k);
   const level = journeyLevel(j);

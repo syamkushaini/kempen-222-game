@@ -9,7 +9,7 @@ import type { Campaign } from './types';
 
 /**
  * The journey (the Career Campaign): a new party climbs a ladder of levels grouped in chapters, each level a contest with a goal of its own (see
- * `STEPS`). Chapter 1 is Selangor: a first seat, a stronghold, a seat won on a shoestring, kingmaker in the state election, and a place in its
+ * `STEPS`). Chapter 1 is Selangor: a first seat, a second, a safe seat won on a shoestring, a breakthrough in the state election, and a place in its
  * government. Every contest is the ordinary one; the goals only say what counts.
  */
 
@@ -84,13 +84,13 @@ export function record(j: Journey, steps: number): Journey {
 export function nextStep(j: Journey, scenario: string, seats: (st: StateId) => string[]): string | null {
   const k = journeyStep(j);
   if (k >= STEPS.length) return null;
-  const clearedHere = STEPS.some((_, i) => i < k && stepScenario(i, seats) === scenario);
+  const clearedHere = STEPS.some((_, i) => i < k && isStepContest(i, scenario, seats));
   return clearedHere ? stepScenario(k, seats) : null;
 }
 
 
 /**
- * How many levels the contest that has just ended cleared, from the level the journey is on: none, one, or two (kingmaker and a place in the
+ * How many levels the contest that has just ended cleared, from the level the journey is on: none, one, or two (a breakthrough and a place in the
  * government can come in the same state election). Null while it is not over, or if it is not this level's contest.
  */
 export function journeyResult(world: World, c: Campaign, j: Journey | undefined, seats: (st: StateId) => string[]): number | null {
@@ -100,7 +100,7 @@ export function journeyResult(world: World, c: Campaign, j: Journey | undefined,
   if (!result) return null;
   let k = journeyStep(j ?? emptyJourney());
   let cleared = 0;
-  while (k < STEPS.length && stepScenario(k, seats) === c.scenario && goalMet(world, c, STEPS[k], result.tally)) { cleared++; k++; }
+  while (k < STEPS.length && isStepContest(k, c.scenario, seats) && goalMet(world, c, STEPS[k], result.tally)) { cleared++; k++; }
   return cleared;
 }
 
@@ -145,7 +145,7 @@ function goalMet(world: World, c: Campaign, step: StepDef, tally: number[]): boo
     return won && (goal === 'win' || c.parties[p]!.spent <= spendingLimit(world) / 2);
   }
   if (goal === 'seatsOrShare') return tally[p] >= (step.need ?? stateSeatsNeeded(world.seats.length)) || summarise(world, c, electionResult(world, c)!).voteShare >= (step.share ?? SHARE_NEEDED);
-  if (goal === 'kingmaker') return tally[p] >= stateSeatsNeeded(world.seats.length) && Math.max(...tally) < majorityLine(world);
+  if (goal === 'seats') return tally[p] >= (step.need ?? stateSeatsNeeded(world.seats.length));
   // A place in the government: heading it or a partner in it once the talks are over, or a majority of one's own.
   if (tally[p] >= majorityLine(world)) return true;
   const o = c.formation?.outcome;
@@ -206,8 +206,8 @@ export const nextUnlock = (level: number): { level: number; modes: ModeId[] } | 
 
 // ---------- the chapters ----------
 
-/** What a level asks: to win the seat, to win it spending at most half the legal limit, to be kingmaker in a hung assembly, or to be in government. */
-export type Goal = 'win' | 'winShoestring' | 'kingmaker' | 'inGovernment' | 'serveTerm' | 'reElected' | 'seatsOrShare'
+/** What a level asks: to win the seat, to win it spending at most half the legal limit, to win so many seats, or to be in government, and so on. */
+export type Goal = 'win' | 'winShoestring' | 'seats' | 'inGovernment' | 'serveTerm' | 'reElected' | 'seatsOrShare'
   | 'headGovt' | 'yearAsPm' | 'fullTermPm' | 'winAsPm' | 'ownMajority' | 'promises' | 'retire';
 
 export interface StepDef {
@@ -216,7 +216,11 @@ export interface StepDef {
   chapter: number;
   goal: Goal;
   /** The contest: a DUN by-election of Selangor (the closest fight, the safest seat, or the second closest), or Selangor's state election. */
-  contest: 'closest' | 'safest' | 'second' | 'state' | 'career' | 'general' | 'federal';
+  contest: 'dun' | 'state' | 'career' | 'general' | 'federal';
+  /** A DUN level's seat (its number in Selangor's assembly), and the seat it was fought in before the levels were set to grow harder step by step:
+   * the closest fight (the first of the state's seats), the safest (the last), or the second closest. A game begun there still counts. */
+  seat?: string;
+  was?: 'closest' | 'safest' | 'second';
   /** The state of a state election away from Selangor, and how many seats its assembly has. */
   state?: StateId;
   seats?: number;
@@ -229,19 +233,23 @@ export interface StepDef {
 
 /** The levels of the chapters, in order. Chapter 1 is Selangor. */
 export const STEPS: readonly StepDef[] = [
-  { id: 'firstSeat', chapter: 1, goal: 'win', contest: 'closest' },
-  { id: 'stronghold', chapter: 1, goal: 'win', contest: 'safest' },
-  { id: 'shoestring', chapter: 1, goal: 'winShoestring', contest: 'second' },
-  { id: 'kingmaker', chapter: 1, goal: 'kingmaker', contest: 'state' },
+  // Each level is a little harder than the one before. Played by the team alone on Easy, a new party clears about: Bukit Melawati 55-63% of
+  // the time, Sekinchan 40-48%, Paya Jaras (held by a wide margin, and on half the money) about 33%, six seats in the state election about 25%;
+  // a place in Selangor's government takes more (a pact, or a hung assembly); then Perak, Sabah and the general election about 20% each, with
+  // the polls in Sabah not to be trusted. A player who plays the weeks does better than the team alone.
+  { id: 'firstSeat', chapter: 1, goal: 'win', contest: 'dun', seat: 'N.10', was: 'closest' },
+  { id: 'stronghold', chapter: 1, goal: 'win', contest: 'dun', seat: 'N.04', was: 'safest' },
+  { id: 'shoestring', chapter: 1, goal: 'winShoestring', contest: 'dun', seat: 'N.38', was: 'second' },
+  { id: 'kingmaker', chapter: 1, goal: 'seats', contest: 'state', need: 6 },
   { id: 'intoGovt', chapter: 1, goal: 'inGovernment', contest: 'state' },
   // Chapter 2, In charge: a term in Selangor's government, then the election at the end of it.
   { id: 'govern', chapter: 2, goal: 'serveTerm', contest: 'career' },
   { id: 'defend', chapter: 2, goal: 'reElected', contest: 'career' },
   // Chapter 3, Beyond Selangor: a state where the party is unknown, then Borneo with polls that cannot be trusted.
-  { id: 'secondFront', chapter: 3, goal: 'seatsOrShare', contest: 'state', state: 'perak', seats: 59 },
-  { id: 'borneoBlind', chapter: 3, goal: 'seatsOrShare', contest: 'state', state: 'sabah', seats: 73, twist: { fog: true, noisy: true } },
+  { id: 'secondFront', chapter: 3, goal: 'seatsOrShare', contest: 'state', state: 'perak', seats: 59, need: 9, share: 0.24 },
+  { id: 'borneoBlind', chapter: 3, goal: 'seatsOrShare', contest: 'state', state: 'sabah', seats: 73, need: 18, share: 0.25, twist: { fog: true, noisy: true } },
   // Chapter 4, The nation: the general election, the talks of a hung parliament, and a term in the federal government.
-  { id: 'generalElection', chapter: 4, goal: 'seatsOrShare', contest: 'general', seats: 222, need: 20, share: 0.2 },
+  { id: 'generalElection', chapter: 4, goal: 'seatsOrShare', contest: 'general', seats: 222, need: 22, share: 0.24 },
   { id: 'hungParliament', chapter: 4, goal: 'inGovernment', contest: 'general' },
   { id: 'governCountry', chapter: 4, goal: 'serveTerm', contest: 'federal' },
   // Chapter 5, Prime Minister: head the government, a year in charge, a whole term at the top. All in the federal career that goes on from Chapter 4.
@@ -263,6 +271,12 @@ export const PROMISES_KEPT = 5;
 /** The vote share that clears a seats-or-share level in place of the seats: what a new party that is heard everywhere and wins little gets. */
 export const SHARE_NEEDED = 0.15;
 
+/**
+ * The following a new party starts Level 1 with: a little more than a single by-election gives (25%), so a first game is one a new player can
+ * win while learning. At the cap a carried following may have (see `MAX_FOLLOWING`); the team playing on its own wins about one game in five.
+ */
+export const FIRST_LEVEL_FOLLOWING = 0.3;
+
 /** The contest of a level. */
 export function stepScenario(i: number, seats: (st: StateId) => string[]): string {
   const step = STEPS[Math.max(0, Math.min(i, STEPS.length - 1))];
@@ -271,9 +285,24 @@ export function stepScenario(i: number, seats: (st: StateId) => string[]): strin
   if (step.contest === 'general') return 'general';
   if (step.contest === 'federal') return 'career';
   if (step.contest === 'state' || dun.length === 0) return `state:${step.state ?? FIRST_STATE}`;
-  if (step.contest === 'closest') return dun[0];
-  if (step.contest === 'safest') return dun[dun.length - 1];
-  return dun[Math.min(1, dun.length - 1)];
+  return dun.find((id) => id.endsWith(`:${step.seat}`)) ?? oldSeat(step, dun) ?? dun[0];
+}
+
+/**
+ * Whether a contest is the one of a level. A DUN level fought in a seat it no longer uses (see `StepDef.was`) still counts, so a game begun
+ * before the levels moved is not lost.
+ */
+export function isStepContest(i: number, scenario: string, seats: (st: StateId) => string[]): boolean {
+  if (stepScenario(i, seats) === scenario) return true;
+  const step = STEPS[i];
+  // Not a seat some level is fought in now: Sekinchan was the third level's and is now the second's, and must clear only that one.
+  return !!step && step.contest === 'dun' && oldSeat(step, seats(FIRST_STATE)) === scenario && !STEPS.some((_, j) => stepScenario(j, seats) === scenario);
+}
+
+/** The seat a DUN level was fought in before it had a seat of its own (see `StepDef.was`). */
+function oldSeat(step: StepDef, dun: string[]): string | undefined {
+  if (!step.was || dun.length === 0) return undefined;
+  return step.was === 'closest' ? dun[0] : step.was === 'safest' ? dun[dun.length - 1] : dun[Math.min(1, dun.length - 1)];
 }
 
 /** Levels cleared: as saved, or, for a journey saved before the chapters, worked out from it. */

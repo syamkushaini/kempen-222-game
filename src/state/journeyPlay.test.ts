@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import '../data/allStates';
 import { dunByElections } from '../data/world';
 import { FOUNDING_SLOT } from '../sim/campaign/founding';
-import { DUN_LEVELS, emptyJourney, journeyLevel } from '../sim/campaign/journey';
+import { DUN_LEVELS, FIRST_LEVEL_FOLLOWING, emptyJourney, journeyLevel, stepScenario } from '../sim/campaign/journey';
 import { PARTY_IDS } from '../sim/types';
 import { useStore } from './store';
 
@@ -14,11 +14,12 @@ describe('the journey, played through the store', () => {
   it('starts in Selangor and moves the level up only for a DUN by-election won', () => {
     const seats = dunByElections('selangor');
     expect(seats.length).toBeGreaterThan(DUN_LEVELS);
+    const first = stepScenario(0, dunByElections);
     const outcomes: boolean[] = [];
     for (let seed = 1; seed <= 12; seed++) {
       useStore.setState((s) => ({ profile: { ...s.profile, journey: undefined } }));
       store().quitToTitle();
-      store().startCampaign({ name: 'T', scenario: seats[0], player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', backstory: null, seed, founded: true, journey: true });
+      store().startCampaign({ name: 'T', scenario: first, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', backstory: null, seed, founded: true, journey: true, following: FIRST_LEVEL_FOLLOWING });
       useStore.setState((s) => ({ game: { ...s.game!, tutorial: null } }));
       store().finishWithTeam();
       store().finishNight();
