@@ -82,7 +82,7 @@ import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/c
 import { notePlay } from './streak';
 import { clearedHeat } from '../sim/campaign/heat';
 import { validLeaderStats } from '../sim/campaign/perks';
-import { emptyJourney, journeyLevel, journeyResult, modeOpen, nextStep } from '../sim/campaign/journey';
+import { STEPS, emptyJourney, journeyLevel, journeyResult, journeyStep, modeOpen, nextStep, scenarioState, stepScenario } from '../sim/campaign/journey';
 import { keepSaves } from './persist';
 import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordHeat, recordJourney, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
@@ -274,6 +274,8 @@ interface Store {
   carryOn(): void;
   /** Carries the party the player founded on from a finished by-election or state election to the next contest up (see `nextContest`). */
   climb(): Promise<void>;
+  /** In the Career Campaign: starts the contest of the level the journey is on (one away from the last contest's state: Chapter 3). */
+  playLevel(): Promise<void>;
   /** A challenge sent as a link, waiting for the player to say whether to play it. */
   pendingChallenge: ChallengeSpec | null;
   setPendingChallenge(spec: ChallengeSpec | null): void;
@@ -895,10 +897,32 @@ export const useStore = create<Store>((set, get) => {
       }
       get().startCampaign({ ...startOf(g), name: g.name, identity: g.identity });
     },
+    playLevel: async () => {
+      const g = get().game;
+      if (!g || !g.start?.journey) return;
+      const k = journeyStep(get().profile.journey ?? emptyJourney());
+      const step = STEPS[k];
+      const scenario = step ? stepScenario(k, dunByElections) : null;
+      // A term of government is entered from the talks, not started on its own.
+      if (!step || !scenario || scenario.startsWith('career:')) return;
+      const st = scenarioState(scenario);
+      if (st) await loadState(st);
+      await loadScenario(scenario);
+      if (get().game?.id !== g.id) return;
+      const c = g.campaign;
+      get().startCampaign({
+        name: g.name, scenario, player: c.player, difficulty: c.difficulty, backstory: c.team.leader.backstory ?? null, ideology: null,
+        ...(c.team.leader.backstory === null && validLeaderStats(c.team.leader.stats) ? { leaderStats: [...c.team.leader.stats] } : {}),
+        journey: true, identity: g.identity, founded: true, following: carriedFollowing(0.4),
+        ...(step.twist ? { challenge: { ...step.twist } } : {}),
+      });
+    },
     climb: async () => {
       const g = get().game;
       const c = g?.campaign;
       if (!g || !c || g.aside || c.phase !== 'done' || !c.newParty || c.career) return;
+      // A level in another state starts fresh there, with its own twist (Chapter 3).
+      if (g.start?.journey && STEPS[journeyStep(get().profile.journey ?? emptyJourney())]?.state) { await get().playLevel(); return; }
       const world = worldOf(c);
       const result = world && electionResult(world, c);
       const journey = get().profile.journey ?? emptyJourney();

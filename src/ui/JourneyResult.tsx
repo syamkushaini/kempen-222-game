@@ -1,6 +1,6 @@
 import type { StringKey } from '../i18n/strings';
 import { dunByElections } from '../data/world';
-import { MODE_UNLOCKS, STEPS, emptyJourney, journeyLevel, journeyStep, nextStep, stateSeatsNeeded, stepScenario, type ModeId } from '../sim/campaign/journey';
+import { MODE_UNLOCKS, SHARE_NEEDED, STEPS, emptyJourney, journeyLevel, journeyStep, nextStep, stateSeatsNeeded, stepScenario, type ModeId } from '../sim/campaign/journey';
 import { spendingLimit } from '../sim/campaign/actions';
 import { inGovernment } from '../sim/campaign/career';
 import { useStore } from '../state/store';
@@ -14,7 +14,7 @@ const SELANGOR_SEATS = 56;
 /** A level's name. */
 export const stepTitle = (t: T, i: number): string => t(`step.${STEPS[i].id}` as StringKey);
 /** What a level asks, in a sentence. */
-export const stepGoal = (t: T, i: number): string => t(`step.${STEPS[i].id}.goal` as StringKey, { n: stateSeatsNeeded(SELANGOR_SEATS) });
+export const stepGoal = (t: T, i: number): string => t(`step.${STEPS[i].id}.goal` as StringKey, { n: stateSeatsNeeded(STEPS[i].seats ?? SELANGOR_SEATS), pct: Math.round(SHARE_NEEDED * 100) });
 
 /** The place the journey has reached, in a few words: the level to play next, or the chapter done. */
 export function useJourneyPlace(): string {
@@ -44,6 +44,7 @@ export function JourneyGoal() {
   const journey = useStore((s) => s.game?.start?.journey);
   const j = useStore((s) => s.profile.journey) ?? emptyJourney();
   const restart = useStore((s) => s.restart);
+  const playLevel = useStore((s) => s.playLevel);
   const canRetry = useStore((s) => !!s.game?.checkpoint);
   if (!c || !journey || (c.phase !== 'campaign' && c.phase !== 'term')) return null;
   const k = journeyStep(j);
@@ -56,6 +57,17 @@ export function JourneyGoal() {
       <p className="goal-line journey-goal" role="status">
         <strong>{t('jgoal.line', { n: k + 1, title: stepTitle(t, k) })}</strong>
         <span>{t('jgoal.setup')}</span>
+      </p>
+    );
+  }
+  // A term finished and the next level is elsewhere (Chapter 3): it is started from here.
+  if (!current && c.career && k < STEPS.length && STEPS[k].state && STEPS[k].contest === 'state') {
+    return (
+      <p className="goal-line journey-goal" role="status">
+        {done.map((i) => <span key={i} className="badge">{t('jr.step.done', { title: stepTitle(t, i) })}</span>)}
+        <strong>{t('jgoal.line', { n: k + 1, title: stepTitle(t, k) })}</strong>
+        <span>{stepGoal(t, k)}</span>
+        <button className="btn small primary" onClick={() => void playLevel()}>{t('jgoal.start')} ▸</button>
       </p>
     );
   }
@@ -78,7 +90,8 @@ export function JourneyResult() {
   const t = useT();
   const c = useStore((s) => s.game?.campaign);
   const j = useStore((s) => s.profile.journey) ?? emptyJourney();
-  if (!c || !c.newParty || c.career || c.challenge) return null;
+  const inJourney = useStore((s) => !!s.game?.start?.journey);
+  if (!c || !c.newParty || c.career || (c.challenge && !inJourney)) return null;
   // A place in the government is known only once the talks are over.
   if (c.scenario.startsWith('state:') && c.phase !== 'done') return null;
   const k = journeyStep(j);

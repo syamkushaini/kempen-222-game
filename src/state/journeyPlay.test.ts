@@ -60,3 +60,20 @@ describe('Chapter 2: from the talks into Selangor\'s government', () => {
     expect(journeyResult(worldOf(term)!, term, at, dunByElections)).toBe(1);
   });
 });
+
+describe('Chapter 3: beyond Selangor', () => {
+  it('starts Perak as it is, then Sabah with polls that cannot be trusted', async () => {
+    const player = PARTY_IDS.indexOf(FOUNDING_SLOT);
+    store().quitToTitle();
+    store().startCampaign({ name: 'T', scenario: dunByElections('selangor')[0], player, difficulty: 'easy', backstory: null, founded: true, journey: true });
+    useStore.setState((s) => ({ profile: { ...s.profile, journey: { ...emptyJourney(), step: 7 } } }));
+    await store().playLevel();
+    expect(store().game!.campaign.scenario).toBe('state:perak');
+    expect(store().game!.campaign.challenge).toBeUndefined();
+    useStore.setState((s) => ({ profile: { ...s.profile, journey: { ...emptyJourney(), step: 8 } } }));
+    await store().playLevel();
+    expect(store().game!.campaign.scenario).toBe('state:sabah');
+    expect(store().game!.campaign.challenge).toMatchObject({ fog: true, noisy: true });
+    expect(store().game!.start?.journey).toBe(true);
+  });
+});
