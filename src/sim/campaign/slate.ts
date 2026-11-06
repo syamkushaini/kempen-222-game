@@ -27,6 +27,15 @@ export function nominationCost(world: World, seat: number): number {
 /** Whether candidates can still be put forward or taken back: until nomination day, in a career's election. */
 export const nominationsOpen = (c: Campaign) => isOwn(c) && c.phase === 'campaign' && beforeNomination(c);
 
+/**
+ * A state election fought in the Career Campaign by a party that is new: it stands in every seat, and is not charged for it, but the player
+ * may pull a candidate out of any seat it does not want to contest (to be kingmaker rather than the winner, say), until nomination day.
+ */
+export const picksSeats = (world: World, c: Campaign): boolean => !c.career && !!c.newParty && world.seats.length > 1;
+
+/** Whether candidates can be pulled out or put back now: a career's nominations, or a new party's state election, before nomination day. */
+export const pullsOpen = (world: World, c: Campaign): boolean => nominationsOpen(c) || (picksSeats(world, c) && c.phase === 'campaign' && beforeNomination(c));
+
 /** The seats the player's party has a candidate in. */
 export function fieldedSeats(world: World, c: Campaign): number[] {
   return world.seats.map((_, i) => i).filter((i) => contests(world, c, i, c.player));
@@ -65,7 +74,16 @@ export function openNominations(world: World, c: Campaign): void {
 export function fieldSeat(world: World, c: Campaign, seatId: string): boolean {
   const i = world.seatIndex.get(seatId);
   const pc = c.parties[c.player];
-  if (i === undefined || !pc || !nominationsOpen(c) || !canField(world, c, i)) return false;
+  if (i === undefined || !pc) return false;
+  // A new party's state election: a candidate put back costs nothing.
+  if (picksSeats(world, c)) {
+    if (!pullsOpen(world, c) || !canField(world, c, i)) return false;
+    const row = c.standDowns[seatId];
+    row[c.player] = STANDS;
+    if (row.every((v) => v === STANDS)) delete c.standDowns[seatId];
+    return true;
+  }
+  if (!nominationsOpen(c) || !canField(world, c, i)) return false;
   const cost = nominationCost(world, i);
   if (pc.funds < cost) return false;
   pc.funds -= cost;
@@ -78,9 +96,11 @@ export function fieldSeat(world: World, c: Campaign, seatId: string): boolean {
 
 /** Whether the party's candidate in a seat can be pulled out now: nominations are open and the party stands there (added this time, or stood there last time). */
 export function canPullOut(world: World, c: Campaign, seatId: string): boolean {
-  const k = c.career;
   const i = world.seatIndex.get(seatId);
-  if (!k || i === undefined || !nominationsOpen(c)) return false;
+  if (i === undefined) return false;
+  if (picksSeats(world, c)) return pullsOpen(world, c) && contests(world, c, i, c.player);
+  const k = c.career;
+  if (!k || !nominationsOpen(c)) return false;
   return k.slate?.added[seatId] !== undefined || (!!k.slate?.held.includes(seatId) && contests(world, c, i, c.player));
 }
 
@@ -92,9 +112,9 @@ export function canPullOut(world: World, c: Campaign, seatId: string): boolean {
 export function withdrawSeat(world: World, c: Campaign, seatId: string): boolean {
   const k = c.career;
   const pc = c.parties[c.player];
-  if (!k || !pc || !canPullOut(world, c, seatId)) return false;
-  const cost = k.slate?.added[seatId];
-  if (cost !== undefined) {
+  if (!pc || !canPullOut(world, c, seatId)) return false;
+  const cost = k?.slate?.added[seatId];
+  if (k && cost !== undefined) {
     pc.funds += cost;
     delete k.slate!.added[seatId];
   }

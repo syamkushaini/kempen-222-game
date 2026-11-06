@@ -77,3 +77,38 @@ describe('Chapter 3: beyond Selangor', () => {
     expect(store().game!.start?.journey).toBe(true);
   });
 });
+
+describe('pulling candidates out in a Career Campaign state election', () => {
+  it('lets a new party pull a candidate out of a seat and put it back, free, until nomination day, and the seat is left uncontested', async () => {
+    const slate = await import('../sim/campaign/slate');
+    const { worldOf } = await import('../data/world');
+    const { contests } = await import('../sim/campaign/actions');
+    const player = PARTY_IDS.indexOf(FOUNDING_SLOT);
+    store().quitToTitle();
+    store().startCampaign({ name: 'T', scenario: 'state:selangor', player, difficulty: 'easy', backstory: null, seed: 5, founded: true, journey: true });
+    const c = () => store().game!.campaign;
+    const world = () => worldOf(c())!;
+    const seat = world().seats[3].id;
+    expect(slate.picksSeats(world(), c())).toBe(true);
+    expect(contests(world(), c(), 3, player)).toBe(true);
+    const funds = c().parties[player]!.funds;
+    store().withdrawSeat(seat);
+    expect(contests(world(), c(), 3, player)).toBe(false);
+    expect(c().parties[player]!.funds).toBe(funds);
+    store().fieldSeat(seat);
+    expect(contests(world(), c(), 3, player)).toBe(true);
+    expect(c().parties[player]!.funds).toBe(funds);
+    store().withdrawSeat(seat);
+    for (let i = 0; i < 20 && slate.pullsOpen(world(), c()); i++) store().endWeek();
+    expect(slate.pullsOpen(world(), c())).toBe(false);
+    store().fieldSeat(seat);
+    expect(contests(world(), c(), 3, player)).toBe(false);
+  });
+  it('is not offered in a by-election, which has a single seat', async () => {
+    const slate = await import('../sim/campaign/slate');
+    const { worldOf } = await import('../data/world');
+    store().quitToTitle();
+    store().startCampaign({ name: 'T', scenario: dunByElections('selangor')[0], player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', backstory: null, founded: true, journey: true });
+    expect(slate.picksSeats(worldOf(store().game!.campaign)!, store().game!.campaign)).toBe(false);
+  });
+});
