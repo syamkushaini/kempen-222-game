@@ -78,6 +78,7 @@ export function SlateDialog({ onClose }: { onClose(): void }) {
   const me = campaign.player;
   const funds = campaign.parties[me]!.funds;
   const added = campaign.career?.slate?.added ?? {};
+  const held = new Set(campaign.career?.slate?.held ?? []);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -124,7 +125,7 @@ export function SlateDialog({ onClose }: { onClose(): void }) {
                 </div>
                 <button className="link small" onClick={() => { selectSeat(seat.id, seat.state); onClose(); }}>{t('nom.map')}</button>
                 {open && !has && !pact && <button className="btn small" disabled={cost > funds} onClick={() => fieldSeat(seat.id)}>{t('nom.field')}</button>}
-                {open && has && mine && <button className="btn small" onClick={() => withdrawSeat(seat.id)}>{t('nom.withdraw')}</button>}
+                {open && has && (mine || held.has(seat.id)) && <button className="btn small" title={mine ? undefined : t('nom.pullout.hint')} onClick={() => withdrawSeat(seat.id)}>{t(mine ? 'nom.withdraw' : 'nom.pullout')}</button>}
               </li>
             );
           })}
@@ -151,11 +152,12 @@ export function SeatNomination({ seatId }: { seatId: string }) {
   const cost = nominationCost(world, i);
   const open = openFor(campaign) && beforeNomination(campaign);
   const mine = seatId in (campaign.career?.slate?.added ?? {});
+  const pull = has && !mine && !!campaign.career?.slate?.held.includes(seatId);
   return (
     <p className="seat-nomination small">
       <strong>{has ? t('nom.status.in') : t('nom.status.out')}</strong>
       {open && !has && canField(world, campaign, i) && <> <button className="btn small" disabled={cost > funds} onClick={() => fieldSeat(seatId)}>{t('nom.seat.field', { rm: f.rm(cost) })}</button></>}
-      {open && has && mine && <> <button className="btn small" onClick={() => withdrawSeat(seatId)}>{t('nom.withdraw')}</button></>}
+      {open && has && (mine || pull) && <> <button className="btn small" title={mine ? undefined : t('nom.pullout.hint')} onClick={() => withdrawSeat(seatId)}>{t(mine ? 'nom.withdraw' : 'nom.pullout')}</button></>}
     </p>
   );
 }

@@ -10,7 +10,7 @@ import { nextTerm, startCareer, termWeek, TERM_WEEKS } from './career';
 import { pactSeats, nominationWeek } from './diplomacy';
 import { endDay } from './formation';
 import { FOUNDING_SLOT } from './founding';
-import { canField, closeSlate, fieldCheapest, fieldedSeats, fieldSeat, fieldWithin, isOwn, nominationCost, nominationsOpen, openSeats, slateSpent, withdrawSeat } from './slate';
+import { canField, canPullOut, closeSlate, fieldCheapest, fieldedSeats, fieldSeat, fieldWithin, isOwn, nominationCost, nominationsOpen, openSeats, slateSpent, withdrawSeat } from './slate';
 import { closeNight, endWeek } from './turn';
 import type { Campaign } from './types';
 import { isValidCampaign } from './validate';
@@ -81,6 +81,33 @@ describe('a founded party’s slate', () => {
     expect(c.parties[GENBA]!.funds).toBe(50_000);
     expect(fieldedSeats(world, c)).toHaveLength(0);
     expect(withdrawSeat(world, c, seat.id)).toBe(false);
+  });
+
+  it('lets the party pull its candidate out of a seat it stood in last time, with no refund, until nomination day', () => {
+    const { c, world } = founded(200_000);
+    const seat = world.seats[20];
+    // The seat was stood in last time: it is held, and nothing was added for it now.
+    c.career!.slate = { held: [seat.id], added: {} };
+    delete c.standDowns[seat.id];
+    expect(fieldedSeats(world, c)).toContain(20);
+    const funds = c.parties[GENBA]!.funds;
+    expect(canPullOut(world, c, seat.id)).toBe(true);
+    expect(withdrawSeat(world, c, seat.id)).toBe(true);
+    expect(c.parties[GENBA]!.funds).toBe(funds);
+    expect(fieldedSeats(world, c)).not.toContain(20);
+    expect(withdrawSeat(world, c, seat.id)).toBe(false);
+    // it can be fielded again at its price
+    expect(fieldSeat(world, c, seat.id)).toBe(true);
+    expect(c.parties[GENBA]!.funds).toBeLessThan(funds);
+    expect(withdrawSeat(world, c, seat.id)).toBe(true);
+    expect(c.parties[GENBA]!.funds).toBe(funds);
+    // a seat the party never stood in cannot be pulled out of
+    expect(canPullOut(world, c, world.seats[21].id)).toBe(false);
+    // and nomination day ends it
+    c.career!.slate = { held: [seat.id], added: {} };
+    delete c.standDowns[seat.id];
+    while (c.week <= nominationWeek(c)) endWeek(world, c);
+    expect(canPullOut(world, c, seat.id)).toBe(false);
   });
 
   it('cannot field more than the party can afford', () => {

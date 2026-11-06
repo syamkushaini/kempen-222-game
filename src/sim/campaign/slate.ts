@@ -76,14 +76,28 @@ export function fieldSeat(world: World, c: Campaign, seatId: string): boolean {
   return true;
 }
 
-/** Takes back a candidate put forward this time, at what they cost. Seats the party stood in last time stay as they are. */
+/** Whether the party's candidate in a seat can be pulled out now: nominations are open and the party stands there (added this time, or stood there last time). */
+export function canPullOut(world: World, c: Campaign, seatId: string): boolean {
+  const k = c.career;
+  const i = world.seatIndex.get(seatId);
+  if (!k || i === undefined || !nominationsOpen(c)) return false;
+  return k.slate?.added[seatId] !== undefined || (!!k.slate?.held.includes(seatId) && contests(world, c, i, c.player));
+}
+
+/**
+ * Pulls the party's candidate out of a seat, so that it does not contest it. A candidate put forward this time is taken back at what they
+ * cost; one the party stood last time has been paid for already, and goes without a refund. The seat can be fielded again, at its price, while
+ * nominations are open. False if nominations are shut or the party has nobody there.
+ */
 export function withdrawSeat(world: World, c: Campaign, seatId: string): boolean {
   const k = c.career;
   const pc = c.parties[c.player];
-  const cost = k?.slate?.added[seatId];
-  if (!k || !pc || cost === undefined || !nominationsOpen(c) || !world.seatIndex.has(seatId)) return false;
-  pc.funds += cost;
-  delete k.slate!.added[seatId];
+  if (!k || !pc || !canPullOut(world, c, seatId)) return false;
+  const cost = k.slate?.added[seatId];
+  if (cost !== undefined) {
+    pc.funds += cost;
+    delete k.slate!.added[seatId];
+  }
   const row = c.standDowns[seatId] ?? (c.standDowns[seatId] = new Array<number>(N_PARTIES).fill(STANDS));
   row[c.player] = WITHDRAWN;
   return true;
