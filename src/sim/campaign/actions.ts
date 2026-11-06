@@ -78,7 +78,9 @@ export const CHIEF_ACTIONS: readonly ActionId[] = ['ceramah', 'walkabout', 'canv
 export const CHIEF_OPS: Record<ChiefLevel, number> = { 1: 1, 2: 2, 3: 4 };
 
 /** Get-out-the-vote drives only work in the last weeks: two in a long campaign, one in a short one. */
-export const gotvWeeks = (c: Campaign) => Math.max(1, Math.round(c.totalWeeks / 4));
+/** The weeks of the campaign proper: all of them, but for the years of rebuilding in opposition that may come first. */
+export const campaignWeeks = (c: Campaign): number => c.totalWeeks - (c.rebuild ?? 0);
+export const gotvWeeks = (c: Campaign) => Math.max(1, Math.round(campaignWeeks(c) / 4));
 
 // ---------- tuning ----------
 // Support numbers are logit units: +0.10 in a seat is roughly a 2.5-point gain

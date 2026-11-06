@@ -213,7 +213,7 @@ export function Title() {
   const base: Draft = {
     name: founding ? t('platform.founded.name') : PARTIES[playerId].name, short: founding ? t('platform.founded.short') : PARTIES[playerId].short,
     // A party of its own needs one of the colours the creator offers; the small party it is built on has a colour that is not among them.
-    color: founding ? PARTY_COLORS[6] : STANDARD_COLORS[playerId], emblem: DEFAULT_EMBLEMS[playerId], leader: founding ? t('platform.founded.leader') : LEADERS[playerId], look: 0, ideology: null,
+    color: founding ? PARTY_COLORS[18] : STANDARD_COLORS[playerId], emblem: DEFAULT_EMBLEMS[playerId], leader: founding ? t('platform.founded.leader') : LEADERS[playerId], look: 0, ideology: null,
   };
   const shown = draft ?? base;
   const identity = own ? makeIdentity(shown) : null;

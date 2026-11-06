@@ -94,7 +94,8 @@ describe('opposition actions in the weeks of rebuilding', () => {
     const before = c().parties[PS]!.unity;
     useStore.getState().act('regroup', {});
     expect(c().parties[PS]!.unity).toBeGreaterThanOrEqual(before);
-    for (let i = 0; i < REBUILD_WEEKS; i++) useStore.getState().endWeek();
+    useStore.getState().skipRebuild(9999);
+    expect(c().week).toBe(REBUILD_WEEKS + 1);
     expect(rebuilding(c())).toBe(false);
     for (const id of REBUILD_ONLY) expect(canDo(world(), c(), PS, id, id === 'scrutiny' ? { party: rival } : {}).ok, id).toBe(false);
   });

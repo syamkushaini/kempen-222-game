@@ -24,7 +24,7 @@ export function JourneySetup({ onStart }: { onStart(name: string, identity: Iden
   const [stats, setStats] = useState<number[]>([3, 3, 3, 3]);
   const [draft, setDraft] = useState<Draft>(() => ({
     name: saved?.identity?.name ?? t('platform.founded.name'), short: saved?.identity?.short ?? t('platform.founded.short'),
-    color: saved?.identity?.color ?? PARTY_COLORS[6], emblem: saved?.identity?.emblem ?? DEFAULT_EMBLEMS[FOUNDING_SLOT],
+    color: saved?.identity?.color ?? PARTY_COLORS[18], emblem: saved?.identity?.emblem ?? DEFAULT_EMBLEMS[FOUNDING_SLOT],
     leader: saved?.identity?.leader ?? t('platform.founded.leader'), look: saved?.identity?.look ?? 0, ideology: null,
     ...(saved?.identity?.photo ? { photo: saved.identity.photo } : {}), ...(saved?.identity?.flag ? { flag: saved.identity.flag } : {}),
   }));

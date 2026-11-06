@@ -37,6 +37,7 @@ import { carriedFollowing, voteShares } from '../sim/campaign/founding';
 import { recordAsideResults } from '../sim/campaign/results';
 import { summarise } from '../sim/campaign/night';
 import { buildCampaign, type SimConfig } from '../sim/campaign/simulate';
+import { rebuilding } from '../sim/campaign/actions';
 import { closeNight, electionResult, endWeek, newCampaign, playOut, playerAct, playerPoll, publishPublicPoll, setChief, setChiefFloor } from '../sim/campaign/turn';
 import type {
   ActionId, ActionTarget, BackstoryId, Campaign, Challenge, ChiefLevel, Difficulty, EndorserId, LeverId, LineId, MeasureId, NewsItem, Offer, Orders,
@@ -295,6 +296,8 @@ interface Store {
   setChiefs(states: RegionId[], level: ChiefLevel | 0): void;
   setChiefFloor(amount: number): void;
   endWeek(): void;
+  /** In the years of rebuilding in opposition: runs up to this many weeks, stopping when something needs the leader's answer or the campaign begins. */
+  skipRebuild(weeks: number): void;
   /** Marks election night as watched, so reloading shows the final result. */
   finishNight(): void;
   /** Hands the weeks still to come to the team, and goes to polling day. */
@@ -643,6 +646,10 @@ export const useStore = create<Store>((set, get) => {
       return c.phase === 'campaign'
         ? { lastReport: null, pactReply: null, tab: 'news' }
         : { lastReport: null, pactReply: null, selectedSeat: null, selectedState: null, showNight: true };
+    }),
+    skipRebuild: (weeks) => mutate((c, _g, world) => {
+      for (let i = 0; i < weeks && rebuilding(c) && c.phase === 'campaign' && c.inbox.length === 0; i++) endWeek(world, c);
+      return { lastReport: null, pactReply: null, tab: 'news' };
     }),
     finishNight: () => mutate((c, _g, world) => closeNight(world, c)),
     finishWithTeam: () => mutate((c, _g, world) => {

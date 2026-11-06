@@ -44,7 +44,7 @@ import { Icon, type IconName } from './Icon';
 import { Title } from './Title';
 import { Music } from './Music';
 import { installIdentity } from './identity';
-import { ground, mix } from './shareCard';
+import { applyAccent, isDark } from './accent';
 import { TouchGestures } from './TouchGestures';
 import { Sandbox } from './Sandbox';
 import { useBackClose } from './backClose';
@@ -358,17 +358,10 @@ export function App() {
   // An accent that has been earned and chosen is worn in its place, on the title screen too; the party's colour stays where it is data.
   const accentColor = worn.accent.color;
   useEffect(() => {
-    const root = document.documentElement;
-    const names = ['--primary', '--primary-hover', '--primary-focus', '--ring', '--party'];
-    if (player === undefined && !accentColor) { for (const n of names) root.style.removeProperty(n); return; }
+    if (player === undefined && !accentColor) { applyAccent(null, false); return; }
     const party = player === undefined ? null : partyColor(player);
-    const [base] = ground(accentColor ?? party!);
-    root.style.setProperty('--primary', base);
-    root.style.setProperty('--primary-hover', mix(base, '#ffffff', 0.35));
-    root.style.setProperty('--primary-focus', mix(base, '#000000', 0.15));
-    root.style.setProperty('--ring', `color-mix(in srgb, ${mix(base, '#ffffff', 0.3)} 55%, transparent)`);
-    if (party) root.style.setProperty('--party', party); else root.style.removeProperty('--party');
-  }, [player, palette, accentColor]);
+    applyAccent(accentColor ?? party, isDark(scheme), party);
+  }, [player, palette, accentColor, scheme]);
 
   useEffect(() => installFeedback(), []);
   useEffect(() => installAnalytics(), []);
