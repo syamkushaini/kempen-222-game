@@ -26,9 +26,8 @@ function RebuildSkip() {
   if (!on) return null;
   return (
     <div className="rebuild-skip">
-      <button className="btn small" disabled={waiting} onClick={() => skip(4)}>{t('term.month')} ▸▸</button>
-      <button className="btn small" disabled={waiting} onClick={() => skip(52)}>{t('hud.skipYear')} ▸▸</button>
-      <button className="btn small primary" disabled={waiting} onClick={() => skip(9999)}>{t('hud.skipToCampaign')} ⏭</button>
+      <button className="btn small" disabled={waiting} onClick={() => skip(9999)}>{t('hud.skipEvent')} ▸▸</button>
+      <button className="btn small primary" disabled={waiting} onClick={() => skip(9999, true)}>{t('hud.skipToCampaign')} ⏭</button>
     </div>
   );
 }
@@ -123,7 +122,7 @@ function Hud() {
   return (
     <div className="hud">
       <div className="hud-item">
-        <span className="hud-label">{campaign.rebuild && campaign.week <= campaign.rebuild ? t('hud.rebuild', { y: Math.floor((campaign.week - 1) / 52) + 1, w: ((campaign.week - 1) % 52) + 1 }) : final ? t('hud.finalWeek') : t('hud.week', { n: campaign.week, total: campaign.totalWeeks })}</span>
+        <span className="hud-label">{campaign.rebuild && campaign.week <= campaign.rebuild ? t('hud.rebuild', { y: Math.floor((campaign.week - 1) / 52) + 1, w: ((campaign.week - 1) % 52) + 1 }) : final ? t('hud.finalWeek') : t('hud.week', { n: campaign.week - (campaign.rebuild ?? 0), total: campaign.totalWeeks - (campaign.rebuild ?? 0) })}</span>
         <div className="weeks" aria-hidden="true">
           {Array.from({ length: campaign.totalWeeks - (campaign.rebuild ?? 0) }, (_, i) => (
             <i key={i} className={i + 1 < campaign.week - (campaign.rebuild ?? 0) ? 'past' : i + 1 === campaign.week - (campaign.rebuild ?? 0) ? 'now' : ''} />
@@ -242,7 +241,7 @@ export function Header() {
   const career = useStore((s) => s.game?.campaign.career);
   // On a phone the bar is one line: whose campaign, and where in it. The week has no box of its own there.
   const when = phase === 'campaign' && week !== undefined && totalWeeks !== undefined
-    ? (rebuild && week <= rebuild ? t('hud.rebuild', { y: Math.floor((week - 1) / 52) + 1, w: ((week - 1) % 52) + 1 }) : week === totalWeeks ? t('hud.finalWeek') : t('hud.week', { n: week, total: totalWeeks }))
+    ? (rebuild && week <= rebuild ? t('hud.rebuild', { y: Math.floor((week - 1) / 52) + 1, w: ((week - 1) % 52) + 1 }) : week === totalWeeks ? t('hud.finalWeek') : t('hud.week', { n: week - (rebuild ?? 0), total: totalWeeks - (rebuild ?? 0) }))
     : phase === 'term' && career ? t('term.date', { term: career.term, year: Math.floor((career.week - 1) / 52) + 1, week: ((career.week - 1) % 52) + 1 }) : null;
   // The sticky sidebar sits below the bar, so it needs to know how tall the bar is.
   useEffect(() => {

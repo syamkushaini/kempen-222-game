@@ -24,6 +24,9 @@ const FAMILIES: { family: Family; actions: ActionId[] }[] = [
   { family: 'funds', actions: ['dinner', 'crowdfund', 'tycoon'] },
 ];
 
+/** What an opposition does in the years between elections: mend the party, listen, hold the government to account, and keep the money coming. No rallies. */
+const OPPOSITION_ROUTINE: readonly ActionId[] = ['regroup', 'listen', 'scrutiny', 'conference', 'build', 'social', 'crowdfund', 'dinner'];
+
 /** The picture that goes with each thing a party can do. Always beside its name, never instead of it. */
 const ACTION_ICON: Record<ActionId, IconName> = {
   ceramah: 'megaphone', walkabout: 'walk', megarally: 'flag', canvass: 'home', gotv: 'ballot', build: 'tool',
@@ -149,7 +152,9 @@ export function ActionsTab() {
   };
 
   // Not while the adviser is guiding: her steps name what to do.
-  const ideas = guided ? [] : suggestions(world, campaign);
+  // In the years of opposition the screen is the routine of an opposition, not a campaign: no suggestions for the week, no target, no candidates.
+  const oppo = rebuilding(campaign);
+  const ideas = guided || oppo ? [] : suggestions(world, campaign);
 
   const endWeek = useStore((s) => s.endWeek);
   const setPreview = useStore((s) => s.setPreview);
@@ -244,20 +249,20 @@ export function ActionsTab() {
 
   return (
     <section className="actions">
-      <NominationsPanel />
-      <EntriesPanel />
-      <p className="target-line">
+      {!oppo && <NominationsPanel />}
+      {!oppo && <EntriesPanel />}
+      {!oppo && <p className="target-line">
         <span className="muted">{t('actions.target')}:</span>{' '}
         <i className="dot" data-party={me} style={{ background: partyColor(me) }} />
         <strong>{seat && world.seats.length > 1 ? `${seat.name}, ` : ''}{regionLabel(t, world, state)}</strong>
         {pc.chiefs[state] && <span className="badge plain">{t('chiefs.badge', { level: t(`chiefs.level.${pc.chiefs[state]}`) })}</span>}
-      </p>
-      <p className={`muted small spend ${pc.spent > spendingLimit(world) ? 'over' : ''}`}>
+      </p>}
+      {!oppo && <p className={`muted small spend ${pc.spent > spendingLimit(world) ? 'over' : ''}`}>
         {t('spend.line', { spent: f.rm(pc.spent), limit: f.rm(spendingLimit(world)) })}
         {pc.fined ? ` ${t('spend.fined')}` : pc.spent > spendingLimit(world) ? ` ${fog ? t('spend.over.fog') : t('spend.over', { pct: f.pct(probeChance(world, campaign, me), 0) })}` : ''}
         {pc.spent > spendingLimit(world) && ` ${t('spend.petition', { rm: f.rm(Math.round(spendingLimit(world) * PETITION_FROM)) })}`}
-      </p>
-      {seat && contesting && <PitchPicker seatId={seat.id} segment={segment} onPick={setSegment} />}
+      </p>}
+      {!oppo && seat && contesting && <PitchPicker seatId={seat.id} segment={segment} onPick={setSegment} />}
       {ideas.length > 0 && (
         <details className="action-family suggested" open={open.suggested} onToggle={(e) => setGroup('suggested', e.currentTarget.open)}>
           <summary>
@@ -276,9 +281,9 @@ export function ActionsTab() {
           </ul>
         </details>
       )}
-      <p className={`muted small weather weather-${weatherIn(world, campaign, state)}`}>{t(`weather.${weatherIn(world, campaign, state)}` as StringKey, { state: regionLabel(t, world, state) })}</p>
+      {!oppo && <p className={`muted small weather weather-${weatherIn(world, campaign, state)}`}>{t(`weather.${weatherIn(world, campaign, state)}` as StringKey, { state: regionLabel(t, world, state) })}</p>}
       {FAMILIES.map(({ family, actions: all }) => {
-        const actions = all.filter((id) => world.rules.actions.includes(id) && (!REBUILD_ONLY.includes(id) || rebuilding(campaign)));
+        const actions = all.filter((id) => world.rules.actions.includes(id) && (oppo ? OPPOSITION_ROUTINE.includes(id) : !REBUILD_ONLY.includes(id)));
         if (actions.length === 0) return null;
         return (
           <details key={family} id={`family-${family}`} className="action-family" open={guided || open[family]} onToggle={(e) => { if (!guided) setGroup(family, e.currentTarget.open); }}>
