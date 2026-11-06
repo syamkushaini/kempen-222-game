@@ -263,6 +263,12 @@ export const PROMISES_KEPT = 5;
 /** The vote share that clears a seats-or-share level in place of the seats: what a new party that is heard everywhere and wins little gets. */
 export const SHARE_NEEDED = 0.15;
 
+/**
+ * The following a new party starts Level 1 with: a little more than a single by-election gives (25%), so a first game is one a new player can
+ * win while learning. At the cap a carried following may have (see `MAX_FOLLOWING`); the team playing on its own wins about one game in five.
+ */
+export const FIRST_LEVEL_FOLLOWING = 0.3;
+
 /** The contest of a level. */
 export function stepScenario(i: number, seats: (st: StateId) => string[]): string {
   const step = STEPS[Math.max(0, Math.min(i, STEPS.length - 1))];

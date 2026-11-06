@@ -67,3 +67,12 @@ describe('leading into a term', () => {
     expect(isTerm('general')).toBe(false);
   });
 });
+
+describe('Level 1', () => {
+  it('starts a new party stronger than a single by-election does, within what a carried following may be', async () => {
+    const { FIRST_LEVEL_FOLLOWING } = await import('./journey');
+    const { MAX_FOLLOWING, NEW_PARTY_SHARE } = await import('./founding');
+    expect(FIRST_LEVEL_FOLLOWING).toBeGreaterThan(NEW_PARTY_SHARE.byelection);
+    expect(FIRST_LEVEL_FOLLOWING).toBeLessThanOrEqual(MAX_FOLLOWING);
+  });
+});

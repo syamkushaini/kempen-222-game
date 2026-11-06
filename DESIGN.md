@@ -1482,7 +1482,8 @@ fight), Flip a stronghold (win the seat held most safely), On a shoestring (win 
 state election win at least 5 seats with no party holding a majority) and Into government (be in Selangor's government after the talks, or win a
 majority). Planned next: Chapter 2 (govern Selangor for a term, then defend it), Chapter 3 (a hung state, then different ground with a twist),
 Chapter 4 (general election, hung parliament, a term as PM or opposition leader), with optional stars and difficulty-set targets.
-A loss offers "Try this again" or "Rebuild the party and try again" (back to the set-up with the party filled in); the opposition years that
+Level 1 starts the new party on a 30% following, not the 25% of a single by-election, so a first game can be won while it is being learned (the
+team playing alone won about 1 game in 14 at 25% and about 1 in 5 at 30%; more money made no difference). A loss offers "Try this again" or "Rebuild the party and try again" (back to the set-up with the party filled in); the opposition years that
 were tried for a few days were removed. Until the later chapters exist, finishing Chapter 1 (level 6) opens every other way to play. Journeys
 saved before the chapters keep their DUN wins (up to three), and a state taken counts as Chapter 1 done.
 
