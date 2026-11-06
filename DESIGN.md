@@ -1502,3 +1502,9 @@ Chapter 4 (The nation) is built, which completes the Career Campaign at level 13
 autoplayer took 8 to 28 seats and about 20 to 24% of the vote in trial runs, in a parliament where nobody had a majority), Hung parliament (be in
 the federal government after the talks, or win a majority) and Govern the country (still in the federal government when the next general
 election is called), entered from the talks as the Selangor term is. Resumed from the menu, the federal term plays the general election first.
+
+Chapters 5 to 7 carry the Career Campaign on through the federal career that Chapter 4 opens, to level 20. Chapter 5, Prime Minister: head the
+federal government; a year as Prime Minister in all; three years in all and still Prime Minister when the next general election is called.
+Chapter 6, Second term: win a general election as Prime Minister; come out of one with a majority of the party's own seats. Chapter 7, Legacy:
+keep at least 5 promises, more kept than broken; end the career by retiring (not ousted, wiped out or jailed). Journeys saved before the
+chapters map one or two states taken to Chapter 1 done and three or more to Chapter 2 done, so nothing that was open locks again.

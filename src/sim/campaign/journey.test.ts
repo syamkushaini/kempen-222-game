@@ -6,15 +6,15 @@ const seats = () => [1, 2, 3, 4, 5].map(seat);
 
 describe('the chapters of the journey', () => {
   it('runs Chapter 1 in Selangor: the closest seat, the safest, the second closest, then the state election twice', () => {
-    expect(STEPS.map((s) => s.id)).toEqual(['firstSeat', 'stronghold', 'shoestring', 'kingmaker', 'intoGovt', 'govern', 'defend', 'secondFront', 'borneoBlind', 'generalElection', 'hungParliament', 'governCountry']);
-    expect(STEPS.map((_, i) => stepScenario(i, seats))).toEqual([seat(1), seat(5), seat(2), 'state:selangor', 'state:selangor', 'career:selangor', 'career:selangor', 'state:perak', 'state:sabah', 'general', 'general', 'career']);
+    expect(STEPS.map((s) => s.id)).toEqual(['firstSeat', 'stronghold', 'shoestring', 'kingmaker', 'intoGovt', 'govern', 'defend', 'secondFront', 'borneoBlind', 'generalElection', 'hungParliament', 'governCountry', 'primeMinister', 'firstYear', 'fullTerm', 'secondTerm', 'ownMajority', 'promisesKept', 'retireWell']);
+    expect(STEPS.map((_, i) => stepScenario(i, seats))).toEqual([seat(1), seat(5), seat(2), 'state:selangor', 'state:selangor', 'career:selangor', 'career:selangor', 'state:perak', 'state:sabah', 'general', 'general', 'career', 'career', 'career', 'career', 'career', 'career', 'career', 'career']);
     expect(STEPS.find((s) => s.id === 'borneoBlind')?.twist).toEqual({ fog: true, noisy: true });
   });
   it('records the levels a contest cleared, and nothing for none', () => {
     expect(record(emptyJourney(), 0)).toEqual(emptyJourney());
     expect(journeyStep(record(emptyJourney(), 1))).toBe(1);
     expect(journeyStep(record({ ...emptyJourney(), step: 3 }, 2))).toBe(5);
-    expect(journeyStep(record({ ...emptyJourney(), step: 4 }, 9))).toBe(STEPS.length);
+    expect(journeyStep(record({ ...emptyJourney(), step: 4 }, 99))).toBe(STEPS.length);
   });
   it('offers the next level only after this one was cleared, and nothing once the chapters are done', () => {
     expect(nextStep(emptyJourney(), seat(1), seats)).toBeNull();
@@ -30,10 +30,11 @@ describe('the chapters of the journey', () => {
     expect(resumeScenario({ ...emptyJourney(), step: 2 }, seats)).toBe(seat(2));
     expect(resumeScenario({ ...emptyJourney(), step: STEPS.length }, seats)).toBe('career');
   });
-  it('keeps a journey saved before the chapters: DUN seats won carry over, and a state taken finishes Chapter 1', () => {
+  it('keeps a journey saved before the chapters: DUN seats won carry over, a state taken finishes Chapter 1, and three finish Chapter 2', () => {
     expect(journeyStep({ state: 'selangor', dunWon: 2, fought: [], governed: [] })).toBe(2);
     expect(journeyStep({ state: 'selangor', dunWon: 3, fought: [], governed: [] })).toBe(3);
-    expect(journeyStep({ state: null, dunWon: 0, fought: [], governed: ['selangor'] })).toBe(STEPS.length);
+    expect(journeyStep({ state: null, dunWon: 0, fought: [], governed: ['selangor'] })).toBe(5);
+    expect(journeyLevel({ state: null, dunWon: 0, fought: [], governed: ['selangor', 'perak', 'johor'] })).toBe(8);
   });
   it('keeps every other way to play locked at the start, and opens them at level 4, when Chapter 1 is done and when Chapter 2 is', () => {
     expect(FIRST_UNLOCK).toBe(4);
