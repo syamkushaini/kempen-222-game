@@ -3,7 +3,7 @@ import type { StringKey } from '../i18n/strings';
 import { whatIfsFor, type WhatIfId } from '../sim/campaign/whatif';
 import { PARTIES, STANDARD_COLORS } from '../data/parties';
 import { byElectionId, dunByElections, fairSeats, getWorld, HOME_PARTIES, loadScenario, loadState, SCENARIOS, STATE_SCENARIOS, STATE_SEATS, vacancyOf } from '../data/world';
-import { FIRST_STATE, FIRST_UNLOCK, MODE_UNLOCKS, journeyLevel, journeyStep, modeOpen, resumeScenario, type ModeId } from '../sim/campaign/journey';
+import { FIRST_STATE, FIRST_UNLOCK, MODE_UNLOCKS, STEPS as LEVELS, emptyJourney, journeyLevel, journeyStep, modeOpen, resumeScenario, scenarioState, type ModeId } from '../sim/campaign/journey';
 import { rememberName } from '../state/leaderboard';
 import { saveJourneyParty } from '../state/journeyParty';
 import type { Identity } from '../state/identity';
@@ -171,13 +171,18 @@ export function Title() {
     // A term of government needs the state election that leads into it: resumed from the menu, that election is played again first.
     const resumedAt = resumeAt();
     const at = resumedAt.startsWith('career:') ? `state:${resumedAt.slice(7)}` : resumedAt;
+    // A level away from Selangor needs its own state's seats.
+    const atState = scenarioState(at);
+    if (atState) await loadState(atState);
     await loadScenario(at);
     const resumed = journey !== undefined && journeyStep(journey) > 0;
+    const step = LEVELS[journeyStep(journey ?? emptyJourney())];
     // A journey picked up after a state is taken, or with its DUN seats won, starts with the following those wins earned.
     const stage = at === 'general' || at.startsWith('state:');
     startCampaign({
       name: playerName, scenario: at, player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: level, backstory: chosen, ...(leaderStats ? { leaderStats } : {}), identity, founded: true, journey: true, seed: seedFromSearch(window.location.search),
       ...(resumed && stage ? { following: carriedFollowing(0.4) } : {}),
+      ...(step?.twist && step.state && at === `state:${step.state}` ? { challenge: step.twist } : {}),
     });
   };
   const [lastMode] = useState<'quick' | 'custom' | null>(() => { try { const v = localStorage.getItem(MODE_KEY); return v === 'custom' || v === 'quick' ? v : null; } catch { return null; } });

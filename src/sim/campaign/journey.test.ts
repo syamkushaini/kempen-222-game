@@ -6,8 +6,9 @@ const seats = () => [1, 2, 3, 4, 5].map(seat);
 
 describe('the chapters of the journey', () => {
   it('runs Chapter 1 in Selangor: the closest seat, the safest, the second closest, then the state election twice', () => {
-    expect(STEPS.map((s) => s.id)).toEqual(['firstSeat', 'stronghold', 'shoestring', 'kingmaker', 'intoGovt', 'govern', 'defend']);
-    expect(STEPS.map((_, i) => stepScenario(i, seats))).toEqual([seat(1), seat(5), seat(2), 'state:selangor', 'state:selangor', 'career:selangor', 'career:selangor']);
+    expect(STEPS.map((s) => s.id)).toEqual(['firstSeat', 'stronghold', 'shoestring', 'kingmaker', 'intoGovt', 'govern', 'defend', 'secondFront', 'borneoBlind']);
+    expect(STEPS.map((_, i) => stepScenario(i, seats))).toEqual([seat(1), seat(5), seat(2), 'state:selangor', 'state:selangor', 'career:selangor', 'career:selangor', 'state:perak', 'state:sabah']);
+    expect(STEPS.find((s) => s.id === 'borneoBlind')?.twist).toEqual({ fog: true, noisy: true });
   });
   it('records the levels a contest cleared, and nothing for none', () => {
     expect(record(emptyJourney(), 0)).toEqual(emptyJourney());
@@ -27,7 +28,7 @@ describe('the chapters of the journey', () => {
     expect(journeyLevel({ ...emptyJourney(), step: 99 })).toBe(MAX_LEVEL);
     expect(resumeScenario(undefined, seats)).toBe(seat(1));
     expect(resumeScenario({ ...emptyJourney(), step: 2 }, seats)).toBe(seat(2));
-    expect(resumeScenario({ ...emptyJourney(), step: STEPS.length }, seats)).toBe('career:selangor');
+    expect(resumeScenario({ ...emptyJourney(), step: STEPS.length }, seats)).toBe('state:sabah');
   });
   it('keeps a journey saved before the chapters: DUN seats won carry over, and a state taken finishes Chapter 1', () => {
     expect(journeyStep({ state: 'selangor', dunWon: 2, fought: [], governed: [] })).toBe(2);

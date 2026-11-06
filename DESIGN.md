@@ -1492,3 +1492,8 @@ as the state election left them, with the government the talks made and the part
 government) is tried again from the start of the term (the game keeps a copy of it). A journey resumed from the menu at a term level plays the
 Selangor state election again first, since the term needs it. State elections and the challenges open at level 6; the general election, the
 hung parliament, a career of one's own and the simulator at level 8, when Chapter 2 is done.
+
+Chapter 3 (Beyond Selangor) is built: Second front (the Perak state election, where the party is unknown: win 5 of its 59 seats or 15% of the
+vote) and Borneo, blind (the Sabah state election under the fog and noisy-poll rules: 6 of 73 seats or 15% of the vote). Seats or share, so a
+party heard everywhere that wins little is not stopped by how the seats fall. After Defend it, the line above the term starts Second front.
+Level 10 is the top until Chapter 4 (the nation) is built.
