@@ -23,6 +23,21 @@ export function Music() {
 
   useEffect(moveOldChoice, []);
 
+  // The game open in another tab or window: the Music and Sound switches flipped there are followed here too, or this tab plays on.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== 'k222.settings' || !e.newValue) return;
+      try {
+        const next = JSON.parse(e.newValue) as { music?: unknown; sound?: unknown };
+        const now = useStore.getState().settings;
+        const music = next.music !== false, sound = next.sound !== false;
+        if (music !== now.music || sound !== now.sound) useStore.getState().setSettings({ music, sound });
+      } catch { /* not ours to read */ }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   useEffect(() => {
     const a = new Audio(TRACKS[0]);
     let i = 0;
