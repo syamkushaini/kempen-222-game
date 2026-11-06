@@ -277,6 +277,17 @@ export function parseSave(text: string): ParseResult {
   const s = migrate(first);
   if (!s) return { ok: false, error: 'outdated' };
 
+  // A game saved while the opposition years existed (since removed): its weeks of rebuilding are dropped, and it goes on as an ordinary contest.
+  const old = s.campaign as { rebuild?: unknown; opposition?: unknown; week?: unknown; totalWeeks?: unknown } | null;
+  if (old && typeof old.rebuild === 'number') {
+    const r = old.rebuild;
+    if (typeof old.totalWeeks === 'number') old.totalWeeks = Math.max(1, old.totalWeeks - r);
+    if (typeof old.week === 'number') old.week = Math.max(1, old.week - r);
+    delete old.rebuild; delete old.opposition;
+    const start = s.start as { rebuild?: unknown; weeks?: unknown } | undefined;
+    if (start) { if (typeof start.weeks === 'number' && typeof start.rebuild === 'number') start.weeks = Math.max(1, start.weeks - start.rebuild); delete start.rebuild; }
+  }
+
   // A career's world is built from the results stored in the save, which may themselves be damaged.
   const saved = s.campaign as { scenario?: unknown; career?: unknown } | null;
   let world = null;
