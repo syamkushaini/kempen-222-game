@@ -76,3 +76,30 @@ describe('Level 1', () => {
     expect(FIRST_LEVEL_FOLLOWING).toBeLessThanOrEqual(MAX_FOLLOWING);
   });
 });
+
+describe('the seat of Level 1', () => {
+  it('is Bukit Melawati where the state offers it, and the closest fight otherwise', async () => {
+    const { FIRST_SEAT } = await import('./journey');
+    const melawati = `byelection:dun:selangor:${FIRST_SEAT}`;
+    expect(stepScenario(0, () => [seat(1), melawati, seat(2)])).toBe(melawati);
+    expect(stepScenario(0, seats)).toBe(seat(1));
+  });
+  it('still counts a game begun in the old Level 1 seat, the closest fight', async () => {
+    const { isStepContest } = await import('./journey');
+    const melawati = 'byelection:dun:selangor:N.10';
+    const list = () => [seat(1), melawati, seat(2)];
+    expect(isStepContest(0, melawati, list)).toBe(true);
+    expect(isStepContest(0, seat(1), list)).toBe(true);
+    expect(isStepContest(0, seat(2), list)).toBe(false);
+    expect(isStepContest(1, seat(1), list)).toBe(false);
+  });
+  it('is a real Selangor by-election, and not the seat of any later level', async () => {
+    const { FIRST_SEAT } = await import('./journey');
+    const { dunByElections } = await import('../../data/world');
+    const dun = dunByElections('selangor');
+    const first = stepScenario(0, dunByElections);
+    expect(first).toBe(`byelection:dun:selangor:${FIRST_SEAT}`);
+    expect(dun).toContain(first);
+    for (let i = 1; i < STEPS.length; i++) expect(stepScenario(i, dunByElections)).not.toBe(first);
+  });
+});

@@ -84,7 +84,7 @@ export function record(j: Journey, steps: number): Journey {
 export function nextStep(j: Journey, scenario: string, seats: (st: StateId) => string[]): string | null {
   const k = journeyStep(j);
   if (k >= STEPS.length) return null;
-  const clearedHere = STEPS.some((_, i) => i < k && stepScenario(i, seats) === scenario);
+  const clearedHere = STEPS.some((_, i) => i < k && isStepContest(i, scenario, seats));
   return clearedHere ? stepScenario(k, seats) : null;
 }
 
@@ -100,7 +100,7 @@ export function journeyResult(world: World, c: Campaign, j: Journey | undefined,
   if (!result) return null;
   let k = journeyStep(j ?? emptyJourney());
   let cleared = 0;
-  while (k < STEPS.length && stepScenario(k, seats) === c.scenario && goalMet(world, c, STEPS[k], result.tally)) { cleared++; k++; }
+  while (k < STEPS.length && isStepContest(k, c.scenario, seats) && goalMet(world, c, STEPS[k], result.tally)) { cleared++; k++; }
   return cleared;
 }
 
@@ -216,7 +216,7 @@ export interface StepDef {
   chapter: number;
   goal: Goal;
   /** The contest: a DUN by-election of Selangor (the closest fight, the safest seat, or the second closest), or Selangor's state election. */
-  contest: 'closest' | 'safest' | 'second' | 'state' | 'career' | 'general' | 'federal';
+  contest: 'first' | 'closest' | 'safest' | 'second' | 'state' | 'career' | 'general' | 'federal';
   /** The state of a state election away from Selangor, and how many seats its assembly has. */
   state?: StateId;
   seats?: number;
@@ -229,7 +229,7 @@ export interface StepDef {
 
 /** The levels of the chapters, in order. Chapter 1 is Selangor. */
 export const STEPS: readonly StepDef[] = [
-  { id: 'firstSeat', chapter: 1, goal: 'win', contest: 'closest' },
+  { id: 'firstSeat', chapter: 1, goal: 'win', contest: 'first' },
   { id: 'stronghold', chapter: 1, goal: 'win', contest: 'safest' },
   { id: 'shoestring', chapter: 1, goal: 'winShoestring', contest: 'second' },
   { id: 'kingmaker', chapter: 1, goal: 'kingmaker', contest: 'state' },
@@ -269,6 +269,12 @@ export const SHARE_NEEDED = 0.15;
  */
 export const FIRST_LEVEL_FOLLOWING = 0.3;
 
+/**
+ * The seat of Level 1: Bukit Melawati, the Selangor DUN where a new party has the best chance (the team playing alone won it in a little over
+ * half its games, against about 1 in 7 in Sungai Air Tawar, the closest fight). Not one any later level uses.
+ */
+export const FIRST_SEAT = 'N.10';
+
 /** The contest of a level. */
 export function stepScenario(i: number, seats: (st: StateId) => string[]): string {
   const step = STEPS[Math.max(0, Math.min(i, STEPS.length - 1))];
@@ -277,9 +283,19 @@ export function stepScenario(i: number, seats: (st: StateId) => string[]): strin
   if (step.contest === 'general') return 'general';
   if (step.contest === 'federal') return 'career';
   if (step.contest === 'state' || dun.length === 0) return `state:${step.state ?? FIRST_STATE}`;
+  if (step.contest === 'first') return dun.find((id) => id.endsWith(`:${FIRST_SEAT}`)) ?? dun[0];
   if (step.contest === 'closest') return dun[0];
   if (step.contest === 'safest') return dun[dun.length - 1];
   return dun[Math.min(1, dun.length - 1)];
+}
+
+/**
+ * Whether a contest is the one of a level. Level 1 was once the closest fight (the first of the state's seats): a game begun there before it
+ * moved to Bukit Melawati still counts.
+ */
+export function isStepContest(i: number, scenario: string, seats: (st: StateId) => string[]): boolean {
+  if (stepScenario(i, seats) === scenario) return true;
+  return STEPS[i]?.contest === 'first' && seats(FIRST_STATE)[0] === scenario;
 }
 
 /** Levels cleared: as saved, or, for a journey saved before the chapters, worked out from it. */
