@@ -365,7 +365,8 @@ export function App() {
   useEffect(() => {
     let remembered: string | null = null;
     try { if (partyHex) localStorage.setItem('k222.party-colour', partyHex); else remembered = localStorage.getItem('k222.party-colour'); } catch { /* private window: the menu stays green */ }
-    const color = partyHex ?? accentColor ?? remembered;
+    // The party's colour, in a game and on the menus after it; an earned accent only where there has been no party yet.
+    const color = partyHex ?? remembered ?? accentColor;
     if (!color) { applyAccent(null, false); return; }
     applyAccent(color, isDark(scheme), partyHex);
   }, [partyHex, palette, accentColor, scheme]);
