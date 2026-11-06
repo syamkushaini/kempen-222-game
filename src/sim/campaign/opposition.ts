@@ -32,7 +32,7 @@ export function startOpposition(world: World, c: Campaign): void {
   const pool = [...PLEDGE_IDS].filter((id) => PLEDGES[id]);
   const policies: PledgeId[] = [];
   while (policies.length < POLICIES_SHOWN && pool.length) policies.push(pool.splice(rng.int(pool.length), 1)[0]);
-  c.opposition = { govt: Math.max(0, govt), policies, shadow: {}, dossier: 0, credibility: 30, challenged: [], lastChallenge: -CHALLENGE.every, used: [], flags: [] };
+  c.opposition = { govt: Math.max(0, govt), policies, shadow: {}, dossier: 0, credibility: 30, challenged: [], lastChallenge: -CHALLENGE.every, used: [], flags: [], won: 0, lost: 0 };
 }
 
 const open = (c: Campaign): c is Campaign & { opposition: Opposition } => !!c.opposition && rebuilding(c) && c.phase === 'campaign';
@@ -114,7 +114,9 @@ export function challengeHere(world: World, c: Campaign, id: PledgeId, method: M
     nudge(c, o.govt, -0.012 * (method === 'public' ? 1.3 : 1));
     nudge(c, c.player, 0.008);
     o.credibility = clamp(o.credibility + CHALLENGE.won, 0, 100);
+    o.won++;
   } else {
+    o.lost++;
     nudge(c, c.player, -0.004);
     o.credibility = clamp(o.credibility - CHALLENGE.lost, 0, 100);
   }
@@ -133,4 +135,36 @@ export function oppositionWeek(c: Campaign): void {
   }
   o.credibility += (30 - o.credibility) * 0.01;
   o.used = [];
+  // The weeks pass by themselves until something matters: a quarter ends, or the government stumbles and leaves an opening (the dossier grows).
+  if (c.week % QUARTER === 0) o.pause = true;
+  if (new Rng(((c.seed ^ 0x09e1) + c.week * 53) >>> 0).next() < OPENING_CHANCE) {
+    o.dossier = Math.min(100, o.dossier + OPENING_DOSSIER);
+    pushNews(c, { party: c.player, key: 'news.opp.opening', vars: { party: `@party:${o.govt}` }, tone: 'good' });
+    o.pause = true;
+  }
+}
+
+/** Weeks in a quarter of the year; the chance in any week that the government stumbles; and what a stumble adds to the dossier. */
+export const QUARTER = 13;
+const OPENING_CHANCE = 0.05;
+const OPENING_DOSSIER = 25;
+
+/** The most the years of rebuilding can add to the next campaign, in support (logit units, about 2 points of the vote at the most). */
+export const REPAIR_MAX = 0.1;
+
+/**
+ * The years end and the election campaign begins: what was done in opposition (a party at one, branches built, a cabinet in waiting, a name for being
+ * believed, arguments won) lifts the party's standing at the start of it. It is what makes the years worth playing.
+ */
+export function closeOpposition(c: Campaign): void {
+  const o = c.opposition;
+  const pc = c.parties[c.player];
+  if (!o || !pc || o.result) return;
+  const people = Object.values(o.shadow);
+  const shadow = people.length === 0 ? 0 : (people.length / SHADOW_POSTS.length) * (people.reduce((a, s) => a + s!.skill, 0) / people.length / 5);
+  const score = 0.4 * clamp(pc.unity / 100, 0, 1) + 0.3 * (o.credibility / 100) + 0.3 * shadow;
+  const bonus = Math.min(REPAIR_MAX, 0.08 * score + 0.004 * o.won);
+  nudge(c, c.player, bonus);
+  o.result = { bonus, unity: Math.round(pc.unity), credibility: Math.round(o.credibility), shadow: people.length, won: o.won, lost: o.lost };
+  pushNews(c, { party: c.player, key: 'news.opp.result', vars: { pts: Math.round(bonus * 25 * 10) / 10 }, tone: bonus > 0.02 ? 'good' : 'neutral' });
 }

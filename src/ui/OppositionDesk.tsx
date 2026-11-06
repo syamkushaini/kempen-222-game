@@ -142,3 +142,17 @@ export function OppositionDesk() {
     </section>
   );
 }
+
+/** The first week of the election campaign after the years in opposition: what the years brought it. */
+export function RebuildResult() {
+  const t = useT();
+  const campaign = useStore((s) => s.game!.campaign);
+  const r = campaign.opposition?.result;
+  if (!r || !campaign.rebuild || campaign.week !== campaign.rebuild + 1) return null;
+  return (
+    <div className="journey-result up" role="status">
+      <strong>{t('opp.result.title', { pts: Math.round(r.bonus * 25 * 10) / 10 })}</strong>
+      <span className="small">{t('opp.result.body', { unity: r.unity, cred: r.credibility, shadow: r.shadow, won: r.won, lost: r.lost })}</span>
+    </div>
+  );
+}

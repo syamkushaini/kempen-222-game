@@ -298,7 +298,7 @@ interface Store {
   setChiefFloor(amount: number): void;
   endWeek(): void;
   /** In the years of rebuilding in opposition: runs up to this many weeks, stopping when something needs the leader's answer or the campaign begins. */
-  skipRebuild(weeks: number): void;
+  skipRebuild(weeks: number, past?: boolean): void;
   /** In opposition after a defeat: names someone to shadow a post, calls a minister before a committee, challenges a policy of the government. */
   oppShadow(post: PortfolioId): void;
   oppCommittee(): void;
@@ -655,8 +655,13 @@ export const useStore = create<Store>((set, get) => {
     oppShadow: (post) => mutate((c, _g, world) => { nameShadowHere(world, c, post); }),
     oppCommittee: () => mutate((c) => { committeeHere(c); }),
     oppChallenge: (id, method) => mutate((c, _g, world) => { challengeHere(world, c, id, method); }),
-    skipRebuild: (weeks) => mutate((c, _g, world) => {
-      for (let i = 0; i < weeks && rebuilding(c) && c.phase === 'campaign' && c.inbox.length === 0; i++) endWeek(world, c);
+    // The quiet weeks pass by themselves, up to the next thing that matters: a decision waiting, a quarter's end, or an opening against the government.
+    // With `past` set only a decision waiting stops them, and the years run to the campaign.
+    skipRebuild: (weeks, past = false) => mutate((c, _g, world) => {
+      for (let i = 0; i < weeks && rebuilding(c) && c.phase === 'campaign' && c.inbox.length === 0; i++) {
+        endWeek(world, c);
+        if (c.opposition?.pause) { c.opposition.pause = false; if (!past) break; }
+      }
       return { lastReport: null, pactReply: null, tab: 'news' };
     }),
     finishNight: () => mutate((c, _g, world) => closeNight(world, c)),
@@ -932,6 +937,8 @@ export const useStore = create<Store>((set, get) => {
         ...(share > 0 ? { stronghold: { place: c.scenario.startsWith('state:') ? c.scenario.slice(6) : world.seats[0].id, share, ...(world.seats.length === 1 ? { shares: voteShares(result.votes) } : {}) } } : {}),
         ...(c.challenge ? { challenge: { fog: c.challenge.fog, noisy: c.challenge.noisy } } : {}),
       });
+      // The years in opposition begin: the quiet weeks pass by themselves, up to the first thing that needs the leader.
+      if (get().game?.campaign.rebuild) get().skipRebuild(9999);
     },
     carryOn: () => {
       const g = get().game;

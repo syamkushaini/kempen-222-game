@@ -50,7 +50,7 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
     return (
       <>
         <button className="btn primary" onClick={() => { countClick('again', 'restart'); doRestart(); }}>{t('jr.retry')} ▸</button>
-        {skip && <button className="btn" onClick={() => { countClick('again', 'climb'); void climb(); }}>{t('jr.carry', { place: skip.startsWith('state:') ? t(`state.${skip.slice(6)}` as StringKey) : vacancyOf(skip.slice('byelection:'.length))?.name ?? '' })} ▸</button>}
+        {skip && <button className="btn" onClick={() => { countClick('again', 'climb'); void climb(); }}>{t('jr.rebuild')} ▸</button>}
         <button className="btn" onClick={() => { countClick('again', 'new'); quitToTitle(); }}>{t('jr.menu')}</button>
       </>
     );

@@ -1018,4 +1018,11 @@ export interface Opposition {
   used: string[];
   /** Cabinet milestones already rewarded. */
   flags: string[];
+  /** Challenges that carried and challenges that did not. */
+  won: number;
+  lost: number;
+  /** Set when something has happened that the player should see before the weeks go on: the end of a quarter, or an opening against the government. */
+  pause?: boolean;
+  /** What the years brought the next campaign, set when they end. */
+  result?: { bonus: number; unity: number; credibility: number; shadow: number; won: number; lost: number };
 }

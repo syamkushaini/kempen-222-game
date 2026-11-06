@@ -95,7 +95,7 @@ describe('opposition actions in the weeks of rebuilding', () => {
     const before = c().parties[PS]!.unity;
     useStore.getState().act('regroup', {});
     expect(c().parties[PS]!.unity).toBeGreaterThanOrEqual(before);
-    useStore.getState().skipRebuild(9999);
+    useStore.getState().skipRebuild(9999, true);
     expect(c().week).toBe(REBUILD_WEEKS + 1);
     expect(rebuilding(c())).toBe(false);
     for (const id of REBUILD_ONLY) expect(canDo(world(), c(), PS, id, id === 'scrutiny' ? { party: rival } : {}).ok, id).toBe(false);
@@ -144,5 +144,68 @@ describe('the opposition in the years of rebuilding', () => {
     useStore.getState().quitToTitle();
     useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: PARTY_IDS.indexOf('ps'), difficulty: 'normal', founded: true, journey: true });
     expect(useStore.getState().game!.campaign.opposition).toBeUndefined();
+  });
+});
+
+describe('what the years in opposition earn', () => {
+  it('raise the start of the campaign by more for a party that did the work, and tell the player', () => {
+    const PS = PARTY_IDS.indexOf('ps');
+    const run = (work: boolean) => {
+      useStore.getState().quitToTitle();
+      const base = getWorld(dun())!.rules.weeks;
+      useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: PS, difficulty: 'normal', founded: true, journey: true, rebuild: 52, weeks: base + 52, seed: 7 });
+      if (work) { useStore.getState().oppShadow(SHADOW_POSTS[0]); useStore.getState().oppShadow(SHADOW_POSTS[1]); useStore.getState().oppCommittee(); }
+      useStore.getState().skipRebuild(9999, true);
+      return useStore.getState().game!.campaign;
+    };
+    const idle = run(false);
+    const busy = run(true);
+    expect(busy.week).toBe(53);
+    expect(busy.opposition!.result!.bonus).toBeGreaterThan(idle.opposition!.result!.bonus);
+    expect(busy.opposition!.result!.bonus).toBeLessThanOrEqual(0.1);
+    expect(busy.news.some((n) => n.key === 'news.opp.result')).toBe(true);
+  });
+  it('can be a year, two or five', () => {
+    const PS = PARTY_IDS.indexOf('ps');
+    useStore.getState().quitToTitle();
+    useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: PS, difficulty: 'normal', founded: true, journey: true, rebuild: 104, weeks: getWorld(dun())!.rules.weeks + 104 });
+    expect(useStore.getState().game!.campaign.rebuild).toBe(104);
+  });
+});
+
+describe('what the years in opposition bring the next campaign', () => {
+  it('turns the work done into a head start, set once when the campaign begins', () => {
+    const ps = PARTY_IDS.indexOf('ps');
+    useStore.getState().quitToTitle();
+    const base = getWorld(dun())!.rules.weeks;
+    useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: ps, difficulty: 'normal', founded: true, journey: true, rebuild: 52, weeks: base + 52 });
+    const c = () => useStore.getState().game!.campaign;
+    const idle = (() => { useStore.getState().skipRebuild(9999, true); return c().opposition!.result!.bonus; })();
+    expect(c().week).toBe(53);
+    expect(idle).toBeGreaterThanOrEqual(0);
+    useStore.getState().quitToTitle();
+    useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: ps, difficulty: 'normal', founded: true, journey: true, rebuild: 52, weeks: base + 52 });
+    for (const post of SHADOW_POSTS) { useStore.getState().oppShadow(post); }
+    useStore.getState().skipRebuild(9999, true);
+    const worked = c().opposition!.result!;
+    expect(worked.shadow).toBeGreaterThan(0);
+    expect(worked.bonus).toBeGreaterThan(idle);
+    expect(worked.bonus).toBeLessThanOrEqual(0.1);
+  });
+});
+
+describe('skipping the years in opposition', () => {
+  it('stops at the end of a quarter or an opening, and runs on to the campaign when told to pass them', () => {
+    const ps = PARTY_IDS.indexOf('ps');
+    useStore.getState().quitToTitle();
+    const base = getWorld(dun())!.rules.weeks;
+    useStore.getState().startCampaign({ name: 'T', scenario: dun(), player: ps, difficulty: 'normal', founded: true, journey: true, rebuild: REBUILD_WEEKS, weeks: base + REBUILD_WEEKS });
+    const c = () => useStore.getState().game!.campaign;
+    useStore.getState().skipRebuild(9999);
+    expect(c().week).toBeGreaterThan(1);
+    expect(c().week).toBeLessThanOrEqual(14);
+    expect(rebuilding(c())).toBe(true);
+    useStore.getState().skipRebuild(9999, true);
+    expect(rebuilding(c())).toBe(false);
   });
 });

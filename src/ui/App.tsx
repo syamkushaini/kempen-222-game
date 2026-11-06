@@ -23,7 +23,7 @@ import { ReminderStrip } from './ReminderStrip';
 import { GameMenu } from './GameMenu';
 import { GroupMenu } from './GroupMenu';
 import { NextStep } from './NextStep';
-import { OppositionDesk } from './OppositionDesk';
+import { OppositionDesk, RebuildResult } from './OppositionDesk';
 import { FinishWithTeam } from './FinishWithTeam';
 import { DisplayContext, partyColor, useCampaignDisplay, useSpot, useT, useTablet, useWorld, useNarrow } from './hooks';
 import { AsideBanner } from './Aside';
@@ -210,6 +210,7 @@ function CampaignScreen() {
     <DisplayContext.Provider value={display}>
       <TouchGestures onSwipeLeft={() => swipe(1)} onSwipeRight={() => swipe(-1)}>
       <main className={phone ? `layout phone-${screen}` : 'layout'}>
+        <RebuildResult />
         <NextStep />
         <FinishWithTeam />
         <GoalLine />
