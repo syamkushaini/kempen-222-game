@@ -267,6 +267,27 @@ export function startCareer(world: World, opts: CampaignOptions & { ideology?: I
   return c;
 }
 
+/**
+ * Chapter 2 of the Career Campaign: a founded party's career in a state that begins where that state's election ended, with the government
+ * that came out of the talks (the party in it), and the seats it won held. `c.career.results` must already be that election's results.
+ */
+export function enterTerm(world: World, c: Campaign, outcome: Outcome): void {
+  const k = c.career!;
+  if (!k.results) return;
+  const results = k.results;
+  k.government = structuredClone(outcome);
+  const held = world.seats.filter((_, i) => winnerOf(results.votes[i]) === c.player).map((s) => s.id);
+  k.own = true;
+  k.slate = { held, added: {} };
+  k.record.bestSeats = held.length;
+  k.govRun = inGovernment(c, c.player) ? 1 : 0;
+  k.pmRun = k.government.pm === c.player ? 1 : 0;
+  takeOffice(c);
+  c.news = [];
+  syncOpinion(c);
+  pushNews(c, { party: null, key: 'news.term.start', vars: { party: ref.party(k.government.pm), n: k.government.seats }, tone: 'neutral' });
+}
+
 // ---------- money ----------
 
 /** What comes in each week, by source. `total` is the party's; the government's allocation is a treasury of its own (see treasury.ts). */

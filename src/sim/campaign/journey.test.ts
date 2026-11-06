@@ -6,8 +6,8 @@ const seats = () => [1, 2, 3, 4, 5].map(seat);
 
 describe('the chapters of the journey', () => {
   it('runs Chapter 1 in Selangor: the closest seat, the safest, the second closest, then the state election twice', () => {
-    expect(STEPS.map((s) => s.id)).toEqual(['firstSeat', 'stronghold', 'shoestring', 'kingmaker', 'intoGovt']);
-    expect([0, 1, 2, 3, 4].map((i) => stepScenario(i, seats))).toEqual([seat(1), seat(5), seat(2), 'state:selangor', 'state:selangor']);
+    expect(STEPS.map((s) => s.id)).toEqual(['firstSeat', 'stronghold', 'shoestring', 'kingmaker', 'intoGovt', 'govern', 'defend']);
+    expect(STEPS.map((_, i) => stepScenario(i, seats))).toEqual([seat(1), seat(5), seat(2), 'state:selangor', 'state:selangor', 'career:selangor', 'career:selangor']);
   });
   it('records the levels a contest cleared, and nothing for none', () => {
     expect(record(emptyJourney(), 0)).toEqual(emptyJourney());
@@ -27,19 +27,19 @@ describe('the chapters of the journey', () => {
     expect(journeyLevel({ ...emptyJourney(), step: 99 })).toBe(MAX_LEVEL);
     expect(resumeScenario(undefined, seats)).toBe(seat(1));
     expect(resumeScenario({ ...emptyJourney(), step: 2 }, seats)).toBe(seat(2));
-    expect(resumeScenario({ ...emptyJourney(), step: STEPS.length }, seats)).toBe('state:selangor');
+    expect(resumeScenario({ ...emptyJourney(), step: STEPS.length }, seats)).toBe('career:selangor');
   });
   it('keeps a journey saved before the chapters: DUN seats won carry over, and a state taken finishes Chapter 1', () => {
     expect(journeyStep({ state: 'selangor', dunWon: 2, fought: [], governed: [] })).toBe(2);
     expect(journeyStep({ state: 'selangor', dunWon: 3, fought: [], governed: [] })).toBe(3);
     expect(journeyStep({ state: null, dunWon: 0, fought: [], governed: ['selangor'] })).toBe(STEPS.length);
   });
-  it('keeps every other way to play locked at the start, opens single by-elections at level 4 and the rest when Chapter 1 is done', () => {
+  it('keeps every other way to play locked at the start, and opens them at level 4, when Chapter 1 is done and when Chapter 2 is', () => {
     expect(FIRST_UNLOCK).toBe(4);
     expect(modeOpen('byelection', 3)).toBe(false);
     expect(modeOpen('byelection', 4)).toBe(true);
     for (const m of Object.keys(MODE_UNLOCKS) as (keyof typeof MODE_UNLOCKS)[]) expect(modeOpen(m, MAX_LEVEL)).toBe(true);
-    expect(unlockStages().map((s) => s.level)).toEqual([4, 6]);
+    expect(unlockStages().map((s) => s.level)).toEqual([4, 6, 8]);
     expect(nextUnlock(1)?.level).toBe(4);
     expect(nextUnlock(MAX_LEVEL)).toBeNull();
   });

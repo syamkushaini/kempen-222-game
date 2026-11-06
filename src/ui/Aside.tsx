@@ -26,6 +26,7 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
   const next = useStore((s) => { const c = s.game?.campaign; return c && c.newParty && !c.career && !s.game?.aside && c.phase === 'done' ? (s.game?.start?.journey ? nextStep(s.profile.journey ?? emptyJourney(), c.scenario, dunByElections) : nextStep(s.profile.journey ?? emptyJourney(), c.scenario, dunByElections) ?? nextContest(c.scenario, world)) : null; });
   const inJourney = useStore((s) => !!s.game?.start?.journey && !s.game.campaign.career);
   const journey = useStore((s) => s.profile.journey);
+  const inGovt = useStore((s) => { const c = s.game?.campaign; const o = c?.formation?.outcome; return !!c && !!o && (o.pm === c.player || o.partners.includes(c.player)); });
   if (aside) {
     const next = aside.queue[0];
     return <button className="btn primary" onClick={() => void finishAside()}>{next ? t('fight.next', { state: regionLabel(t, world, next) }) : t('fight.back')} ▸</button>;
@@ -37,7 +38,9 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
     if (to.startsWith('byelection:')) return t('journey.nextDun', { seat: vacancyOf(to.slice('byelection:'.length))?.name ?? '', n: (journey?.dunWon ?? 0) + 1, total: DUN_LEVELS });
     return t('climb.state', { state: t(`state.${to.slice(6)}` as StringKey) });
   };
-  if (next) {
+  // A term follows the talks only for a party that came out of them in the government.
+  const termShut = !!next && next.startsWith('career:') && !inGovt;
+  if (next && !termShut) {
     return (
       <>
         <button className="btn primary" onClick={() => { countClick('again', 'climb'); void climb(); }}>{label(next)} ▸</button>

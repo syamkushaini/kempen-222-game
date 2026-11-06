@@ -41,6 +41,8 @@ export interface GameState {
    * the career waits here, with the states still to fight in the same round.
    */
   aside?: Aside;
+  /** The campaign as it stood when a level of the Career Campaign that is a term of government began, so that the term can be tried again. */
+  checkpoint?: Campaign;
 }
 
 export interface Aside {
@@ -305,6 +307,12 @@ export function parseSave(text: string): ParseResult {
     (tutorial === null || (typeof tutorial === 'object' && Number.isInteger(tutorial.step) && (tutorial.step as number) >= 0));
   if (!valid) return { ok: false, error: 'damaged' };
 
+  // A term of the Career Campaign keeps how it began, to be tried again; one that is not sound is dropped, and the term cannot be retried.
+  let checkpoint: Campaign | null = null;
+  const cp = s.checkpoint as { scenario?: unknown } | undefined;
+  if (cp && typeof cp === 'object' && cp.scenario === (s.campaign as { scenario?: unknown }).scenario) {
+    try { const w = worldOf(cp as Parameters<typeof worldOf>[0]); if (w && isValidCampaign(cp, w)) checkpoint = cp as Campaign; } catch { checkpoint = null; }
+  }
   // A career with a state election in the middle of it carries the career along, which has to be as sound as the game itself.
   let aside: Aside | null = null;
   if (s.aside !== undefined) {
@@ -332,6 +340,7 @@ export function parseSave(text: string): ParseResult {
       identity: s.identity as Identity | null,
       ...(isStart(s.start) ? { start: s.start } : {}),
       ...(aside ? { aside } : {}),
+      ...(checkpoint ? { checkpoint } : {}),
     },
   };
 }
