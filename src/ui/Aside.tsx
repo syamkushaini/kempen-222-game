@@ -1,5 +1,5 @@
 import { dunByElections, nextContest, vacancyOf } from '../data/world';
-import { DUN_LEVELS, STEPS, emptyJourney, journeyStep, nextStep } from '../sim/campaign/journey';
+import { DUN_LEVELS, STEPS, emptyJourney, isTerm, journeyStep, nextStep } from '../sim/campaign/journey';
 import { stepTitle } from './JourneyResult';
 import type { StringKey } from '../i18n/strings';
 import { countClick } from '../state/playWatch';
@@ -39,7 +39,7 @@ export function AgainButtons({ restart = false }: { restart?: boolean }) {
     return t('climb.state', { state: t(`state.${to.slice(6)}` as StringKey) });
   };
   // A term follows the talks only for a party that came out of them in the government.
-  const termShut = !!next && next.startsWith('career:') && !inGovt;
+  const termShut = !!next && isTerm(next) && !inGovt;
   if (next && !termShut) {
     return (
       <>

@@ -1,6 +1,6 @@
 import type { StringKey } from '../i18n/strings';
 import { dunByElections } from '../data/world';
-import { MODE_UNLOCKS, SHARE_NEEDED, STEPS, emptyJourney, journeyLevel, journeyStep, nextStep, stateSeatsNeeded, stepScenario, type ModeId } from '../sim/campaign/journey';
+import { MODE_UNLOCKS, SHARE_NEEDED, STEPS, isTerm, termLeadIn, emptyJourney, journeyLevel, journeyStep, nextStep, stateSeatsNeeded, stepScenario, type ModeId } from '../sim/campaign/journey';
 import { spendingLimit } from '../sim/campaign/actions';
 import { inGovernment } from '../sim/campaign/career';
 import { useStore } from '../state/store';
@@ -14,7 +14,7 @@ const SELANGOR_SEATS = 56;
 /** A level's name. */
 export const stepTitle = (t: T, i: number): string => t(`step.${STEPS[i].id}` as StringKey);
 /** What a level asks, in a sentence. */
-export const stepGoal = (t: T, i: number): string => t(`step.${STEPS[i].id}.goal` as StringKey, { n: stateSeatsNeeded(STEPS[i].seats ?? SELANGOR_SEATS), pct: Math.round(SHARE_NEEDED * 100) });
+export const stepGoal = (t: T, i: number): string => t(`step.${STEPS[i].id}.goal` as StringKey, { n: STEPS[i].need ?? stateSeatsNeeded(STEPS[i].seats ?? SELANGOR_SEATS), pct: Math.round((STEPS[i].share ?? SHARE_NEEDED) * 100) });
 
 /** The place the journey has reached, in a few words: the level to play next, or the chapter done. */
 export function useJourneyPlace(): string {
@@ -52,7 +52,7 @@ export function JourneyGoal() {
   const done = c.career ? STEPS.map((_, i) => i).filter((i) => i < k && stepScenario(i, dunByElections) === c.scenario) : [];
   const current = k < STEPS.length && stepScenario(k, dunByElections) === c.scenario;
   // A term level resumed from the menu: the state election is played again first, to get back into the government the term needs.
-  if (!current && !c.career && k < STEPS.length && STEPS[k].contest === 'career' && c.scenario === `state:${stepScenario(k, dunByElections).slice(7)}`) {
+  if (!current && !c.career && k < STEPS.length && isTerm(stepScenario(k, dunByElections)) && c.scenario === termLeadIn(stepScenario(k, dunByElections))) {
     return (
       <p className="goal-line journey-goal" role="status">
         <strong>{t('jgoal.line', { n: k + 1, title: stepTitle(t, k) })}</strong>
@@ -61,7 +61,7 @@ export function JourneyGoal() {
     );
   }
   // A term finished and the next level is elsewhere (Chapter 3): it is started from here.
-  if (!current && c.career && k < STEPS.length && STEPS[k].state && STEPS[k].contest === 'state') {
+  if (!current && c.career && k < STEPS.length && !isTerm(stepScenario(k, dunByElections))) {
     return (
       <p className="goal-line journey-goal" role="status">
         {done.map((i) => <span key={i} className="badge">{t('jr.step.done', { title: stepTitle(t, i) })}</span>)}

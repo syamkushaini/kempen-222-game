@@ -1497,3 +1497,8 @@ Chapter 3 (Beyond Selangor) is built: Second front (the Perak state election, wh
 vote) and Borneo, blind (the Sabah state election under the fog and noisy-poll rules: 6 of 73 seats or 15% of the vote). Seats or share, so a
 party heard everywhere that wins little is not stopped by how the seats fall. After Defend it, the line above the term starts Second front.
 Level 10 is the top until Chapter 4 (the nation) is built.
+
+Chapter 4 (The nation) is built, which completes the Career Campaign at level 13: General election (20 of 222 seats or 20% of the vote; the
+autoplayer took 8 to 28 seats and about 20 to 24% of the vote in trial runs, in a parliament where nobody had a majority), Hung parliament (be in
+the federal government after the talks, or win a majority) and Govern the country (still in the federal government when the next general
+election is called), entered from the talks as the Selangor term is. Resumed from the menu, the federal term plays the general election first.

@@ -82,7 +82,7 @@ import { canFight, playRound, settleAside, stakeFor, startAside } from '../sim/c
 import { notePlay } from './streak';
 import { clearedHeat } from '../sim/campaign/heat';
 import { validLeaderStats } from '../sim/campaign/perks';
-import { STEPS, emptyJourney, journeyLevel, journeyResult, journeyStep, modeOpen, nextStep, scenarioState, stepScenario } from '../sim/campaign/journey';
+import { STEPS, emptyJourney, isTerm, journeyLevel, journeyResult, journeyStep, modeOpen, nextStep, scenarioState, stepScenario } from '../sim/campaign/journey';
 import { keepSaves } from './persist';
 import { award, awardLegacyPoints, hang, legacyEntry, noteAchieved, ProfileStore, recordHeat, recordJourney, recordPoints, unlock, type Profile } from './profile';
 import { forgetParty, keepParty, PartyBook, type SavedParty } from './partyBook';
@@ -904,7 +904,7 @@ export const useStore = create<Store>((set, get) => {
       const step = STEPS[k];
       const scenario = step ? stepScenario(k, dunByElections) : null;
       // A term of government is entered from the talks, not started on its own.
-      if (!step || !scenario || scenario.startsWith('career:')) return;
+      if (!step || !scenario || isTerm(scenario)) return;
       const st = scenarioState(scenario);
       if (st) await loadState(st);
       await loadScenario(scenario);
@@ -922,7 +922,11 @@ export const useStore = create<Store>((set, get) => {
       const c = g?.campaign;
       if (!g || !c || g.aside || c.phase !== 'done' || !c.newParty || c.career) return;
       // A level in another state starts fresh there, with its own twist (Chapter 3).
-      if (g.start?.journey && STEPS[journeyStep(get().profile.journey ?? emptyJourney())]?.state) { await get().playLevel(); return; }
+      if (g.start?.journey) {
+        const k0 = journeyStep(get().profile.journey ?? emptyJourney());
+        const at = stepScenario(k0, dunByElections);
+        if ((STEPS[k0]?.chapter ?? 0) >= 3 && !isTerm(at) && at !== c.scenario) { await get().playLevel(); return; }
+      }
       const world = worldOf(c);
       const result = world && electionResult(world, c);
       const journey = get().profile.journey ?? emptyJourney();
@@ -932,7 +936,7 @@ export const useStore = create<Store>((set, get) => {
       const next = world && (g.start?.journey ? step : step ?? nextContest(c.scenario, world));
       if (!world || !result || !next) return;
       // Chapter 2: the party goes from the talks into Selangor's government, for a term.
-      if (g.start?.journey && next.startsWith('career:')) {
+      if (g.start?.journey && isTerm(next)) {
         const results = recordAsideResults(world, c);
         const outcome = c.formation?.outcome;
         if (!results || !outcome) return;
