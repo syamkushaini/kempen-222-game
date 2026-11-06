@@ -1,0 +1,38 @@
+/*
+ * Micro-interactions: small, quick transitions that say a control was touched, a panel opened or a card is the one being pointed at.
+ * Short (120 to 220 ms), on colour, shadow and transform only (never width or height, which make the page jump), and all of it off for
+ * a player who asks the system for less motion.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Buttons and chips: colour eases, and a press sinks a touch so a tap is felt on a phone as much as a click. */
+  .btn, .chip, .tab, .segmented button, .phone-nav button, .menu-item, .swatch-btn, .accent-swatch, .switch, .switch i {
+    transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out, box-shadow 150ms ease-out, transform 120ms ease-out;
+  }
+  .btn:active:not(:disabled), .chip:active, .segmented button:active, .phone-nav button:active, .swatch-btn:active { transform: scale(0.97); }
+  .btn.primary:hover:not(:disabled) { box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent); }
+
+  /* Cards: the one under the pointer lifts its edge, without moving the layout. */
+  .action, .desk-card, .bloc-card, .party-card, .slate-row, .menu-item {
+    transition: background-color 160ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out;
+  }
+  @media (hover: hover) {
+    .action:hover, .desk-card:hover, .bloc-card:hover, .party-card:hover { border-color: var(--line-3); box-shadow: 0 6px 18px rgb(2 6 23 / 18%); }
+  }
+
+  /* An opened group slides its first rows in; its arrow turns rather than jumps. */
+  details > summary::marker, details > summary .chev { transition: transform 160ms ease-out; }
+  details[open] > summary + * { animation: motion-rise 180ms ease-out; }
+
+  /* The floating cards on a phone settle into place when they first appear. */
+  .adviser-strip, .campaign-bar, .phone-nav { animation: motion-rise 220ms ease-out; }
+
+  /* Tabs: the underline grows from the middle when a tab is chosen. */
+  .tab.active { animation: motion-tab 200ms ease-out; }
+
+  /* Figures that change (funds, days) flash the accent briefly so the change is noticed. */
+  .hud-value { transition: color 300ms ease-out; }
+}
+
+@keyframes motion-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes motion-tab { from { border-bottom-color: transparent; } to { border-bottom-color: var(--primary); } }

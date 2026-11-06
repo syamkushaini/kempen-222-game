@@ -6,6 +6,10 @@ import { lastOutcome, partyColor, partyName, partyShort, useFormat, useT, useWor
 import { Delta } from './Delta';
 import { Icon } from './Icon';
 import { SeatBar } from './Tally';
+import { lazy, Suspense } from 'react';
+
+// Recharts is loaded only when the poll is opened.
+const PollTrend = lazy(() => import('./PollTrend'));
 
 /** The player's share poll by poll, as a small line: whether the campaign is working, at a glance. */
 export function Sparkline({ values, colour }: { values: number[]; colour: string }) {
@@ -77,6 +81,7 @@ export function Standing({ campaign }: { campaign: Campaign }) {
               </li>
             ))}
           </ul>
+          <Suspense fallback={null}><PollTrend campaign={campaign} /></Suspense>
           {poll && <p className="muted small">{t('standing.moe', { n: Math.round(poll.moe * 100) })}</p>}
           {kind !== 'byelection' && (
             <>

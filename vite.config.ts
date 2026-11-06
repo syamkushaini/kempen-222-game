@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 // The version people quote in a bug report: the release number and the commit it was built from.
 const version = (() => {
@@ -12,7 +13,7 @@ const version = (() => {
 export default defineConfig({
   // Relative base so the build works from any static host or sub-path.
   base: './',
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   define: { __APP_VERSION__: JSON.stringify(version) },
   // The map boundaries are one large chunk, loaded on demand.
   build: { chunkSizeWarningLimit: 900 },
