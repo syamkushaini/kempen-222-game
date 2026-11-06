@@ -12,8 +12,8 @@ import type { Campaign } from './types';
 
 /** DUN by-elections to win in a state before its state election is offered. */
 export const DUN_LEVELS = 3;
-/** The weeks in opposition a party gets to repair itself when it tries a contest again after a defeat, before the election's own weeks. */
-export const REBUILD_WEEKS = 4;
+/** The weeks in opposition (five years, the length of a parliament) a party has to repair itself when it tries a contest again after a defeat, before the election's own weeks; the player may skip through them. */
+export const REBUILD_WEEKS = 260;
 
 /** The state the journey is recommended to begin in. */
 export const FIRST_STATE: StateId = 'selangor';

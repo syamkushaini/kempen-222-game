@@ -17,6 +17,22 @@ import { SupportButton } from './Support';
 import { partyName, useFormat, useNarrow, useSpot, useT, useWorld } from './hooks';
 
 /** Ending the week takes one press. What would be thrown away is written on the button, so nobody does it by accident. */
+/** In the years of rebuilding in opposition: a month, a year, or all of it at a time, stopping where something needs an answer. */
+function RebuildSkip() {
+  const t = useT();
+  const on = useStore((s) => !!s.game?.campaign.rebuild && s.game.campaign.week <= (s.game.campaign.rebuild ?? 0) && s.game.campaign.phase === 'campaign');
+  const waiting = useStore((s) => (s.game?.campaign.inbox.length ?? 0) > 0);
+  const skip = useStore((s) => s.skipRebuild);
+  if (!on) return null;
+  return (
+    <div className="rebuild-skip">
+      <button className="btn small" disabled={waiting} onClick={() => skip(4)}>{t('term.month')} ▸▸</button>
+      <button className="btn small" disabled={waiting} onClick={() => skip(52)}>{t('hud.skipYear')} ▸▸</button>
+      <button className="btn small primary" disabled={waiting} onClick={() => skip(9999)}>{t('hud.skipToCampaign')} ⏭</button>
+    </div>
+  );
+}
+
 export function useEndWeek() {
   const t = useT();
   const f = useFormat();
@@ -107,10 +123,10 @@ function Hud() {
   return (
     <div className="hud">
       <div className="hud-item">
-        <span className="hud-label">{campaign.rebuild && campaign.week <= campaign.rebuild ? t('hud.rebuild', { n: campaign.week, total: campaign.rebuild }) : final ? t('hud.finalWeek') : t('hud.week', { n: campaign.week, total: campaign.totalWeeks })}</span>
+        <span className="hud-label">{campaign.rebuild && campaign.week <= campaign.rebuild ? t('hud.rebuild', { y: Math.floor((campaign.week - 1) / 52) + 1, w: ((campaign.week - 1) % 52) + 1 }) : final ? t('hud.finalWeek') : t('hud.week', { n: campaign.week, total: campaign.totalWeeks })}</span>
         <div className="weeks" aria-hidden="true">
-          {Array.from({ length: campaign.totalWeeks }, (_, i) => (
-            <i key={i} className={i + 1 < campaign.week ? 'past' : i + 1 === campaign.week ? 'now' : ''} />
+          {Array.from({ length: campaign.totalWeeks - (campaign.rebuild ?? 0) }, (_, i) => (
+            <i key={i} className={i + 1 < campaign.week - (campaign.rebuild ?? 0) ? 'past' : i + 1 === campaign.week - (campaign.rebuild ?? 0) ? 'now' : ''} />
           ))}
         </div>
       </div>
@@ -131,6 +147,7 @@ function Hud() {
       <GraftChip />
       {/* on a phone the button lives in the bottom bar */}
       {!narrow && <EndWeekButton />}
+      <RebuildSkip />
     </div>
   );
 }
@@ -225,7 +242,7 @@ export function Header() {
   const career = useStore((s) => s.game?.campaign.career);
   // On a phone the bar is one line: whose campaign, and where in it. The week has no box of its own there.
   const when = phase === 'campaign' && week !== undefined && totalWeeks !== undefined
-    ? (rebuild && week <= rebuild ? t('hud.rebuild', { n: week, total: rebuild }) : week === totalWeeks ? t('hud.finalWeek') : t('hud.week', { n: week, total: totalWeeks }))
+    ? (rebuild && week <= rebuild ? t('hud.rebuild', { y: Math.floor((week - 1) / 52) + 1, w: ((week - 1) % 52) + 1 }) : week === totalWeeks ? t('hud.finalWeek') : t('hud.week', { n: week, total: totalWeeks }))
     : phase === 'term' && career ? t('term.date', { term: career.term, year: Math.floor((career.week - 1) / 52) + 1, week: ((career.week - 1) % 52) + 1 }) : null;
   // The sticky sidebar sits below the bar, so it needs to know how tall the bar is.
   useEffect(() => {
