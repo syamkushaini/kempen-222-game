@@ -3,16 +3,16 @@ import { dunByElections } from '../data/world';
 import { MODE_UNLOCKS, SHARE_NEEDED, STEPS, isTerm, termLeadIn, emptyJourney, journeyLevel, journeyStep, isStepContest, nextStep, stateSeatsNeeded, stepScenario, type ModeId } from '../sim/campaign/journey';
 import { spendingLimit } from '../sim/campaign/actions';
 import { inGovernment } from '../sim/campaign/career';
+import { TIPS_PER_LEVEL } from '../sim/campaign/contestTips';
 import { useStore } from '../state/store';
 import { PostLevel } from './Leaderboard';
 import { useFormat, useT, useWorld } from './hooks';
 import type { T } from './hooks';
 
+export { TIPS_PER_LEVEL };
+
 /** Seats a party needs to be kingmaker in Selangor's state election (56 seats). */
 const SELANGOR_SEATS = 56;
-
-/** How many tips each level has for a player who did not clear it (`tip.<level>.<n>`). */
-export const TIPS_PER_LEVEL = 3;
 
 /** A level's name. */
 export const stepTitle = (t: T, i: number): string => t(`step.${STEPS[i].id}` as StringKey);

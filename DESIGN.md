@@ -1495,6 +1495,10 @@ or a majority of one's own, still clears it.
 A level that is not cleared now shows "Tips for this level" under the result: three short tips for each level played as a contest (the by-election
 and state-election levels and the general election), in English and Bahasa Malaysia (`tip.<level>.<n>`; `JourneyResult.tsx`). They are static, not
 read from how the game went, and say only what the rules and the measurements above support.
+During a level of the Career Campaign, once the tutorial is over, the campaign manager (the one the player hired, or else Kak Ros) says one thing
+a week in the strip along the bottom (`contestTips.ts`): a warning when something needs doing now (the chest is nearly empty; three quarters of a
+shoestring level's budget is spent; the last week has come and Get out the vote is not done), and otherwise one of the level's three tips, a
+different one each week. "Not this week" puts it away until the next.
 Level 2 was then found too hard: measured over whole play-throughs (Level 1 won, then Level 2 on what it carried, about 27%), Sekinchan was
 cleared in only about 35% of games, nearly as few as Level 3. Level 2 now starts the party on a following of at least 28.5%, which clears it in
 about 48% of games: still a step harder than Level 1 (about 54% over the same play-throughs) and easier than Level 3. At 29% it was as easy as

@@ -55,3 +55,25 @@ describe('the result panel', () => {
     expect(seen).toEqual({ lost: true, won: true });
   }, 120000);
 });
+
+describe('the campaign manager during a level', () => {
+  it('speaks once the tutorial is over, with a tip for the week', async () => {
+    await import('../data/allStates');
+    const { createElement } = await import('react');
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { useStore } = await import('../state/store');
+    const { dunByElections } = await import('../data/world');
+    const { FOUNDING_SLOT } = await import('../sim/campaign/founding');
+    const { emptyJourney, stepScenario, FIRST_LEVEL_FOLLOWING } = await import('../sim/campaign/journey');
+    const { PARTY_IDS } = await import('../sim/types');
+    const { Adviser } = await import('./Adviser');
+    useStore.setState((s) => ({ profile: { ...s.profile, journey: emptyJourney() } }));
+    useStore.getState().quitToTitle();
+    useStore.getState().startCampaign({ name: 'T', scenario: stepScenario(0, dunByElections), player: PARTY_IDS.indexOf(FOUNDING_SLOT), difficulty: 'easy', backstory: null, seed: 1, founded: true, journey: true, following: FIRST_LEVEL_FOLLOWING });
+    useStore.setState((st) => ({ game: { ...st.game!, tutorial: null } }));
+    const html = renderToStaticMarkup(createElement(Adviser));
+    expect(html).toContain(translate('en', 'adviser.name'));
+    expect(html).toMatch(/adviser-strip/);
+    expect(html).toContain(translate('en', 'ctip.later' as StringKey));
+  }, 120000);
+});

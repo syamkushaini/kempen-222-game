@@ -3,7 +3,7 @@ import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { useTypewriter } from './useTypewriter';
 import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
-import { isThreeWay } from '../data/world';
+import { dunByElections, isThreeWay } from '../data/world';
 import { lastOutcome, useSpot, useT, useWorld } from './hooks';
 import { Jargon } from './Term';
 import { atHome } from '../sim/campaign/turn';
@@ -11,6 +11,8 @@ import { STAFF_NAMES } from '../sim/campaign/staff';
 import { voice } from '../sim/campaign/advice';
 import { ROLE_IDS } from '../sim/campaign/types';
 import { STEPS, stepFor } from './tutorial';
+import { STEPS as LEVELS, emptyJourney, isStepContest, journeyStep } from '../sim/campaign/journey';
+import { contestTip } from '../sim/campaign/contestTips';
 
 /**
  * One manager speaking: their avatar, their name, and their words typed out a letter at a time while the avatar talks. A press on the words
@@ -99,7 +101,8 @@ function Warning() {
   // The campaign manager the player hired is the one who speaks, once there is one and they are being paid; before that it is Kak Ros.
   const hired = useStore((s) => (s.game!.campaign.team.unpaid ? null : s.game!.campaign.team.staff[ROLE_IDS.indexOf('manager')]));
   const [away, setAway] = useState<string | null>(null);
-  if (!k || !me || k.ending) return null;
+  if (!k) return <ContestVoice />;
+  if (!me || k.ending) return null;
   const figures = [
     { id: 'unity', value: me.unity, tab: 'deals' as const },
     { id: 'credibility', value: k.credibility, tab: 'policy' as const },
@@ -137,6 +140,31 @@ function TeamVoice() {
     <Strip who={{ staff: who.name, role: v.role }} name={<>{name} <span className="muted">· {t(`role.${v.role}`)}</span></>} text={t(v.advice ? (`advice.${v.advice.id}` as StringKey) : (`chat.${v.role}.${v.line}` as StringKey))}>
       {v.advice && <button className="btn small primary" onClick={() => follow(v.role)}>{t('chat.follow')}</button>}
       <button className="btn small" onClick={() => setAway(week)}>{t('adviser.danger.later')}</button>
+    </Strip>
+  );
+}
+
+/**
+ * In a level of the Career Campaign, the campaign manager says one thing each week: what needs doing now if anything does, or one of the
+ * level's tips. It can be put away for the week. The manager the player hired speaks if there is one; otherwise Kak Ros.
+ */
+function ContestVoice() {
+  const t = useT();
+  const world = useWorld();
+  const campaign = useStore((s) => s.game!.campaign);
+  const journey = useStore((s) => !!s.game!.start?.journey);
+  const j = useStore((s) => s.profile.journey) ?? emptyJourney();
+  const [away, setAway] = useState<string | null>(null);
+  if (!journey) return null;
+  const k = journeyStep(j);
+  if (k >= LEVELS.length || !isStepContest(k, campaign.scenario, dunByElections)) return null;
+  const tip = contestTip(world, campaign, LEVELS[k]);
+  const key = `${campaign.scenario}|${campaign.week}`;
+  if (!tip || away === key) return null;
+  const hired = campaign.team.unpaid ? null : campaign.team.staff[ROLE_IDS.indexOf('manager')];
+  return (
+    <Strip className={tip.key.startsWith('ctip.') ? 'danger' : ''} who={hired ? { staff: hired.name, role: 'manager' } : { adviser: true }} name={<>{hired ? STAFF_NAMES[hired.name] : t('adviser.name')} <span className="muted">· {hired ? t('role.manager') : t('adviser.role')}</span></>} text={t(tip.key as StringKey, tip.vars)}>
+      <button className="btn small" onClick={() => setAway(key)}>{t('ctip.later')}</button>
     </Strip>
   );
 }
