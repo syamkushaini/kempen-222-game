@@ -241,8 +241,8 @@ export const STEPS: readonly StepDef[] = [
   { id: 'firstSeat', chapter: 1, goal: 'win', contest: 'dun', seat: 'N.10', was: 'closest' },
   { id: 'stronghold', chapter: 1, goal: 'win', contest: 'dun', seat: 'N.04', was: 'safest' },
   { id: 'shoestring', chapter: 1, goal: 'winShoestring', contest: 'dun', seat: 'N.38', was: 'second' },
-  { id: 'kingmaker', chapter: 1, goal: 'seats', contest: 'state', need: 6 },
-  { id: 'intoGovt', chapter: 1, goal: 'inGovernment', contest: 'state', need: 6 },
+  { id: 'kingmaker', chapter: 1, goal: 'seats', contest: 'state', need: 7 },
+  { id: 'intoGovt', chapter: 1, goal: 'inGovernment', contest: 'state', need: 7 },
   // Chapter 2, In charge: a term in Selangor's government, then the election at the end of it.
   { id: 'govern', chapter: 2, goal: 'serveTerm', contest: 'career' },
   { id: 'defend', chapter: 2, goal: 'reElected', contest: 'career' },
