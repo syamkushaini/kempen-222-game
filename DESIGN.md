@@ -1487,6 +1487,10 @@ Melawati (55-63%), Level 2 Sekinchan, renamed Second seat (40-48%; the safest se
 money, a seat held by about 11 points (about 33%), Level 4 renamed Breakthrough, six of Selangor's seats with no need for a hung assembly
 (about 25%; a hung Selangor almost never came), Perak 9 seats or 24% of the vote, Sabah 18 or 25%, the general election 22 or 24% (about 20%
 each; the old bars of 15-20% of the vote were cleared nearly every time). A game begun in a DUN level's old seat still counts.
+Level 5 (Into government) could not be cleared when a rival won a majority of Selangor's assembly outright: there are then no talks to join. With
+the team playing alone that was 259 of 300 state elections (86%; 104 of 118 where the party won 6-8 seats), a hung assembly came in 41, and Level 5
+was never cleared. It is now also cleared by winning at least 8 seats (about 31% of games, 127 of the 184 clears with a rival majority), a step
+above Level 4's 6; being in the government after the talks, or a majority of one's own, still clears it.
 Level 2 was then found too hard: measured over whole play-throughs (Level 1 won, then Level 2 on what it carried, about 27%), Sekinchan was
 cleared in only about 35% of games, nearly as few as Level 3. Level 2 now starts the party on a following of at least 28.5%, which clears it in
 about 48% of games: still a step harder than Level 1 (about 54% over the same play-throughs) and easier than Level 3. At 29% it was as easy as

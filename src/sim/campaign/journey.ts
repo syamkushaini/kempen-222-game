@@ -146,8 +146,9 @@ function goalMet(world: World, c: Campaign, step: StepDef, tally: number[]): boo
   }
   if (goal === 'seatsOrShare') return tally[p] >= (step.need ?? stateSeatsNeeded(world.seats.length)) || summarise(world, c, electionResult(world, c)!).voteShare >= (step.share ?? SHARE_NEEDED);
   if (goal === 'seats') return tally[p] >= (step.need ?? stateSeatsNeeded(world.seats.length));
-  // A place in the government: heading it or a partner in it once the talks are over, or a majority of one's own.
-  if (tally[p] >= majorityLine(world)) return true;
+  // A place in the government: heading it or a partner in it once the talks are over, or a majority of one's own. A level may also take a
+  // number of seats instead (`need`): a rival that wins a majority outright leaves no talks to join, and a hung assembly is rare.
+  if (tally[p] >= majorityLine(world) || (step.need !== undefined && tally[p] >= step.need)) return true;
   const o = c.formation?.outcome;
   return c.phase === 'done' && !!o && (o.pm === p || o.partners.includes(p));
 }
@@ -241,7 +242,7 @@ export const STEPS: readonly StepDef[] = [
   { id: 'stronghold', chapter: 1, goal: 'win', contest: 'dun', seat: 'N.04', was: 'safest' },
   { id: 'shoestring', chapter: 1, goal: 'winShoestring', contest: 'dun', seat: 'N.38', was: 'second' },
   { id: 'kingmaker', chapter: 1, goal: 'seats', contest: 'state', need: 6 },
-  { id: 'intoGovt', chapter: 1, goal: 'inGovernment', contest: 'state' },
+  { id: 'intoGovt', chapter: 1, goal: 'inGovernment', contest: 'state', need: 8 },
   // Chapter 2, In charge: a term in Selangor's government, then the election at the end of it.
   { id: 'govern', chapter: 2, goal: 'serveTerm', contest: 'career' },
   { id: 'defend', chapter: 2, goal: 'reElected', contest: 'career' },
