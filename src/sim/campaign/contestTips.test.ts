@@ -5,7 +5,7 @@ import { translate, type StringKey } from '../../i18n/strings';
 import { useStore } from '../../state/store';
 import { PARTY_IDS } from '../types';
 import { spendingLimit } from './actions';
-import { contestTip, TIPS_PER_LEVEL } from './contestTips';
+import { contestTip } from './contestTips';
 import { FOUNDING_SLOT } from './founding';
 import { STEPS, stepScenario } from './journey';
 
@@ -19,12 +19,13 @@ const start = (i: number) => {
 };
 
 describe('the campaign manager\'s tip of the week in a level', () => {
-  it('gives one of the level\'s own tips, a different one each week', () => {
-    const { c, world } = start(0);
+  it('briefs the level in its first week, then keeps quiet unless something needs doing', () => {
+    const { c, world } = start(3);
     c.parties[c.player]!.funds = 1e9;
-    const seen = new Set<string>();
-    for (let w = 1; w <= TIPS_PER_LEVEL; w++) { c.week = w; c.totalWeeks = 10; seen.add(contestTip(world, c, STEPS[0])!.key); }
-    expect([...seen].sort()).toEqual(['tip.firstSeat.1', 'tip.firstSeat.2', 'tip.firstSeat.3']);
+    c.week = 1;
+    expect(contestTip(world, c, STEPS[3])).toMatchObject({ key: 'ltip.kingmaker', vars: { n: 6 } });
+    c.week = 2;
+    expect(contestTip(world, c, STEPS[3])).toBeNull();
   });
   it('asks for money when the chest is nearly empty, and for Get out the vote in the last week', () => {
     const { c, world } = start(1);
@@ -34,7 +35,8 @@ describe('the campaign manager\'s tip of the week in a level', () => {
     c.week = c.totalWeeks;
     expect(contestTip(world, c, STEPS[1])!.key).toBe('ctip.gotv');
     c.parties[c.player]!.used = { 'gotv:x': 1 };
-    expect(contestTip(world, c, STEPS[1])!.key).toMatch(/^tip\.stronghold\./);
+    c.parties[c.player]!.funds = 1e9;
+    expect(contestTip(world, c, STEPS[1])).toBeNull();
   });
   it('warns about the budget of the shoestring level once most of it is spent', () => {
     const { c, world } = start(2);
@@ -42,6 +44,9 @@ describe('the campaign manager\'s tip of the week in a level', () => {
     c.parties[c.player]!.spent = 0.8 * (spendingLimit(world) / 2);
     expect(contestTip(world, c, STEPS[2])).toEqual({ key: 'ctip.budget', vars: { pct: 80 } });
     expect(contestTip(world, c, STEPS[0])!.key).not.toBe('ctip.budget');
+    c.parties[c.player]!.spent = 0;
+    c.week = 1;
+    expect(contestTip(world, c, STEPS[2])).toMatchObject({ key: 'ltip.shoestring', vars: { rm: spendingLimit(world) / 2 } });
   });
   it('says nothing once the campaign is over', () => {
     const { c, world } = start(0);
@@ -49,7 +54,8 @@ describe('the campaign manager\'s tip of the week in a level', () => {
     expect(contestTip(world, c, STEPS[0])).toBeNull();
   });
   it('only says what is written in both languages', () => {
-    for (const key of ['ctip.budget', 'ctip.gotv', 'ctip.funds', 'ctip.later'])
+    const played = STEPS.filter((s) => s.contest !== 'career' && s.contest !== 'federal');
+    for (const key of ['ctip.budget', 'ctip.gotv', 'ctip.funds', 'ctip.later', ...played.map((s) => `ltip.${s.id}`)])
       for (const lang of ['en', 'ms'] as const) expect(translate(lang, key as StringKey)).not.toBe(key);
   });
 });

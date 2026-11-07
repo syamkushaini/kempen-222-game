@@ -4,7 +4,7 @@ import { useTypewriter } from './useTypewriter';
 import type { StringKey } from '../i18n/strings';
 import { useStore } from '../state/store';
 import { dunByElections, isThreeWay } from '../data/world';
-import { lastOutcome, useSpot, useT, useWorld } from './hooks';
+import { lastOutcome, useFormat, useSpot, useT, useWorld } from './hooks';
 import { Jargon } from './Term';
 import { atHome } from '../sim/campaign/turn';
 import { STAFF_NAMES } from '../sim/campaign/staff';
@@ -145,11 +145,12 @@ function TeamVoice() {
 }
 
 /**
- * In a level of the Career Campaign, the campaign manager says one thing each week: what needs doing now if anything does, or one of the
- * level's tips. It can be put away for the week. The manager the player hired speaks if there is one; otherwise Kak Ros.
+ * In a level of the Career Campaign, the campaign manager speaks only when it matters: the level's briefing in its first week, and after that a
+ * warning when something needs doing now. It can be put away for the week. The manager the player hired speaks if there is one; otherwise Kak Ros.
  */
 function ContestVoice() {
   const t = useT();
+  const f = useFormat();
   const world = useWorld();
   const campaign = useStore((s) => s.game!.campaign);
   const journey = useStore((s) => !!s.game!.start?.journey);
@@ -163,7 +164,7 @@ function ContestVoice() {
   if (!tip || away === key) return null;
   const hired = campaign.team.unpaid ? null : campaign.team.staff[ROLE_IDS.indexOf('manager')];
   return (
-    <Strip className={tip.key.startsWith('ctip.') ? 'danger' : ''} who={hired ? { staff: hired.name, role: 'manager' } : { adviser: true }} name={<>{hired ? STAFF_NAMES[hired.name] : t('adviser.name')} <span className="muted">· {hired ? t('role.manager') : t('adviser.role')}</span></>} text={t(tip.key as StringKey, tip.vars)}>
+    <Strip className={tip.key.startsWith('ctip.') ? 'danger' : ''} who={hired ? { staff: hired.name, role: 'manager' } : { adviser: true }} name={<>{hired ? STAFF_NAMES[hired.name] : t('adviser.name')} <span className="muted">· {hired ? t('role.manager') : t('adviser.role')}</span></>} text={t(tip.key as StringKey, tip.vars && { ...tip.vars, rm: f.rm(tip.vars.rm ?? 0) })}>
       <button className="btn small" onClick={() => setAway(key)}>{t('ctip.later')}</button>
     </Strip>
   );
