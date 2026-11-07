@@ -50,7 +50,7 @@ describe('the result panel', () => {
       const html = renderToStaticMarkup(createElement(JourneyResult));
       const won = journeyLevel(store().profile.journey) === 2;
       if (won) { seen.won = true; expect(html).not.toContain('journey-tips'); }
-      else { seen.lost = true; expect(html).toContain('journey-tips'); expect(html).toContain(translate('en', 'tip.firstSeat.1' as StringKey)); }
+      else { seen.lost = true; expect(html).toContain('journey-tips'); expect(html).toContain('Poll before you spend'); expect(html).not.toMatch(/[{}]/); }
     }
     expect(seen).toEqual({ lost: true, won: true });
   }, 120000);

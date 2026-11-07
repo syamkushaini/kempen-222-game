@@ -23,7 +23,7 @@ describe('the campaign manager\'s tip of the week in a level', () => {
     const { c, world } = start(3);
     c.parties[c.player]!.funds = 1e9;
     c.week = 1;
-    expect(contestTip(world, c, STEPS[3])).toMatchObject({ key: 'ltip.kingmaker', vars: { n: 6 } });
+    expect(contestTip(world, c, STEPS[3])).toEqual({ key: 'ltip.kingmaker' });
     c.week = 2;
     expect(contestTip(world, c, STEPS[3])).toBeNull();
   });
@@ -42,11 +42,11 @@ describe('the campaign manager\'s tip of the week in a level', () => {
     const { c, world } = start(2);
     c.parties[c.player]!.funds = 1e9;
     c.parties[c.player]!.spent = 0.8 * (spendingLimit(world) / 2);
-    expect(contestTip(world, c, STEPS[2])).toEqual({ key: 'ctip.budget', vars: { pct: 80 } });
+    expect(contestTip(world, c, STEPS[2])).toEqual({ key: 'ctip.budget', vars: { spentPct: 80 } });
     expect(contestTip(world, c, STEPS[0])!.key).not.toBe('ctip.budget');
     c.parties[c.player]!.spent = 0;
     c.week = 1;
-    expect(contestTip(world, c, STEPS[2])).toMatchObject({ key: 'ltip.shoestring', vars: { rm: spendingLimit(world) / 2 } });
+    expect(contestTip(world, c, STEPS[2])).toEqual({ key: 'ltip.shoestring' });
   });
   it('says nothing once the campaign is over', () => {
     const { c, world } = start(0);

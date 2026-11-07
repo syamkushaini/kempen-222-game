@@ -12,7 +12,8 @@ import { voice } from '../sim/campaign/advice';
 import { ROLE_IDS } from '../sim/campaign/types';
 import { STEPS, stepFor } from './tutorial';
 import { STEPS as LEVELS, emptyJourney, isStepContest, journeyStep } from '../sim/campaign/journey';
-import { contestTip } from '../sim/campaign/contestTips';
+import { contestTip, tipFacts } from '../sim/campaign/contestTips';
+import { tipText } from './tipText';
 
 /**
  * One manager speaking: their avatar, their name, and their words typed out a letter at a time while the avatar talks. A press on the words
@@ -164,7 +165,7 @@ function ContestVoice() {
   if (!tip || away === key) return null;
   const hired = campaign.team.unpaid ? null : campaign.team.staff[ROLE_IDS.indexOf('manager')];
   return (
-    <Strip className={tip.key.startsWith('ctip.') ? 'danger' : ''} who={hired ? { staff: hired.name, role: 'manager' } : { adviser: true }} name={<>{hired ? STAFF_NAMES[hired.name] : t('adviser.name')} <span className="muted">· {hired ? t('role.manager') : t('adviser.role')}</span></>} text={t(tip.key as StringKey, tip.vars && { ...tip.vars, rm: f.rm(tip.vars.rm ?? 0) })}>
+    <Strip className={tip.key.startsWith('ctip.') ? 'danger' : ''} who={hired ? { staff: hired.name, role: 'manager' } : { adviser: true }} name={<>{hired ? STAFF_NAMES[hired.name] : t('adviser.name')} <span className="muted">· {hired ? t('role.manager') : t('adviser.role')}</span></>} text={tipText(t, f, tip.key, tipFacts(world, campaign, LEVELS[k]), tip.vars)}>
       <button className="btn small" onClick={() => setAway(key)}>{t('ctip.later')}</button>
     </Strip>
   );

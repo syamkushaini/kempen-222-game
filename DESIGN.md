@@ -1500,6 +1500,10 @@ along the bottom (`contestTips.ts`) only when it matters for the level: in the f
 the seats or share asked for, the budget of the shoestring level, untrustworthy polls in Sabah), and after that only a warning when something
 needs doing now (the chest is nearly empty; three quarters of a shoestring level's budget is spent; the last week has come and Get out the vote
 is not done). Otherwise the manager is quiet; weekly tips in rotation were tried and dropped. "Not this week" puts it away until the next.
+The tips were then made detailed (`tipFacts` in `contestTips.ts`, `tipText.ts`): they quote figures read from the contest itself, so they stay
+right if prices change: what each action costs there (in a by-election a walkabout RM1k, a ceramah RM3k, Get out the vote RM2k), the budget of the
+shoestring level, the seats or share asked for, the chest, the seat's voters, the parties that came first and second in it last time, and a plan
+of ground work that suits the kind of seat (a ceramah leads in a rural seat, a walkabout and a town hall in a town seat).
 Level 2 was then found too hard: measured over whole play-throughs (Level 1 won, then Level 2 on what it carried, about 27%), Sekinchan was
 cleared in only about 35% of games, nearly as few as Level 3. Level 2 now starts the party on a following of at least 28.5%, which clears it in
 about 48% of games: still a step harder than Level 1 (about 54% over the same play-throughs) and easier than Level 3. At 29% it was as easy as

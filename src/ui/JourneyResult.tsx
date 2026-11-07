@@ -3,7 +3,8 @@ import { dunByElections } from '../data/world';
 import { MODE_UNLOCKS, SHARE_NEEDED, STEPS, isTerm, termLeadIn, emptyJourney, journeyLevel, journeyStep, isStepContest, nextStep, stateSeatsNeeded, stepScenario, type ModeId } from '../sim/campaign/journey';
 import { spendingLimit } from '../sim/campaign/actions';
 import { inGovernment } from '../sim/campaign/career';
-import { TIPS_PER_LEVEL } from '../sim/campaign/contestTips';
+import { TIPS_PER_LEVEL, tipFacts } from '../sim/campaign/contestTips';
+import { tipText } from './tipText';
 import { useStore } from '../state/store';
 import { PostLevel } from './Leaderboard';
 import { useFormat, useT, useWorld } from './hooks';
@@ -91,6 +92,8 @@ export function JourneyGoal() {
 /** After a contest of the Career Campaign: which of its levels were cleared, what is next, and what has opened. */
 export function JourneyResult() {
   const t = useT();
+  const f = useFormat();
+  const world = useWorld();
   const c = useStore((s) => s.game?.campaign);
   const j = useStore((s) => s.profile.journey) ?? emptyJourney();
   const inJourney = useStore((s) => !!s.game?.start?.journey);
@@ -114,7 +117,7 @@ export function JourneyResult() {
         <div key={`tips${i}`} className="journey-tips">
           <strong className="small">{t('jr.tips')}</strong>
           <ul className="small">
-            {Array.from({ length: TIPS_PER_LEVEL }, (_, n) => <li key={n}>{t(`tip.${STEPS[i].id}.${n + 1}` as StringKey, { n: STEPS[i].need ?? stateSeatsNeeded(STEPS[i].seats ?? SELANGOR_SEATS), pct: Math.round((STEPS[i].share ?? SHARE_NEEDED) * 100) })}</li>)}
+            {Array.from({ length: TIPS_PER_LEVEL }, (_, n) => <li key={n}>{tipText(t, f, `tip.${STEPS[i].id}.${n + 1}`, tipFacts(world, c, STEPS[i]))}</li>)}
           </ul>
         </div>
       ))}

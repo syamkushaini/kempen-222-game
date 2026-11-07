@@ -4,7 +4,7 @@ import { PARTIES } from '../data/parties';
 import { shownAlliance } from '../state/allianceLook';
 import { scenarioInfo, world as generalWorld, worldOf } from '../data/world';
 import { LEADERS } from '../sim/campaign/cast';
-import { translate, type StringKey } from '../i18n/strings';
+import { translate, type Lang, type StringKey } from '../i18n/strings';
 import { latestSeatIntel, type SeatIntel } from '../sim/campaign/polls';
 import { FORMATION_WEEK, shownWeek } from '../sim/campaign/news';
 import { truth } from '../sim/campaign/turn';
@@ -37,25 +37,28 @@ export interface Format {
   dateTime(ms: number): string;
 }
 
+/** The formats of a language, outside a component. */
+export function formatFor(lang: Lang): Format {
+  const locale = lang === 'ms' ? 'ms-MY' : 'en-MY';
+  const int = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+  return {
+    int: (n) => int.format(n),
+    pct: (x, digits = 1) => `${(x * 100).toFixed(digits)}%`,
+    // Under RM500 would round to "RM0k", so small amounts are shown as they are.
+    rm: (n) => (Math.abs(n) >= 1_000_000_000_000 ? `RM${(n / 1_000_000_000_000).toFixed(2)}${lang === 'ms' ? ' trilion' : 'tn'}` : Math.abs(n) >= 1_000_000_000 ? `RM${(n / 1_000_000_000).toFixed(2)}${lang === 'ms' ? ' bilion' : 'bn'}` : Math.abs(n) >= 1_000_000 ? `RM${(n / 1_000_000).toFixed(2)}m` : Math.abs(n) < 500 ? `RM${Math.round(n)}` : `RM${Math.round(n / 1000)}k`),
+    days: (d) => {
+      const whole = Math.floor(d), half = d - whole >= 0.5;
+      const unit = translate(lang, d > 1 ? 'unit.days' : 'unit.day');
+      return `${whole > 0 ? whole : ''}${half ? '½' : ''} ${unit}`;
+    },
+    time: (ms) => new Date(ms).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+    dateTime: (ms) => new Date(ms).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' }),
+  };
+}
+
 export function useFormat(): Format {
   const lang = useStore((s) => s.settings.lang);
-  return useMemo(() => {
-    const locale = lang === 'ms' ? 'ms-MY' : 'en-MY';
-    const int = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
-    return {
-      int: (n) => int.format(n),
-      pct: (x, digits = 1) => `${(x * 100).toFixed(digits)}%`,
-      // Under RM500 would round to "RM0k", so small amounts are shown as they are.
-      rm: (n) => (Math.abs(n) >= 1_000_000_000_000 ? `RM${(n / 1_000_000_000_000).toFixed(2)}${lang === 'ms' ? ' trilion' : 'tn'}` : Math.abs(n) >= 1_000_000_000 ? `RM${(n / 1_000_000_000).toFixed(2)}${lang === 'ms' ? ' bilion' : 'bn'}` : Math.abs(n) >= 1_000_000 ? `RM${(n / 1_000_000).toFixed(2)}m` : Math.abs(n) < 500 ? `RM${Math.round(n)}` : `RM${Math.round(n / 1000)}k`),
-      days: (d) => {
-        const whole = Math.floor(d), half = d - whole >= 0.5;
-        const unit = translate(lang, d > 1 ? 'unit.days' : 'unit.day');
-        return `${whole > 0 ? whole : ''}${half ? '½' : ''} ${unit}`;
-      },
-      time: (ms) => new Date(ms).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
-      dateTime: (ms) => new Date(ms).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' }),
-    };
-  }, [lang]);
+  return useMemo(() => formatFor(lang), [lang]);
 }
 
 export function partyName(t: T, index: number): string {
