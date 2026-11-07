@@ -3,10 +3,14 @@ import { dunByElections } from '../data/world';
 import { MODE_UNLOCKS, SHARE_NEEDED, STEPS, isTerm, termLeadIn, emptyJourney, journeyLevel, journeyStep, isStepContest, nextStep, stateSeatsNeeded, stepScenario, type ModeId } from '../sim/campaign/journey';
 import { spendingLimit } from '../sim/campaign/actions';
 import { inGovernment } from '../sim/campaign/career';
+import { TIPS_PER_LEVEL, tipFacts } from '../sim/campaign/contestTips';
+import { tipText } from './tipText';
 import { useStore } from '../state/store';
 import { PostLevel } from './Leaderboard';
 import { useFormat, useT, useWorld } from './hooks';
 import type { T } from './hooks';
+
+export { TIPS_PER_LEVEL };
 
 /** Seats a party needs to be kingmaker in Selangor's state election (56 seats). */
 const SELANGOR_SEATS = 56;
@@ -88,6 +92,8 @@ export function JourneyGoal() {
 /** After a contest of the Career Campaign: which of its levels were cleared, what is next, and what has opened. */
 export function JourneyResult() {
   const t = useT();
+  const f = useFormat();
+  const world = useWorld();
   const c = useStore((s) => s.game?.campaign);
   const j = useStore((s) => s.profile.journey) ?? emptyJourney();
   const inJourney = useStore((s) => !!s.game?.start?.journey);
@@ -107,6 +113,14 @@ export function JourneyResult() {
       <strong>{cleared.length > 0 ? t('jr.up', { n: level }) : t('jr.same', { n: level })}</strong>
       {cleared.map((i) => <span key={i} className="small">{t('jr.step.done', { title: stepTitle(t, i) })}</span>)}
       {missed.map((i) => <span key={i} className="small">{t('jr.step.missed', { title: stepTitle(t, i), goal: stepGoal(t, i) })}</span>)}
+      {cleared.length === 0 && missed.map((i) => (
+        <div key={`tips${i}`} className="journey-tips">
+          <strong className="small">{t('jr.tips')}</strong>
+          <ul className="small">
+            {Array.from({ length: TIPS_PER_LEVEL }, (_, n) => <li key={n}>{tipText(t, f, `tip.${STEPS[i].id}.${n + 1}`, tipFacts(world, c, STEPS[i]))}</li>)}
+          </ul>
+        </div>
+      ))}
       {next && <span className="small">{t('journey.next.step', { title: stepTitle(t, k) })}</span>}
       {k >= STEPS.length && cleared.length > 0 && <span className="small">{t('chapter.done')}</span>}
       {opened.length > 0 && cleared.length > 0 && <span className="small unlocked">🔓 {t('jr.unlocked', { modes: opened.map((m) => t(`unlock.mode.${m}` as StringKey)).join(', ') })}</span>}

@@ -121,6 +121,8 @@ describe('the bars of the levels', () => {
   it('ask for more as the chapters go on', () => {
     const at = (id: string) => STEPS.find((s) => s.id === id)!;
     expect(at('kingmaker')).toMatchObject({ goal: 'seats', need: 6 });
+    expect(at('intoGovt')).toMatchObject({ goal: 'inGovernment', need: 7 });
+    expect(at('intoGovt').need!).toBeGreaterThan(at('kingmaker').need!);
     expect(at('secondFront')).toMatchObject({ need: 9, share: 0.24 });
     expect(at('borneoBlind')).toMatchObject({ need: 18, share: 0.25 });
     expect(at('generalElection')).toMatchObject({ need: 22, share: 0.24 });

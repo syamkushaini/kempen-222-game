@@ -1487,6 +1487,23 @@ Melawati (55-63%), Level 2 Sekinchan, renamed Second seat (40-48%; the safest se
 money, a seat held by about 11 points (about 33%), Level 4 renamed Breakthrough, six of Selangor's seats with no need for a hung assembly
 (about 25%; a hung Selangor almost never came), Perak 9 seats or 24% of the vote, Sabah 18 or 25%, the general election 22 or 24% (about 20%
 each; the old bars of 15-20% of the vote were cleared nearly every time). A game begun in a DUN level's old seat still counts.
+Level 5 (Into government) could not be cleared when a rival won a majority of Selangor's assembly outright: there are then no talks to join. With
+the team playing alone that was 259 of 300 state elections (86%; 104 of 118 where the party won 6-8 seats), a hung assembly came in 41, and Level 5
+was never cleared. It is now also cleared by winning at least 7 seats (about 44% of games by the team alone; 8 seats, about 31%, was found too hard, and 6, the
+same bar as Level 4, would clear both levels in one election), a step above Level 4's 6 (about 59%); being in the government after the talks,
+or a majority of one's own, still clears it.
+A level that is not cleared now shows "Tips for this level" under the result: three short tips for each level played as a contest (the by-election
+and state-election levels and the general election), in English and Bahasa Malaysia (`tip.<level>.<n>`; `JourneyResult.tsx`). They are static, not
+read from how the game went, and say only what the rules and the measurements above support.
+During a level of the Career Campaign, once the tutorial is over, the campaign manager (the one the player hired, or else Kak Ros) speaks in the strip
+along the bottom (`contestTips.ts`) only when it matters for the level: in the first week, a briefing of what this level needs (`ltip.<level>`:
+the seats or share asked for, the budget of the shoestring level, untrustworthy polls in Sabah), and after that only a warning when something
+needs doing now (the chest is nearly empty; three quarters of a shoestring level's budget is spent; the last week has come and Get out the vote
+is not done). Otherwise the manager is quiet; weekly tips in rotation were tried and dropped. "Not this week" puts it away until the next.
+The tips were then made detailed (`tipFacts` in `contestTips.ts`, `tipText.ts`): they quote figures read from the contest itself, so they stay
+right if prices change: what each action costs there (in a by-election a walkabout RM1k, a ceramah RM3k, Get out the vote RM2k), the budget of the
+shoestring level, the seats or share asked for, the chest, the seat's voters, the parties that came first and second in it last time, and a plan
+of ground work that suits the kind of seat (a ceramah leads in a rural seat, a walkabout and a town hall in a town seat).
 Level 2 was then found too hard: measured over whole play-throughs (Level 1 won, then Level 2 on what it carried, about 27%), Sekinchan was
 cleared in only about 35% of games, nearly as few as Level 3. Level 2 now starts the party on a following of at least 28.5%, which clears it in
 about 48% of games: still a step harder than Level 1 (about 54% over the same play-throughs) and easier than Level 3. At 29% it was as easy as

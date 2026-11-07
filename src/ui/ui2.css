@@ -1131,6 +1131,8 @@ html { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .journey-result.up { background: color-mix(in srgb, #16a34a 14%, var(--panel)); border-color: color-mix(in srgb, #16a34a 45%, var(--line-2)); }
 .journey-result.same { background: color-mix(in srgb, var(--panel) 92%, transparent); }
 .journey-result .unlocked { font-weight: 600; }
+.journey-tips { display: grid; gap: 2px; margin-top: 4px; }
+.journey-tips ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
 
 /* the control that opens or closes the rest of a group of toasts: a button, so that the keyboard reaches it */
 .toast-group-expand { display: flex; align-items: center; gap: 6px; padding: 4px 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
