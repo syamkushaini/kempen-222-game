@@ -1489,8 +1489,9 @@ money, a seat held by about 11 points (about 33%), Level 4 renamed Breakthrough,
 each; the old bars of 15-20% of the vote were cleared nearly every time). A game begun in a DUN level's old seat still counts.
 Level 5 (Into government) could not be cleared when a rival won a majority of Selangor's assembly outright: there are then no talks to join. With
 the team playing alone that was 259 of 300 state elections (86%; 104 of 118 where the party won 6-8 seats), a hung assembly came in 41, and Level 5
-was never cleared. It is now also cleared by winning at least 7 seats (about 44% of games by the team alone; 8 seats was about 31% and was found a little too
-hard), a step above Level 4's 6 (about 59%); being in the government after the talks, or a majority of one's own, still clears it.
+was never cleared. It is now also cleared by winning at least 6 seats (about 59% of games by the team alone; 8 seats, about 31%, and 7, about 44%, were found too
+hard), the same bar as Level 4, so one state election that wins 6 seats clears both levels; being in the government after the talks, or a
+majority of one's own, still clears it.
 Level 2 was then found too hard: measured over whole play-throughs (Level 1 won, then Level 2 on what it carried, about 27%), Sekinchan was
 cleared in only about 35% of games, nearly as few as Level 3. Level 2 now starts the party on a following of at least 28.5%, which clears it in
 about 48% of games: still a step harder than Level 1 (about 54% over the same play-throughs) and easier than Level 3. At 29% it was as easy as
