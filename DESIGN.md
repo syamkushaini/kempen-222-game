@@ -1492,6 +1492,9 @@ the team playing alone that was 259 of 300 state elections (86%; 104 of 118 wher
 was never cleared. It is now also cleared by winning at least 7 seats (about 44% of games by the team alone; 8 seats, about 31%, was found too hard, and 6, the
 same bar as Level 4, would clear both levels in one election), a step above Level 4's 6 (about 59%); being in the government after the talks,
 or a majority of one's own, still clears it.
+A level that is not cleared now shows "Tips for this level" under the result: three short tips for each level played as a contest (the by-election
+and state-election levels and the general election), in English and Bahasa Malaysia (`tip.<level>.<n>`; `JourneyResult.tsx`). They are static, not
+read from how the game went, and say only what the rules and the measurements above support.
 Level 2 was then found too hard: measured over whole play-throughs (Level 1 won, then Level 2 on what it carried, about 27%), Sekinchan was
 cleared in only about 35% of games, nearly as few as Level 3. Level 2 now starts the party on a following of at least 28.5%, which clears it in
 about 48% of games: still a step harder than Level 1 (about 54% over the same play-throughs) and easier than Level 3. At 29% it was as easy as

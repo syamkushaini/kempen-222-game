@@ -11,6 +11,9 @@ import type { T } from './hooks';
 /** Seats a party needs to be kingmaker in Selangor's state election (56 seats). */
 const SELANGOR_SEATS = 56;
 
+/** How many tips each level has for a player who did not clear it (`tip.<level>.<n>`). */
+export const TIPS_PER_LEVEL = 3;
+
 /** A level's name. */
 export const stepTitle = (t: T, i: number): string => t(`step.${STEPS[i].id}` as StringKey);
 /** What a level asks, in a sentence. */
@@ -107,6 +110,14 @@ export function JourneyResult() {
       <strong>{cleared.length > 0 ? t('jr.up', { n: level }) : t('jr.same', { n: level })}</strong>
       {cleared.map((i) => <span key={i} className="small">{t('jr.step.done', { title: stepTitle(t, i) })}</span>)}
       {missed.map((i) => <span key={i} className="small">{t('jr.step.missed', { title: stepTitle(t, i), goal: stepGoal(t, i) })}</span>)}
+      {cleared.length === 0 && missed.map((i) => (
+        <div key={`tips${i}`} className="journey-tips">
+          <strong className="small">{t('jr.tips')}</strong>
+          <ul className="small">
+            {Array.from({ length: TIPS_PER_LEVEL }, (_, n) => <li key={n}>{t(`tip.${STEPS[i].id}.${n + 1}` as StringKey, { n: STEPS[i].need ?? stateSeatsNeeded(STEPS[i].seats ?? SELANGOR_SEATS), pct: Math.round((STEPS[i].share ?? SHARE_NEEDED) * 100) })}</li>)}
+          </ul>
+        </div>
+      ))}
       {next && <span className="small">{t('journey.next.step', { title: stepTitle(t, k) })}</span>}
       {k >= STEPS.length && cleared.length > 0 && <span className="small">{t('chapter.done')}</span>}
       {opened.length > 0 && cleared.length > 0 && <span className="small unlocked">🔓 {t('jr.unlocked', { modes: opened.map((m) => t(`unlock.mode.${m}` as StringKey)).join(', ') })}</span>}
